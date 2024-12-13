@@ -1,0 +1,21 @@
+name: debezium-platform
+description: Debezium Platform
+version: 0.0.1
+apiVersion: v2
+keywords:
+  - debezium
+  - cdc
+sources:
+  - https://github.com/debezium/debezium-platform-conductor
+home: https://github.com/debezium/debezium-platform-conductor
+dependencies:
+    - name: debezium-operator
+      version: "3.0.4-final"
+      repository: "https://charts.debezium.io"
+    - name: strimzi-kafka-operator
+      version: "0.44.0"
+      repository: "https://strimzi.io/charts/"
+      condition: kafka.enabled
+    - name: database
+      version: 0.0.1
+      condition: database.enabled

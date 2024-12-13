@@ -22,3 +22,67 @@ The conductor component itself is composed of several subcomponents:
 
 
 ![Debezium Management Platform Architecture](resources/images/debezium-platform-architecture.svg)
+
+## Installation
+
+You can install the platform through helm chart. For instructions refer to the [README](helm/README.md)
+
+## Run the example
+
+If you don't have already a Kubernetes cluster up, you can use [minikube](https://minikube.sigs.k8s.io/docs/) 
+and follow the [Get Started](https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download) to set up a local one. 
+
+For this example, considering a local setup, we will use the `/etc/hosts` to resolve the domain.
+
+The following script will map the K8s IP to the specified domain into the `/etc/hosts`.
+
+```shell
+export DEBEZIUM_PLATFORM_DOMAIN=platform.debezium.io
+./examples/update_hosts.sh
+```
+
+Create a dedicated namespace
+
+```shell
+kubectl create ns debezium-platform
+```
+
+and then install *debezium-platform* through `helm`
+
+```shell
+cd helm && 
+helm dependency build &&
+helm install debezium-platform . -f ../example.yaml &&
+cd ..
+```
+
+after all pods are running you should access the platform UI from `http://platform.debezium.io/`
+
+To finish the example we will create a PostgreSQL, that will be used as source database,
+and a kafka cluster, used as destination in our example pipeline.
+
+```shell
+# Deploy the source database
+
+kubectl create -f examples/compose-kind-kafka/k8s/database/001_postgresql.yml
+```
+
+```shell
+# Deploy the kafka cluster
+
+kubectl create -f examples/compose-kind-kafka/k8s/kafka/001_kafka.yml
+```
+
+```shell
+# Create a test pipeline
+
+./examples/seed.sh platform.debezium.io 80 helm/payloads/
+```
+
+And that's all. 
+
+![Debezium Management Platform Architecture](resources/images/pipeline.png)
+
+You should have a test pipeline configured to move data from PostgreSQL to Kakfa.
+
+

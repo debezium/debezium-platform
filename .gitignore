@@ -41,4 +41,8 @@ nb-configuration.xml
 # Logs
 *.log
 
+/helm/charts/*.tgz
+
+/helm/Chart.lock
+
 
