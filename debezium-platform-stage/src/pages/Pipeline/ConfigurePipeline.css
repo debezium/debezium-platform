@@ -1,0 +1,20 @@
+.pipeline-card-body {
+  max-width: var(--pf-v6-c-form--m-limit-width--MaxWidth, 55rem);
+}
+
+.pipeline-page-section .pf-v6-c-page__main-body {
+  max-width: var(--pf-v6-c-form--m-limit-width--MaxWidth, 55rem) !important;
+}
+
+.create_pipeline-toolbar {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.create_pipeline-footer {
+  margin-top: 0 !important;
+}
+
+.create_pipeline-toolbar .pf-v6-c-toolbar__content {
+  padding: 0 !important;
+}

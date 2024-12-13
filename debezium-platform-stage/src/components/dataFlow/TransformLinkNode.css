@@ -1,0 +1,57 @@
+.transformationWrapper {
+  overflow: hidden;
+  display: flex;
+  padding: 1px;
+  position: relative;
+  border-radius: 0 10px 0 10px;
+  flex-grow: 1;
+  box-shadow: var(--brand-shadow--light) !important;
+}
+
+.transformationGradient:before {
+  content: "";
+  position: absolute;
+  padding-bottom: calc(100% * 1.41421356237);
+  width: calc(100% * 1.41421356237);
+  background: conic-gradient(
+    from -45deg at 50% 50%,
+    var(--brand-color--green),
+    var(--brand-color--green-light) 120deg,
+    var(--brand-color--teal) 200deg,
+    var(--brand-color--green) 360deg
+  );
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 100%;
+}
+
+.transformationWrapper.transformationGradient:before {
+  content: "";
+  background: conic-gradient(
+    from -45deg at 50% 50%,
+    var(--brand-color--green),
+    var(--brand-color--green-light) 120deg,
+    var(--brand-color--teal) 200deg,
+    var(--brand-color--green) 360deg
+  );
+  /* animation: spinner 4s linear infinite; */
+  transform: translate(-50%, -50%) rotate(0deg);
+  z-index: -1;
+}
+
+@keyframes spinner {
+  100% {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+
+.transformationInner {
+  /* border-radius: 9px; */
+  border-radius: 0 9px 0 9px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+  position: relative;
+}

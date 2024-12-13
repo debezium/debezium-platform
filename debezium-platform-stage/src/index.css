@@ -1,0 +1,25 @@
+:root {
+  --brand-color--green: #a5c82d;
+  --brand-color--green-light: #7fc5a5;
+  --brand-color--teal: #58b2da;
+  /* --brand-shadow: 10px 0 15px rgba(88, 178, 218, 0.3),
+    -10px 0 15px rgba(165, 200, 45, 0.3); */
+  --brand-shadow: 7px 7px 15px rgba(88, 178, 218, 0.3),
+    -7px -7px 15px rgba(165, 200, 45, 0.3);
+  --brand-shadow--large: 14px 14px 30px rgba(88, 178, 218, 0.3),
+    -14px -14px 30px rgba(165, 200, 45, 0.3);
+  --brand-shadow--light: 3.5px 3.5px 7.5px rgba(88, 178, 218, 0.3),
+    /* Light Blue */ -3.5px -3.5px 7.5px rgba(165, 200, 45, 0.3); /* Green */
+  --brand-shadow--green: 5px 0 7.5px rgba(165, 200, 45, 0.3),
+    -5px 0 7.5px rgba(165, 200, 45, 0.3);
+  --brand-shadow--green-large: 10px 0 15px rgba(165, 200, 45, 0.3),
+    -10px 0 15px rgba(165, 200, 45, 0.3);
+  --brand-shadow--teal: 5px 0 7.5px rgba(88, 178, 218, 0.3),
+    -5px 0 7.5px rgba(88, 178, 218, 0.3);
+  --brand-shadow--teal-large: 10px 0 15px rgba(88, 178, 218, 0.3),
+    -10px 0 15px rgba(88, 178, 218, 0.3);
+}
+
+.pf-v6-c-page__main-body{
+  height: -webkit-fill-available;
+}

@@ -1,0 +1,16 @@
+  .creation_flow-card_selection {
+    flex-grow: 1 !important;
+    flex-basis: 0;
+    max-width: 100%;
+  }
+  
+  .creation_flow-card_selection .pf-c-card {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .pipeline_flow-modal_header{
+    gap: 2px;
+  }

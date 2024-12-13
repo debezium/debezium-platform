@@ -1,0 +1,24 @@
+[
+  {
+    "id": 2,
+    "config": {
+      "key": "value"
+    },
+    "description": "",
+    "name": "test-infi",
+    "schema": "schema321",
+    "type": "infinispan",
+    "vaults": []
+  },
+  {
+    "id": 1,
+    "config": {
+      "key": "value"
+    },
+    "description": "",
+    "name": "kafka",
+    "schema": "schema321",
+    "type": "kafka",
+    "vaults": []
+  }
+]

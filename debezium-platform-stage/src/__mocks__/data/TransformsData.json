@@ -1,0 +1,86 @@
+[
+    {
+      "id": 5,
+      "config": {
+        "debezium.transforms.extract-new-record.route.by.field": "user-id",
+        "debezium.transforms.extract-new-record.drop.fields.header.name": "__id"
+      },
+      "description": "configured from ui",
+      "name": "extract-new-record",
+      "schema": "schema321",
+      "type": "io.debezium.transforms.ExtractNewRecordState",
+      "vaults": []
+    },
+    {
+      "id": 8,
+      "config": {
+        "debezium.transforms.mongo-eventRouter-long-name-verry-long.route.by.field": "test"
+      },
+      "description": null,
+      "name": "mongo-eventRouter-long-name-verry-long",
+      "schema": "schema321",
+      "type": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+      "vaults": []
+    },
+    {
+      "id": 6,
+      "config": {
+        "debezium.transforms.filter-transform.language": "groovy",
+        "debezium.transforms.filter-transform.condition": "value.before.id==2"
+      },
+      "description": "configured from ui",
+      "name": "filter-transform",
+      "schema": "schema321",
+      "type": "io.debezium.transforms.Filter",
+      "vaults": []
+    },
+    {
+      "id": 4,
+      "config": {
+        "debezium.transforms.logical-router.topic.regex": "/[0-9]/[a-z]",
+        "debezium.transforms.logical-router.key.field.regex": "/[0-9]/[a-z]",
+        "debezium.transforms.logical-router.topic.replacement": "new_test",
+        "debezium.transforms.logical-router.key.field.replacement": "new_value"
+      },
+      "description": "",
+      "name": "logical-router",
+      "schema": "schema321",
+      "type": "io.debezium.transforms.ByLogicalTableRouter",
+      "vaults": []
+    },
+    {
+      "id": 3,
+      "config": {
+        "debezium.transforms.mongo-eventRouter.collection.field.event.key": "new_id",
+        "debezium.transforms.mongo-eventRouter.collection.field.event.schema.version": "user_set"
+      },
+      "description": "",
+      "name": "mongo-eventRouter",
+      "schema": "schema321",
+      "type": "io.debezium.connector.mongodb.transforms.outbox.MongoEventRouter",
+      "vaults": []
+    },
+    {
+      "id": 9,
+      "config": {
+        "debezium.transforms.filter-new-transfrom.condition": "ramdon"
+      },
+      "description": "Config",
+      "name": "filter-new-transfrom",
+      "schema": "schema321",
+      "type": "io.debezium.transforms.Filter",
+      "vaults": []
+    },
+    {
+      "id": 7,
+      "config": {
+        "debezium.transforms.filter-id-transform.language": "groovy",
+        "debezium.transforms.filter-id-transform.condition": "value.before.id==2"
+      },
+      "description": "configured from ui",
+      "name": "filter-id-transform",
+      "schema": "schema321",
+      "type": "io.debezium.transforms.Filter",
+      "vaults": []
+    }
+  ]

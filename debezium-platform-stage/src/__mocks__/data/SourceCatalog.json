@@ -1,0 +1,32 @@
+[
+  {
+    "name": "MongoDB",
+    "id": "mongodb",
+    "type": "io.debezium.connector.mongodb.MongoDbConnector",
+    "description": "Capture changes from a MongoDB database in real-time."
+  },
+  {
+    "name": "MySQL",
+    "id": "mysql",
+    "type": "io.debezium.connector.mysql.MySqlConnector",
+    "description": "Stream changes from a MySQL database to other systems."
+  },
+  { 
+    "name": "PostgreSQL",
+    "id": "postgresql",
+    "type": "io.debezium.connector.postgresql.PostgresConnector",
+    "description": "Monitor and capture changes from a PostgreSQL database."
+  },
+  {
+    "name": "SQL Server",
+    "id": "sqlserver",
+    "type": "io.debezium.connector.sqlserver.SqlServerConnector",
+    "description": "Stream change events from a Microsoft SQL Server database."
+  },
+  {
+    "name": "Cassandra",
+    "id": "cassandra",
+    "type": "io.debezium.connector.cassandra.CassandraConnector",
+    "description": "Capture changes from a Cassandra database in a distributed manner."
+  }
+]

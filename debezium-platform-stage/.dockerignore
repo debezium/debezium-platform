@@ -1,0 +1,27 @@
+# Ignore node_modules directory
+node_modules/
+
+# Ignore build artifacts
+build/
+dist/
+
+# Ignore development files
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignore npm cache
+.npm
+
+# Ignore log files
+logs
+*.log
+
+# Ignore coverage directory
+coverage/
+
+# Ignore stats file
+stats.json

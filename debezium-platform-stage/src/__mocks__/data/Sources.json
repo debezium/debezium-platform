@@ -1,0 +1,25 @@
+[
+  {
+    "id": 2,
+    "config": {
+      "key": "val"
+    },
+    "description": "",
+    "name": "test-case",
+    "schema": "schema321",
+    "type": "io.debezium.connector.cassandra.CassandraConnector",
+    "vaults": []
+  },
+  {
+    "id": 1,
+    "config": {
+      "key": "value",
+      "key1": "value1"
+    },
+    "description": "temp",
+    "name": "test-source-mongo",
+    "schema": "schema321",
+    "type": "io.debezium.connector.mongodb.MongoDbConnector",
+    "vaults": []
+  }
+]

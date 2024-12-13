@@ -1,0 +1,215 @@
+
+
+.wrapper {
+    overflow: hidden;
+    display: flex;
+    padding: 2px;
+    position: relative;
+    border-radius: 10px;
+    flex-grow: 1;
+    /* box-shadow: var(--brand-shadow); */
+    box-shadow: var(--brand-shadow--green-large);
+  }
+
+  .wrapperSource {
+    overflow: hidden;
+    display: flex;
+    padding: 1px;
+    position: relative;
+    border-radius: 10px;
+    flex-grow: 1;
+    box-shadow: var(--brand-shadow--green);
+  }
+
+  .wrapperDestination {
+    overflow: hidden;
+    display: flex;
+    padding: 1px;
+    position: relative;
+    border-radius: 10px;
+    flex-grow: 1;
+    box-shadow: var(--brand-shadow--teal);
+  }
+
+  .dataNodeSelectorWrapper {
+    overflow: hidden;
+    display: flex;
+    padding: 2px;
+    position: relative;
+    border-radius: 10px;
+    flex-grow: 1;
+     box-shadow: var(--brand-shadow--teal-large);
+  }
+
+  .gradient:before {
+    content: '';
+    position: absolute;
+    padding-bottom: calc(100% * 1.41421356237);
+    width: calc(100% * 1.41421356237);
+    /* background: conic-gradient(
+        from -45deg at 50% 50%, 
+        var(--brand-color--green), 
+        var(--brand-color--green-light) 120deg,  
+        var(--brand-color--teal) 200deg,  
+        var(--brand-color--green) 360deg 
+      ); */
+    background: var(--brand-color--green);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 100%;
+  }
+
+  .gradientSource:before {
+    content: '';
+    position: absolute;
+    padding-bottom: calc(100% * 1.41421356237);
+    width: calc(100% * 1.41421356237);
+    background: var(--brand-color--green);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 100%;
+  }
+
+  .gradientDestination:before {
+    content: '';
+    position: absolute;
+    padding-bottom: calc(100% * 1.41421356237);
+    width: calc(100% * 1.41421356237);
+    background: var(--brand-color--teal);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 100%;
+  }
+
+  .wrapper.gradient:before {
+    content: '';
+     /* background: conic-gradient(
+        from -45deg at 50% 50%, 
+        var(--brand-color--green), 
+        var(--brand-color--green-light) 120deg,  
+        var(--brand-color--teal) 200deg,  
+        var(--brand-color--green) 360deg 
+      ); */
+    background: var(--brand-color--green);
+    /* animation: spinner 4s linear infinite; */
+    transform: translate(-50%, -50%) rotate(0deg);
+    z-index: -1;
+  }
+
+  .dataNodeSelectorWrapper.gradient:before {
+    content: '';
+    background: var(--brand-color--teal);
+    animation: spinner 4s linear infinite;
+    transform: translate(-50%, -50%) rotate(0deg);
+    z-index: -1;
+  }
+
+  @keyframes spinner {
+    100% {
+      transform: translate(-50%, -50%) rotate(-360deg);
+    }
+  }
+
+  .inner {
+    border-radius: 9px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    position: relative;
+  }
+
+
+  .editDataNode{
+    border-radius: 100%;
+    width: 22px;
+    height: 22px;
+    right: 0;
+    position: absolute;
+    top: 0;
+    transform: translate(20%, -20%);
+    display: flex;
+    transform-origin: center center;
+    padding: 1px;
+    overflow: hidden;
+    box-shadow: var(--brand-shadow);
+    z-index: 1;
+}
+
+.editDataNodeSource{
+  border-radius: 100%;
+ 
+  width: 22px;
+  height: 22px;
+  right: 0;
+  position: absolute;
+  top: 0;
+  transform: translate(40%, -40%);
+  display: flex;
+  transform-origin: center center;
+  padding: 1px;
+  overflow: hidden;
+  box-shadow: var(--brand-shadow--green-large);
+  z-index: 1;
+}
+
+.editDataNodeDestination{
+  border-radius: 100%;
+ 
+  width: 22px;
+  height: 22px;
+  right: 0;
+  position: absolute;
+  top: 0;
+  transform: translate(40%, -40%);
+  display: flex;
+  transform-origin: center center;
+  padding: 1px;
+  overflow: hidden;
+  box-shadow: var(--brand-shadow--teal-large);
+  z-index: 1;
+}
+.editDataNode div {
+    flex-grow: 1;
+    cursor: pointer;
+    border-radius: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    /* padding:1px */
+    font-size: .8em;
+}
+
+.editDataNodeSource div {
+  flex-grow: 1;
+  cursor: pointer;
+  border-radius: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  /* padding:1px */
+  font-size: .8em;
+}
+
+.editDataNodeDestination div {
+  flex-grow: 1;
+  cursor: pointer;
+  border-radius: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  /* padding:1px */
+  font-size: .8em;
+}
+
+
+
+
+
+

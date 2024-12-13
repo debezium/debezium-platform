@@ -1,0 +1,673 @@
+[
+  {
+    "properties": {
+      "serializer.type": {
+        "title": "Specifies a serialization type a provided CloudEvent was serialized and deserialized with",
+        "description": "Specifies a serialization type a provided CloudEvent was serialized and deserialized with",
+        "type": "STRING",
+        "x-name": "serializer.type"
+      },
+      "fields.mapping": {
+        "title": "Specifies a list of pairs with mappings between a CloudEvent's fields and names of database columns",
+        "description": "Specifies a list of pairs with mappings between a CloudEvent's fields and names of database columns",
+        "type": "STRING",
+        "format": "list,regex",
+        "x-name": "fields.mapping"
+      }
+    },
+    "transform": "io.debezium.connector.jdbc.transforms.ConvertCloudEventToSaveableForm"
+  },
+  {
+    "properties": {
+      "delete.handling.mode": {
+        "title": "Handle delete records",
+        "description": "How to handle delete records. Options are: none - records are passed,drop - records are removed (the default),rewrite - __deleted field is added to records.Note: This option is scheduled for removal in a future release, use \"delete.tombstone.handling.mode\" instead",
+        "type": "STRING",
+        "defaultValue": "drop",
+        "x-name": "delete.handling.mode",
+        "enum": ["drop", "rewrite", "none"]
+      },
+      "add.headers.prefix": {
+        "title": "Header prefix to be added to each header.",
+        "description": "Adds this prefix listed to each header.",
+        "type": "STRING",
+        "defaultValue": "__",
+        "x-name": "add.headers.prefix"
+      },
+      "flatten.struct.delimiter": {
+        "title": "Delimiter for flattened struct",
+        "description": "Delimiter to concat between field names from the input record when generating field names for theoutput record.",
+        "type": "STRING",
+        "defaultValue": "_",
+        "x-name": "flatten.struct.delimiter"
+      },
+      "route.by.field": {
+        "title": "Route by field name",
+        "description": "The column which determines how the events will be routed, the value will replace the topic name.",
+        "type": "STRING",
+        "defaultValue": "",
+        "x-name": "route.by.field"
+      },
+      "add.headers": {
+        "title": "Adds the specified fields to the header if they exist.",
+        "description": "Adds each field listed to the header,  __ (or __\u003Cstruct\u003E_ if the struct is specified). Example: 'version,connector,source.ts_ms' would add __version, __connector and __source_ts_ms fields. Optionally one can also map new field name like version:VERSION,connector:CONNECTOR,source.ts_ms:EVENT_TIMESTAMP.Please note that the new field name is case-sensitive.",
+        "type": "STRING",
+        "format": "list,regex",
+        "defaultValue": "[]",
+        "x-name": "add.headers"
+      },
+      "flatten.struct": {
+        "title": "Flatten struct",
+        "description": "Flattening structs by concatenating the fields into plain properties, using a (configurable) delimiter.",
+        "type": "BOOLEAN",
+        "defaultValue": "false",
+        "x-name": "flatten.struct"
+      },
+      "drop.tombstones": {
+        "title": "Drop tombstones",
+        "description": "Debezium by default generates a tombstone record to enable Kafka compaction after a delete record was generated. This record is usually filtered out to avoid duplicates as a delete record is converted to a tombstone record, tooNote: This option is scheduled for removal in a future release, use \"delete.tombstone.handling.mode\" instead",
+        "type": "BOOLEAN",
+        "defaultValue": "true",
+        "x-name": "drop.tombstones"
+      },
+      "add.fields": {
+        "title": "Adds the specified field(s) to the message if they exist.",
+        "description": "Adds each field listed, prefixed with __ (or __\u003Cstruct\u003E_ if the struct is specified). Example: 'version,connector,source.ts_ms' would add __version, __connector and __source_ts_ms fields. Optionally one can also map new field name like version:VERSION,connector:CONNECTOR,source.ts_ms:EVENT_TIMESTAMP.Please note that the new field name is case-sensitive.",
+        "type": "STRING",
+        "format": "list,regex",
+        "defaultValue": "[]",
+        "x-name": "add.fields"
+      },
+      "add.fields.prefix": {
+        "title": "Field prefix to be added to each field.",
+        "description": "Adds this prefix to each field listed.",
+        "type": "STRING",
+        "defaultValue": "__",
+        "x-name": "add.fields.prefix"
+      },
+      "array.encoding": {
+        "title": "Array encoding",
+        "description": "The arrays can be encoded using 'array' schema type (the default) or as a 'document' (similar to how BSON encodes arrays). 'array' is easier to consume but requires all elements in the array to be of the same type. Use 'document' if the arrays in data source mix different types together.",
+        "type": "STRING",
+        "defaultValue": "array",
+        "x-name": "array.encoding",
+        "enum": ["array", "document"]
+      }
+    },
+    "transform": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState"
+  },
+  {
+    "properties": {
+      "collection.field.event.payload": {
+        "title": "Event Payload Field",
+        "description": "The field which contains the event payload within the outbox collection",
+        "type": "STRING",
+        "defaultValue": "payload",
+        "x-name": "collection.field.event.payload"
+      },
+      "collection.field.event.key": {
+        "title": "Event Key Field",
+        "description": "The field which contains the event key within the outbox collection",
+        "type": "STRING",
+        "x-name": "collection.field.event.key"
+      },
+      "tracing.operation.name": {
+        "title": "Tracing operation name",
+        "description": "The operation name representing Debezium processing span. Default is 'debezium-read'",
+        "type": "STRING",
+        "defaultValue": "debezium-read",
+        "x-name": "tracing.operation.name"
+      },
+      "collection.field.event.timestamp": {
+        "title": "Event Timestamp Field",
+        "description": "Optionally you can override the Kafka message timestamp with a value from a chosen field, otherwise it'll be the Debezium event processed timestamp.",
+        "type": "STRING",
+        "x-name": "collection.field.event.timestamp"
+      },
+      "route.topic.regex": {
+        "title": "The name of the routed topic",
+        "description": "The default regex to use within the RegexRouter, the default capture will allow to replace the routed field into a new topic name defined in 'route.topic.replacement'",
+        "type": "STRING",
+        "defaultValue": "(?\u003CroutedByValue\u003E.*)",
+        "x-name": "route.topic.regex"
+      },
+      "collection.fields.additional.placement": {
+        "title": "Settings for each additional column in the outbox table",
+        "description": "Extra fields can be added as part of the event envelope or a message header, format is a list of colon-delimited pairs or trios when you desire to have aliases, e.g. \u003Ccode\u003Eid:header,field_name:envelope:alias\u003C/code\u003E ",
+        "type": "STRING",
+        "format": "list,regex",
+        "x-name": "collection.fields.additional.placement"
+      },
+      "collection.field.event.schema.version": {
+        "title": "Event Schema Version Field",
+        "description": "The field which contains the event schema version within the outbox collection",
+        "type": "STRING",
+        "x-name": "collection.field.event.schema.version"
+      },
+      "route.tombstone.on.empty.payload": {
+        "title": "Empty payloads cause a tombstone message",
+        "description": "Whether or not an empty payload should cause a tombstone event.",
+        "type": "BOOLEAN",
+        "defaultValue": "false",
+        "x-name": "route.tombstone.on.empty.payload"
+      },
+      "collection.field.event.type": {
+        "title": "Event Type Field",
+        "description": "The field which contains the event type within the outbox collection",
+        "type": "STRING",
+        "defaultValue": "type",
+        "x-name": "collection.field.event.type"
+      },
+      "route.by.field": {
+        "title": "Field to route events by",
+        "description": "The field which determines how the events will be routed within the outbox collection. The value will become a part of the topic name",
+        "type": "STRING",
+        "defaultValue": "aggregatetype",
+        "x-name": "route.by.field"
+      },
+      "tracing.span.context.field": {
+        "title": "Serialized tracing span context field",
+        "description": "The name of the field containing java.util.Properties representation of serialized span context. Defaults to 'tracingspancontext'",
+        "type": "STRING",
+        "defaultValue": "tracingspancontext",
+        "x-name": "tracing.span.context.field"
+      },
+      "collection.field.event.id": {
+        "title": "Event ID Field",
+        "description": "The field which contains the event ID within the outbox collection",
+        "type": "STRING",
+        "defaultValue": "_id",
+        "x-name": "collection.field.event.id"
+      },
+      "tracing.with.context.field.only": {
+        "title": "Trace only events with context field present",
+        "description": "Set to `true` when only events that have serialized context field should be traced.",
+        "type": "BOOLEAN",
+        "defaultValue": "false",
+        "x-name": "tracing.with.context.field.only"
+      },
+      "table.op.invalid.behavior": {
+        "title": "Behavior when capturing an unexpected outbox event",
+        "description": "While Debezium is monitoring the collection, it's expecting only to see 'create' document events, in case something else is processed this transform can log it as warning, error or stop the process",
+        "type": "STRING",
+        "defaultValue": "warn",
+        "x-name": "table.op.invalid.behavior"
+      },
+      "collection.expand.json.payload": {
+        "title": "Expand Payload escaped string as real JSON",
+        "description": "Whether or not to try unescaping a JSON string and make it real JSON. It will infer schema information from payload and update the record schema accordingly. If content is not JSON, it just produces a warning and emits the record unchanged",
+        "type": "BOOLEAN",
+        "defaultValue": "false",
+        "x-name": "collection.expand.json.payload"
+      },
+      "route.topic.replacement": {
+        "title": "The name of the routed topic",
+        "description": "The name of the topic in which the events will be routed, a replacement '${routedByValue}' is available which is the value of the field configured via 'route.by.field'",
+        "type": "STRING",
+        "defaultValue": "outbox.event.${routedByValue}",
+        "x-name": "route.topic.replacement"
+      }
+    },
+    "transform": "io.debezium.connector.mongodb.transforms.outbox.MongoEventRouter"
+  },
+  {
+    "properties": {
+      "target.topic.prefix": {
+        "title": "The prefix of TimescaleDB topic names",
+        "description": "The namespace (prefix) of topics where TimescaleDB events will be routed, defaults to: '_timescaledb_internal'",
+        "type": "STRING",
+        "defaultValue": "timescaledb",
+        "x-name": "target.topic.prefix"
+      },
+      "schema.list": {
+        "title": "The list of TimescaleDB data schemas",
+        "description": "Comma-separated list schema names that contain TimescaleDB data tables, defaults to: '_timescaledb_internal'",
+        "type": "STRING",
+        "format": "list,regex",
+        "defaultValue": "[_timescaledb_internal]",
+        "x-name": "schema.list"
+      }
+    },
+    "transform": "io.debezium.connector.postgresql.transforms.timescaledb.TimescaleDb"
+  },
+  {
+    "properties": {
+      "key.enforce.uniqueness": {
+        "title": "Add source topic name into key",
+        "description": "Augment each record's key with a field denoting the source topic. This field distinguishes records coming from different physical tables which may otherwise have primary/unique key conflicts. If the source tables are guaranteed to have globally unique keys then this may be set to false to disable key rewriting.",
+        "type": "BOOLEAN",
+        "defaultValue": "true",
+        "x-name": "key.enforce.uniqueness"
+      },
+      "key.field.regex": {
+        "title": "Key field regex",
+        "description": "The regex used for extracting the physical table identifier from the original topic name. Now that multiple physical tables can share a topic, the event's key may need to be augmented to include fields other than just those for the record's primary/unique key, since these are not guaranteed to be unique across tables. We need some identifier added to the key that distinguishes the different physical tables.",
+        "type": "STRING",
+        "x-name": "key.field.regex"
+      },
+      "topic.replacement": {
+        "title": "Topic replacement",
+        "description": "The replacement string used in conjunction with topic.regex. This will be used to create the new topic name.",
+        "type": "STRING",
+        "x-name": "topic.replacement"
+      },
+      "logical.table.cache.size": {
+        "title": "Logical table cache size",
+        "description": "The size used for holding the max entries in LRUCache. The cache will keep the old/new schema for logical table key and value, also cache the derived key and topic regex result for improving the source record transformation.",
+        "type": "INTEGER",
+        "format": "int32",
+        "defaultValue": "16",
+        "x-name": "logical.table.cache.size"
+      },
+      "topic.regex": {
+        "title": "Topic regex",
+        "description": "The regex used for extracting the name of the logical table from the original topic name.",
+        "type": "STRING",
+        "x-name": "topic.regex"
+      },
+      "key.field.replacement": {
+        "title": "Key field replacement",
+        "description": "The replacement string used in conjunction with key.field.regex. This will be used to create the physical table identifier in the record's key.",
+        "type": "STRING",
+        "x-name": "key.field.replacement"
+      }
+    },
+    "transform": "io.debezium.transforms.ByLogicalTableRouter"
+  },
+  {
+    "properties": {
+      "topic.regex": {
+        "title": "Topic regex",
+        "description": "A regex used for selecting the topic(s) to which this transformation should be applied.",
+        "type": "STRING",
+        "x-name": "topic.regex"
+      },
+      "language": {
+        "title": "Expression language",
+        "description": "An expression language used to evaluate the expression. Must begin with 'jsr223.', e.g.  'jsr223.groovy' or 'jsr223.graal.js'.",
+        "type": "STRING",
+        "x-name": "language"
+      },
+      "null.handling.mode": {
+        "title": "Handle null records",
+        "description": "How to handle records with null value. Options are: keep - records are passed (the default),drop - records are removed,evaluate - the null records are passed for evaluation.",
+        "type": "STRING",
+        "defaultValue": "keep",
+        "x-name": "null.handling.mode"
+      },
+      "topic.expression": {
+        "title": "Topic name expression",
+        "description": "An expression determining the new name of the topic the record should use. When null the record is delivered to the original topic.",
+        "type": "STRING",
+        "x-name": "topic.expression"
+      }
+    },
+    "transform": "io.debezium.transforms.ContentBasedRouter"
+  },
+  {
+    "properties": {
+      "header.unchanged.name": {
+        "title": "Header unchanged name.",
+        "description": "Specify the header unchanged name of schema, default is null which means not send changes to header.",
+        "type": "STRING",
+        "x-name": "header.unchanged.name"
+      },
+      "header.changed.name": {
+        "title": "Header change name.",
+        "description": "Specify the header changed name, default is null which means not send changes to header.",
+        "type": "STRING",
+        "x-name": "header.changed.name"
+      }
+    },
+    "transform": "io.debezium.transforms.ExtractChangedRecordState"
+  },
+  {
+    "properties": {
+      "delete.handling.mode": {
+        "title": "Handle delete records",
+        "description": "How to handle delete records. Options are: none - records are passed,drop - records are removed (the default),rewrite - __deleted field is added to records.Note: This option is scheduled for removal in a future release, use \"delete.tombstone.handling.mode\" instead",
+        "type": "STRING",
+        "defaultValue": "drop",
+        "x-name": "delete.handling.mode",
+        "enum": ["drop", "rewrite", "none"]
+      },
+      "add.headers.prefix": {
+        "title": "Header prefix to be added to each header.",
+        "description": "Adds this prefix listed to each header.",
+        "type": "STRING",
+        "defaultValue": "__",
+        "x-name": "add.headers.prefix"
+      },
+      "route.by.field": {
+        "title": "Route by field name",
+        "description": "The column which determines how the events will be routed, the value will replace the topic name.",
+        "type": "STRING",
+        "defaultValue": "",
+        "x-name": "route.by.field"
+      },
+      "drop.fields.from.key": {
+        "title": "Specifies whether the fields to be dropped should also be omitted from the key",
+        "description": "Specifies whether to apply the drop fields behavior to the event key as well as the value. Default behavior is to only remove fields from the event value, not the key.",
+        "type": "BOOLEAN",
+        "defaultValue": "false",
+        "x-name": "drop.fields.from.key"
+      },
+      "drop.fields.header.name": {
+        "title": "Specifies a header that contains a list of field names to be removed",
+        "description": "Specifies the name of a header that contains a list of fields to be removed from the event value.",
+        "type": "STRING",
+        "x-name": "drop.fields.header.name"
+      },
+      "add.headers": {
+        "title": "Adds the specified fields to the header if they exist.",
+        "description": "Adds each field listed to the header,  __ (or __<struct>_ if the struct is specified). Example: 'version,connector,source.ts_ms' would add __version, __connector and __source_ts_ms fields. Optionally one can also map new field name like version:VERSION,connector:CONNECTOR,source.ts_ms:EVENT_TIMESTAMP.Please note that the new field name is case-sensitive.",
+        "type": "STRING",
+        "format": "list,regex",
+        "defaultValue": "[]",
+        "x-name": "add.headers"
+      },
+      "drop.fields.keep.schema.compatible": {
+        "title": "Specifies if fields are dropped, will the event's schemas be compatible",
+        "description": "Controls the output event's schema compatibility when using the drop fields feature. `true`: dropped fields are removed if the schema indicates its optional leaving the schemas unchanged, `false`: dropped fields are removed from the key/value schemas, regardless of optionality.",
+        "type": "BOOLEAN",
+        "defaultValue": "true",
+        "x-name": "drop.fields.keep.schema.compatible"
+      },
+      "drop.tombstones": {
+        "title": "Drop tombstones",
+        "description": "Debezium by default generates a tombstone record to enable Kafka compaction after a delete record was generated. This record is usually filtered out to avoid duplicates as a delete record is converted to a tombstone record, tooNote: This option is scheduled for removal in a future release, use \"delete.tombstone.handling.mode\" instead",
+        "type": "BOOLEAN",
+        "defaultValue": "true",
+        "x-name": "drop.tombstones"
+      },
+      "add.fields": {
+        "title": "Adds the specified field(s) to the message if they exist.",
+        "description": "Adds each field listed, prefixed with __ (or __<struct>_ if the struct is specified). Example: 'version,connector,source.ts_ms' would add __version, __connector and __source_ts_ms fields. Optionally one can also map new field name like version:VERSION,connector:CONNECTOR,source.ts_ms:EVENT_TIMESTAMP.Please note that the new field name is case-sensitive.",
+        "type": "STRING",
+        "format": "list,regex",
+        "defaultValue": "[]",
+        "x-name": "add.fields"
+      },
+      "add.fields.prefix": {
+        "title": "Field prefix to be added to each field.",
+        "description": "Adds this prefix to each field listed.",
+        "type": "STRING",
+        "defaultValue": "__",
+        "x-name": "add.fields.prefix"
+      }
+    },
+    "transform": "io.debezium.transforms.ExtractNewRecordState"
+  },
+  {
+    "properties": {
+      "condition": {
+        "title": "Filtering condition",
+        "description": "An expression determining whether the record should be filtered out. When evaluated to true the record is removed.",
+        "type": "STRING",
+        "x-name": "condition"
+      },
+      "topic.regex": {
+        "title": "Topic regex",
+        "description": "A regex used for selecting the topic(s) to which this transformation should be applied.",
+        "type": "STRING",
+        "x-name": "topic.regex"
+      },
+      "language": {
+        "title": "Expression language",
+        "description": "An expression language used to evaluate the expression. Must begin with 'jsr223.', e.g.  'jsr223.groovy' or 'jsr223.graal.js'.",
+        "type": "STRING",
+        "x-name": "language"
+      },
+      "null.handling.mode": {
+        "title": "Handle null records",
+        "description": "How to handle records with null value. Options are: keep - records are passed (the default),drop - records are removed,evaluate - the null records are passed for evaluation.",
+        "type": "STRING",
+        "defaultValue": "keep",
+        "x-name": "null.handling.mode"
+      }
+    },
+    "transform": "io.debezium.transforms.Filter"
+  },
+  {
+    "properties": {
+      "headers": {
+        "title": "Header names list",
+        "description": "Header names in the record whose values are to be copied or moved to record value.",
+        "type": "STRING",
+        "format": "list,regex",
+        "x-name": "headers"
+      },
+      "fields": {
+        "title": "Field names list",
+        "description": "Field names, in the same order as the header names listed in the headers configuration property. Supports Struct nesting using dot notation.",
+        "type": "STRING",
+        "format": "list,regex",
+        "x-name": "fields"
+      },
+      "operation": {
+        "title": "Operation: mover or copy",
+        "description": "Either <code>move</code> if the fields are to be moved to the value (removed from the headers), or <code>copy</code> if the fields are to be copied to the value (retained in the headers).",
+        "type": "STRING",
+        "x-name": "operation"
+      }
+    },
+    "transform": "io.debezium.transforms.HeaderToValue"
+  },
+  {
+    "properties": {
+      "schema.change.event.exclude.list": {
+        "title": "Schema change event exclude list",
+        "description": "Support filtering during DDL synchronization",
+        "type": "STRING",
+        "x-name": "schema.change.event.exclude.list"
+      }
+    },
+    "transform": "io.debezium.transforms.SchemaChangeEventFilter"
+  },
+  {
+    "properties": {
+      "include.list": {
+        "title": "Include List",
+        "description": "A comma-separated list of rules that specify what events should be evaluated for timezone conversion, using one of the following formats: `source:<tablename>`:: Matches only Debezium change events with a source information block with the specified table name. All time-based fields will be converted. `source:<tablename>:<fieldname>`:: Matches only Debezium change events with a source information with the specified table name. Only the specified field name will be converted. `topic:<topicname>`:: Matches the specified topic name, converting all time-based fields. `topic:<topicname>:<fieldname>`:: Matches the specified topic name, converting only the specified field name. `<matchname>:<fieldname>`:: Uses a heuristic matching algorithm to matches the source information block table name if the source information block exists, otherwise matches against the topic name. The conversion is applied only to to the specified field name. ",
+        "type": "STRING",
+        "format": "list,regex",
+        "x-name": "include.list"
+      },
+      "converted.timezone": {
+        "title": "Converted Timezone",
+        "description": "A string that represents the timezone to which the time-based fields should be converted.The format can be geographic (e.g. America/Los_Angeles), or it can be a UTC offset in the format of +/-hh:mm, (e.g. +08:00).",
+        "type": "STRING",
+        "x-name": "converted.timezone"
+      },
+      "exclude.list": {
+        "title": "Exclude List",
+        "description": "A comma-separated list of rules that specify what events should be excluded from timezone conversion, using one of the following formats: `source:<tablename>`:: Matches only Debezium change events with a source information block with the specified table name. All time-based fields will be excluded. `source:<tablename>:<fieldnames>`:: Matches only Debezium change events with a source information with the specified table name. Only the specified field name will be excluded. `topic:<topicname>`:: Matches the specified topic name, excluding all time-based fields. `topic:<topicname>:<fieldnames>`:: Matches the specified topic name, excluding only the specified field name. `<matchname>:<fieldnames>`:: Uses a heuristic matching algorithm to matches the source information block table name if the source information block exists, otherwise matches against the topic name. The conversion is applied only to to the specified field name. ",
+        "type": "STRING",
+        "format": "list,regex",
+        "x-name": "exclude.list"
+      }
+    },
+    "transform": "io.debezium.transforms.TimezoneConverter"
+  },
+  {
+    "properties": {
+      "tracing.operation.name": {
+        "title": "Tracing operation name",
+        "description": "The operation name representing Debezium processing span. Default is 'debezium-read'",
+        "type": "STRING",
+        "defaultValue": "debezium-read",
+        "x-name": "tracing.operation.name"
+      },
+      "table.json.payload.null.behavior": {
+        "title": "Behavior when json payload including null value",
+        "description": "Behavior when json payload including null value, the default will ignore null, optional_bytes will keep the null value, and treat null as optional bytes of connect.",
+        "type": "STRING",
+        "defaultValue": "ignore",
+        "x-name": "table.json.payload.null.behavior"
+      },
+      "table.field.event.schema.version": {
+        "title": "Event Schema Version Field",
+        "description": "The column which contains the event schema version within the outbox table",
+        "type": "STRING",
+        "x-name": "table.field.event.schema.version"
+      },
+      "table.field.event.timestamp": {
+        "title": "Event Timestamp Field",
+        "description": "Optionally you can override the Kafka message timestamp with a value from a chosen column, otherwise it'll be the Debezium event processed timestamp.",
+        "type": "STRING",
+        "x-name": "table.field.event.timestamp"
+      },
+      "route.topic.regex": {
+        "title": "The name of the routed topic",
+        "description": "The default regex to use within the RegexRouter, the default capture will allow to replace the routed field into a new topic name defined in 'route.topic.replacement'",
+        "type": "STRING",
+        "defaultValue": "(?<routedByValue>.*)",
+        "x-name": "route.topic.regex"
+      },
+      "table.field.event.key": {
+        "title": "Event Key Field",
+        "description": "The column which contains the event key within the outbox table",
+        "type": "STRING",
+        "defaultValue": "aggregateid",
+        "x-name": "table.field.event.key"
+      },
+      "table.fields.additional.placement": {
+        "title": "Settings for each additional column in the outbox table",
+        "description": "Extra fields can be added as part of the event envelope or a message header, format is a list of colon-delimited pairs or trios when you desire to have aliases, e.g. <code>id:header,field_name:envelope:alias,field_name:partition</code> ",
+        "type": "STRING",
+        "format": "list,regex",
+        "x-name": "table.fields.additional.placement"
+      },
+      "table.expand.json.payload": {
+        "title": "Expand Payload escaped string as real JSON",
+        "description": "Whether or not to try unescaping a JSON string and make it real JSON. It will infer schema information from payload and update the record schema accordingly. If content is not JSON, it just produces a warning and emits the record unchanged",
+        "type": "BOOLEAN",
+        "defaultValue": "false",
+        "x-name": "table.expand.json.payload"
+      },
+      "route.tombstone.on.empty.payload": {
+        "title": "Empty payloads cause a tombstone message",
+        "description": "Whether or not an empty payload should cause a tombstone event.",
+        "type": "BOOLEAN",
+        "defaultValue": "false",
+        "x-name": "route.tombstone.on.empty.payload"
+      },
+      "table.field.event.payload": {
+        "title": "Event Payload Field",
+        "description": "The column which contains the event payload within the outbox table",
+        "type": "STRING",
+        "defaultValue": "payload",
+        "x-name": "table.field.event.payload"
+      },
+      "table.field.event.type": {
+        "title": "Event Type Field",
+        "description": "The column which contains the event type within the outbox table",
+        "type": "STRING",
+        "defaultValue": "type",
+        "x-name": "table.field.event.type"
+      },
+      "route.by.field": {
+        "title": "Field to route events by",
+        "description": "The column which determines how the events will be routed, the value will become part of the topic name",
+        "type": "STRING",
+        "defaultValue": "aggregatetype",
+        "x-name": "route.by.field"
+      },
+      "tracing.span.context.field": {
+        "title": "Serialized tracing span context field",
+        "description": "The name of the field containing java.util.Properties representation of serialized span context. Defaults to 'tracingspancontext'",
+        "type": "STRING",
+        "defaultValue": "tracingspancontext",
+        "x-name": "tracing.span.context.field"
+      },
+      "tracing.with.context.field.only": {
+        "title": "Trace only events with context field present",
+        "description": "Set to `true` when only events that have serialized context field should be traced.",
+        "type": "BOOLEAN",
+        "defaultValue": "false",
+        "x-name": "tracing.with.context.field.only"
+      },
+      "table.op.invalid.behavior": {
+        "title": "Behavior when capturing an unexpected outbox event",
+        "description": "While Debezium is capturing changes from the outbox table, it is expecting only to process 'create' or 'delete' row events; in case something else is processed this transform can log it as warning, error or stop the process.",
+        "type": "STRING",
+        "defaultValue": "warn",
+        "x-name": "table.op.invalid.behavior"
+      },
+      "table.fields.additional.error.on.missing": {
+        "title": "Should the transform error if an additional field is missing in the change data",
+        "description": "When transforming the 'table.fields.additional.placement' fields, should the transform throw an exception if one of the fields is missing in the change data",
+        "type": "BOOLEAN",
+        "defaultValue": "true",
+        "x-name": "table.fields.additional.error.on.missing"
+      },
+      "route.topic.replacement": {
+        "title": "The name of the routed topic",
+        "description": "The name of the topic in which the events will be routed, a replacement '${routedByValue}' is available which is the value of The column configured via 'route.by.field'",
+        "type": "STRING",
+        "defaultValue": "outbox.event.${routedByValue}",
+        "x-name": "route.topic.replacement"
+      },
+      "table.field.event.id": {
+        "title": "Event ID Field",
+        "description": "The column which contains the event ID within the outbox table",
+        "type": "STRING",
+        "defaultValue": "id",
+        "x-name": "table.field.event.id"
+      }
+    },
+    "transform": "io.debezium.transforms.outbox.EventRouter"
+  },
+  {
+    "properties": {
+      "partition.hash.function": {
+        "title": "Hash function",
+        "description": "Hash function to be used when computing hash of the fields which would determine number of the destination partition.",
+        "type": "STRING",
+        "defaultValue": "java",
+        "x-name": "partition.hash.function"
+      },
+      "partition.topic.num": {
+        "title": "Number of partition configured for topic",
+        "description": "Number of partition for the topic on which this SMT act. Use TopicNameMatches predicate to filter records by topic",
+        "type": "INTEGER",
+        "format": "int32",
+        "x-name": "partition.topic.num"
+      },
+      "partition.payload.fields": {
+        "title": "List of payload fields to use for compute partition.",
+        "description": "Payload fields to use to calculate the partition. Supports Struct nesting using dot notation.To access fields related to data collections, you can use: after, before or change, where 'change' is a special field that will automatically choose, based on operation, the 'after' or 'before'. If a field not exist for the current record it will simply not usede.g. after.name,source.table,change.name",
+        "type": "STRING",
+        "format": "list,regex",
+        "x-name": "partition.payload.fields"
+      }
+    },
+    "transform": "io.debezium.transforms.partitions.PartitionRouting"
+  },
+  {
+    "properties": {
+      "tracing.operation.name": {
+        "title": "Tracing operation name",
+        "description": "The operation name representing Debezium processing span. Default is 'debezium-read'",
+        "type": "STRING",
+        "defaultValue": "debezium-read",
+        "x-name": "tracing.operation.name"
+      },
+      "tracing.span.context.field": {
+        "title": "Serialized tracing span context field",
+        "description": "The name of the field containing java.util.Properties representation of serialized span context. Defaults to 'tracingspancontext'",
+        "type": "STRING",
+        "defaultValue": "tracingspancontext",
+        "x-name": "tracing.span.context.field"
+      },
+      "tracing.with.context.field.only": {
+        "title": "Trace only events with context field present",
+        "description": "Set to `true` when only events that have serialized context field should be traced.",
+        "type": "BOOLEAN",
+        "defaultValue": "false",
+        "x-name": "tracing.with.context.field.only"
+      }
+    },
+    "transform": "io.debezium.transforms.tracing.ActivateTracingSpan"
+  }
+]

@@ -1,0 +1,37 @@
+.transformationGroupWrapper {
+  border-radius: 0 10px 0 10px;
+  box-shadow: var(--brand-shadow);
+}
+
+.editDataNodeDestination {
+  border-radius: 100%;
+  background-color: #fff;
+  width: 22px;
+  height: 22px;
+  right: 0;
+  position: absolute;
+  top: 0;
+  transform: translate(40%, -40%);
+  display: flex;
+  transform-origin: center center;
+  padding: 1px;
+  overflow: hidden;
+  box-shadow: var(--brand-shadow--teal-large);
+  z-index: 1;
+}
+.collapsedDataNodeDestination {
+  border-radius: 100%;
+  /* background-color: #fff; */
+  width: 25px;
+  height: 25px;
+  left: 5;
+  position: absolute;
+  top: 0;
+  /* transform: translate(40%, -40%); */
+  display: flex;
+  /* transform-origin: center center; */
+  padding: 3px;
+  overflow: hidden;
+  /* box-shadow: var(--brand-shadow--teal-large); */
+  z-index: 1;
+}

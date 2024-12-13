@@ -1,0 +1,11 @@
+.pipeline-overview__card-border {
+    border-right: 1px solid #D2D2D2;
+}
+
+.pipeline-overview__coming-soon-card {
+    position: relative !important;
+}
+
+.pipeline-overview__card-description {
+    padding-left: 10px !important;
+}

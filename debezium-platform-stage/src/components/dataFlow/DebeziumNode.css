@@ -1,0 +1,56 @@
+.debeziumNodeWrapper {
+  overflow: hidden;
+  display: flex;
+  padding: 1px;
+  position: relative;
+  border-radius: 0 8px 0 8px;
+  flex-grow: 1;
+  box-shadow: var(--brand-shadow);
+}
+
+.debeziumNodeGradient:before {
+  content: "";
+  position: absolute;
+  padding-bottom: calc(100% * 1.41421356237);
+  width: calc(100% * 1.41421356237);
+  background: conic-gradient(
+    from -45deg at 50% 50%,
+    var(--brand-color--green),
+    var(--brand-color--green-light) 120deg,
+    var(--brand-color--teal) 200deg,
+    var(--brand-color--green) 360deg
+  );
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 100%;
+}
+
+.debeziumNodeWrapper.debeziumNodeGradient:before {
+  content: "";
+  background: conic-gradient(
+    from -45deg at 50% 50%,
+    var(--brand-color--green),
+    var(--brand-color--green-light) 120deg,
+    var(--brand-color--teal) 200deg,
+    var(--brand-color--green) 360deg
+  );
+  /* animation: spinner 4s linear infinite; */
+  transform: translate(-50%, -50%) rotate(0deg);
+  z-index: -1;
+}
+
+@keyframes spinner {
+  100% {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+
+.debeziumNodeInner {
+  border-radius: 0 7px 0 7px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+  position: relative;
+}

@@ -1,0 +1,40 @@
+.gradientTransform:before {
+    content: '';
+    position: absolute;
+    padding-bottom: calc(100% * 1.41421356237);
+    width: calc(100% * 1.41421356237);
+    background: var(--brand-color--green);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 100%;
+  }
+
+  .editTransformNode{
+    border-radius: 100%;
+   
+    width: 22px;
+    height: 22px;
+    right: 0;
+    position: absolute;
+    top: 0;
+    transform: translate(40%, -40%);
+    display: flex;
+    transform-origin: center center;
+    padding: 1px;
+    overflow: hidden;
+    box-shadow: var(--brand-shadow--green-large);
+    z-index: 1;
+  }
+
+  .editTransformNode div {
+    flex-grow: 1;
+    cursor: pointer;
+    border-radius: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    /* padding:1px */
+    font-size: .8em;
+  }

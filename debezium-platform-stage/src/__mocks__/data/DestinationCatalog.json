@@ -1,0 +1,62 @@
+[
+  {
+      "name": "Apache Pulsar",
+      "id": "apachepulsar",
+      "type": "apachepulsar",
+      "description": "Streams CDC events into Apache Pulsar, a distributed messaging and event-streaming platform offering low-latency and high-throughput."
+  },
+  {
+      "name": "Azure Event Hub",
+      "id": "eventhub",
+      "type": "eventhub",
+      "description": "Sends change events to Azure Event Hub, a real-time data ingestion service optimized for streaming millions of events per second."
+  },
+  {
+      "name": "Infinispan",
+      "id": "infinispan",
+      "type": "infinispan",
+      "description": "Propagates events to Infinispan, a distributed in-memory data grid providing high availability and scalability for data replication."
+  },
+  {
+      "name": "Kafka",
+      "id": "kafka",
+      "type": "kafka",
+      "description": "Streams real-time change events into Apache Kafka, a distributed platform for building streaming data pipelines and real-time applications."
+  },
+  {
+      "name": "NATS Streaming",
+      "id": "natsstreaming",
+      "type": "natsstreaming",
+      "description": "Sends change events to NATS Streaming, a messaging system designed for distributed systems and microservices architectures."
+  },
+  {
+      "name": "Pravega",
+      "id": "pravega",
+      "type": "pravega",
+      "description": "Streams change events to Pravega, a scalable storage system for distributed data streams, offering a tiered storage model."
+  },
+  {
+      "name": "Pub/Sub",
+      "id": "pubsub",
+      "type": "pubsub",
+      "description": "Sends real-time change events to Google Pub/Sub, a fully managed messaging service for building event-driven systems and real-time analytics."
+  },
+  {
+      "name": "Pub/Sub Lite",
+      "id": "pubsublite",
+      "type": "pubsublite",
+      "description": "Streams events to Google Pub/Sub Lite, a cost-effective, low-latency message delivery service for simpler use cases."
+  },
+  {
+      "name": "RabbitMQ",
+      "id": "rabbitmq",
+      "type": "rabbitmq",
+      "description": "Publishes change events to RabbitMQ, an open-source message broker supporting various messaging protocols for inter-service communication."
+  },
+  {
+      "name": "RocketMQ",
+      "id": "rocketmq",
+      "type": "rocketmq",
+      "description": "Streams change events to Apache RocketMQ, a high-throughput, low-latency messaging platform."
+  }
+]

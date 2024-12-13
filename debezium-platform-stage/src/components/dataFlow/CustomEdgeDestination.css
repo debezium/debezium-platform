@@ -1,0 +1,7 @@
+
+
+.react-flow__edge-path__destination {
+  stroke: url(#edge-gradient-destination) !important;
+  stroke-width: 2 !important;
+  stroke-opacity: 0.75 !important;
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "description": "",
+    "destination": {
+      "id": 2,
+      "name": "test-infi"
+    },
+    "logLevel": "ERROR",
+    "name": "indra-ui-test",
+    "source": {
+      "id": 2,
+      "name": "test-cass"
+    },
+    "transforms": []
+  }
+]

@@ -1,0 +1,22 @@
+.custom-card-footer {
+    /* border-color: var(--pf-t--global--border--color--default);
+    border-width: var(--pf-t--global--border--width--box--default);
+    border-style: var(--pf-t--global--border--style--default); */
+    border-radius:  var(--pf-t--global--border--radius--medium);
+    border-top: var(--pf-t--global--border--width--box--default) solid var(--pf-t--global--border--color--default);
+    padding: 0;
+    
+}
+.custom-card-footer .pf-m-action {
+    padding: var(--pf-t--global--spacer--md) !important;
+}
+
+.pipeline_designer{
+    padding: 0 !important;
+    gap: 0 !important;
+    width: 100% !important;
+}
+
+.pipeline_designer .pf-v6-c-page__main-body{
+    display: contents !important;
+}

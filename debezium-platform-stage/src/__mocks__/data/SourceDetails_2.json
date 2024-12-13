@@ -1,0 +1,11 @@
+{
+  "id": 2,
+  "config": {
+    "key": "val"
+  },
+  "description": "",
+  "name": "test-cass",
+  "schema": "schema321",
+  "type": "io.debezium.connector.cassandra.CassandraConnector",
+  "vaults": []
+}

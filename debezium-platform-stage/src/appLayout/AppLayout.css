@@ -1,0 +1,24 @@
+/* .custom-switch{
+margin-left: auto;
+} */
+
+@media (min-width: 75rem){
+    .custom-app-page {
+        grid-template-columns: 100px 1fr !important;
+    }
+    .pf-v6-c-page__main-container {
+        margin-left: 0 !important;
+    }
+}
+/* .pf-v6-c-page__main-container {
+    width: 100%;
+} */
+.pf-v6-c-drawer__body{
+    display: flex;
+    max-height: 100%;
+}
+
+/* .custom-app-page__sidebar-body {
+    padding-inline-start: 1rem;
+    padding-inline-end: 1rem;
+} */
