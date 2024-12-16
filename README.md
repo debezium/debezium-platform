@@ -29,8 +29,12 @@ You can install the platform through helm chart. For instructions refer to the [
 
 ## Run the example
 
-If you don't have already a Kubernetes cluster up, you can use [minikube](https://minikube.sigs.k8s.io/docs/) 
-and follow the [Get Started](https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download) to set up a local one. 
+If you don't have already a Kubernetes cluster up, you can use one of the commons tools to have a local K8s cluster
+
+* [minikube](https://minikube.sigs.k8s.io/docs/) 
+* [kind](https://kind.sigs.k8s.io/)
+
+The prerequisite is to install an ingress controller. 
 
 For this example, considering a local setup, we will use the `/etc/hosts` to resolve the domain.
 
