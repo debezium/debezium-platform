@@ -56,7 +56,7 @@ and then install *debezium-platform* through `helm`
 ```shell
 cd helm && 
 helm dependency build &&
-helm install debezium-platform . -f ../example.yaml &&
+helm install debezium-platform . -f ../examples/example.yaml &&
 cd ..
 ```
 
@@ -80,7 +80,7 @@ kubectl create -f examples/compose-kind-kafka/k8s/kafka/001_kafka.yml
 ```shell
 # Create a test pipeline
 
-./examples/seed.sh platform.debezium.io 80 helm/payloads/
+./examples/seed.sh platform.debezium.io 80 examples/payloads/
 ```
 
 And that's all. 
