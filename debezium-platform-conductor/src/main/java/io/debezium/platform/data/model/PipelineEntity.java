@@ -17,7 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-@Entity(name = "Pipeline")
+@Entity(name = "pipeline")
 @Getter
 @Setter
 public class PipelineEntity {

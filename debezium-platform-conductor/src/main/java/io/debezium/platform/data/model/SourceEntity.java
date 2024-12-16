@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@Entity(name = "Source")
+@Entity(name = "source")
 @Getter
 @Setter
 public class SourceEntity {

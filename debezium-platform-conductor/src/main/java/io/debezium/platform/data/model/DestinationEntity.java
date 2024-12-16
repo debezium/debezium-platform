@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@Entity(name = "Destination")
+@Entity(name = "destination")
 @Getter
 @Setter
 public class DestinationEntity {

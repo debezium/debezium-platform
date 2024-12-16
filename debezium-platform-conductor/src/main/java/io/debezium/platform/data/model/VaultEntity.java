@@ -13,7 +13,7 @@ import org.hibernate.type.SqlTypes;
 import java.util.HashMap;
 import java.util.Map;
 
-@Entity(name = "Vault")
+@Entity(name = "vault")
 @Getter
 @Setter
 public class VaultEntity {

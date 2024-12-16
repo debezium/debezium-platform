@@ -108,6 +108,17 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-websockets-next</artifactId>
     </dependency>
+
+    <!-- Flyway -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-flyway</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>com.blazebit</groupId>
       <artifactId>blaze-persistence-integration-quarkus-3</artifactId>

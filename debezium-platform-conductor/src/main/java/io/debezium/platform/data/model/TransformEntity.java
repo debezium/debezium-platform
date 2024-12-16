@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@Entity(name = "Transform")
+@Entity(name = "transform")
 @Getter
 @Setter
 public class TransformEntity {
