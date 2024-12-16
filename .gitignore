@@ -39,8 +39,6 @@ nb-configuration.xml
 **/.env
 
 # Logs
-logs
-**/logs
 *.log
 
 
