@@ -1,10 +1,16 @@
 conductor:
   watcher:
-#   For now watcher is disabled in prod as we need only the REST API
-    enabled: false
+    enabled: true
     offset:
-      storage: org.apache.kafka.connect.storage.FileOffsetBackingStore
-      file: offsets.dat
+      storage:
+        type: org.apache.kafka.connect.storage.FileOffsetBackingStore
+        config:
+          file:
+            filename: offsets.dat
+      config:
+        flush:
+          interval:
+            ms: 300
 
 quarkus:
   http:
@@ -34,7 +40,15 @@ quarkus:
       enabled: true
       crd: https://raw.githubusercontent.com/debezium/debezium-operator/main/k8/debeziumservers.debezium.io-v1.yml
       offset:
-        storage: org.apache.kafka.connect.storage.MemoryOffsetBackingStore
+        storage:
+          type: org.apache.kafka.connect.storage.FileOffsetBackingStore
+          config:
+            file:
+              filename: offsets.dat
+        config:
+          flush:
+            interval:
+              ms: 300
   quarkus:
     debezium-outbox:
       remove-after-insert: false

@@ -7,6 +7,7 @@ import io.debezium.embedded.Connect;
 import io.debezium.embedded.EmbeddedEngineConfig;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.platform.environment.watcher.config.WatcherConfig;
+import io.debezium.platform.environment.watcher.config.WatcherConfigGroup;
 import io.debezium.platform.environment.watcher.consumers.OutboxParentEventConsumer;
 import io.debezium.transforms.outbox.EventRouter;
 import io.quarkus.runtime.ShutdownEvent;
@@ -16,6 +17,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import org.jboss.logging.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +29,9 @@ import java.util.stream.Stream;
 @Startup
 public class ConductorEnvironmentWatcher {
 
+    public static final String CONFIG_PORTION = "\\.config";
+    public static final String OFFSET_STORAGE_PREFIX = "offset.storage.";
+    public static final String OFFSET_PREFIX = "offset.";
     private final Logger logger;
     private final OutboxParentEventConsumer eventConsumer;
     private final WatcherConfig watcherConfig;
@@ -52,11 +58,9 @@ public class ConductorEnvironmentWatcher {
                 .map(c -> c + ":envelope")
                 .collect(Collectors.joining(","));
 
-        var config = Configuration.create()
+        Configuration.Builder configurationBuilder = Configuration.create()
                 .with(EmbeddedEngineConfig.ENGINE_NAME, "conductor")
                 .with(EmbeddedEngineConfig.CONNECTOR_CLASS, PostgresConnector.class.getName())
-                .with(EmbeddedEngineConfig.OFFSET_STORAGE, offset.storage())
-                .with(EmbeddedEngineConfig.OFFSET_STORAGE_FILE_FILENAME, offset.file())
                 .with(PostgresConnectorConfig.TOPIC_PREFIX, "conductor")
                 .with(PostgresConnectorConfig.HOSTNAME, connection.host())
                 .with(PostgresConnectorConfig.PORT, connection.port())
@@ -68,8 +72,11 @@ public class ConductorEnvironmentWatcher {
                 .with(PostgresConnectorConfig.TABLE_INCLUDE_LIST, "public.%s".formatted(outbox.table()))
                 .with("transforms", "outbox")
                 .with("transforms.outbox.type", EventRouter.class.getName())
-                .with("transforms.outbox.table.fields.additional.placement", extraFields)
-                .build();
+                .with("transforms.outbox.table.fields.additional.placement", extraFields);
+
+        offsetConfigurations(offset).forEach(configurationBuilder::with);
+
+        var config = configurationBuilder.build();
 
         logger.info("Creating Debezium engine");
         this.engine = DebeziumEngine.create(Connect.class)
@@ -79,6 +86,24 @@ public class ConductorEnvironmentWatcher {
 
         logger.info("Attempting to start debezium engine");
         executor.execute(engine);
+    }
+
+    private Map<String, String> offsetConfigurations(WatcherConfigGroup.OffsetConfigGroup offset) {
+
+        Map<String, String> config = new HashMap<>();
+
+        config.put(EmbeddedEngineConfig.OFFSET_STORAGE.name(), offset.storage().type());
+        offset.storage().config()
+                .forEach((key,value) -> config.put(buildKey(OFFSET_STORAGE_PREFIX, key), value));
+
+        offset.config()
+                .forEach((key,value) -> config.put(buildKey(OFFSET_PREFIX, key), value));
+
+        return config;
+    }
+
+    private String buildKey(String offsetStoragePrefix, String currentKey) {
+        return offsetStoragePrefix + currentKey.replaceAll(CONFIG_PORTION, "");
     }
 
     public void stop(@Observes ShutdownEvent event) {

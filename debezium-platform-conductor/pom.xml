@@ -12,12 +12,13 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.11.2</quarkus.platform.version>
+    <quarkus.platform.version>3.17.3</quarkus.platform.version>
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
     <version.assertj>3.24.2</version.assertj>
     <version.lombok>1.18.32</version.lombok>
     <version.mapstruct>1.5.5.Final</version.mapstruct>
+    <version.debezium>3.0.4.Final</version.debezium>
 
     <quarkus.container-image.registry>quay.io</quarkus.container-image.registry>
     <quarkus.container-image.group>debezium</quarkus.container-image.group>
@@ -27,6 +28,13 @@
   </properties>
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>io.debezium</groupId>
+        <artifactId>debezium-bom</artifactId>
+        <version>${version.debezium}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
       <dependency>
         <groupId>${quarkus.platform.group-id}</groupId>
         <artifactId>quarkus-bom</artifactId>
@@ -63,6 +71,30 @@
       <groupId>io.debezium</groupId>
       <artifactId>debezium-embedded</artifactId>
     </dependency>
+
+    <!-- Storages  -->
+    <dependency>
+      <groupId>io.debezium</groupId>
+      <artifactId>debezium-storage-configmap</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.debezium</groupId>
+      <artifactId>debezium-storage-redis</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.debezium</groupId>
+      <artifactId>debezium-storage-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.debezium</groupId>
+      <artifactId>debezium-storage-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.debezium</groupId>
+      <artifactId>debezium-storage-file</artifactId>
+    </dependency>
+
+
     <dependency>
       <groupId>io.debezium</groupId>
       <artifactId>debezium-connector-postgres</artifactId>
@@ -70,7 +102,7 @@
     <dependency>
       <groupId>io.debezium</groupId>
       <artifactId>debezium-operator-api</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>${version.debezium}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -86,7 +118,7 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy-reactive-jackson</artifactId>
+      <artifactId>quarkus-rest-jackson</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

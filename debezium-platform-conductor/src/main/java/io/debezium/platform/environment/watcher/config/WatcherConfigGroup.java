@@ -2,6 +2,7 @@ package io.debezium.platform.environment.watcher.config;
 
 import io.smallrye.config.ConfigMapping;
 
+import java.util.Map;
 import java.util.Optional;
 
 @ConfigMapping(prefix = "conductor.watcher")
@@ -14,7 +15,11 @@ public interface WatcherConfigGroup {
     OffsetConfigGroup offset();
 
     interface OffsetConfigGroup {
-        String storage();
-        String file();
+        OffsetStorageConfigGroup storage();
+        Map<String, String> config();
+    }
+    interface OffsetStorageConfigGroup {
+        String type();
+        Map<String, String> config();
     }
 }
