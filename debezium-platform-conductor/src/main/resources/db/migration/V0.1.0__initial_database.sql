@@ -94,51 +94,51 @@ create table vault (
 );
 
 alter table if exists destination_vault
-   add constraint FK3iovoim04er4ryyxc3ahg30aj
+   add constraint FK_destination_vault_vault
    foreign key (vault_id)
    references vault;
 
 alter table if exists destination_vault
-   add constraint FKd0fe4epx8p20cauoxvxp4955h
+   add constraint FK_destination_vault_destination
    foreign key (destination_id)
    references destination;
 
 alter table if exists pipeline
-   add constraint FK8r2te3uxaido3bqgjffg2xta2
+   add constraint FK_pipeline_destination
    foreign key (destination_id)
    references destination;
 
 alter table if exists pipeline
-   add constraint FKebhpr7kuud8gmd9vu3otlmj8n
+   add constraint FK_pipeline_source
    foreign key (source_id)
    references source;
 
 alter table if exists pipeline_transform
-   add constraint FKsi3fg3axorefhqxm13nj9hxio
+   add constraint FK_pipeline_transform_transform
    foreign key (transform_id)
    references transform;
 
 alter table if exists pipeline_transform
-   add constraint FK1plywyt3hwkakji6hqsi029w1
+   add constraint FK_pipeline_transform_pipeline
    foreign key (pipeline_id)
    references pipeline;
 
 alter table if exists source_vault
-   add constraint FK61huudvf4fal0hc23w86gxgre
+   add constraint FK_source_vault_vault
    foreign key (vault_id)
    references vault;
 
 alter table if exists source_vault
-   add constraint FK9ge74yjnvbr4ag2axg30txdxi
+   add constraint FK_source_vault_source
    foreign key (source_id)
    references source;
 
 alter table if exists transform_vault
-   add constraint FK9oliw5kt0tlklhen1773revd1
+   add constraint FK_transform_vault_vault
    foreign key (vault_id)
    references vault;
 
 alter table if exists transform_vault
-   add constraint FK73egfadmeqt6sgfmo2fdalyhj
+   add constraint FK_transform_vault_transform
    foreign key (transform_id)
    references transform;
