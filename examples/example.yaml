@@ -1,6 +1,4 @@
 domain:
   url: platform.debezium.io
-kafka:
-  enabled: true
 database:
   enabled: true

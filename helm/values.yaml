@@ -6,8 +6,6 @@ conductor:
   image: quay.io/debezium/platform-conductor:nightly
   offset:
     existingConfigMap: ""
-kafka:
-  enabled: false
 database:
   enabled: false
   name: postgres

@@ -19,7 +19,6 @@ You need also to have domain that must point to the cluster IP and then configur
 | stage.image                        | Image for the stage (UI)                                                                                                                          | quay.io/debezium/platform-stage:latest      |
 | conductor.image                    | Image for the conductor                                                                                                                           | quay.io/debezium/platform-conductor:nightly |
 | conductor.offset.existingConfigMap | Name of the config map used to store conductor offsets. If empty it will be automatically created.                                                | ""                                          |
-| kafka.enabled                      | Enable the installation of Strimzi operator                                                                                                       | false                                       |
 | database.enabled                   | Enable the installation of PostgreSQL by the chart                                                                                                | false                                       |
 | database.name                      | Database name                                                                                                                                     | postgres                                    |
 | database.host                      | Database host                                                                                                                                     |                                             |
@@ -34,7 +33,7 @@ You need also to have domain that must point to the cluster IP and then configur
 ```shell
 helm dependency build
 ```
-Thi will download the required debezium operator chart and, only if `kafka.enabled` is `true`, the Strimzi operator chart.
+Thi will download the required [Debezium Operator](https://github.com/debezium/debezium-operator) chart.
 
 ```shell
 helm install <release_name> .
