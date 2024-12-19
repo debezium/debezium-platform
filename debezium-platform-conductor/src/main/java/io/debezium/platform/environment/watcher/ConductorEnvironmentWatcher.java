@@ -78,6 +78,7 @@ public class ConductorEnvironmentWatcher {
                 .with(PostgresConnectorConfig.PLUGIN_NAME, PostgresConnectorConfig.LogicalDecoder.PGOUTPUT.getValue())
                 .with(PostgresConnectorConfig.INCLUDE_SCHEMA_CHANGES, false)
                 .with(PostgresConnectorConfig.TABLE_INCLUDE_LIST, "public.%s".formatted(outbox.table()))
+                .with(PostgresConnectorConfig.PUBLICATION_AUTOCREATE_MODE, AutoCreateMode.FILTERED)
                 .with("transforms", "outbox")
                 .with("transforms.outbox.type", EventRouter.class.getName())
                 .with("transforms.outbox.table.fields.additional.placement", extraFields);
