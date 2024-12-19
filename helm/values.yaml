@@ -6,6 +6,14 @@ conductor:
   image: quay.io/debezium/platform-conductor:nightly
   offset:
     existingConfigMap: ""
+offsets:
+  reusePlatformDatabase: true
+  database:
+    enabled: false
+    name: postgres
+    host: postgres
+    auth:
+      existingSecret: ""
 database:
   enabled: false
   name: postgres
