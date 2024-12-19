@@ -22,11 +22,12 @@ import org.jboss.logging.Logger;
 import io.debezium.config.Configuration;
 import io.debezium.connector.postgresql.PostgresConnector;
 import io.debezium.connector.postgresql.PostgresConnectorConfig;
+import io.debezium.connector.postgresql.PostgresConnectorConfig.AutoCreateMode;
 import io.debezium.embedded.Connect;
 import io.debezium.embedded.EmbeddedEngineConfig;
 import io.debezium.engine.DebeziumEngine;
+import io.debezium.platform.config.OffsetConfigGroup;
 import io.debezium.platform.environment.watcher.config.WatcherConfig;
-import io.debezium.platform.environment.watcher.config.WatcherConfigGroup;
 import io.debezium.platform.environment.watcher.consumers.OutboxParentEventConsumer;
 import io.debezium.transforms.outbox.EventRouter;
 import io.quarkus.runtime.ShutdownEvent;
@@ -95,7 +96,7 @@ public class ConductorEnvironmentWatcher {
         executor.execute(engine);
     }
 
-    private Map<String, String> offsetConfigurations(WatcherConfigGroup.OffsetConfigGroup offset) {
+    private Map<String, String> offsetConfigurations(OffsetConfigGroup offset) {
 
         Map<String, String> config = new HashMap<>();
 
