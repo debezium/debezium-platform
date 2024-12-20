@@ -18,19 +18,17 @@ pipeline:
       type: io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore
       config:
         jdbc:
-          #TODO use quarkus data source if no OFFSET_JDBC_URL defined
-          url: ${quarkus.datasource.jdbc.url}
-          user: ${quarkus.datasource.username}
-          password: ${quarkus.datasource.password}
+          url: ${OFFSET_JDBC_URL:${quarkus.datasource.jdbc.url}}
+          user: ${OFFSET_JDBC_USERNAME:${quarkus.datasource.username}}
+          password: ${OFFSET_JDBC_PASSWORD:${quarkus.datasource.password}}
   schema:
     history:
       internal: io.debezium.storage.jdbc.history.JdbcSchemaHistory
       config:
         jdbc:
-          #TODO use quarkus data source if no SCHEMA_HISTORY_JDBC_URL defined
-          url: ${quarkus.datasource.jdbc.url}
-          user: ${quarkus.datasource.username}
-          password: ${quarkus.datasource.password}
+          url: ${SCHEMA_HISTORY_JDBC_URL:${quarkus.datasource.jdbc.url}}
+          user: ${SCHEMA_HISTORY_JDBC_USERNAME:${quarkus.datasource.username}}
+          password: ${SCHEMA_HISTORY_JDBC_PASSWORD:${quarkus.datasource.password}}
 
 quarkus:
   http:
