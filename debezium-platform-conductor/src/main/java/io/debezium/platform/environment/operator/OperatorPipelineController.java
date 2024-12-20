@@ -19,19 +19,13 @@ import io.debezium.operator.api.model.SinkBuilder;
 import io.debezium.operator.api.model.runtime.RuntimeBuilder;
 import io.debezium.operator.api.model.runtime.metrics.JmxExporterBuilder;
 import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
-import io.debezium.operator.api.model.source.OffsetBuilder;
-import io.debezium.operator.api.model.source.SchemaHistoryBuilder;
 import io.debezium.operator.api.model.source.SourceBuilder;
-import io.debezium.operator.api.model.source.storage.offset.JdbcOffsetStoreBuilder;
-import io.debezium.operator.api.model.source.storage.offset.JdbcOffsetTableConfigBuilder;
-import io.debezium.operator.api.model.source.storage.schema.JdbcSchemaHistoryStoreBuilder;
-import io.debezium.operator.api.model.source.storage.schema.JdbcSchemaHistoryTableConfigBuilder;
-import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.environment.PipelineController;
 import io.debezium.platform.environment.logs.LogReader;
+import io.debezium.platform.environment.operator.configuration.OffsetConfigurationFactory;
+import io.debezium.platform.environment.operator.configuration.SchemaHistoryConfigurationFactory;
 import io.debezium.platform.environment.operator.logs.KubernetesLogReader;
-import io.debezium.storage.jdbc.JdbcCommonConfig;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -44,11 +38,14 @@ public class OperatorPipelineController implements PipelineController {
 
     private final KubernetesClient k8s;
 
-    private final PipelineConfigGroup pipelineConfigGroup;
+    private final OffsetConfigurationFactory offsetConfigurationFactory;
+    private final SchemaHistoryConfigurationFactory schemaHistoryConfigurationFactory;
 
-    public OperatorPipelineController(KubernetesClient k8s, PipelineConfigGroup pipelineConfigGroup) {
+    public OperatorPipelineController(KubernetesClient k8s, OffsetConfigurationFactory offsetConfigurationFactory,
+                                      SchemaHistoryConfigurationFactory schemaHistoryConfigurationFactory) {
         this.k8s = k8s;
-        this.pipelineConfigGroup = pipelineConfigGroup;
+        this.offsetConfigurationFactory = offsetConfigurationFactory;
+        this.schemaHistoryConfigurationFactory = schemaHistoryConfigurationFactory;
     }
 
     @Override
@@ -76,40 +73,10 @@ public class OperatorPipelineController implements PipelineController {
         sourceConfig.setAllProps(source.getConfig());
 
 
-        var pipelineOffsetConfigs = pipelineConfigGroup.offset().storage().config();
-        var pipelineSchemaHistoryConfigs = pipelineConfigGroup.schema().config();
-
-        var offset = new OffsetBuilder()
-                .withJdbc(new JdbcOffsetStoreBuilder()
-                        .withUrl(pipelineOffsetConfigs.get(JdbcCommonConfig.PROP_JDBC_URL.name()))
-                        .withUser(pipelineOffsetConfigs.get(JdbcCommonConfig.PROP_USER.name()))
-                        .withPassword(pipelineOffsetConfigs.get(JdbcCommonConfig.PROP_PASSWORD.name()))
-                        .withTable(new JdbcOffsetTableConfigBuilder()
-                                //TODO name is not working since on the operator the property is wrong
-                                // debezium.source.offset.storage.jdbc.table.name=test-pipeline -> debezium.source.offset.storage.jdbc.offset.table.name=test-pipeline
-                                .withName(pipeline.getName())
-                                .build())
-                        .build()
-                )
-                .build();
-
-        var schemaHistory = new SchemaHistoryBuilder()
-                .withJdbc(new JdbcSchemaHistoryStoreBuilder()
-                        .withUrl(pipelineSchemaHistoryConfigs.get(JdbcCommonConfig.PROP_JDBC_URL.name()))
-                        .withUser(pipelineSchemaHistoryConfigs.get(JdbcCommonConfig.PROP_USER.name()))
-                        .withPassword(pipelineSchemaHistoryConfigs.get(JdbcCommonConfig.PROP_PASSWORD.name()))
-                        .withTable(new JdbcSchemaHistoryTableConfigBuilder()
-                                //TODO name is not working since on the operator the property is wrong
-                                // debezium.source.schema.history.internal.jdbc.table.name=test-pipeline -> debezium.source.schema.history.internal.jdbc.schema.history.table.name=test-pipeline
-                                .withName(pipeline.getName())
-                                .build())
-                        .build())
-                .build();
-
         var dsSource = new SourceBuilder()
                 .withSourceClass(source.getType())
-                .withOffset(offset)
-                .withSchemaHistory(schemaHistory)
+                .withOffset(offsetConfigurationFactory.create(pipeline))
+                .withSchemaHistory(schemaHistoryConfigurationFactory.create(pipeline))
                 .withConfig(sourceConfig)
                 .build();
 
