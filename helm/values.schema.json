@@ -50,9 +50,73 @@
         "env": {
             "type": "array"
         },
-        "kafka": {
+        "offset": {
             "properties": {
-                "enabled": {
+                "database": {
+                    "properties": {
+                        "auth": {
+                            "properties": {
+                                "existingSecret": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "host": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "password": {
+                            "type": "string"
+                        },
+                        "port": {
+                            "type": "integer"
+                        },
+                        "username": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "reusePlatformDatabase": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "schemaHistory": {
+            "properties": {
+                "database": {
+                    "properties": {
+                        "auth": {
+                            "properties": {
+                                "existingSecret": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "host": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "password": {
+                            "type": "string"
+                        },
+                        "port": {
+                            "type": "integer"
+                        },
+                        "username": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "reusePlatformDatabase": {
                     "type": "boolean"
                 }
             },

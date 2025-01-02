@@ -9,15 +9,13 @@ import io.debezium.operator.api.model.SinkBuilder;
 import io.debezium.operator.api.model.runtime.RuntimeBuilder;
 import io.debezium.operator.api.model.runtime.metrics.JmxExporterBuilder;
 import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
-import io.debezium.operator.api.model.source.OffsetBuilder;
-import io.debezium.operator.api.model.source.SchemaHistoryBuilder;
 import io.debezium.operator.api.model.source.SourceBuilder;
-import io.debezium.operator.api.model.source.storage.offset.InMemoryOffsetStore;
-import io.debezium.operator.api.model.source.storage.schema.InMemorySchemaHistoryStore;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.environment.PipelineController;
-import io.debezium.platform.environment.operator.logs.KubernetesLogReader;
 import io.debezium.platform.environment.logs.LogReader;
+import io.debezium.platform.environment.operator.configuration.OffsetConfigurationFactory;
+import io.debezium.platform.environment.operator.configuration.SchemaHistoryConfigurationFactory;
+import io.debezium.platform.environment.operator.logs.KubernetesLogReader;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -35,8 +33,14 @@ public class OperatorPipelineController implements PipelineController {
 
     private final KubernetesClient k8s;
 
-    public OperatorPipelineController(KubernetesClient k8s) {
+    private final OffsetConfigurationFactory offsetConfigurationFactory;
+    private final SchemaHistoryConfigurationFactory schemaHistoryConfigurationFactory;
+
+    public OperatorPipelineController(KubernetesClient k8s, OffsetConfigurationFactory offsetConfigurationFactory,
+                                      SchemaHistoryConfigurationFactory schemaHistoryConfigurationFactory) {
         this.k8s = k8s;
+        this.offsetConfigurationFactory = offsetConfigurationFactory;
+        this.schemaHistoryConfigurationFactory = schemaHistoryConfigurationFactory;
     }
 
     @Override
@@ -64,18 +68,11 @@ public class OperatorPipelineController implements PipelineController {
         var sourceConfig = new ConfigProperties();
         sourceConfig.setAllProps(source.getConfig());
 
-        // TODO: offset and schema history type should be configurable in the future
-        var offset = new OffsetBuilder()
-                .withMemory(new InMemoryOffsetStore())
-                .build();
-        var schemaHistory = new SchemaHistoryBuilder()
-                .withMemory(new InMemorySchemaHistoryStore())
-                .build();
 
         var dsSource = new SourceBuilder()
                 .withSourceClass(source.getType())
-                .withOffset(offset)
-                .withSchemaHistory(schemaHistory)
+                .withOffset(offsetConfigurationFactory.create(pipeline))
+                .withSchemaHistory(schemaHistoryConfigurationFactory.create(pipeline))
                 .withConfig(sourceConfig)
                 .build();
 

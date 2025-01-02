@@ -11,6 +11,24 @@ conductor:
         flush:
           interval:
             ms: 300
+pipeline:
+  offset:
+    storage:
+      # In the future when we will have other environment implementations the default should be re-thought.
+      type: io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore
+      config:
+        jdbc:
+          url: ${OFFSET_JDBC_URL:${quarkus.datasource.jdbc.url}}
+          user: ${OFFSET_JDBC_USERNAME:${quarkus.datasource.username}}
+          password: ${OFFSET_JDBC_PASSWORD:${quarkus.datasource.password}}
+  schema:
+    history:
+      internal: io.debezium.storage.jdbc.history.JdbcSchemaHistory
+      config:
+        jdbc:
+          url: ${SCHEMA_HISTORY_JDBC_URL:${quarkus.datasource.jdbc.url}}
+          user: ${SCHEMA_HISTORY_JDBC_USERNAME:${quarkus.datasource.username}}
+          password: ${SCHEMA_HISTORY_JDBC_PASSWORD:${quarkus.datasource.password}}
 
 quarkus:
   http:

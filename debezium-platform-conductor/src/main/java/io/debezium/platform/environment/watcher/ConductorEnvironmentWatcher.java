@@ -3,11 +3,12 @@ package io.debezium.platform.environment.watcher;
 import io.debezium.config.Configuration;
 import io.debezium.connector.postgresql.PostgresConnector;
 import io.debezium.connector.postgresql.PostgresConnectorConfig;
+import io.debezium.connector.postgresql.PostgresConnectorConfig.AutoCreateMode;
 import io.debezium.embedded.Connect;
 import io.debezium.embedded.EmbeddedEngineConfig;
 import io.debezium.engine.DebeziumEngine;
+import io.debezium.platform.config.OffsetConfigGroup;
 import io.debezium.platform.environment.watcher.config.WatcherConfig;
-import io.debezium.platform.environment.watcher.config.WatcherConfigGroup;
 import io.debezium.platform.environment.watcher.consumers.OutboxParentEventConsumer;
 import io.debezium.transforms.outbox.EventRouter;
 import io.quarkus.runtime.ShutdownEvent;
@@ -70,6 +71,7 @@ public class ConductorEnvironmentWatcher {
                 .with(PostgresConnectorConfig.PLUGIN_NAME, PostgresConnectorConfig.LogicalDecoder.PGOUTPUT.getValue())
                 .with(PostgresConnectorConfig.INCLUDE_SCHEMA_CHANGES, false)
                 .with(PostgresConnectorConfig.TABLE_INCLUDE_LIST, "public.%s".formatted(outbox.table()))
+                .with(PostgresConnectorConfig.PUBLICATION_AUTOCREATE_MODE, AutoCreateMode.FILTERED)
                 .with("transforms", "outbox")
                 .with("transforms.outbox.type", EventRouter.class.getName())
                 .with("transforms.outbox.table.fields.additional.placement", extraFields);
@@ -88,7 +90,7 @@ public class ConductorEnvironmentWatcher {
         executor.execute(engine);
     }
 
-    private Map<String, String> offsetConfigurations(WatcherConfigGroup.OffsetConfigGroup offset) {
+    private Map<String, String> offsetConfigurations(OffsetConfigGroup offset) {
 
         Map<String, String> config = new HashMap<>();
 
