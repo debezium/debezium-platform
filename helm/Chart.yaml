@@ -10,7 +10,7 @@ sources:
 home: https://github.com/debezium/debezium-platform-conductor
 dependencies:
     - name: debezium-operator
-      #TODO update to 3.0.5-final
+      #TODO update to next final image
       version: "3.0.4-final"
       repository: "https://charts.debezium.io"
     - name: database

@@ -26,7 +26,7 @@ public class TableNameResolver {
      * @param tableName The original table name
      * @return A sanitized version safe for use as a PostgreSQL table name
      */
-    private static String sanitizeTableName(String tableName) {
+    private String sanitizeTableName(String tableName) {
 
         if (tableName == null || tableName.isEmpty()) {
             throw new IllegalArgumentException("Table name cannot be null or empty");
