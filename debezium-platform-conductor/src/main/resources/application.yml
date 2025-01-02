@@ -21,6 +21,9 @@ pipeline:
           url: ${OFFSET_JDBC_URL:${quarkus.datasource.jdbc.url}}
           user: ${OFFSET_JDBC_USERNAME:${quarkus.datasource.username}}
           password: ${OFFSET_JDBC_PASSWORD:${quarkus.datasource.password}}
+          offset:
+            table:
+              name: "@{pipeline_name}_offset"
   schema:
     history:
       internal: io.debezium.storage.jdbc.history.JdbcSchemaHistory
@@ -29,6 +32,10 @@ pipeline:
           url: ${SCHEMA_HISTORY_JDBC_URL:${quarkus.datasource.jdbc.url}}
           user: ${SCHEMA_HISTORY_JDBC_USERNAME:${quarkus.datasource.username}}
           password: ${SCHEMA_HISTORY_JDBC_PASSWORD:${quarkus.datasource.password}}
+          schema:
+            history:
+              table:
+                name: "@{pipeline_name}_schema_history"
 
 quarkus:
   http:
@@ -67,6 +74,31 @@ quarkus:
           flush:
             interval:
               ms: 300
+  pipeline:
+    offset:
+      storage:
+        # In the future when we will have other environment implementations the default should be re-thought.
+        type: io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore
+        config:
+          jdbc:
+            url: jdbc:postgresql://postgresql:5432/debezium?loggerLevel=OFF
+            user: debezium
+            password: debezium
+            offset:
+              table:
+                name: "@{pipeline_name}_offset"
+    schema:
+      history:
+        internal: io.debezium.storage.jdbc.history.JdbcSchemaHistory
+        config:
+          jdbc:
+            url: jdbc:postgresql://postgresql:5432/debezium?loggerLevel=OFF
+            user: debezium
+            password: debezium
+            schema:
+              history:
+                table:
+                  name: "@{pipeline_name}_schema_history"
   quarkus:
     debezium-outbox:
       remove-after-insert: false

@@ -15,6 +15,7 @@ import io.smallrye.config.WithName;
 public interface PipelineConfigGroup {
 
     OffsetConfigGroup offset();
+
     @WithName("schema.history")
     SchemaHistoryConfigGroup schema();
 

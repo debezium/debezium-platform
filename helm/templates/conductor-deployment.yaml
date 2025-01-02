@@ -44,6 +44,8 @@ spec:
               value: jdbc:postgresql://{{ .Values.database.host }}:5432/{{ .Values.database.name }}
             - name: QUARKUS_KUBERNETES_CLIENT_NAMESPACE
               value: {{ .Release.Namespace }}
+{{ include "debezium-platform.offsetConfig" . | indent 12 }}
+{{ include "debezium-platform.schemaHistoryConfig" . | indent 12 }}
           {{- range .Values.env }}
             - name: {{ .name }}
               value: {{ .value }}

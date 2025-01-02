@@ -5,6 +5,8 @@
  */
 package io.debezium.platform.environment.operator;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -19,12 +21,17 @@ import io.debezium.operator.api.model.SinkBuilder;
 import io.debezium.operator.api.model.runtime.RuntimeBuilder;
 import io.debezium.operator.api.model.runtime.metrics.JmxExporterBuilder;
 import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
+import io.debezium.operator.api.model.source.Offset;
+import io.debezium.operator.api.model.source.OffsetBuilder;
+import io.debezium.operator.api.model.source.SchemaHistory;
+import io.debezium.operator.api.model.source.SchemaHistoryBuilder;
 import io.debezium.operator.api.model.source.SourceBuilder;
+import io.debezium.operator.api.model.source.storage.CustomStoreBuilder;
+import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.environment.PipelineController;
 import io.debezium.platform.environment.logs.LogReader;
-import io.debezium.platform.environment.operator.configuration.OffsetConfigurationFactory;
-import io.debezium.platform.environment.operator.configuration.SchemaHistoryConfigurationFactory;
+import io.debezium.platform.environment.operator.configuration.TableNameResolver;
 import io.debezium.platform.environment.operator.logs.KubernetesLogReader;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
@@ -35,17 +42,18 @@ import io.fabric8.kubernetes.client.dsl.TailPrettyLoggable;
 public class OperatorPipelineController implements PipelineController {
 
     public static final String LABEL_DBZ_CONDUCTOR_ID = "debezium.io/conductor-id";
+    private static final List<String> RESOLVABLE_CONFIGS = List.of("jdbc.schema.history.table.name", "jdbc.offset.table.name");
 
     private final KubernetesClient k8s;
+    private final PipelineConfigGroup pipelineConfigGroup;
+    private final TableNameResolver tableNameResolver;
 
-    private final OffsetConfigurationFactory offsetConfigurationFactory;
-    private final SchemaHistoryConfigurationFactory schemaHistoryConfigurationFactory;
-
-    public OperatorPipelineController(KubernetesClient k8s, OffsetConfigurationFactory offsetConfigurationFactory,
-                                      SchemaHistoryConfigurationFactory schemaHistoryConfigurationFactory) {
+    public OperatorPipelineController(KubernetesClient k8s,
+                                      PipelineConfigGroup pipelineConfigGroup,
+                                      TableNameResolver tableNameResolver) {
         this.k8s = k8s;
-        this.offsetConfigurationFactory = offsetConfigurationFactory;
-        this.schemaHistoryConfigurationFactory = schemaHistoryConfigurationFactory;
+        this.pipelineConfigGroup = pipelineConfigGroup;
+        this.tableNameResolver = tableNameResolver;
     }
 
     @Override
@@ -72,11 +80,10 @@ public class OperatorPipelineController implements PipelineController {
         var sourceConfig = new ConfigProperties();
         sourceConfig.setAllProps(source.getConfig());
 
-
         var dsSource = new SourceBuilder()
                 .withSourceClass(source.getType())
-                .withOffset(offsetConfigurationFactory.create(pipeline))
-                .withSchemaHistory(schemaHistoryConfigurationFactory.create(pipeline))
+                .withOffset(getOffset(pipeline))
+                .withSchemaHistory(getSchemaHistory(pipeline))
                 .withConfig(sourceConfig)
                 .build();
 
@@ -106,6 +113,40 @@ public class OperatorPipelineController implements PipelineController {
 
         // apply to server
         k8s.resource(ds).serverSideApply();
+    }
+
+    private SchemaHistory getSchemaHistory(PipelineFlat pipeline) {
+
+        var pipelineSchemaHistoryConfigs = pipelineConfigGroup.schema().config();
+        var schemaHistoryType = pipelineConfigGroup.schema().internal();
+
+        Map<String, String> schemaHistoryStorageConfigs = new HashMap<>(pipelineSchemaHistoryConfigs);
+        ConfigProperties schemaHistoryProps = new ConfigProperties();
+        schemaHistoryStorageConfigs.forEach(schemaHistoryProps::setProps);
+
+        RESOLVABLE_CONFIGS.forEach(prop -> schemaHistoryProps.setProps(prop, tableNameResolver.resolve(pipeline, schemaHistoryStorageConfigs.get(prop))));
+
+        return new SchemaHistoryBuilder().withStore(new CustomStoreBuilder()
+                .withType(schemaHistoryType)
+                .withConfig(schemaHistoryProps)
+                .build()).build();
+    }
+
+    private Offset getOffset(PipelineFlat pipeline) {
+
+        var pipelineOffsetConfigs = pipelineConfigGroup.offset().storage().config();
+        var offsetType = pipelineConfigGroup.offset().storage().type();
+
+        Map<String, String> offsetStorageConfigs = new HashMap<>(pipelineOffsetConfigs);
+        ConfigProperties offsetStorageProps = new ConfigProperties();
+        offsetStorageConfigs.forEach(offsetStorageProps::setProps);
+
+        RESOLVABLE_CONFIGS.forEach(prop -> offsetStorageProps.setProps(prop, tableNameResolver.resolve(pipeline, pipelineOffsetConfigs.get(prop))));
+
+        return new OffsetBuilder().withStore(new CustomStoreBuilder()
+                .withType(offsetType)
+                .withConfig(offsetStorageProps)
+                .build()).build();
     }
 
     @Override
