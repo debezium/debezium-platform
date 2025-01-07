@@ -1,10 +1,9 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.domain;
-
-import io.debezium.platform.environment.logs.LogReader;
-import io.quarkus.virtual.threads.VirtualThreads;
-import jakarta.enterprise.context.ApplicationScoped;
-import lombok.Getter;
-import org.jboss.logging.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -12,6 +11,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
+import org.jboss.logging.Logger;
+
+import io.debezium.platform.environment.logs.LogReader;
+import io.quarkus.virtual.threads.VirtualThreads;
+
+import lombok.Getter;
 
 @ApplicationScoped
 public class LogStreamingService {
@@ -58,12 +66,15 @@ public class LogStreamingService {
             try (var reader = supplier.get()) {
                 doStream(reader);
                 logger.infof("Finished streaming from log %s", name);
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 logger.errorf("Error streaming from log %s", name);
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
                 logger.errorf("Interrupted while waiting for more logs from log %s", name);
                 Thread.currentThread().interrupt();
-            } finally {
+            }
+            finally {
                 stop();
             }
         }
@@ -96,7 +107,7 @@ public class LogStreamingService {
      */
     public LogStreamingTask stream(String name, Supplier<LogReader> logSupplier, Consumer<String> consumer) {
         logger.infof("Starting log streamer for log %s", name);
-        var task  = new LogStreamingTask(name, logSupplier, consumer, logger);
+        var task = new LogStreamingTask(name, logSupplier, consumer, logger);
         executorService.submit(task);
         return task;
     }

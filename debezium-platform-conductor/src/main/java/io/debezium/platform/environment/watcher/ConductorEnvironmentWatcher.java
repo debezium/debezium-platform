@@ -1,4 +1,23 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.watcher;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+
+import org.jboss.logging.Logger;
 
 import io.debezium.config.Configuration;
 import io.debezium.connector.postgresql.PostgresConnector;
@@ -12,18 +31,6 @@ import io.debezium.platform.environment.watcher.consumers.OutboxParentEventConsu
 import io.debezium.transforms.outbox.EventRouter;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.Startup;
-import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import org.jboss.logging.Logger;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @ApplicationScoped
 @Startup
@@ -94,10 +101,10 @@ public class ConductorEnvironmentWatcher {
 
         config.put(EmbeddedEngineConfig.OFFSET_STORAGE.name(), offset.storage().type());
         offset.storage().config()
-                .forEach((key,value) -> config.put(buildKey(OFFSET_STORAGE_PREFIX, key), value));
+                .forEach((key, value) -> config.put(buildKey(OFFSET_STORAGE_PREFIX, key), value));
 
         offset.config()
-                .forEach((key,value) -> config.put(buildKey(OFFSET_PREFIX, key), value));
+                .forEach((key, value) -> config.put(buildKey(OFFSET_PREFIX, key), value));
 
         return config;
     }
@@ -116,7 +123,8 @@ public class ConductorEnvironmentWatcher {
             engine.close();
             executor.shutdown();
             executor.awaitTermination(10, TimeUnit.SECONDS);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Exception while shutting down Debezium", e);
         }
     }

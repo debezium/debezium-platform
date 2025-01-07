@@ -1,9 +1,16 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.watcher.consumers;
+
+import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.debezium.platform.environment.EnvironmentController;
-import org.jboss.logging.Logger;
 
 public abstract class AbstractEventConsumer<T> implements EnvironmentEventConsumer<T> {
 
@@ -31,7 +38,8 @@ public abstract class AbstractEventConsumer<T> implements EnvironmentEventConsum
         }
         try {
             return objectMapper.readValue(payload, consumedPayloadType());
-        } catch (JsonProcessingException e) {
+        }
+        catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }

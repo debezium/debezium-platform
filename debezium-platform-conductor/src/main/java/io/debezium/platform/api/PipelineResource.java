@@ -1,11 +1,15 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.api;
 
-import com.blazebit.persistence.integration.jaxrs.EntityViewId;
-import io.debezium.platform.domain.PipelineService;
-import io.debezium.platform.domain.views.Pipeline;
-import io.debezium.platform.environment.EnvironmentController;
-import io.debezium.platform.environment.logs.LogReader;
-import io.smallrye.common.annotation.RunOnVirtualThread;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
+
+import java.net.URI;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.DELETE;
@@ -18,6 +22,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+
 import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
@@ -29,20 +34,16 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
 
-import java.net.URI;
+import com.blazebit.persistence.integration.jaxrs.EntityViewId;
 
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
+import io.debezium.platform.domain.PipelineService;
+import io.debezium.platform.domain.views.Pipeline;
+import io.debezium.platform.environment.EnvironmentController;
+import io.debezium.platform.environment.logs.LogReader;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 
 @Tag(name = "pipelines")
-@OpenAPIDefinition(
-        info = @Info(
-                title = "Pipeline API",
-                description = "CRUD operations over Pipeline resource",
-                version = "0.1.0",
-                contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")
-        )
-)
+@OpenAPIDefinition(info = @Info(title = "Pipeline API", description = "CRUD operations over Pipeline resource", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
 @Path("/pipelines")
 public class PipelineResource {
 
@@ -55,10 +56,7 @@ public class PipelineResource {
     }
 
     @Operation(summary = "Returns all available pipelines")
-    @APIResponse(
-            responseCode = "200",
-            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Pipeline.class, required = true, type = SchemaType.ARRAY))
-    )
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Pipeline.class, required = true, type = SchemaType.ARRAY)))
     @GET
     public Response get() {
         var pipelines = pipelineService.list();
@@ -66,10 +64,7 @@ public class PipelineResource {
     }
 
     @Operation(summary = "Returns a pipeline with given id")
-    @APIResponse(
-            responseCode = "200",
-            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Pipeline.class, required = true))
-    )
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Pipeline.class, required = true)))
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
@@ -79,10 +74,7 @@ public class PipelineResource {
     }
 
     @Operation(summary = "Creates new pipeline")
-    @APIResponse(
-            responseCode = "201",
-            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true))
-    )
+    @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
     @POST
     public Response post(@NotNull @Valid Pipeline pipeline, @Context UriInfo uriInfo) {
         var created = pipelineService.create(pipeline);
@@ -93,10 +85,7 @@ public class PipelineResource {
     }
 
     @Operation(summary = "Updates an existing pipeline")
-    @APIResponse(
-            responseCode = "200",
-            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Pipeline.class, required = true))
-    )
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Pipeline.class, required = true)))
     @PUT
     @Path("/{id}")
     public Response put(@EntityViewId("id") @NotNull @Valid Pipeline pipeline) {
@@ -114,10 +103,7 @@ public class PipelineResource {
     }
 
     @Operation(summary = "Returns logs for pipeline with given id")
-    @APIResponse(
-            responseCode = "200",
-            content = @Content(mediaType = TEXT_PLAIN, schema = @Schema(implementation = String.class, required = true))
-    )
+    @APIResponse(responseCode = "200", content = @Content(mediaType = TEXT_PLAIN, schema = @Schema(implementation = String.class, required = true)))
     @GET
     @Path("/{id}/logs")
     @Produces(TEXT_PLAIN)

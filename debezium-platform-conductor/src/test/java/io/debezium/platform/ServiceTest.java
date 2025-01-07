@@ -1,6 +1,26 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import jakarta.inject.Inject;
+
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Assumptions;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
 import com.blazebit.persistence.view.EntityViewManager;
+
 import io.debezium.platform.domain.DestinationService;
 import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.SourceService;
@@ -15,18 +35,6 @@ import io.debezium.platform.domain.views.refs.DestinationReference;
 import io.debezium.platform.domain.views.refs.SourceReference;
 import io.debezium.platform.domain.views.refs.VaultReference;
 import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import org.assertj.core.api.Assertions;
-import org.assertj.core.api.Assumptions;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -107,7 +115,7 @@ public class ServiceTest {
         destination1.setName("destination1");
         destination1.setSchema("schemaDXY");
         destination1.setType("pubsub");
-        destination1.setVaults(Set.of(vaultRef(0),vaultRef(1)));
+        destination1.setVaults(Set.of(vaultRef(0), vaultRef(1)));
         destination1.setConfig(Map.of("foo", "bar"));
 
         var destination2 = evm.create(Destination.class);
@@ -130,7 +138,7 @@ public class ServiceTest {
         transform1.setName("transform1");
         transform1.setSchema("schemaASD");
         transform1.setType("io.example.SomeTransform");
-        transform1.setVaults(Set.of(vaultRef(0),vaultRef(1)));
+        transform1.setVaults(Set.of(vaultRef(0), vaultRef(1)));
         transform1.setConfig(Map.of("baz", "qux"));
 
         transforms.add(transformService.create(transform1));
@@ -162,7 +170,6 @@ public class ServiceTest {
         Assumptions.assumeThat(destinations).hasSize(2);
         Assumptions.assumeThat(pipeline).isNotNull();
 
-
         var sourceRef = sourceRef(1);
         var destinationRef = destinationRef(1);
         var uPipeline = pipelineService.findById(pipeline.getId()).orElse(null);
@@ -183,12 +190,12 @@ public class ServiceTest {
     @Test
     @Order(61)
     public void deletePipeline() {
-       pipelineService.delete(pipeline.getId());
+        pipelineService.delete(pipeline.getId());
 
-       var found = pipelineService.findById(pipeline.getId());
-       Assertions.assertThat(found).isEmpty();
-       Assertions.assertThat(destinationService.list()).hasSize(2);
-       Assertions.assertThat(sourceService.list()).hasSize(2);
+        var found = pipelineService.findById(pipeline.getId());
+        Assertions.assertThat(found).isEmpty();
+        Assertions.assertThat(destinationService.list()).hasSize(2);
+        Assertions.assertThat(sourceService.list()).hasSize(2);
     }
 
     @Test

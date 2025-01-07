@@ -1,8 +1,14 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.api;
 
-import com.blazebit.persistence.integration.jaxrs.EntityViewId;
-import io.debezium.platform.domain.SourceService;
-import io.debezium.platform.domain.views.Source;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+
+import java.net.URI;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.DELETE;
@@ -14,6 +20,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+
 import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
@@ -25,19 +32,13 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
 
-import java.net.URI;
+import com.blazebit.persistence.integration.jaxrs.EntityViewId;
 
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import io.debezium.platform.domain.SourceService;
+import io.debezium.platform.domain.views.Source;
 
 @Tag(name = "sources")
-@OpenAPIDefinition(
-        info = @Info(
-                title = "Source API",
-                description = "CRUD operations over Source resource",
-                version = "0.1.0",
-                contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")
-        )
-)
+@OpenAPIDefinition(info = @Info(title = "Source API", description = "CRUD operations over Source resource", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
 @Path("/sources")
 public class SourceResource {
 
@@ -50,10 +51,7 @@ public class SourceResource {
     }
 
     @Operation(summary = "Returns all available sources")
-    @APIResponse(
-            responseCode = "200",
-            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Source.class, required = true, type = SchemaType.ARRAY))
-    )
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Source.class, required = true, type = SchemaType.ARRAY)))
     @GET
     public Response get() {
         var sources = sourceService.list();
@@ -61,10 +59,7 @@ public class SourceResource {
     }
 
     @Operation(summary = "Returns a source with given id")
-    @APIResponse(
-            responseCode = "200",
-            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Source.class, required = true))
-    )
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Source.class, required = true)))
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
@@ -74,10 +69,7 @@ public class SourceResource {
     }
 
     @Operation(summary = "Creates new source")
-    @APIResponse(
-            responseCode = "201",
-            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true))
-    )
+    @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
     @POST
     public Response post(@NotNull @Valid Source source, @Context UriInfo uriInfo) {
         var created = sourceService.create(source);
@@ -88,10 +80,7 @@ public class SourceResource {
     }
 
     @Operation(summary = "Updates an existing source")
-    @APIResponse(
-            responseCode = "200",
-            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Source.class, required = true))
-    )
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Source.class, required = true)))
     @PUT
     @Path("/{id}")
     public Response put(@EntityViewId("id") @NotNull @Valid Source source) {

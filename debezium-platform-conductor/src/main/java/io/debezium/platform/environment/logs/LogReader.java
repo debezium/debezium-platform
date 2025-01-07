@@ -1,3 +1,8 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.logs;
 
 import java.io.BufferedReader;
@@ -5,7 +10,6 @@ import java.io.Closeable;
 import java.io.IOException;
 
 public interface LogReader extends Closeable {
-
 
     /**
      * Reads the entire log content currently available.

@@ -1,4 +1,4 @@
-name: UI Test
+name: Test Debezium platform (stage)
 on:
   push:
     paths:
@@ -11,7 +11,8 @@ on:
     branches:
       - main
 jobs:
-  Tests:
+  tests:
+    name: "Run tests"
     runs-on: ubuntu-latest
     defaults:
       run:

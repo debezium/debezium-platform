@@ -1,14 +1,21 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.watcher.consumers;
 
-import io.debezium.engine.ChangeEvent;
-import io.debezium.platform.environment.watcher.config.OutboxConfigGroup;
+import java.util.function.Consumer;
+
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
+
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.jboss.logging.Logger;
 
-import java.util.function.Consumer;
+import io.debezium.engine.ChangeEvent;
+import io.debezium.platform.environment.watcher.config.OutboxConfigGroup;
 
 /**
  * Top level consumer of outbox events. Parent consumer will extract

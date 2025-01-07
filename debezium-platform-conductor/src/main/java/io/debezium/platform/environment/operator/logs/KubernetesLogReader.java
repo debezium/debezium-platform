@@ -1,15 +1,20 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.operator.logs;
-
-import io.debezium.platform.environment.logs.LogReader;
-import io.fabric8.kubernetes.client.KubernetesClientException;
-import io.fabric8.kubernetes.client.dsl.LogWatch;
-import io.fabric8.kubernetes.client.dsl.TailPrettyLoggable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Objects;
 import java.util.function.Supplier;
+
+import io.debezium.platform.environment.logs.LogReader;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.dsl.LogWatch;
+import io.fabric8.kubernetes.client.dsl.TailPrettyLoggable;
 
 public class KubernetesLogReader implements LogReader {
 
@@ -52,7 +57,8 @@ public class KubernetesLogReader implements LogReader {
             try {
                 this.watch = supplier.get().tailingLines(STREAM_TAIL_LINES).watchLog();
                 this.reader = new BufferedReader(new InputStreamReader(watch.getOutput()));
-            } catch (KubernetesClientException e) {
+            }
+            catch (KubernetesClientException e) {
                 throw new IOException(e);
             }
         }

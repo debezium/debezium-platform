@@ -1,18 +1,24 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.domain;
 
+import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
-import com.blazebit.persistence.CriteriaBuilderFactory;
-import com.blazebit.persistence.view.EntityViewManager;
-import io.debezium.platform.data.model.DestinationEntity;
-import io.debezium.platform.domain.views.Destination;
-import io.debezium.platform.domain.views.refs.DestinationReference;
+import java.util.Optional;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
-import java.util.Optional;
+import com.blazebit.persistence.CriteriaBuilderFactory;
+import com.blazebit.persistence.view.EntityViewManager;
 
-import static jakarta.transaction.Transactional.TxType.SUPPORTS;
+import io.debezium.platform.data.model.DestinationEntity;
+import io.debezium.platform.domain.views.Destination;
+import io.debezium.platform.domain.views.refs.DestinationReference;
 
 @ApplicationScoped
 public class DestinationService extends AbstractService<DestinationEntity, Destination, DestinationReference> {

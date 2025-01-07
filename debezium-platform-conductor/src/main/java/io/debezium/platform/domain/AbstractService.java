@@ -1,19 +1,26 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.domain;
+
+import static jakarta.transaction.Transactional.TxType.REQUIRED;
+import static jakarta.transaction.Transactional.TxType.SUPPORTS;
+
+import java.util.List;
+import java.util.Optional;
+
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 
 import com.blazebit.persistence.CriteriaBuilder;
 import com.blazebit.persistence.CriteriaBuilderFactory;
 import com.blazebit.persistence.view.EntityViewManager;
 import com.blazebit.persistence.view.EntityViewSetting;
+
 import io.debezium.platform.domain.views.base.IdView;
-import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
-
-import java.util.List;
-import java.util.Optional;
-
-import static jakarta.transaction.Transactional.TxType.REQUIRED;
-import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
 /**
  * Service ancestor
@@ -33,12 +40,12 @@ public class AbstractService<E, T extends IdView, R extends IdView> {
     Class<R> referenceViewType;
 
     public AbstractService(
-            Class<E> entityType,
-            Class<T> viewType,
-            Class<R> referenceViewType,
-            EntityManager em,
-            CriteriaBuilderFactory cbf,
-            EntityViewManager evm) {
+                           Class<E> entityType,
+                           Class<T> viewType,
+                           Class<R> referenceViewType,
+                           EntityManager em,
+                           CriteriaBuilderFactory cbf,
+                           EntityViewManager evm) {
         this.entityType = entityType;
         this.viewType = viewType;
         this.referenceViewType = referenceViewType;

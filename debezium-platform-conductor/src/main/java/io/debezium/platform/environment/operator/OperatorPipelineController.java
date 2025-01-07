@@ -1,4 +1,14 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.operator;
+
+import java.util.Map;
+import java.util.Optional;
+
+import jakarta.enterprise.context.Dependent;
 
 import io.debezium.operator.api.model.ConfigProperties;
 import io.debezium.operator.api.model.DebeziumServer;
@@ -16,17 +26,12 @@ import io.debezium.operator.api.model.source.storage.offset.InMemoryOffsetStore;
 import io.debezium.operator.api.model.source.storage.schema.InMemorySchemaHistoryStore;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.environment.PipelineController;
-import io.debezium.platform.environment.operator.logs.KubernetesLogReader;
 import io.debezium.platform.environment.logs.LogReader;
+import io.debezium.platform.environment.operator.logs.KubernetesLogReader;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.TailPrettyLoggable;
-import jakarta.enterprise.context.Dependent;
-
-import java.util.Map;
-import java.util.Optional;
-
 
 @Dependent
 public class OperatorPipelineController implements PipelineController {
@@ -45,8 +50,7 @@ public class OperatorPipelineController implements PipelineController {
         var quarkusConfig = new ConfigProperties();
         quarkusConfig.setAllProps(Map.of(
                 "log.level", pipeline.getLogLevel(),
-                "log.console.json", false
-        ));
+                "log.console.json", false));
         var dsQuarkus = new QuarkusBuilder()
                 .withConfig(quarkusConfig)
                 .build();

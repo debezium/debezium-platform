@@ -1,9 +1,23 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.domain;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 
 import com.blazebit.persistence.CriteriaBuilderFactory;
 import com.blazebit.persistence.view.EntityViewManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.debezium.outbox.quarkus.ExportedEvent;
 import io.debezium.platform.data.model.PipelineEntity;
 import io.debezium.platform.domain.views.Pipeline;
@@ -12,14 +26,6 @@ import io.debezium.platform.domain.views.refs.PipelineReference;
 import io.debezium.platform.environment.EnvironmentController;
 import io.debezium.platform.environment.watcher.events.PipelineEvent;
 import io.quarkus.arc.All;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Event;
-import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 @ApplicationScoped
 public class PipelineService extends AbstractService<PipelineEntity, Pipeline, PipelineReference> {
@@ -42,7 +48,6 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
         this.logStreamer = logStreamer;
         this.environmentControllers = environmentControllers;
     }
-
 
     @Override
     @Transactional(Transactional.TxType.REQUIRED)

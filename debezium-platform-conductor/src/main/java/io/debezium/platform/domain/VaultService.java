@@ -1,20 +1,25 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.domain;
 
-
-import com.blazebit.persistence.CriteriaBuilderFactory;
-import com.blazebit.persistence.view.EntityViewManager;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.debezium.outbox.quarkus.ExportedEvent;
-import io.debezium.platform.data.model.VaultEntity;
-import io.debezium.platform.domain.views.Vault;
-import io.debezium.platform.domain.views.refs.VaultReference;
-import io.debezium.platform.environment.watcher.events.VaultEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
+import com.blazebit.persistence.CriteriaBuilderFactory;
+import com.blazebit.persistence.view.EntityViewManager;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.debezium.outbox.quarkus.ExportedEvent;
+import io.debezium.platform.data.model.VaultEntity;
+import io.debezium.platform.domain.views.Vault;
+import io.debezium.platform.domain.views.refs.VaultReference;
+import io.debezium.platform.environment.watcher.events.VaultEvent;
 
 @ApplicationScoped
 public class VaultService extends AbstractService<VaultEntity, Vault, VaultReference> {

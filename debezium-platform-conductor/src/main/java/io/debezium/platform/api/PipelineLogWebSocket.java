@@ -1,8 +1,20 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.api;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import io.debezium.platform.domain.PipelineService;
+import jakarta.inject.Inject;
+
+import org.jboss.logging.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.debezium.platform.domain.LogStreamingService;
+import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.error.NotFoundException;
 import io.quarkus.websockets.next.InboundProcessingMode;
 import io.quarkus.websockets.next.OnClose;
@@ -12,17 +24,8 @@ import io.quarkus.websockets.next.PathParam;
 import io.quarkus.websockets.next.WebSocket;
 import io.quarkus.websockets.next.WebSocketConnection;
 import io.smallrye.common.annotation.RunOnVirtualThread;
-import jakarta.inject.Inject;
-import org.jboss.logging.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-@WebSocket(
-        path = "/api/pipelines/{id}/logs/stream",
-        inboundProcessingMode = InboundProcessingMode.CONCURRENT
-)
+@WebSocket(path = "/api/pipelines/{id}/logs/stream", inboundProcessingMode = InboundProcessingMode.CONCURRENT)
 public class PipelineLogWebSocket {
 
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(PipelineLogWebSocket.class);
@@ -36,7 +39,6 @@ public class PipelineLogWebSocket {
     LogStreamingService logStreamer;
 
     private final Map<String, LogStreamingService.LogStreamingTask> streamingTasks = new ConcurrentHashMap<>();
-
 
     @OnOpen
     @RunOnVirtualThread

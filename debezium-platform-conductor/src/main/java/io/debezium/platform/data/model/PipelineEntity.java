@@ -1,4 +1,12 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.data.model;
+
+import java.util.LinkedList;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,12 +18,9 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OrderColumn;
 import jakarta.validation.constraints.NotEmpty;
+
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.LinkedList;
-import java.util.List;
-
 
 @Entity(name = "pipeline")
 @Getter
@@ -39,4 +44,3 @@ public class PipelineEntity {
     @NotEmpty
     private String logLevel = "info";
 }
-

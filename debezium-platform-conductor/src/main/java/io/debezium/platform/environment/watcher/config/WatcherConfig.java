@@ -1,6 +1,12 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.watcher.config;
 
 import jakarta.enterprise.context.Dependent;
+
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
@@ -13,7 +19,8 @@ public final class WatcherConfig {
     private final OutboxConfigGroup outbox;
     private final ConnectionConfig connection;
 
-    public record ConnectionConfig(String username, String password, String database, String host, int port) {}
+    public record ConnectionConfig(String username, String password, String database, String host, int port) {
+    }
 
     public WatcherConfig(DataSourceConfigGroup dsConfig, WatcherConfigGroup watcher, OutboxConfigGroup outbox) {
         this.watcher = watcher;
@@ -32,7 +39,7 @@ public final class WatcherConfig {
 
         var username = dsConfig.username();
         var password = dsConfig.password();
-        var database = url.substring(databaseStart, (databaseEnd != -1)? databaseEnd : url.length());
+        var database = url.substring(databaseStart, (databaseEnd != -1) ? databaseEnd : url.length());
         var host = url.substring(hostStart, hostEnd);
         var port = url.substring(portStart, portEnd);
 
