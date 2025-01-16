@@ -5,10 +5,8 @@
  */
 package io.debezium.platform.environment.operator.configuration;
 
-import java.util.Map;
-import java.util.function.BiFunction;
+import java.util.List;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import jakarta.enterprise.context.Dependent;
 
@@ -17,7 +15,8 @@ import io.debezium.platform.domain.views.flat.PipelineFlat;
 @Dependent
 public class TableNameResolver {
 
-    private static final Map<String, Function<PipelineFlat, String>> PLACE_HOLDERS = Map.of("@{pipeline_name}", PipelineFlat::getName);
+    private static final List<PlaceHolder> PLACE_HOLDERS = List.of(
+            new PlaceHolder("@{pipeline_name}", PipelineFlat::getName));
 
     public String resolve(PipelineFlat pipeline, String currentValue) {
 
@@ -25,18 +24,19 @@ public class TableNameResolver {
             return currentValue;
         }
 
-        String processedValue = PLACE_HOLDERS.entrySet().stream()
-                .reduce(currentValue,
-                        applyReplacementFunction(pipeline),
-                        (lastProcessed, newProcessed) -> newProcessed);
+        String processedValue = currentValue;
+        for (PlaceHolder placeHolder : PLACE_HOLDERS) {
+            processedValue = placeHolder.apply(processedValue, pipeline);
+        }
 
         return sanitizeTableName(processedValue);
     }
 
-    private BiFunction<String, Map.Entry<String, Function<PipelineFlat, String>>, String> applyReplacementFunction(PipelineFlat pipeline) {
-        return (processedText, placeHolderMapping) -> processedText.replaceAll(
-                Pattern.quote(placeHolderMapping.getKey()),
-                placeHolderMapping.getValue().apply(pipeline));
+    private record PlaceHolder(String token, Function<PipelineFlat, String> valueResolver) {
+
+        String apply(String text, PipelineFlat pipeline) {
+            return text.replace(token, valueResolver.apply(pipeline));
+        }
     }
 
     /**
