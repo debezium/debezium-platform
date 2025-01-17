@@ -2,7 +2,7 @@ version: '0.1'
 services:
   conductor:
     container_name: conductor
-    image: quay.io/debezium/platform-conductor:nightly
+    image: quay.io/debezium/platform-conductor:latest
     pull_policy: always
     depends_on:
       - postgres

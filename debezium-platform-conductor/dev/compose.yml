@@ -1,6 +1,6 @@
 services:
   conductor:
-    image: quay.io/debezium/platform-conductor:nightly
+    image: quay.io/debezium/platform-conductor:latest
     pull_policy: always
     depends_on:
       - postgres

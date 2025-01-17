@@ -3,7 +3,7 @@ domain:
 stage:
   image: quay.io/debezium/platform-stage:latest
 conductor:
-  image: quay.io/debezium/platform-conductor:nightly
+  image: quay.io/debezium/platform-conductor:latest
   offset:
     existingConfigMap: ""
 offset:
