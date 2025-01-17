@@ -1,0 +1,19 @@
+{
+  "name": "Debezium marker",
+  "description": "Extract Debezium payload",
+  "type": "io.debezium.transforms.ExtractNewRecordState",
+  "schema": "string",
+  "vaults": [
+  ],
+  "config": {
+    "add.fields": "op",
+    "add.headers": "db,table"
+  },
+  "predicate": {
+    "type": "org.apache.kafka.connect.transforms.predicates.TopicNameMatches",
+    "config": {
+      "pattern": "inventory.inventory.products"
+    },
+    "negate": false
+  }
+}

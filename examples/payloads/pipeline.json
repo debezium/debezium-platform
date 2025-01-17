@@ -9,5 +9,11 @@
     "id": 1,
     "name": "test-destination"
   },
+  "transforms": [
+    {
+      "name": "ExtractRecords",
+      "id": 1
+    }
+  ],
   "logLevel": "debug"
 }

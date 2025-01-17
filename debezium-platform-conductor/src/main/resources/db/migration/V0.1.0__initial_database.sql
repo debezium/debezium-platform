@@ -75,6 +75,9 @@ create table transform (
     schema varchar(255) not null,
     type varchar(255) not null,
     config jsonb,
+    predicate_type VARCHAR(255),
+    predicate_config JSONB,
+    predicate_negate BOOLEAN,
     primary key (id)
 );
 

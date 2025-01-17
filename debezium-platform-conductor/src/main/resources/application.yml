@@ -102,9 +102,9 @@ quarkus:
   quarkus:
     debezium-outbox:
       remove-after-insert: false
-    hibernate-orm:
-      database:
-        generation: drop-and-create
+    flyway:
+      baseline-on-migrate: true
+      migrate-at-start: true
     datasource:
       devservices:
         enabled: true
