@@ -2,9 +2,16 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>io.debezium</groupId>
+
+  <parent>
+    <groupId>io.debezium</groupId>
+    <artifactId>debezium-parent</artifactId>
+    <version>3.1.0-SNAPSHOT</version>
+  </parent>
+
   <artifactId>debezium-platform-conductor</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>3.1.0-SNAPSHOT</version>
+
   <properties>
     <compiler-plugin.version>3.12.1</compiler-plugin.version>
     <maven.compiler.release>21</maven.compiler.release>
@@ -34,6 +41,10 @@
     <format.imports.goal>sort</format.imports.goal>
     <!-- Do not skip formatting source code by default -->
     <format.skip>false</format.skip>
+
+    <!-- Distribution -->
+    <dist.root.dir>${project.basedir}</dist.root.dir>
+    <dist.app.source.dir>${dist.root.dir}/target/quarkus-app</dist.app.source.dir>
 
   </properties>
   <dependencyManagement>
@@ -361,6 +372,8 @@
       </plugin>
     </plugins>
   </build>
+
+
   <profiles>
     <profile>
       <id>native</id>
@@ -373,6 +386,37 @@
         <skipITs>false</skipITs>
         <quarkus.package.type>native</quarkus.package.type>
       </properties>
+    </profile>
+    <profile>
+      <id>assembly</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>${version.assembly.plugin}</version>
+            <configuration>
+              <attach>true</attach>  <!-- we want to attach & deploy these to Maven -->
+              <tarLongFileMode>posix</tarLongFileMode>
+            </configuration>
+            <executions>
+              <execution>
+                <id>operator-package</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration>
+                  <appendAssemblyId>false</appendAssemblyId>
+                  <descriptors>
+                    <descriptor>dist/assembly/conductor.xml</descriptor>
+                  </descriptors>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 </project>
