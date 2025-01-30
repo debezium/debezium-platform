@@ -1,8 +1,13 @@
 {
-  "name": "stage",
-  "private": true,
-  "version": "0.0.0",
+  "name": "@debezium/platform-stage",
+  "private": false,
+  "version": "1.0.0",
+  "description": "Debezium Platform UI - Built UI Package",
   "type": "module",
+  "main": "dist/index.html",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -74,6 +79,23 @@
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
     "vite-tsconfig-paths": "^5.0.1",
+    "vite-plugin-static-copy": "^2.2.0",
     "vitest": "^2.0.5"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Debezium Community",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/debezium/debezium-platform.git"
+  },
+  "keywords": [
+    "platform-ui"
+  ],
+  "bugs": {
+    "url": "https://issues.redhat.com/browse/DBZ"
+  },
+  "homepage": "https://github.com/indraraj/debezium-platform-stage#readme"
 }
