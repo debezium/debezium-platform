@@ -3,6 +3,7 @@ import PageHeader from "@components/PageHeader";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import {
   ActionGroup,
+  Alert,
   Button,
   ButtonType,
   Card,
@@ -48,12 +49,15 @@ import {
 import * as React from "react";
 import transforms from "../../__mocks__/data/DebeziumTransfroms.json";
 import predicates from "../../__mocks__/data/Predicates.json";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createPost, TransformData } from "src/apis";
-import { API_URL } from "@utils/constants";
+import { createPost, TransformData, TransformPayload } from "src/apis";
+import { API_URL, transformSchema } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { find } from "lodash";
+import Ajv from "ajv";
+
+const ajv = new Ajv();
 
 export interface ICreateTransformsProps {
   modelLoaded?: boolean;
@@ -72,22 +76,30 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
 
   const { addNotification } = useNotification();
 
-  const [editorSelected, setEditorSelected] = React.useState("form-editor");
+  const [editorSelected, setEditorSelected] = useState("form-editor");
 
-  const [isLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [selected, setSelected] = React.useState<string>("");
-  const [inputValue, setInputValue] = React.useState<string>("");
-  const [filterValue, setFilterValue] = React.useState<string>("");
-  const [selectOptions, setSelectOptions] =
-    React.useState<SelectOptionProps[]>();
-  const [focusedItemIndex, setFocusedItemIndex] = React.useState<number | null>(
-    null
-  );
-  const [activeItemId, setActiveItemId] = React.useState<string | null>(null);
-  const textInputRef = React.useRef<HTMLInputElement>();
+  const [isOpen, setIsOpen] = useState(false);
+  const [selected, setSelected] = useState<string>("");
+  const [inputValue, setInputValue] = useState<string>("");
+  const [filterValue, setFilterValue] = useState<string>("");
+  const [selectOptions, setSelectOptions] = useState<SelectOptionProps[]>();
+  const [focusedItemIndex, setFocusedItemIndex] = useState<number | null>(null);
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
+  const textInputRef = useRef<HTMLInputElement>();
 
+  const [code, setCode] = useState({
+    name: "",
+    description: "",
+    type: "",
+    schema: "schema123",
+    vaults: [],
+    config: {},
+  });
+  const [codeAlert, setCodeAlert] = useState("");
+
+  const validate = ajv.compile(transformSchema);
   const NO_RESULTS = "no results";
 
   useEffect(() => {
@@ -339,44 +351,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
     </MenuToggle>
   );
 
-  const createNewTransform = async (values: Record<string, string>) => {
-    const {
-      "transform-name": transformName,
-      description: description,
-      ...restValues
-    } = values;
-    const predicateConfig: Record<string, string> = {};
-    let transformConfig: Record<string, string> = {};
-
-    if (selectedPredicate) {
-      Object.entries(restValues).forEach(([key, value]) => {
-        if (key.startsWith("predicate")) {
-          if (key.startsWith("predicateConfig.")) {
-            predicateConfig[key.replace("predicateConfig.", "")] = value;
-          }
-        } else {
-          transformConfig[key] = value;
-        }
-      });
-    } else {
-      transformConfig = restValues;
-    }
-
-    const payload = {
-      description: description,
-      type: selected,
-      schema: "schema321",
-      vaults: [],
-      config: { ...transformConfig },
-      ...(selectedPredicate && {
-        predicate: {
-          type: selectedPredicate,
-          config: { ...predicateConfig },
-          negate: values["predicate.negate"] === "true",
-        },
-      }),
-      name: transformName,
-    };
+  const createNewTransform = async (payload: TransformPayload) => {
     const response = await createPost(`${API_URL}/api/transforms`, payload);
     if (response.error) {
       addNotification(
@@ -392,6 +367,69 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
         `Source "${(response.data as any).name}" created successfully.`
       );
       !modelLoaded && navigateTo("/transform");
+    }
+  };
+
+  const handleCreate = async (
+    values: Record<string, string>,
+    setError: (fieldId: string, error: string | undefined) => void
+  ) => {
+    if (editorSelected === "form-editor") {
+      if (!values["transform-name"]) {
+        setError("transform-name", "transform name is required.");
+      } else {
+        setIsLoading(true);
+        const {
+          "transform-name": transformName,
+          description: description,
+          ...restValues
+        } = values;
+        const predicateConfig: Record<string, string> = {};
+        let transformConfig: Record<string, string> = {};
+
+        if (selectedPredicate) {
+          Object.entries(restValues).forEach(([key, value]) => {
+            if (key.startsWith("predicate")) {
+              if (key.startsWith("predicateConfig.")) {
+                predicateConfig[key.replace("predicateConfig.", "")] = value;
+              }
+            } else {
+              transformConfig[key] = value;
+            }
+          });
+        } else {
+          transformConfig = restValues;
+        }
+
+        const payload = {
+          description: description,
+          type: selected,
+          schema: "schema321",
+          vaults: [],
+          config: { ...transformConfig },
+          ...(selectedPredicate && {
+            predicate: {
+              type: selectedPredicate,
+              config: { ...predicateConfig },
+              negate: values["predicate.negate"] === "true",
+            },
+          }),
+          name: transformName,
+        };
+        await createNewTransform(payload as TransformPayload);
+        setIsLoading(false);
+      }
+    } else {
+      const payload = code;
+      const isValid = validate(payload);
+      if (!isValid) {
+        setCodeAlert(ajv.errorsText(validate.errors));
+        return;
+      } else {
+        setIsLoading(true);
+        await createNewTransform(payload as TransformPayload);
+        setIsLoading(false);
+      }
     }
   };
 
@@ -420,6 +458,21 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
     setEditorSelected(id);
   };
 
+  const onEditorDidMount = (
+    editor: { layout: () => void; focus: () => void },
+    monaco: {
+      editor: {
+        getModels: () => {
+          updateOptions: (arg0: { tabSize: number }) => void;
+        }[];
+      };
+    }
+  ) => {
+    editor.layout();
+    editor.focus();
+    monaco.editor.getModels()[0].updateOptions({ tabSize: 5 });
+  };
+
   return (
     <>
       {!modelLoaded && (
@@ -429,7 +482,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
         />
       )}
       <PageSection className="create_source-toolbar">
-        <Toolbar id="create-editor-toggle">
+        <Toolbar id="transform-editor-toggle">
           <ToolbarContent>
             <ToolbarItem>
               <ToggleGroup aria-label="Toggle between form editor and smart editor">
@@ -814,15 +867,36 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                   </CardBody>
                 </Card>
               ) : (
-                <CodeEditor
-                  isUploadEnabled
-                  isDownloadEnabled
-                  isCopyEnabled
-                  isLanguageLabelVisible
-                  isMinimapVisible
-                  language={Language.yaml}
-                  height="450px"
-                />
+                <>
+                  {codeAlert && (
+                    <Alert
+                      variant="danger"
+                      isInline
+                      title={`Provided json is not valid: ${codeAlert}`}
+                      style={{ marginBottom: "10px" }}
+                    />
+                  )}
+                  <CodeEditor
+                    isUploadEnabled
+                    isDownloadEnabled
+                    isCopyEnabled
+                    isLanguageLabelVisible
+                    isMinimapVisible
+                    language={Language.json}
+                    downloadFileName="transforms.json"
+                    isFullHeight
+                    code={JSON.stringify(code, null, 2)}
+                    onCodeChange={(value) => {
+                      try {
+                        const parsedCode = JSON.parse(value);
+                        setCode(parsedCode);
+                      } catch (error) {
+                        console.error("Invalid JSON:", error);
+                      }
+                    }}
+                    onEditorDidMount={onEditorDidMount}
+                  />
+                </>
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
@@ -834,12 +908,13 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                   type={ButtonType.submit}
                   onClick={(e) => {
                     e.preventDefault();
+                    handleCreate(values, setError);
 
-                    if (!values["transform-name"]) {
-                      setError("transform-name", "transform name is required.");
-                    } else {
-                      createNewTransform(values);
-                    }
+                    // if (!values["transform-name"]) {
+                    //   setError("transform-name", "transform name is required.");
+                    // } else {
+                    //   createNewTransform(values);
+                    // }
                   }}
                 >
                   Create transform

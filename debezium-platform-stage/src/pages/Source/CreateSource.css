@@ -23,3 +23,7 @@
   .create_source-footer {
     margin-top: 0 !important;
   }
+
+  .pf-v6-c-code-editor__upload{
+    height: 100%;
+  }

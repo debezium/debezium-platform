@@ -2,6 +2,7 @@
 import * as React from "react";
 import {
   ActionGroup,
+  Alert,
   Button,
   ButtonType,
   FormContextProvider,
@@ -16,15 +17,18 @@ import { PencilAltIcon, CodeIcon } from "@patternfly/react-icons";
 import { useNavigate, useParams } from "react-router-dom";
 import "./CreateSource.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
-import { useState } from "react";
-import { createPost, Source } from "../../apis/apis";
-import { API_URL } from "../../utils/constants";
+import { useEffect, useRef, useState } from "react";
+import { createPost, Payload, Source } from "../../apis/apis";
+import { API_URL, connectorSchema, initialConnectorSchema } from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
 import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
 import { find } from "lodash";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
+import Ajv from "ajv";
+
+const ajv = new Ajv();
 
 interface CreateSourceProps {
   modelLoaded?: boolean;
@@ -35,6 +39,102 @@ interface CreateSourceProps {
 
 type Properties = { key: string; value: string };
 
+const FormSyncManager: React.FC<{
+  getFormValue: (key: string) => string;
+  setFormValue: (key: string, value: string) => void;
+  code: any;
+  setCode: (code: any) => void;
+  sourceId: string | undefined;
+  properties: Map<string, Properties>;
+  setProperties: (properties: Map<string, Properties>) => void;
+  setCodeAlert: (alert: string) => void;
+}> = ({
+  getFormValue,
+  setFormValue,
+  code,
+  setCode,
+  sourceId,
+  properties,
+  setProperties,
+  setCodeAlert,
+}) => {
+  const validate = ajv.compile(initialConnectorSchema);
+  // Ref to track the source of the update
+  const updateSource = useRef<"form" | "code" | null>(null);
+
+  // Update code state when form values change
+  useEffect(() => {
+    if (updateSource.current === "code") {
+      updateSource.current = null;
+      return;
+    }
+
+    updateSource.current = "form";
+    const type = find(sourceCatalog, { id: sourceId })?.type || "";
+    const configuration = convertMapToObject(properties);
+
+    setCode((prevCode: any) => {
+      if (
+        prevCode.name === getFormValue("source-name") &&
+        prevCode.description === getFormValue("description") &&
+        JSON.stringify(prevCode.config) === JSON.stringify(configuration)
+      ) {
+        return prevCode;
+      }
+
+      return {
+        ...prevCode,
+        type,
+        config: configuration,
+        name: getFormValue("source-name") || "",
+        description: getFormValue("description") || "",
+      };
+    });
+  }, [
+    getFormValue("source-name"),
+    getFormValue("description"),
+    properties,
+    sourceId,
+  ]);
+
+  // Update form values when code changes
+  useEffect(() => {
+    const isValid = validate(code);
+    if (isValid) {
+      if (updateSource.current === "form") {
+        updateSource.current = null;
+        return;
+      }
+      updateSource.current = "code";
+      if (code.name !== getFormValue("source-name")) {
+        setFormValue(
+          "source-name",
+          typeof code.name === "string" ? code.name : ""
+        );
+      }
+      if (code.description !== getFormValue("description")) {
+        setFormValue(
+          "description",
+          typeof code.description === "string" ? code.description : ""
+        );
+      }
+      const currentConfig = convertMapToObject(properties);
+      if (JSON.stringify(currentConfig) !== JSON.stringify(code.config)) {
+        const configMap = new Map();
+        Object.entries(code.config || {}).forEach(([key, value], index) => {
+          configMap.set(`key${index}`, { key, value: value as string });
+        });
+        setProperties(configMap);
+      }
+      setCodeAlert("");
+    } else {
+      setCodeAlert(ajv.errorsText(validate.errors));
+    }
+  }, [code]);
+
+  return null;
+};
+
 const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   modelLoaded,
   selectedId,
@@ -42,27 +142,34 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   onSelection,
 }) => {
   const navigate = useNavigate();
+  const navigateTo = (url: string) => {
+    navigate(url);
+  };
+  const { addNotification } = useNotification();
+
+  const [code, setCode] = useState({
+    name: "",
+    description: "",
+    type: "",
+    schema: "schema123",
+    vaults: [],
+    config: {},
+  });
 
   const sourceIdParam = useParams<{ sourceId: string }>();
+  const [codeAlert, setCodeAlert] = useState("");
   const sourceIdModel = selectedId;
   const sourceId = modelLoaded ? sourceIdModel : sourceIdParam.sourceId;
 
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
-
-  const navigateTo = (url: string) => {
-    navigate(url);
-  };
-
-  const { addNotification } = useNotification();
-
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
-
   const [isLoading, setIsLoading] = useState(false);
-
   const [properties, setProperties] = useState<Map<string, Properties>>(
     new Map([["key0", { key: "", value: "" }]])
   );
   const [keyCount, setKeyCount] = useState<number>(1);
+
+  const validate = ajv.compile(connectorSchema);
 
   const handleAddProperty = () => {
     const newKey = `key${keyCount}`;
@@ -98,23 +205,14 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     });
   };
 
-  const createNewSource = async (values: Record<string, string>) => {
-    const payload = {
-      description: values["details"],
-      type: find(sourceCatalog, { id: sourceId })?.type || "",
-      schema: "schema321",
-      vaults: [],
-      config: convertMapToObject(properties),
-      name: values["source-name"],
-    };
-
+  const createNewSource = async (payload: Payload) => {
     const response = await createPost(`${API_URL}/api/sources`, payload);
 
     if (response.error) {
       addNotification(
         "danger",
         `Source creation failed`,
-        `Failed to create ${(response.data as Source).name}: ${response.error}`
+        `Failed to create ${(response.data as Source)?.name}: ${response.error}`
       );
     } else {
       modelLoaded && onSelection && onSelection(response.data as Source);
@@ -123,30 +221,58 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         `Create successful`,
         `Source "${(response.data as Source).name}" created successfully.`
       );
+      !modelLoaded && navigateTo("/source");
     }
   };
 
-  const handleCreateSource = async (values: Record<string, string>) => {
-    setIsLoading(true);
-    const errorWarning = [] as string[];
-    properties.forEach((value: Properties, key: string) => {
-      if (value.key === "" || value.value === "") {
-        errorWarning.push(key);
+  const handleCreate = async (
+    values: Record<string, string>,
+    setError: (fieldId: string, error: string | undefined) => void
+  ) => {
+    if (editorSelected === "form-editor") {
+      if (!values["source-name"]) {
+        setError("source-name", "Source name is required.");
+      } else {
+        setIsLoading(true);
+        const errorWarning = [] as string[];
+        properties.forEach((value: Properties, key: string) => {
+          if (value.key === "" || value.value === "") {
+            errorWarning.push(key);
+          }
+        });
+        setErrorWarning(errorWarning);
+        if (errorWarning.length > 0) {
+          addNotification(
+            "danger",
+            `Source creation failed`,
+            `Please fill both Key and Value fields for all the properties.`
+          );
+          setIsLoading(false);
+          return;
+        }
+        const payload = {
+          description: values["description"],
+          type: find(sourceCatalog, { id: sourceId })?.type || "",
+          schema: "schema321",
+          vaults: [],
+          config: convertMapToObject(properties),
+          name: values["source-name"],
+        } as unknown as Payload;
+        await createNewSource(payload);
+        setIsLoading(false);
       }
-    });
-    setErrorWarning(errorWarning);
-    if (errorWarning.length > 0) {
-      addNotification(
-        "danger",
-        `Source creation failed`,
-        `Please fill both Key and Value fields for all the properties.`
-      );
-      setIsLoading(false);
-      return;
+    } else {
+      const payload = code;
+      const isValid = validate(payload);
+      if (!isValid) {
+        setCodeAlert(ajv.errorsText(validate.errors));
+        return;
+      } else {
+        setIsLoading(true);
+        await createNewSource(payload);
+        setIsLoading(false);
+      }
     }
-    await createNewSource(values);
-    setIsLoading(false);
-    !modelLoaded && navigateTo("/source");
   };
 
   const handleItemClick = (
@@ -157,6 +283,21 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   ) => {
     const id = event.currentTarget.id;
     setEditorSelected(id);
+  };
+
+  const onEditorDidMount = (
+    editor: { layout: () => void; focus: () => void },
+    monaco: {
+      editor: {
+        getModels: () => {
+          updateOptions: (arg0: { tabSize: number }) => void;
+        }[];
+      };
+    }
+  ) => {
+    editor.layout();
+    editor.focus();
+    monaco.editor.getModels()[0].updateOptions({ tabSize: 5 });
   };
 
   return (
@@ -171,7 +312,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         />
       )}
       <PageSection className="create_source-toolbar">
-        <Toolbar id="create-editor-toggle">
+        <Toolbar id="source-editor-toggle">
           <ToolbarContent>
             <ToolbarItem>
               <ToggleGroup aria-label="Toggle between form editor and smart editor">
@@ -201,6 +342,16 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
       <FormContextProvider initialValues={{}}>
         {({ setValue, getValue, setError, values, errors }) => (
           <>
+            <FormSyncManager
+              getFormValue={getValue}
+              setFormValue={setValue}
+              code={code}
+              setCode={setCode}
+              sourceId={sourceId}
+              properties={properties}
+              setProperties={setProperties}
+              setCodeAlert={setCodeAlert}
+            />
             <PageSection
               isWidthLimited={
                 (modelLoaded && editorSelected === "form-editor") ||
@@ -229,15 +380,36 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   handlePropertyChange={handlePropertyChange}
                 />
               ) : (
-                <CodeEditor
-                  isUploadEnabled
-                  isDownloadEnabled
-                  isCopyEnabled
-                  isLanguageLabelVisible
-                  isMinimapVisible
-                  language={Language.yaml}
-                  height="450px"
-                />
+                <>
+                  {codeAlert && (
+                    <Alert
+                      variant="danger"
+                      isInline
+                      title={`Provided json is not valid: ${codeAlert}`}
+                      style={{ marginBottom: "10px" }}
+                    />
+                  )}
+                  <CodeEditor
+                    isUploadEnabled
+                    isDownloadEnabled
+                    isCopyEnabled
+                    isLanguageLabelVisible
+                    isMinimapVisible
+                    language={Language.json}
+                    downloadFileName="source-connector.json"
+                    isFullHeight
+                    code={JSON.stringify(code, null, 2)}
+                    onCodeChange={(value) => {
+                      try {
+                        const parsedCode = JSON.parse(value);
+                        setCode(parsedCode);
+                      } catch (error) {
+                        console.error("Invalid JSON:", error);
+                      }
+                    }}
+                    onEditorDidMount={onEditorDidMount}
+                  />
+                </>
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
@@ -250,11 +422,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   onClick={(e) => {
                     e.preventDefault();
 
-                    if (!values["source-name"]) {
-                      setError("source-name", "Source name is required.");
-                    } else {
-                      handleCreateSource(values);
-                    }
+                    handleCreate(values, setError);
                   }}
                 >
                   Create source

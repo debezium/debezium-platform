@@ -31,6 +31,15 @@ export type DestinationConfig = {
   [key: string]: string; // Dynamic keys with string values
 };
 
+export type Payload = {
+  type: string;
+  schema: string;
+  vaults: Vault[];
+  config: DestinationConfig;
+  description?: string;
+  name: string;
+};
+
 export type Destination = {
   type: string;
   schema: string;
@@ -44,6 +53,15 @@ export type Destination = {
 export type Pipeline = {
   name: string;
   id: number;
+  source: PipelineSource;
+  destination: PipelineDestination;
+  description?: string;
+  transforms: Transform[];
+  logLevel: string;
+};
+
+export type PipelinePayload = {
+  name: string;
   source: PipelineSource;
   destination: PipelineDestination;
   description?: string;
@@ -82,6 +100,16 @@ export type TransformData = {
   predicate?: Predicate;
   name: string;
   id: number;
+};
+
+export type TransformPayload = {
+  type: string;
+  schema: string;
+  vaults: Vault[];
+  config: SourceConfig;
+  description?: string;
+  predicate?: Predicate;
+  name: string;
 };
 
 export type TransformApiResponse = TransformData[];

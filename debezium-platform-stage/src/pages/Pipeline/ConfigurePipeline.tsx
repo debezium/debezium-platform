@@ -2,6 +2,7 @@
 import * as React from "react";
 import {
   ActionGroup,
+  Alert,
   Button,
   ButtonType,
   Card,
@@ -36,18 +37,101 @@ import ConnectorImage from "../../components/ComponentImage";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./ConfigurePipeline.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   createPost,
   Destination,
   fetchDataTypeTwo,
+  PipelinePayload,
   Source,
+  Transform,
 } from "../../apis/apis";
-import { API_URL } from "../../utils/constants";
+import { API_URL, pipelineSchema } from "../../utils/constants";
 import PageHeader from "@components/PageHeader";
 import { useAtom } from "jotai";
 import { selectedTransformAtom } from "./PipelineDesigner";
 import { useNotification } from "@appContext/AppNotificationContext";
+import Ajv from "ajv";
+
+const ajv = new Ajv();
+
+const FormSyncManager: React.FC<{
+  getFormValue: (key: string) => string;
+  setFormValue: (key: string, value: string) => void;
+  code: any;
+  setCode: (code: any) => void;
+  setCodeAlert: (alert: string) => void;
+}> = ({ getFormValue, setFormValue, code, setCode, setCodeAlert }) => {
+  const validate = ajv.compile(pipelineSchema);
+  // Ref to track the source of the update
+  const updateSource = useRef<"form" | "code" | null>(null);
+
+  // Update code state when form values change
+  useEffect(() => {
+    if (updateSource.current === "code") {
+      updateSource.current = null;
+      return;
+    }
+
+    updateSource.current = "form";
+
+    setCode((prevCode: any) => {
+      if (
+        prevCode.name === getFormValue("pipeline-name") &&
+        prevCode.description === getFormValue("description") &&
+        prevCode.logLevel === getFormValue("log-level")
+      ) {
+        return prevCode;
+      }
+
+      return {
+        ...prevCode,
+        name: getFormValue("pipeline-name") || "",
+        description: getFormValue("description") || "",
+        logLevel: getFormValue("log-level") || "",
+      };
+    });
+  }, [
+    getFormValue("pipeline-name"),
+    getFormValue("description"),
+    getFormValue("log-level"),
+  ]);
+
+  // Update form values when code changes
+  useEffect(() => {
+    const isValid = validate(code);
+    if (isValid) {
+      if (updateSource.current === "form") {
+        updateSource.current = null;
+        return;
+      }
+      updateSource.current = "code";
+      if (code.name !== getFormValue("pipeline-name")) {
+        setFormValue(
+          "pipeline-name",
+          typeof code.name === "string" ? code.name : ""
+        );
+      }
+      if (code.description !== getFormValue("description")) {
+        setFormValue(
+          "description",
+          typeof code.description === "string" ? code.description : ""
+        );
+      }
+      if (code["log-level"] !== getFormValue("log-level")) {
+        setFormValue(
+          "log-level",
+          typeof code["logLevel"] === "string" ? code["logLevel"] : ""
+        );
+      }
+      setCodeAlert("");
+    } else {
+      setCodeAlert(ajv.errorsText(validate.errors));
+    }
+  }, [code]);
+
+  return null;
+};
 
 const ConfigurePipeline: React.FunctionComponent = () => {
   const navigate = useNavigate();
@@ -56,7 +140,23 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   const sourceId = params.get("sourceId");
   const destinationId = params.get("destinationId");
 
-  const [selectedTransform] = useAtom(selectedTransformAtom);
+  const [code, setCode] = useState({
+    name: "",
+    description: "",
+    source: {
+      id: 0,
+      name: "",
+    },
+    destination: {
+      id: 0,
+      name: "",
+    },
+    transforms: [] as Transform[],
+    logLevel: "",
+  });
+  const [codeAlert, setCodeAlert] = useState("");
+
+  const validate = ajv.compile(pipelineSchema);
 
   const { addNotification } = useNotification();
 
@@ -79,6 +179,19 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   const [destination, setDestination] = useState<Destination>();
   const [, setIsDestinationLoading] = useState<boolean>(true);
   const [, setDestinationError] = useState<string | null>(null);
+
+  const [selectedTransform] = useAtom(selectedTransformAtom);
+
+  useEffect(() => {
+    if (source?.name && destination?.name) {
+      setCode((prev) => ({
+        ...prev,
+        source: { name: source!.name, id: source!.id },
+        transforms: selectedTransform ? [...selectedTransform] : [],
+        destination: { name: destination!.name, id: destination!.id },
+      }));
+    }
+  }, [source, destination, selectedTransform]);
 
   useEffect(() => {
     const fetchSources = async () => {
@@ -118,53 +231,68 @@ const ConfigurePipeline: React.FunctionComponent = () => {
     fetchDestination();
   }, [destinationId]);
 
-  const createNewPipeline = async (values: Record<string, string>) => {
-    const payload = {
-      description: values["description"],
-      logLevel: values["log-level"],
-      source: {
-        name: source?.name,
-        id: source?.id,
-      },
-      destination: {
-        name: destination?.name,
-        id: destination?.id,
-      },
-      transforms: [...selectedTransform],
-      name: values["pipeline-name"],
-    };
-
+  const createNewPipeline = async (payload: PipelinePayload) => {
     const response = await createPost(`${API_URL}/api/pipelines`, payload);
 
-    return response;
-  };
-
-  const handleCreatePipeline = async (values: Record<string, string>) => {
-    console.log("values", values);
-    setIsLoading(true);
-    if (!values["log-level"]) {
-      setLogLevelError(true);
-      setIsLoading(false);
-      return;
-    }
-    const response = await createNewPipeline(values);
     if (response.error) {
       addNotification(
         "danger",
         `Pipeline creation failed`,
         `${response.error}`
       );
-      setIsLoading(false);
       return;
     }
     addNotification(
       "success",
       `Pipeline creation successful.`,
-      `Pipeline "${values["pipeline-name"]}" created successfully.`
+      `Pipeline "${payload["name"]}" created successfully.`
     );
-    setIsLoading(false);
-
     navigateTo("/pipeline");
+
+    return response;
+  };
+
+  const handleCreate = async (
+    values: Record<string, string>,
+    setError: (fieldId: string, error: string | undefined) => void
+  ) => {
+    if (editorSelected === "form-editor") {
+      if (!values["pipeline-name"]) {
+        setError("pipeline-name", "Pipeline name is required.");
+      } else if (!values["log-level"]) {
+        setLogLevelError(true);
+        return;
+      } else {
+        setIsLoading(true);
+        const payload = {
+          description: values["description"],
+          logLevel: values["log-level"],
+          source: {
+            name: source?.name,
+            id: source?.id,
+          },
+          destination: {
+            name: destination?.name,
+            id: destination?.id,
+          },
+          transforms: [...selectedTransform],
+          name: values["pipeline-name"],
+        } as PipelinePayload;
+        await createNewPipeline(payload);
+        setIsLoading(false);
+      }
+    } else {
+      const payload = code;
+      const isValid = validate(payload);
+      if (!isValid) {
+        setCodeAlert(ajv.errorsText(validate.errors));
+        return;
+      } else {
+        setIsLoading(true);
+        await createNewPipeline(payload as any);
+        setIsLoading(false);
+      }
+    }
   };
 
   const [logLevelError, setLogLevelError] = React.useState<boolean>(false);
@@ -189,6 +317,21 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   ) => {
     const id = event.currentTarget.id;
     setEditorSelected(id);
+  };
+
+  const onEditorDidMount = (
+    editor: { layout: () => void; focus: () => void },
+    monaco: {
+      editor: {
+        getModels: () => {
+          updateOptions: (arg0: { tabSize: number }) => void;
+        }[];
+      };
+    }
+  ) => {
+    editor.layout();
+    editor.focus();
+    monaco.editor.getModels()[0].updateOptions({ tabSize: 5 });
   };
 
   return (
@@ -231,6 +374,13 @@ const ConfigurePipeline: React.FunctionComponent = () => {
       <FormContextProvider initialValues={{}}>
         {({ setValue, getValue, setError, values, errors }) => (
           <>
+            <FormSyncManager
+              getFormValue={getValue}
+              setFormValue={setValue}
+              code={code}
+              setCode={setCode}
+              setCodeAlert={setCodeAlert}
+            />
             <PageSection
               isWidthLimited={true}
               isCenterAligned
@@ -382,15 +532,36 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                   </CardBody>
                 </Card>
               ) : (
-                <CodeEditor
-                  isUploadEnabled
-                  isDownloadEnabled
-                  isCopyEnabled
-                  isLanguageLabelVisible
-                  isMinimapVisible
-                  language={Language.yaml}
-                  height="450px"
-                />
+                <>
+                  {codeAlert && (
+                    <Alert
+                      variant="danger"
+                      isInline
+                      title={`Provided json is not valid: ${codeAlert}`}
+                      style={{ marginBottom: "10px" }}
+                    />
+                  )}
+                  <CodeEditor
+                    isUploadEnabled
+                    isDownloadEnabled
+                    isCopyEnabled
+                    isLanguageLabelVisible
+                    isMinimapVisible
+                    language={Language.json}
+                    downloadFileName="pipeline.json"
+                    isFullHeight
+                    code={JSON.stringify(code, null, 2)}
+                    onCodeChange={(value) => {
+                      try {
+                        const parsedCode = JSON.parse(value);
+                        setCode(parsedCode);
+                      } catch (error) {
+                        console.error("Invalid JSON:", error);
+                      }
+                    }}
+                    onEditorDidMount={onEditorDidMount}
+                  />
+                </>
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
@@ -403,11 +574,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                   onClick={(e) => {
                     e.preventDefault();
 
-                    if (!values["pipeline-name"]) {
-                      setError("pipeline-name", "Pipeline name is required.");
-                    } else {
-                      handleCreatePipeline(values);
-                    }
+                    handleCreate(values, setError);
                   }}
                 >
                   Create pipeline
