@@ -19,8 +19,7 @@ interface DataNodeProps {
     connectorType: string;
     label: string;
     type: string;
-    editAction: () => void;
-    compositionFlow?: boolean;
+    editAction?: () => void;
   };
 }
 
@@ -29,7 +28,7 @@ const DataNode: React.FC<DataNodeProps> = ({ data }) => {
 
   return (
     <>
-      {!data.compositionFlow && (
+      {data.editAction && (
         <div
           onClick={data.editAction}
           className={
@@ -89,7 +88,6 @@ const DataNode: React.FC<DataNodeProps> = ({ data }) => {
               <Stack>
                 <StackItem
                   style={{
-                    // textAlign: "center",
                     display: "flex",
                     justifyContent: "center",
                     paddingBottom: 5,

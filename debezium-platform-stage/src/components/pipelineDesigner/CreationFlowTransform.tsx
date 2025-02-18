@@ -69,6 +69,7 @@ interface CreationFlowTransformProps {
   isDestinationConfigured: boolean;
   selectedTransform: Transform[];
   rearrangeTrigger: boolean;
+  trigger?: boolean;
 }
 
 const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
@@ -81,8 +82,10 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
   isDestinationConfigured,
   selectedTransform,
   rearrangeTrigger,
+  trigger
 }) => {
   const { darkMode } = useData();
+  console.log("trigger", trigger);
 
   const reactFlowInstance = useReactFlow();
 
@@ -223,7 +226,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         type: "destination",
         action: cardButton("Destination"),
       },
-      position: { x: 480, y: 80 },
+      position: { x: 480, y: 78 },
       type: "dataSelectorNode",
       draggable: false,
     };
@@ -300,23 +303,117 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     const transformLinkNodes = nodes.filter(
       (node: any) => node.type === "transformLinkNode"
     );
-    const updatedTransformLinkNodes = transformLinkNodes.map(
-      (node: any, index: number) => ({
-        ...node,
-        data: {
-          ...node.data,
-          label: selectedTransformRef.current[index].name,
-        },
-      })
-    );
+    console.log("nodes", nodes);
+    const filteredTransformLinkNode = transformLinkNodes.filter((node: any) => {
+      return selectedTransformRef.current.some(
+        (transform: Transform) => transform.name === node.data.label
+      );
+    });
+    console.log("filteredTransformLinkNode", filteredTransformLinkNode);
+    let updatedTransformLinkNodes: never[] = [];
+    if (filteredTransformLinkNode.length === 0) {
+      setNodes((prevNodes: any) => {
+        const defaultDestinationNode = prevNodes.find(
+          (node: any) => node.id === "destination"
+        );
 
+        const updatedDefaultDestinationNode = {
+          ...defaultDestinationNode,
+          position: { x: 480, y: 78 },
+        };
+        return [
+          ...prevNodes.filter(
+            (node: any) =>
+              !node.id.includes("transform") || node.id === "destination"
+          ),
+          transformSelectorNode,
+          updatedDefaultDestinationNode,
+        ];
+      });
+      return;
+    } else if (filteredTransformLinkNode.length < transformLinkNodes.length) {
+      updatedTransformLinkNodes = filteredTransformLinkNode.map(
+        (node: any, index: number) => {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              label: selectedTransformRef.current[index]?.name,
+            },
+            position: {
+              ...node.position,
+              x: 25 + index * 150,
+            },
+          };
+        }
+      );
+      const updateAddTransformNode = nodes.filter(
+        (node: any) => node.type === "addTransformNode"
+      );
+      const updateTransformGroupNode = nodes.filter(
+        (node: any) => node.id === "transform_group"
+      );
+      const updateDataDestinationNode = nodes.filter(
+        (node: any) => node.id === "destination"
+      );
+      const updatedAddTransformNode = [
+        {
+          ...updateAddTransformNode[0],
+          position: {
+            ...updateAddTransformNode[0].position,
+            x: 45 + selectedTransformRef.current.length * 150,
+          },
+        },
+      ];
+      const updatedTransformGroupNode = [
+        {
+          ...updateTransformGroupNode[0],
+          style: {
+            ...updateTransformGroupNode[0].style,
+            width: 100 + +150 * selectedTransformRef.current.length,
+          },
+        },
+      ];
+      const updatedDataDestinationNode = [
+        {
+          ...updateDataDestinationNode[0],
+          position: {
+            ...updateDataDestinationNode[0].position,
+            x: 480 + selectedTransformRef.current.length * 150,
+          },
+        },
+      ];
+      setNodes((prevNodes: any) => {
+        return [
+          ...prevNodes.filter(
+            (node: any) =>
+              node.id === "source" || node.id === "transform_selector"
+          ),
+          ...updatedTransformLinkNodes,
+          ...updatedAddTransformNode,
+          ...updatedTransformGroupNode,
+          ...updatedDataDestinationNode,
+        ];
+      });
+      return;
+    } else if (filteredTransformLinkNode.length === transformLinkNodes.length) {
+      updatedTransformLinkNodes = filteredTransformLinkNode.map(
+        (node: any, index: number) => ({
+          ...node,
+          data: {
+            ...node.data,
+            label: selectedTransformRef.current[index]?.name,
+          },
+        })
+      );
+    }
     setNodes((prevNodes: any) => {
       return [
         ...prevNodes.filter((node: any) => node.type !== "transformLinkNode"),
         ...updatedTransformLinkNodes,
       ];
     });
-  }, [nodes, rearrangeTrigger]);
+  }, [rearrangeTrigger]);
 
   const handleExpand = useCallback(() => {
     const linkTransforms = selectedTransformRef.current.map((transform, id) => {
@@ -356,7 +453,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         targetPosition: "left",
         action: cardButtonTransform(),
       },
-      position: { x: 45 + selectedTransformRef.current.length * 150, y: 37 },
+      position: { x: 45 + selectedTransformRef.current.length * 150, y: 36 },
       style: {
         zIndex: 10,
       },
@@ -526,15 +623,29 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
 
   const handleAddTransform = useCallback(
     (transform: TransformData) => {
-      let noOfTransformNodes = nodes.filter((node: any) => {
+      const transformNode = nodes.filter((node: any) => {
         return node.parentId === "transform_group";
-      }).length;
+      });
+      let noOfTransformNodes = transformNode.length;
       if (noOfTransformNodes === 0) {
         handleProcessor();
         noOfTransformNodes = 1;
       }
-      const newId = `transform_${noOfTransformNodes}`;
+      const transformLinkNode = transformNode.filter((node: any) => {
+        return node.id !== "add_transform";
+      });
+      console.log("transformLinkNode", transformLinkNode);
+      const transformID =
+        noOfTransformNodes === 1
+          ? 1
+          : +transformLinkNode[transformLinkNode.length - 1].id.split("_")[1] +
+            1;
+      console.log("transformID", transformID);
+
+      const newId = `transform_${transformID}`;
       const xPosition = 25 + (noOfTransformNodes - 1) * 150;
+
+      console.log("xPosition", xPosition);
       const newTransformNode = createNewTransformNode(
         newId,
         xPosition,
