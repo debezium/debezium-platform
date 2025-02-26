@@ -1,0 +1,6 @@
+.edge-path__unified-edit {
+    stroke: url(#edge-gradient-edit) !important;
+    /* stroke: #ff0000 !important; */
+    stroke-width: 2 !important;
+    stroke-opacity: 0.75 !important;
+  }

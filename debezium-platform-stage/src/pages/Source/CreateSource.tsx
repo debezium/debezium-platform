@@ -19,7 +19,11 @@ import "./CreateSource.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { useEffect, useRef, useState } from "react";
 import { createPost, Payload, Source } from "../../apis/apis";
-import { API_URL, connectorSchema, initialConnectorSchema } from "../../utils/constants";
+import {
+  API_URL,
+  connectorSchema,
+  initialConnectorSchema,
+} from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
 import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
 import { find } from "lodash";
@@ -380,7 +384,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   handlePropertyChange={handlePropertyChange}
                 />
               ) : (
-                <>
+                <div>
                   {codeAlert && (
                     <Alert
                       variant="danger"
@@ -408,8 +412,9 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                       }
                     }}
                     onEditorDidMount={onEditorDidMount}
+                    height="250px"
                   />
-                </>
+                </div>
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>

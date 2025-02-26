@@ -1,9 +1,9 @@
 import { EdgeProps, getBezierPath, Position } from "reactflow";
-import "./UnifiedCustomEdge.css";
+import "./EditUnifiedCustomEdge.css";
 
-interface UnifiedCustomEdgeProps extends EdgeProps {}
+interface EditUnifiedCustomEdgeProps extends EdgeProps {}
 
-const UnifiedCustomEdge: React.FC<UnifiedCustomEdgeProps> = ({
+const EditUnifiedCustomEdge: React.FC<EditUnifiedCustomEdgeProps> = ({
   id,
   sourceX,
   sourceY,
@@ -42,19 +42,11 @@ const UnifiedCustomEdge: React.FC<UnifiedCustomEdgeProps> = ({
 
   return (
     <>
-      <svg>
-        <defs>
-          <linearGradient id="edge-gradient-unified">
-            <stop offset="0%" stopColor="#a5c82d" />
-            <stop offset="50%" stopColor="#7fc5a5" />
-            <stop offset="100%" stopColor="#58b2da" />
-          </linearGradient>
-        </defs>
-      </svg>
+      
       <path
         id={id}
         style={style}
-        className="react-flow__edge-path react-flow__edge-path__unified"
+        className="edge-path__unified-edit"
         d={completePath}
         markerEnd={markerEnd}
       />
@@ -65,4 +57,4 @@ const UnifiedCustomEdge: React.FC<UnifiedCustomEdgeProps> = ({
   );
 };
 
-export default UnifiedCustomEdge;
+export default EditUnifiedCustomEdge;

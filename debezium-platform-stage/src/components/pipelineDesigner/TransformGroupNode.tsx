@@ -10,8 +10,8 @@ interface TransformGroupNodeProps {
     label: string;
     sourcePosition: Position;
     targetPosition: Position;
-    onToggleDrawer: () => void;
     handleCollapsed: () => void;
+    onToggleDrawer?: () => void;
   };
 }
 
@@ -41,23 +41,28 @@ const TransformGroupNode: React.FC<TransformGroupNodeProps> = ({ data }) => {
           </div>
         </Tooltip>
       </div>
-      <div onClick={data.onToggleDrawer} className={"editDataNodeDestination"}>
-        <Tooltip content={<div>Edit transform</div>}>
-          <div
-            style={
-              darkMode
-                ? {
-                    background: AppColors.dark,
-                  }
-                : {
-                    backgroundColor: AppColors.white,
-                  }
-            }
-          >
-            <PencilAltIcon />
-          </div>
-        </Tooltip>
-      </div>
+      {data.onToggleDrawer && (
+        <div
+          onClick={data.onToggleDrawer}
+          className={"editDataNodeDestination"}
+        >
+          <Tooltip content={<div>Edit transform</div>}>
+            <div
+              style={
+                darkMode
+                  ? {
+                      background: AppColors.dark,
+                    }
+                  : {
+                      backgroundColor: AppColors.white,
+                    }
+              }
+            >
+              <PencilAltIcon />
+            </div>
+          </Tooltip>
+        </div>
+      )}
 
       <div className="transformationGroupWrapper " style={{ height: 100 }}>
         {/* <Handle type="target" id="smt-input" position={data.targetPosition} /> */}
@@ -69,7 +74,7 @@ const TransformGroupNode: React.FC<TransformGroupNodeProps> = ({ data }) => {
             fontWeight: "bold",
             textAlign: "center",
             width: "100%",
-            paddingTop: 5,
+            paddingTop: 3,
           }}
         >
           {data.label}

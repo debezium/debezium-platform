@@ -8,7 +8,7 @@ import {
   Stack,
   StackItem,
 } from "@patternfly/react-core";
-import { Handle, Position } from "reactflow";
+import { Position } from "reactflow";
 import "./TransformLinkNode.css";
 
 import { DataProcessorIcon, FilterIcon } from "@patternfly/react-icons";
@@ -48,7 +48,7 @@ const TransformLinkNode: React.FC<TransformLinkNodeProps> = ({ data }) => {
                 }
           }
         >
-          <Handle type="target" id="smt-input" position={data.sourcePosition} />
+          {/* <Handle type="target" id="smt-input" position={data.sourcePosition} /> */}
           <Card
             ouiaId="BasicCard"
             isCompact
@@ -131,11 +131,11 @@ const TransformLinkNode: React.FC<TransformLinkNodeProps> = ({ data }) => {
             </CardBody>
           </Card>
 
-          <Handle
+          {/* <Handle
             type="source"
             id="smt-output"
             position={data.targetPosition}
-          />
+          /> */}
         </div>
       </div>
     </>

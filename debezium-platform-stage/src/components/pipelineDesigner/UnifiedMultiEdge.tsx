@@ -20,8 +20,11 @@ const UnifiedMultiEdge: React.FC<UnifiedMultiEdgeProps> = ({
 }) => {
   const midY = sourceY - 1; // Slightly above the direct line
 
-  const firstTransformX = sourceX + 180;
-  const lastTransformX = targetX - 220;
+  // const firstTransformX = sourceX + 180;
+  // const lastTransformX = targetX - 220;
+
+  const firstTransformX = sourceX + 170;
+  const lastTransformX = firstTransformX;
 
   // Create a combined path through all three points
   const firstPath = getBezierPath({
@@ -31,12 +34,12 @@ const UnifiedMultiEdge: React.FC<UnifiedMultiEdgeProps> = ({
     targetY: midY,
   });
 
-  const middlePath = getBezierPath({
-    sourceX: firstTransformX,
-    sourceY: midY,
-    targetX: lastTransformX,
-    targetY: midY,
-  });
+  // const middlePath = getBezierPath({
+  //   sourceX: firstTransformX,
+  //   sourceY: midY,
+  //   targetX: lastTransformX,
+  //   targetY: midY,
+  // });
 
   const secondPath = getBezierPath({
     sourceX: lastTransformX,
@@ -46,11 +49,20 @@ const UnifiedMultiEdge: React.FC<UnifiedMultiEdgeProps> = ({
   });
 
   // Combine the paths
-  const completePath = `${firstPath[0]} ${middlePath[0]}  ${secondPath[0]}`;
+  const completePath = `${firstPath[0]}   ${secondPath[0]}`;
   const duration = data?.throughNodeNo ? 3 + data.throughNodeNo : 3;
 
   return (
     <>
+      <svg>
+        <defs>
+          <linearGradient id="edge-gradient-unified">
+            <stop offset="0%" stopColor="#a5c82d" />
+            <stop offset="50%" stopColor="#7fc5a5" />
+            <stop offset="100%" stopColor="#58b2da" />
+          </linearGradient>
+        </defs>
+      </svg>
       <path
         id={id}
         style={style}
