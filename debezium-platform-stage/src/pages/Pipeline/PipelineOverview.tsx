@@ -23,7 +23,7 @@ import {
 } from "@patternfly/react-core";
 import { API_URL } from "@utils/constants";
 import { getConnectorTypeName } from "@utils/helpers";
-import { FC, useEffect, useState } from "react";
+import { FC, memo, useEffect, useState } from "react";
 import {
   Pipeline,
   Source,
@@ -33,6 +33,11 @@ import {
 } from "src/apis/apis";
 import comingSoonImage from "../../assets/comingSoon.png";
 import "./PipelineOverview.css";
+declare global {
+  interface Window {
+    EVENT_BUFFER_SIZE: number;
+  }
+}
 import CompositionFlow from "@components/pipelineDesigner/CompositionFlow";
 import { ReactFlowProvider } from "reactflow";
 
@@ -41,7 +46,6 @@ type PipelineOverviewProp = {
 };
 
 const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
-  const [pipeline, setPipeline] = useState<Pipeline>();
   const [source, setSource] = useState<Source>();
   const [transforms, setTransforms] = useState<Transform[]>([]);
   const [destination, setDestination] = useState<Destination>();
@@ -53,64 +57,62 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPipeline = async () => {
+    const fetchData = async () => {
       setIsFetchLoading(true);
-      const response = await fetchDataTypeTwo<Pipeline>(
-        `${API_URL}/api/pipelines/${pipelineId}`
-      );
+      try {
+        const pipelineResponse = await fetchDataTypeTwo<Pipeline>(
+          `${API_URL}/api/pipelines/${pipelineId}`
+        );
 
-      if (response.error) {
-        setError(response.error);
-      } else {
-        setPipeline(response.data as Pipeline);
-        setTransforms(response.data?.transforms as Transform[]);
+        if (pipelineResponse.error) {
+          throw new Error(pipelineResponse.error);
+        }
+
+        const pipelineData = pipelineResponse.data as Pipeline;
+        setTransforms(pipelineData.transforms as Transform[]);
+
+        if (pipelineData?.source?.id && pipelineData?.destination?.id) {
+          const [sourceResponse, destinationResponse] = await Promise.all([
+            fetchDataTypeTwo<Source>(
+              `${API_URL}/api/sources/${pipelineData.source.id}`
+            ),
+            fetchDataTypeTwo<Destination>(
+              `${API_URL}/api/destinations/${pipelineData.destination.id}`
+            ),
+          ]);
+
+          if (!sourceResponse.error) {
+            setSource(sourceResponse.data as Source);
+          }
+
+          if (!destinationResponse.error) {
+            setDestination(destinationResponse.data as Destination);
+          }
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setIsFetchLoading(false);
+        setIsSourceFetchLoading(false);
+        setIsDestinationFetchLoading(false);
       }
-
-      setIsFetchLoading(false);
     };
 
-    fetchPipeline();
+    fetchData();
   }, [pipelineId]);
 
-  useEffect(() => {
-    const fetchSource = async () => {
-      setIsSourceFetchLoading(true);
-      const response = await fetchDataTypeTwo<Source>(
-        `${API_URL}/api/sources/${pipeline!.source.id}`
-      );
-
-      if (response.error) {
-        setError(response.error);
-      } else {
-        setSource(response.data as Source);
-      }
-      setIsSourceFetchLoading(false);
-    };
-
-    if (pipeline?.source?.id) {
-      fetchSource();
-    }
-  }, [pipeline]);
+  const CompositionFlowMemo = memo(CompositionFlow);
 
   useEffect(() => {
-    const fetchDestination = async () => {
-      setIsDestinationFetchLoading(true);
-      const response = await fetchDataTypeTwo<Destination>(
-        `${API_URL}/api/destinations/${pipeline!.destination.id}`
-      );
-
-      if (response.error) {
-        setError(response.error);
-      } else {
-        setDestination(response.data as Destination);
-      }
-      setIsDestinationFetchLoading(false);
+    // Store original event buffer size
+    const originalSize = window.EVENT_BUFFER_SIZE;
+    // Reduce event buffer size for charts to improve performance
+    window.EVENT_BUFFER_SIZE = 100;
+    return () => {
+      // Restore original size on unmount
+      window.EVENT_BUFFER_SIZE = originalSize;
     };
-
-    if (pipeline?.source?.id) {
-      fetchDestination();
-    }
-  }, [pipeline]);
+  }, []);
 
   if (isFetchLoading) {
     return <div>Loading...</div>;
@@ -220,7 +222,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
             style={{ minHeight: "300px", height: "100%", width: "100%" }}
           >
             <ReactFlowProvider>
-              <CompositionFlow
+              <CompositionFlowMemo
                 sourceName={source?.name || ""}
                 sourceType={source?.type || ""}
                 selectedTransform={transforms}

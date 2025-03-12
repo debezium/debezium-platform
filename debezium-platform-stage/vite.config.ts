@@ -22,6 +22,9 @@ const config: ViteConfig = {
     },
     port: PORT,
   },
+  preview: {
+    port: PORT,
+  },
   test: {
     // 👋 add the line below to add jsdom to vite
     environment: "jsdom",
