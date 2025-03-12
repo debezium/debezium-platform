@@ -1,9 +1,9 @@
 domain:
   url: ""
 stage:
-  image: quay.io/debezium/platform-stage:latest
+  image: quay.io/debezium/platform-stage:nightly
 conductor:
-  image: quay.io/debezium/platform-conductor:latest
+  image: quay.io/debezium/platform-conductor:nightly
   offset:
     existingConfigMap: ""
 offset:
