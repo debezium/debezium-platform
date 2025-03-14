@@ -6,8 +6,8 @@ keywords:
   - debezium
   - cdc
 sources:
-  - https://github.com/debezium/debezium-platform-conductor
-home: https://github.com/debezium/debezium-platform-conductor
+  - https://github.com/debezium/debezium-platform
+home: https://github.com/debezium/debezium-platform
 dependencies:
     - name: debezium-operator
       version: "3.0.7-final"
