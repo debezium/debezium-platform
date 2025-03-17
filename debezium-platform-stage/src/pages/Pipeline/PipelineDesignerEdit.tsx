@@ -416,9 +416,6 @@ const PipelineDesignerEdit: React.FunctionComponent<
                       >
                         Save and next
                       </Button>
-                      <Button variant="link" onClick={() => {}}>
-                        Cancel
-                      </Button>
                     </ActionGroup>
                   </CardFooter>
                 </Card>

@@ -20,6 +20,8 @@ import {
   DescriptionListDescription,
   Skeleton,
   Content,
+  CardHeader,
+  Button,
 } from "@patternfly/react-core";
 import { API_URL } from "@utils/constants";
 import { getConnectorTypeName } from "@utils/helpers";
@@ -40,12 +42,19 @@ declare global {
 }
 import CompositionFlow from "@components/pipelineDesigner/CompositionFlow";
 import { ReactFlowProvider } from "reactflow";
+import { PencilAltIcon } from "@patternfly/react-icons";
+import { useNavigate } from "react-router-dom";
 
 type PipelineOverviewProp = {
   pipelineId: string;
 };
 
 const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
+  const navigate = useNavigate();
+
+  const navigateTo = (url: string) => {
+    navigate(url);
+  };
   const [source, setSource] = useState<Source>();
   const [transforms, setTransforms] = useState<Transform[]>([]);
   const [destination, setDestination] = useState<Destination>();
@@ -217,7 +226,22 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
       </GridItem>
       <GridItem span={12} rowSpan={1}>
         <Card ouiaId="BasicCard" isFullHeight>
-          <CardTitle>Pipeline composition</CardTitle>
+          <CardHeader
+            actions={{
+              actions: (
+                <Button
+                  variant="link"
+                  icon={<PencilAltIcon />}
+                  onClick={() => navigateTo(`/pipeline/${pipelineId}/edit`)}
+                >
+                  Edit
+                </Button>
+              ),
+            }}
+          >
+            <CardTitle>Pipeline composition</CardTitle>
+          </CardHeader>
+
           <CardBody
             style={{ minHeight: "300px", height: "100%", width: "100%" }}
           >
@@ -236,7 +260,23 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
 
       <GridItem span={6} rowSpan={1}>
         <Card ouiaId="BasicCard">
-          <CardTitle>Source</CardTitle>
+          <CardHeader
+            actions={{
+              actions: (
+                <Button
+                  variant="link"
+                  icon={<PencilAltIcon />}
+                  onClick={() =>
+                    navigateTo(`/source/edit_source/${destination?.id}`)
+                  }
+                >
+                  Edit
+                </Button>
+              ),
+            }}
+          >
+            <CardTitle>Source</CardTitle>
+          </CardHeader>
           <CardBody>
             <DescriptionList>
               <DescriptionListGroup>
@@ -298,7 +338,25 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
 
       <GridItem span={6} rowSpan={1}>
         <Card ouiaId="BasicCard">
-          <CardTitle>Destination</CardTitle>
+          <CardHeader
+            actions={{
+              actions: (
+                <Button
+                  variant="link"
+                  icon={<PencilAltIcon />}
+                  onClick={() =>
+                    navigateTo(
+                      `/destination/edit_destination/${destination?.id}`
+                    )
+                  }
+                >
+                  Edit
+                </Button>
+              ),
+            }}
+          >
+            <CardTitle>Destination</CardTitle>
+          </CardHeader>
           <CardBody>
             <DescriptionList>
               <DescriptionListGroup>
