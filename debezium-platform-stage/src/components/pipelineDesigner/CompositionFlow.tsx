@@ -13,6 +13,7 @@ import ReactFlow, {
   addEdge,
   PanOnScrollMode,
   useReactFlow,
+  NodeTypes,
 } from "reactflow";
 import { useData } from "../../appLayout/AppContext";
 import DebeziumNode from "./DebeziumNode";
@@ -24,21 +25,6 @@ import TransformLinkNode from "./TransformLinkNode";
 import TransformGroupNode from "./TransformGroupNode";
 import TransformCollapsedNode from "./TransformCollapsedNode";
 import UnifiedMultiEdge from "./UnifiedMultiEdge";
-
-const nodeTypes = {
-  debeziumNode: DebeziumNode,
-  dataNode: DataNode,
-  transformLinkNode: TransformLinkNode,
-  transformGroupNode: TransformGroupNode,
-  transformCollapsedNode: TransformCollapsedNode,
-};
-
-const edgeTypes = {
-  unifiedCustomEdge: UnifiedCustomEdge,
-  unifiedMultiCustomEdge: UnifiedMultiEdge,
-};
-
-const proOptions = { hideAttribution: true };
 
 interface CreationFlowProps {
   sourceName: string;
@@ -57,18 +43,34 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
     selectedTransform,
   }) => {
     const { darkMode } = useData();
-
     const reactFlowInstance = useReactFlow();
+
+    const nodeTypes = useMemo<NodeTypes>(() => ({
+      debeziumNode: DebeziumNode,
+      dataNode: DataNode,
+      transformLinkNode: TransformLinkNode,
+      transformGroupNode: TransformGroupNode,
+      transformCollapsedNode: TransformCollapsedNode,
+    }), []);
+
+    const edgeTypes = useMemo(() => ({
+      unifiedCustomEdge: UnifiedCustomEdge,
+      unifiedMultiCustomEdge: UnifiedMultiEdge,
+    }), []);
+
+    const proOptions = useMemo(() => ({ hideAttribution: true }), []);
 
     const refitElements = useCallback(() => {
       const timeoutId = setTimeout(() => {
-        reactFlowInstance.fitView({
-          padding: 0.2,
-          duration: 200, // 200ms
-        });
+        if (reactFlowInstance) {
+          reactFlowInstance.fitView({
+            padding: 0.2,
+            duration: 200,
+          });
+        }
       }, 50);
 
-      return () => clearTimeout(timeoutId); // Clear timeout
+      return () => clearTimeout(timeoutId);
     }, [reactFlowInstance]);
 
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -139,85 +141,7 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
     const selectedTransformRef = useRef(selectedTransform);
     selectedTransformRef.current = selectedTransform;
 
-    const handleExpand = useCallback(() => {
-      const linkTransforms = selectedTransformRef.current.map(
-        (transform, id) => {
-          const newId = `transform_${id + 1}`;
-          const xPosition = 25 + id * 150;
-          const newTransformNode = createNewTransformNode(
-            newId,
-            xPosition,
-            transform.name
-            // transform.predicate
-          );
-          return newTransformNode;
-        }
-      );
-      const transformGroupNode = {
-        id: "transform_group",
-        data: {
-          label: "Transform",
-          handleCollapsed: handleCollapsed,
-        },
-        position: { x: 260, y: 25 },
-        style: {
-          width: +150 * selectedTransformRef.current.length - 10,
-          height: 80,
-          zIndex: 1,
-        },
-        type: "transformGroupNode",
-        draggable: false,
-      };
-
-      setNodes((prevNodes: any) => {
-        const dataSelectorDestinationNode = prevNodes.find(
-          (node: any) => node.id === "destination"
-        );
-
-        const updatedDataSelectorDestinationNode = {
-          ...dataSelectorDestinationNode,
-          position: {
-            ...dataSelectorDestinationNode.position,
-            x: 350 + 150 * selectedTransformRef.current.length,
-          },
-        };
-
-        return [
-          ...prevNodes.filter(
-            (node: any) =>
-              node.id !== "transform_selected" && node.id !== "destination"
-          ),
-
-          transformGroupNode,
-          ...linkTransforms,
-          updatedDataSelectorDestinationNode,
-        ];
-      });
-
-      setEdges([...createEdges]);
-    }, [
-      destinationName,
-      destinationType,
-      selectedTransform.length,
-      createEdges,
-    ]);
-
-    const TransformCollapsedNode = useMemo(() => {
-      return {
-        id: "transform_selected",
-        data: {
-          label: "Transformation",
-          handleExpand: handleExpand,
-          selectedTransform: selectedTransformRef,
-        },
-        position: { x: 280, y: 45 },
-        targetPosition: "left",
-        type: "transformCollapsedNode",
-        draggable: false,
-      };
-    }, [selectedTransformRef]);
-
-    const createNewTransformNode = (
+    const createNewTransformNode = useCallback((
       id: string,
       xPosition: number,
       transformName: string,
@@ -244,13 +168,28 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
         extent: "parent",
         draggable: false,
       };
-    };
+    }, []);
+
+    const transformCollapsedNodeConfig = useMemo(() => ({
+      id: "transform_selected",
+      data: {
+        label: "Transformation",
+        selectedTransform: selectedTransformRef,
+        handleExpand: () => {},
+      },
+      position: { x: 280, y: 45 },
+      targetPosition: "left",
+      type: "transformCollapsedNode",
+      draggable: false,
+    }), [selectedTransformRef]);
 
     const handleCollapsed = useCallback(() => {
-      setNodes((prevNodes: any) => {
+      setNodes((prevNodes: Node[]) => {
         const destinationNode = prevNodes.find(
-          (node: any) => node.id === "destination"
+          (node: Node) => node.id === "destination"
         );
+
+        if (!destinationNode) return prevNodes;
 
         const updatedDestinationNode = {
           ...destinationNode,
@@ -259,18 +198,18 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
 
         return [
           ...prevNodes.filter(
-            (node: any) =>
+            (node: Node) =>
               !node.id.includes("transform") && node.id !== "destination"
           ),
-          TransformCollapsedNode,
+          transformCollapsedNodeConfig,
           updatedDestinationNode,
         ];
       });
-    }, [TransformCollapsedNode]);
+    }, [transformCollapsedNodeConfig]);
 
-    useEffect(() => {
-      if (selectedTransform.length > 0) {
-        const linkTransforms = selectedTransform.map((transform, id) => {
+    const handleExpand = useCallback(() => {
+      const linkTransforms = selectedTransformRef.current.map(
+        (transform, id) => {
           const newId = `transform_${id + 1}`;
           const xPosition = 25 + id * 150;
           const newTransformNode = createNewTransformNode(
@@ -279,12 +218,75 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
             transform.name
           );
           return newTransformNode;
+        }
+      );
+      const transformGroupNode = {
+        id: "transform_group",
+        data: {
+          label: "Transform",
+          handleCollapsed: handleCollapsed,
+        },
+        position: { x: 260, y: 25 },
+        style: {
+          width: +150 * selectedTransformRef.current.length - 10,
+          height: 80,
+          zIndex: 1,
+        },
+        type: "transformGroupNode",
+        draggable: false,
+      };
+
+      setNodes((prevNodes: Node[]) => {
+        const dataSelectorDestinationNode = prevNodes.find(
+          (node: Node) => node.id === "destination"
+        );
+
+        if (!dataSelectorDestinationNode) return prevNodes;
+
+        const updatedDataSelectorDestinationNode = {
+          ...dataSelectorDestinationNode,
+          position: {
+            ...dataSelectorDestinationNode.position,
+            x: 350 + 150 * selectedTransformRef.current.length,
+          },
+        };
+
+        return [
+          ...prevNodes.filter(
+            (node: Node) =>
+              node.id !== "transform_selected" && node.id !== "destination"
+          ),
+          transformGroupNode,
+          ...linkTransforms,
+          updatedDataSelectorDestinationNode,
+        ];
+      });
+
+      setEdges([...createEdges]);
+    }, [
+      createNewTransformNode,
+      selectedTransformRef,
+      createEdges,
+      handleCollapsed
+    ]);
+
+    useEffect(() => {
+      transformCollapsedNodeConfig.data.handleExpand = handleExpand;
+    }, [handleExpand, transformCollapsedNodeConfig]);
+
+    useEffect(() => {
+      if (selectedTransform.length > 0) {
+        const linkTransforms = selectedTransform.map((transform, id) => {
+          const newId = `transform_${id + 1}`;
+          const xPosition = 25 + id * 150;
+          return createNewTransformNode(newId, xPosition, transform.name);
         });
+
         const transformGroupNode = {
           id: "transform_group",
           data: {
             label: "Transform",
-            handleCollapsed: handleCollapsed,
+            handleCollapsed,
           },
           position: { x: 260, y: 25 },
           style: {
@@ -295,6 +297,7 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
           type: "transformGroupNode",
           draggable: false,
         };
+
         const dataDestinationNode = {
           id: "destination",
           data: {
@@ -313,6 +316,8 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
           ...linkTransforms,
           dataDestinationNode,
         ]);
+
+        setEdges([...createEdges]);
       } else {
         const defaultTransformationNode = {
           id: "add_transformation",
@@ -336,14 +341,14 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
           type: "dataNode",
           draggable: false,
         };
+
         setNodes([
           dataSourceNode,
           defaultTransformationNode,
           dataDestinationNode,
         ]);
+        setEdges([...createEdges]);
       }
-
-      setEdges([...createEdges]);
     }, [
       createEdges,
       dataSourceNode,
@@ -351,60 +356,58 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
       destinationType,
       handleCollapsed,
       selectedTransform,
-      setNodes,
-      sourceName,
-      sourceType,
+      createNewTransformNode,
     ]);
 
+    const reactFlowProps = useMemo(() => ({
+      nodes,
+      edges,
+      onNodesChange,
+      onEdgesChange,
+      nodeTypes,
+      edgeTypes,
+      proOptions,
+      fitView: true,
+      fitViewOptions: {
+        padding: 0.2,
+        includeHiddenNodes: false,
+      },
+      maxZoom: 1.4,
+      minZoom: 1.4,
+      onConnect,
+      panOnScroll: true,
+      panOnScrollMode: PanOnScrollMode.Horizontal,
+      defaultViewport: { x: 0, y: 0, zoom: 1.4 },
+      panOnDrag: true,
+      onInit: (instance: any) => {
+        instance.fitView({ padding: 0.2 });
+      },
+      snapToGrid: true,
+      snapGrid: [20, 20] as [number, number],
+      nodesDraggable: false,
+    }), [nodes, edges, onNodesChange, onEdgesChange, nodeTypes, edgeTypes, proOptions, onConnect]);
+
     return (
-      <>
-        <div
-          ref={reactFlowWrapper}
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            proOptions={proOptions}
-            fitView
-            fitViewOptions={{
-              padding: 0.2,
-              includeHiddenNodes: false,
+      <div
+        ref={reactFlowWrapper}
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <ReactFlow {...reactFlowProps}>
+          <Background
+            style={{
+              borderRadius: "5px",
             }}
-            maxZoom={1.4}
-            minZoom={1.4}
-            onConnect={onConnect}
-            panOnScroll={true}
-            panOnScrollMode={PanOnScrollMode.Horizontal}
-            defaultViewport={{ x: 0, y: 0, zoom: 1.4 }}
-            panOnDrag={true}
-            onInit={(instance) => {
-              instance.fitView({ padding: 0.2 });
-            }}
-            snapToGrid={true}
-            snapGrid={[20, 20]}
-            nodesDraggable={false}
-          >
-            <Background
-              style={{
-                borderRadius: "5px",
-              }}
-              gap={13}
-              color={darkMode ? AppColors.dark : AppColors.white}
-            />
-          </ReactFlow>
-        </div>
-      </>
+            gap={13}
+            color={darkMode ? AppColors.dark : AppColors.white}
+          />
+        </ReactFlow>
+      </div>
     );
   }
 );

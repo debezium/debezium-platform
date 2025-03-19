@@ -579,6 +579,44 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
     handleTransformModalToggle,
   ]);
 
+  const reactFlowProps = useMemo(() => ({
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    nodeTypes,
+    edgeTypes,
+    proOptions,
+    fitView: true,
+    maxZoom: 1.4,
+    minZoom: 1.4,
+    onConnect,
+    panOnScroll: true,
+    panOnScrollMode: PanOnScrollMode.Horizontal,
+    panOnDrag: true,
+    onInit: (instance: any) => {
+      instance.fitView({ padding: 0.2 });
+    },
+  }), [nodes, edges, onNodesChange, onEdgesChange, nodeTypes, edgeTypes, proOptions, onConnect]);
+
+  const backgroundProps = useMemo(() => ({
+    style: {
+      borderRadius: "5px",
+    },
+    gap: 13,
+    color: darkMode ? AppColors.dark : AppColors.white,
+  }), [darkMode]);
+
+  const gradientDefs = useMemo(() => (
+    <defs>
+      <linearGradient id="edge-gradient-edit">
+        <stop offset="0%" stopColor="#a5c82d" />
+        <stop offset="50%" stopColor="#7fc5a5" />
+        <stop offset="100%" stopColor="#58b2da" />
+      </linearGradient>
+    </defs>
+  ), []);
+
   return (
     <>
        <div
@@ -591,41 +629,10 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
           alignItems: "center",
         }}
       >
-        <ReactFlow
-          key={nodes.length}
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          proOptions={proOptions}
-          fitView
-          maxZoom={1.4}
-          minZoom={1.4}
-          onConnect={onConnect}
-          panOnScroll={true}
-          panOnScrollMode={PanOnScrollMode.Horizontal}
-          panOnDrag={true}
-          onInit={(instance) => {
-            instance.fitView({ padding: 0.2 });
-          }}
-        >
-          <Background
-            style={{
-              borderRadius: "5px",
-            }}
-            gap={13}
-            color={darkMode ? AppColors.dark : AppColors.white}
-          />
+        <ReactFlow {...reactFlowProps}>
+          <Background {...backgroundProps} />
           <svg>
-            <defs>
-              <linearGradient id="edge-gradient-edit">
-                <stop offset="0%" stopColor="#a5c82d" />
-                <stop offset="50%" stopColor="#7fc5a5" />
-                <stop offset="100%" stopColor="#58b2da" />
-              </linearGradient>
-            </defs>
+            {gradientDefs}
           </svg>
         </ReactFlow>
       </div>

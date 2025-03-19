@@ -31,15 +31,12 @@ const TransformCollapsedNode: React.FC<TransformCollapsedNodeProps> = ({
   return (
     <>
       <div
-        onClick={() => {
-          console.log("log count");
-        }}
+        onClick={data.handleExpand}
         className={" gradientSource editDataNodeSource"}
       >
         <Tooltip
           content={
             <div>
-              {" "}
               {data.selectedTransform.current
                 ? data.selectedTransform.current
                     .map((transform) => transform.name)
@@ -100,6 +97,7 @@ const TransformCollapsedNode: React.FC<TransformCollapsedNodeProps> = ({
                   cursor: "pointer",
                 }
           }
+          onClick={data.handleExpand}
         >
           {/* <Handle type="target" id="smt-input" position={data.targetPosition} /> */}
           <Card
