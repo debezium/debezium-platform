@@ -9,7 +9,7 @@ import {
 import { DownloadIcon, ExpandIcon } from "@patternfly/react-icons";
 import { LogViewer, LogViewerSearch } from "@patternfly/react-log-viewer";
 import { API_URL } from "@utils/constants";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useState, useRef } from "react";
 import "./PipelineLog.css";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { fetchFile } from "src/apis/apis";
@@ -36,6 +36,9 @@ interface PipelineLogProps {
   pipelineName: string;
 }
 
+// Maximum number of log lines to keep in memory
+const MAX_LOG_LINES = 1000;
+
 // eslint-disable-next-line no-empty-pattern
 const PipelineLog: FC<PipelineLogProps> = ({
   activeTabKey,
@@ -46,57 +49,95 @@ const PipelineLog: FC<PipelineLogProps> = ({
 
   const [logs, setLogs] = useState<string[]>([]);
   // Set to track unique logs
-  const logSet = new Set<string>();
+  const logSet = useRef(new Set<string>());
 
   const [isLogLoading, setIsLogLoading] = useState<boolean>(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
+
+  // Close WebSocket connection when tab is not active
+  useEffect(() => {
+    const isActive = activeTabKey === "logs";
+    
+    if (!isActive && wsRef.current) {
+      console.log("Closing WebSocket connection as log tab is not active");
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, [activeTabKey]);
 
   useEffect(() => {
-    let ws: WebSocket;
+    if (activeTabKey !== "logs") return;
+    
+    // Only fetch logs when tab is active
     // Fetch initial logs via HTTP
     fetch(`${API_URL}/api/pipelines/${pipelineId}/logs`)
       .then((response) => response.text())
       .then((initialLogs) => {
         const initialLogLines = initialLogs.split("\n");
-
+        
+        // Reset logs when tab becomes active
+        logSet.current.clear();
+        
         // Add initial logs to the set and state
-        initialLogLines.forEach((logLine) => {
-          if (logLine && !logSet.has(logLine)) {
-            logSet.add(logLine);
+        const uniqueInitialLogs = initialLogLines.filter(logLine => {
+          if (logLine && !logSet.current.has(logLine)) {
+            logSet.current.add(logLine);
+            return true;
           }
+          return false;
         });
+        
+        // Apply log rotation if needed
+        if (uniqueInitialLogs.length > MAX_LOG_LINES) {
+          uniqueInitialLogs.splice(0, uniqueInitialLogs.length - MAX_LOG_LINES);
+        }
+        
+        setLogs(uniqueInitialLogs);
 
-        setLogs((prevLogs) => [...prevLogs, ...initialLogLines]);
-
-        // open WebSocket for real-time updates
+        // open WebSocket for real-time updates only if tab is active
         const webSocketURL = API_URL.replace(/^https?/, "ws");
-        ws = new WebSocket(
+        wsRef.current = new WebSocket(
           `${webSocketURL}/api/pipelines/${pipelineId}/logs/stream`
         );
 
-        ws.onmessage = (event) => {
+        wsRef.current.onmessage = (event) => {
           const newLogs = event.data.split("\n");
 
           const newUniqueLogs = newLogs.filter((logLine: string) => {
             // Only keep logs that haven't been added
-            return logLine && !logSet.has(logLine);
+            return logLine && !logSet.current.has(logLine);
           });
 
-          // Add new unique logs to the set and append them to the logs array
+          // Add new unique logs to the set
           newUniqueLogs.forEach((logLine: string) => {
-            logSet.add(logLine);
+            logSet.current.add(logLine);
           });
 
           if (newUniqueLogs.length > 0) {
-            setLogs((prevLogs) => [...prevLogs, ...newUniqueLogs]);
+            setLogs(prevLogs => {
+              const updatedLogs = [...prevLogs, ...newUniqueLogs];
+              // Apply log rotation - keep only the most recent MAX_LOG_LINES
+              if (updatedLogs.length > MAX_LOG_LINES) {
+                return updatedLogs.slice(updatedLogs.length - MAX_LOG_LINES);
+              }
+              return updatedLogs;
+            });
           }
         };
 
-        ws.onerror = (error) => {
+        wsRef.current.onerror = (error) => {
           console.error("WebSocket error:", error);
         };
 
-        ws.onclose = () => {
+        wsRef.current.onclose = () => {
           console.log("WebSocket connection closed");
         };
       })
@@ -104,11 +145,12 @@ const PipelineLog: FC<PipelineLogProps> = ({
 
     // Cleanup
     return () => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+        wsRef.current = null;
       }
     };
-  }, []);
+  }, [activeTabKey, pipelineId]);
 
   const downloadLogFile = async (
     pipelineId: string | undefined,
@@ -258,7 +300,6 @@ const PipelineLog: FC<PipelineLogProps> = ({
       </ToolbarContent>
     </Toolbar>
   );
-  // console.log(logs);
 
   return (
     <div className="pipeline_log">
