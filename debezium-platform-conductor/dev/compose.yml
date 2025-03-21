@@ -1,6 +1,6 @@
 services:
   conductor:
-    image: quay.io/debezium/platform-conductor:latest
+    image: quay.io/debezium/platform-conductor:nightly
     pull_policy: always
     depends_on:
       - postgres
@@ -23,7 +23,7 @@ services:
     depends_on:
       - conductor
     container_name: stage
-    image: quay.io/debezium/platform-stage:latest
+    image: quay.io/debezium/platform-stage:nightly
     pull_policy: always
     ports:
       - "3000:3000"
