@@ -18,6 +18,7 @@ import "./PipelineDetails.css";
 import PipelineLog from "./PipelineLog";
 import PipelineOverview from "./PipelineOverview";
 import { PipelineDesignerEdit } from "./PipelineDesignerEdit";
+import PipelineAction from "./PipelineAction";
 
 const PipelineDetails: React.FunctionComponent = () => {
   const { pipelineId, detailsTab } = useParams<{
@@ -108,6 +109,12 @@ const PipelineDetails: React.FunctionComponent = () => {
             title={<TabTitleText>Pipeline logs</TabTitleText>}
             tabContentId={`tabContent${"logs"}`}
           />
+
+          <Tab
+            eventKey={"action"}
+            title={<TabTitleText>Pipeline actions</TabTitleText>}
+            tabContentId={`tabContent${"action"}`}
+          />
           <Tab
             eventKey={"edit"}
             title={<TabTitleText>Edit pipeline</TabTitleText>}
@@ -162,6 +169,17 @@ const PipelineDetails: React.FunctionComponent = () => {
                 pipelineId={pipeline.id}
               />
             )}
+          </TabContentBody>
+        </TabContent>
+        <TabContent
+          key={"action"}
+          eventKey={"action"}
+          id={`tabContent${"action"}`}
+          activeKey={activeTabKey}
+          hidden={"action" !== activeTabKey}
+        >
+          <TabContentBody>
+            <PipelineAction/>
           </TabContentBody>
         </TabContent>
       </PageSection>
