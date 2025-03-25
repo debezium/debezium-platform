@@ -3,6 +3,7 @@ import type { InlineConfig } from "vitest";
 import type { UserConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import tsconfigPaths from 'vite-tsconfig-paths';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { loadEnv } from 'vite';
 
 const env = loadEnv('all', process.cwd());
@@ -11,7 +12,16 @@ const PORT = +`${env.VITE_PORT ?? 3000}`;
 
 type ViteConfig = UserConfig & { test: InlineConfig };
 const config: ViteConfig = {
-  plugins: [react(), tsconfigPaths()],
+  plugins: [react(), tsconfigPaths(),
+    viteStaticCopy({
+      targets: [
+        {
+          src: 'inject-env.sh',
+          dest: './',
+        }
+      ]
+    })
+  ],
   server: {
     proxy: {
       "/api": {
