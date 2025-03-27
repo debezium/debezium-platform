@@ -19,9 +19,10 @@ import {
   // Tile,
 } from "@patternfly/react-core";
 import ConnectorImage from "./ComponentImage";
-import { PlusCircleIcon } from "@patternfly/react-icons";
+import { ExternalLinkAltIcon, PlusCircleIcon } from "@patternfly/react-icons";
 import "./CatalogGrid.css";
 import { Catalog } from "src/apis/types";
+import { openDBZJira } from "@utils/helpers";
 
 export interface ICatalogGridProps {
   onCardSelect: (selectId: string) => void;
@@ -85,7 +86,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
           ))}
           {isAddButtonVisible && (
             <GalleryItem>
-              <Card isClickable variant={"secondary"}>
+              <Card isClickable variant={"secondary"} onClick={openDBZJira}>
                 <CardHeader
                   selectableActions={{
                     onClickAction: () => {},
@@ -97,11 +98,11 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                     style={{ fontSize: "xxx-large", paddingBottom: "10px" }}
                   />
                   <CardTitle id={`catalog-card-id-fill-out-form`}>
-                    Request new {catalogType}
+                    Request new {catalogType} <ExternalLinkAltIcon />
                   </CardTitle>
                 </CardHeader>
                 <CardBody>
-                  Fill our a form to request a new {catalogType}.
+                  Fill our a request to create a new {catalogType}.
                 </CardBody>
               </Card>
             </GalleryItem>
@@ -169,7 +170,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                         style={{ fontSize: "xxx-large", paddingBottom: "10px" }}
                       />
                     </DataListCell>,
-                    <DataListCell key="secondary content">
+                    <DataListCell key="secondary content" onClick={openDBZJira}>
                       <Flex direction={{ default: "column" }}>
                         <FlexItem>
                           <Content component="h3">
@@ -180,7 +181,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                         <FlexItem>
                           <Content component="p">
                             {" "}
-                            Fill our a form to request a new {catalogType}.
+                            Fill our a request to create a new {catalogType}.
                           </Content>
                         </FlexItem>
                       </Flex>

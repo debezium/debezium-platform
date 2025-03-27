@@ -15,6 +15,13 @@ export const isEmpty = (obj: any) => {
   return Object.keys(obj).length === 0;
 };
 
+export const openDBZJira = () => {
+  const newWindow = window.open("https://issues.redhat.com/projects/DBZ/issues", '_blank');
+  if (newWindow) {
+    newWindow.focus();
+  }
+}
+
 export const getConnectorTypeName = (connectorType: string) => {
   let name = "";
 
