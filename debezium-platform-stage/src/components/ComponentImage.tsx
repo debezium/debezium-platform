@@ -15,6 +15,8 @@ import kafka from "../assets/kafka.png";
 import infinispan from "../assets/infinispan.png";
 import pubsubLite from "../assets/pub-sub-lite.png";
 import pravega from "../assets/pravega.webp";
+import mariadb from "../assets/mariadb.png";
+import oracle from "../assets/oracle.png";
 import dbz from "../assets/dbz_logo.png";
 
 interface ConnectorImageProps {
@@ -91,7 +93,15 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "Pravega"
       src = pravega;
       break;
-    case connectorType.includes("debezium"):
+    case connectorType.includes("oracle"):
+      altText = "Oracle"
+      src = oracle;
+      break;
+    case connectorType.includes("mariadb"):
+      altText = "MariaDB"
+      src = mariadb;
+      break;
+    default: 
       altText = "Debezium"
       src = dbz;
       break;
