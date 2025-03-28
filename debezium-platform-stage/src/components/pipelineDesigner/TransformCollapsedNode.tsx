@@ -128,7 +128,7 @@ const TransformCollapsedNode: React.FC<TransformCollapsedNodeProps> = ({
                           : {}
                       }
                     >
-                      <ConnectorImage connectorType={"debezium"} size={30} />
+                      <ConnectorImage connectorType={"debezium"} size={30} designerComponent={true}/>
                     </Bullseye>
                   </StackItem>
                   <StackItem

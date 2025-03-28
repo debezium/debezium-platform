@@ -35,6 +35,7 @@ import {
 } from "@patternfly/react-drag-drop";
 import { TrashIcon } from "@patternfly/react-icons";
 import { ReactFlowProvider } from "reactflow";
+import TrademarkMessage from "@components/TrademarkMessage";
 
 // Define Jotai atoms
 export const selectedSourceAtom = atom<Source | undefined>(undefined);
@@ -231,6 +232,7 @@ const PipelineDesigner: React.FunctionComponent = () => {
 
   return (
     <>
+    <TrademarkMessage/>
       <Drawer isExpanded={isExpanded} onExpand={onExpand}>
         <DrawerContent panelContent={panelContent}>
           <DrawerContentBody>

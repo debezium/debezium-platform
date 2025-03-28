@@ -108,6 +108,7 @@ const DataNode: React.FC<DataNodeProps> = ({ data }) => {
                   >
                     <ConnectorImage
                       connectorType={data.connectorType}
+                      designerComponent={true}
                       size={30}
                     />
                   </div>
