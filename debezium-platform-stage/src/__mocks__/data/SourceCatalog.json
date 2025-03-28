@@ -28,5 +28,17 @@
     "id": "cassandra",
     "type": "io.debezium.connector.cassandra.CassandraConnector",
     "description": "Capture changes from a Cassandra database in a distributed manner."
+  },
+  {
+    "name": "Oracle",
+    "id": "oracle",
+    "type": "io.debezium.connector.oracle.OracleConnector",
+    "description": "Captures and records row-level changes that occur in databases on an Oracle server."
+  },
+  {
+    "name": "MariaDB",
+    "id": "mariadb",
+    "type": "io.debezium.connector.mariadb.MariaDbConnector",
+    "description": "Records all operations in the order in which they are committed to the database."
   }
 ]

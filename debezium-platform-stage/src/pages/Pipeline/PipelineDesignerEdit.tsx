@@ -67,6 +67,7 @@ import PipelineEditFlow from "@components/pipelineDesigner/PipelineEditFlow";
 import ConnectorImage from "@components/ComponentImage";
 import { useNotification } from "@appContext/AppNotificationContext";
 import ApiError from "@components/ApiError";
+import TrademarkMessage from "@components/TrademarkMessage";
 
 // Define Jotai atoms
 export const selectedSourceAtom = atom<Source | undefined>(undefined);
@@ -387,6 +388,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
           <DrawerContent panelContent={panelContent}>
             <DrawerContentBody>
               <PageSection isFilled padding={{ default: "noPadding" }}>
+                <TrademarkMessage />
                 <Card isFullHeight>
                   <CardBody isFilled style={{ height: "100%", width: "100%" }}>
                     <ReactFlowProvider>
@@ -476,6 +478,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
                                 <FlexItem spacer={{ default: "spacerMd" }}>
                                   <ConnectorImage
                                     connectorType={source?.type || ""}
+                                    designerComponent={true}
                                     size={30}
                                   />
                                 </FlexItem>
