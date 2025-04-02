@@ -56,6 +56,7 @@ import { PipelineEmpty } from "./PipelineEmpty";
 import { useDeleteData } from "src/apis";
 import PageHeader from "@components/PageHeader";
 import "./Pipelines.css";
+import { useTranslation } from 'react-i18next';
 
 export type DeleteInstance = {
   id: number;
@@ -69,6 +70,8 @@ export type ActionData = {
 
 const Pipelines: React.FunctionComponent = () => {
   const navigate = useNavigate();
+  // const { t } = useTranslation(['common','pipeline']);
+  const { t } = useTranslation();
 
   const navigateTo = (url: string) => {
     navigate(url);
@@ -267,13 +270,13 @@ const Pipelines: React.FunctionComponent = () => {
             secondaryActions={
               <>
                 <Button variant="link" onClick={() => navigateTo("/source")}>
-                  Go to source
+                  {t("goto", { val: t("source") })}
                 </Button>
                 <Button
                   variant="link"
                   onClick={() => navigateTo("/destination")}
                 >
-                  Go to destination
+                 {t("goto", { val: t("destination") })}
                 </Button>
               </>
             }
@@ -283,7 +286,7 @@ const Pipelines: React.FunctionComponent = () => {
         <>
           {pipelinesLoading ? (
             <EmptyState
-              titleText="Loading..."
+              titleText={t("loading")}
               headingLevel="h4"
               icon={Spinner}
             />
@@ -292,13 +295,8 @@ const Pipelines: React.FunctionComponent = () => {
               {pipelinesList.length > 0 ? (
                 <>
                   <PageHeader
-                    title="Pipeline"
-                    description="Add a pipeline to streams change events from a pipeline
-                      database. To start select a connector below once you
-                      select a connector you can configure it using form or
-                      smart editor option. You can also search the connector by
-                      its name or toggle the catalog between the list view or
-                      card view."
+                    title={t("pipeline")}
+                    description={t("pipeline:pipelinePage.description")}
                   />
                   <PageSection>
                     <Card className="pipeline-card">
@@ -311,7 +309,7 @@ const Pipelines: React.FunctionComponent = () => {
                           <ToolbarItem>
                             <SearchInput
                               aria-label="Items example search input"
-                              placeholder="Find by name"
+                              placeholder={t("common:findByName")}
                               value={searchQuery}
                               onChange={(_event, value) => onSearch(value)}
                               onClear={onClear}
@@ -326,7 +324,7 @@ const Pipelines: React.FunctionComponent = () => {
                                   navigateTo("/pipeline/pipeline_designer")
                                 }
                               >
-                                Add Pipeline
+                               {t("addButton", { val: t("source") })}
                               </Button>
                             </ToggleGroup>
                           </ToolbarItem>

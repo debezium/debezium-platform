@@ -1,0 +1,12 @@
+{
+    "name": "Nome",
+    "loading": "Caricamento...",
+    "findByName": "Trova per nome",
+    "source": "Fonte",
+    "transform": "Trasforma",
+    "transformations": "Trasformazioni",
+    "destination": "Destinazione",
+    "pipeline": "Pipeline",
+    "addButton": "Aggiungi {{val}}",
+    "goTo": "Vai a {{val}}"
+}

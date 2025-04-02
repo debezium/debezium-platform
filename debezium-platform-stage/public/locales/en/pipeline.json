@@ -1,0 +1,18 @@
+{
+    "pipeline": "pipeline",
+    "pipelinePage": {
+        "description": "Add a pipeline to streams change events from a pipeline database. To start select a connector below once you select a connector you can configure it using form or smart editor option. You can also search the connector by its name or toggle the catalog between the list view or card view.",
+        "title": "Pipeline",
+        "phase": "Phase",
+        "Enabled": "Enabled",
+        "Actions": "Actions",
+        "welcomeTitle": "Welcome to Stage",
+        "welcomeDescription": "Stage UI provide a visual tool to setup and operate with data pipelines where can you define the source, the destination, and any data transformations.",
+        "welcomeDescriptionSufix": "Add a pipeline to stream change event from a pipeline source database. To create a pipeline, you can select an already configured or add a new source and destination.",
+        "welcomeButtom": "Create your first pipeline"
+    },
+    "pipelineOverview": {
+        "description": "Pipeline overview for {{val}} with list of essential metrics, composition (source & destination) details, pipeline logs and option to edit pipeline.",
+        "title": "Pipeline overview"
+    }
+}

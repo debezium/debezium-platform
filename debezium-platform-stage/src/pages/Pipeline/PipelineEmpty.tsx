@@ -15,9 +15,11 @@ import {
 import { useNavigate } from "react-router-dom";
 import WelcomeFlow from "@components/pipelineDesigner/WelcomeFlow";
 import { ReactFlowProvider } from "reactflow";
+import { useTranslation } from 'react-i18next';
 
 const PipelineEmpty: React.FunctionComponent = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const navigateTo = (url: string) => {
     navigate(url);
@@ -25,17 +27,13 @@ const PipelineEmpty: React.FunctionComponent = () => {
 
   return (
     <PageSection isFilled>
-      <EmptyState titleText="Welcome to Stage" headingLevel="h1" isFullHeight>
+      <EmptyState titleText={t('pipeline:pipelinePage.welcomeTitle')} headingLevel="h1" isFullHeight>
         <EmptyStateBody>
           <Content component="p">
-            Stage UI provide a visual tool to setup and operate with data
-            pipelines where can you define the source, the destination, and any
-            data transformations.
+          {t('pipeline:pipelinePage.welcomeDescription')}
           </Content>
           <Content component={ContentVariants.small}>
-            Add a pipeline to stream change event from a pipeline source
-            database. To create a pipeline, you can select an already configured
-            or add a new source and destination.
+          {t('pipeline:pipelinePage.welcomeDescriptionSufix')}
           </Content>
 
           <Card style={{ height: "300px" }} isPlain>
@@ -52,18 +50,18 @@ const PipelineEmpty: React.FunctionComponent = () => {
               variant="primary"
               onClick={() => navigateTo(`/pipeline/pipeline_designer`)}
             >
-              Create your first pipeline
+              {t('pipeline:pipelinePage.welcomeButtom')}
             </Button>
           </EmptyStateActions>
           <EmptyStateActions>
             <Button variant="link" onClick={() => navigateTo("/source")}>
-              Source
+            {t('source')}
             </Button>
             <Button variant="link" onClick={() => navigateTo("/transform")}>
-              Transform
+            {t('transform')}
             </Button>
             <Button variant="link" onClick={() => navigateTo("/destination")}>
-              Destination
+            {t('destination')}
             </Button>
           </EmptyStateActions>
         </EmptyStateFooter>
