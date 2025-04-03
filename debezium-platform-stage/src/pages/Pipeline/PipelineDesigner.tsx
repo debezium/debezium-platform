@@ -36,6 +36,7 @@ import {
 import { TrashIcon } from "@patternfly/react-icons";
 import { ReactFlowProvider } from "reactflow";
 import TrademarkMessage from "@components/TrademarkMessage";
+import { useTranslation } from "react-i18next";
 
 // Define Jotai atoms
 export const selectedSourceAtom = atom<Source | undefined>(undefined);
@@ -79,6 +80,7 @@ const getItems = (
 
 const PipelineDesigner: React.FunctionComponent = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [items, setItems] = React.useState<DraggableObject[]>([]);
 
@@ -194,19 +196,18 @@ const PipelineDesigner: React.FunctionComponent = () => {
     <DrawerPanelContent>
       <DrawerHead>
         <Content component="h4" tabIndex={isExpanded ? 0 : -1}>
-          Transform list
+          {t('pipeline:transformDrawer.title')}
         </Content>
         <DrawerActions>
           <DrawerCloseButton onClick={onCloseClick} />
         </DrawerActions>
       </DrawerHead>
       <DrawerPanelDescription>
-        List of transform to be applied to pipeline you can delete or rearrange
-        them on specific order for them to be applied.
+        {t('pipeline:transformDrawer.description')}
       </DrawerPanelDescription>
       <DrawerPanelBody style={{ display: "inline-block" }}>
         {selectedTransform.length === 0 ? (
-          <>No transform configured</>
+          <>{t('pipeline:transformDrawer.emptyState')}</>
         ) : (
           <>
             <DragDropSort
@@ -222,7 +223,7 @@ const PipelineDesigner: React.FunctionComponent = () => {
               style={{ marginTop: "15px" }}
               onClick={handleRearrangeClick}
             >
-              Apply
+              {t('apply')}
             </Button>
           </>
         )}
@@ -232,19 +233,17 @@ const PipelineDesigner: React.FunctionComponent = () => {
 
   return (
     <>
-    <TrademarkMessage/>
+      <TrademarkMessage />
       <Drawer isExpanded={isExpanded} onExpand={onExpand}>
         <DrawerContent panelContent={panelContent}>
           <DrawerContentBody>
             <PageSection className="pipeline_designer">
               <PageSection isWidthLimited style={{ gap: 0 }}>
-                <Content component="h1" onClick={onToggleDrawer}>
-                  Pipeline designer
+                <Content component="h1">
+                  {t('pipeline:pipelinePage.designerTitle')}
                 </Content>
                 <Content component="p">
-                  Configure the pipeline by adding an existing source and
-                  destination or create a new one as per you need. Optionally
-                  you can also any number of transformation as needed.
+                  {t('pipeline:pipelinePage.designerDescription')}
                 </Content>
               </PageSection>
               <PageSection isFilled>
@@ -283,13 +282,13 @@ const PipelineDesigner: React.FunctionComponent = () => {
                           )
                         }
                       >
-                        Configure Pipeline
+                        {t('pipeline:configuePipeline')}
                       </Button>
                       <Button
                         variant="link"
                         onClick={() => navigateTo("/pipeline")}
                       >
-                        Cancel
+                        {t('cancel')}
                       </Button>
                     </ActionGroup>
                   </CardFooter>

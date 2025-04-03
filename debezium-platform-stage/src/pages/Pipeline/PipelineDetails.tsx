@@ -87,10 +87,7 @@ const PipelineDetails: React.FunctionComponent = () => {
       <PageSection isWidthLimited>
         <Content component="h1"> {pipeline?.name}</Content>
         <Content component="p">
-          {/* Pipeline overview for {pipeline?.name} with list of essential metrics,
-          composition (source & destination) details, pipeline logs and option
-          to edit pipeline. */}
-          {t("pipelineOverview")}
+          {t("pipeline:overview.description", {val: pipeline?.name || ""})}
         </Content>
       </PageSection>
       <PageSection type="tabs" isWidthLimited>
@@ -102,17 +99,17 @@ const PipelineDetails: React.FunctionComponent = () => {
         >
           <Tab
             eventKey={"overview"}
-            title={<TabTitleText>Overview</TabTitleText>}
+            title={<TabTitleText>{t('pipeline:tabs.overview')}</TabTitleText>}
             tabContentId={`tabContent${"overview"}`}
           />
           <Tab
             eventKey={"logs"}
-            title={<TabTitleText>Pipeline logs</TabTitleText>}
+            title={<TabTitleText>{t('pipeline:tabs.log')}</TabTitleText>}
             tabContentId={`tabContent${"logs"}`}
           />
           <Tab
             eventKey={"edit"}
-            title={<TabTitleText>Edit pipeline</TabTitleText>}
+            title={<TabTitleText>{t('pipeline:tabs.edit')}</TabTitleText>}
             tabContentId={`tabContent${"edit"}`}
           />
         </Tabs>

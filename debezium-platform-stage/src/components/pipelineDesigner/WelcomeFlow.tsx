@@ -20,6 +20,7 @@ import { useData } from "../../appLayout/AppContext";
 import { AppColors } from "@utils/constants";
 import DebeziumNode from "./DebeziumNode";
 import UnifiedCustomEdge from "./UnifiedCustomEdge";
+import { useTranslation } from "react-i18next";
 
 const nodeTypes = {
   dataNodeSelector: DataNodeSelector,
@@ -33,10 +34,11 @@ const edgeTypes = {
 
 const proOptions = { hideAttribution: true };
 
-interface WelcomeFlowProps {}
+interface WelcomeFlowProps { }
 
 const WelcomeFlow: React.FC<WelcomeFlowProps> = () => {
   const { darkMode } = useData();
+  const { t } = useTranslation();
 
   const reactFlowInstance = useReactFlow();
 
@@ -66,9 +68,9 @@ const WelcomeFlow: React.FC<WelcomeFlowProps> = () => {
       id: "source",
       data: {
         icon: MdLogout,
-        label: "Source",
+        label: t('source'),
         type: "source",
-        action: () => {},
+        action: () => { },
         welcomeFlow: true,
       },
       position: { x: 100, y: 150 },
@@ -81,7 +83,7 @@ const WelcomeFlow: React.FC<WelcomeFlowProps> = () => {
     return {
       id: "add_transformation",
       data: {
-        label: "Transformation",
+        label: t('transformation'),
         sourcePosition: "right",
         targetPosition: "left",
       },
@@ -97,9 +99,9 @@ const WelcomeFlow: React.FC<WelcomeFlowProps> = () => {
       id: "destination",
       data: {
         icon: MdLogin,
-        label: "Destination",
+        label: t('destination'),
         type: "destination",
-        action: () => {},
+        action: () => { },
         welcomeFlow: true,
       },
       position: { x: 500, y: 150 },
@@ -144,9 +146,6 @@ const WelcomeFlow: React.FC<WelcomeFlowProps> = () => {
     },
     [setEdges]
   );
-
-  const savedPreference = localStorage.getItem("side-nav-collapsed");
-  console.log("side bar", savedPreference);
 
   return (
     <>

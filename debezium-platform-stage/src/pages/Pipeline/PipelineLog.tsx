@@ -13,6 +13,7 @@ import { FC, useEffect, useState, useRef } from "react";
 import "./PipelineLog.css";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { fetchFile } from "src/apis/apis";
+import { useTranslation } from "react-i18next";
 
 // Extend the Document interface
 interface ExtendedDocument extends Document {
@@ -46,6 +47,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
   pipelineName,
 }) => {
   const { addNotification } = useNotification();
+  const { t } = useTranslation();
 
   const [logs, setLogs] = useState<string[]>([]);
   // Set to track unique logs
@@ -58,13 +60,13 @@ const PipelineLog: FC<PipelineLogProps> = ({
   // Close WebSocket connection when tab is not active
   useEffect(() => {
     const isActive = activeTabKey === "logs";
-    
+
     if (!isActive && wsRef.current) {
       console.log("Closing WebSocket connection as log tab is not active");
       wsRef.current.close();
       wsRef.current = null;
     }
-    
+
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
@@ -75,17 +77,17 @@ const PipelineLog: FC<PipelineLogProps> = ({
 
   useEffect(() => {
     if (activeTabKey !== "logs") return;
-    
+
     // Only fetch logs when tab is active
     // Fetch initial logs via HTTP
     fetch(`${API_URL}/api/pipelines/${pipelineId}/logs`)
       .then((response) => response.text())
       .then((initialLogs) => {
         const initialLogLines = initialLogs.split("\n");
-        
+
         // Reset logs when tab becomes active
         logSet.current.clear();
-        
+
         // Add initial logs to the set and state
         const uniqueInitialLogs = initialLogLines.filter(logLine => {
           if (logLine && !logSet.current.has(logLine)) {
@@ -94,12 +96,12 @@ const PipelineLog: FC<PipelineLogProps> = ({
           }
           return false;
         });
-        
+
         // Apply log rotation if needed
         if (uniqueInitialLogs.length > MAX_LOG_LINES) {
           uniqueInitialLogs.splice(0, uniqueInitialLogs.length - MAX_LOG_LINES);
         }
-        
+
         setLogs(uniqueInitialLogs);
 
         // open WebSocket for real-time updates only if tab is active
@@ -161,8 +163,8 @@ const PipelineLog: FC<PipelineLogProps> = ({
     if (pipelineId === undefined) {
       addNotification(
         "danger",
-        "Download Failed",
-        "Failed to download logs: Pipeline ID is missing"
+        t('statusMessage:download.failedTitle'),
+        t('statusMessage:download.pipelineLogFail'),
       );
       setIsLogLoading(false);
       return;
@@ -176,8 +178,8 @@ const PipelineLog: FC<PipelineLogProps> = ({
     if ("error" in response) {
       addNotification(
         "danger",
-        `Download Failed log for ${pipelineName}`,
-        `Failed to download logs: ${response.error}`
+        t('statusMessage:download.failedTitle'),
+        t('statusMessage:download.failedDescription', { val: `${pipelineName} : response.error` }),
       );
     } else {
       const url = window.URL.createObjectURL(response);
@@ -274,11 +276,11 @@ const PipelineLog: FC<PipelineLogProps> = ({
         <ToolbarGroup align={{ default: "alignEnd" }}>
           <ToolbarGroup variant="action-group-plain">
             <ToolbarItem>
-              <Tooltip content="Download Log File">
+              <Tooltip content={t('pipeline:logs.download')}>
                 <Button
                   variant="plain"
                   isDisabled={isLogLoading}
-                  aria-label="edit"
+                  aria-label="download log file"
                   icon={<DownloadIcon />}
                   onClick={() => downloadLogFile(pipelineId, pipelineName)}
                 />
@@ -286,7 +288,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
             </ToolbarItem>
 
             <ToolbarItem>
-              <Tooltip content="Full screen">
+              <Tooltip content={t('pipeline:logs.fullScreen')}>
                 <Button
                   variant="plain"
                   aria-label="View log viewer in full screen"

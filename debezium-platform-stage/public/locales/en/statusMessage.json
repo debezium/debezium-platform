@@ -1,0 +1,21 @@
+{
+    "codeAlert": "Provided json is not valid: {{val}}",
+    "edit": {
+        "failedTitle": "Edit failed",
+        "successTitle": "Edit success",
+        "failedDescription": "Failed to edit {{val}}",
+        "successDescription": "{{val}} edited successfully."
+    },
+    "creation": {
+        "failedTitle": "{{val}} creation failed",
+        "successTitle": "{{val}} creation successful.",
+        "successDescription": "{{val}} created successfully."
+    },
+    "download": {
+        "failedTitle": "Download Failed",
+        "failedDescription": "Failed to download logs for {{val}}",
+        "successTitle": "{{val}} download successful.",
+        "successDescription": "{{val}} downloaded successfully.",
+        "pipelineLogFail": "Failed to download logs: Pipeline ID is missing."
+    }
+}

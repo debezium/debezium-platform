@@ -276,7 +276,7 @@ const Pipelines: React.FunctionComponent = () => {
                   variant="link"
                   onClick={() => navigateTo("/destination")}
                 >
-                 {t("goto", { val: t("destination") })}
+                  {t("goto", { val: t("destination") })}
                 </Button>
               </>
             }
@@ -286,7 +286,7 @@ const Pipelines: React.FunctionComponent = () => {
         <>
           {pipelinesLoading ? (
             <EmptyState
-              titleText={t("loading")}
+              titleText={t('common:loading')}
               headingLevel="h4"
               icon={Spinner}
             />
@@ -324,7 +324,7 @@ const Pipelines: React.FunctionComponent = () => {
                                   navigateTo("/pipeline/pipeline_designer")
                                 }
                               >
-                               {t("addButton", { val: t("source") })}
+                                {t("addButton", { val: t("pipeline:pipeline") })}
                               </Button>
                             </ToggleGroup>
                           </ToolbarItem>
@@ -414,7 +414,7 @@ const Pipelines: React.FunctionComponent = () => {
                                     id="pipeline-enable-switch"
                                     aria-label="switch pipeline enable"
                                     isChecked={true}
-                                    onChange={() => {}}
+                                    onChange={() => { }}
                                     isDisabled
                                   />
                                 </Td>
