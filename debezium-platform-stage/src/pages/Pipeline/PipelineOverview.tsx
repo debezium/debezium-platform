@@ -44,6 +44,7 @@ import CompositionFlow from "@components/pipelineDesigner/CompositionFlow";
 import { ReactFlowProvider } from "reactflow";
 import { PencilAltIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 type PipelineOverviewProp = {
   pipelineId: string;
@@ -51,6 +52,7 @@ type PipelineOverviewProp = {
 
 const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const navigateTo = (url: string) => {
     navigate(url);
@@ -124,7 +126,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
   }, []);
 
   if (isFetchLoading) {
-    return <div>Loading...</div>;
+    return <div>{t('loading')}</div>;
   }
 
   if (error) {
@@ -146,7 +148,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   <div className="overlay">
                     <img src={comingSoonImage} alt="Coming Soon" />
                   </div>
-                  <CardTitle>Queue usage</CardTitle>
+                  <CardTitle>{t('pipeline:overview.queueUsage')}</CardTitle>
                   <CardBody>
                     <ChartDonutUtilization
                       ariaDesc="Queue utilization"
@@ -186,7 +188,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   <div className="overlay">
                     <img src={comingSoonImage} alt="Coming Soon" />
                   </div>
-                  <CardTitle>Events</CardTitle>
+                  <CardTitle>{t('pipeline:overview.events')}</CardTitle>
                   <CardBody>
                     <Chart
                       ariaDesc="Events chart"
@@ -234,12 +236,12 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   icon={<PencilAltIcon />}
                   onClick={() => navigateTo(`/pipeline/${pipelineId}/edit`)}
                 >
-                  Edit
+                  {t('edit')}
                 </Button>
               ),
             }}
           >
-            <CardTitle>Pipeline composition</CardTitle>
+            <CardTitle>{t('pipeline:overview.pipelineComposition')}</CardTitle>
           </CardHeader>
 
           <CardBody
@@ -270,17 +272,17 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                     navigateTo(`/source/edit_source/${destination?.id}`)
                   }
                 >
-                  Edit
+                  {t('edit')}
                 </Button>
               ),
             }}
           >
-            <CardTitle>Source</CardTitle>
+            <CardTitle>{t('source')}</CardTitle>
           </CardHeader>
           <CardBody>
             <DescriptionList>
               <DescriptionListGroup>
-                <DescriptionListTerm>Name</DescriptionListTerm>
+                <DescriptionListTerm>{t('name')}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isSourceFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />
@@ -311,7 +313,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
-                <DescriptionListTerm>Description</DescriptionListTerm>
+                <DescriptionListTerm>{t('description')}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isSourceFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />
@@ -322,7 +324,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
               </DescriptionListGroup>
 
               <DescriptionListGroup>
-                <DescriptionListTerm>Schema</DescriptionListTerm>
+                <DescriptionListTerm>{t('schema')}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isSourceFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />
@@ -350,17 +352,17 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                     )
                   }
                 >
-                  Edit
+                  {t('edit')}
                 </Button>
               ),
             }}
           >
-            <CardTitle>Destination</CardTitle>
+            <CardTitle>{t('destination')}</CardTitle>
           </CardHeader>
           <CardBody>
             <DescriptionList>
               <DescriptionListGroup>
-                <DescriptionListTerm>Name</DescriptionListTerm>
+                <DescriptionListTerm>{t('name')}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isDestinationFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />
@@ -370,7 +372,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
-                <DescriptionListTerm>Type</DescriptionListTerm>
+                <DescriptionListTerm>{t('type')}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isDestinationFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />
@@ -392,7 +394,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
-                <DescriptionListTerm>Description</DescriptionListTerm>
+                <DescriptionListTerm>{t('description')}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isDestinationFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />
@@ -403,7 +405,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
               </DescriptionListGroup>
 
               <DescriptionListGroup>
-                <DescriptionListTerm>Schema</DescriptionListTerm>
+                <DescriptionListTerm>{t('schema')}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isDestinationFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />

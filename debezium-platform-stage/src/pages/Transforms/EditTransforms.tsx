@@ -60,6 +60,7 @@ import { API_URL, transformSchema } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { isEmpty } from "lodash";
 import Ajv from "ajv";
+import { useTranslation } from "react-i18next";
 
 const ajv = new Ajv();
 
@@ -78,6 +79,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   };
 
   const { addNotification } = useNotification();
+  const { t } = useTranslation();
 
   const [transformData, setTransformData] = useState<TransformData>();
   const [isFetchLoading, setIsFetchLoading] = useState<boolean>(true);
@@ -319,7 +321,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
       onClick={onToggleClick}
       isExpanded={isOpen}
       isFullWidth
-      // isDisabled
+    // isDisabled
     >
       <TextInputGroup isPlain>
         <TextInputGroupMain
@@ -448,12 +450,12 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
           const updatedConfig = { ...oldConfig, ...newValues };
           const updatedPredicates =
             Object.keys(newPredicates).length > 1 ||
-            !isEmpty(newPredicates.config)
+              !isEmpty(newPredicates.config)
               ? {
-                  ...oldPredicates,
-                  ...newPredicates,
-                  config: { ...newPredicates.config },
-                }
+                ...oldPredicates,
+                ...newPredicates,
+                config: { ...newPredicates.config },
+              }
               : {};
 
           const payload = {
@@ -517,9 +519,8 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   return (
     <>
       <PageHeader
-        title="Edit transform"
-        description="Edit a transform, Before the messages are delivered to the sink, they can run through a sequence of transformations."
-      />
+        title={t("transform:edit.title")}
+        description={t("transform:edit.description")} />
 
       <PageSection className="create_source-toolbar">
         <Toolbar id="create-editor-toggle">
@@ -528,8 +529,8 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
               <ToggleGroup aria-label="Toggle between form editor and smart editor">
                 <ToggleGroupItem
                   icon={<PencilAltIcon />}
-                  text="Form editor"
-                  aria-label="Form editor"
+                  text={t("formEditor")}
+                  aria-label={t("formEditor")}
                   buttonId="form-editor"
                   isSelected={editorSelected === "form-editor"}
                   onChange={handleItemClick}
@@ -537,8 +538,8 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
 
                 <ToggleGroupItem
                   icon={<CodeIcon />}
-                  text="Smart editor"
-                  aria-label="Smart editor"
+                  text={t("smartEditor")}
+                  aria-label={t("smartEditor")}
                   buttonId="smart-editor"
                   isSelected={editorSelected === "smart-editor"}
                   onChange={handleItemClick}
@@ -549,7 +550,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
         </Toolbar>
       </PageSection>
       {isFetchLoading ? (
-        <div>Loading...</div>
+        <div>{t("loading")}</div>
       ) : error ? (
         <div>Error: {error}</div>
       ) : (
@@ -571,11 +572,11 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                     <CardBody isFilled>
                       <Form isWidthLimited>
                         <FormGroup
-                          label="Transform class"
+                          label={t("transform:form.classField")}
                           labelHelp={
                             <Popover
                               bodyContent={
-                                "The name of Java class implementing the transformation"
+                                t("transform:form.classFieldHelper")
                               }
                             >
                               <FormGroupLabelHelp aria-label="More info for name field" />
@@ -629,14 +630,14 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                           </FormHelperText>
                         </FormGroup>
                         <FormGroup
-                          label="Transform name"
+                          label={t("transform:form.nameField")}
                           isRequired
                           fieldId="transform-name"
                         >
                           <TextInput
                             id="transform-name"
                             name="transform-name"
-                            aria-label="transform name"
+                            aria-label={t("transform:form.nameField")}
                             onChange={(_event, value) => {
                               setValue("transform-name", value);
                               setError("transform-name", undefined);
@@ -662,11 +663,11 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                           </FormHelperText>
                         </FormGroup>
 
-                        <FormGroup label="Description" fieldId="description">
+                        <FormGroup label={t("transform:form.descriptionField")} fieldId="description">
                           <TextInput
                             id="description"
                             name="description"
-                            aria-label="description"
+                            aria-label={t("transform:form.descriptionField")}
                             onChange={(_event, value) => {
                               setValue("description", value);
                               setError("description", undefined);
@@ -680,20 +681,17 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                             header={
                               <FormFieldGroupHeader
                                 titleText={{
-                                  text: "Transform configuration properties",
+                                  text: t("transform:form.subsectionTitle"),
                                   id: `field-group-${selected}-id`,
                                 }}
                                 titleDescription={
                                   !values["transform-name"] ? (
                                     <>
-                                      Enter <i>transform name</i> to enable
-                                      configuration properties.
+                                      {t("transform:form.subsectionDescription")}
                                     </>
                                   ) : (
                                     <>
-                                      Configuration properties passed to the
-                                      transformation with name
-                                      <i>"{values["transform-name"]}"</i>
+                                      {t("transform:form.subsectionDisabledDescription", { val: values["transform-name"] })}
                                     </>
                                   )
                                 }
@@ -814,21 +812,20 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                           header={
                             <FormFieldGroupHeader
                               titleText={{
-                                text: "Predicates & Negate",
+                                text: t("transform:predicates.title"),
                                 id: `field-group-${selected}-id`,
                               }}
                               titleDescription={
-                                "Transformations are applied only to records that meet the condition specified by the predicate. Set 'negate' to 'true' to reverse this behavior."
-                              }
+                                t("transform:predicates.description")}
                             />
                           }
                         >
                           <FormGroup
-                            label="Predicate type"
+                            label={t("transform:form.predicateTypeField")}
                             labelHelp={
                               <Popover
                                 bodyContent={
-                                  "The name of Java class implementing the predicate"
+                                  t("transform:form.predicateTypeFieldHelper")
                                 }
                               >
                                 <FormGroupLabelHelp aria-label="More info for name field" />
@@ -839,7 +836,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                             <FormSelect
                               value={selectedPredicate}
                               onChange={onChange}
-                              aria-label="FormSelect Input"
+                              aria-label={t("transform:form.predicateTypeField")}
                               ouiaId="BasicFormSelect"
                             >
                               {selectPredicateOptions?.map((option, index) => (
@@ -855,7 +852,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                           </FormGroup>
                           {selectedPredicate &&
                             selectedPredicate !==
-                              "org.apache.kafka.connect.transforms.predicates.RecordIsTombstone" &&
+                            "org.apache.kafka.connect.transforms.predicates.RecordIsTombstone" &&
                             (() => {
                               const predicate = predicates.find(
                                 (predicate) =>
@@ -903,7 +900,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                             })()}
                           {selectedPredicate && (
                             <FormGroup
-                              label="Negate predicate"
+                              label={t("transform:form.negateField")}
                               fieldId="negate"
                             >
                               <Checkbox
@@ -919,7 +916,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                                   setValue("predicate.negate", "" + checked);
                                   setError("predicate.negate", undefined);
                                 }}
-                                description="Setting this option to True applies the predicate only to records that do not match the defined predicate condition"
+                                description={t("transform:form.negateFieldDescription")}
                               />
                             </FormGroup>
                           )}
@@ -972,14 +969,14 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                       handleEdit(values, setError);
                     }}
                   >
-                    Save changes
+                    {t("saveChanges")}
                   </Button>
 
                   <Button
                     variant="link"
                     onClick={() => navigateTo("/transform")}
                   >
-                    Cancel
+                    {t("cancel")}
                   </Button>
                 </ActionGroup>
               </PageSection>

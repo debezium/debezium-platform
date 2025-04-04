@@ -1,0 +1,51 @@
+{
+    "pipeline": "pipeline",
+    "configuePipeline": "Configure pipeline",
+    "createPipeline": "Create pipeline",
+    "pipelinePage": {
+        "description": "Add a pipeline to streams change events from a pipeline database. To start select a connector below once you select a connector you can configure it using form or smart editor option. You can also search the connector by its name or toggle the catalog between the list view or card view.",
+        "title": "Pipeline",
+        "phase": "Phase",
+        "Enabled": "Enabled",
+        "Actions": "Actions",
+        "welcomeTitle": "Welcome to Stage",
+        "welcomeDescription": "Stage UI provide a visual tool to setup and operate with data pipelines where can you define the source, the destination, and any data transformations.",
+        "welcomeDescriptionSufix": "Add a pipeline to stream change event from a pipeline source database. To create a pipeline, you can select an already configured or add a new source and destination.",
+        "welcomeButtom": "Create your first pipeline",
+        "designerTitle": "Pipeline designer",
+        "designerDescription": "Configure the pipeline by adding an existing source and destination or create a new one as per you need. Optionally you can also any number of transformation as needed."
+    },
+    "transformDrawer": {
+        "description": "List of transform to be applied to pipeline you can delete or rearrange them on specific order for them to be applied.",
+        "title": "Transform list",
+        "emptyState": "No transform added to the pipeline"
+    },
+    "form": {
+        "title": "Pipeline configuration",
+        "description": "To configure and create a data pipeline fill out the below form or use the smart editor to setup a new data pipeline. If you already have a configuration file, you can setup a new data pipeline by uploading it in the smart editor.",
+        "nameField": "Pipeline name",
+        "descriptionField": "Description",
+        "descriptionFieldHelperText": " Add a one liner to describe your pipeline or what you plan to capture.",
+        "subsectionTitle": "Configuration properties",
+        "logLevelField": "Log level",
+        "flowField": "Pipeline flow"
+    },
+    "tabs": {
+        "overview": "Overview",
+        "log": "Pipeline logs",
+        "edit": "Edit pipeline",
+        "action": "Pipeline action"
+    },
+    "overview": {
+        "description": "Pipeline overview for {{val}} with list of essential metrics, composition (source & destination) details, pipeline logs and option to edit pipeline.",
+        "title": "Pipeline overview",
+        "updatePipeline": "Update pipeline",
+        "pipelineComposition": "Pipeline composition",
+        "queueUsage": "Queue usage",
+        "events": "Events"
+    },
+    "logs": {
+        "download": "Download Log File",
+        "fullScreen": "Full screen"
+    }
+}

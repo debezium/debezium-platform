@@ -1,0 +1,19 @@
+{
+    "source": "Fonte",
+    "page": {
+        "description": "Elenca le fonti disponibili configurate nel cluster che trasmettono eventi di modifica da un database di origine. Puoi cercare una fonte per nome o ordinare l’elenco in base al numero di pipeline attive che la utilizzano."
+    },
+    "create": {
+        "title": "Crea fonte",
+        "description": "Per configurare e creare un connettore, compila il modulo sottostante oppure utilizza l’editor intelligente per configurare una nuova fonte. Se hai già un file di configurazione, puoi configurare una nuova fonte caricandolo nell’editor intelligente."
+    },
+    "catalog": {
+        "title": "Catalogo fonti",
+        "description": "Seleziona il tipo di fonte che vuoi connettere dall’elenco sottostante. Una volta selezionato un connettore, puoi configurarlo usando l’editor modulo o l’editor intelligente. Puoi anche cercare il connettore per nome o passare dalla vista elenco alla vista a schede.",
+        "backToCatalog": "Torna al catalogo"
+    },
+    "edit": {
+        "title": "Modifica fonte",
+        "description": "Per configurare e creare un connettore, compila il modulo sottostante oppure utilizza l’editor intelligente per configurare una nuova fonte. Se hai già un file di configurazione, puoi configurare una nuova fonte caricandolo nell’editor intelligente."
+    }
+}

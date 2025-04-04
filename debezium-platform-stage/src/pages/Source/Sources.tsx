@@ -26,6 +26,7 @@ import SourceSinkTable from "../../components/SourceSinkTable";
 import ApiError from "../../components/ApiError";
 import "./Sources.css";
 import PageHeader from "@components/PageHeader";
+import { useTranslation } from "react-i18next";
 
 export interface ISourceProps {
   sampleProp?: string;
@@ -33,7 +34,7 @@ export interface ISourceProps {
 
 const Sources: React.FunctionComponent<ISourceProps> = () => {
   const navigate = useNavigate();
-
+  const { t } = useTranslation();
   const navigateTo = (url: string) => {
     navigate(url);
   };
@@ -114,11 +115,8 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
               {sourcesList.length > 0 ? (
                 <>
                   <PageHeader
-                    title="Source"
-                    description="Lists the available sources configured in the cluster
-                  streaming change events from a source database. You can search
-                  a source by its name or sort the list by the count of active
-                  pipelines using a source."
+                    title={t('source')}
+                    description={t('source:page.description')}
                   />
                   <PageSection>
                     <Card className="source-card">
@@ -131,7 +129,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                           <ToolbarItem>
                             <SearchInput
                               aria-label="Items example search input"
-                              placeholder="Find by name"
+                              placeholder={t('findByName')}
                               value={searchQuery}
                               onChange={(_event, value) => onSearch(value)}
                               onClear={onClear}
@@ -144,7 +142,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                                 icon={<PlusIcon />}
                                 onClick={() => navigateTo("/source/catalog")}
                               >
-                                Add source
+                                {t('addButton', { val: t('source:source') })}
                               </Button>
                             </ToggleGroup>
                           </ToolbarItem>
@@ -157,7 +155,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                                     : sourcesList
                                   ).length
                                 }{" "}
-                                Items
+                                {t("items")}
                               </Content>
                             </ToolbarItem>
                           </ToolbarGroup>
@@ -175,10 +173,8 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                 </>
               ) : (
                 <EmptyStatus
-                  heading="No source available"
-                  primaryMessage='No source is configure for this cluster yet. To streams change
-            events from a source database you can configure a source by click
-            the "Add source" button.'
+                  heading={t('emptyState.title')}
+                  primaryMessage={t('emptyState.description', { val: t('source:source') })}
                   secondaryMessage=""
                   icon={DataSourceIcon as React.ComponentType<unknown>}
                   primaryAction={
@@ -187,7 +183,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                       icon={<PlusIcon />}
                       onClick={() => navigateTo("/source/catalog")}
                     >
-                      Add source
+                      {t('addButton', { val: t('source:source') })}
                     </Button>
                   }
                   secondaryActions={
@@ -196,19 +192,19 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                         variant="link"
                         onClick={() => navigateTo("/destination")}
                       >
-                        Go to destination
+                        {t('destination')}
                       </Button>
                       <Button
                         variant="link"
                         onClick={() => navigateTo("/transform")}
                       >
-                        Add transformations
+                        {t('transform')}
                       </Button>
                       <Button
                         variant="link"
                         onClick={() => navigateTo("/vaults")}
                       >
-                        Configure Vaults
+                        {t('vaults')}
                       </Button>
                     </>
                   }

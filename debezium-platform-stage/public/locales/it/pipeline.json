@@ -1,0 +1,52 @@
+{
+    "pipeline": "Pipeline",
+    "configuePipeline": "Configura pipeline",
+    "createPipeline": "Crea pipeline",
+    "pipelinePage": {
+      "description": "Aggiungi una pipeline per trasmettere eventi di modifica da un database. Per iniziare, seleziona un connettore qui sotto; una volta selezionato, puoi configurarlo usando l’editor modulo o l’editor intelligente. Puoi anche cercare il connettore per nome o passare dalla vista elenco alla vista a schede.",
+      "title": "Pipeline",
+      "phase": "Fase",
+      "Enabled": "Abilitato",
+      "Actions": "Azioni",
+      "welcomeTitle": "Benvenuto in Stage",
+      "welcomeDescription": "Stage UI fornisce uno strumento visivo per configurare e operare con pipeline di dati dove puoi definire la fonte, la destinazione e qualsiasi trasformazione dei dati.",
+      "welcomeDescriptionSufix": "Aggiungi una pipeline per trasmettere eventi di modifica da una fonte dati. Per creare una pipeline, puoi selezionarne una già configurata oppure aggiungere una nuova fonte e destinazione.",
+      "welcomeButtom": "Crea la tua prima pipeline",
+      "designerTitle": "Designer della pipeline",
+      "designerDescription": "Configura la pipeline aggiungendo una fonte e una destinazione esistenti oppure creane di nuove secondo le tue necessità. Puoi anche aggiungere trasformazioni, se necessario."
+    },
+    "transformDrawer": {
+      "description": "Elenco delle trasformazioni da applicare alla pipeline. Puoi eliminarle o riordinarle per definire l’ordine di applicazione.",
+      "title": "Elenco trasformazioni",
+      "emptyState": "Nessuna trasformazione aggiunta alla pipeline"
+    },
+    "form": {
+      "title": "Configurazione pipeline",
+      "description": "Per configurare e creare una pipeline di dati, compila il modulo sottostante oppure utilizza l’editor intelligente. Se hai già un file di configurazione, puoi caricarlo tramite l’editor intelligente.",
+      "nameField": "Nome della pipeline",
+      "descriptionField": "Descrizione",
+      "descriptionFieldHelperText": "Aggiungi una breve descrizione della pipeline o di cosa intendi acquisire.",
+      "subsectionTitle": "Proprietà di configurazione",
+      "logLevelField": "Livello di log",
+      "flowField": "Flusso della pipeline"
+    },
+    "tabs": {
+      "overview": "Panoramica",
+      "log": "Log della pipeline",
+      "edit": "Modifica pipeline",
+      "action": "Azione pipeline"
+    },
+    "overview": {
+      "description": "Panoramica della pipeline per {{val}} con elenco di metriche essenziali, dettagli della composizione (fonte e destinazione), log della pipeline e opzione per modificarla.",
+      "title": "Panoramica pipeline",
+      "updatePipeline": "Aggiorna pipeline",
+      "pipelineComposition": "Composizione pipeline",
+      "queueUsage": "Utilizzo della coda",
+      "events": "Eventi"
+    },
+    "logs": {
+      "download": "Scarica file di log",
+      "fullScreen": "Schermo intero"
+    }
+  }
+  

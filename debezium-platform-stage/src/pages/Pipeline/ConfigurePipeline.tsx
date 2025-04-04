@@ -52,6 +52,7 @@ import { useAtom } from "jotai";
 import { selectedTransformAtom } from "./PipelineDesigner";
 import { useNotification } from "@appContext/AppNotificationContext";
 import Ajv from "ajv";
+import { useTranslation } from "react-i18next";
 
 const ajv = new Ajv();
 
@@ -134,6 +135,7 @@ const FormSyncManager: React.FC<{
 };
 
 const ConfigurePipeline: React.FunctionComponent = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -237,15 +239,15 @@ const ConfigurePipeline: React.FunctionComponent = () => {
     if (response.error) {
       addNotification(
         "danger",
-        `Pipeline creation failed`,
+        t('statusMessage:creation.failedTitle'),
         `${response.error}`
       );
       return;
     }
     addNotification(
       "success",
-      `Pipeline creation successful.`,
-      `Pipeline "${payload["name"]}" created successfully.`
+      t('statusMessage:creation.successTitle'),
+      t('statusMessage:creation.successDescription', {val: `${t('pipeline')} ${payload["name"]}`}),
     );
     navigateTo("/pipeline");
 
@@ -337,11 +339,8 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   return (
     <>
       <PageHeader
-        title="Create pipeline"
-        description="To configure and create a data pipeline fill out the below form or
-            use the smart editor to setup a new data pipeline. If you already
-            have a configuration file, you can setup a new data pipeline by
-            uploading it in the smart editor."
+        title={t('pipeline:form.title')}
+        description={t('pipeline:form.description')}
       />
       <PageSection className="create_pipeline-toolbar">
         <Toolbar id="create-editor-toggle" className="create_pipeline-toolbar">
@@ -350,8 +349,8 @@ const ConfigurePipeline: React.FunctionComponent = () => {
               <ToggleGroup aria-label="Toggle between form editor and smart editor">
                 <ToggleGroupItem
                   icon={<PencilAltIcon />}
-                  text="Form editor"
-                  aria-label="Form editor"
+                  text={t('formEditor')}
+                  aria-label={t('formEditor')}
                   buttonId="form-editor"
                   isSelected={editorSelected === "form-editor"}
                   onChange={handleItemClick}
@@ -359,8 +358,8 @@ const ConfigurePipeline: React.FunctionComponent = () => {
 
                 <ToggleGroupItem
                   icon={<CodeIcon />}
-                  text="Smart editor"
-                  aria-label="Smart editor"
+                  text={t('smartEditor')}
+                  aria-label={t('smartEditor')}
                   buttonId="smart-editor"
                   isSelected={editorSelected === "smart-editor"}
                   onChange={handleItemClick}
@@ -394,7 +393,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                   <CardBody isFilled>
                     <Form isWidthLimited>
                       <FormGroup
-                        label="Pipeline flow"
+                        label={t('pipeline:form.flowField')}
                         isRequired
                         fieldId="pipeline-flow-field"
                       >
@@ -443,7 +442,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                         </Flex>
                       </FormGroup>
                       <FormGroup
-                        label="Pipeline name"
+                        label={t('pipeline:form.nameField')}
                         isRequired
                         fieldId="pipeline-name-field"
                       >
@@ -475,7 +474,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                         </FormHelperText>
                       </FormGroup>
                       <FormGroup
-                        label="Description"
+                        label={t('pipeline:form.descriptionField')}
                         fieldId="description-field"
                       >
                         <TextInput
@@ -489,19 +488,18 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                         <FormHelperText>
                           <HelperText>
                             <HelperTextItem>
-                              Add a one liner to describe your pipeline or what
-                              you plan to capture.
+                              {t('pipeline:form.descriptionFieldHelperText')}
                             </HelperTextItem>
                           </HelperText>
                         </FormHelperText>
                       </FormGroup>
                       <FormSection
-                        title="Configuration properties"
+                        title={t('pipeline:form.subsectionTitle')}
                         titleElement="h2"
                         className="custom-form-group"
                       >
                         <FormGroup
-                          label="Log level"
+                          label={t('pipeline:form.logLevelField')}
                           isRequired
                           fieldId="log-level-field"
                         >
@@ -537,7 +535,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                     <Alert
                       variant="danger"
                       isInline
-                      title={`Provided json is not valid: ${codeAlert}`}
+                      title={t('statusMessage:codeAlert', { val: codeAlert })}
                       style={{ marginBottom: "10px" }}
                     />
                   )}
@@ -577,10 +575,10 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                     handleCreate(values, setError);
                   }}
                 >
-                  Create pipeline
+                  {t('pipeline:createPipeline')}
                 </Button>
                 <Button variant="link" onClick={handleGoBack}>
-                  Back
+                  {t('back')}
                 </Button>
               </ActionGroup>
             </PageSection>

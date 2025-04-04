@@ -1,0 +1,19 @@
+{
+    "source": "source",
+    "page": {
+        "description": "Lists the available sources configured in the cluster streaming change events from a source database. You can search a source by its name or sort the list by the count of active pipelines using a source."
+    },
+    "create": {
+        "title": "Create source",
+        "description": "To configure and create a connector fill out the below form or use the smart editor to setup a new source connector. If you already have a configuration file, you can setup a new source connector by uploading it in the smart editor."
+    },
+    "catalog": {
+        "title": "Source catalog",
+        "description": "Select the type of source you want to connect from the list below, once you select a connector you can configure it using form or smart editor option. You can also search the connector by its name or toggle the catalog between the list view or card view.",
+        "backToCatalog": "Back to catalog"
+    },
+    "edit": {
+        "title": "Edit source",
+        "description": "To configure and create a connector fill out the below form or use the smart editor to setup a new source connector. If you already have a configuration file, you can setup a new source connector by uploading it in the smart editor."
+    }
+}

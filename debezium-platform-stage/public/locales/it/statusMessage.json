@@ -1,0 +1,21 @@
+{
+    "codeAlert": "Il JSON fornito non è valido: {{val}}",
+    "edit": {
+        "failedTitle": "Modifica fallita",
+        "successTitle": "Modifica riuscita",
+        "failedDescription": "Modifica di {{val}} non riuscita",
+        "successDescription": "{{val}} modificato con successo."
+    },
+    "creation": {
+        "failedTitle": "Creazione di {{val}} fallita",
+        "successTitle": "Creazione di {{val}} riuscita.",
+        "successDescription": "{{val}} creato con successo."
+    },
+    "download": {
+        "failedTitle": "Download fallito",
+        "failedDescription": "Download dei log per {{val}} non riuscito",
+        "successTitle": "Download di {{val}} riuscito.",
+        "successDescription": "{{val}} scaricato con successo.",
+        "pipelineLogFail": "Download dei log non riuscito: ID della pipeline mancante."
+    }
+}

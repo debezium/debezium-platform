@@ -31,6 +31,7 @@ import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
 import Ajv from "ajv";
+import { useTranslation } from "react-i18next";
 
 const ajv = new Ajv();
 
@@ -62,82 +63,82 @@ const FormSyncManager: React.FC<{
   setProperties,
   setCodeAlert,
 }) => {
-  const validate = ajv.compile(initialConnectorSchema);
-  // Ref to track the source of the update
-  const updateSource = useRef<"form" | "code" | null>(null);
+    const validate = ajv.compile(initialConnectorSchema);
+    // Ref to track the source of the update
+    const updateSource = useRef<"form" | "code" | null>(null);
 
-  // Update code state when form values change
-  useEffect(() => {
-    if (updateSource.current === "code") {
-      updateSource.current = null;
-      return;
-    }
-
-    updateSource.current = "form";
-    const type = find(sourceCatalog, { id: sourceId })?.type || "";
-    const configuration = convertMapToObject(properties);
-
-    setCode((prevCode: any) => {
-      if (
-        prevCode.name === getFormValue("source-name") &&
-        prevCode.description === getFormValue("description") &&
-        JSON.stringify(prevCode.config) === JSON.stringify(configuration)
-      ) {
-        return prevCode;
-      }
-
-      return {
-        ...prevCode,
-        type,
-        config: configuration,
-        name: getFormValue("source-name") || "",
-        description: getFormValue("description") || "",
-      };
-    });
-  }, [
-    getFormValue("source-name"),
-    getFormValue("description"),
-    properties,
-    sourceId,
-  ]);
-
-  // Update form values when code changes
-  useEffect(() => {
-    const isValid = validate(code);
-    if (isValid) {
-      if (updateSource.current === "form") {
+    // Update code state when form values change
+    useEffect(() => {
+      if (updateSource.current === "code") {
         updateSource.current = null;
         return;
       }
-      updateSource.current = "code";
-      if (code.name !== getFormValue("source-name")) {
-        setFormValue(
-          "source-name",
-          typeof code.name === "string" ? code.name : ""
-        );
-      }
-      if (code.description !== getFormValue("description")) {
-        setFormValue(
-          "description",
-          typeof code.description === "string" ? code.description : ""
-        );
-      }
-      const currentConfig = convertMapToObject(properties);
-      if (JSON.stringify(currentConfig) !== JSON.stringify(code.config)) {
-        const configMap = new Map();
-        Object.entries(code.config || {}).forEach(([key, value], index) => {
-          configMap.set(`key${index}`, { key, value: value as string });
-        });
-        setProperties(configMap);
-      }
-      setCodeAlert("");
-    } else {
-      setCodeAlert(ajv.errorsText(validate.errors));
-    }
-  }, [code]);
 
-  return null;
-};
+      updateSource.current = "form";
+      const type = find(sourceCatalog, { id: sourceId })?.type || "";
+      const configuration = convertMapToObject(properties);
+
+      setCode((prevCode: any) => {
+        if (
+          prevCode.name === getFormValue("source-name") &&
+          prevCode.description === getFormValue("description") &&
+          JSON.stringify(prevCode.config) === JSON.stringify(configuration)
+        ) {
+          return prevCode;
+        }
+
+        return {
+          ...prevCode,
+          type,
+          config: configuration,
+          name: getFormValue("source-name") || "",
+          description: getFormValue("description") || "",
+        };
+      });
+    }, [
+      getFormValue("source-name"),
+      getFormValue("description"),
+      properties,
+      sourceId,
+    ]);
+
+    // Update form values when code changes
+    useEffect(() => {
+      const isValid = validate(code);
+      if (isValid) {
+        if (updateSource.current === "form") {
+          updateSource.current = null;
+          return;
+        }
+        updateSource.current = "code";
+        if (code.name !== getFormValue("source-name")) {
+          setFormValue(
+            "source-name",
+            typeof code.name === "string" ? code.name : ""
+          );
+        }
+        if (code.description !== getFormValue("description")) {
+          setFormValue(
+            "description",
+            typeof code.description === "string" ? code.description : ""
+          );
+        }
+        const currentConfig = convertMapToObject(properties);
+        if (JSON.stringify(currentConfig) !== JSON.stringify(code.config)) {
+          const configMap = new Map();
+          Object.entries(code.config || {}).forEach(([key, value], index) => {
+            configMap.set(`key${index}`, { key, value: value as string });
+          });
+          setProperties(configMap);
+        }
+        setCodeAlert("");
+      } else {
+        setCodeAlert(ajv.errorsText(validate.errors));
+      }
+    }, [code]);
+
+    return null;
+  };
 
 const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   modelLoaded,
@@ -146,6 +147,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   onSelection,
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const navigateTo = (url: string) => {
     navigate(url);
   };
@@ -308,11 +310,8 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     <>
       {!modelLoaded && (
         <PageHeader
-          title="Create source"
-          description="To configure and create a connector fill out the below form or use the
-          smart editor to setup a new source connector. If you already have a
-          configuration file, you can setup a new source connector by uploading
-          it in the smart editor."
+          title={t('source:create.title')}
+          description={t('source:create.description')}
         />
       )}
       <PageSection className="create_source-toolbar">
@@ -322,8 +321,8 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
               <ToggleGroup aria-label="Toggle between form editor and smart editor">
                 <ToggleGroupItem
                   icon={<PencilAltIcon />}
-                  text="Form editor"
-                  aria-label="Form editor"
+                  text={t('formEditor')}
+                  aria-label={t('formEditor')}
                   buttonId="form-editor"
                   isSelected={editorSelected === "form-editor"}
                   onChange={handleItemClick}
@@ -331,8 +330,8 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
 
                 <ToggleGroupItem
                   icon={<CodeIcon />}
-                  text="Smart editor"
-                  aria-label="Smart editor"
+                  text={t('smartEditor')}
+                  aria-label={t('smartEditor')}
                   buttonId="smart-editor"
                   isSelected={editorSelected === "smart-editor"}
                   onChange={handleItemClick}
@@ -430,21 +429,21 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                     handleCreate(values, setError);
                   }}
                 >
-                  Create source
+                  {t('source:create.title')}
                 </Button>
                 {modelLoaded ? (
                   <Button
                     variant="link"
                     onClick={() => selectSource && selectSource("")}
                   >
-                    Back
+                    {t('back')}
                   </Button>
                 ) : (
                   <Button
                     variant="link"
                     onClick={() => navigateTo("/source/catalog")}
                   >
-                    Back to catalog
+                    {t('backToCatalog')}
                   </Button>
                 )}
               </ActionGroup>
