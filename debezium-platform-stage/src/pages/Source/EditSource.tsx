@@ -36,6 +36,7 @@ import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
 import Ajv from "ajv";
+import { useTranslation } from "react-i18next";
 
 const ajv = new Ajv();
 
@@ -60,83 +61,84 @@ const FormSyncManager: React.FC<{
   setProperties,
   setCodeAlert,
 }) => {
-  const validate = ajv.compile(initialConnectorSchema);
-  // Ref to track the source of the update
-  const updateSource = React.useRef<"form" | "code" | null>(null);
+    const validate = ajv.compile(initialConnectorSchema);
+    // Ref to track the source of the update
+    const updateSource = React.useRef<"form" | "code" | null>(null);
 
-  // Update code state when form values change
-  useEffect(() => {
-    if (updateSource.current === "code") {
-      updateSource.current = null;
-      return;
-    }
-
-    updateSource.current = "form";
-    const configuration = convertMapToObject(properties);
-
-    setCode((prevCode: any) => {
-      if (
-        prevCode.name === getFormValue("source-name") &&
-        prevCode.description === getFormValue("description") &&
-        JSON.stringify(prevCode.config) === JSON.stringify(configuration)
-      ) {
-        return prevCode;
-      }
-
-      return {
-        ...prevCode,
-        config: configuration,
-        name: getFormValue("source-name") || "",
-        description: getFormValue("description") || "",
-      };
-    });
-  }, [
-    getFormValue("source-name"),
-    getFormValue("description"),
-    properties,
-    sourceId,
-  ]);
-
-  // Update form values when code changes
-  useEffect(() => {
-    const isValid = validate(code);
-    if (isValid) {
-      if (updateSource.current === "form") {
+    // Update code state when form values change
+    useEffect(() => {
+      if (updateSource.current === "code") {
         updateSource.current = null;
         return;
       }
-      updateSource.current = "code";
-      if (code.name !== getFormValue("source-name")) {
-        setFormValue(
-          "source-name",
-          typeof code.name === "string" ? code.name : ""
-        );
-      }
-      if (code.description !== getFormValue("description")) {
-        setFormValue(
-          "description",
-          typeof code.description === "string" ? code.description : ""
-        );
-      }
-      const currentConfig = convertMapToObject(properties);
-      if (JSON.stringify(currentConfig) !== JSON.stringify(code.config)) {
-        const configMap = new Map();
-        Object.entries(code.config || {}).forEach(([key, value], index) => {
-          configMap.set(`key${index}`, { key, value: value as string });
-        });
-        setProperties(configMap);
-      }
-      setCodeAlert("");
-    } else {
-      setCodeAlert(ajv.errorsText(validate.errors));
-    }
-  }, [code]);
 
-  return null;
-};
+      updateSource.current = "form";
+      const configuration = convertMapToObject(properties);
+
+      setCode((prevCode: any) => {
+        if (
+          prevCode.name === getFormValue("source-name") &&
+          prevCode.description === getFormValue("description") &&
+          JSON.stringify(prevCode.config) === JSON.stringify(configuration)
+        ) {
+          return prevCode;
+        }
+
+        return {
+          ...prevCode,
+          config: configuration,
+          name: getFormValue("source-name") || "",
+          description: getFormValue("description") || "",
+        };
+      });
+    }, [
+      getFormValue("source-name"),
+      getFormValue("description"),
+      properties,
+      sourceId,
+    ]);
+
+    // Update form values when code changes
+    useEffect(() => {
+      const isValid = validate(code);
+      if (isValid) {
+        if (updateSource.current === "form") {
+          updateSource.current = null;
+          return;
+        }
+        updateSource.current = "code";
+        if (code.name !== getFormValue("source-name")) {
+          setFormValue(
+            "source-name",
+            typeof code.name === "string" ? code.name : ""
+          );
+        }
+        if (code.description !== getFormValue("description")) {
+          setFormValue(
+            "description",
+            typeof code.description === "string" ? code.description : ""
+          );
+        }
+        const currentConfig = convertMapToObject(properties);
+        if (JSON.stringify(currentConfig) !== JSON.stringify(code.config)) {
+          const configMap = new Map();
+          Object.entries(code.config || {}).forEach(([key, value], index) => {
+            configMap.set(`key${index}`, { key, value: value as string });
+          });
+          setProperties(configMap);
+        }
+        setCodeAlert("");
+      } else {
+        setCodeAlert(ajv.errorsText(validate.errors));
+      }
+    }, [code]);
+
+    return null;
+  };
 
 const EditSource: React.FunctionComponent = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { sourceId } = useParams<{ sourceId: string }>();
 
   const navigateTo = (url: string) => {
@@ -248,14 +250,14 @@ const EditSource: React.FunctionComponent = () => {
     if (response.error) {
       addNotification(
         "danger",
-        `Edit failed`,
-        `Failed to edit ${(response.data as Source)?.name}: ${response.error}`
+        t('statusMessage:edit.failedTitle'),
+        t("statusMessage:edit.failedDescription", {val: `${(response.data as Source)?.name}: ${response.error}`}),
       );
     } else {
       addNotification(
         "success",
-        `Edit successful`,
-        `Source "${(response.data as Source)?.name}" edited successfully.`
+        t('statusMessage:edit.successTitle'),
+        t("statusMessage:edit.successDescription", {val: `${(response.data as Source)?.name}`})
       );
       navigateTo("/source");
     }
@@ -335,7 +337,7 @@ const EditSource: React.FunctionComponent = () => {
   };
 
   if (isFetchLoading) {
-    return <div>Loading...</div>;
+    return <div>{t('loading')}</div>;
   }
 
   if (error) {
@@ -345,11 +347,8 @@ const EditSource: React.FunctionComponent = () => {
   return (
     <>
       <PageHeader
-        title="Edit source"
-        description="To configure and create a connector fill out the below form or use the
-          smart editor to setup a new source connector. If you already have a
-          configuration file, you can setup a new source connector by uploading
-          it in the smart editor."
+        title={t("source:edit.title")}
+        description={t("source:edit.description")}
       />
       <PageSection className="create_source-toolbar">
         <Toolbar id="source-editor-toggle">
@@ -358,8 +357,8 @@ const EditSource: React.FunctionComponent = () => {
               <ToggleGroup aria-label="Toggle between form editor and smart editor">
                 <ToggleGroupItem
                   icon={<PencilAltIcon />}
-                  text="Form editor"
-                  aria-label="Form editor"
+                  text={t('formEditor')}
+                  aria-label={t('formEditor')}
                   buttonId="form-editor"
                   isSelected={editorSelected === "form-editor"}
                   onChange={handleItemClick}
@@ -367,8 +366,8 @@ const EditSource: React.FunctionComponent = () => {
 
                 <ToggleGroupItem
                   icon={<CodeIcon />}
-                  text="Smart editor"
-                  aria-label="Smart editor"
+                  text={t('smartEditor')}
+                  aria-label={t('smartEditor')}
                   buttonId="smart-editor"
                   isSelected={editorSelected === "smart-editor"}
                   onChange={handleItemClick}
@@ -474,10 +473,10 @@ const EditSource: React.FunctionComponent = () => {
                     handleEditSource(values, setError);
                   }}
                 >
-                  Save changes
+                  {t("saveChanges")}
                 </Button>
                 <Button variant="link" onClick={() => navigateTo("/source")}>
-                  Cancel
+                  {t("cancel")}
                 </Button>
               </ActionGroup>
             </PageSection>

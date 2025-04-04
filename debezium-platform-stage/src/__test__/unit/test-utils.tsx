@@ -9,13 +9,14 @@ import sourceEN from '../../../public/locales/en/source.json';
 import destinationEN from '../../../public/locales/en/destination.json';
 import transformEN from '../../../public/locales/en/transform.json';
 import statusMessageEN from '../../../public/locales/en/statusMessage.json';
+import vaultEN from '../../../public/locales/en/vault.json';
 
 i18n
     .use(initReactI18next)
     .init({
         lng: 'en',
         resources: {
-            en: { common: commonEN, pipeline: pipelineEN, source: sourceEN, destination: destinationEN, transform: transformEN, statusMessage: statusMessageEN },
+            en: { common: commonEN, pipeline: pipelineEN, source: sourceEN, destination: destinationEN, transform: transformEN, statusMessage: statusMessageEN, vault: vaultEN },
         },
     });
 

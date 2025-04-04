@@ -4,8 +4,10 @@
     "description": "Description",
     "type": "Type",
     "edit": "Edit",
+    "items": "Items",
     "loading": "Loading...",
     "findByName": "Find by name",
+    "searchByName": "Search by name",
     "source": "Source",
     "transform": "Transform",
     "transformations": "Transformations",
@@ -14,10 +16,24 @@
     "cancel": "Cancel",
     "saveChanges": "Save changes",
     "apply": "Apply",
+    "vaults": "Vaults",
+    "active": "Active",
     "formEditor": "Form editor",
     "smartEditor": "Smart editor",
     "saveAndNext": "Save and next",
+    "confirm": "Confirm",
+    "actions": "Actions",
+    "delete": "Delete",
     "goToHome": "Go to home",
     "addButton": "Add {{val}}",
-    "goTo": "Go to {{val}}"
+    "goTo": "Go to {{val}}",
+    "emptyState": {
+        "title": "No {{val}} available",
+        "description": "No {{val}} is configure for this cluster yet. To streams change events from a {{val}} you can configure a {{val}} by click the 'Add {{val}}' button."
+    },
+    "search":{
+        "title": "No matching {{val}} is present.",
+        "description": "Clear search and try again.",
+        "button": "Clear search"
+    }
 }

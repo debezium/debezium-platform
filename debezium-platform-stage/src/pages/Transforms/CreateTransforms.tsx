@@ -56,6 +56,7 @@ import { API_URL, transformSchema } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { find } from "lodash";
 import Ajv from "ajv";
+import { useTranslation } from "react-i18next";
 
 const ajv = new Ajv();
 
@@ -69,7 +70,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
   onSelection,
 }) => {
   const navigate = useNavigate();
-
+  const { t } = useTranslation();
   const navigateTo = (url: string) => {
     navigate(url);
   };
@@ -477,8 +478,8 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
     <>
       {!modelLoaded && (
         <PageHeader
-          title="Create transform"
-          description="Add a transform, Before the messages are delivered to the sink, they can run through a sequence of transformations."
+          title={t("transform:create.title")}
+          description={t("transform:create.description")}
         />
       )}
       <PageSection className="create_source-toolbar">
@@ -524,11 +525,11 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                   <CardBody isFilled>
                     <Form isWidthLimited>
                       <FormGroup
-                        label="Transform class"
+                        label={t("transform:form.classField")}
                         labelHelp={
                           <Popover
                             bodyContent={
-                              "The name of Java class implementing the transformation"
+                              t("transform:form.classFieldHelper")
                             }
                           >
                             <FormGroupLabelHelp aria-label="More info for name field" />
@@ -579,14 +580,14 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                         </FormHelperText>
                       </FormGroup>
                       <FormGroup
-                        label="Transform name"
+                        label={t("transform:form.nameField")}
                         isRequired
                         fieldId="transform-name"
                       >
                         <TextInput
                           id="transform-name"
                           name="transform-name"
-                          aria-label="transform name"
+                          aria-label={t("transform:form.nameField")}
                           onChange={(_event, value) => {
                             setValue("transform-name", value);
                             setError("transform-name", undefined);
@@ -612,11 +613,11 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                         </FormHelperText>
                       </FormGroup>
 
-                      <FormGroup label="Description" fieldId="description">
+                      <FormGroup label={t("transform:form.descriptionField")} fieldId="description">
                         <TextInput
                           id="description"
                           name="description"
-                          aria-label="description"
+                          aria-label={t("transform:form.descriptionField")}
                           onChange={(_event, value) => {
                             setValue("description", value);
                             setError("description", undefined);
@@ -630,20 +631,17 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                           header={
                             <FormFieldGroupHeader
                               titleText={{
-                                text: "Transform configuration properties",
+                                text: t("transform:form.subsectionTitle"),
                                 id: `field-group-${selected}-id`,
                               }}
                               titleDescription={
                                 !values["transform-name"] ? (
                                   <>
-                                    Enter <i>transform name</i> to enable
-                                    configuration properties.
+                                    {t("transform:form.subsectionDescription")}
                                   </>
                                 ) : (
                                   <>
-                                    Configuration properties passed to the
-                                    transformation with name
-                                    <i>"{values["transform-name"]}"</i>
+                                    {t("transform:form.subsectionDisabledDescription", { val: values["transform-name"] })}
                                   </>
                                 )
                               }
@@ -761,21 +759,21 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                         header={
                           <FormFieldGroupHeader
                             titleText={{
-                              text: "Predicate",
+                              text: t("transform:predicates.title"),
                               id: `field-group-${selected}-id`,
                             }}
                             titleDescription={
-                              "Transformations are applied only to records that meet the condition specified by the predicate."
+                              t("transform:predicates.description")
                             }
                           />
                         }
                       >
                         <FormGroup
-                          label="Predicate type"
+                          label={t("transform:form.predicateTypeField")}
                           labelHelp={
                             <Popover
                               bodyContent={
-                                "The name of Java class implementing the predicate"
+                                t("transform:form.predicateTypeFieldHelper")
                               }
                             >
                               <FormGroupLabelHelp aria-label="More info for name field" />
@@ -786,7 +784,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                           <FormSelect
                             value={selectedPredicate}
                             onChange={onChange}
-                            aria-label="FormSelect Input"
+                            aria-label={t("transform:form.predicateTypeField")}
                             ouiaId="BasicFormSelect"
                           >
                             {selectPredicateOptions?.map((option, index) => (
@@ -802,7 +800,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                         </FormGroup>
                         {selectedPredicate &&
                           selectedPredicate !==
-                            "org.apache.kafka.connect.transforms.predicates.RecordIsTombstone" &&
+                          "org.apache.kafka.connect.transforms.predicates.RecordIsTombstone" &&
                           (() => {
                             const predicate = predicates.find(
                               (predicate) =>
@@ -850,7 +848,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                         {selectedPredicate && (
                           <Checkbox
                             id="description-check-1"
-                            label="Negate predicate"
+                            label={t("transform:form.negateField")}
                             isChecked={getValue("predicate.negate") === "true"}
                             onChange={(
                               _event: React.FormEvent<HTMLInputElement>,
@@ -859,7 +857,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                               setValue("predicate.negate", "" + checked);
                               setError("predicate.negate", undefined);
                             }}
-                            description="Setting this option to True applies the predicate only to records that do not match the defined predicate condition"
+                            description={t("transform:form.negateFieldDescription")}
                           />
                         )}
                       </FormFieldGroup>
@@ -911,14 +909,14 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                     handleCreate(values, setError);
                   }}
                 >
-                  Create transform
+                  {t("transform:create.title")}
                 </Button>
                 {!modelLoaded && (
                   <Button
                     variant="link"
                     onClick={() => navigateTo("/transform")}
                   >
-                    Back
+                    {t("back")}
                   </Button>
                 )}
               </ActionGroup>

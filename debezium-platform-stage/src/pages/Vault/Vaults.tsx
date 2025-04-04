@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import comingSoonImage from "../../assets/comingSoon.png";
 import { useData } from "../../appLayout/AppContext";
 import { featureFlags } from "@utils/featureFlag";
+import { useTranslation } from "react-i18next";
 
 export interface IVaultsProps {
   sampleProp?: string;
@@ -13,6 +14,7 @@ export interface IVaultsProps {
 
 const Vaults: React.FunctionComponent<IVaultsProps> = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const navigateTo = (url: string) => {
     navigate(url);
@@ -25,33 +27,31 @@ const Vaults: React.FunctionComponent<IVaultsProps> = () => {
         {!featureFlags.Vault && (
           <div
             className="transformation_overlay"
-            style={darkMode ? { background: "rgba(41, 41, 41, 0.6)", zIndex: 9999 } : {zIndex: 9999}}
+            style={darkMode ? { background: "rgba(41, 41, 41, 0.6)", zIndex: 9999 } : { zIndex: 9999 }}
           >
             <img src={comingSoonImage} alt="Coming Soon" />
           </div>
         )}
 
         <EmptyStatus
-          heading="No vaults available"
-          primaryMessage=' No vaults is configure for this cluster yet. To streams change
-              events from a source database you can configure a source by click
-              the "Add vaults" button.'
+          heading={t("emptyState.title", { val: t("vault:vault") })}
+          primaryMessage={t("emptyState.description", { val: t("vault:vault") })}
           secondaryMessage=""
           primaryAction={
             <Button variant="primary" icon={<PlusIcon />}>
-              Add vaults
+              {t("addButton", { val: t("vault:vault") })}
             </Button>
           }
           secondaryActions={
             <>
               <Button variant="link" onClick={() => navigateTo("/source")}>
-                Go to source
+                {t("source")}
               </Button>
               <Button variant="link" onClick={() => navigateTo("/destination")}>
-                Go to destination
+                {t("destination")}
               </Button>
               <Button variant="link" onClick={() => navigateTo("/pipeline")}>
-                Go to pipeline
+                {t("pipeline")}
               </Button>
             </>
           }

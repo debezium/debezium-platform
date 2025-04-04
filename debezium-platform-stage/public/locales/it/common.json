@@ -1,12 +1,40 @@
 {
     "name": "Nome",
+    "schema": "Schema",
+    "description": "Descrizione",
+    "type": "Tipo",
+    "edit": "Modifica",
+    "items": "Elementi",
     "loading": "Caricamento...",
     "findByName": "Trova per nome",
-    "source": "Source",
-    "transform": "Transform",
-    "transformations": "Transformations",
+    "searchByName": "Cerca per nome",
+    "source": "Fonte",
+    "transform": "Trasforma",
+    "transformations": "Trasformazioni",
     "destination": "Destinazione",
     "pipeline": "Pipeline",
+    "cancel": "Annulla",
+    "saveChanges": "Salva le modifiche",
+    "apply": "Applica",
+    "vaults": "Vault",
+    "active": "Attivo",
+    "formEditor": "Editor modulo",
+    "smartEditor": "Editor intelligente",
+    "saveAndNext": "Salva e continua",
+    "confirm": "Conferma",
+    "actions": "Azioni",
+    "delete": "Elimina",
+    "goToHome": "Vai alla home",
     "addButton": "Aggiungi {{val}}",
-    "goTo": "Vai a {{val}}"
-}
+    "goTo": "Vai a {{val}}",
+    "emptyState": {
+      "title": "Nessun {{val}} disponibile",
+      "description": "Nessun {{val}} è ancora configurato per questo cluster. Per trasmettere eventi di modifica da un {{val}}, puoi configurarlo cliccando sul pulsante 'Aggiungi {{val}}'."
+    },
+    "search": {
+      "title": "Nessun {{val}} corrispondente presente.",
+      "description": "Cancella la ricerca e riprova.",
+      "button": "Cancella ricerca"
+    }
+  }
+  

@@ -20,6 +20,7 @@ import { debounce } from "lodash";
 import _ from "lodash";
 import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
 import { Catalog } from "src/apis/types";
+import { useTranslation } from "react-i18next";
 
 export interface ISinkProps {
   sampleProp?: string;
@@ -27,7 +28,7 @@ export interface ISinkProps {
 
 const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
   const navigate = useNavigate();
-
+  const { t } = useTranslation();
   const [isSelected, setIsSelected] = React.useState<"grid" | "list">("grid");
 
   const [searchResult, setSearchResult] = useState<Catalog[]>(sourceCatalog);
@@ -72,12 +73,9 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
   return (
     <>
       <PageSection isWidthLimited>
-        <Content component="h1">Source catalog</Content>
+        <Content component="h1">{t('source:catalog.title')}</Content>
         <Content component="p">
-          Select the type of source you want to connect from the list below,
-          once you select a connector you can configure it using form or smart
-          editor option. You can also search the connector by its name or toggle
-          the catalog between the list view or card view.
+          {t('source:catalog.description')}
         </Content>
         <Toolbar
           id="toolbar-sticky"
@@ -89,7 +87,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
             <ToolbarItem>
               <SearchInput
                 aria-label="Items  search input"
-                placeholder="Search by name"
+                placeholder={t("searchByName")}
                 value={searchQuery}
                 onChange={(_event, value) => onSearch(value)}
                 onClear={onClear}
@@ -118,7 +116,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
             <ToolbarGroup align={{ default: "alignEnd" }}>
               <ToolbarItem>
                 <Content component={ContentVariants.small}>
-                  {searchResult.length} Items
+                  {searchResult.length} {t("items")}
                 </Content>
               </ToolbarItem>
             </ToolbarGroup>

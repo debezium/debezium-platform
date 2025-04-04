@@ -1,1 +1,39 @@
-{}
+{
+    "transform": "transfrom",
+    "transformations": "transfromations",
+    "page": {
+        "title": "Transform",
+        "description": "Add a pipeline to streams change events from a pipeline database. To start select a connector below once you select a connector you can configure it using form or smart editor option. You can also search the connector by its name or toggle the catalog between the list view or card view."
+    },
+    "create": {
+        "title": "Create transfor",
+        "description": "Add a transform, Before the messages are delivered to the sink, they can run through a sequence of transformations."
+    },
+    "form": {
+        "classField": "Transform class",
+        "classFieldHelper": "The name of Java class implementing the transformation",
+        "nameField": "Transform name",
+        "descriptionField": "Description",
+        "subsectionTitle": "Transform configuration properties",
+        "subsectionDescription": "Enter transform name to enable configuration properties.",
+        "subsectionDisabledDescription": "Configuration properties passed to the transformation with name {{val}}",
+        "predicateTypeField": "Predicate type",
+        "predicateTypeFieldHelper": "The name of Java class implementing the predicate",
+        "negateField": "Negate predicate",
+        "negateFieldDescription": "Setting this option to True applies the predicate only to records that do not match the defined predicate condition"
+        
+    },
+    "predicates": {
+        "title": "Predicates",
+        "description": "Transformations are applied only to records that meet the condition specified by the predicate. Set 'negate' to 'true' to reverse this behavior."
+    },
+    "edit": {
+        "title": "Edit transform",
+        "description": "Edit a transform, Before the messages are delivered to the sink, they can run through a sequence of transformations."
+    },
+    "delete":{
+        "title": "Delete transform",
+        "description": "Enter {{val}} to delete transform",
+        "confirm": "Delete"
+    }
+}
