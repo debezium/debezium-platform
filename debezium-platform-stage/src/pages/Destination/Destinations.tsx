@@ -26,9 +26,10 @@ import ApiError from "../../components/ApiError";
 import { useCallback } from "react";
 import "./Destinations.css";
 import PageHeader from "@components/PageHeader";
+import { useTranslation } from "react-i18next";
 const Destinations: React.FunctionComponent = () => {
   const navigate = useNavigate();
-
+  const { t } = useTranslation();
   const navigateTo = (url: string) => {
     navigate(url);
   };
@@ -89,10 +90,10 @@ const Destinations: React.FunctionComponent = () => {
           secondaryActions={
             <>
               <Button variant="link" onClick={() => navigateTo("/source")}>
-                Go to source
+                {t("goTo", { val: t("source:source") })}
               </Button>
               <Button variant="link" onClick={() => navigateTo("/pipeline")}>
-                Go to pipeline
+                {t("goTo", { val: t("pipeline:pipeline") })}
               </Button>
             </>
           }
@@ -101,7 +102,7 @@ const Destinations: React.FunctionComponent = () => {
         <>
           {isDestinationLoading ? (
             <EmptyState
-              titleText="Loading..."
+              titleText={t("loading")}
               headingLevel="h4"
               icon={Spinner}
             />
@@ -110,11 +111,8 @@ const Destinations: React.FunctionComponent = () => {
               {destinationsList.length > 0 ? (
                 <>
                   <PageHeader
-                    title="Destination"
-                    description="Lists the available destination to capture the streaming change
-          events from a source database. You can search a destination by
-          its name or sort the list by the count of active pipelines using
-          a destination."
+                    title={t("destination")}
+                    description={t("destination:page.description")}
                   />
 
                   <PageSection>
@@ -129,7 +127,7 @@ const Destinations: React.FunctionComponent = () => {
                             <SearchInput
                               aria-label="Items example search input"
                               value={searchQuery}
-                              placeholder="Find by name"
+                              placeholder={t("findByName")}
                               onChange={(_event, value) => onSearch(value)}
                               onClear={onClear}
                             />
@@ -143,7 +141,9 @@ const Destinations: React.FunctionComponent = () => {
                                   navigateTo("/destination/catalog")
                                 }
                               >
-                                Add destination
+                                {t("addButton", {
+                                  val: t("destination:destination"),
+                                })}
                               </Button>
                             </ToggleGroup>
                           </ToolbarItem>
@@ -156,7 +156,7 @@ const Destinations: React.FunctionComponent = () => {
                                     : destinationsList
                                   ).length
                                 }{" "}
-                                Items
+                                {t("items")}
                               </Content>
                             </ToolbarItem>
                           </ToolbarGroup>
@@ -177,10 +177,8 @@ const Destinations: React.FunctionComponent = () => {
                 </>
               ) : (
                 <EmptyStatus
-                  heading="No Destination available"
-                  primaryMessage=' No Destination is configure for this cluster yet. To capture the streaming change
-                events from a source database you can configure a Destination by click
-                the "Add Destination" button.'
+                  heading={t("emptyState.title", { val: t("destination:destination") })}
+                  primaryMessage={t("emptyState.description", { val: t("destination:destination") })}
                   secondaryMessage=""
                   icon={DataSinkIcon as React.ComponentType<unknown>}
                   primaryAction={
@@ -189,7 +187,9 @@ const Destinations: React.FunctionComponent = () => {
                       icon={<PlusIcon />}
                       onClick={() => navigateTo("/destination/catalog")}
                     >
-                      Add destination
+                      {t("addButton", {
+                        val: t("destination:destination"),
+                      })}
                     </Button>
                   }
                   secondaryActions={
@@ -198,19 +198,19 @@ const Destinations: React.FunctionComponent = () => {
                         variant="link"
                         onClick={() => navigateTo("/source")}
                       >
-                        Go to source
+                        {t("source")}
                       </Button>
                       <Button
                         variant="link"
                         onClick={() => navigateTo("/transform")}
                       >
-                        Add transformation
+                        {t("transform")}
                       </Button>
                       <Button
                         variant="link"
                         onClick={() => navigateTo("/vaults")}
                       >
-                        Configure Vaults
+                        {t("vaults")}
                       </Button>
                     </>
                   }

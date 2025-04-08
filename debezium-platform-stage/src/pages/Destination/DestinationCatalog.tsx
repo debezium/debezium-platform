@@ -19,6 +19,7 @@ import { Catalog } from "src/apis/types";
 import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 import { debounce } from "lodash";
 import _ from "lodash";
+import { useTranslation } from "react-i18next";
 
 export interface ISinkProps {
   sampleProp?: string;
@@ -27,7 +28,7 @@ export interface ISinkProps {
 const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
   const navigate = useNavigate();
   const [isSelected, setIsSelected] = useState<"list" | "grid">("grid");
-
+  const { t } = useTranslation();
   const [searchResult, setSearchResult] =
     useState<Catalog[]>(destinationCatalog);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -71,12 +72,9 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
   return (
     <>
       <PageSection isWidthLimited>
-        <Content component="h1">Destination</Content>
+        <Content component="h1">{t("destination:catalog.title")}</Content>
         <Content component="p">
-          Add a destination to capture the change data event. To start select a
-          connector below once you select a connector you can configure it using
-          form or smart editor option. You can also search the connector by its
-          name or toggle the catalog between the list view or card view.
+        {t("destination:catalog.description")}
         </Content>
         <Toolbar
           id="toolbar-sticky"
@@ -88,7 +86,7 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
             <ToolbarItem>
               <SearchInput
                 aria-label="Items  search input"
-                placeholder="Search by name"
+                placeholder={t("searchByName")}
                 value={searchQuery}
                 onChange={(_event, value) => onSearch(value)}
                 onClear={onClear}
@@ -116,7 +114,7 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
             <ToolbarGroup align={{ default: "alignEnd" }}>
               <ToolbarItem>
                 <Content component={ContentVariants.small}>
-                  {searchResult.length} Items
+                  {searchResult.length} {t("items")}
                 </Content>
               </ToolbarItem>
             </ToolbarGroup>

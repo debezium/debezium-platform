@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Vaults } from "./Vaults";
 import { MemoryRouter } from "react-router-dom";
 import { useData } from "../../appLayout/AppContext";
+import { render } from '../../__test__/unit/test-utils';
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -34,13 +35,13 @@ describe("Vaults Component", () => {
     );
 
     expect(screen.getByAltText("Coming Soon")).toBeInTheDocument();
-    expect(screen.getByText("No vaults available")).toBeInTheDocument();
+    expect(screen.getByText("No vault available")).toBeInTheDocument();
     expect(
-      screen.getByText(/No vaults is configure for this cluster yet/)
+      screen.getByText(/No vault is configure for this cluster yet/)
     ).toBeInTheDocument();
-    expect(screen.getByText("Add vaults")).toBeInTheDocument();
-    expect(screen.getByText("Go to source")).toBeInTheDocument();
-    expect(screen.getByText("Go to destination")).toBeInTheDocument();
-    expect(screen.getByText("Go to pipeline")).toBeInTheDocument();
+    expect(screen.getByText("Add vault")).toBeInTheDocument();
+    expect(screen.getByText("Source")).toBeInTheDocument();
+    expect(screen.getByText("Destination")).toBeInTheDocument();
+    expect(screen.getByText("Pipeline")).toBeInTheDocument();
   });
 });

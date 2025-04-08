@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Destinations } from "./Destinations";
 import { useQuery } from "react-query";
@@ -7,6 +7,7 @@ import { useDeleteData } from "src/apis";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import destinationsMock from "../../__mocks__/data/Destinations.json";
 import pipelinesMock from "../../__mocks__/data/Pipelines.json"; // Add this import
+import { render } from '../../__test__/unit/test-utils';
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
@@ -33,7 +34,7 @@ vi.mock("../../appLayout/AppNotificationContext", () => ({
   useNotification: vi.fn(),
 }));
 
-describe("Sources", () => {
+describe("Destinations", () => {
   const mockDestinations = destinationsMock;
   const mockPipelines = pipelinesMock; // Add this line
 

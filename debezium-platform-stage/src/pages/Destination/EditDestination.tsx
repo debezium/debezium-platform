@@ -32,6 +32,7 @@ import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
 import Ajv from "ajv";
+import { useTranslation } from "react-i18next";
 
 const ajv = new Ajv();
 
@@ -133,6 +134,7 @@ const FormSyncManager: React.FC<{
 
 const EditDestination: React.FunctionComponent = () => {
   const navigate = useNavigate();
+    const { t } = useTranslation();
   const { destinationId } = useParams<{ destinationId: string }>();
   const navigateTo = (url: string) => {
     navigate(url);
@@ -334,7 +336,7 @@ const EditDestination: React.FunctionComponent = () => {
   };
 
   if (isFetchLoading) {
-    return <div>Loading...</div>;
+    return <div>{t("loading")}</div>;
   }
 
   if (error) {
@@ -344,11 +346,8 @@ const EditDestination: React.FunctionComponent = () => {
   return (
     <>
       <PageHeader
-        title="Edit destination"
-        description=" To configure and create a connector fill out the below form or use
-            the smart editor to setup a new Destination connector. If you
-            already have a configuration file, you can setup a new Destination
-            connector by uploading it in the smart editor."
+        title={t("destination:edit.title")}
+        description={t("destination:edit.description")}
       />
 
       <PageSection className="create_destination-toolbar">
@@ -358,8 +357,8 @@ const EditDestination: React.FunctionComponent = () => {
               <ToggleGroup aria-label="Toggle between form editor and smart editor">
                 <ToggleGroupItem
                   icon={<PencilAltIcon />}
-                  text="Form editor"
-                  aria-label="Form editor"
+                  text={t("formEditor")}
+                  aria-label={t("formEditor")}
                   buttonId="form-editor"
                   isSelected={editorSelected === "form-editor"}
                   onChange={handleItemClick}
@@ -367,8 +366,8 @@ const EditDestination: React.FunctionComponent = () => {
 
                 <ToggleGroupItem
                   icon={<CodeIcon />}
-                  text="Smart editor"
-                  aria-label="Smart editor"
+                  text={t("smartEditor")}
+                  aria-label={t("smartEditor")}
                   buttonId="smart-editor"
                   isSelected={editorSelected === "smart-editor"}
                   onChange={handleItemClick}
@@ -473,13 +472,13 @@ const EditDestination: React.FunctionComponent = () => {
                     handleEditDestination(values, setError);
                   }}
                 >
-                  Save changes
+                  {t("saveChanges")}
                 </Button>
                 <Button
                   variant="link"
                   onClick={() => navigateTo("/destination")}
                 >
-                  Cancel
+                  {t("cancel")}
                 </Button>
               </ActionGroup>
             </PageSection>

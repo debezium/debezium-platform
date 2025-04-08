@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Transforms } from "./Transforms";
 import transformsMock from "../../__mocks__/data/TransformsData.json";
 import { useQuery } from "react-query";
 import { useDeleteData } from "src/apis";
 import { useNotification } from "@appContext/AppNotificationContext";
+import { render } from '../../__test__/unit/test-utils';
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),

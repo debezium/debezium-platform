@@ -27,6 +27,7 @@ import PageHeader from "@components/PageHeader";
 import SourceSinkForm from "@components/SourceSinkForm";
 import { useEffect, useRef, useState } from "react";
 import Ajv from "ajv";
+import { useTranslation } from "react-i18next";
 
 const ajv = new Ajv();
 
@@ -142,6 +143,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   onSelection,
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const destinationIdParam = useParams<{ destinationId: string }>();
   const destinationIdModel = selectedId;
   const destinationId = modelLoaded
@@ -312,11 +314,8 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     <>
       {!modelLoaded && (
         <PageHeader
-          title="Create Destination"
-          description="To configure and create a connector fill out the below form or use
-            the smart editor to setup a new destination connector. If you
-            already have a configuration file, you can setup a new destination
-            connector by uploading it in the smart editor."
+          title={t("destination:create.title")}
+          description={t("destination:create.description")}
         />
       )}
 
@@ -327,8 +326,8 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
               <ToggleGroup aria-label="Toggle between form and smart editor">
                 <ToggleGroupItem
                   icon={<PencilAltIcon />}
-                  text="Form editor"
-                  aria-label="Form editor"
+                  text={t("formEditor")}
+                  aria-label={t("formEditor")}
                   buttonId="form-editor"
                   isSelected={editorSelected === "form-editor"}
                   onChange={handleItemClick}
@@ -336,8 +335,8 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
 
                 <ToggleGroupItem
                   icon={<CodeIcon />}
-                  text="Smart editor"
-                  aria-label="Smart editor"
+                  text={t("smartEditor")}
+                  aria-label={t("smartEditor")}
                   buttonId="smart-editor"
                   isSelected={editorSelected === "smart-editor"}
                   onChange={handleItemClick}
@@ -433,21 +432,21 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                     handleCreate(values, setError);
                   }}
                 >
-                  Create destination
+                  {t("destination:create.title")}
                 </Button>
                 {modelLoaded ? (
                   <Button
                     variant="link"
                     onClick={() => selectDestination && selectDestination("")}
                   >
-                    Back
+                    {t("back")}
                   </Button>
                 ) : (
                   <Button
                     variant="link"
                     onClick={() => navigateTo("/destination/catalog")}
                   >
-                    Back to catalog
+                    {t("destination:catalog.backToCatalog")}
                   </Button>
                 )}
               </ActionGroup>

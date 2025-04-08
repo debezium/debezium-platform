@@ -15,6 +15,7 @@ i18n
     .use(initReactI18next)
     .init({
         lng: 'en',
+        defaultNS: 'common',
         resources: {
             en: { common: commonEN, pipeline: pipelineEN, source: sourceEN, destination: destinationEN, transform: transformEN, statusMessage: statusMessageEN, vault: vaultEN },
         },

@@ -286,7 +286,7 @@ const Pipelines: React.FunctionComponent = () => {
         <>
           {pipelinesLoading ? (
             <EmptyState
-              titleText={t('common:loading')}
+              titleText={t('loading')}
               headingLevel="h4"
               icon={Spinner}
             />
@@ -309,7 +309,7 @@ const Pipelines: React.FunctionComponent = () => {
                           <ToolbarItem>
                             <SearchInput
                               aria-label="Items example search input"
-                              placeholder={t("common:findByName")}
+                              placeholder={t("findByName")}
                               value={searchQuery}
                               onChange={(_event, value) => onSearch(value)}
                               onClear={onClear}

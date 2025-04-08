@@ -1,0 +1,19 @@
+{
+    "destination": "destinazione",
+    "page": {
+        "description": "Elenca le destinazioni disponibili per acquisire gli eventi di modifica in streaming da un database di origine. Puoi cercare una destinazione per nome o ordinare l'elenco in base al numero di pipeline attive che utilizzano una destinazione."
+    },
+    "create": {
+        "title": "Crea destinazione",
+        "description": "Per configurare e creare un connettore, compila il modulo sottostante o utilizza l'editor intelligente per configurare un nuovo connettore di destinazione. Se hai già un file di configurazione, puoi configurare un nuovo connettore caricandolo nell'editor intelligente."
+    },
+    "catalog": {
+        "title": "Catalogo destinazioni",
+        "description": "Aggiungi una destinazione per acquisire gli eventi di modifica dei dati. Per iniziare, seleziona un connettore qui sotto. Una volta selezionato, puoi configurarlo utilizzando il modulo o l'editor intelligente. Puoi anche cercare il connettore per nome o cambiare la visualizzazione del catalogo tra elenco e schede.",
+        "backToCatalog": "Torna al catalogo"
+    },
+    "edit": {
+        "title": "Modifica destinazione",
+        "description": "Per configurare e creare un connettore, compila il modulo sottostante o utilizza l'editor intelligente per configurare un nuovo connettore di destinazione. Se hai già un file di configurazione, puoi configurare un nuovo connettore caricandolo nell'editor intelligente."
+    }
+}
