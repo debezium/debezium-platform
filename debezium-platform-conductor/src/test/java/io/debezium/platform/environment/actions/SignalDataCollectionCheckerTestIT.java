@@ -6,6 +6,11 @@
 package io.debezium.platform.environment.actions;
 
 import io.agroal.api.AgroalDataSource;
+import io.debezium.platform.environment.actions.db.MariaDbTestResource;
+import io.debezium.platform.environment.actions.db.MySQLTestResource;
+import io.debezium.platform.environment.actions.db.OracleTestResource;
+import io.debezium.platform.environment.actions.db.PostgresTestResource;
+import io.debezium.platform.environment.actions.db.SqlserverTestResource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.arc.InjectableInstance;
 import io.quarkus.test.common.QuarkusTestResource;
@@ -20,7 +25,7 @@ import java.sql.Statement;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
-@TestProfile(MyTestProfile.class)
+@TestProfile(DatabaseTestProfile.class)
 @QuarkusTestResource(PostgresTestResource.class)
 @QuarkusTestResource(MySQLTestResource.class)
 @QuarkusTestResource(MariaDbTestResource.class)
@@ -50,11 +55,11 @@ public class SignalDataCollectionCheckerTestIT {
     InjectableInstance<AgroalDataSource> mssqlDataSource;
 
     @Test
-    void testVerifySchemaOnPostgres() {
+    void testVerifySchemaOnPostgres() throws SQLException {
 
         AgroalDataSource dataSource = postgresDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource);
+        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource.getConnection());
 
         assertThat(verifier.verifyTableStructure("test", "debezium_signal", "public")).isFalse();
 
@@ -71,11 +76,11 @@ public class SignalDataCollectionCheckerTestIT {
     }
 
     @Test
-    void testVerifySchemaOnMySQL() {
+    void testVerifySchemaOnMySQL() throws SQLException {
 
         AgroalDataSource dataSource = mysqlDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource);
+        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource.getConnection());
 
         assertThat(verifier.verifyTableStructure("test","debezium_signal", "")).isFalse();
 
@@ -92,11 +97,11 @@ public class SignalDataCollectionCheckerTestIT {
     }
 
     @Test
-    void testVerifySchemaOnMariaDb() {
+    void testVerifySchemaOnMariaDb() throws SQLException {
 
         AgroalDataSource dataSource = mariadbDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource);
+        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource.getConnection());
 
         assertThat(verifier.verifyTableStructure("test","debezium_signal", "")).isFalse();
 
@@ -113,11 +118,11 @@ public class SignalDataCollectionCheckerTestIT {
     }
 
     @Test
-    void testVerifySchemaOnOracle() {
+    void testVerifySchemaOnOracle() throws SQLException {
 
         AgroalDataSource dataSource = oracleDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource);
+        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource.getConnection());
 
         assertThat(verifier.verifyTableStructure(null,"DEBEZIUM_SIGNAL", "DEBEZIUM")).isFalse();
 
@@ -134,11 +139,11 @@ public class SignalDataCollectionCheckerTestIT {
     }
 
     @Test
-    void testVerifySchemaOnMSSQL() {
+    void testVerifySchemaOnMSSQL() throws SQLException {
 
         AgroalDataSource dataSource = mssqlDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource);
+        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource.getConnection());
 
         assertThat(verifier.verifyTableStructure("master","debezium_signal", "dbo")).isFalse();
 

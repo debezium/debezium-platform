@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import io.agroal.api.AgroalDataSource;
+import io.debezium.DebeziumException;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.slf4j.Logger;
@@ -37,7 +37,7 @@ public class SignalDataCollectionChecker {
     private static final String NULLABLE_ATTRIBUTE = "NULLABLE";
     private static final String TABLE_TYPE = "TABLE";
 
-    private final AgroalDataSource dataSource;
+    private final Connection connection;
 
     private record ColumnMetadata(
             String name,
@@ -57,15 +57,25 @@ public class SignalDataCollectionChecker {
         public int hashCode() {
             return Objects.hash(sqlType, size, nullable);
         }
+
+        @Override
+        public String toString() {
+            return "ColumnMetadata{" +
+                    "name='" + name + '\'' +
+                    ", sqlType=" + sqlType +
+                    ", size=" + size +
+                    ", nullable=" + nullable +
+                    '}';
+        }
     }
 
-    public SignalDataCollectionChecker(AgroalDataSource dataSource) {
-        this.dataSource = dataSource;
+    public SignalDataCollectionChecker(Connection connection) {
+        this.connection = connection;
     }
 
     public boolean verifyTableStructure(String catalog, String tableName, String schemaName) {
 
-        try(Connection conn = dataSource.getConnection()) {
+        try(Connection conn = connection) {
 
             DatabaseMetaData metaData = conn.getMetaData();
 
@@ -77,21 +87,24 @@ public class SignalDataCollectionChecker {
             );
 
             boolean tableExists = tables.next();
+
             tables.close();
 
             if (!tableExists) {
+                LOGGER.debug("Table {} doesn't exists in schema {} and catalog {}", tableName, schemaName, catalog);
                 return false;
             }
 
             return hasCorrectStructure(tableName, schemaName, metaData, catalog);
         }
         catch (SQLException e) {
-            return false; //TODO check error
+            throw new DebeziumException(String.format("Error while verifying structure for table %s", tableName));
         }
     }
 
     private boolean hasCorrectStructure(String tableName, String schemaName, DatabaseMetaData metaData, String catalog) throws SQLException {
 
+        LOGGER.debug("Table {} exists in schema {} and catalog {}. Checking structure.", tableName, schemaName, catalog);
         Map<String, ColumnMetadata> actualColumns = new HashMap<>();
         ResultSet columns = metaData.getColumns(catalog, schemaName, tableName, null);
 
@@ -101,6 +114,7 @@ public class SignalDataCollectionChecker {
         }
         columns.close();
 
+        LOGGER.trace("Table {} metadata {}", tableName, actualColumns);
         return compareWithExpectedStructure(actualColumns);
     }
 
@@ -121,6 +135,7 @@ public class SignalDataCollectionChecker {
             ColumnMetadata expectedMeta = expected.getValue();
             ColumnMetadata actualMeta = Optional.ofNullable(actualColumns.get(columnName)).orElseGet(()-> actualColumns.get(columnName.toUpperCase()));
 
+            LOGGER.trace("Comparing expected metadata {} with actual metadata {} for column {}", expectedMeta, actualMeta, columnName);
             if (!actualColumns.containsKey(columnName) && !actualColumns.containsKey(columnName.toUpperCase())) {
                 return false;
             }

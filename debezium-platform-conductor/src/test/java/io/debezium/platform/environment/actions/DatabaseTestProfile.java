@@ -10,7 +10,7 @@ import io.quarkus.test.junit.QuarkusTestProfile;
 
 import java.util.Map;
 
-public class MyTestProfile implements QuarkusTestProfile {
+public class DatabaseTestProfile implements QuarkusTestProfile {
     @Override
     public String getConfigProfile() {
         return "db-test";
