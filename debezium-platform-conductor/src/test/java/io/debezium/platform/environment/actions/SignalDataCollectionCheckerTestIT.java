@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @QuarkusTestResource(MySQLTestResource.class)
 @QuarkusTestResource(MariaDbTestResource.class)
 @QuarkusTestResource(OracleTestResource.class)
-@QuarkusTestResource(OracleTestResource.class)
+@QuarkusTestResource(SqlserverTestResource.class)
 public class SignalDataCollectionCheckerTestIT {
 
     // InjectableInstance is required when multiple datasource must be active at runtime
@@ -44,6 +44,10 @@ public class SignalDataCollectionCheckerTestIT {
     @Inject
     @DataSource("oracle")
     InjectableInstance<AgroalDataSource> oracleDataSource;
+
+    @Inject
+    @DataSource("mssql")
+    InjectableInstance<AgroalDataSource> mssqlDataSource;
 
     @Test
     void testVerifySchemaOnPostgres() {
@@ -126,6 +130,27 @@ public class SignalDataCollectionCheckerTestIT {
         }
 
         assertThat(verifier.verifyTableStructure(null,"DEBEZIUM_SIGNAL", "DEBEZIUM")).isTrue();
+
+    }
+
+    @Test
+    void testVerifySchemaOnMSSQL() {
+
+        AgroalDataSource dataSource = mssqlDataSource.get();
+
+        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource);
+
+        assertThat(verifier.verifyTableStructure("master","debezium_signal", "dbo")).isFalse();
+
+        try (Statement statement = dataSource.getConnection().createStatement()) {
+
+            statement.execute("CREATE TABLE dbo.debezium_signal (id VARCHAR(42) PRIMARY KEY,type VARCHAR(32) NOT NULL,data VARCHAR(2048) NULL);");
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        assertThat(verifier.verifyTableStructure("master","debezium_signal", "dbo")).isTrue();
 
     }
 }
