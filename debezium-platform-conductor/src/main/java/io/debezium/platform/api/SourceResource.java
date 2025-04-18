@@ -35,6 +35,7 @@ import org.jboss.logging.Logger;
 import com.blazebit.persistence.integration.jaxrs.EntityViewId;
 
 import io.debezium.platform.domain.SourceService;
+import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
 import io.debezium.platform.domain.views.Source;
 
 @Tag(name = "sources")
@@ -95,5 +96,15 @@ public class SourceResource {
     public Response delete(@PathParam("id") Long id) {
         sourceService.delete(id);
         return Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    @Operation(summary = "Verify that signal data collection is configured correctly")
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
+    @POST
+    @Path("/signals/verify")
+    public Response verifySignalConfiguration(@NotNull @Valid SignalCollectionVerifyRequest request) {
+        var signalConfigurationStatus = sourceService.verifySignalDataCollection(request);
+
+        return Response.ok().entity(signalConfigurationStatus).build();
     }
 }

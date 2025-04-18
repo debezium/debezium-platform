@@ -5,6 +5,15 @@
  */
 package io.debezium.platform.environment.actions;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import jakarta.inject.Inject;
+
+import org.junit.jupiter.api.Test;
+
 import io.agroal.api.AgroalDataSource;
 import io.debezium.platform.environment.actions.db.MariaDbTestResource;
 import io.debezium.platform.environment.actions.db.MySQLTestResource;
@@ -16,13 +25,6 @@ import io.quarkus.arc.InjectableInstance;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.sql.SQLException;
-import java.sql.Statement;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 @TestProfile(DatabaseTestProfile.class)
@@ -59,9 +61,9 @@ public class SignalDataCollectionCheckerTestIT {
 
         AgroalDataSource dataSource = postgresDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource.getConnection());
+        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker();
 
-        assertThat(verifier.verifyTableStructure("test", "debezium_signal", "public")).isFalse();
+        assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "public", "debezium_signal")).isFalse();
 
         try (Statement statement = dataSource.getConnection().createStatement()) {
 
@@ -71,7 +73,7 @@ public class SignalDataCollectionCheckerTestIT {
             throw new RuntimeException(e);
         }
 
-        assertThat(verifier.verifyTableStructure("test","debezium_signal", "public")).isTrue();
+        assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "public", "debezium_signal")).isTrue();
 
     }
 
@@ -80,9 +82,9 @@ public class SignalDataCollectionCheckerTestIT {
 
         AgroalDataSource dataSource = mysqlDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource.getConnection());
+        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker();
 
-        assertThat(verifier.verifyTableStructure("test","debezium_signal", "")).isFalse();
+        assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "", "debezium_signal")).isFalse();
 
         try (Statement statement = dataSource.getConnection().createStatement()) {
 
@@ -92,7 +94,7 @@ public class SignalDataCollectionCheckerTestIT {
             throw new RuntimeException(e);
         }
 
-        assertThat(verifier.verifyTableStructure("test","debezium_signal", "")).isTrue();
+        assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "", "debezium_signal")).isTrue();
 
     }
 
@@ -101,9 +103,9 @@ public class SignalDataCollectionCheckerTestIT {
 
         AgroalDataSource dataSource = mariadbDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource.getConnection());
+        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker();
 
-        assertThat(verifier.verifyTableStructure("test","debezium_signal", "")).isFalse();
+        assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "", "debezium_signal")).isFalse();
 
         try (Statement statement = dataSource.getConnection().createStatement()) {
 
@@ -113,7 +115,7 @@ public class SignalDataCollectionCheckerTestIT {
             throw new RuntimeException(e);
         }
 
-        assertThat(verifier.verifyTableStructure("test","debezium_signal", "")).isTrue();
+        assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "", "debezium_signal")).isTrue();
 
     }
 
@@ -122,9 +124,9 @@ public class SignalDataCollectionCheckerTestIT {
 
         AgroalDataSource dataSource = oracleDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource.getConnection());
+        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker();
 
-        assertThat(verifier.verifyTableStructure(null,"DEBEZIUM_SIGNAL", "DEBEZIUM")).isFalse();
+        assertThat(verifier.verifyTableStructure(dataSource.getConnection(), null, "DEBEZIUM", "DEBEZIUM_SIGNAL")).isFalse();
 
         try (Statement statement = dataSource.getConnection().createStatement()) {
 
@@ -134,7 +136,7 @@ public class SignalDataCollectionCheckerTestIT {
             throw new RuntimeException(e);
         }
 
-        assertThat(verifier.verifyTableStructure(null,"DEBEZIUM_SIGNAL", "DEBEZIUM")).isTrue();
+        assertThat(verifier.verifyTableStructure(dataSource.getConnection(), null, "DEBEZIUM", "DEBEZIUM_SIGNAL")).isTrue();
 
     }
 
@@ -143,9 +145,9 @@ public class SignalDataCollectionCheckerTestIT {
 
         AgroalDataSource dataSource = mssqlDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker(dataSource.getConnection());
+        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker();
 
-        assertThat(verifier.verifyTableStructure("master","debezium_signal", "dbo")).isFalse();
+        assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "master", "dbo", "debezium_signal")).isFalse();
 
         try (Statement statement = dataSource.getConnection().createStatement()) {
 
@@ -155,7 +157,7 @@ public class SignalDataCollectionCheckerTestIT {
             throw new RuntimeException(e);
         }
 
-        assertThat(verifier.verifyTableStructure("master","debezium_signal", "dbo")).isTrue();
+        assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "master", "dbo", "debezium_signal")).isTrue();
 
     }
 }

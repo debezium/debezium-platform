@@ -15,11 +15,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import io.debezium.DebeziumException;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.debezium.DebeziumException;
 
 @ApplicationScoped
 public class SignalDataCollectionChecker {
@@ -29,15 +30,13 @@ public class SignalDataCollectionChecker {
     private static final Map<String, ColumnMetadata> EXPECTED_COLUMN_METADATA = Map.of(
             "id", new ColumnMetadata("id", Types.VARCHAR, 42, false),
             "type", new ColumnMetadata("type", Types.VARCHAR, 32, false),
-            "data", new ColumnMetadata("data", Types.VARCHAR, 2048, true)
-    );
+            "data", new ColumnMetadata("data", Types.VARCHAR, 2048, true));
+
     private static final String COLUMN_NAME_ATTRIBUTE = "COLUMN_NAME";
     private static final String DATA_TYPE_ATTRIBUTE = "DATA_TYPE";
     private static final String COLUMN_SIZE_ATTRIBUTE = "COLUMN_SIZE";
     private static final String NULLABLE_ATTRIBUTE = "NULLABLE";
     private static final String TABLE_TYPE = "TABLE";
-
-    private final Connection connection;
 
     private record ColumnMetadata(
             String name,
@@ -69,13 +68,13 @@ public class SignalDataCollectionChecker {
         }
     }
 
-    public SignalDataCollectionChecker(Connection connection) {
-        this.connection = connection;
+    public SignalDataCollectionChecker() {
+
     }
 
-    public boolean verifyTableStructure(String catalog, String tableName, String schemaName) {
+    public boolean verifyTableStructure(Connection connection, String catalog, String schemaName, String tableName) {
 
-        try(Connection conn = connection) {
+        try (Connection conn = connection) {
 
             DatabaseMetaData metaData = conn.getMetaData();
 
@@ -83,8 +82,7 @@ public class SignalDataCollectionChecker {
                     catalog,
                     schemaName,
                     tableName,
-                    new String[]{ TABLE_TYPE }
-            );
+                    new String[]{ TABLE_TYPE });
 
             boolean tableExists = tables.next();
 
@@ -133,18 +131,21 @@ public class SignalDataCollectionChecker {
         for (Map.Entry<String, ColumnMetadata> expected : EXPECTED_COLUMN_METADATA.entrySet()) {
             String columnName = expected.getKey();
             ColumnMetadata expectedMeta = expected.getValue();
-            ColumnMetadata actualMeta = Optional.ofNullable(actualColumns.get(columnName)).orElseGet(()-> actualColumns.get(columnName.toUpperCase()));
+            ColumnMetadata actualMeta = Optional.ofNullable(actualColumns.get(columnName)).orElseGet(() -> actualColumns.get(columnName.toUpperCase()));
 
             LOGGER.trace("Comparing expected metadata {} with actual metadata {} for column {}", expectedMeta, actualMeta, columnName);
             if (!actualColumns.containsKey(columnName) && !actualColumns.containsKey(columnName.toUpperCase())) {
+                LOGGER.trace("Column {} is not present in table signal data collection", columnName);
                 return false;
             }
 
             if (!actualMeta.equals(expectedMeta)) {
+                LOGGER.trace("Column {} doesn't match the excepted configuration, actual {} expected {}", columnName, actualMeta, expectedMeta);
                 return false;
             }
         }
 
+        LOGGER.trace("Signal data collection is correctly configured.");
         return true;
     }
 }

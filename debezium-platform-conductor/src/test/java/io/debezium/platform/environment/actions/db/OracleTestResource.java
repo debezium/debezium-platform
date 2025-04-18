@@ -5,11 +5,12 @@
  */
 package io.debezium.platform.environment.actions.db;
 
-import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
+import java.util.Map;
+
 import org.testcontainers.containers.OracleContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.Map;
+import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
 public class OracleTestResource implements QuarkusTestResourceLifecycleManager {
 

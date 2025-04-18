@@ -5,10 +5,9 @@
  */
 package io.debezium.platform.environment.actions;
 
+import java.util.Map;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
-
-import java.util.Map;
 
 public class DatabaseTestProfile implements QuarkusTestProfile {
     @Override
@@ -20,7 +19,7 @@ public class DatabaseTestProfile implements QuarkusTestProfile {
     public Map<String, String> getConfigOverrides() {
         // Disable specific beans via configuration
         return Map.of(
-                "quarkus.arc.exclude-types", "io.debezium.platform.environment.watcher.config.WatcherConfig,io.debezium.platform.environment.watcher.ConductorEnvironmentWatcher"
-        );
+                "quarkus.arc.exclude-types",
+                "io.debezium.platform.environment.watcher.config.WatcherConfig,io.debezium.platform.environment.watcher.ConductorEnvironmentWatcher");
     }
 }

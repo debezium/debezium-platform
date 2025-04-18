@@ -57,6 +57,7 @@ quarkus:
   swagger-ui:
     always-include: true
   log:
+    min-level: TRACE
     level: INFO
 
 "%dev":
@@ -115,7 +116,10 @@ quarkus:
     log:
       level: INFO
       category:
-        "io.debezium": DEBUG
+        "io.debezium":
+          level: INFO
+        "io.debezium.platform.environment.actions":
+          level: TRACE
 
 "%test":
   quarkus:
