@@ -13,6 +13,7 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import io.agroal.api.AgroalDataSource;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -27,13 +28,14 @@ public class SignalDataCollectionChecker {
 
     private static final Map<String, ColumnMetadata> EXPECTED_COLUMN_METADATA = Map.of(
             "id", new ColumnMetadata("id", Types.VARCHAR, 42, false),
-            "type", new ColumnMetadata("id", Types.VARCHAR, 32, false),
-            "data", new ColumnMetadata("id", Types.VARCHAR, 2048, true)
+            "type", new ColumnMetadata("type", Types.VARCHAR, 32, false),
+            "data", new ColumnMetadata("data", Types.VARCHAR, 2048, true)
     );
     private static final String COLUMN_NAME_ATTRIBUTE = "COLUMN_NAME";
     private static final String DATA_TYPE_ATTRIBUTE = "DATA_TYPE";
     private static final String COLUMN_SIZE_ATTRIBUTE = "COLUMN_SIZE";
     private static final String NULLABLE_ATTRIBUTE = "NULLABLE";
+    private static final String TABLE_TYPE = "TABLE";
 
     private final AgroalDataSource dataSource;
 
@@ -71,7 +73,7 @@ public class SignalDataCollectionChecker {
                     catalog,
                     schemaName,
                     tableName,
-                    new String[]{ "TABLE" }
+                    new String[]{ TABLE_TYPE }
             );
 
             boolean tableExists = tables.next();
@@ -117,9 +119,9 @@ public class SignalDataCollectionChecker {
         for (Map.Entry<String, ColumnMetadata> expected : EXPECTED_COLUMN_METADATA.entrySet()) {
             String columnName = expected.getKey();
             ColumnMetadata expectedMeta = expected.getValue();
-            ColumnMetadata actualMeta = actualColumns.get(columnName);
+            ColumnMetadata actualMeta = Optional.ofNullable(actualColumns.get(columnName)).orElseGet(()-> actualColumns.get(columnName.toUpperCase()));
 
-            if (!actualColumns.containsKey(columnName)) {
+            if (!actualColumns.containsKey(columnName) && !actualColumns.containsKey(columnName.toUpperCase())) {
                 return false;
             }
 
