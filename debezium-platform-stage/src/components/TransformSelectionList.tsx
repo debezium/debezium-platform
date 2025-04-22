@@ -16,6 +16,7 @@ import {
 } from "../apis/apis";
 import { API_URL } from "../utils/constants";
 import { useQuery } from "react-query";
+import { useTranslation } from "react-i18next";
 
 interface ITransformSelectionListProps {
   data: TransformApiResponse;
@@ -25,6 +26,7 @@ interface ITransformSelectionListProps {
 const TransformSelectionList: React.FunctionComponent<
   ITransformSelectionListProps
 > = ({ data, onSelection }) => {
+  const { t } = useTranslation();
   const {
     data: _pipelineList = [],
     error: _pipelineError,
@@ -43,9 +45,9 @@ const TransformSelectionList: React.FunctionComponent<
         <Table aria-label={`transform table`}>
           <Thead>
             <Tr>
-              <Th key={0}>Name</Th>
-              <Th key={1}>Type</Th>
-              <Th key={2}>Active</Th>
+              <Th key={0}>{t('name')}</Th>
+              <Th key={1}>{t('type')}</Th>
+              <Th key={2}>{t('active')}</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -57,11 +59,11 @@ const TransformSelectionList: React.FunctionComponent<
                   isSelectable
                   isClickable
                 >
-                  <Td dataLabel="Name">{instance.name}</Td>
-                  <Td dataLabel="Type" style={{ paddingLeft: "0px" }}>
-                  {instance.type}
+                  <Td dataLabel={t('name')}>{instance.name}</Td>
+                  <Td dataLabel={t('type')} style={{ paddingLeft: "0px" }}>
+                    {instance.type}
                   </Td>
-                  <Td dataLabel="Active">
+                  <Td dataLabel={t('active')}>
                     <Label icon={<TagIcon />} color="blue">
                       {/* {getActivePipelineCount(
                         pipelineList,
@@ -78,13 +80,12 @@ const TransformSelectionList: React.FunctionComponent<
       ) : (
         <EmptyState
           headingLevel="h2"
-          titleText={`No transform available`}
+          titleText={t('emptyState.title',{val: "Transform"})}
           icon={DataProcessorIcon}
           variant={EmptyStateVariant.lg}
         >
           <EmptyStateBody>
-            No transform is configure for this cluster yet. Configure a one by
-            selecting "Create a transform" option above.
+          {t('emptyState.shortDescription',{val: "Transform"})}
           </EmptyStateBody>
         </EmptyState>
       )}

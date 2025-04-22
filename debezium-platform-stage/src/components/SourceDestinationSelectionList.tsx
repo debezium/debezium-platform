@@ -23,6 +23,7 @@ import ConnectorImage from "./ComponentImage";
 import { API_URL } from "../utils/constants";
 import { useQuery } from "react-query";
 import { getActivePipelineCount } from "../utils/pipelineUtils";
+import { useTranslation } from "react-i18next";
 
 interface ISourceDestinationSelectionListProps {
   tableType: "source" | "destination";
@@ -33,6 +34,7 @@ interface ISourceDestinationSelectionListProps {
 const SourceDestinationSelectionList: React.FunctionComponent<
   ISourceDestinationSelectionListProps
 > = ({ tableType, data, onSelection }) => {
+  const { t } = useTranslation();
   const {
     data: pipelineList = [],
     error: _pipelineError,
@@ -51,9 +53,9 @@ const SourceDestinationSelectionList: React.FunctionComponent<
         <Table aria-label={`${tableType} table`}>
           <Thead>
             <Tr>
-              <Th key={0}>Name</Th>
-              <Th key={1}>Type</Th>
-              <Th key={2}>Active</Th>
+              <Th key={0}>{t("name")}</Th>
+              <Th key={1}>{t("type")}</Th>
+              <Th key={2}>{t("active")}</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -65,8 +67,8 @@ const SourceDestinationSelectionList: React.FunctionComponent<
                   isSelectable
                   isClickable
                 >
-                  <Td dataLabel="Name">{instance.name}</Td>
-                  <Td dataLabel="Type" style={{ paddingLeft: "0px" }}>
+                  <Td dataLabel={t("name")}>{instance.name}</Td>
+                  <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
                     <Flex alignItems={{ default: "alignItemsCenter" }}>
                       <FlexItem>
                         <ConnectorImage
@@ -77,7 +79,7 @@ const SourceDestinationSelectionList: React.FunctionComponent<
                       <FlexItem>{getConnectorTypeName(instance.type)}</FlexItem>
                     </Flex>
                   </Td>
-                  <Td dataLabel="Active">
+                  <Td dataLabel={t("active")}>
                     <Label icon={<TagIcon />} color="blue">
                       {getActivePipelineCount(
                         pipelineList,
@@ -93,13 +95,12 @@ const SourceDestinationSelectionList: React.FunctionComponent<
       ) : (
         <EmptyState
           headingLevel="h2"
-          titleText={`No ${tableType} available`}
+          titleText={t("emptyState.title", {val: tableType})}
           icon={tableType === "source" ? DataSourceIcon : DataSinkIcon}
           variant={EmptyStateVariant.lg}
         >
           <EmptyStateBody>
-            No {tableType} is configure for this cluster yet. Configure a one by
-            selecting "Create a {tableType}" option above.
+           {t("emptyState.description", {val: tableType})}
           </EmptyStateBody>
           {/* <EmptyStateFooter>
             <EmptyStateActions>

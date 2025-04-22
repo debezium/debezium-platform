@@ -44,6 +44,7 @@ import { getActivePipelineCount } from "../utils/pipelineUtils";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../appLayout/AppNotificationContext";
 import { useDeleteData } from "src/apis";
+import { useTranslation } from "react-i18next";
 
 interface ISourceSinkTableProps {
   tableType: "source" | "destination";
@@ -66,6 +67,7 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
   data,
   onClear,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const { addNotification } = useNotification();
@@ -135,12 +137,12 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
 
   const rowActions = (actionData: ActionData): IAction[] => [
     {
-      title: "Edit",
+      title: t("edit"),
       onClick: () => onEditHandler(actionData.id, actionData.name),
     },
 
     {
-      title: "Delete",
+      title: t("delete"),
       onClick: () => onDeleteHandler(actionData.id, actionData.name),
     },
   ];
@@ -150,18 +152,18 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
       <Table aria-label={`${tableType} table`}>
         <Thead>
           <Tr>
-            <Th key={0}>Name</Th>
-            <Th key={1}>Type</Th>
-            <Th key={2}>Active</Th>
-            <Th key={3}>Actions</Th>
+            <Th key={0}>{t('name')}</Th>
+            <Th key={1}>{t('type')}</Th>
+            <Th key={2}>{t('active')}</Th>
+            <Th key={3}>{t('actions')}</Th>
           </Tr>
         </Thead>
         <Tbody>
           {data.length > 0 ? (
             data.map((instance) => (
               <Tr key={instance.id}>
-                <Td dataLabel="Name">{instance.name}</Td>
-                <Td dataLabel="Type" style={{ paddingLeft: "0px" }}>
+                <Td dataLabel={t('name')}>{instance.name}</Td>
+                <Td dataLabel={t('type')} style={{ paddingLeft: "0px" }}>
                   <Flex alignItems={{ default: "alignItemsCenter" }}>
                     <FlexItem>
                       <ConnectorImage connectorType={instance.type} size={35} />
@@ -169,7 +171,7 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
                     <FlexItem>{getConnectorTypeName(instance.type)}</FlexItem>
                   </Flex>
                 </Td>
-                <Td dataLabel="Active">
+                <Td dataLabel={t('active')}>
                   <Label icon={<TagIcon />} color="blue">
                     {getActivePipelineCount(
                       pipelineList,
@@ -178,7 +180,7 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
                     )}
                   </Label>
                 </Td>
-                <Td dataLabel="Actions" isActionCell>
+                <Td dataLabel={t('actions')} isActionCell>
                   <ActionsColumn
                     items={rowActions({ id: instance.id, name: instance.name })}
                   />
@@ -191,15 +193,15 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
                 <Bullseye>
                   <EmptyState
                     headingLevel="h2"
-                    titleText={`No matching ${tableType} is present. `}
+                    titleText={t('search.title', { val: tableType })}
                     icon={SearchIcon}
                     variant={EmptyStateVariant.sm}
                   >
-                    <EmptyStateBody>Clear search and try again.</EmptyStateBody>
+                    <EmptyStateBody>{t('search.description')}</EmptyStateBody>
                     <EmptyStateFooter>
                       <EmptyStateActions>
                         <Button variant="link" onClick={onClear}>
-                          Clear search
+                          {t('search.button')}
                         </Button>
                       </EmptyStateActions>
                     </EmptyStateFooter>
@@ -212,7 +214,7 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
       </Table>
       <Modal
         variant="medium"
-        title="Delete modal"
+        title={t("deleteModel.title")}
         isOpen={isOpen}
         onClose={() => modalToggle(false)}
         aria-labelledby={`delete ${tableType} model`}
@@ -221,8 +223,9 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
         <ModalHeader
           title={
             <p>
-              {" "}
-              Enter <i>"{`${deleteInstance.name}`}"</i> to delete{" "}
+              {t("deleteModel.description", {
+                val: deleteInstance.name,
+              })}
               {`${tableType}`}
             </p>
           }
@@ -249,14 +252,14 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
             isDisabled={deleteInstanceName !== deleteInstance.name}
             isLoading={isLoading}
           >
-            Confirm
+            {t("deleteModel.confirm")}
           </Button>
           <Button
             key="cancel"
             variant="link"
             onClick={() => modalToggle(false)}
           >
-            Cancel
+            {t("deleteModel.cancel")}
           </Button>
         </ModalFooter>
       </Modal>

@@ -23,6 +23,7 @@ import { ExternalLinkAltIcon, PlusCircleIcon } from "@patternfly/react-icons";
 import "./CatalogGrid.css";
 import { Catalog } from "src/apis/types";
 import { openDBZJira } from "@utils/helpers";
+import { useTranslation } from "react-i18next";
 
 export interface ICatalogGridProps {
   onCardSelect: (selectId: string) => void;
@@ -39,6 +40,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
   searchResult,
   displayType,
 }) => {
+  const { t } = useTranslation();
   const [selectedDataListItemId, setSelectedDataListItemId] =
     React.useState("");
 
@@ -89,7 +91,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
               <Card isClickable variant={"secondary"} onClick={openDBZJira}>
                 <CardHeader
                   selectableActions={{
-                    onClickAction: () => {},
+                    onClickAction: () => { },
                     selectableActionAriaLabelledby: `catalog-card-id-fill-out-form`,
                   }}
                 >
@@ -98,11 +100,11 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                     style={{ fontSize: "xxx-large", paddingBottom: "10px" }}
                   />
                   <CardTitle id={`catalog-card-id-fill-out-form`}>
-                    Request new {catalogType} <ExternalLinkAltIcon />
+                    {t("requestNewResource.title", { val: catalogType })} <ExternalLinkAltIcon />
                   </CardTitle>
                 </CardHeader>
                 <CardBody>
-                  Fill our a request to create a new {catalogType}.
+                  {t("requestNewResource.description", { val: catalogType })}
                 </CardBody>
               </Card>
             </GalleryItem>
@@ -174,14 +176,12 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                       <Flex direction={{ default: "column" }}>
                         <FlexItem>
                           <Content component="h3">
-                            {" "}
-                            Request new {catalogType}
+                            {t("requestNewResource.title", { val: catalogType })} <ExternalLinkAltIcon />
                           </Content>
                         </FlexItem>
                         <FlexItem>
                           <Content component="p">
-                            {" "}
-                            Fill our a request to create a new {catalogType}.
+                            {t("requestNewResource.description", { val: catalogType })}
                           </Content>
                         </FlexItem>
                       </Flex>

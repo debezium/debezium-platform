@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 let trademarkMessageDisplayed = false;
 
 const TrademarkMessage = () => {
+  const { t } = useTranslation();
   const [showTrademark, setShowTrademark] = useState(true);
 
   useEffect(() => {
@@ -23,7 +25,7 @@ const TrademarkMessage = () => {
 
   return (
     <div id="trademark-msg" className="trademark_msg">
-      # All logos and trademarks are the property of their respective owners.
+      # {t('trademarkWarking')}
     </div>
   );
 };

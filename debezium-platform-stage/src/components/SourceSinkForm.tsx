@@ -18,6 +18,7 @@ import {
 import { PlusIcon, TrashIcon } from "@patternfly/react-icons";
 import { getConnectorTypeName } from "@utils/helpers";
 import ConnectorImage from "./ComponentImage";
+import { useTranslation } from "react-i18next";
 
 interface SourceSinkFormProps {
   ConnectorId: string;
@@ -51,13 +52,14 @@ const SourceSinkForm = ({
   handleDeleteProperty,
   handlePropertyChange,
 }: SourceSinkFormProps) => {
+  const { t } = useTranslation();
   const connectorLabel = connectorType === "source" ? "Source" : "Destination";
   return (
     <Card className="custom-card-body">
       <CardBody isFilled>
         <Form isWidthLimited>
           <FormGroup
-            label={`${connectorLabel} type`}
+            label={t("form.field.type", { val: connectorLabel })}
             isRequired
             fieldId={`${connectorType}-type-field`}
           >
@@ -69,7 +71,7 @@ const SourceSinkForm = ({
             </>
           </FormGroup>
           <FormGroup
-            label={`${connectorLabel} name`}
+            label={t("form.field.name", { val: connectorLabel })}
             isRequired
             fieldId={`${connectorType}-name-field`}
           >
@@ -85,7 +87,7 @@ const SourceSinkForm = ({
             />
           </FormGroup>
           <FormGroup
-            label="Description"
+            label={t("form.field.description.label")}
             fieldId={`${connectorType}-description-field`}
           >
             <TextInput
@@ -97,8 +99,7 @@ const SourceSinkForm = ({
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
-                  Add a one liner to describe your {connectorType} or where you
-                  plan to capture.
+                  {t("form.field.description.helper", { val: connectorType })}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
@@ -108,10 +109,10 @@ const SourceSinkForm = ({
             header={
               <FormFieldGroupHeader
                 titleText={{
-                  text: "Configuration properties",
+                  text: t("form.subHeading.title"),
                   id: `field-group-${connectorType}-id`,
                 }}
-                titleDescription="Enter the both key and value pair to configure a property"
+                titleDescription={t("form.subHeading.description")}
                 actions={
                   <>
                     <Button
@@ -119,7 +120,7 @@ const SourceSinkForm = ({
                       icon={<PlusIcon />}
                       onClick={handleAddProperty}
                     >
-                      Add property
+                      {t("form.addFieldButton")}
                     </Button>
                   </>
                 }

@@ -1,40 +1,69 @@
 {
-    "name": "Nome",
-    "schema": "Schema",
-    "description": "Descrizione",
-    "type": "Tipo",
-    "edit": "Modifica",
-    "items": "Elementi",
-    "loading": "Caricamento...",
-    "findByName": "Trova per nome",
-    "searchByName": "Cerca per nome",
-    "source": "Fonte",
-    "transform": "Trasforma",
-    "transformations": "Trasformazioni",
-    "destination": "Destinazione",
-    "pipeline": "Pipeline",
-    "cancel": "Annulla",
-    "saveChanges": "Salva le modifiche",
-    "apply": "Applica",
-    "vaults": "Vault",
-    "active": "Attivo",
-    "formEditor": "Editor modulo",
-    "smartEditor": "Editor intelligente",
-    "saveAndNext": "Salva e continua",
-    "confirm": "Conferma",
-    "actions": "Azioni",
-    "delete": "Elimina",
-    "goToHome": "Vai alla home",
-    "addButton": "Aggiungi {{val}}",
-    "goTo": "Vai a {{val}}",
-    "emptyState": {
-      "title": "Nessun {{val}} disponibile",
-      "description": "Nessun {{val}} è ancora configurato per questo cluster. Per trasmettere eventi di modifica da un {{val}}, puoi configurarlo cliccando sul pulsante 'Aggiungi {{val}}'."
+  "name": "Nome",
+  "schema": "Schema",
+  "description": "Descrizione",
+  "type": "Tipo",
+  "edit": "Modifica",
+  "items": "Elementi",
+  "loading": "Caricamento...",
+  "findByName": "Trova per nome",
+  "searchByName": "Cerca per nome",
+  "source": "Fonte",
+  "transform": "Trasforma",
+  "transformations": "Trasformazioni",
+  "destination": "Destinazione",
+  "pipeline": "Pipeline",
+  "cancel": "Annulla",
+  "saveChanges": "Salva le modifiche",
+  "apply": "Applica",
+  "vaults": "Vault",
+  "active": "Attivo",
+  "formEditor": "Editor modulo",
+  "smartEditor": "Editor intelligente",
+  "saveAndNext": "Salva e continua",
+  "confirm": "Conferma",
+  "actions": "Azioni",
+  "delete": "Elimina",
+  "goToHome": "Vai alla home",
+  "addButton": "Aggiungi {{val}}",
+  "refresh": "Aggiorna",
+  "error": "Errore",
+  "failedToLoad": "Caricamento fallito",
+  "apiError": "Errore: caricamento fallito",
+  "goTo": "Vai a {{val}}",
+  "trademarkWarking": "Tutti i loghi e i marchi sono di proprietà dei rispettivi titolari",
+  "emptyState": {
+    "title": "Nessun {{val}} disponibile",
+    "description": "Nessun {{val}} è ancora configurato per questo cluster. Per trasmettere eventi di modifica da un {{val}}, puoi configurarlo cliccando sul pulsante 'Aggiungi {{val}}'."
+  },
+  "search": {
+    "title": "Nessun {{val}} corrispondente trovato.",
+    "description": "Cancella la ricerca e riprova.",
+    "button": "Cancella ricerca"
+  },
+  "deleteModel": {
+    "title": "Finestra di eliminazione",
+    "description": "Inserisci '{{val}}' per eliminare",
+    "confirm": "Elimina",
+    "cancel": "Annulla"
+  },
+  "form": {
+    "field": {
+      "type": "Tipo {{val}}",
+      "name": "Nome {{val}}",
+      "description": {
+        "label": "Descrizione",
+        "helper": "Aggiungi una breve descrizione per il tuo {{val}} o dove intendi acquisirlo."
+      }
     },
-    "search": {
-      "title": "Nessun {{val}} corrispondente presente.",
-      "description": "Cancella la ricerca e riprova.",
-      "button": "Cancella ricerca"
-    }
+    "subHeading": {
+      "title": "Proprietà di configurazione",
+      "description": "Inserisci la coppia chiave-valore per configurare una proprietà"
+    },
+    "addFieldButton": "Aggiungi proprietà"
+  },
+  "requestNewResource": {
+    "title": "Richiedi nuovo {{val}}",
+    "description": "Compila una richiesta per creare un nuovo {{val}}."
   }
-  
+}
