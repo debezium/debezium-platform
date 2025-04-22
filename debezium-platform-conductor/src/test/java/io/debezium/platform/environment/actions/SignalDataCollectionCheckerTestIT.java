@@ -28,11 +28,11 @@ import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
 @TestProfile(DatabaseTestProfile.class)
-@QuarkusTestResource(PostgresTestResource.class)
-@QuarkusTestResource(MySQLTestResource.class)
-@QuarkusTestResource(MariaDbTestResource.class)
-@QuarkusTestResource(OracleTestResource.class)
-@QuarkusTestResource(SqlserverTestResource.class)
+@QuarkusTestResource(value =PostgresTestResource.class, restrictToAnnotatedClass = true)
+@QuarkusTestResource(value =MySQLTestResource.class, restrictToAnnotatedClass = true)
+@QuarkusTestResource(value =MariaDbTestResource.class, restrictToAnnotatedClass = true)
+@QuarkusTestResource(value =OracleTestResource.class, restrictToAnnotatedClass = true)
+@QuarkusTestResource(value = SqlserverTestResource.class, restrictToAnnotatedClass = true)
 public class SignalDataCollectionCheckerTestIT {
 
     // InjectableInstance is required when multiple datasource must be active at runtime
