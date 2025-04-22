@@ -117,7 +117,7 @@ public class SignalDataCollectionChecker {
         return compareWithExpectedStructure(actualColumns);
     }
 
-    private static ColumnMetadata getColumnMetadata(ResultSet columns) throws SQLException {
+    private ColumnMetadata getColumnMetadata(ResultSet columns) throws SQLException {
 
         String columnName = columns.getString(COLUMN_NAME_ATTRIBUTE);
         int dataType = columns.getInt(DATA_TYPE_ATTRIBUTE);

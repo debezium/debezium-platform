@@ -69,9 +69,6 @@ public class SignalDataCollectionCheckerIT {
 
             statement.execute("CREATE TABLE public.debezium_signal (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);");
         }
-        catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
         assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "public", "debezium_signal")).isTrue();
 
@@ -89,9 +86,6 @@ public class SignalDataCollectionCheckerIT {
         try (Statement statement = dataSource.getConnection().createStatement()) {
 
             statement.execute("CREATE TABLE test.debezium_signal (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);");
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e);
         }
 
         assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "", "debezium_signal")).isTrue();
@@ -111,9 +105,6 @@ public class SignalDataCollectionCheckerIT {
 
             statement.execute("CREATE TABLE test.debezium_signal (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);");
         }
-        catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
         assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "", "debezium_signal")).isTrue();
 
@@ -132,9 +123,6 @@ public class SignalDataCollectionCheckerIT {
 
             statement.execute("CREATE TABLE DEBEZIUM.debezium_signal (id VARCHAR2(42) PRIMARY KEY, type VARCHAR2(32) NOT NULL, data VARCHAR2(2048) NULL)");
         }
-        catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
         assertThat(verifier.verifyTableStructure(dataSource.getConnection(), null, "DEBEZIUM", "DEBEZIUM_SIGNAL")).isTrue();
 
@@ -152,9 +140,6 @@ public class SignalDataCollectionCheckerIT {
         try (Statement statement = dataSource.getConnection().createStatement()) {
 
             statement.execute("CREATE TABLE dbo.debezium_signal (id VARCHAR(42) PRIMARY KEY,type VARCHAR(32) NOT NULL,data VARCHAR(2048) NULL);");
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e);
         }
 
         assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "master", "dbo", "debezium_signal")).isTrue();
