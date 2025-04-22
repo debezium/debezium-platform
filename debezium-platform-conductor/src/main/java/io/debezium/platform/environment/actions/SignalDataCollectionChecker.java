@@ -46,8 +46,9 @@ public class SignalDataCollectionChecker {
 
         @Override
         public boolean equals(Object o) {
-            if (o == null || getClass() != o.getClass())
+            if (o == null || getClass() != o.getClass()) {
                 return false;
+            }
             ColumnMetadata that = (ColumnMetadata) o;
             return size == that.size && sqlType == that.sqlType && nullable == that.nullable;
         }

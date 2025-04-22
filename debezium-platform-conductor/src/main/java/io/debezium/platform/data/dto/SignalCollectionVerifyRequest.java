@@ -5,7 +5,6 @@
  */
 package io.debezium.platform.data.dto;
 
-
 public record SignalCollectionVerifyRequest(
         DatabaseType databaseType,
         String hostname,

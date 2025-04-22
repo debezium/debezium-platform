@@ -7,12 +7,9 @@ package io.debezium.platform.domain;
 
 import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
-import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Optional;
 
-import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
-import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -23,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import com.blazebit.persistence.CriteriaBuilderFactory;
 import com.blazebit.persistence.view.EntityViewManager;
 
+import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
+import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import io.debezium.platform.data.model.SourceEntity;
 import io.debezium.platform.domain.views.Source;
 import io.debezium.platform.domain.views.refs.SourceReference;

@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Signal Data Collection Verify Response Schema",
+  "type": "object",
+  "required": [
+    "exists",
+    "message"
+  ],
+  "properties": {
+    "exists": {
+      "type": "boolean",
+      "description": "Indicates whether the signal data collection exists"
+    },
+    "message": {
+      "type": "string",
+      "description": "A message providing additional information about the verification result"
+    }
+  },
+  "additionalProperties": false
+}

@@ -34,8 +34,8 @@ import org.jboss.logging.Logger;
 
 import com.blazebit.persistence.integration.jaxrs.EntityViewId;
 
-import io.debezium.platform.domain.SourceService;
 import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
+import io.debezium.platform.domain.SourceService;
 import io.debezium.platform.domain.views.Source;
 
 @Tag(name = "sources")

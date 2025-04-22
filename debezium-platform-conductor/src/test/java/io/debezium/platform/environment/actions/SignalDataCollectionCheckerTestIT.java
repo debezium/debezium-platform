@@ -28,10 +28,10 @@ import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
 @TestProfile(DatabaseTestProfile.class)
-@QuarkusTestResource(value =PostgresTestResource.class, restrictToAnnotatedClass = true)
-@QuarkusTestResource(value =MySQLTestResource.class, restrictToAnnotatedClass = true)
-@QuarkusTestResource(value =MariaDbTestResource.class, restrictToAnnotatedClass = true)
-@QuarkusTestResource(value =OracleTestResource.class, restrictToAnnotatedClass = true)
+@QuarkusTestResource(value = PostgresTestResource.class, restrictToAnnotatedClass = true)
+@QuarkusTestResource(value = MySQLTestResource.class, restrictToAnnotatedClass = true)
+@QuarkusTestResource(value = MariaDbTestResource.class, restrictToAnnotatedClass = true)
+@QuarkusTestResource(value = OracleTestResource.class, restrictToAnnotatedClass = true)
 @QuarkusTestResource(value = SqlserverTestResource.class, restrictToAnnotatedClass = true)
 public class SignalDataCollectionCheckerTestIT {
 
