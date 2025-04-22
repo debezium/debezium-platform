@@ -129,7 +129,7 @@ const PipelineAction: React.FC = () => {
                                                 </Popover>
                                             }
                                         >
-                                            <TextInput type="text" id="collection-name" name="collection-name" value='"\"public\".\"Collection1\"", "\"public\".\"Collection2\""' />
+                                            <TextInput type="text" id="collection-name" name="collection-name" value='public.Collection1, public.Collection2' />
                                         </FormGroup>
                                         <FormGroup role="radiogroup" isStack fieldId="snapshot-type" hasNoPaddingTop label="Snapshot type"
                                             labelHelp={

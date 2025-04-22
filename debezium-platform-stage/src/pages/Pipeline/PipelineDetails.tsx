@@ -44,6 +44,8 @@ const PipelineDetails: React.FunctionComponent = () => {
       setActiveTabKey("logs");
     } else if (detailsTab === "edit") {
       setActiveTabKey("edit");
+    } else if (detailsTab === "action") {
+      setActiveTabKey("action");
     }
   }, [detailsTab]);
 
