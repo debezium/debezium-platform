@@ -22,7 +22,7 @@ import io.quarkus.arc.InjectableInstance;
 import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
-class SourceResourceTest {
+class SourceResourceIT {
 
     @Inject
     InjectableInstance<AgroalDataSource> dataSource;

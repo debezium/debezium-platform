@@ -33,7 +33,7 @@ import io.quarkus.test.junit.TestProfile;
 @QuarkusTestResource(value = MariaDbTestResource.class, restrictToAnnotatedClass = true)
 @QuarkusTestResource(value = OracleTestResource.class, restrictToAnnotatedClass = true)
 @QuarkusTestResource(value = SqlserverTestResource.class, restrictToAnnotatedClass = true)
-public class SignalDataCollectionCheckerTestIT {
+public class SignalDataCollectionCheckerIT {
 
     // InjectableInstance is required when multiple datasource must be active at runtime
     // see https://quarkus.io/guides/datasource#configure-multiple-datasources

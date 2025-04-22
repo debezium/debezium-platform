@@ -38,7 +38,7 @@ import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class ServiceTest {
+public class ServiceIT {
     @Inject
     SourceService sourceService;
 
