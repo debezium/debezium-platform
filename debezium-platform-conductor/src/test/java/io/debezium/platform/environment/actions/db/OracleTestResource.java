@@ -15,7 +15,7 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 public class OracleTestResource implements QuarkusTestResourceLifecycleManager {
 
     private static final OracleContainer ORACLE = new OracleContainer(
-            DockerImageName.parse("gvenzl/oracle-xe:21-slim-faststart"))
+            DockerImageName.parse("quay.io/debezium/gvenzl-oracle-xe:21-slim-faststart").asCompatibleSubstituteFor("gvenzl/oracle-xe"))
             .withUsername("debezium")
             .withPassword("dbz")
             .withDatabaseName("ORCLPDB1");
