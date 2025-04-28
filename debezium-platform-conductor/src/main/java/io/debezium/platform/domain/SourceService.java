@@ -34,7 +34,7 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
     private static final Logger LOGGER = LoggerFactory.getLogger(SourceService.class);
 
     private static final String SIGNAL_DATA_COLLECTION_CONFIGURED_MESSAGE = "Signal data collection correctly configured";
-    private static final String SIGNAL_DATA_COLLECTION_MISS_CONFIGURED_MESSAGE = "Signal data collection not present or miss configured";
+    private static final String SIGNAL_DATA_COLLECTION_MISS_CONFIGURED_MESSAGE = "Signal data collection not present or misconfigured";
 
     private final SignalDataCollectionChecker signalDataCollectionChecker;
 

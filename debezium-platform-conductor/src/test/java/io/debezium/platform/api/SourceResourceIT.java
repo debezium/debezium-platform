@@ -49,7 +49,7 @@ class SourceResourceIT {
                 .assertThat().body(matchesJsonSchemaInClasspath("schemas/signal-verify-response-schema.json"))
                 .statusCode(200)
                 .body("exists", equalTo(false))
-                .body("message", equalTo("Signal data collection not present or miss configured"));
+                .body("message", equalTo("Signal data collection not present or misconfigured"));
     }
 
     @Test
