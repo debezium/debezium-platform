@@ -325,7 +325,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                 ) : (
 
                   <EmptyStatus
-                    heading={t('emptyState.title')}
+                    heading={t('emptyState.title', { val: t('transform:transform') })}
                     primaryMessage={t('emptyState.description', { val: t('transform:transform') })}
                     secondaryMessage=""
                     icon={DataProcessorIcon as React.ComponentType<unknown>}

@@ -173,7 +173,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                 </>
               ) : (
                 <EmptyStatus
-                  heading={t('emptyState.title')}
+                  heading={t('emptyState.title', { val: t('source:source') })}
                   primaryMessage={t('emptyState.description', { val: t('source:source') })}
                   secondaryMessage=""
                   icon={DataSourceIcon as React.ComponentType<unknown>}

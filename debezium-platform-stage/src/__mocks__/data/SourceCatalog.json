@@ -24,12 +24,6 @@
     "description": "Stream change events from a Microsoft SQL Server database."
   },
   {
-    "name": "Cassandra",
-    "id": "cassandra",
-    "type": "io.debezium.connector.cassandra.CassandraConnector",
-    "description": "Capture changes from a Cassandra database in a distributed manner."
-  },
-  {
     "name": "Oracle",
     "id": "oracle",
     "type": "io.debezium.connector.oracle.OracleConnector",
