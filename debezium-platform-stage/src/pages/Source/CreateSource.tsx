@@ -443,7 +443,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                     variant="link"
                     onClick={() => navigateTo("/source/catalog")}
                   >
-                    {t('backToCatalog')}
+                    {t('source:catalog.backToCatalog')}
                   </Button>
                 )}
               </ActionGroup>
