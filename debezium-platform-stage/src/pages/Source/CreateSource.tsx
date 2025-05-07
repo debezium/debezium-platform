@@ -17,7 +17,7 @@ import { PencilAltIcon, CodeIcon } from "@patternfly/react-icons";
 import { useNavigate, useParams } from "react-router-dom";
 import "./CreateSource.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPost, Payload, Source } from "../../apis/apis";
 import {
   API_URL,
@@ -175,7 +175,15 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   );
   const [keyCount, setKeyCount] = useState<number>(1);
 
+  const [signalCollectionName, setSignalCollectionName] = useState<string>("");
+
   const validate = ajv.compile(connectorSchema);
+
+  const updateSignalCollectionName = useCallback(
+    (name: string) => {
+      setSignalCollectionName(name);
+    }
+  , []);
 
   const handleAddProperty = () => {
     const newKey = `key${keyCount}`;
@@ -261,7 +269,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
           type: find(sourceCatalog, { id: sourceId })?.type || "",
           schema: "schema321",
           vaults: [],
-          config: convertMapToObject(properties),
+          config: {signalCollectionName: signalCollectionName,  ...convertMapToObject(properties)},
           name: values["source-name"],
         } as unknown as Payload;
         await createNewSource(payload);
@@ -381,6 +389,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   handleAddProperty={handleAddProperty}
                   handleDeleteProperty={handleDeleteProperty}
                   handlePropertyChange={handlePropertyChange}
+                  updateSignalCollectionName={updateSignalCollectionName}
                 />
               ) : (
                 <div>

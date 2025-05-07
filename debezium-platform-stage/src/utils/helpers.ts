@@ -1,3 +1,5 @@
+import { DatabaseType } from "./constants";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const convertMapToObject = (
   map: Map<string, { key: string; value: string }>
@@ -20,6 +22,28 @@ export const openDBZJira = () => {
   if (newWindow) {
     newWindow.focus();
   }
+}
+
+export const getDatabaseType = (connectorType: string)  => {
+  let type =  "";
+  switch (true) {
+    case connectorType.includes("postgresql"):
+      type = DatabaseType.POSTGRESQL;
+      break;
+    case connectorType.includes("mysql"): 
+      type = DatabaseType.MYSQL;
+      break;
+    case connectorType.includes("mariadb"): 
+      type = DatabaseType.MARIADB;
+      break;
+    case connectorType.includes("sqlserver"):
+      type = DatabaseType.SQLSERVER;
+      break;
+    case connectorType.includes("oracle"):
+      type = DatabaseType.ORACLE;
+      break;
+  }
+  return type;
 }
 
 export const getConnectorTypeName = (connectorType: string) => {
