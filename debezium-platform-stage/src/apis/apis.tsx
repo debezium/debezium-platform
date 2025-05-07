@@ -1,4 +1,4 @@
-import { QueryClient} from "react-query";
+import { QueryClient } from "react-query";
 
 const queryClient = new QueryClient();
 
@@ -234,5 +234,33 @@ export const fetchFile = async (
   } catch (error) {
     console.error("Error fetching file:", error);
     return { error: "An error occurred while fetching the file" };
+  }
+};
+
+
+export const verifySignals = async <T,>(
+  url: string,
+  payload: unknown
+): Promise<ApiResponse<T>> => {
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorMsg = `Failed to verify the signals: ${response.statusText}`;
+      return { error: errorMsg };
+    }
+
+    const data = await response.json();
+
+    return { data };
+  } catch (error) {
+    console.error("Error verify the signals:", error);
+    return { error: "An error occurred while verify the signals." };
   }
 };

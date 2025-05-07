@@ -89,6 +89,14 @@ export const transformSchema = {
   required: ["name", "type", "schema", "config"],
 };
 
+export enum DatabaseType {
+  ORACLE = "ORACLE",
+  MYSQL = "MYSQL",
+  MARIADB = "MARIADB",
+  SQLSERVER = "SQLSERVER",
+  POSTGRESQL = "POSTGRESQL",
+}
+
 export const pipelineSchema = {
   type: "object",
   properties: {
