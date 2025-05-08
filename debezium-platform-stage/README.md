@@ -24,7 +24,7 @@ This project is under active development, any contributions are very welcome.
 
 
 ## Requirements
-node (version 20.x.x or higher) and yarn (version 1.22.x or higher).
+node (version 22.x.x or higher) and yarn (version 1.22.x or higher).
 
 ## Quick-start
 
