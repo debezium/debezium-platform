@@ -19,6 +19,7 @@ import PipelineLog from "./PipelineLog";
 import PipelineOverview from "./PipelineOverview";
 import { PipelineDesignerEdit } from "./PipelineDesignerEdit";
 import { useTranslation } from 'react-i18next';
+import PipelineAction from "./PipelineAction";
 
 const PipelineDetails: React.FunctionComponent = () => {
   const { pipelineId, detailsTab } = useParams<{
@@ -43,6 +44,8 @@ const PipelineDetails: React.FunctionComponent = () => {
       setActiveTabKey("logs");
     } else if (detailsTab === "edit") {
       setActiveTabKey("edit");
+    } else if (detailsTab === "action") {
+      setActiveTabKey("action");
     }
   }, [detailsTab]);
 
@@ -107,6 +110,12 @@ const PipelineDetails: React.FunctionComponent = () => {
             title={<TabTitleText>{t('pipeline:tabs.log')}</TabTitleText>}
             tabContentId={`tabContent${"logs"}`}
           />
+
+          <Tab
+            eventKey={"action"}
+            title={<TabTitleText>Pipeline actions</TabTitleText>}
+            tabContentId={`tabContent${"action"}`}
+          />
           <Tab
             eventKey={"edit"}
             title={<TabTitleText>{t('pipeline:tabs.edit')}</TabTitleText>}
@@ -161,6 +170,17 @@ const PipelineDetails: React.FunctionComponent = () => {
                 pipelineId={pipeline.id}
               />
             )}
+          </TabContentBody>
+        </TabContent>
+        <TabContent
+          key={"action"}
+          eventKey={"action"}
+          id={`tabContent${"action"}`}
+          activeKey={activeTabKey}
+          hidden={"action" !== activeTabKey}
+        >
+          <TabContentBody>
+            <PipelineAction/>
           </TabContentBody>
         </TabContent>
       </PageSection>

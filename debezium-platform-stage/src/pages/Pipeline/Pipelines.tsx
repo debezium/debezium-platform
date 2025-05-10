@@ -214,6 +214,10 @@ const Pipelines: React.FunctionComponent = () => {
     navigateTo(`/pipeline/${id}/logs`);
   };
 
+  const onActionHandler = (id: number, _name: string) => {
+    navigateTo(`/pipeline/${id}/action`);
+  };
+
   const onDeleteHandler = (id: number, name: string) => {
     setIsOpen(true);
     setDeleteInstance({ id: id, name: name });
@@ -244,6 +248,10 @@ const Pipelines: React.FunctionComponent = () => {
     {
       title: "View logs",
       onClick: () => onLogViewHandler(actionData.id, actionData.name),
+    },
+    {
+      title: "Actions",
+      onClick: () => onActionHandler(actionData.id, actionData.name),
     },
     {
       title: "Edit pipeline",
