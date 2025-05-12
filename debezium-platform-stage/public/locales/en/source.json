@@ -15,5 +15,17 @@
     "edit": {
         "title": "Edit source",
         "description": "To configure and create a connector fill out the below form or use the smart editor to setup a new source connector. If you already have a configuration file, you can setup a new source connector by uploading it in the smart editor."
+    },
+    "signal": {
+        "title": "Enable signalling",
+        "description": "To enable the signaling capability, set the Signaling collection name and confirm that databse DDL has ben execulted.",
+        "modelDescription": "You need to create the signaling data collection on the source database, its designated exclusively for sending signals to Debezium. The signaling data collection must be unique to each connector instance.",
+        "setupSignaling": "Setup signaling",
+        "signalingCollectionField": {
+            "label": "Signaling collection name",
+            "helper": "Entered value will be suffixed with '{{val}}' to create signaling collection on the source database."
+        },
+        "ddlQuery": "DDL query",
+        "errorMsg": "Please fill out the {{val}} fields in the connector configuration properties."
     }
 }

@@ -420,6 +420,7 @@ const EditSource: React.FunctionComponent = () => {
                   handleAddProperty={handleAddProperty}
                   handleDeleteProperty={handleDeleteProperty}
                   handlePropertyChange={handlePropertyChange}
+                  editFlow={true}
                 />
               ) : (
                 <>

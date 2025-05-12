@@ -97,6 +97,8 @@ export enum DatabaseType {
   POSTGRESQL = "POSTGRESQL",
 }
 
+export const DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX = "_debezium_signal";
+
 export const pipelineSchema = {
   type: "object",
   properties: {

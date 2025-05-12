@@ -28,7 +28,7 @@ import ConnectorImage from "./ComponentImage";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { verifySignals } from "src/apis";
-import { API_URL } from "@utils/constants";
+import { API_URL, DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX } from "@utils/constants";
 import { useNotification } from "@appContext/index";
 
 interface SourceSinkFormProps {
@@ -48,6 +48,7 @@ interface SourceSinkFormProps {
     type: "key" | "value",
     value: string
   ) => void;
+  editFlow?: boolean;
   updateSignalCollectionName?: (name: string) => void;
 }
 const SourceSinkForm = ({
@@ -63,6 +64,7 @@ const SourceSinkForm = ({
   handleAddProperty,
   handleDeleteProperty,
   handlePropertyChange,
+  editFlow,
   updateSignalCollectionName
 }: SourceSinkFormProps) => {
   const { t } = useTranslation();
@@ -79,12 +81,6 @@ const SourceSinkForm = ({
   const [signalMissingPayloads, setSignalMissingPayload] = useState<string[]>([]);
 
   const [setDone, setSetDone] = useState(false);
-
-  const signalCollectionConfigured = (_event: KeyboardEvent | React.MouseEvent) => {
-    setSetDone(true);
-
-    setIsModalOpen(false);
-  }
 
   const handleModalToggle = (_event: KeyboardEvent | React.MouseEvent) => {
     setIsModalOpen(!isModalOpen);
@@ -118,16 +114,16 @@ const SourceSinkForm = ({
       setSignalMissingPayload(missingFields);
       setIsLoading(false);
       return;
-     
+
     }
     const response = await verifySignals(`${API_URL}/api/sources/signals/verify`, payload);
 
     if (response.error) {
-      console.log("Error creating source:", response.error);
+
       addNotification(
         "danger",
-        `Source creation failed`,
-        `Failed to create `
+        `Signal verification failed`,
+        `Coudn't verify the signal data collection: ${response.error}`
       );
       setIsLoading(false);
     } else {
@@ -135,8 +131,8 @@ const SourceSinkForm = ({
       setSignalVerified(true);
       addNotification(
         "success",
-        `Create successful`,
-        `Source created successfully.`
+        `Signal verification succesfully`,
+        `Signal data collection verified succesfully: ${signalColectionName}`
       );
       setIsLoading(false);
     }
@@ -145,7 +141,7 @@ const SourceSinkForm = ({
   const configureSignalCollection = async () => {
     setIsLoading(true);
     updateSignalCollectionName && updateSignalCollectionName(signalColectionName);
-
+    setSetDone(true);
     setIsLoading(false);
     setIsModalOpen(false);
   }
@@ -279,22 +275,20 @@ const SourceSinkForm = ({
               ))}
             </FormFieldGroup>
             {
-              connectorType === "source" &&
+              connectorType === "source" && !editFlow &&
               <FormFieldGroup
                 header={
                   <FormFieldGroupHeader
                     titleText={{
-                      text: "Enable signal",
+                      text: t("source:signal.title"),
                       id: `field-group-signal-id`,
                     }}
-                    titleDescription={
-                      "To enable the signaling capability, set the Signaling collection name and confirm that databse DDL has ben execulted."
-                    }
+                    titleDescription={t("source:signal.description")}
                   />
                 }
               >
                 <Button variant="link" size="lg" icon={setDone ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />} iconPosition="left" onClick={handleModalToggle}>
-                  Setup signaling
+                  {t("source:signal.setupSignaling")}
                 </Button>
 
               </FormFieldGroup>
@@ -311,38 +305,36 @@ const SourceSinkForm = ({
         aria-describedby="modal-box-body-with-description"
       >
         <ModalHeader
-          title="Enable Signalling"
+          title={t("source:signal.title")}
           labelId="modal-with-description-title"
-          description="A description is used when you want to provide more info about the modal than the title is able to describe. The content in the description is static and will not scroll with the rest of the modal body."
+          description={t("source:signal.modelDescription")}
         />
-
-
         <ModalBody tabIndex={0} id="modal-box-body-with-description">
-          {signalMissingPayloads.length > 0 && (<Alert variant="danger" isInline isPlain title={`Please fill out the ${signalMissingPayloads.join(", ")} fields in the connector configuration properties.`} style={{ paddingBottom: "15px" }} />)}
+          {signalMissingPayloads.length > 0 && (<Alert variant="danger" isInline isPlain title={t('source:signal.errorMsg', { val: signalMissingPayloads.join(", ") })} style={{ paddingBottom: "15px" }} />)}
 
           {/* <Alert variant="danger" title="Danger alert title" ouiaId="DangerAlert" style={{paddingBottom: "15px"}} />  */}
 
           <Form isWidthLimited>
             <FormGroup
-              label="Signaling collection name"
+              label={t("source:signal.signalingCollectionField.label")}
               isRequired
               fieldId={`signaling-collection-name`}
             >
               <TextInput
                 id={`signaling-collection-name`}
-                aria-label={`signaling-collection-name`}
-                placeholder="_debezium_signal"
+                aria-label={t("source:signal.signalingCollectionField.label")}
+                placeholder={`{ ${t('enterValue')} }${DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX}`}
                 onBlur={(_event) => {
                   setSignalColectionName((prevValue) =>
-                    prevValue.endsWith("_debezium_signal")
-                      ? prevValue
-                      : `${prevValue}_debezium_signal`
+                    prevValue && prevValue.trim() !== "" && !prevValue.endsWith(DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX)
+                      ? `${prevValue}${DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX}`
+                      : prevValue
                   );
                 }}
                 onFocus={(_event) => {
                   setSignalColectionName((prevValue) =>
-                    prevValue.endsWith("_debezium_signal")
-                      ? prevValue.split("_debezium_signal")[0]
+                    prevValue.endsWith(DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX)
+                      ? prevValue.split(DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX)[0]
                       : prevValue
                   );
                 }}
@@ -351,13 +343,17 @@ const SourceSinkForm = ({
                 }}
                 value={signalColectionName}
               />
+              <FormHelperText>
+                <HelperText>
+                  <HelperTextItem>{t("source:signal.signalingCollectionField.helper", { val: DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX })}</HelperTextItem>
+                </HelperText>
+              </FormHelperText>
             </FormGroup>
             <FormGroup
-              label="DDL query"
-              isRequired
+              label={t("source:signal.ddlQuery")}
               fieldId={`ddl-query-name`}
             >
-              <ClipboardCopy isReadOnly hoverTip="Copy" clickTip="Copied">
+              <ClipboardCopy isReadOnly hoverTip={t('copy')} clickTip={t('copied')}>
                 {`CREATE TABLE ${signalColectionName} (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);`}
               </ClipboardCopy>
             </FormGroup>
@@ -375,16 +371,14 @@ const SourceSinkForm = ({
         <ModalFooter>
           {signalVerified ?
             <Button key="done" variant="primary" isLoading={isLoading} onClick={configureSignalCollection} >
-              Done
+              {t("done")}
             </Button>
             :
             <Button key="confirm" variant="primary" isLoading={isLoading} onClick={verifySignalsHandler} >
-              Verify
+              {t('verify')}
             </Button>}
-
-
           <Button key="cancel" variant="link" onClick={handleModalToggle}>
-            Cancel
+            {t("cancel")}
           </Button>
         </ModalFooter>
       </Modal>

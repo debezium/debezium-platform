@@ -15,5 +15,17 @@
     "edit": {
         "title": "Modifica fonte",
         "description": "Per configurare e creare un connettore, compila il modulo sottostante oppure utilizza l’editor intelligente per configurare una nuova fonte. Se hai già un file di configurazione, puoi configurare una nuova fonte caricandolo nell’editor intelligente."
+    },
+    "signal": {
+        "title": "Abilita il signaling",
+        "description": "Per abilitare la funzionalità di signaling, imposta il nome della collezione di signaling e conferma che il DDL del database sia stato eseguito.",
+        "modelDescription": "Devi creare la collezione di dati di signaling sul database di origine, designata esclusivamente per l'invio di segnali a Debezium. La collezione di dati di signaling deve essere unica per ogni istanza del connettore.",
+        "setupSignaling": "Configura il signaling",
+        "signalingCollectionField": {
+            "label": "Nome della collezione di signaling",
+            "helper": "Il valore inserito sarà suffisso con '{{val}}' per creare la collezione di signaling sul database di origine."
+        },
+        "ddlQuery": "Query DDL",
+        "errorMsg": "Si prega di compilare i campi {{val}} nelle proprietà di configurazione del connettore."
     }
 }

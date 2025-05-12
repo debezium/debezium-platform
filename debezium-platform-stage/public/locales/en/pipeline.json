@@ -46,6 +46,11 @@
     },
     "logs": {
         "download": "Download Log File",
-        "fullScreen": "Full screen"
+        "fullScreen": "Full screen",
+        "notification": {
+            "grepNotification": "Grep notifications",
+            "showTooltip": "Click to grep the notification logs.",
+            "hideTooltip": "Click to stopping grep the notification logs."
+        }
     }
 }
