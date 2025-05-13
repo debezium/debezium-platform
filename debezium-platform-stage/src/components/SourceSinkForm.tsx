@@ -28,7 +28,7 @@ import ConnectorImage from "./ComponentImage";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { verifySignals } from "src/apis";
-import { API_URL, DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX } from "@utils/constants";
+import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/index";
 
 interface SourceSinkFormProps {
@@ -323,31 +323,12 @@ const SourceSinkForm = ({
               <TextInput
                 id={`signaling-collection-name`}
                 aria-label={t("source:signal.signalingCollectionField.label")}
-                placeholder={`{ ${t('enterValue')} }${DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX}`}
-                onBlur={(_event) => {
-                  setSignalColectionName((prevValue) =>
-                    prevValue && prevValue.trim() !== "" && !prevValue.endsWith(DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX)
-                      ? `${prevValue}${DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX}`
-                      : prevValue
-                  );
-                }}
-                onFocus={(_event) => {
-                  setSignalColectionName((prevValue) =>
-                    prevValue.endsWith(DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX)
-                      ? prevValue.split(DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX)[0]
-                      : prevValue
-                  );
-                }}
+                type="text"
                 onChange={(_event, value) => {
                   setSignalColectionName(value);
                 }}
                 value={signalColectionName}
               />
-              <FormHelperText>
-                <HelperText>
-                  <HelperTextItem>{t("source:signal.signalingCollectionField.helper", { val: DEBEZIUM_SIGNAL_COLLECTION_NAME_SUFIX })}</HelperTextItem>
-                </HelperText>
-              </FormHelperText>
             </FormGroup>
             <FormGroup
               label={t("source:signal.ddlQuery")}
