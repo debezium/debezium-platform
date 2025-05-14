@@ -56,11 +56,12 @@ import {
   TransformData,
   TransformPayload,
 } from "src/apis";
-import { API_URL, transformSchema } from "@utils/constants";
+import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { isEmpty } from "lodash";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
+import { transformSchema } from "@utils/schemas";
 
 const ajv = new Ajv();
 

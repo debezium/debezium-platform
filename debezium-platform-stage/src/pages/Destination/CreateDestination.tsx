@@ -20,7 +20,7 @@ import "./CreateDestination.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { find } from "lodash";
 import { createPost, Destination, Payload } from "../../apis/apis";
-import { API_URL, initialConnectorSchema, connectorSchema } from "../../utils/constants";
+import { API_URL } from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import PageHeader from "@components/PageHeader";
@@ -28,6 +28,7 @@ import SourceSinkForm from "@components/SourceSinkForm";
 import { useEffect, useRef, useState } from "react";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
+import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
 
 const ajv = new Ajv();
 

@@ -15,10 +15,9 @@ import {
   Gallery,
   GalleryItem,
   PageSection,
-  // Tile,
 } from "@patternfly/react-core";
 import ConnectorImage from "./ComponentImage";
-import { ExternalLinkAltIcon, PlusCircleIcon } from "@patternfly/react-icons";
+import { CodeIcon, ExternalLinkAltIcon, PlusCircleIcon } from "@patternfly/react-icons";
 import "./CatalogGrid.css";
 import { Catalog } from "src/apis/types";
 import { openDBZJira } from "@utils/helpers";
@@ -67,6 +66,27 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
     <PageSection>
       {displayType === "grid" ? (
         <Gallery hasGutter className="custom-gallery">
+          <GalleryItem>
+            <Card isClickable variant={"default"} onClick={openDBZJira}>
+              <CardHeader
+                selectableActions={{
+                  onClickAction: () => { },
+                  selectableActionAriaLabelledby: `catalog-card-id-fill-out-form`,
+                }}
+              >
+                <CodeIcon
+                  color="#0066CC"
+                  style={{ fontSize: "xxx-large", paddingBottom: "10px" }}
+                />
+                <CardTitle id={`catalog-card-id-fill-out-form`}>
+                  Source
+                </CardTitle>
+              </CardHeader>
+              <CardBody>
+                Use this to create a source from existing connectors connfiguration that you might have.
+              </CardBody>
+            </Card>
+          </GalleryItem>
           {searchResult.map((item) => (
             <GalleryItem key={item.id}>
               <Card isClickable variant={"default"}>
@@ -117,6 +137,44 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
           onSelectDataListItem={onSelectDataListItem}
           onSelectableRowChange={handleInputChange}
         >
+
+          <DataListItem aria-labelledby="code-connector">
+            <DataListItemRow>
+              <DataListItemCells
+                dataListCells={[
+                  <DataListCell
+                    key="primary content"
+                    isFilled={false}
+                    style={{
+                      minWidth: "80px",
+                      // display: "flex",
+                      // justifyContent: "center",
+                    }}
+                  >
+                    <CodeIcon
+                      color="#0066CC"
+                      style={{ fontSize: "xxx-large", paddingBottom: "10px" }}
+                    />
+                  </DataListCell>,
+                  <DataListCell key="secondary content" onClick={openDBZJira}>
+                    <Flex direction={{ default: "column" }}>
+                      <FlexItem>
+                        <Content component="h3">
+                          Source
+                        </Content>
+                      </FlexItem>
+                      <FlexItem>
+                        <Content component="p">
+                          Use this to create a source from existing connectors connfiguration that you might have.
+                        </Content>
+                      </FlexItem>
+                    </Flex>
+                  </DataListCell>,
+                ]}
+              />
+            </DataListItemRow>
+          </DataListItem>
+
           {searchResult.map((item) => (
             <DataListItem
               aria-labelledby="simple-item1"
@@ -131,8 +189,6 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                       isFilled={false}
                       style={{
                         minWidth: "80px",
-                        // display: "flex",
-                        // justifyContent: "center",
                       }}
                     >
                       <ConnectorImage connectorType={item.id} />

@@ -13,16 +13,14 @@ import {
   ToolbarContent,
   ToolbarItem,
 } from "@patternfly/react-core";
-import { PencilAltIcon, CodeIcon } from "@patternfly/react-icons";
+import { PencilAltIcon, CodeIcon, PlayIcon } from "@patternfly/react-icons";
 import { useNavigate, useParams } from "react-router-dom";
 import "./CreateSource.css";
-import { CodeEditor, Language } from "@patternfly/react-code-editor";
+import { CodeEditor, CodeEditorControl, Language } from "@patternfly/react-code-editor";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPost, Payload, Source } from "../../apis/apis";
 import {
   API_URL,
-  connectorSchema,
-  initialConnectorSchema,
 } from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
 import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
@@ -32,6 +30,7 @@ import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
+import { connectorSchema, initialConnectorSchema, kafkaConnectSchema } from "@utils/schemas";
 
 const ajv = new Ajv();
 
@@ -53,6 +52,7 @@ const FormSyncManager: React.FC<{
   properties: Map<string, Properties>;
   setProperties: (properties: Map<string, Properties>) => void;
   setCodeAlert: (alert: string) => void;
+  setFormatType: (type: string) => void;
 }> = ({
   getFormValue,
   setFormValue,
@@ -62,8 +62,10 @@ const FormSyncManager: React.FC<{
   properties,
   setProperties,
   setCodeAlert,
+  setFormatType,
 }) => {
     const validate = ajv.compile(initialConnectorSchema);
+    const validateKafkaSchema = ajv.compile(kafkaConnectSchema);
     // Ref to track the source of the update
     const updateSource = useRef<"form" | "code" | null>(null);
 
@@ -104,7 +106,21 @@ const FormSyncManager: React.FC<{
 
     // Update form values when code changes
     useEffect(() => {
+      const isKafkaConnectSchema = validateKafkaSchema(code);
+
       const isValid = validate(code);
+
+      console.log("isValid", isValid, "isKafkaConnectSchema", isKafkaConnectSchema);
+
+      if (isKafkaConnectSchema) {
+        setFormatType("kafka-connect");
+        setCodeAlert(
+          "Provided json is of kafka connect format, use 'Auto conversion' to tranfrom it to Debezium-platform format"
+        );
+        return;
+      }
+
+
       if (isValid) {
         if (updateSource.current === "form") {
           updateSource.current = null;
@@ -164,6 +180,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
 
   const sourceIdParam = useParams<{ sourceId: string }>();
   const [codeAlert, setCodeAlert] = useState("");
+  const [formatType, setFormatType] = useState("");
   const sourceIdModel = selectedId;
   const sourceId = modelLoaded ? sourceIdModel : sourceIdParam.sourceId;
 
@@ -299,6 +316,18 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     setEditorSelected(id);
   };
 
+  const customControl = (
+    <CodeEditorControl
+      icon={<PlayIcon />}
+      aria-label="Execute code"
+      tooltipProps={{ content: 'Auto convert the json into debezium-platfrom format' }}
+      onClick={() => { }}
+      isVisible={formatType !== ''}
+    >
+      Auto conversion
+    </CodeEditorControl>
+  );
+
   const onEditorDidMount = (
     editor: { layout: () => void; focus: () => void },
     monaco: {
@@ -362,7 +391,34 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
               properties={properties}
               setProperties={setProperties}
               setCodeAlert={setCodeAlert}
+              setFormatType={setFormatType}
             />
+
+            {codeAlert && editorSelected !== "form-editor" && (
+              <PageSection
+                isWidthLimited={
+                  (modelLoaded && editorSelected === "form-editor") ||
+                  !modelLoaded
+                }
+                isCenterAligned
+                isFilled
+                className={
+                  editorSelected === "form-editor"
+                    ? "custom-page-section create_source-page_section"
+                    : "create_source-page_section"
+                }
+              >
+                <Alert
+                  variant="danger"
+                  isInline
+                  title={formatType === "" ? `Provided json is not valid: ${codeAlert}` : "Invalid json format"}
+                >
+                  <p>{codeAlert}</p>
+                </Alert>
+              </PageSection>
+            )}
+
+
             <PageSection
               isWidthLimited={
                 (modelLoaded && editorSelected === "form-editor") ||
