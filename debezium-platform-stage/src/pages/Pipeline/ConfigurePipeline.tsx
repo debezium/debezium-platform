@@ -46,13 +46,14 @@ import {
   Source,
   Transform,
 } from "../../apis/apis";
-import { API_URL, pipelineSchema } from "../../utils/constants";
+import { API_URL } from "../../utils/constants";
 import PageHeader from "@components/PageHeader";
 import { useAtom } from "jotai";
 import { selectedTransformAtom } from "./PipelineDesigner";
 import { useNotification } from "@appContext/AppNotificationContext";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
+import { pipelineSchema } from "@utils/schemas";
 
 const ajv = new Ajv();
 

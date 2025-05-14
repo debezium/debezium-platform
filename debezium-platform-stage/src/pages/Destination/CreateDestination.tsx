@@ -20,7 +20,7 @@ import "./CreateDestination.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { find } from "lodash";
 import { createPost, Destination, Payload } from "../../apis/apis";
-import { API_URL, initialConnectorSchema, connectorSchema } from "../../utils/constants";
+import { API_URL } from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import PageHeader from "@components/PageHeader";
@@ -28,6 +28,7 @@ import SourceSinkForm from "@components/SourceSinkForm";
 import { useEffect, useRef, useState } from "react";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
+import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
 
 const ajv = new Ajv();
 
@@ -59,82 +60,82 @@ const FormSyncManager: React.FC<{
   setProperties,
   setCodeAlert,
 }) => {
-  const validate = ajv.compile(initialConnectorSchema);
-  // Ref to track the source of the update
-  const updateSource = useRef<"form" | "code" | null>(null);
+    const validate = ajv.compile(initialConnectorSchema);
+    // Ref to track the source of the update
+    const updateSource = useRef<"form" | "code" | null>(null);
 
-  // Update code state when form values change
-  useEffect(() => {
-    if (updateSource.current === "code") {
-      updateSource.current = null;
-      return;
-    }
-
-    updateSource.current = "form";
-    const type = find(destinationCatalog, { id: destinationId })?.type || "";
-    const configuration = convertMapToObject(properties);
-
-    setCode((prevCode: any) => {
-      if (
-        prevCode.name === getFormValue("destination-name") &&
-        prevCode.description === getFormValue("description") &&
-        JSON.stringify(prevCode.config) === JSON.stringify(configuration)
-      ) {
-        return prevCode;
-      }
-
-      return {
-        ...prevCode,
-        type,
-        config: configuration,
-        name: getFormValue("destination-name") || "",
-        description: getFormValue("description") || "",
-      };
-    });
-  }, [
-    getFormValue("destination-name"),
-    getFormValue("description"),
-    properties,
-    destinationId,
-  ]);
-
-  // Update form values when code changes
-  useEffect(() => {
-    const isValid = validate(code);
-    if (isValid) {
-      if (updateSource.current === "form") {
+    // Update code state when form values change
+    useEffect(() => {
+      if (updateSource.current === "code") {
         updateSource.current = null;
         return;
       }
-      updateSource.current = "code";
-      if (code.name !== getFormValue("destination-name")) {
-        setFormValue(
-          "destination-name",
-          typeof code.name === "string" ? code.name : ""
-        );
-      }
-      if (code.description !== getFormValue("description")) {
-        setFormValue(
-          "description",
-          typeof code.description === "string" ? code.description : ""
-        );
-      }
-      const currentConfig = convertMapToObject(properties);
-      if (JSON.stringify(currentConfig) !== JSON.stringify(code.config)) {
-        const configMap = new Map();
-        Object.entries(code.config || {}).forEach(([key, value], index) => {
-          configMap.set(`key${index}`, { key, value: value as string });
-        });
-        setProperties(configMap);
-      }
-      setCodeAlert("");
-    } else {
-      setCodeAlert(ajv.errorsText(validate.errors));
-    }
-  }, [code]);
 
-  return null;
-};
+      updateSource.current = "form";
+      const type = find(destinationCatalog, { id: destinationId })?.type || "";
+      const configuration = convertMapToObject(properties);
+
+      setCode((prevCode: any) => {
+        if (
+          prevCode.name === getFormValue("destination-name") &&
+          prevCode.description === getFormValue("description") &&
+          JSON.stringify(prevCode.config) === JSON.stringify(configuration)
+        ) {
+          return prevCode;
+        }
+
+        return {
+          ...prevCode,
+          type,
+          config: configuration,
+          name: getFormValue("destination-name") || "",
+          description: getFormValue("description") || "",
+        };
+      });
+    }, [
+      getFormValue("destination-name"),
+      getFormValue("description"),
+      properties,
+      destinationId,
+    ]);
+
+    // Update form values when code changes
+    useEffect(() => {
+      const isValid = validate(code);
+      if (isValid) {
+        if (updateSource.current === "form") {
+          updateSource.current = null;
+          return;
+        }
+        updateSource.current = "code";
+        if (code.name !== getFormValue("destination-name")) {
+          setFormValue(
+            "destination-name",
+            typeof code.name === "string" ? code.name : ""
+          );
+        }
+        if (code.description !== getFormValue("description")) {
+          setFormValue(
+            "description",
+            typeof code.description === "string" ? code.description : ""
+          );
+        }
+        const currentConfig = convertMapToObject(properties);
+        if (JSON.stringify(currentConfig) !== JSON.stringify(code.config)) {
+          const configMap = new Map();
+          Object.entries(code.config || {}).forEach(([key, value], index) => {
+            configMap.set(`key${index}`, { key, value: value as string });
+          });
+          setProperties(configMap);
+        }
+        setCodeAlert("");
+      } else {
+        setCodeAlert(ajv.errorsText(validate.errors));
+      }
+    }, [code]);
+
+    return null;
+  };
 
 const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   modelLoaded,
@@ -218,8 +219,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
       addNotification(
         "danger",
         `Destination creation failed`,
-        `Failed to create ${(response.data as Destination)?.name}: ${
-          response.error
+        `Failed to create ${(response.data as Destination)?.name}: ${response.error
         }`
       );
     } else {
@@ -227,8 +227,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
       addNotification(
         "success",
         `Create successful`,
-        `Destination "${
-          (response.data as Destination).name
+        `Destination "${(response.data as Destination).name
         }" created successfully.`
       );
       !modelLoaded && navigateTo("/destination");
