@@ -26,9 +26,7 @@ import {
   SourceConfig,
 } from "../../apis/apis";
 import {
-  API_URL,
-  connectorSchema,
-  initialConnectorSchema,
+  API_URL
 } from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
 import { useData } from "../../appLayout/AppContext";
@@ -37,6 +35,7 @@ import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
+import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
 
 const ajv = new Ajv();
 
@@ -251,13 +250,13 @@ const EditSource: React.FunctionComponent = () => {
       addNotification(
         "danger",
         t('statusMessage:edit.failedTitle'),
-        t("statusMessage:edit.failedDescription", {val: `${(response.data as Source)?.name}: ${response.error}`}),
+        t("statusMessage:edit.failedDescription", { val: `${(response.data as Source)?.name}: ${response.error}` }),
       );
     } else {
       addNotification(
         "success",
         t('statusMessage:edit.successTitle'),
-        t("statusMessage:edit.successDescription", {val: `${(response.data as Source)?.name}`})
+        t("statusMessage:edit.successDescription", { val: `${(response.data as Source)?.name}` })
       );
       navigateTo("/source");
     }

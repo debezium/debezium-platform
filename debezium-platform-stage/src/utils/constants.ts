@@ -30,65 +30,6 @@ export const AppStrings = {
   pipeline: "pipeline",
 };
 
-// Connector schema
-export const connectorSchema = {
-  type: "object",
-  properties: {
-    name: { type: "string" },
-    description: { type: "string" },
-    type: { type: "string" },
-    schema: { type: "string" },
-    vault: { type: "array" },
-    config: {
-      type: "object",
-      minProperties: 1,
-    },
-  },
-  required: ["name", "type", "schema", "config"],
-};
-
-export const initialConnectorSchema = {
-  type: "object",
-  properties: {
-    name: { type: "string" },
-    description: { type: "string" },
-    type: { type: "string" },
-    schema: { type: "string" },
-    vault: { type: "array" },
-    config: {
-      type: "object",
-      // minProperties: 1,
-    },
-  },
-  required: ["name", "type", "schema", "config"],
-};
-
-export const transformSchema = {
-  type: "object",
-  properties: {
-    name: { type: "string" },
-    description: { type: "string" },
-    type: { type: "string" },
-    schema: { type: "string" },
-    vault: { type: "array" },
-    config: {
-      type: "object",
-      minProperties: 1,
-    },
-    predicate: {
-      type: "object",
-      properties: {
-        type: { type: "string" },
-        config: {
-          type: "object",
-        },
-        negate: { type: "boolean" },
-      },
-    }
-  },
-  required: ["name", "type", "schema", "config"],
-};
-
 export enum DatabaseType {
   ORACLE = "ORACLE",
   MYSQL = "MYSQL",
@@ -96,33 +37,3 @@ export enum DatabaseType {
   SQLSERVER = "SQLSERVER",
   POSTGRESQL = "POSTGRESQL",
 }
-
-export const pipelineSchema = {
-  type: "object",
-  properties: {
-    name: { type: "string" },
-    description: { type: "string" },
-    source: {
-      type: "object",
-      properties: { name: { type: "string" }, id: { type: "number" } },
-      required: ["name", "id"],
-    },
-    destination: {
-      type: "object",
-      properties: { name: { type: "string" }, id: { type: "number" } },
-      required: ["name", "id"],
-    },
-    transforms: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          name: { type: "string" },
-          id: { type: "number" },
-        },
-        required: ["name", "id"],
-      },
-    },
-  },
-  required: ["name", "source", "destination"],
-};
