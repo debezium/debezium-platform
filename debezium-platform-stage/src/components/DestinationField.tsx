@@ -10,6 +10,7 @@ import {
 import { Td } from "@patternfly/react-table";
 import ConnectorImage from "./ComponentImage";
 import ApiError from "./ApiError";
+import { useTranslation } from "react-i18next";
 
 interface DestinationFieldProps {
   pipelineDestination: PipelineDestination;
@@ -18,6 +19,7 @@ interface DestinationFieldProps {
 const DestinationField: React.FC<DestinationFieldProps> = ({
   pipelineDestination,
 }) => {
+  const { t } = useTranslation();
   const [destination, setDestination] = useState<Destination>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ const DestinationField: React.FC<DestinationFieldProps> = ({
   }, [pipelineDestination.id]);
 
   return (
-    <Td dataLabel="Destination" style={{ paddingLeft: "0px" }}>
+    <Td dataLabel={t("destination")} style={{ paddingLeft: "0px" }}>
       {error ? (
         <ApiError errorType="small" />
       ) : isLoading ? (

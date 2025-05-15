@@ -6,12 +6,14 @@ import { Td } from "@patternfly/react-table";
 import { PipelineSource, Source, fetchDataTypeTwo } from "../apis/apis";
 import ConnectorImage from "./ComponentImage";
 import ApiError from "./ApiError";
+import { useTranslation } from "react-i18next";
 
 interface SourceFieldProps {
   pipelineSource: PipelineSource;
 }
 
 const SourceField: React.FC<SourceFieldProps> = ({ pipelineSource }) => {
+  const { t } = useTranslation();
   const [source, setSource] = useState<Source>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ const SourceField: React.FC<SourceFieldProps> = ({ pipelineSource }) => {
   }, []);
 
   return (
-    <Td dataLabel="Source" style={{ paddingLeft: "0px" }}>
+    <Td dataLabel={t("source")} style={{ paddingLeft: "0px" }}>
       {error ? (
         <ApiError errorType="small" />
       ) : isLoading ? (

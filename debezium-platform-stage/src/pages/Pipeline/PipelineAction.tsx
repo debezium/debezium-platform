@@ -2,8 +2,10 @@ import { FormGroup, FormSelect, FormSelectOption, Radio, ActionGroup, Button, Fo
 import { pipelineAction } from '@utils/pipelineActions';
 import { find } from 'lodash';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const PipelineAction: React.FC = () => {
+    const { t } = useTranslation();
     const [option, setOption] = React.useState('please choose');
 
     const [logMessage, setLogMessage] = React.useState('');
@@ -62,8 +64,8 @@ const PipelineAction: React.FC = () => {
     return (
         <>
             <Form isHorizontal isWidthLimited>
-                <FormSection title=" Use signaling to perform actions on the pipeline" titleElement="h2">
-                    <FormGroup label="Action" fieldId="pipeline-action" isRequired>
+                <FormSection title={t("pipeline:actions.description")} titleElement="h2">
+                    <FormGroup label={t("pipeline:actions.actionField")} fieldId="pipeline-action" isRequired>
                         <FormSelect
                             value={option}
                             onChange={handleOptionChange}
@@ -80,16 +82,16 @@ const PipelineAction: React.FC = () => {
                             ))}
                         </FormSelect>
                     </FormGroup>
-                    <FormGroup label="Action type" fieldId="action-type-field" isRequired
+                    <FormGroup label={t("pipeline:actions.actionTypeField")} fieldId="action-type-field" isRequired
                         labelHelp={
                             <Popover
                                 bodyContent={
                                     <div>
-                                        Specifies type parameter specifies the operation that the signal is intended to trigger.
+                                        {t("pipeline:actions.actionTypeFieldDescription")}
                                     </div>
                                 }
                             >
-                                <FormGroupLabelHelp aria-label="More info for name field" />
+                                <FormGroupLabelHelp aria-label={t("pipeline:actions.actionTypeFieldDescription")} />
                             </Popover>
                         }
                     >
@@ -207,8 +209,8 @@ const PipelineAction: React.FC = () => {
                 </FormSection>
 
                 <ActionGroup>
-                    <Button variant="primary">Submit</Button>
-                    <Button variant="link">Clear</Button>
+                    <Button variant="primary">{t("submit")}</Button>
+                    <Button variant="link">{t("clear")}</Button>
                 </ActionGroup>
             </Form>
         </>

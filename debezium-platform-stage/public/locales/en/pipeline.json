@@ -2,6 +2,15 @@
     "pipeline": "pipeline",
     "configuePipeline": "Configure pipeline",
     "createPipeline": "Create pipeline",
+    "deletePipeline": "Delete pipeline",
+    "userActions": {
+        "overview": "Overview",
+        "logs": "View logs",
+        "download": "Download logs",
+        "actions": "Actions",
+        "edit": "Edit",
+        "delete": "Delete"
+    },
     "pipelinePage": {
         "description": "Add a pipeline to streams change events from a pipeline database. To start select a connector below once you select a connector you can configure it using form or smart editor option. You can also search the connector by its name or toggle the catalog between the list view or card view.",
         "title": "Pipeline",
@@ -43,6 +52,13 @@
         "pipelineComposition": "Pipeline composition",
         "queueUsage": "Queue usage",
         "events": "Events"
+    },
+    "actions": {
+        "title": "Pipeline actions",
+        "description": "Use signaling to perform actions on the pipeline.",
+        "actionField": "Action",
+        "actionTypeField": "Action type",
+        "actionTypeFieldDescription": "Specifies type parameter specifies the operation that the signal is intended to trigger."
     },
     "logs": {
         "download": "Download Log File",

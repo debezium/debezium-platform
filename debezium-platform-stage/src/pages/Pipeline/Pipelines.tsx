@@ -70,7 +70,6 @@ export type ActionData = {
 
 const Pipelines: React.FunctionComponent = () => {
   const navigate = useNavigate();
-  // const { t } = useTranslation(['common','pipeline']);
   const { t } = useTranslation();
 
   const navigateTo = (url: string) => {
@@ -97,7 +96,7 @@ const Pipelines: React.FunctionComponent = () => {
   };
 
   const logAction = (): ReactNode => {
-    return isLogLoading ? <>Downloading...</> : <>Download logs</>;
+    return isLogLoading ? <>{t("downloading")}</> : <>{t("pipeline:userActions.download")}</>;
   };
 
   const {
@@ -233,37 +232,30 @@ const Pipelines: React.FunctionComponent = () => {
 
   const rowActions = (actionData: ActionData): IAction[] => [
     {
-      title: "Pause",
-      isDisabled: true,
-    },
-    {
-      title: "Resume",
-      isDisabled: true,
-    },
-    { isSeparator: true },
-    {
-      title: "Overview",
+      title: t("pipeline:userActions.overview"),
       onClick: () => onOverviewHandler(actionData.id, actionData.name),
     },
     {
-      title: "View logs",
-      onClick: () => onLogViewHandler(actionData.id, actionData.name),
-    },
-    {
-      title: "Actions",
+      title: t("pipeline:userActions.actions"),
       onClick: () => onActionHandler(actionData.id, actionData.name),
     },
     {
-      title: "Edit pipeline",
-      onClick: () => onEditHandler(actionData.id, actionData.name),
+      title: t("pipeline:userActions.logs"),
+      onClick: () => onLogViewHandler(actionData.id, actionData.name),
     },
-    { isSeparator: true },
     {
       title: logAction(),
       onClick: () => onLogDownloadHandler(actionData.id, actionData.name),
     },
+
+
+    { isSeparator: true },
     {
-      title: "Delete",
+      title: t("pipeline:userActions.edit"),
+      onClick: () => onEditHandler(actionData.id, actionData.name),
+    },
+    {
+      title: t("pipeline:userActions.delete"),
       onClick: () => onDeleteHandler(actionData.id, actionData.name),
     },
   ];
@@ -354,12 +346,12 @@ const Pipelines: React.FunctionComponent = () => {
                       <Table aria-label="Pipeline Table">
                         <Thead>
                           <Tr>
-                            <Th key={0}>Name</Th>
-                            <Th key={1}>Source</Th>
-                            <Th key={2}>Destination</Th>
-                            <Th key={3}>Phase</Th>
-                            <Th key={4}>Enabled</Th>
-                            <Th key={5}>Actions</Th>
+                            <Th key={0}>{t("name")}</Th>
+                            <Th key={1}>{t("source")}</Th>
+                            <Th key={2}>{t("destination")}</Th>
+                            {/* <Th key={3}>Phase</Th> */}
+                            <Th key={4}>{t("enabled")}</Th>
+                            <Th key={5}></Th>
                           </Tr>
                         </Thead>
 
@@ -373,7 +365,7 @@ const Pipelines: React.FunctionComponent = () => {
                               : pipelinesList
                             ).map((instance: Pipeline) => (
                               <Tr key={instance.id}>
-                                <Td dataLabel="Name">
+                                <Td dataLabel={t("name")}>
                                   <Button
                                     variant="link"
                                     isInline
@@ -386,7 +378,7 @@ const Pipelines: React.FunctionComponent = () => {
                                 <DestinationField
                                   pipelineDestination={instance.destination}
                                 />
-                                <Td
+                                {/* <Td
                                   dataLabel="Phase"
                                   className="pipeline-phase"
                                 >
@@ -416,8 +408,8 @@ const Pipelines: React.FunctionComponent = () => {
                                       aria-label="pending step"
                                     />
                                   </ProgressStepper>
-                                </Td>
-                                <Td dataLabel="Enabled">
+                                </Td> */}
+                                <Td dataLabel={t("enabled")}>
                                   <Switch
                                     id="pipeline-enable-switch"
                                     aria-label="switch pipeline enable"
@@ -426,7 +418,7 @@ const Pipelines: React.FunctionComponent = () => {
                                     isDisabled
                                   />
                                 </Td>
-                                <Td dataLabel="Actions" isActionCell>
+                                <Td dataLabel={t("actions")} isActionCell>
                                   <ActionsColumn
                                     items={rowActions({
                                       id: instance.id,
@@ -442,12 +434,12 @@ const Pipelines: React.FunctionComponent = () => {
                                 <Bullseye>
                                   <EmptyState
                                     headingLevel="h2"
-                                    titleText="No results found"
+                                    titleText={t("search.title", { val: "pipeline" })}
                                     icon={SearchIcon}
                                     variant={EmptyStateVariant.sm}
                                   >
                                     <EmptyStateBody>
-                                      Clear search and try again.
+                                      {t("search.description")}
                                     </EmptyStateBody>
                                     <EmptyStateFooter>
                                       <EmptyStateActions>
@@ -455,7 +447,7 @@ const Pipelines: React.FunctionComponent = () => {
                                           variant="link"
                                           onClick={onClear}
                                         >
-                                          Clear search
+                                          {t("search.button")}
                                         </Button>
                                       </EmptyStateActions>
                                     </EmptyStateFooter>
@@ -479,7 +471,7 @@ const Pipelines: React.FunctionComponent = () => {
 
           <Modal
             variant="medium"
-            title="Delete pipeline"
+            title={t("pipeline:deletePipeline")}
             isOpen={isOpen}
             onClose={() => modalToggle(false)}
             aria-labelledby={`delete pipeline model`}
@@ -488,7 +480,6 @@ const Pipelines: React.FunctionComponent = () => {
             <ModalHeader
               title={
                 <p>
-                  {" "}
                   Enter <i>"{`${deleteInstance.name}`}"</i> to delete pipeline
                 </p>
               }
@@ -515,14 +506,14 @@ const Pipelines: React.FunctionComponent = () => {
                 isDisabled={deleteInstanceName !== deleteInstance.name}
                 isLoading={isLoading}
               >
-                Confirm
+                {t("confirm")}
               </Button>
               <Button
                 key="cancel"
                 variant="link"
                 onClick={() => modalToggle(false)}
               >
-                Cancel
+                {t("cancel")}
               </Button>
             </ModalFooter>
           </Modal>
