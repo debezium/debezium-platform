@@ -29,3 +29,11 @@ export const AppStrings = {
   destination: "destination",
   pipeline: "pipeline",
 };
+
+export enum DatabaseType {
+  ORACLE = "ORACLE",
+  MYSQL = "MYSQL",
+  MARIADB = "MARIADB",
+  SQLSERVER = "SQLSERVER",
+  POSTGRESQL = "POSTGRESQL",
+}
