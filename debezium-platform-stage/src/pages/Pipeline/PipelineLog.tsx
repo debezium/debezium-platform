@@ -40,7 +40,7 @@ interface PipelineLogProps {
 // Maximum number of log lines to keep in memory
 const MAX_LOG_LINES = 1000;
 
-// eslint-disable-next-line no-empty-pattern
+ 
 const PipelineLog: FC<PipelineLogProps> = ({
   activeTabKey,
   pipelineId,

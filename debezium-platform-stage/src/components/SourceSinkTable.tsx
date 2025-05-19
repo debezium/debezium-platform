@@ -125,7 +125,6 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
     setDeleteInstance({ id: id, name: name });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onEditHandler = (id: number, _name: string) => {
     navigate(`/${tableType}/edit_${tableType}/${id}`);
   };

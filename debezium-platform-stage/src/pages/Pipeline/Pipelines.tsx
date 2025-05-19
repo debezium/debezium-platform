@@ -19,8 +19,6 @@ import {
   ModalFooter,
   ModalHeader,
   PageSection,
-  ProgressStep,
-  ProgressStepper,
   SearchInput,
   Spinner,
   Switch,

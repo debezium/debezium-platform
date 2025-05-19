@@ -16,7 +16,7 @@ const PipelineAction: React.FC = () => {
 
     };
 
-    const handleLogMessageChange = (_event: any, experience: string) => {
+    const handleLogMessageChange = (_event: React.ChangeEvent<HTMLTextAreaElement>, experience: string) => {
         setLogMessage(experience);
     };
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { EdgeProps, getBezierPath } from "reactflow";
 import "./UnifiedCustomEdge.css";
 

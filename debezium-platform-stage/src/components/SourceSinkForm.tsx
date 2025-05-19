@@ -82,7 +82,7 @@ const SourceSinkForm = ({
 
   const [setDone, setSetDone] = useState(false);
 
-  const handleModalToggle = (_event: KeyboardEvent | React.MouseEvent) => {
+  const handleModalToggle = () => {
     setIsModalOpen(!isModalOpen);
     setSignalMissingPayload([]);
   };

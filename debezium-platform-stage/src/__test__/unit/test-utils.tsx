@@ -21,7 +21,7 @@ i18n
         },
     });
 
-const customRender = (ui: any, options?: any) =>
+const customRender = (ui: React.ReactElement, options?: import('@testing-library/react').RenderOptions) =>
     render(ui, {
         wrapper: ({ children }) => (
             <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
