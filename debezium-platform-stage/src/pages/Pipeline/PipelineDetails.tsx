@@ -39,7 +39,7 @@ const PipelineDetails: React.FunctionComponent = () => {
 
   useEffect(() => {
     if (detailsTab === "overview") {
-      setActiveTabKey;
+      setActiveTabKey("overview");
     } else if (detailsTab === "logs") {
       setActiveTabKey("logs");
     } else if (detailsTab === "edit") {

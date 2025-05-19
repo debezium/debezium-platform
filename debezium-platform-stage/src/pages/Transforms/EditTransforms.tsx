@@ -398,7 +398,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
         `Failed to create ${(response.data as any).name}: ${response.error}`
       );
     } else {
-      onSelection && onSelection(response.data as any);
+      onSelection?.(response.data as any);
       addNotification(
         "success",
         `Edit successful`,
@@ -592,7 +592,9 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                             selected={selected}
                             onSelect={onSelect}
                             onOpenChange={(isOpen) => {
-                              !isOpen && closeMenu();
+                              if (!isOpen) {
+                                closeMenu();
+                              }
                             }}
                             toggle={toggle}
                             shouldFocusFirstItemOnOpen={false}

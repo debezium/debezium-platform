@@ -9,11 +9,8 @@ import {
 import React, { useState } from "react";
 import imgAvatar from "@patternfly/react-core/src/components/assets/avatarImg.svg";
 
-interface UserAvatarProps {
 
-}
-
-const UserAvatar: React.FC<UserAvatarProps> = () => {
+const UserAvatar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const onDropdownSelect = () => {

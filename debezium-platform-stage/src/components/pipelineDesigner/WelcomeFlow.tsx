@@ -34,9 +34,8 @@ const edgeTypes = {
 
 const proOptions = { hideAttribution: true };
 
-interface WelcomeFlowProps { }
 
-const WelcomeFlow: React.FC<WelcomeFlowProps> = () => {
+const WelcomeFlow: React.FC = () => {
   const { darkMode } = useData();
   const { t } = useTranslation();
 

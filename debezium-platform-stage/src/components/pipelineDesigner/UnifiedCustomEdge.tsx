@@ -1,9 +1,7 @@
 import { EdgeProps, getBezierPath, Position } from "reactflow";
 import "./UnifiedCustomEdge.css";
 
-interface UnifiedCustomEdgeProps extends EdgeProps {}
-
-const UnifiedCustomEdge: React.FC<UnifiedCustomEdgeProps> = ({
+const UnifiedCustomEdge: React.FC<EdgeProps> = ({
   id,
   sourceX,
   sourceY,

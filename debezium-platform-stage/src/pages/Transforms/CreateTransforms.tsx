@@ -361,7 +361,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
         `Failed to create ${(response.data as any).name}: ${response.error}`
       );
     } else {
-      modelLoaded && onSelection && onSelection(response.data as any);
+      modelLoaded && onSelection?.(response.data as any);
       addNotification(
         "success",
         `Create successful`,
