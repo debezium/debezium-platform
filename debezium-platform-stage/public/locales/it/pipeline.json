@@ -44,6 +44,19 @@
     "queueUsage": "Utilizzo della coda",
     "events": "Eventi"
   },
+  "actions": {
+    "title": "Azioni della pipeline",
+    "description": "Usa il signaling per eseguire azioni sulla pipeline.",
+    "actionField": "Azione",
+    "actionTypeField": "Tipo di azione",
+    "messageField": "Messaggio",
+    "collectionField": "Nome della collezione",
+    "collectionFieldDescription": "Una componente obbligatoria del campo dati di un segnale che specifica un array di nomi di collezioni o espressioni regolari per abbinare i nomi delle collezioni da includere nello snapshot.",
+    "messageFieldDescription": "Il parametro messaggio specifica la stringa da stampare nel log. Se aggiungi un segnaposto ({ }), verrà sostituito con le coordinate di streaming.",
+    "selectAnAction": "Seleziona un'azione",
+    "actionTypeFieldDescription": "Il parametro type specifica l'operazione che il segnale intende attivare.",
+    "actionIdHelper": "È precompilato con una stringa UUID, ma l'utente può modificarlo per fornire il proprio ID."
+  },
   "logs": {
     "download": "Scarica file di log",
     "fullScreen": "Schermo intero",

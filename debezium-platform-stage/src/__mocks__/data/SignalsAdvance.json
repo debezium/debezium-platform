@@ -1,0 +1,357 @@
+[
+    {
+        "name": "logAction",
+        "display": {
+            "label": "Add messages to the log",
+            "description": "Actions related to logging.",
+            "group": "Log",
+            "groupOrder": 1,
+            "value": "log",
+            "disabled": false
+        },
+        "properties": [
+            {
+                "name": "id",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Action ID",
+                    "description": "An arbitrary unique string that identifies a signal instance which can be used for logging, debugging, or de-duplication. Its prefilled with UUID string but user can update it."
+                }
+            },
+            {
+                "name": "message",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Message",
+                    "description": "The message parameter specifies the string to print to the log. If you add a placeholder ({}) to the message, it is replaced with streaming coordinates."
+                }
+            }
+        ]
+    },
+    {
+        "name": "adhocSnapshotActions",
+        "display": {
+            "label": "Trigger ad hoc snapshots",
+            "description": "Actions related to ad hoc snapshots.",
+            "group": "Ad hoc Snapshot",
+            "groupOrder": 2,
+            "value": "execute-snapshot",
+            "disabled": false
+        },
+        "properties": [
+            {
+                "name": "id",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Action ID",
+                    "description": "An arbitrary unique string that identifies a signal instance which can be used for logging, debugging, or de-duplication. Its prefilled with UUID string but user can update it."
+                }
+            },
+            {
+                "name": "data-collections",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Collection name",
+                    "description": "An array of comma-separated regular expressions that match the fully qualified names of the data collections to include in the snapshot. The naming format depends on the database."
+                }
+            },
+            {
+                "name": "type",
+                "type": "string",
+                "required": true,
+                "disabled": true,
+                "defaultValue": "INCREMENTAL",
+                "enum": [
+                    "INCREMENTAL",
+                    "blocking"
+                ],
+                "display": {
+                    "label": "Snapshot type",
+                    "description": "An optional type component of the data field of a signal that specifies the type of snapshot operation to run. Currently supports the incremental and blocking types."
+                }
+            },
+            {
+                "name": "additional-properties",
+                "type": "array",
+                "required": false,
+                "display": {
+                    "label": "Additional filter conditions",
+                    "description": "Additional conditions that the connector evaluates to determine the subset of records to include in a snapshot."
+                },
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "data-collections": {
+                            "name": "data-collections",
+                            "type": "string",
+                            "required": true,
+                            "display": {
+                                "label": "Collection name",
+                                "description": "The fully-qualified name of the data collection for which the filter will be applied."
+                            }
+                        },
+                        "filter": {
+                            "name": "filter",
+                            "type": "string",
+                            "required": true,
+                            "display": {
+                                "label": "Filter",
+                                "description": "Specifies the column values that must be present in a data collection record for the snapshot to include it."
+                            }
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "stopAdhocSnapshotActions",
+        "display": {
+            "label": "Stop execution of an ad hoc snapshot",
+            "description": "Actions related to ad hoc snapshots.",
+            "group": "Ad hoc Snapshot",
+            "groupOrder": 2,
+            "value": "stop-snapshot",
+            "disabled": false
+        },
+        "properties": [
+            {
+                "name": "id",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Action ID",
+                    "description": "An arbitrary unique string that identifies a signal instance which can be used for logging, debugging, or de-duplication. Its prefilled with UUID string but user can update it."
+                }
+            },
+            {
+                "name": "data-collections",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Collection name",
+                    "description": "An array of comma-separated regular expressions that match the fully qualified names of the data collections to include in the snapshot. The naming format depends on the database."
+                }
+            },
+            {
+                "name": "type",
+                "type": "string",
+                "required": true,
+                "disabled": true,
+                "defaultValue": "INCREMENTAL",
+                "enum": [
+                    "INCREMENTAL",
+                    "blocking"
+                ],
+                "display": {
+                    "label": "Snapshot type",
+                    "description": "An optional type component of the data field of a signal that specifies the type of snapshot operation to run. Currently supports the incremental and blocking types."
+                }
+            }
+        ]
+    },
+    {
+        "name": "adhocIncrementalSnapshotActions",
+        "display": {
+            "label": "Trigger ad hoc incremental snapshots",
+            "description": "Actions related to incremental snapshots.",
+            "group": "Incremental Snapshot",
+            "groupOrder": 3,
+            "value": "execute-snapshot",
+            "disabled": false
+        },
+        "properties": [
+            {
+                "name": "id",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Action ID",
+                    "description": "An arbitrary unique string that identifies a signal instance which can be used for logging, debugging, or de-duplication. Its prefilled with UUID string but user can update it."
+                }
+            },
+            {
+                "name": "data-collections",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Collection name",
+                    "description": "An array of comma-separated regular expressions that match the fully qualified names of the data collections to include in the snapshot. The naming format depends on the database."
+                }
+            },
+            {
+                "name": "type",
+                "type": "string",
+                "required": true,
+                "disabled": true,
+                "defaultValue": "INCREMENTAL",
+                "enum": [
+                    "INCREMENTAL",
+                    "blocking"
+                ],
+                "display": {
+                    "label": "Snapshot type",
+                    "description": "An optional type component of the data field of a signal that specifies the type of snapshot operation to run. Currently supports the incremental and blocking types."
+                }
+            },
+            {
+                "name": "additional-properties",
+                "type": "array",
+                "required": false,
+                "display": {
+                    "label": "Additional filter conditions",
+                    "description": "Additional conditions that the connector evaluates to determine the subset of records to include in a snapshot."
+                },
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "data-collections": {
+                            "name": "data-collections",
+                            "type": "string",
+                            "required": true,
+                            "display": {
+                                "label": "Collection name",
+                                "description": "The fully-qualified name of the data collection for which the filter will be applied."
+                            }
+                        },
+                        "filter": {
+                            "name": "filter",
+                            "type": "string",
+                            "required": true,
+                            "display": {
+                                "label": "Filter",
+                                "description": "Specifies the column values that must be present in a data collection record for the snapshot to include it."
+                            }
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "pauseIncrementalSnapshotActions",
+        "display": {
+            "label": "Pause incremental snapshots",
+            "description": "Actions related to incremental snapshots.",
+            "group": "Incremental Snapshot",
+            "groupOrder": 3,
+            "value": "pause-snapshot",
+            "disabled": false
+        },
+        "properties": [
+            {
+                "name": "id",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Action ID",
+                    "description": "An arbitrary unique string that identifies a signal instance which can be used for logging, debugging, or de-duplication. Its prefilled with UUID string but user can update it."
+                }
+            }
+        ]
+    },
+    {
+        "name": "resumeIncrementalSnapshotActions",
+        "display": {
+            "label": "Resume incremental snapshots",
+            "description": "Actions related to incremental snapshots.",
+            "group": "Incremental Snapshot",
+            "groupOrder": 3,
+            "value": "resume-snapshot",
+            "disabled": false
+        },
+        "properties": [
+            {
+                "name": "id",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Action ID",
+                    "description": "An arbitrary unique string that identifies a signal instance which can be used for logging, debugging, or de-duplication. Its prefilled with UUID string but user can update it."
+                }
+            }
+        ]
+    },
+    {
+        "name": "blockingSnapshotActions",
+        "display": {
+            "label": "Trigger ad hoc blocking snapshot",
+            "description": "Actions related to blocking snapshots.",
+            "group": "Blocking Snapshot",
+            "groupOrder": 4,
+            "value": "execute-snapshot",
+            "disabled": false
+        },
+        "properties": [
+            {
+                "name": "id",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Action ID",
+                    "description": "An arbitrary unique string that identifies a signal instance which can be used for logging, debugging, or de-duplication. Its prefilled with UUID string but user can update it."
+                }
+            },
+            {
+                "name": "data-collections",
+                "type": "string",
+                "required": true,
+                "display": {
+                    "label": "Collection name",
+                    "description": "An array of comma-separated regular expressions that match the fully qualified names of the data collections to include in the snapshot. The naming format depends on the database."
+                }
+            },
+            {
+                "name": "type",
+                "type": "string",
+                "required": true,
+                "disabled": true,
+                "defaultValue": "blocking",
+                "enum": [
+                    "INCREMENTAL",
+                    "blocking"
+                ],
+                "display": {
+                    "label": "Snapshot type",
+                    "description": "An optional type component of the data field of a signal that specifies the type of snapshot operation to run. Currently supports the incremental and blocking types."
+                }
+            },
+            {
+                "name": "additional-properties",
+                "type": "array",
+                "required": false,
+                "display": {
+                    "label": "Additional filter conditions",
+                    "description": "Additional conditions that the connector evaluates to determine the subset of records to include in a snapshot."
+                },
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "data-collections": {
+                            "name": "data-collections",
+                            "type": "string",
+                            "required": true,
+                            "display": {
+                                "label": "Collection name",
+                                "description": "The fully-qualified name of the data collection for which the filter will be applied."
+                            }
+                        },
+                        "filter": {
+                            "name": "filter",
+                            "type": "string",
+                            "required": true,
+                            "display": {
+                                "label": "Filter",
+                                "description": "Specifies the column values that must be present in a data collection record for the snapshot to include it."
+                            }
+                        }
+                    }
+                }
+            }
+        ]
+    }
+]

@@ -40,6 +40,16 @@ export type Payload = {
   name: string;
 };
 
+export type PipelineSignalPayload = {
+  id: string;
+  type: string;
+  data?: string;
+  additionalData?: {
+    additionalProp1: string;
+  }
+}
+
+
 export type Destination = {
   type: string;
   schema: string;

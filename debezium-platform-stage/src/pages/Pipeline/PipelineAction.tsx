@@ -1,79 +1,163 @@
-import { FormGroup, FormSelect, FormSelectOption, Radio, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, FormFieldGroupHeader, FormFieldGroupExpandable, TextArea, FormGroupLabelHelp, Popover } from '@patternfly/react-core';
-import { pipelineAction } from '@utils/pipelineActions';
-import { find } from 'lodash';
+import { FormGroup, FormSelect, FormSelectOption, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, TextArea, FormGroupLabelHelp, Popover, FormHelperText, HelperText, HelperTextItem } from '@patternfly/react-core';
 import React from 'react';
+import { useForm, SubmitHandler } from "react-hook-form"
 import { useTranslation } from 'react-i18next';
+import signalActions from "../../__mocks__/data/Signals.json";
+import { API_URL } from '@utils/constants';
+import { createPost, PipelineSignalPayload } from 'src/apis';
+import { useNotification } from '@appContext/index';
 
-const PipelineAction: React.FC = () => {
+
+const getSignalActions = () => {
+    const placeholder = {
+        groupLabel: '',
+        disabled: false,
+        options: [
+            {
+                value: '', label: 'Select an action', disabled: false
+                , isPlaceholder: true
+            },
+        ]
+    }
+    const signalActionsGroup = [placeholder];
+    signalActions.forEach((action) => {
+        if (signalActionsGroup.find((group) => group.groupLabel === action.display.group)) {
+            signalActionsGroup.find((group) => group.groupLabel === action.display.group)?.options.push({
+                value: action.name,
+                label: action.display.label,
+                disabled: action.display.disabled,
+                isPlaceholder: false
+            });
+        } else {
+            signalActionsGroup.splice(action.display.groupOrder, 0, {
+                groupLabel: action.display.group,
+                disabled: false,
+                options: [
+                    { value: action.name, label: action.display.label, disabled: action.display.disabled, isPlaceholder: false },
+                ]
+            })
+        }
+
+
+    });
+    return signalActionsGroup;
+}
+
+// Define the Inputs interface for form fields
+interface Inputs {
+    actionType: string;
+    actionId: string;
+    logMessage?: string;
+    collectionName?: string;
+    filterCollectionName?: string;
+    filter?: string;
+}
+
+interface PipelineActionProps {
+    pipelineId: string | undefined;
+}
+
+const PipelineAction: React.FC<PipelineActionProps> = ({
+    pipelineId
+}) => {
     const { t } = useTranslation();
-    const [option, setOption] = React.useState('please choose');
+    const { addNotification } = useNotification();
+    const [pipelineAction, setPipelineAction] = React.useState('please choose');
 
-    const [logMessage, setLogMessage] = React.useState('');
+    const {
+        register,
+        handleSubmit,
+        formState: { errors }
+    } = useForm<Inputs>({
+        defaultValues: {
+            actionId: self.crypto.randomUUID(),
+        },
+    })
+
+    const onSubmit: SubmitHandler<Inputs> = (data) => {
+        let payload: PipelineSignalPayload = {
+            "id": data.actionId,
+            "type": signalActions.find((action) => action.name === pipelineAction)?.value || "",
+        };
+
+        switch (pipelineAction) {
+            case "logAction":
+                payload = {
+                    ...payload,
+                    "data": JSON.stringify({
+                        "message": data.logMessage,
+                    }),
+                }
+                break;
+            case "adhocSnapshotActions":
+            case "stopAdhocSnapshotActions":
+            case "adhocIncrementalSnapshotActions":
+                payload = {
+                    ...payload,
+                    "data": JSON.stringify({
+                        "data-collections": data.collectionName ? data.collectionName.split(",").map(name => name.trim()) : [""],
+                        "type": "INCREMENTAL"
+                    }),
+                }
+                break;
+            case "pauseIncrementalSnapshotActions":
+            case "resumeIncrementalSnapshotActions":
+                payload = payload;
+                break
+
+            case "blockingSnapshotActions":
+                payload = {
+                    ...payload,
+                    "data": JSON.stringify({
+                        "data-collections": data.collectionName ? data.collectionName.split(",").map(name => name.trim()) : [""],
+                        "type": "blocking"
+                    }),
+                }
+                break;
+        }
+        sendPipelineSignalAction(payload);
+    }
+
 
     const handleOptionChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
         console.log(value);
-        setOption(value);
+        setPipelineAction(value);
 
     };
 
-    const handleLogMessageChange = (_event: React.ChangeEvent<HTMLTextAreaElement>, experience: string) => {
-        setLogMessage(experience);
-    };
-
-    const groups = [
-        {
-            groupLabel: '',
-            disabled: false,
-            options: [
-                { value: '', label: 'Select an action', disabled: false, isPlaceholder: true },
-            ]
-        },
-        {
-            groupLabel: 'Log',
-            disabled: false,
-            options: [
-                { value: 'log', label: 'Add messages to the log', disabled: false },
-            ]
-        },
-        {
-            groupLabel: 'Ad hoc Snapshot',
-            disabled: false,
-            options: [
-                { value: 'adhocSnapshot', label: 'Trigger ad hoc snapshots', disabled: false },
-                { value: 'stopAdhocSnapshot', label: 'Stop execution of an ad hoc snapshot', disabled: false },
-            ]
-        },
-        {
-            groupLabel: 'Incremental Snapshot',
-            disabled: false,
-            options: [
-                { value: 'adhocIncremental', label: 'Trigger ad hoc incremental snapshots', disabled: false },
-                { value: 'pauseIncremental', label: 'Pause incremental snapshots', disabled: false },
-                { value: 'resumeIncremental', label: 'Resume incremental snapshots', disabled: false }
-            ]
-        },
-        {
-            groupLabel: 'Blocking Snapshot',
-            disabled: false,
-            options: [
-                { value: 'adhocBlocking', label: 'Trigger ad hoc blocking snapshot', disabled: false },
-            ]
+    const sendPipelineSignalAction = async (payload: PipelineSignalPayload) => {
+        const response = await createPost(`${API_URL}/api/pipelines/${pipelineId}/signals`, payload);
+        if (response.error) {
+            addNotification(
+                "danger",
+                `Signal action failed`,
+                `Failed to send signal action: ${response.error
+                }`
+            );
+        } else {
+            addNotification(
+                "success",
+                `Signal action success`,
+                `Send action "${payload.type
+                }" created successfully.`
+            );
         }
-    ];
+    };
+
 
     return (
         <>
-            <Form isHorizontal isWidthLimited>
+            <Form isHorizontal isWidthLimited onSubmit={handleSubmit(onSubmit)}>
                 <FormSection title={t("pipeline:actions.description")} titleElement="h2">
-                    <FormGroup label={t("pipeline:actions.actionField")} fieldId="pipeline-action" isRequired>
+                    <FormGroup label={t("pipeline:actions.actionField")} fieldId="action-type" isRequired>
                         <FormSelect
-                            value={option}
+                            value={pipelineAction}
                             onChange={handleOptionChange}
-                            id="pipeline-action-title"
-                            name="pipeline-actiontitle"
-                            aria-label="action"
+                            id="action-type"
+                            name="actionType"
+                            aria-label="action type"
                         >
-                            {groups.map((group, index) => (
+                            {getSignalActions().map((group, index) => (
                                 <FormSelectOptionGroup isDisabled={group.disabled} key={index} label={group.groupLabel}>
                                     {group.options.map((option, i) => (
                                         <FormSelectOption isDisabled={option.disabled} key={i} value={option.value} label={option.label} />
@@ -82,48 +166,80 @@ const PipelineAction: React.FC = () => {
                             ))}
                         </FormSelect>
                     </FormGroup>
-                    <FormGroup label={t("pipeline:actions.actionTypeField")} fieldId="action-type-field" isRequired
-                        labelHelp={
-                            <Popover
-                                bodyContent={
-                                    <div>
-                                        {t("pipeline:actions.actionTypeFieldDescription")}
-                                    </div>
-                                }
-                            >
-                                <FormGroupLabelHelp aria-label={t("pipeline:actions.actionTypeFieldDescription")} />
-                            </Popover>
-                        }
-                    >
-                        <TextInput isDisabled type="text" id="action-type" name="action-type" value={option ? find(pipelineAction, (act) => act.action === option)?.type : ""} />
-                    </FormGroup>
+                    {
+                        pipelineAction !== "" && pipelineAction !== "please choose" && (
+                            <>
+                                <FormGroup label={t("Action Id")} fieldId="action-id" isRequired
+                                    labelHelp={
+                                        <Popover
+                                            bodyContent={
+                                                <div>
+                                                    {t("pipeline:actions.actionTypeFieldDescription")}
+                                                </div>
+                                            }
+                                        >
+                                            <FormGroupLabelHelp aria-label={t("pipeline:actions.actionTypeFieldDescription")} />
+                                        </Popover>
+                                    }
+                                >
+                                    <TextInput isRequired type="text" id="action-id"
+                                        validated={errors.actionId ? "error" : "default"}
+                                        {...register("actionId", {
+                                            required: "Action Id is required",
+                                            minLength: { value: 5, message: "Action id be at least 5 characters" }
+                                        })} />
+                                    <FormHelperText>
+                                        <HelperText>
+                                            <HelperTextItem>{t("pipeline:action.actionIdHelper")}</HelperTextItem>
+                                        </HelperText>
+                                    </FormHelperText>
+
+                                </FormGroup>
+                            </>
+                        )
+                    }
+
+
                     {(() => {
-                        switch (find(pipelineAction, (act) => act.action === option)?.action) {
-                            case "log":
+                        switch (pipelineAction) {
+                            case "logAction":
                                 return (
-                                    <FormGroup label="Message" fieldId="log-message-field" isRequired>
+                                    <FormGroup label={t("pipeline:action.messageField")} fieldId="log-message" isRequired
+                                        labelHelp={
+                                            <Popover
+                                                bodyContent={
+                                                    <div>
+                                                        {t("pipeline:action.messageFieldDescription")}
+                                                    </div>
+                                                }
+                                            >
+                                                <FormGroupLabelHelp aria-label="Log helper msg" />
+                                            </Popover>
+                                        }>
                                         <TextArea
-                                            value={logMessage}
-                                            onChange={handleLogMessageChange}
+                                            isRequired
                                             id="log-message"
-                                            name="log-message"
-                                            aria-label="log-message"
+                                            aria-label="log message"
+                                            validated={errors.logMessage ? "error" : "default"}
+                                            {...register("logMessage", {
+                                                required: "Log message is required",
+                                            })}
                                         />
                                     </FormGroup>
                                 );
-                            case "adhocBlocking":
-                            case "adhocSnapshot":
-                            case "adhocIncremental":
-                            case "stopAdhocSnapshot":
+                            case "blockingSnapshotActions":
+                            case "adhocSnapshotActions":
+                            case "adhocIncrementalSnapshotActions":
+                            case "stopAdhocSnapshotActions":
                                 return (
                                     <>
-                                        <FormGroup label="Collection name" fieldId="collection-name-field" isRequired
+                                        <FormGroup label={t("pipeline:action.collectionField")} fieldId="collection-name"
                                             labelHelp={
                                                 <Popover
                                                     bodyContent={
                                                         <div>
 
-                                                            A required component of the data field of a signal that specifies an array of collection names or regular expressions to match collection names to include in the snapshot.
+                                                            {t("pipeline:action.collectionFieldDescription")}
                                                         </div>
                                                     }
                                                 >
@@ -131,9 +247,11 @@ const PipelineAction: React.FC = () => {
                                                 </Popover>
                                             }
                                         >
-                                            <TextInput type="text" id="collection-name" name="collection-name" value='public.Collection1, public.Collection2' />
+                                            <TextInput type="text" id="collection-name"
+
+                                                {...register("collectionName")} />
                                         </FormGroup>
-                                        <FormGroup role="radiogroup" isStack fieldId="snapshot-type" hasNoPaddingTop label="Snapshot type"
+                                        {/* <FormGroup role="radiogroup" isStack fieldId="snapshot-type" hasNoPaddingTop label="Snapshot type"
                                             labelHelp={
                                                 <Popover
                                                     //   triggerRef={labelHelpRef}
@@ -152,7 +270,7 @@ const PipelineAction: React.FC = () => {
                                             <Radio name="incremental-snapshot-type" label="Incremental" isChecked id="incremental-snapshot-type" />
                                             <Radio name="blocking-snapshot-type" label="Blocking" id="blocking-snapshot-type" isDisabled />
                                         </FormGroup>
-                                        {find(pipelineAction, (act) => act.action === option)?.action !== "stopAdhocSnapshot" &&
+                                        {pipelineAction !== "stopAdhocSnapshotActions" &&
 
                                             <FormFieldGroupExpandable
                                                 style={{ border: "none" }}
@@ -198,8 +316,7 @@ const PipelineAction: React.FC = () => {
                                                     <TextInput type="text" id="filter" name="filter" value="color=\'blue\'" />
                                                 </FormGroup>
                                             </FormFieldGroupExpandable>
-                                        }
-
+                                        } */}
                                     </>
                                 );
                             default:
@@ -207,11 +324,15 @@ const PipelineAction: React.FC = () => {
                         }
                     })()}
                 </FormSection>
+                {
+                    pipelineAction !== "" && pipelineAction !== "please choose" && (
+                        <ActionGroup>
+                            <Button variant="primary" type="submit">{t("submit")}</Button>
+                            <Button variant="link">{t("clear")}</Button>
+                        </ActionGroup>
+                    )
+                }
 
-                <ActionGroup>
-                    <Button variant="primary">{t("submit")}</Button>
-                    <Button variant="link">{t("clear")}</Button>
-                </ActionGroup>
             </Form>
         </>
 

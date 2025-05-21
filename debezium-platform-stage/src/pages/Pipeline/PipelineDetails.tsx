@@ -176,7 +176,7 @@ const PipelineDetails: React.FunctionComponent = () => {
           hidden={"action" !== activeTabKey}
         >
           <TabContentBody>
-            <PipelineAction />
+            <PipelineAction  pipelineId={pipelineId}/>
           </TabContentBody>
         </TabContent>
       </PageSection>
