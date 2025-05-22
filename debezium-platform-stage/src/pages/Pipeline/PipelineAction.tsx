@@ -63,6 +63,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     const { t } = useTranslation();
     const { addNotification } = useNotification();
     const [pipelineAction, setPipelineAction] = React.useState('please choose');
+    const [isLoading, setIsLoading] = React.useState(false);
 
     const {
         register,
@@ -75,6 +76,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     })
 
     const onSubmit: SubmitHandler<Inputs> = (data) => {
+        setIsLoading(true);
         let payload: PipelineSignalPayload = {
             "id": data.actionId,
             "type": signalActions.find((action) => action.name === pipelineAction)?.value || "",
@@ -102,9 +104,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                 break;
             case "pauseIncrementalSnapshotActions":
             case "resumeIncrementalSnapshotActions":
-                payload = payload;
                 break
-
             case "blockingSnapshotActions":
                 payload = {
                     ...payload,
@@ -120,7 +120,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
 
 
     const handleOptionChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
-        console.log(value);
         setPipelineAction(value);
 
     };
@@ -128,6 +127,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     const sendPipelineSignalAction = async (payload: PipelineSignalPayload) => {
         const response = await createPost(`${API_URL}/api/pipelines/${pipelineId}/signals`, payload);
         if (response.error) {
+            setIsLoading(false);
             addNotification(
                 "danger",
                 `Signal action failed`,
@@ -135,6 +135,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                 }`
             );
         } else {
+            setIsLoading(false);
             addNotification(
                 "success",
                 `Signal action success`,
@@ -190,7 +191,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                         })} />
                                     <FormHelperText>
                                         <HelperText>
-                                            <HelperTextItem>{t("pipeline:action.actionIdHelper")}</HelperTextItem>
+                                            <HelperTextItem>{t("pipeline:actions.actionIdHelper")}</HelperTextItem>
                                         </HelperText>
                                     </FormHelperText>
 
@@ -204,12 +205,12 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                         switch (pipelineAction) {
                             case "logAction":
                                 return (
-                                    <FormGroup label={t("pipeline:action.messageField")} fieldId="log-message" isRequired
+                                    <FormGroup label={t("pipeline:actions.messageField")} fieldId="log-message" isRequired
                                         labelHelp={
                                             <Popover
                                                 bodyContent={
                                                     <div>
-                                                        {t("pipeline:action.messageFieldDescription")}
+                                                        {t("pipeline:actions.messageFieldDescription")}
                                                     </div>
                                                 }
                                             >
@@ -233,13 +234,13 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                             case "stopAdhocSnapshotActions":
                                 return (
                                     <>
-                                        <FormGroup label={t("pipeline:action.collectionField")} fieldId="collection-name"
+                                        <FormGroup label={t("pipeline:actions.collectionField")} fieldId="collection-name"
                                             labelHelp={
                                                 <Popover
                                                     bodyContent={
                                                         <div>
 
-                                                            {t("pipeline:action.collectionFieldDescription")}
+                                                            {t("pipeline:actions.collectionFieldDescription")}
                                                         </div>
                                                     }
                                                 >
@@ -327,8 +328,8 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                 {
                     pipelineAction !== "" && pipelineAction !== "please choose" && (
                         <ActionGroup>
-                            <Button variant="primary" type="submit">{t("submit")}</Button>
-                            <Button variant="link">{t("clear")}</Button>
+                            <Button variant="primary" type="submit" isLoading={isLoading} isDisabled={isLoading}>{t("submit")}</Button>
+                            {/* <Button variant="link">{t("clear")}</Button> */}
                         </ActionGroup>
                     )
                 }
