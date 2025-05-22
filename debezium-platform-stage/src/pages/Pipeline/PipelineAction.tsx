@@ -93,7 +93,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                 break;
             case "adhocSnapshotActions":
             case "stopAdhocSnapshotActions":
-            case "adhocIncrementalSnapshotActions":
                 payload = {
                     ...payload,
                     "data": JSON.stringify({
@@ -102,15 +101,15 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                     }),
                 }
                 break;
-            case "pauseIncrementalSnapshotActions":
-            case "resumeIncrementalSnapshotActions":
+            case "pauseAdhocSnapshotActions":
+            case "resumeAdhocSnapshotActions":
                 break
             case "blockingSnapshotActions":
                 payload = {
                     ...payload,
                     "data": JSON.stringify({
                         "data-collections": data.collectionName ? data.collectionName.split(",").map(name => name.trim()) : [""],
-                        "type": "blocking"
+                        "type": "BLOCKING"
                     }),
                 }
                 break;
@@ -230,7 +229,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                 );
                             case "blockingSnapshotActions":
                             case "adhocSnapshotActions":
-                            case "adhocIncrementalSnapshotActions":
                             case "stopAdhocSnapshotActions":
                                 return (
                                     <>

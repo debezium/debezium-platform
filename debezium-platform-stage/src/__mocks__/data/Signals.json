@@ -34,9 +34,9 @@
         "name": "adhocSnapshotActions",
         "value": "execute-snapshot",
         "display": {
-            "label": "Trigger ad hoc snapshots",
+            "label": "Trigger ad hoc incremental snapshots",
             "description": "Actions related to ad hoc snapshots.",
-            "group": "Ad hoc Snapshot",
+            "group": "Ad hoc Incremental snapshot",
             "groupOrder": 2,
             "disabled": false
         },
@@ -67,7 +67,7 @@
                 "defaultValue": "INCREMENTAL",
                 "enum": [
                     "INCREMENTAL",
-                    "blocking"
+                    "BLOCKING"
                 ],
                 "display": {
                     "label": "Snapshot type",
@@ -82,7 +82,7 @@
         "display": {
             "label": "Stop execution of an ad hoc snapshot",
             "description": "Actions related to ad hoc snapshots.",
-            "group": "Ad hoc Snapshot",
+            "group": "Ad hoc Incremental snapshot",
             "groupOrder": 2,
             "disabled": false
         },
@@ -113,7 +113,7 @@
                 "defaultValue": "INCREMENTAL",
                 "enum": [
                     "INCREMENTAL",
-                    "blocking"
+                    "BLOCKING"
                 ],
                 "display": {
                     "label": "Snapshot type",
@@ -123,59 +123,13 @@
         ]
     },
     {
-        "name": "adhocIncrementalSnapshotActions",
-        "value": "execute-snapshot",
-        "display": {
-            "label": "Trigger ad hoc incremental snapshots",
-            "description": "Actions related to incremental snapshots.",
-            "group": "Incremental Snapshot",
-            "groupOrder": 3,
-            "disabled": false
-        },
-        "properties": [
-            {
-                "name": "id",
-                "type": "string",
-                "required": true,
-                "display": {
-                    "label": "Action ID",
-                    "description": "An arbitrary unique string that identifies a signal instance which can be used for logging, debugging, or de-duplication. Its prefilled with UUID string but user can update it."
-                }
-            },
-            {
-                "name": "data-collections",
-                "type": "string",
-                "required": true,
-                "display": {
-                    "label": "Collection name",
-                    "description": "An array of comma-separated regular expressions that match the fully qualified names of the data collections to include in the snapshot. The naming format depends on the database."
-                }
-            },
-            {
-                "name": "type",
-                "type": "string",
-                "required": true,
-                "disabled": true,
-                "defaultValue": "INCREMENTAL",
-                "enum": [
-                    "INCREMENTAL",
-                    "blocking"
-                ],
-                "display": {
-                    "label": "Snapshot type",
-                    "description": "An optional type component of the data field of a signal that specifies the type of snapshot operation to run. Currently supports the incremental and blocking types."
-                }
-            }
-        ]
-    },
-    {
-        "name": "pauseIncrementalSnapshotActions",
+        "name": "pauseAdhocSnapshotActions",
         "value": "pause-snapshot",
         "display": {
-            "label": "Pause incremental snapshots",
+            "label": "Pause ad hoc snapshots",
             "description": "Actions related to incremental snapshots.",
-            "group": "Incremental Snapshot",
-            "groupOrder": 3,
+            "group": "Ad hoc Incremental snapshot",
+            "groupOrder": 2,
             "disabled": false
         },
         "properties": [
@@ -191,13 +145,13 @@
         ]
     },
     {
-        "name": "resumeIncrementalSnapshotActions",
+        "name": "resumeAdhocSnapshotActions",
         "value": "resume-snapshot",
         "display": {
-            "label": "Resume incremental snapshots",
+            "label": "Resume ad hoc snapshots",
             "description": "Actions related to incremental snapshots.",
-            "group": "Incremental Snapshot",
-            "groupOrder": 3,
+            "group": "Ad hoc Incremental snapshot",
+            "groupOrder": 2,
             "disabled": false
         },
         "properties": [
@@ -218,8 +172,8 @@
         "display": {
             "label": "Trigger ad hoc blocking snapshot",
             "description": "Actions related to blocking snapshots.",
-            "group": "Blocking Snapshot",
-            "groupOrder": 4,
+            "group": "Ad hoc Blocking Snapshot",
+            "groupOrder": 3,
             "disabled": false
         },
         "properties": [
@@ -246,10 +200,10 @@
                 "type": "string",
                 "required": true,
                 "disabled": true,
-                "defaultValue": "blocking",
+                "defaultValue": "BLOCKING",
                 "enum": [
                     "INCREMENTAL",
-                    "blocking"
+                    "BLOCKING"
                 ],
                 "display": {
                     "label": "Snapshot type",
