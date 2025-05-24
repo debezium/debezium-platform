@@ -3,7 +3,7 @@
         "name": "logAction",
         "value": "log",
         "display": {
-            "label": "Add messages to the log",
+            "label": "Write message to the pipeline log",
             "description": "Actions related to logging.",
             "group": "Log",
             "groupOrder": 1,
@@ -34,9 +34,9 @@
         "name": "adhocSnapshotActions",
         "value": "execute-snapshot",
         "display": {
-            "label": "Trigger ad hoc incremental snapshots",
+            "label": "Start an incremental snapshot",
             "description": "Actions related to ad hoc snapshots.",
-            "group": "Ad hoc Incremental snapshot",
+            "group": "Incremental snapshot",
             "groupOrder": 2,
             "disabled": false
         },
@@ -80,9 +80,9 @@
         "name": "stopAdhocSnapshotActions",
         "value": "stop-snapshot",
         "display": {
-            "label": "Stop execution of an ad hoc snapshot",
+            "label": "Stop an incremental snapshot",
             "description": "Actions related to ad hoc snapshots.",
-            "group": "Ad hoc Incremental snapshot",
+            "group": "Incremental snapshot",
             "groupOrder": 2,
             "disabled": false
         },
@@ -126,9 +126,9 @@
         "name": "pauseAdhocSnapshotActions",
         "value": "pause-snapshot",
         "display": {
-            "label": "Pause ad hoc snapshots",
+            "label": "Pause an incremental snapshot",
             "description": "Actions related to incremental snapshots.",
-            "group": "Ad hoc Incremental snapshot",
+            "group": "Incremental snapshot",
             "groupOrder": 2,
             "disabled": false
         },
@@ -148,9 +148,9 @@
         "name": "resumeAdhocSnapshotActions",
         "value": "resume-snapshot",
         "display": {
-            "label": "Resume ad hoc snapshots",
+            "label": "Resume an incremental snapshot",
             "description": "Actions related to incremental snapshots.",
-            "group": "Ad hoc Incremental snapshot",
+            "group": "Incremental snapshot",
             "groupOrder": 2,
             "disabled": false
         },
@@ -170,9 +170,9 @@
         "name": "blockingSnapshotActions",
         "value": "execute-snapshot",
         "display": {
-            "label": "Trigger ad hoc blocking snapshot",
+            "label": "Start a blocking snapshot",
             "description": "Actions related to blocking snapshots.",
-            "group": "Ad hoc Blocking Snapshot",
+            "group": "Blocking Snapshot",
             "groupOrder": 3,
             "disabled": false
         },
