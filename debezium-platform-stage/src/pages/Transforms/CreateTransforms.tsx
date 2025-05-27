@@ -874,26 +874,28 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                       style={{ marginBottom: "10px" }}
                     />
                   )}
-                  <CodeEditor
-                    isUploadEnabled
-                    isDownloadEnabled
-                    isCopyEnabled
-                    isLanguageLabelVisible
-                    isMinimapVisible
-                    language={Language.json}
-                    downloadFileName="transforms.json"
-                    isFullHeight
-                    code={JSON.stringify(code, null, 2)}
-                    onCodeChange={(value) => {
-                      try {
-                        const parsedCode = JSON.parse(value);
-                        setCode(parsedCode);
-                      } catch (error) {
-                        console.error("Invalid JSON:", error);
-                      }
-                    }}
-                    onEditorDidMount={onEditorDidMount}
-                  />
+                  <div style={{ flex: '1 1 auto', minHeight: 0 }} className="smart-editor">
+                    <CodeEditor
+                      isUploadEnabled
+                      isDownloadEnabled
+                      isCopyEnabled
+                      isLanguageLabelVisible
+                      isMinimapVisible
+                      language={Language.json}
+                      downloadFileName="transforms.json"
+                      isFullHeight
+                      code={JSON.stringify(code, null, 2)}
+                      onCodeChange={(value) => {
+                        try {
+                          const parsedCode = JSON.parse(value);
+                          setCode(parsedCode);
+                        } catch (error) {
+                          console.error("Invalid JSON:", error);
+                        }
+                      }}
+                      onEditorDidMount={onEditorDidMount}
+                    />
+                  </div>
                 </>
               )}
             </PageSection>

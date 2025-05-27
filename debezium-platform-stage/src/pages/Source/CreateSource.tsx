@@ -183,7 +183,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     (name: string) => {
       setSignalCollectionName(name);
     }
-  , []);
+    , []);
 
   const handleAddProperty = () => {
     const newKey = `key${keyCount}`;
@@ -269,7 +269,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
           type: find(sourceCatalog, { id: sourceId })?.type || "",
           schema: "schema321",
           vaults: [],
-          config: {"signal.data.collection": signalCollectionName,  ...convertMapToObject(properties)},
+          config: { "signal.data.collection": signalCollectionName, ...convertMapToObject(properties) },
           name: values["source-name"],
         } as unknown as Payload;
         await createNewSource(payload);
@@ -401,27 +401,28 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                       style={{ marginBottom: "10px" }}
                     />
                   )}
-                  <CodeEditor
-                    isUploadEnabled
-                    isDownloadEnabled
-                    isCopyEnabled
-                    isLanguageLabelVisible
-                    isMinimapVisible
-                    language={Language.json}
-                    downloadFileName="source-connector.json"
-                    isFullHeight
-                    code={JSON.stringify(code, null, 2)}
-                    onCodeChange={(value) => {
-                      try {
-                        const parsedCode = JSON.parse(value);
-                        setCode(parsedCode);
-                      } catch (error) {
-                        console.error("Invalid JSON:", error);
-                      }
-                    }}
-                    onEditorDidMount={onEditorDidMount}
-                    height="250px"
-                  />
+                  <div style={{ flex: '1 1 auto', minHeight: 0 }} className="smart-editor">
+                    <CodeEditor
+                      isUploadEnabled
+                      isDownloadEnabled
+                      isCopyEnabled
+                      isLanguageLabelVisible
+                      isMinimapVisible
+                      language={Language.json}
+                      downloadFileName="source-connector.json"
+                      isFullHeight
+                      code={JSON.stringify(code, null, 2)}
+                      onCodeChange={(value) => {
+                        try {
+                          const parsedCode = JSON.parse(value);
+                          setCode(parsedCode);
+                        } catch (error) {
+                          console.error("Invalid JSON:", error);
+                        }
+                      }}
+                      onEditorDidMount={onEditorDidMount}
+                    />
+                  </div>
                 </div>
               )}
             </PageSection>

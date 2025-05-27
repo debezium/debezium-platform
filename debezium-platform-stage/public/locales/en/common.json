@@ -14,6 +14,7 @@
     "source": "Source",
     "transform": "Transform",
     "transformations": "Transformations",
+    "back": "Back",
     "destination": "Destination",
     "done": "Done",
     "verify": "Verify",
