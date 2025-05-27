@@ -391,7 +391,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
                 <PageSection isFilled padding={{ default: "noPadding" }}>
                   <TrademarkMessage />
                   <Card isFullHeight>
-                    <CardBody isFilled style={{ height: "100%", width: "100%" }}>
+                    <CardBody isFilled style={{ height: "100%", width: "100%", minHeight: "450px" }}>
                       <ReactFlowProvider>
                         <PipelineEditFlow
                           sourceName={source?.name || ""}
