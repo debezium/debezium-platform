@@ -1,4 +1,4 @@
-import { FormGroup, FormSelect, FormSelectOption, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, TextArea, FormGroupLabelHelp, Popover, FormHelperText, HelperText, HelperTextItem } from '@patternfly/react-core';
+import { FormGroup, FormSelect, FormSelectOption, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, TextArea, FormGroupLabelHelp, Popover, FormHelperText, HelperText, HelperTextItem, FormFieldGroupExpandable, FormFieldGroupHeader, FormFieldGroup } from '@patternfly/react-core';
 import React from 'react';
 import { useForm, SubmitHandler } from "react-hook-form"
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import signalActions from "../../__mocks__/data/Signals.json";
 import { API_URL } from '@utils/constants';
 import { createPost, PipelineSignalPayload } from 'src/apis';
 import { useNotification } from '@appContext/index';
+import { TrashIcon } from '@patternfly/react-icons';
 
 
 const getSignalActions = () => {
@@ -37,10 +38,13 @@ const getSignalActions = () => {
                 ]
             })
         }
-
-
     });
     return signalActionsGroup;
+}
+
+interface FilterConditions {
+    filterCollectionName: string;
+    filterCondition: string;
 }
 
 // Define the Inputs interface for form fields
@@ -49,8 +53,7 @@ interface Inputs {
     actionId: string;
     logMessage?: string;
     collectionName?: string;
-    filterCollectionName?: string;
-    filter?: string;
+    additionalConditions?: FilterConditions[];
 }
 
 interface PipelineActionProps {
@@ -76,6 +79,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     })
 
     const onSubmit: SubmitHandler<Inputs> = (data) => {
+        console.log("Form data submitted:", data);
         setIsLoading(true);
         let payload: PipelineSignalPayload = {
             "id": data.actionId,
@@ -114,13 +118,12 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                 }
                 break;
         }
-        sendPipelineSignalAction(payload);
+        // sendPipelineSignalAction(payload);
     }
 
 
     const handleOptionChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
         setPipelineAction(value);
-
     };
 
     const sendPipelineSignalAction = async (payload: PipelineSignalPayload) => {
@@ -227,9 +230,8 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                         />
                                     </FormGroup>
                                 );
-                            case "blockingSnapshotActions":
-                            case "adhocSnapshotActions":
                             case "stopAdhocSnapshotActions":
+
                                 return (
                                     <>
                                         <FormGroup label={t("pipeline:actions.collectionField")} fieldId="collection-name"
@@ -250,15 +252,20 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
 
                                                 {...register("collectionName")} />
                                         </FormGroup>
-                                        {/* <FormGroup role="radiogroup" isStack fieldId="snapshot-type" hasNoPaddingTop label="Snapshot type"
+                                    </>
+                                );
+                            case "blockingSnapshotActions":
+                            case "adhocSnapshotActions":
+
+                                return (
+                                    <>
+                                        <FormGroup label={t("pipeline:actions.collectionField")} fieldId="collection-name"
                                             labelHelp={
                                                 <Popover
-                                                    //   triggerRef={labelHelpRef}
-
                                                     bodyContent={
                                                         <div>
-                                                            An optional type component of the data field of a signal that specifies the type of snapshot operation to run.
-                                                            Currently supports the incremental and blocking types.
+
+                                                            {t("pipeline:actions.collectionFieldDescription")}
                                                         </div>
                                                     }
                                                 >
@@ -266,22 +273,49 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                                 </Popover>
                                             }
                                         >
-                                            <Radio name="incremental-snapshot-type" label="Incremental" isChecked id="incremental-snapshot-type" />
-                                            <Radio name="blocking-snapshot-type" label="Blocking" id="blocking-snapshot-type" isDisabled />
+                                            <TextInput type="text" id="collection-name"
+                                                {...register("collectionName")} />
                                         </FormGroup>
-                                        {pipelineAction !== "stopAdhocSnapshotActions" &&
+                                        <FormFieldGroupExpandable
+                                            isExpanded
+                                            toggleAriaLabel="Details"
+                                            header={
+                                                <FormFieldGroupHeader
+                                                    titleText={{ text: 'Additional conditions', id: 'action-filter-condition' }}
+                                                    titleDescription="Additional conditions that the connector evaluates to determine the subset of records to include in a snapshot."
+                                                    actions={
+                                                        <>
+                                                            <Button variant="link">Delete all</Button> <Button variant="secondary">Add Filter</Button>
+                                                        </>
+                                                    }
+                                                />
+                                            }
 
-                                            <FormFieldGroupExpandable
-                                                style={{ border: "none" }}
-                                                isExpanded
-                                                toggleAriaLabel="Details"
+                                        >
+                                            <FormFieldGroup
                                                 header={
                                                     <FormFieldGroupHeader
-                                                        titleText={{ text: 'Additional filter conditions', id: 'action-filter-condition' }}
-                                                        titleDescription="Additional conditions that the connector evaluates to determine the subset of records to include in a snapshot."
+                                                        titleText={{ text: 'Additional filter condition', id: 'nested-field-group1-titleText-id' }}
+                                                        actions={<Button variant="plain" aria-label="Remove" icon={<TrashIcon />} />}
                                                     />
                                                 }
                                             >
+                                                <FormGroup label="Filters" fieldId="filter-filed"
+                                                    labelHelp={
+                                                        <Popover
+                                                            bodyContent={
+                                                                <div>
+                                                                    Specifies the column values that must be present in a data collection record for the snapshot to include it
+                                                                </div>
+                                                            }
+                                                        >
+                                                            <FormGroupLabelHelp aria-label="More info for name field" />
+                                                        </Popover>
+                                                    }
+                                                >
+                                                    <TextInput type="text" id={`filter-condition-${0}`}
+                                                        {...register(`additionalConditions.${0}.filterCondition`)} />
+                                                </FormGroup>
                                                 <FormGroup label="Collection name" fieldId="filter-collection-name-field"
                                                     labelHelp={
                                                         <Popover
@@ -297,25 +331,18 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                                         </Popover>
                                                     }
                                                 >
-                                                    <TextInput type="text" id="filter-collection-name" name="filter-collection-name" value="schema1.table1" />
+                                                    <TextInput type="text" id={`filter-collection-name-${0}`}
+                                                        {...register(`additionalConditions.${0}.filterCollectionName`)} />
                                                 </FormGroup>
-                                                <FormGroup label="Filters" fieldId="filter-filed"
-                                                    labelHelp={
-                                                        <Popover
-                                                            bodyContent={
-                                                                <div>
-                                                                    Specifies the column values that must be present in a data collection record for the snapshot to include it
-                                                                </div>
-                                                            }
-                                                        >
-                                                            <FormGroupLabelHelp aria-label="More info for name field" />
-                                                        </Popover>
-                                                    }
-                                                >
-                                                    <TextInput type="text" id="filter" name="filter" value="color=\'blue\'" />
-                                                </FormGroup>
-                                            </FormFieldGroupExpandable>
-                                        } */}
+
+                                            </FormFieldGroup>
+
+
+
+                                        </FormFieldGroupExpandable>
+
+
+
                                     </>
                                 );
                             default:
