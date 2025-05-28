@@ -6,6 +6,7 @@ import signalActions from "../../__mocks__/data/Signals.json";
 import { API_URL } from '@utils/constants';
 import { createPost, PipelineSignalPayload } from 'src/apis';
 import { useNotification } from '@appContext/index';
+import { v4 as uuidv4 } from 'uuid';
 
 
 const getSignalActions = () => {
@@ -71,7 +72,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
         formState: { errors }
     } = useForm<Inputs>({
         defaultValues: {
-            actionId: self.crypto.randomUUID(),
+            actionId: uuidv4(),
         },
     })
 
