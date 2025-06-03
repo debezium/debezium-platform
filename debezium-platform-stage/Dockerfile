@@ -7,7 +7,7 @@ RUN npm install -g yarn
 
 RUN yarn config set network-timeout 600000 && \
     yarn config set registry https://registry.yarnpkg.com && \
-    yarn config set network-concurrency 1
+    yarn config set network-concurrency 2
 
 
 WORKDIR /app
@@ -18,7 +18,7 @@ COPY . .
 RUN yarn build
 
 FROM mirror.gcr.io/library/node:22-alpine
-RUN npm install -g serve
+RUN yarn global add serve
 COPY --from=builder /app/dist /app/dist
 
 # Add a script to inject environment variables
