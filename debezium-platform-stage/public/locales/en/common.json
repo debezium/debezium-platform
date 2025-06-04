@@ -35,6 +35,7 @@
     "clear": "Clear",
     "actions": "Actions",
     "delete": "Delete",
+    "deleteAll": "Delete all",
     "goToHome": "Go to home",
     "addButton": "Add {{val}}",
     "refresh": "Refresh",

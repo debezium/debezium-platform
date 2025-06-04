@@ -55,7 +55,17 @@
     "messageFieldDescription": "Il parametro messaggio specifica la stringa da stampare nel log. Se aggiungi un segnaposto ({ }), verrà sostituito con le coordinate di streaming.",
     "selectAnAction": "Seleziona un'azione",
     "actionTypeFieldDescription": "Il parametro type specifica l'operazione che il segnale intende attivare.",
-    "actionIdHelper": "È precompilato con una stringa UUID, ma l'utente può modificarlo per fornire il proprio ID."
+    "actionIdHelper": "È precompilato con una stringa UUID, ma l'utente può modificarlo per fornire il proprio ID.",
+    "addFilter": "Aggiungi filtro",
+    "filterCondition": "Condizione filtro {{val}}",
+    "filterConditionFields": {
+      "filtersField": "Filtri",
+      "filtersHelperText": "Specifica i valori delle colonne che devono essere presenti in un record di raccolta dati affinché lo snapshot lo includa.",
+      "collectionsField": "Nome della collezione",
+      "collectionsHelperText": "Il nome completamente qualificato della raccolta dati per cui verrà applicato il filtro."
+    },
+    "additionalConditions": "Condizioni aggiuntive",
+    "additioanlConditionsDesc": "Condizioni aggiuntive che il connettore valuta per determinare il sottoinsieme di record da includere in uno snapshot."
   },
   "logs": {
     "download": "Scarica file di log",

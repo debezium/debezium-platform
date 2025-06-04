@@ -31,6 +31,7 @@
   "confirm": "Conferma",
   "actions": "Azioni",
   "delete": "Elimina",
+  "deleteAll": "Elimina tutto",
   "goToHome": "Vai alla home",
   "addButton": "Aggiungi {{val}}",
   "refresh": "Aggiorna",

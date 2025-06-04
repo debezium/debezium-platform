@@ -101,7 +101,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     };
 
     const onSubmit: SubmitHandler<Inputs> = (data) => {
-        console.log("Form data submitted:", data);
         setIsLoading(true);
         let payload: PipelineSignalPayload = {
             "id": data.actionId,
@@ -319,12 +318,12 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                             toggleAriaLabel="Details"
                                             header={
                                                 <FormFieldGroupHeader
-                                                    titleText={{ text: 'Additional conditions', id: 'action-filter-condition' }}
-                                                    titleDescription="Additional conditions that the connector evaluates to determine the subset of records to include in a snapshot."
+                                                    titleText={{ text: t('pipeline:actions.additionalConditions'), id: 'action-filter-condition' }}
+                                                    titleDescription={t('pipeline:actions.additioanlConditionsDesc')}
                                                     actions={
                                                         <>
-                                                            <Button variant="link" onClick={deleteAllConditions}>Delete all</Button>
-                                                            <Button variant="secondary" onClick={addFilterCondition}>Add Filter</Button>
+                                                            <Button variant="link" onClick={deleteAllConditions}>{t("deleteAll")}</Button>
+                                                            <Button variant="secondary" onClick={addFilterCondition}>{t("pipeline:actions.addFilter")}</Button>
                                                         </>
                                                     }
                                                 />
@@ -336,7 +335,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                                     key={field.id}
                                                     header={
                                                         <FormFieldGroupHeader
-                                                            titleText={{ text: `Filter condition ${index + 1}`, id: `nested-field-group${index}-titleText-id` }}
+                                                            titleText={{ text: t("pipeline:actions.filterCondition",{val: index + 1}), id: `nested-field-group${index}-titleText-id` }}
                                                             actions={
                                                                 <Button
                                                                     variant="plain"
@@ -348,12 +347,12 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                                         />
                                                     }
                                                 >
-                                                    <FormGroup label="Filters" fieldId={`filter-filed-${index}`}
+                                                    <FormGroup label={t("pipeline:actions.filterConditionFields.filtersField")} fieldId={`filter-filed-${index}`}
                                                         labelHelp={
                                                             <Popover
                                                                 bodyContent={
                                                                     <div>
-                                                                        Specifies the column values that must be present in a data collection record for the snapshot to include it
+                                                                        {t("pipeline:actions.filterConditionFields.filtersHelperText")}
                                                                     </div>
                                                                 }
                                                             >
@@ -367,12 +366,12 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                                             {...register(`additionalConditions.${index}.filterCondition` as const)}
                                                         />
                                                     </FormGroup>
-                                                    <FormGroup label="Collection name" fieldId={`filter-collection-name-field-${index}`}
+                                                    <FormGroup label= {t("pipeline:actions.filterConditionFields.collectionsField")} fieldId={`filter-collection-name-field-${index}`}
                                                         labelHelp={
                                                             <Popover
                                                                 bodyContent={
                                                                     <div>
-                                                                        The fully-qualified name of the data collection for which the filter will be applied.
+                                                                        {t("pipeline:actions.filterConditionFields.collectionsHelperText")}
                                                                     </div>
                                                                 }
                                                             >

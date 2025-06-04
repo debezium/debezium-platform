@@ -64,7 +64,18 @@
         "messageFieldDescription": "The message parameter specifies the string to print to the log. If you add a placeholder ({ }) to the message, it is replaced with streaming coordinates.",
         "selectAnAction": "Select an action",
         "actionTypeFieldDescription": "Specifies type parameter specifies the operation that the signal is intended to trigger.",
-        "actionIdHelper": "Its prefilled with UUID string, user can also update it to provide their own ID."
+        "actionIdHelper": "Its prefilled with UUID string, user can also update it to provide their own ID.",
+        "addFilter": "Add filter",
+        "filterCondition": "Filter condition {{val}}",
+        "filterConditionFields":{
+            "filtersField": "Filters",
+            "filtersHelperText": "Specifies the column values that must be present in a data collection record for the snapshot to include it.",
+            "collectionsField": "Collection name",
+            "collectionsHelperText": "The fully-qualified name of the data collection for which the filter will be applied."
+        },
+        "additionalConditions": "Additional conditions",
+        "additioanlConditionsDesc": "Additional conditions that the connector evaluates to determine the subset of records to include in a snapshot."
+
     },
     "logs": {
         "download": "Download Log File",
