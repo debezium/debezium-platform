@@ -55,6 +55,41 @@ jobs:
           -Dstyle.color=always 
           --no-transfer-progress
           -T4
+      - name: Checkout operator repository
+        uses: actions/checkout@v4
+        with:
+          repository: debezium/debezium-operator
+          ref: main
+          path: debezium-platform-conductor/operator
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Set cache key
+        id: set-operator-cache-key
+        run: echo "cache_key=${{ hashFiles('./debezium-platform-conductor/operator/**/pom.xml') }}" >> "$GITHUB_OUTPUT"
+      - id: maven-operator-cache-check
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: maven-debezium-platform-test-build-${{ steps.set-operator-cache-key.outputs.cache_key }}
+          restore-keys: maven-debezium-platform-test-build-${{ steps.set-operator-cache-key.outputs.cache_key }}
+      - name: Maven build operator dependency
+        if: steps.maven-operator-cache-check.outputs.cache-hit != 'true'
+        run: >
+          ./operator/mvnw clean install -f operator/pom.xml 
+          -DskipTests 
+          -DskipITs 
+          -Dformat.formatter.goal=validate
+          -Dformat.imports.goal=check 
+          -Dhttp.keepAlive=false 
+          -Dmaven.wagon.http.pool=false
+          -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
+          -Dmaven.javadoc.skip=true 
+          -Dstyle.color=always 
+          --no-transfer-progress
+          -T4
   check_style:
     name: "Checkstyle and Formatting"
     needs: [ build_cache ]
