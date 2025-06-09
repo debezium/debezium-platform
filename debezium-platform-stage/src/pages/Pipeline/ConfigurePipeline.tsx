@@ -246,7 +246,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
     }
     addNotification(
       "success",
-      t('statusMessage:creation.successTitle'),
+      t('statusMessage:creation.successTitle', {val: t('pipeline')}),
       t('statusMessage:creation.successDescription', {val: `${t('pipeline')} ${payload["name"]}`}),
     );
     navigateTo("/pipeline");

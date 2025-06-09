@@ -40,7 +40,7 @@ interface PipelineLogProps {
 // Maximum number of log lines to keep in memory
 const MAX_LOG_LINES = 1000;
 
- 
+
 const PipelineLog: FC<PipelineLogProps> = ({
   activeTabKey,
   pipelineId,
@@ -304,9 +304,6 @@ const PipelineLog: FC<PipelineLogProps> = ({
 
         <ToolbarGroup align={{ default: "alignEnd" }}>
           <ToolbarGroup variant="action-group-plain">
-
-
-            {/* <ToolbarItem variant="separator" /> */}
             <ToolbarItem>
               <Tooltip content={t('pipeline:logs.download')}>
                 <Button
@@ -339,8 +336,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
     <div className="pipeline_log">
       <LogViewer
         key={activeTabKey}
-        // Fix with Patternfly team to be able to include id in LogViewer
-        // id="pipeline-log-view"
+        {...({ id: "pipeline-log-view" } as any)}
         hasLineNumbers={true}
         data={logs}
         theme={"light"}
