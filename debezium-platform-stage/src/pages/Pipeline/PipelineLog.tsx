@@ -336,7 +336,10 @@ const PipelineLog: FC<PipelineLogProps> = ({
     <div className="pipeline_log">
       <LogViewer
         key={activeTabKey}
-        {...({ id: "pipeline-log-view" } as any)}
+        {...({ id: "pipeline-log-view" } as 
+{
+          id: string;
+        })}
         hasLineNumbers={true}
         data={logs}
         theme={"light"}
