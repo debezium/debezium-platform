@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from "react";
 import {
   Bullseye,
@@ -12,6 +13,7 @@ import {
   EmptyStateVariant,
   Form,
   FormGroup,
+  Label,
   Modal,
   ModalBody,
   ModalFooter,
@@ -25,12 +27,18 @@ import {
   ToolbarContent,
   ToolbarGroup,
   ToolbarItem,
+  Tooltip,
 } from "@patternfly/react-core";
-import { DataProcessorIcon, PlusIcon, SearchIcon } from "@patternfly/react-icons";
+import {
+  DataProcessorIcon,
+  PlusIcon,
+  SearchIcon,
+  TagIcon,
+} from "@patternfly/react-icons";
 import EmptyStatus from "../../components/EmptyStatus";
 import "./Transforms.css";
 import { useNavigate } from "react-router-dom";
-import { fetchData, TransformData, useDeleteData } from "src/apis";
+import { fetchData, Pipeline, TransformData, useDeleteData } from "src/apis";
 import { API_URL } from "@utils/constants";
 import { useQuery } from "react-query";
 import _, { debounce } from "lodash";
@@ -50,6 +58,7 @@ import {
 import { ActionData, DeleteInstance } from "@pipelinePage/index";
 import { useNotification } from "@appContext/index";
 import { useTranslation } from "react-i18next";
+import { getActivePipelineCount } from "@utils/pipelineUtils";
 
 export interface ITransformsProps {
   sampleProp?: string;
@@ -79,6 +88,18 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
   const onClear = () => {
     onSearch?.("");
   };
+
+  const {
+    data: pipelineList = [],
+    error: _pipelineError,
+    isLoading: _isPipelineLoading,
+  } = useQuery<Pipeline[], Error>(
+    "pipelines",
+    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`),
+    {
+      refetchInterval: 7000,
+    }
+  );
 
   const {
     data: transformsList = [],
@@ -235,7 +256,9 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                                     navigateTo("/transform/create_transform")
                                   }
                                 >
-                                  {t("addButton", { val: t("transform:transform") })}
+                                  {t("addButton", {
+                                    val: t("transform:transform"),
+                                  })}
                                 </Button>
                               </ToggleGroup>
                             </ToolbarItem>
@@ -260,8 +283,6 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                               <Th key={0}>{t("name")}</Th>
                               <Th key={1}>{t("type")}</Th>
                               <Th key={2}>{t("active")}</Th>
-
-                              <Th key={5}>{t("actions")}</Th>
                             </Tr>
                           </Thead>
 
@@ -277,7 +298,22 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                                 <Tr key={instance.id}>
                                   <Td dataLabel={t("name")}>{instance.name}</Td>
                                   <Td dataLabel={t("type")}>{instance.type}</Td>
-                                  <Td dataLabel={t("active")}>0</Td>
+                                  <Td dataLabel={t("active")}>
+                                    <Tooltip
+                                      content={
+                                        <div>
+                                         {t("activePipelineTooltip",{val: "transform"})}
+                                        </div>
+                                      }
+                                    >
+                                      <Label icon={<TagIcon />} color="blue">
+                                        {getActivePipelineCount(
+                                          pipelineList,
+                                          instance.id
+                                        )}
+                                      </Label>
+                                    </Tooltip>
+                                  </Td>
 
                                   <Td dataLabel={t("actions")} isActionCell>
                                     <ActionsColumn
@@ -295,7 +331,9 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                                   <Bullseye>
                                     <EmptyState
                                       headingLevel="h2"
-                                      titleText={t("search.title", { val: t('transform:transform') })}
+                                      titleText={t("search.title", {
+                                        val: t("transform:transform"),
+                                      })}
                                       icon={SearchIcon}
                                       variant={EmptyStateVariant.sm}
                                     >
@@ -323,10 +361,13 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                     </PageSection>
                   </>
                 ) : (
-
                   <EmptyStatus
-                    heading={t('emptyState.title', { val: t('transform:transform') })}
-                    primaryMessage={t('emptyState.description', { val: t('transform:transform') })}
+                    heading={t("emptyState.title", {
+                      val: t("transform:transform"),
+                    })}
+                    primaryMessage={t("emptyState.description", {
+                      val: t("transform:transform"),
+                    })}
                     secondaryMessage=""
                     icon={DataProcessorIcon as React.ComponentType<unknown>}
                     primaryAction={
@@ -337,25 +378,24 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                           navigateTo("/transform/create_transform")
                         }
                       >
-                        {t('addButton', { val: t('transform:transform') })}
+                        {t("addButton", { val: t("transform:transform") })}
                       </Button>
                     }
                     secondaryActions={
                       <>
-                        <Button variant="link">{t('source')}</Button>
-                        <Button variant="link">{t('destination')}</Button>
-                        <Button variant="link">{t('pipeline')}</Button>
+                        <Button variant="link">{t("source")}</Button>
+                        <Button variant="link">{t("destination")}</Button>
+                        <Button variant="link">{t("pipeline")}</Button>
                       </>
                     }
                   />
-
                 )}
               </>
             )}
 
             <Modal
               variant="medium"
-              title={(t('transform:delete.title'))}
+              title={t("transform:delete.title")}
               isOpen={isOpen}
               onClose={() => modalToggle(false)}
               aria-labelledby={`delete transform model`}
@@ -364,7 +404,9 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
               <ModalHeader
                 title={
                   <p>
-                    {(t('transform:delete.description', { val: deleteInstance.name }))}
+                    {t("transform:delete.description", {
+                      val: deleteInstance.name,
+                    })}
                   </p>
                 }
                 titleIconVariant="warning"
@@ -390,14 +432,14 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                   isDisabled={deleteInstanceName !== deleteInstance.name}
                   isLoading={isLoading}
                 >
-                  {(t('transform:delete.confirm'))}
+                  {t("transform:delete.confirm")}
                 </Button>
                 <Button
                   key="cancel"
                   variant="link"
                   onClick={() => modalToggle(false)}
                 >
-                  {t('cancel')}
+                  {t("cancel")}
                 </Button>
               </ModalFooter>
             </Modal>

@@ -126,7 +126,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
   }, []);
 
   if (isFetchLoading) {
-    return <div>{t('loading')}</div>;
+    return <div>{t("loading")}</div>;
   }
 
   if (error) {
@@ -148,7 +148,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   <div className="overlay">
                     <img src={comingSoonImage} alt="Coming Soon" />
                   </div>
-                  <CardTitle>{t('pipeline:overview.queueUsage')}</CardTitle>
+                  <CardTitle>{t("pipeline:overview.queueUsage")}</CardTitle>
                   <CardBody>
                     <ChartDonutUtilization
                       ariaDesc="Queue utilization"
@@ -188,7 +188,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   <div className="overlay">
                     <img src={comingSoonImage} alt="Coming Soon" />
                   </div>
-                  <CardTitle>{t('pipeline:overview.events')}</CardTitle>
+                  <CardTitle>{t("pipeline:overview.events")}</CardTitle>
                   <CardBody>
                     <Chart
                       ariaDesc="Events chart"
@@ -236,12 +236,12 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   icon={<PencilAltIcon />}
                   onClick={() => navigateTo(`/pipeline/${pipelineId}/edit`)}
                 >
-                  {t('edit')}
+                  {t("edit")}
                 </Button>
               ),
             }}
           >
-            <CardTitle>{t('pipeline:overview.pipelineComposition')}</CardTitle>
+            <CardTitle>{t("pipeline:overview.pipelineComposition")}</CardTitle>
           </CardHeader>
 
           <CardBody
@@ -272,17 +272,17 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                     navigateTo(`/source/edit_source/${destination?.id}`)
                   }
                 >
-                  {t('edit')}
+                  {t("edit")}
                 </Button>
               ),
             }}
           >
-            <CardTitle>{t('source')}</CardTitle>
+            <CardTitle>{t("source")}</CardTitle>
           </CardHeader>
           <CardBody>
             <DescriptionList>
               <DescriptionListGroup>
-                <DescriptionListTerm>{t('name')}</DescriptionListTerm>
+                <DescriptionListTerm>{t("name")}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isSourceFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />
@@ -313,7 +313,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
-                <DescriptionListTerm>{t('description')}</DescriptionListTerm>
+                <DescriptionListTerm>{t("description")}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isSourceFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />
@@ -322,8 +322,8 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   )}
                 </DescriptionListDescription>
               </DescriptionListGroup>
-
-              <DescriptionListGroup>
+              {/* Temporarily commented out schema section as its using mock value */}
+              {/* <DescriptionListGroup>
                 <DescriptionListTerm>{t('schema')}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isSourceFetchLoading ? (
@@ -332,7 +332,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                     source?.schema
                   )}
                 </DescriptionListDescription>
-              </DescriptionListGroup>
+              </DescriptionListGroup> */}
             </DescriptionList>
           </CardBody>
         </Card>
@@ -352,17 +352,17 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                     )
                   }
                 >
-                  {t('edit')}
+                  {t("edit")}
                 </Button>
               ),
             }}
           >
-            <CardTitle>{t('destination')}</CardTitle>
+            <CardTitle>{t("destination")}</CardTitle>
           </CardHeader>
           <CardBody>
             <DescriptionList>
               <DescriptionListGroup>
-                <DescriptionListTerm>{t('name')}</DescriptionListTerm>
+                <DescriptionListTerm>{t("name")}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isDestinationFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />
@@ -372,7 +372,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
-                <DescriptionListTerm>{t('type')}</DescriptionListTerm>
+                <DescriptionListTerm>{t("type")}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isDestinationFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />
@@ -394,7 +394,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
-                <DescriptionListTerm>{t('description')}</DescriptionListTerm>
+                <DescriptionListTerm>{t("description")}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isDestinationFetchLoading ? (
                     <Skeleton screenreaderText="Loading contents" />
@@ -403,8 +403,8 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   )}
                 </DescriptionListDescription>
               </DescriptionListGroup>
-
-              <DescriptionListGroup>
+              {/* Temporarily commented out schema section as its using mock value */}
+              {/* <DescriptionListGroup>
                 <DescriptionListTerm>{t('schema')}</DescriptionListTerm>
                 <DescriptionListDescription>
                   {isDestinationFetchLoading ? (
@@ -413,7 +413,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                     destination?.schema
                   )}
                 </DescriptionListDescription>
-              </DescriptionListGroup>
+              </DescriptionListGroup> */}
             </DescriptionList>
           </CardBody>
         </Card>

@@ -21,7 +21,6 @@ import {
   PageSection,
   SearchInput,
   Spinner,
-  Switch,
   TextInput,
   ToggleGroup,
   Toolbar,
@@ -54,7 +53,7 @@ import { PipelineEmpty } from "./PipelineEmpty";
 import { useDeleteData } from "src/apis";
 import PageHeader from "@components/PageHeader";
 import "./Pipelines.css";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
 export type DeleteInstance = {
   id: number;
@@ -94,7 +93,11 @@ const Pipelines: React.FunctionComponent = () => {
   };
 
   const logAction = (): ReactNode => {
-    return isLogLoading ? <>{t("downloading")}</> : <>{t("pipeline:userActions.download")}</>;
+    return isLogLoading ? (
+      <>{t("downloading")}</>
+    ) : (
+      <>{t("pipeline:userActions.download")}</>
+    );
   };
 
   const {
@@ -246,7 +249,6 @@ const Pipelines: React.FunctionComponent = () => {
       onClick: () => onLogDownloadHandler(actionData.id, actionData.name),
     },
 
-
     { isSeparator: true },
     {
       title: t("pipeline:userActions.edit"),
@@ -284,7 +286,7 @@ const Pipelines: React.FunctionComponent = () => {
         <>
           {pipelinesLoading ? (
             <EmptyState
-              titleText={t('loading')}
+              titleText={t("loading")}
               headingLevel="h4"
               icon={Spinner}
             />
@@ -322,7 +324,9 @@ const Pipelines: React.FunctionComponent = () => {
                                   navigateTo("/pipeline/pipeline_designer")
                                 }
                               >
-                                {t("addButton", { val: t("pipeline:pipeline") })}
+                                {t("addButton", {
+                                  val: t("pipeline:pipeline"),
+                                })}
                               </Button>
                             </ToggleGroup>
                           </ToolbarItem>
@@ -347,8 +351,6 @@ const Pipelines: React.FunctionComponent = () => {
                             <Th key={0}>{t("name")}</Th>
                             <Th key={1}>{t("source")}</Th>
                             <Th key={2}>{t("destination")}</Th>
-                            {/* <Th key={3}>Phase</Th> */}
-                            <Th key={4}>{t("enabled")}</Th>
                             <Th key={5}></Th>
                           </Tr>
                         </Thead>
@@ -376,46 +378,6 @@ const Pipelines: React.FunctionComponent = () => {
                                 <DestinationField
                                   pipelineDestination={instance.destination}
                                 />
-                                {/* <Td
-                                  dataLabel="Phase"
-                                  className="pipeline-phase"
-                                >
-                                  <ProgressStepper
-                                    aria-label="Basic progress stepper"
-                                    className="pf-m-center pf-m-compact"
-                                  >
-                                    <ProgressStep
-                                      variant="success"
-                                      id="basic-step1"
-                                      titleId="basic-step1-title"
-                                      aria-label="completed step, step with success"
-                                    />
-
-                                    <ProgressStep
-                                      variant="info"
-                                      isCurrent
-                                      id="basic-step2"
-                                      titleId="basic-step2-title"
-                                      aria-label="step with info"
-                                    />
-
-                                    <ProgressStep
-                                      variant="pending"
-                                      id="basic-step3"
-                                      titleId="basic-step3-title"
-                                      aria-label="pending step"
-                                    />
-                                  </ProgressStepper>
-                                </Td> */}
-                                <Td dataLabel={t("enabled")}>
-                                  <Switch
-                                    id="pipeline-enable-switch"
-                                    aria-label="switch pipeline enable"
-                                    isChecked={true}
-                                    onChange={() => { }}
-                                    isDisabled
-                                  />
-                                </Td>
                                 <Td dataLabel={t("actions")} isActionCell>
                                   <ActionsColumn
                                     items={rowActions({
@@ -432,7 +394,9 @@ const Pipelines: React.FunctionComponent = () => {
                                 <Bullseye>
                                   <EmptyState
                                     headingLevel="h2"
-                                    titleText={t("search.title", { val: "pipeline" })}
+                                    titleText={t("search.title", {
+                                      val: "pipeline",
+                                    })}
                                     icon={SearchIcon}
                                     variant={EmptyStateVariant.sm}
                                   >

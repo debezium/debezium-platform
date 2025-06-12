@@ -10,8 +10,8 @@
     "name": "indra-ui-test",
     "source": {
       "id": 2,
-      "name": "test-cass"
+      "name": "test-case"
     },
-    "transforms": []
+    "transforms": [{ "id": 6, "name": "filter-transform" }]
   }
 ]

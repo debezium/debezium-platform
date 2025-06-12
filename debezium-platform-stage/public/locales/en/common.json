@@ -1,82 +1,83 @@
 {
-    "name": "Name",
-    "schema": "Schema",
-    "description": "Description",
-    "type": "Type",
-    "edit": "Edit",
-    "items": "Items",
-    "loading": "Loading...",
-    "downloading": "Downloading...",
-    "enabled": "Enabled",
-    "findByName": "Find by name",
-    "searchByName": "Search by name",
-    "searchPlaceholder": "Search...",
-    "source": "Source",
-    "transform": "Transform",
-    "transformations": "Transformations",
-    "back": "Back",
-    "destination": "Destination",
-    "done": "Done",
-    "verify": "Verify",
-    "copy": "Copy",
-    "copied": "Copied",
-    "enterValue": "enter a value",
-    "pipeline": "Pipeline",
-    "cancel": "Cancel",
-    "saveChanges": "Save changes",
-    "apply": "Apply",
-    "vaults": "Vaults",
-    "active": "Active",
-    "formEditor": "Form editor",
-    "smartEditor": "Smart editor",
-    "saveAndNext": "Save and next",
-    "confirm": "Confirm",
-    "submit": "Submit",
-    "clear": "Clear",
-    "actions": "Actions",
-    "delete": "Delete",
-    "deleteAll": "Delete all",
-    "goToHome": "Go to home",
-    "addButton": "Add {{val}}",
-    "refresh": "Refresh",
-    "error": "Error",
-    "failedToLoad": "Failed to load",
-    "apiError": "Error : Failed to load",
-    "goTo": "Go to {{val}}",
-    "trademarkWarking": "All logos and trademarks are the property of their respective owners",
-    "emptyState": {
-        "title": "No {{val}} available",
-        "shortDescription": "No {{val}} is configure for this cluster yet. Configure a one by selecting 'Create a {{val}}' option above.",
-        "description": "No {{val}} is configure for this cluster yet. To streams change events from a {{val}} you can configure a {{val}} by click the 'Add {{val}}' button."
+  "name": "Name",
+  "schema": "Schema",
+  "description": "Description",
+  "type": "Type",
+  "edit": "Edit",
+  "items": "Items",
+  "loading": "Loading...",
+  "downloading": "Downloading...",
+  "enabled": "Enabled",
+  "findByName": "Find by name",
+  "searchByName": "Search by name",
+  "searchPlaceholder": "Search...",
+  "source": "Source",
+  "transform": "Transform",
+  "transformations": "Transformations",
+  "back": "Back",
+  "destination": "Destination",
+  "done": "Done",
+  "verify": "Verify",
+  "copy": "Copy",
+  "copied": "Copied",
+  "enterValue": "enter a value",
+  "pipeline": "Pipeline",
+  "cancel": "Cancel",
+  "saveChanges": "Save changes",
+  "apply": "Apply",
+  "vaults": "Vaults",
+  "active": "Active",
+  "activePipelineTooltip": " Number of active pipelines using this {{val}}.",
+  "formEditor": "Form editor",
+  "smartEditor": "Smart editor",
+  "saveAndNext": "Save and next",
+  "confirm": "Confirm",
+  "submit": "Submit",
+  "clear": "Clear",
+  "actions": "Actions",
+  "delete": "Delete",
+  "deleteAll": "Delete all",
+  "goToHome": "Go to home",
+  "addButton": "Add {{val}}",
+  "refresh": "Refresh",
+  "error": "Error",
+  "failedToLoad": "Failed to load",
+  "apiError": "Error : Failed to load",
+  "goTo": "Go to {{val}}",
+  "trademarkWarking": "All logos and trademarks are the property of their respective owners",
+  "emptyState": {
+    "title": "No {{val}} available",
+    "shortDescription": "No {{val}} is configure for this cluster yet. Configure a one by selecting 'Create a {{val}}' option above.",
+    "description": "No {{val}} is configure for this cluster yet. To streams change events from a {{val}} you can configure a {{val}} by click the 'Add {{val}}' button."
+  },
+  "search": {
+    "title": "No matching {{val}} is present.",
+    "description": "Clear search and try again.",
+    "button": "Clear search"
+  },
+  "deleteModel": {
+    "title": "Delete modal",
+    "description": "Enter '{{val}}' to delete ",
+    "confirm": "Delete",
+    "cancel": "Cancel"
+  },
+  "form": {
+    "field": {
+      "type": "{{val}} type",
+      "name": "{{val}} name",
+      "description": {
+        "label": "Description",
+        "helper": "Add a one liner to describe your {{val}} or where you plan to capture."
+      }
     },
-    "search": {
-        "title": "No matching {{val}} is present.",
-        "description": "Clear search and try again.",
-        "button": "Clear search"
+    "subHeading": {
+      "title": "Configuration properties",
+      "description": "Enter the both key and value pair to configure a property"
     },
-    "deleteModel": {
-        "title": "Delete modal",
-        "description": "Enter '{{val}}' to delete ",
-        "confirm": "Delete",
-        "cancel": "Cancel"
-    },
-    "form": {
-        "field": {
-            "type": "{{val}} type",
-            "name": "{{val}} name",
-            "description": {
-                "label": "Description",
-                "helper": "Add a one liner to describe your {{val}} or where you plan to capture."
-            }
-        },
-        "subHeading": {
-            "title": "Configuration properties",
-            "description": "Enter the both key and value pair to configure a property"
-        },
-        "addFieldButton": "Add property"
-    },
-    "requestNewResource": {
-        "title": "Request new {{val}}",
-        "description": "Fill our a request to create a new {{val}}."
-    }
+    "addFieldButton": "Add property"
+  },
+  "requestNewResource": {
+    "title": "Request new {{val}}",
+    "description": "Fill our a request to create a new {{val}}."
+  }
 }

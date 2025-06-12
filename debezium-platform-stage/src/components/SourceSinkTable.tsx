@@ -17,6 +17,7 @@ import {
   Form,
   FormGroup,
   TextInput,
+  Tooltip,
 } from "@patternfly/react-core";
 import { TagIcon, SearchIcon } from "@patternfly/react-icons";
 import {
@@ -151,18 +152,17 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
       <Table aria-label={`${tableType} table`}>
         <Thead>
           <Tr>
-            <Th key={0}>{t('name')}</Th>
-            <Th key={1}>{t('type')}</Th>
-            <Th key={2}>{t('active')}</Th>
-            <Th key={3}>{t('actions')}</Th>
+            <Th key={0}>{t("name")}</Th>
+            <Th key={1}>{t("type")}</Th>
+            <Th key={2}>{t("active")}</Th>
           </Tr>
         </Thead>
         <Tbody>
           {data.length > 0 ? (
             data.map((instance) => (
               <Tr key={instance.id}>
-                <Td dataLabel={t('name')}>{instance.name}</Td>
-                <Td dataLabel={t('type')} style={{ paddingLeft: "0px" }}>
+                <Td dataLabel={t("name")}>{instance.name}</Td>
+                <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
                   <Flex alignItems={{ default: "alignItemsCenter" }}>
                     <FlexItem>
                       <ConnectorImage connectorType={instance.type} size={35} />
@@ -170,16 +170,24 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
                     <FlexItem>{getConnectorTypeName(instance.type)}</FlexItem>
                   </Flex>
                 </Td>
-                <Td dataLabel={t('active')}>
-                  <Label icon={<TagIcon />} color="blue">
-                    {getActivePipelineCount(
-                      pipelineList,
-                      instance.id,
-                      tableType
-                    )}
-                  </Label>
+                <Td dataLabel={t("active")}>
+                  <Tooltip
+                    content={
+                      <div>
+                        {t("activePipelineTooltip", { val: tableType })}
+                      </div>
+                    }
+                  >
+                    <Label icon={<TagIcon />} color="blue">
+                      {getActivePipelineCount(
+                        pipelineList,
+                        instance.id,
+                        tableType
+                      )}
+                    </Label>
+                  </Tooltip>
                 </Td>
-                <Td dataLabel={t('actions')} isActionCell>
+                <Td dataLabel={t("actions")} isActionCell>
                   <ActionsColumn
                     items={rowActions({ id: instance.id, name: instance.name })}
                   />
@@ -192,15 +200,15 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
                 <Bullseye>
                   <EmptyState
                     headingLevel="h2"
-                    titleText={t('search.title', { val: tableType })}
+                    titleText={t("search.title", { val: tableType })}
                     icon={SearchIcon}
                     variant={EmptyStateVariant.sm}
                   >
-                    <EmptyStateBody>{t('search.description')}</EmptyStateBody>
+                    <EmptyStateBody>{t("search.description")}</EmptyStateBody>
                     <EmptyStateFooter>
                       <EmptyStateActions>
                         <Button variant="link" onClick={onClear}>
-                          {t('search.button')}
+                          {t("search.button")}
                         </Button>
                       </EmptyStateActions>
                     </EmptyStateFooter>
