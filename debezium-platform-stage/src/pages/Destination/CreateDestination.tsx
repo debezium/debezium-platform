@@ -13,11 +13,11 @@ import {
   ToolbarContent,
   ToolbarItem,
 } from "@patternfly/react-core";
-import { PencilAltIcon, CodeIcon } from "@patternfly/react-icons";
+import { PencilAltIcon, CodeIcon, PlayIcon } from "@patternfly/react-icons";
 import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 import { useNavigate, useParams } from "react-router-dom";
 import "./CreateDestination.css";
-import { CodeEditor, Language } from "@patternfly/react-code-editor";
+import { CodeEditor, CodeEditorControl, Language } from "@patternfly/react-code-editor";
 import { find } from "lodash";
 import { createPost, Destination, Payload } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
@@ -151,6 +151,8 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     ? destinationIdModel
     : destinationIdParam.destinationId;
 
+  const rawConfiguration = !destinationIdParam.destinationId;
+
   const navigateTo = (url: string) => {
     navigate(url);
   };
@@ -166,7 +168,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     config: {},
   });
   const [codeAlert, setCodeAlert] = useState("");
-
+  const [formatType, setFormatType] = useState("");
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
   const [isLoading, setIsLoading] = React.useState(false);
@@ -294,6 +296,16 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     setEditorSelected(id);
   };
 
+  const customControl = (
+    <CodeEditorControl
+      icon={<PlayIcon />}
+      aria-label="Execute code"
+      tooltipProps={{ content: 'Auto convert the json into debezium-platfrom format' }}
+      onClick={() => { }}
+      isVisible={formatType !== ""}
+    >Auto format</CodeEditorControl>
+  );
+
   const onEditorDidMount = (
     editor: { layout: () => void; focus: () => void },
     monaco: {
@@ -314,37 +326,41 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
       {!modelLoaded && (
         <PageHeader
           title={t("destination:create.title")}
-          description={t("destination:create.description")}
+          description={rawConfiguration ?
+            "To configure and create a new source connector use the editor below to add or upload an existing json configuration." : t("destination:create.description")}
         />
       )}
 
-      <PageSection className="create_destination-toolbar">
-        <Toolbar id="destination-editor-toggle">
-          <ToolbarContent>
-            <ToolbarItem>
-              <ToggleGroup aria-label="Toggle between form and smart editor">
-                <ToggleGroupItem
-                  icon={<PencilAltIcon />}
-                  text={t("formEditor")}
-                  aria-label={t("formEditor")}
-                  buttonId="form-editor"
-                  isSelected={editorSelected === "form-editor"}
-                  onChange={handleItemClick}
-                />
+      {!rawConfiguration && (
+        <PageSection className="create_destination-toolbar">
+          <Toolbar id="destination-editor-toggle">
+            <ToolbarContent>
+              <ToolbarItem>
+                <ToggleGroup aria-label="Toggle between form and smart editor">
+                  <ToggleGroupItem
+                    icon={<PencilAltIcon />}
+                    text={t("formEditor")}
+                    aria-label={t("formEditor")}
+                    buttonId="form-editor"
+                    isSelected={editorSelected === "form-editor"}
+                    onChange={handleItemClick}
+                  />
 
-                <ToggleGroupItem
-                  icon={<CodeIcon />}
-                  text={t("smartEditor")}
-                  aria-label={t("smartEditor")}
-                  buttonId="smart-editor"
-                  isSelected={editorSelected === "smart-editor"}
-                  onChange={handleItemClick}
-                />
-              </ToggleGroup>
-            </ToolbarItem>
-          </ToolbarContent>
-        </Toolbar>
-      </PageSection>
+                  <ToggleGroupItem
+                    icon={<CodeIcon />}
+                    text={t("smartEditor")}
+                    aria-label={t("smartEditor")}
+                    buttonId="smart-editor"
+                    isSelected={editorSelected === "smart-editor"}
+                    onChange={handleItemClick}
+                  />
+                </ToggleGroup>
+              </ToolbarItem>
+            </ToolbarContent>
+          </Toolbar>
+        </PageSection>
+      )}
+
       <FormContextProvider initialValues={{}}>
         {({ setValue, getValue, setError, values, errors }) => (
           <>
@@ -371,7 +387,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                   : "create_destination-page_section"
               }
             >
-              {editorSelected === "form-editor" ? (
+              {editorSelected === "form-editor" && !rawConfiguration ? (
                 <SourceSinkForm
                   ConnectorId={destinationId || ""}
                   connectorType="destination"
@@ -389,9 +405,9 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                 <>
                   {codeAlert && (
                     <Alert
-                      variant="danger"
+                      variant={formatType !== "" ? "warning" : "danger"}
                       isInline
-                      title={`Provided json is not valid: ${codeAlert}`}
+                      title={formatType === "" ? `Provided json is not valid: ${codeAlert}` : `Provided json is of kafka connect format, use 'Auto format' to transform it to Debezium-platform supported format`}
                       style={{ marginBottom: "10px" }}
                     />
                   )}
@@ -403,6 +419,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                       isLanguageLabelVisible
                       isMinimapVisible
                       language={Language.json}
+                      customControls={customControl}
                       downloadFileName="destination-connector.json"
                       isFullHeight
                       code={JSON.stringify(code, null, 2)}

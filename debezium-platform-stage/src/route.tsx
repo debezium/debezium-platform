@@ -97,7 +97,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     component: CreateSource,
-    path: "/source/create_source/:sourceId",
+    path: "/source/create_source/:sourceId?",
     navSection: "source",
     title: `${AppBranding} | Source`,
   },
@@ -144,7 +144,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     component: CreateDestination,
-    path: "/destination/create_destination/:destinationId",
+    path: "/destination/create_destination/:destinationId?",
     navSection: "destination",
     title: `${AppBranding} | Destination`,
   },

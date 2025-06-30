@@ -183,6 +183,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   const [formatType, setFormatType] = useState("");
   const sourceIdModel = selectedId;
   const sourceId = modelLoaded ? sourceIdModel : sourceIdParam.sourceId;
+  const rawConfiguration = !sourceIdParam.sourceId
 
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
@@ -315,17 +316,32 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     const id = event.currentTarget.id;
     setEditorSelected(id);
   };
+  const formatCode = () => {
+    const kafkaFormat = code as any
+    const formatedCode = {
+      "name": kafkaFormat.name || "",
+      "description": "",
+      "type": kafkaFormat.config["connector.class"] || "",
+      "schema": "schema123",
+      "vaults": [],
+      "config": Object.keys(kafkaFormat.config || {}).reduce((acc, key) => {
+        if (key !== "connector.class") {
+          acc[key] = kafkaFormat.config[key];
+        }
+        return acc;
+      }, {})
+    };
+    setCode(formatedCode);
+  }
 
   const customControl = (
     <CodeEditorControl
       icon={<PlayIcon />}
       aria-label="Execute code"
       tooltipProps={{ content: 'Auto convert the json into debezium-platfrom format' }}
-      onClick={() => { }}
-      isVisible={formatType !== ''}
-    >
-      Auto conversion
-    </CodeEditorControl>
+      onClick={formatCode}
+      isVisible={formatType !== ""}
+    >Auto format</CodeEditorControl>
   );
 
   const onEditorDidMount = (
@@ -348,36 +364,40 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
       {!modelLoaded && (
         <PageHeader
           title={t('source:create.title')}
-          description={t('source:create.description')}
+          description={rawConfiguration ?
+            "To configure and create a new source connector use the editor below to add or upload an existing json configuration." : t('source:create.description')}
         />
       )}
-      <PageSection className="create_source-toolbar">
-        <Toolbar id="source-editor-toggle">
-          <ToolbarContent>
-            <ToolbarItem>
-              <ToggleGroup aria-label="Toggle between form editor and smart editor">
-                <ToggleGroupItem
-                  icon={<PencilAltIcon />}
-                  text={t('formEditor')}
-                  aria-label={t('formEditor')}
-                  buttonId="form-editor"
-                  isSelected={editorSelected === "form-editor"}
-                  onChange={handleItemClick}
-                />
+      {!rawConfiguration && (
+        <PageSection className="create_source-toolbar">
+          <Toolbar id="source-editor-toggle">
+            <ToolbarContent>
+              <ToolbarItem>
+                <ToggleGroup aria-label="Toggle between form editor and smart editor">
+                  <ToggleGroupItem
+                    icon={<PencilAltIcon />}
+                    text={t('formEditor')}
+                    aria-label={t('formEditor')}
+                    buttonId="form-editor"
+                    isSelected={editorSelected === "form-editor"}
+                    onChange={handleItemClick}
+                  />
 
-                <ToggleGroupItem
-                  icon={<CodeIcon />}
-                  text={t('smartEditor')}
-                  aria-label={t('smartEditor')}
-                  buttonId="smart-editor"
-                  isSelected={editorSelected === "smart-editor"}
-                  onChange={handleItemClick}
-                />
-              </ToggleGroup>
-            </ToolbarItem>
-          </ToolbarContent>
-        </Toolbar>
-      </PageSection>
+                  <ToggleGroupItem
+                    icon={<CodeIcon />}
+                    text={t('smartEditor')}
+                    aria-label={t('smartEditor')}
+                    buttonId="smart-editor"
+                    isSelected={editorSelected === "smart-editor"}
+                    onChange={handleItemClick}
+                  />
+                </ToggleGroup>
+              </ToolbarItem>
+            </ToolbarContent>
+          </Toolbar>
+        </PageSection>
+      )}
+
 
       <FormContextProvider initialValues={{}}>
         {({ setValue, getValue, setError, values, errors }) => (
@@ -409,7 +429,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                 }
               >
                 <Alert
-                  variant="danger"
+                  variant={"danger"}
                   isInline
                   title={formatType === "" ? `Provided json is not valid: ${codeAlert}` : "Invalid json format"}
                 >
@@ -432,7 +452,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   : "create_source-page_section"
               }
             >
-              {editorSelected === "form-editor" ? (
+              {editorSelected === "form-editor" && !rawConfiguration ? (
                 <SourceSinkForm
                   ConnectorId={sourceId || ""}
                   connectorType="source"
@@ -451,9 +471,9 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                 <div>
                   {codeAlert && (
                     <Alert
-                      variant="danger"
+                      variant={formatType !== "" ? "warning" : "danger"}
                       isInline
-                      title={`Provided json is not valid: ${codeAlert}`}
+                      title={formatType === "" ? `Provided json is not valid: ${codeAlert}` : `Provided json is of kafka connect format, use 'Auto format' to transform it to Debezium-platform supported format`}
                       style={{ marginBottom: "10px" }}
                     />
                   )}
@@ -468,6 +488,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                       downloadFileName="source-connector.json"
                       isFullHeight
                       code={JSON.stringify(code, null, 2)}
+                      customControls={customControl}
                       onCodeChange={(value) => {
                         try {
                           const parsedCode = JSON.parse(value);

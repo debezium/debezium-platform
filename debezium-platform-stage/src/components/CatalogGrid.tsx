@@ -22,6 +22,7 @@ import "./CatalogGrid.css";
 import { Catalog } from "src/apis/types";
 import { openDBZJira } from "@utils/helpers";
 import { useTranslation } from "react-i18next";
+import { capitalize } from "lodash";
 
 export interface ICatalogGridProps {
   onCardSelect: (selectId: string) => void;
@@ -67,7 +68,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
       {displayType === "grid" ? (
         <Gallery hasGutter className="custom-gallery">
           <GalleryItem>
-            <Card isClickable variant={"default"} onClick={openDBZJira}>
+            <Card isClickable variant={"default"} onClick={() => onCardSelect("")}>
               <CardHeader
                 selectableActions={{
                   onClickAction: () => { },
@@ -79,11 +80,11 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                   style={{ fontSize: "xxx-large", paddingBottom: "10px" }}
                 />
                 <CardTitle id={`catalog-card-id-fill-out-form`}>
-                  Source
+                  {capitalize(catalogType)}
                 </CardTitle>
               </CardHeader>
               <CardBody>
-                Use this to create a source from existing connectors connfiguration that you might have.
+                Use this to create a {catalogType} direclty form the json or use similar config like kafka connect by auto converting it into debezium platfrom supported format.
               </CardBody>
             </Card>
           </GalleryItem>
