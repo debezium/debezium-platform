@@ -67,7 +67,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
     <PageSection>
       {displayType === "grid" ? (
         <Gallery hasGutter className="custom-gallery">
-          <GalleryItem>
+          {catalogType === "source" ? (<GalleryItem>
             <Card isClickable variant={"default"} onClick={() => onCardSelect("")}>
               <CardHeader
                 selectableActions={{
@@ -84,10 +84,11 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardBody>
-                Use this to create a {catalogType} direclty form the json or use similar config like kafka connect by auto converting it into debezium platfrom supported format.
+                Use this to create a {catalogType} direclty form the json or use similar config by auto converting them into supported format.
               </CardBody>
             </Card>
-          </GalleryItem>
+          </GalleryItem>) : null}
+
           {searchResult.map((item) => (
             <GalleryItem key={item.id}>
               <Card isClickable variant={"default"}>

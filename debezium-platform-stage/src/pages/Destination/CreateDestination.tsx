@@ -168,7 +168,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     config: {},
   });
   const [codeAlert, setCodeAlert] = useState("");
-  const [formatType, setFormatType] = useState("");
+  const [formatType] = useState("");
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
   const [isLoading, setIsLoading] = React.useState(false);

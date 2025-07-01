@@ -107,10 +107,8 @@ const FormSyncManager: React.FC<{
     // Update form values when code changes
     useEffect(() => {
       const isKafkaConnectSchema = validateKafkaSchema(code);
-
       const isValid = validate(code);
-
-      console.log("isValid", isValid, "isKafkaConnectSchema", isKafkaConnectSchema);
+      // console.log("isValid", isValid, "isKafkaConnectSchema", isKafkaConnectSchema);
 
       if (isKafkaConnectSchema) {
         setFormatType("kafka-connect");
@@ -118,6 +116,8 @@ const FormSyncManager: React.FC<{
           "Provided json is of kafka connect format, use 'Auto conversion' to tranfrom it to Debezium-platform format"
         );
         return;
+      } else {
+        setFormatType("");
       }
 
 
@@ -284,7 +284,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         }
         const payload = {
           description: values["description"],
-          type: find(sourceCatalog, { id: sourceId })?.type || "",
+          type: find(sourceCatalog, { id: sourceId })?.type || code.type || "",
           schema: "schema321",
           vaults: [],
           config: { "signal.data.collection": signalCollectionName, ...convertMapToObject(properties) },
@@ -324,18 +324,20 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
       "type": kafkaFormat.config["connector.class"] || "",
       "schema": "schema123",
       "vaults": [],
-      "config": Object.keys(kafkaFormat.config || {}).reduce((acc, key) => {
+      "config": Object.keys(kafkaFormat.config || {}).reduce((acc: any, key) => {
         if (key !== "connector.class") {
           acc[key] = kafkaFormat.config[key];
         }
         return acc;
       }, {})
     };
+    console.log("formatedCode", formatedCode);
     setCode(formatedCode);
   }
 
   const customControl = (
     <CodeEditorControl
+      id="format-button"
       icon={<PlayIcon />}
       aria-label="Execute code"
       tooltipProps={{ content: 'Auto convert the json into debezium-platfrom format' }}
@@ -414,31 +416,6 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
               setFormatType={setFormatType}
             />
 
-            {codeAlert && editorSelected !== "form-editor" && (
-              <PageSection
-                isWidthLimited={
-                  (modelLoaded && editorSelected === "form-editor") ||
-                  !modelLoaded
-                }
-                isCenterAligned
-                isFilled
-                className={
-                  editorSelected === "form-editor"
-                    ? "custom-page-section create_source-page_section"
-                    : "create_source-page_section"
-                }
-              >
-                <Alert
-                  variant={"danger"}
-                  isInline
-                  title={formatType === "" ? `Provided json is not valid: ${codeAlert}` : "Invalid json format"}
-                >
-                  <p>{codeAlert}</p>
-                </Alert>
-              </PageSection>
-            )}
-
-
             <PageSection
               isWidthLimited={
                 (modelLoaded && editorSelected === "form-editor") ||
@@ -468,14 +445,17 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   updateSignalCollectionName={updateSignalCollectionName}
                 />
               ) : (
-                <div>
+                <>
                   {codeAlert && (
                     <Alert
                       variant={formatType !== "" ? "warning" : "danger"}
                       isInline
-                      title={formatType === "" ? `Provided json is not valid: ${codeAlert}` : `Provided json is of kafka connect format, use 'Auto format' to transform it to Debezium-platform supported format`}
-                      style={{ marginBottom: "10px" }}
-                    />
+                      title={formatType === "" ? `Provided json is not valid: ${codeAlert}` : "Invalid json format"}
+                      style={{ marginBottom: "20px" }}
+                    >
+                      <p>{formatType === "" ? "" : <>Provided json is of kafka connect format, use <a href="#format-button">Auto format</a> to transform it to Debezium-platform supported format</>}</p>
+                    </Alert>
+
                   )}
                   <div style={{ flex: '1 1 auto', minHeight: 0 }} className="smart-editor">
                     <CodeEditor
@@ -500,7 +480,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                       onEditorDidMount={onEditorDidMount}
                     />
                   </div>
-                </div>
+                </>
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
@@ -508,7 +488,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                 <Button
                   variant="primary"
                   isLoading={isLoading}
-                  isDisabled={isLoading}
+                  isDisabled={isLoading || codeAlert !== ""}
                   type={ButtonType.submit}
                   onClick={(e) => {
                     e.preventDefault();
