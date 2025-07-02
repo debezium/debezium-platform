@@ -17,7 +17,7 @@ import {
   PageSection,
 } from "@patternfly/react-core";
 import ConnectorImage from "./ComponentImage";
-import { CodeIcon, ExternalLinkAltIcon, PlusCircleIcon } from "@patternfly/react-icons";
+import { CodeIcon, DataSourceIcon, ExternalLinkAltIcon, PlusCircleIcon } from "@patternfly/react-icons";
 import "./CatalogGrid.css";
 import { Catalog } from "src/apis/types";
 import { openDBZJira } from "@utils/helpers";
@@ -75,16 +75,16 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                   selectableActionAriaLabelledby: `catalog-card-id-fill-out-form`,
                 }}
               >
-                <CodeIcon
+                <DataSourceIcon
                   color="#0066CC"
-                  style={{ fontSize: "xxx-large", paddingBottom: "10px" }}
+                  style={{ fontSize: "xxx-large", paddingBottom: "10px", height: "60px" }}
                 />
                 <CardTitle id={`catalog-card-id-fill-out-form`}>
                   {capitalize(catalogType)}
                 </CardTitle>
               </CardHeader>
               <CardBody>
-                Use this to create a {catalogType} direclty form the json or use similar config by auto converting them into supported format.
+                Use this to create a {catalogType} direclty form the json.
               </CardBody>
             </Card>
           </GalleryItem>) : null}

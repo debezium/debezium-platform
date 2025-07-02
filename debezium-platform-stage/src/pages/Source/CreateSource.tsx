@@ -7,6 +7,7 @@ import {
   ButtonType,
   FormContextProvider,
   PageSection,
+  Spinner,
   ToggleGroup,
   ToggleGroupItem,
   Toolbar,
@@ -64,6 +65,7 @@ const FormSyncManager: React.FC<{
   setCodeAlert,
   setFormatType,
 }) => {
+    const { t } = useTranslation();
     const validate = ajv.compile(initialConnectorSchema);
     const validateKafkaSchema = ajv.compile(kafkaConnectSchema);
     // Ref to track the source of the update
@@ -113,7 +115,7 @@ const FormSyncManager: React.FC<{
       if (isKafkaConnectSchema) {
         setFormatType("kafka-connect");
         setCodeAlert(
-          "Provided json is of kafka connect format, use 'Auto conversion' to tranfrom it to Debezium-platform format"
+          t('smartEditor:kakfaConnectFormat')
         );
         return;
       } else {
@@ -331,19 +333,27 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         return acc;
       }, {})
     };
-    console.log("formatedCode", formatedCode);
     setCode(formatedCode);
   }
+
+  const [isFormatting, setIsFormatting] = useState(false);
 
   const customControl = (
     <CodeEditorControl
       id="format-button"
-      icon={<PlayIcon />}
+      icon={isFormatting ? <Spinner size="md" aria-label="Formatting in progress" /> : <PlayIcon />}
       aria-label="Execute code"
-      tooltipProps={{ content: 'Auto convert the json into debezium-platfrom format' }}
-      onClick={formatCode}
+      tooltipProps={{ content: t('smartEditor:autoConvertTooltip') }}
+      onClick={async () => {
+        setIsFormatting(true);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        formatCode();
+        setIsFormatting(false);
+      }}
       isVisible={formatType !== ""}
-    >Auto format</CodeEditorControl>
+    >
+      {t('smartEditor:autoConvertButton')}
+    </CodeEditorControl>
   );
 
   const onEditorDidMount = (
@@ -367,7 +377,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         <PageHeader
           title={t('source:create.title')}
           description={rawConfiguration ?
-            "To configure and create a new source connector use the editor below to add or upload an existing json configuration." : t('source:create.description')}
+            t('source:create.editorPageDescription') : t('source:create.description')}
         />
       )}
       {!rawConfiguration && (

@@ -17,5 +17,10 @@
         "successTitle": "{{val}} download successful.",
         "successDescription": "{{val}} downloaded successfully.",
         "pipelineLogFail": "Failed to download logs: Pipeline ID is missing."
+    },
+    "smartEditor": {
+        "kakfaConnectFormat": "Provided json is of kafka connect format, use 'Auto conversion' to tranfrom it to Debezium-platform format",
+        "autoConvertTooltip": "Convert the json into debezium-platform format",
+        "autoConvertButton": "Auto convert"
     }
 }
