@@ -110,12 +110,11 @@ const FormSyncManager: React.FC<{
     useEffect(() => {
       const isKafkaConnectSchema = validateKafkaSchema(code);
       const isValid = validate(code);
-      // console.log("isValid", isValid, "isKafkaConnectSchema", isKafkaConnectSchema);
 
       if (isKafkaConnectSchema) {
         setFormatType("kafka-connect");
         setCodeAlert(
-          t('smartEditor:kakfaConnectFormat')
+          t('statusMessage:smartEditor.kakfaConnectFormat')
         );
         return;
       } else {
@@ -343,7 +342,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
       id="format-button"
       icon={isFormatting ? <Spinner size="md" aria-label="Formatting in progress" /> : <PlayIcon />}
       aria-label="Execute code"
-      tooltipProps={{ content: t('smartEditor:autoConvertTooltip') }}
+      tooltipProps={{ content: t('statusMessage:smartEditor.autoConvertTooltip') }}
       onClick={async () => {
         setIsFormatting(true);
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -352,7 +351,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
       }}
       isVisible={formatType !== ""}
     >
-      {t('smartEditor:autoConvertButton')}
+      {t('statusMessage:smartEditor.autoConvertButton')}
     </CodeEditorControl>
   );
 

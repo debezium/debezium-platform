@@ -17,5 +17,10 @@
         "successTitle": "Download di {{val}} riuscito.",
         "successDescription": "{{val}} scaricato con successo.",
         "pipelineLogFail": "Download dei log non riuscito: ID della pipeline mancante."
+    },
+    "smartEditor": {
+        "kakfaConnectFormat": "Se il json è nel formato Kafka Connect, utilizzare la 'Conversione automatica' per trasformarlo nel formato della piattaforma Debezium",
+        "autoConvertTooltip": "Convertire il json nel formato debezium-platform",
+        "autoConvertButton": "Conversione formato"
     }
 }

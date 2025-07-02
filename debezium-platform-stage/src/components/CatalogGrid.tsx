@@ -84,7 +84,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardBody>
-                Use this to create a {catalogType} direclty form the json.
+                {t("source:catalog.rawEditorDescription", { val: catalogType })}
               </CardBody>
             </Card>
           </GalleryItem>) : null}
@@ -153,9 +153,9 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                       // justifyContent: "center",
                     }}
                   >
-                    <CodeIcon
+                    <DataSourceIcon
                       color="#0066CC"
-                      style={{ fontSize: "xxx-large", paddingBottom: "10px" }}
+                      style={{ fontSize: "xxx-large", }}
                     />
                   </DataListCell>,
                   <DataListCell key="secondary content" onClick={openDBZJira}>
@@ -167,7 +167,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                       </FlexItem>
                       <FlexItem>
                         <Content component="p">
-                          Use this to create a source from existing connectors connfiguration that you might have.
+                          {t("source:catalog.rawEditorDescription", { val: catalogType })}
                         </Content>
                       </FlexItem>
                     </Flex>
