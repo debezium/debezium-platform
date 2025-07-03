@@ -127,7 +127,6 @@ const SourceSinkForm = ({
       );
       setIsLoading(false);
     } else {
-      console.log(response.data)
       setSignalVerified(true);
       addNotification(
         "success",
