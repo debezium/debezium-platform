@@ -17,7 +17,7 @@ import {
   PageSection,
 } from "@patternfly/react-core";
 import ConnectorImage from "./ComponentImage";
-import { CodeIcon, DataSourceIcon, ExternalLinkAltIcon, PlusCircleIcon } from "@patternfly/react-icons";
+import { DataSourceIcon, ExternalLinkAltIcon, PlusCircleIcon } from "@patternfly/react-icons";
 import "./CatalogGrid.css";
 import { Catalog } from "src/apis/types";
 import { openDBZJira } from "@utils/helpers";
