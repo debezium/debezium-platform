@@ -31,7 +31,8 @@ import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
-import { connectorSchema, initialConnectorSchema, kafkaConnectSchema } from "@utils/schemas";
+import { connectorSchema } from "@utils/schemas";
+import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 
 const ajv = new Ajv();
 
@@ -41,6 +42,15 @@ interface CreateSourceProps {
   selectSource?: (sourceId: string) => void;
   onSelection?: (selection: Source) => void;
 }
+
+const initialCodeValue = {
+  name: "",
+  description: "",
+  type: "",
+  schema: "schema123",
+  vaults: [],
+  config: {},
+};
 
 type Properties = { key: string; value: string };
 
@@ -65,9 +75,7 @@ const FormSyncManager: React.FC<{
   setCodeAlert,
   setFormatType,
 }) => {
-    const { t } = useTranslation();
-    const validate = ajv.compile(initialConnectorSchema);
-    const validateKafkaSchema = ajv.compile(kafkaConnectSchema);
+    // const { t } = useTranslation();
     // Ref to track the source of the update
     const updateSource = useRef<"form" | "code" | null>(null);
 
@@ -106,23 +114,24 @@ const FormSyncManager: React.FC<{
       sourceId,
     ]);
 
+    // Use the useFormatDetector hook
+    const { formatType, isValidFormat, errorMsg } = useFormatDetector(code);
+
     // Update form values when code changes
     useEffect(() => {
-      const isKafkaConnectSchema = validateKafkaSchema(code);
-      const isValid = validate(code);
-
-      if (isKafkaConnectSchema) {
+      if (formatType === "kafka-connect") {
         setFormatType("kafka-connect");
-        setCodeAlert(
-          t('statusMessage:smartEditor.kakfaConnectFormat')
-        );
+        setCodeAlert("Provided json is of kafka connect format, use Auto format to transform it to Debezium-platform supported format");
         return;
-      } else {
-        setFormatType("");
+      } else if (formatType === "properties-file") {
+        setFormatType("properties-file");
+        setCodeAlert("this is a properties file format, please use the form editor to create a source.");
+        return;
       }
-
-
-      if (isValid) {
+      else {
+        setFormatType("dbz-platform");
+      }
+      if (isValidFormat) {
         if (updateSource.current === "form") {
           updateSource.current = null;
           return;
@@ -150,12 +159,13 @@ const FormSyncManager: React.FC<{
         }
         setCodeAlert("");
       } else {
-        setCodeAlert(ajv.errorsText(validate.errors));
+        setCodeAlert(errorMsg);
       }
-    }, [code]);
+    }, [code, formatType, isValidFormat, errorMsg]);
 
     return null;
   };
+
 
 const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   modelLoaded,
@@ -170,18 +180,11 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   };
   const { addNotification } = useNotification();
 
-  const [code, setCode] = useState({
-    name: "",
-    description: "",
-    type: "",
-    schema: "schema123",
-    vaults: [],
-    config: {},
-  });
+  const [code, setCode] = useState<string | typeof initialCodeValue>(initialCodeValue);
 
   const sourceIdParam = useParams<{ sourceId: string }>();
   const [codeAlert, setCodeAlert] = useState("");
-  const [formatType, setFormatType] = useState("");
+  const [formatType, setFormatType] = useState("dbz-platform");
   const sourceIdModel = selectedId;
   const sourceId = modelLoaded ? sourceIdModel : sourceIdParam.sourceId;
   const rawConfiguration = !sourceIdParam.sourceId
@@ -285,7 +288,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         }
         const payload = {
           description: values["description"],
-          type: find(sourceCatalog, { id: sourceId })?.type || code.type || "",
+          type: find(sourceCatalog, { id: sourceId })?.type || (code as typeof initialCodeValue).type || "",
           schema: "schema321",
           vaults: [],
           config: { "signal.data.collection": signalCollectionName, ...convertMapToObject(properties) },
@@ -317,22 +320,53 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     const id = event.currentTarget.id;
     setEditorSelected(id);
   };
-  const formatCode = () => {
-    const kafkaFormat = code as any
-    const formatedCode = {
-      "name": kafkaFormat.name || "",
-      "description": "",
-      "type": kafkaFormat.config["connector.class"] || "",
-      "schema": "schema123",
-      "vaults": [],
-      "config": Object.keys(kafkaFormat.config || {}).reduce((acc: any, key) => {
-        if (key !== "connector.class") {
-          acc[key] = kafkaFormat.config[key];
+  const formatCode = (formatType: string) => {
+    const kafkaFormat = code as any;
+    let formattedCode: any = {};
+    if (formatType === "kafka-connect") {
+      formattedCode = {
+        "name": kafkaFormat.name || "",
+        "description": "",
+        "type": kafkaFormat.config["connector.class"] || "",
+        "schema": "schema123",
+        "vaults": [],
+        "config": Object.keys(kafkaFormat.config || {}).reduce((acc: any, key) => {
+          if (key !== "connector.class") {
+            acc[key] = kafkaFormat.config[key];
+          }
+          return acc;
+        }, {})
+      };
+    } else if (formatType === "properties-file") {
+      const lines = (code as string).split(/\r?\n/);
+      const config: Record<string, string> = {};
+      let connectorClass = "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const match = trimmed.match(/^\s*([a-zA-Z0-9._-]+)\s*=\s*(.*)$/);
+        if (match) {
+          const key = match[1];
+          const value = match[2];
+          if (key === "debezium.source.connector.class") {
+            connectorClass = value;
+          } else if (key.startsWith("debezium.source.")) {
+            config[key] = value;
+          }
         }
-        return acc;
-      }, {})
-    };
-    setCode(formatedCode);
+      }
+
+      formattedCode = {
+        name: "",
+        description: "",
+        type: connectorClass,
+        schema: "schema123",
+        vaults: [],
+        config,
+      };
+    }
+    setCode(formattedCode);
   }
 
   const [isFormatting, setIsFormatting] = useState(false);
@@ -346,10 +380,10 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
       onClick={async () => {
         setIsFormatting(true);
         await new Promise((resolve) => setTimeout(resolve, 500));
-        formatCode();
+        formatCode(formatType);
         setIsFormatting(false);
       }}
-      isVisible={formatType !== ""}
+      isVisible={formatType === "kafka-connect" || formatType === "properties-file"}
     >
       {t('statusMessage:smartEditor.autoConvertButton')}
     </CodeEditorControl>
@@ -457,12 +491,12 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                 <>
                   {codeAlert && (
                     <Alert
-                      variant={formatType !== "" ? "warning" : "danger"}
+                      variant={formatType === "dbz-platform" ? "danger" : "warning"}
                       isInline
-                      title={formatType === "" ? `Provided json is not valid: ${codeAlert}` : "Invalid json format"}
+                      title={formatType === "dbz-platform" ? `Provided json is not valid: ${codeAlert}` : formatType === "kafka-connect" ? "Invalid json format" : "Invalid JSON"}
                       style={{ marginBottom: "20px" }}
                     >
-                      <p>{formatType === "" ? "" : <>Provided json is of kafka connect format, use <a href="#format-button">Auto format</a> to transform it to Debezium-platform supported format</>}</p>
+                      <p>{formatType !== "dbz-platform" && codeAlert}</p>
                     </Alert>
 
                   )}
@@ -473,15 +507,19 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                       isCopyEnabled
                       isLanguageLabelVisible
                       isMinimapVisible
-                      language={Language.json}
+                      language={Language.json || Language.plaintext}
                       downloadFileName="source-connector.json"
                       isFullHeight
-                      code={JSON.stringify(code, null, 2)}
+                      code={isValidJson(code) ? JSON.stringify(code, null, 2) : code as string}
                       customControls={customControl}
                       onCodeChange={(value) => {
                         try {
-                          const parsedCode = JSON.parse(value);
-                          setCode(parsedCode);
+                          if (isValidJson(value)) {
+                            const parsedCode = JSON.parse(value);
+                            setCode(parsedCode);
+                          } else {
+                            setCode(value)
+                          }
                         } catch (error) {
                           console.error("Invalid JSON:", error);
                         }
