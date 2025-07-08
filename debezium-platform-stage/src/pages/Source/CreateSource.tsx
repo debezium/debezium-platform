@@ -30,9 +30,10 @@ import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
 import Ajv from "ajv";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { connectorSchema } from "@utils/schemas";
 import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
+import { formatCode } from "@utils/formatCodeUtils";
 
 const ajv = new Ajv();
 
@@ -62,7 +63,7 @@ const FormSyncManager: React.FC<{
   sourceId: string | undefined;
   properties: Map<string, Properties>;
   setProperties: (properties: Map<string, Properties>) => void;
-  setCodeAlert: (alert: string) => void;
+  setCodeAlert: (alert: string | React.ReactElement) => void;
   setFormatType: (type: string) => void;
 }> = ({
   getFormValue,
@@ -75,7 +76,7 @@ const FormSyncManager: React.FC<{
   setCodeAlert,
   setFormatType,
 }) => {
-    // const { t } = useTranslation();
+    const { t } = useTranslation();
     // Ref to track the source of the update
     const updateSource = useRef<"form" | "code" | null>(null);
 
@@ -85,7 +86,6 @@ const FormSyncManager: React.FC<{
         updateSource.current = null;
         return;
       }
-
       updateSource.current = "form";
       const type = find(sourceCatalog, { id: sourceId })?.type || "";
       const configuration = convertMapToObject(properties);
@@ -98,7 +98,6 @@ const FormSyncManager: React.FC<{
         ) {
           return prevCode;
         }
-
         return {
           ...prevCode,
           type,
@@ -121,11 +120,16 @@ const FormSyncManager: React.FC<{
     useEffect(() => {
       if (formatType === "kafka-connect") {
         setFormatType("kafka-connect");
-        setCodeAlert("Provided json is of kafka connect format, use Auto format to transform it to Debezium-platform supported format");
+        setCodeAlert(
+          <Trans
+            i18nKey="statusMessage:smartEditor.kafkaConnectFormatMsg"
+            components={[<i key="italic" />]}
+          />
+        );
         return;
       } else if (formatType === "properties-file") {
         setFormatType("properties-file");
-        setCodeAlert("this is a properties file format, please use the form editor to create a source.");
+        setCodeAlert(t('statusMessage:smartEditor.debeziumServerFormatMsg'));
         return;
       }
       else {
@@ -156,6 +160,10 @@ const FormSyncManager: React.FC<{
             configMap.set(`key${index}`, { key, value: value as string });
           });
           setProperties(configMap);
+          if (code.name === "") {
+            setCodeAlert(t('statusMessage:smartEditor.connectorNameRequired'));
+            return;
+          }
         }
         setCodeAlert("");
       } else {
@@ -180,10 +188,10 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   };
   const { addNotification } = useNotification();
 
-  const [code, setCode] = useState<string | typeof initialCodeValue>(initialCodeValue);
+  const [code, setCode] = useState<string | Payload>(initialCodeValue);
 
   const sourceIdParam = useParams<{ sourceId: string }>();
-  const [codeAlert, setCodeAlert] = useState("");
+  const [codeAlert, setCodeAlert] = useState<string | React.ReactElement>("");
   const [formatType, setFormatType] = useState("dbz-platform");
   const sourceIdModel = selectedId;
   const sourceId = modelLoaded ? sourceIdModel : sourceIdParam.sourceId;
@@ -267,7 +275,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   ) => {
     if (editorSelected === "form-editor") {
       if (!values["source-name"]) {
-        setError("source-name", "Source name is required.");
+        setError("source-name", t("statusMessage:smartEditor.sourceNameRequired"));
       } else {
         setIsLoading(true);
         const errorWarning = [] as string[];
@@ -288,7 +296,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         }
         const payload = {
           description: values["description"],
-          type: find(sourceCatalog, { id: sourceId })?.type || (code as typeof initialCodeValue).type || "",
+          type: find(sourceCatalog, { id: sourceId })?.type || (code as Payload).type || "",
           schema: "schema321",
           vaults: [],
           config: { "signal.data.collection": signalCollectionName, ...convertMapToObject(properties) },
@@ -320,54 +328,6 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     const id = event.currentTarget.id;
     setEditorSelected(id);
   };
-  const formatCode = (formatType: string) => {
-    const kafkaFormat = code as any;
-    let formattedCode: any = {};
-    if (formatType === "kafka-connect") {
-      formattedCode = {
-        "name": kafkaFormat.name || "",
-        "description": "",
-        "type": kafkaFormat.config["connector.class"] || "",
-        "schema": "schema123",
-        "vaults": [],
-        "config": Object.keys(kafkaFormat.config || {}).reduce((acc: any, key) => {
-          if (key !== "connector.class") {
-            acc[key] = kafkaFormat.config[key];
-          }
-          return acc;
-        }, {})
-      };
-    } else if (formatType === "properties-file") {
-      const lines = (code as string).split(/\r?\n/);
-      const config: Record<string, string> = {};
-      let connectorClass = "";
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith("#")) continue;
-        const match = trimmed.match(/^\s*([a-zA-Z0-9._-]+)\s*=\s*(.*)$/);
-        if (match) {
-          const key = match[1];
-          const value = match[2];
-          if (key === "debezium.source.connector.class") {
-            connectorClass = value;
-          } else if (key.startsWith("debezium.source.")) {
-            config[key] = value;
-          }
-        }
-      }
-
-      formattedCode = {
-        name: "",
-        description: "",
-        type: connectorClass,
-        schema: "schema123",
-        vaults: [],
-        config,
-      };
-    }
-    setCode(formattedCode);
-  }
 
   const [isFormatting, setIsFormatting] = useState(false);
 
@@ -380,7 +340,8 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
       onClick={async () => {
         setIsFormatting(true);
         await new Promise((resolve) => setTimeout(resolve, 500));
-        formatCode(formatType);
+        // formatCode(formatType);
+        setCode(formatCode(formatType, code));
         setIsFormatting(false);
       }}
       isVisible={formatType === "kafka-connect" || formatType === "properties-file"}
@@ -493,10 +454,10 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                     <Alert
                       variant={formatType === "dbz-platform" ? "danger" : "warning"}
                       isInline
-                      title={formatType === "dbz-platform" ? `Provided json is not valid: ${codeAlert}` : formatType === "kafka-connect" ? "Invalid json format" : "Invalid JSON"}
+                      title={formatType === "dbz-platform" ? codeAlert : formatType === "kafka-connect" ? "Invalid json format" : "Invalid JSON"}
                       style={{ marginBottom: "20px" }}
                     >
-                      <p>{formatType !== "dbz-platform" && codeAlert}</p>
+                      {formatType !== "dbz-platform" && codeAlert}
                     </Alert>
 
                   )}

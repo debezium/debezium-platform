@@ -21,6 +21,11 @@
     "smartEditor": {
         "kakfaConnectFormat": "Provided json is of kafka connect format, use 'Auto format' to tranfrom it to Debezium-platform format",
         "autoConvertTooltip": "Convert the json into debezium-platform format",
-        "autoConvertButton": "Auto format"
+        "autoConvertButton": "Auto format",
+        "kafkaConnectFormatMsg": "Provided JSON is of Kafka Connect format, use <1>Auto format</1> to transform it to Debezium-platform supported format.",
+        "debeziumServerFormatMsg": "This appears to be .properties file for Debezium server, use Auto format to transform it to Debezium-platform supported format.",
+        "connectorNameRequired": "Connector name is required.",
+        "sourceNameRequired": "Source name is required.",
+        "autoFormat": "Auto format"
     }
 }

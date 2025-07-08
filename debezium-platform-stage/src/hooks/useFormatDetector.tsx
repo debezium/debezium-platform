@@ -5,14 +5,14 @@ import { useEffect, useState } from "react";
 
 const ajv = new Ajv();
 
-export function useFormatDetector(code: any) {
+export function useFormatDetector(code: unknown) {
 
     const [codeFormatType, setFormatType] = useState<string>("");
     const validate = ajv.compile(initialConnectorSchema);
     const validateKafkaSchema = ajv.compile(kafkaConnectSchema);
 
     useEffect(() => {
-        if (!!code) {
+        if (code) {
             if (isValidJson(code)) {
                 const isKafkaConnectSchema = validateKafkaSchema(code);
                 const isValid = validate(code);
@@ -23,8 +23,10 @@ export function useFormatDetector(code: any) {
                 else if (isValid) {
                     setFormatType("dbz-platform");
                 }
-            } else {
+            } else if(typeof code === "string" && code.includes("debezium.source.")) {
                 setFormatType("properties-file");
+            }else{
+                console.log("Genuine invalid JSON")
             }
         }
     }, [code]);
@@ -37,7 +39,7 @@ export function useFormatDetector(code: any) {
     return formatDetection;
 }
 
-export function isValidJson(value: any): boolean {
+export function isValidJson(value: string | object): boolean {
     // It's a string — try to parse it and check if it's a plain object
     if (typeof value === 'string') {
         try {
