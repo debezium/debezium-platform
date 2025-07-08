@@ -115,7 +115,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
             </ToolbarItem>
             <ToolbarItem variant="separator" />
             <ToolbarItem>
-            <Button variant="secondary" icon={<CogIcon/>}>Use editor to create</Button>
+              <Button variant="secondary" icon={<CogIcon />} onClick={() => onSourceSelection("")}>Use editor to create</Button>
             </ToolbarItem>
             <ToolbarGroup align={{ default: "alignEnd" }}>
               <ToolbarItem>

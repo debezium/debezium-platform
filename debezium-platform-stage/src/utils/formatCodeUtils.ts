@@ -1,8 +1,8 @@
 import { Payload } from "src/apis";
 
-export function formatCode(formatType: string, code: string | object): Payload {
-    const kafkaFormat = code as any;
-    let formattedCode: any = {};
+export function formatCode(connectorType: "source" | "destination",formatType: string, code: string | object): Payload {
+    const kafkaFormat = code as Payload;
+    let formattedCode = {} as Payload;
     if (formatType === "kafka-connect") {
         formattedCode = {
             "name": kafkaFormat.name || "",
@@ -10,7 +10,7 @@ export function formatCode(formatType: string, code: string | object): Payload {
             "type": kafkaFormat.config["connector.class"] || "",
             "schema": "schema123",
             "vaults": [],
-            "config": Object.keys(kafkaFormat.config || {}).reduce((acc: any, key) => {
+            "config": Object.keys(kafkaFormat.config || {}).reduce((acc: Record<string, string>, key) => {
                 if (key !== "connector.class") {
                     acc[key] = kafkaFormat.config[key];
                 }
@@ -29,11 +29,20 @@ export function formatCode(formatType: string, code: string | object): Payload {
             if (match) {
                 const key = match[1];
                 const value = match[2];
-                if (key === "debezium.source.connector.class") {
-                    connectorClass = value;
-                } else if (key.startsWith("debezium.source.")) {
-                    config[key] = value;
+                if(connectorType === "source"){
+                    if (key === "debezium.source.connector.class") {
+                        connectorClass = value;
+                    } else if (key.startsWith("debezium.source.")) {
+                        config[key] = value;
+                    }
+                }else {
+                    if (key === "debezium.sink.type") {
+                        connectorClass = value;
+                    } else if (key.startsWith("debezium.sink.")) {
+                        config[key] = value;
+                    }
                 }
+               
             }
         }
 

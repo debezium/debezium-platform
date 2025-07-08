@@ -114,7 +114,7 @@ const FormSyncManager: React.FC<{
     ]);
 
     // Use the useFormatDetector hook
-    const { formatType, isValidFormat, errorMsg } = useFormatDetector(code);
+    const { formatType, isValidFormat, errorMsg } = useFormatDetector(code, "source");
 
     // Update form values when code changes
     useEffect(() => {
@@ -341,7 +341,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         setIsFormatting(true);
         await new Promise((resolve) => setTimeout(resolve, 500));
         // formatCode(formatType);
-        setCode(formatCode(formatType, code));
+        setCode(formatCode("source", formatType, code));
         setIsFormatting(false);
       }}
       isVisible={formatType === "kafka-connect" || formatType === "properties-file"}

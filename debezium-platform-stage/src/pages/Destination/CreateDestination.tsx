@@ -7,6 +7,7 @@ import {
   ButtonType,
   FormContextProvider,
   PageSection,
+  Spinner,
   ToggleGroup,
   ToggleGroupItem,
   Toolbar,
@@ -28,7 +29,9 @@ import SourceSinkForm from "@components/SourceSinkForm";
 import { useEffect, useRef, useState } from "react";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
-import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
+import { connectorSchema } from "@utils/schemas";
+import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
+import { formatCode } from "@utils/formatCodeUtils";
 
 const ajv = new Ajv();
 
@@ -41,6 +44,15 @@ interface CreateDestinationProps {
 
 type Properties = { key: string; value: string };
 
+const initialCodeValue = {
+  name: "",
+  description: "",
+  type: "",
+  schema: "schema123",
+  vaults: [],
+  config: {},
+};
+
 const FormSyncManager: React.FC<{
   getFormValue: (key: string) => string;
   setFormValue: (key: string, value: string) => void;
@@ -49,7 +61,8 @@ const FormSyncManager: React.FC<{
   destinationId: string | undefined;
   properties: Map<string, Properties>;
   setProperties: (properties: Map<string, Properties>) => void;
-  setCodeAlert: (alert: string) => void;
+  setCodeAlert: (alert: string | React.ReactElement) => void;
+  setFormatType: (type: string) => void;
 }> = ({
   getFormValue,
   setFormValue,
@@ -59,8 +72,9 @@ const FormSyncManager: React.FC<{
   properties,
   setProperties,
   setCodeAlert,
+  setFormatType,
 }) => {
-    const validate = ajv.compile(initialConnectorSchema);
+    const { t } = useTranslation();
     // Ref to track the source of the update
     const updateSource = useRef<"form" | "code" | null>(null);
 
@@ -99,10 +113,20 @@ const FormSyncManager: React.FC<{
       destinationId,
     ]);
 
+    // Use the useFormatDetector hook
+    const { formatType, isValidFormat, errorMsg } = useFormatDetector(code, "destination");
+
     // Update form values when code changes
     useEffect(() => {
-      const isValid = validate(code);
-      if (isValid) {
+      if (formatType === "properties-file") {
+        setFormatType("properties-file");
+        setCodeAlert(t('statusMessage:smartEditor.debeziumServerFormatMsg'));
+        return;
+      }
+      else {
+        setFormatType("dbz-platform");
+      }
+      if (isValidFormat) {
         if (updateSource.current === "form") {
           updateSource.current = null;
           return;
@@ -127,12 +151,16 @@ const FormSyncManager: React.FC<{
             configMap.set(`key${index}`, { key, value: value as string });
           });
           setProperties(configMap);
+          if (code.name === "") {
+            setCodeAlert(t('statusMessage:smartEditor.connectorNameRequired'));
+            return;
+          }
         }
         setCodeAlert("");
       } else {
-        setCodeAlert(ajv.errorsText(validate.errors));
+        setCodeAlert(errorMsg);
       }
-    }, [code]);
+    }, [code, formatType, isValidFormat, errorMsg]);
 
     return null;
   };
@@ -159,16 +187,9 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
 
   const { addNotification } = useNotification();
 
-  const [code, setCode] = useState({
-    name: "",
-    description: "",
-    type: "",
-    schema: "schema123",
-    vaults: [],
-    config: {},
-  });
-  const [codeAlert, setCodeAlert] = useState("");
-  const [formatType] = useState("");
+  const [code, setCode] = useState<string | Payload>(initialCodeValue);
+  const [codeAlert, setCodeAlert] = useState<string | React.ReactElement>("");
+  const [formatType, setFormatType] = useState("dbz-platform");
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
   const [isLoading, setIsLoading] = React.useState(false);
@@ -296,14 +317,25 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     setEditorSelected(id);
   };
 
+  const [isFormatting, setIsFormatting] = useState(false);
+
   const customControl = (
     <CodeEditorControl
-      icon={<PlayIcon />}
+      id="format-button"
+      icon={isFormatting ? <Spinner size="md" aria-label="Formatting in progress" /> : <PlayIcon />}
       aria-label="Execute code"
-      tooltipProps={{ content: 'Auto convert the json into debezium-platfrom format' }}
-      onClick={() => { }}
-      isVisible={formatType !== ""}
-    >Auto format</CodeEditorControl>
+      tooltipProps={{ content: t('statusMessage:smartEditor.autoConvertTooltip') }}
+      onClick={async () => {
+        setIsFormatting(true);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        // formatCode(formatType);
+        setCode(formatCode("destination", formatType, code));
+        setIsFormatting(false);
+      }}
+      isVisible={formatType === "properties-file"}
+    >
+      {t('statusMessage:smartEditor.autoConvertButton')}
+    </CodeEditorControl>
   );
 
   const onEditorDidMount = (
@@ -373,6 +405,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
               properties={properties}
               setProperties={setProperties}
               setCodeAlert={setCodeAlert}
+              setFormatType={setFormatType}
             />
             <PageSection
               isWidthLimited={
@@ -403,30 +436,39 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                 />
               ) : (
                 <>
+
                   {codeAlert && (
                     <Alert
-                      variant={formatType !== "" ? "warning" : "danger"}
+                      variant={formatType === "dbz-platform" ? "danger" : "warning"}
                       isInline
-                      title={formatType === "" ? `Provided json is not valid: ${codeAlert}` : `Provided json is of kafka connect format, use 'Auto format' to transform it to Debezium-platform supported format`}
-                      style={{ marginBottom: "10px" }}
-                    />
+                      title={formatType === "dbz-platform" ? `Invalid JSON format: ${codeAlert}` : "Invalid JSON"}
+                      style={{ marginBottom: "20px" }}
+                    >
+                      {formatType !== "dbz-platform" && codeAlert}
+                    </Alert>
+
                   )}
                   <div style={{ flex: '1 1 auto', minHeight: 0 }} className="smart-editor">
+
                     <CodeEditor
                       isUploadEnabled
                       isDownloadEnabled
                       isCopyEnabled
                       isLanguageLabelVisible
                       isMinimapVisible
-                      language={Language.json}
-                      customControls={customControl}
-                      downloadFileName="destination-connector.json"
+                      language={Language.json || Language.plaintext}
+                      downloadFileName="source-connector.json"
                       isFullHeight
-                      code={JSON.stringify(code, null, 2)}
+                      code={isValidJson(code) ? JSON.stringify(code, null, 2) : code as string}
+                      customControls={customControl}
                       onCodeChange={(value) => {
                         try {
-                          const parsedCode = JSON.parse(value);
-                          setCode(parsedCode);
+                          if (isValidJson(value)) {
+                            const parsedCode = JSON.parse(value);
+                            setCode(parsedCode);
+                          } else {
+                            setCode(value)
+                          }
                         } catch (error) {
                           console.error("Invalid JSON:", error);
                         }
@@ -442,7 +484,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                 <Button
                   variant="primary"
                   isLoading={isLoading}
-                  isDisabled={isLoading}
+                  isDisabled={isLoading || codeAlert !== ""}
                   type={ButtonType.submit}
                   onClick={(e) => {
                     e.preventDefault();

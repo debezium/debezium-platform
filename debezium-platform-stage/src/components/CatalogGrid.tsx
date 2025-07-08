@@ -67,7 +67,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
     <PageSection>
       {displayType === "grid" ? (
         <Gallery hasGutter className="custom-gallery">
-          {catalogType === "source" ? (<GalleryItem>
+          <GalleryItem>
             <Card isClickable variant={"default"} onClick={() => onCardSelect("")}>
               <CardHeader
                 selectableActions={{
@@ -87,7 +87,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                 {t("source:catalog.rawEditorDescription", { val: catalogType })}
               </CardBody>
             </Card>
-          </GalleryItem>) : null}
+          </GalleryItem>
 
           {searchResult.map((item) => (
             <GalleryItem key={item.id}>

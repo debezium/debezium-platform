@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
+  Button,
   Content,
   ContentVariants,
   PageSection,
@@ -11,7 +12,7 @@ import {
   ToolbarGroup,
   ToolbarItem,
 } from "@patternfly/react-core";
-import { ListIcon, ThIcon } from "@patternfly/react-icons";
+import { CogIcon, ListIcon, ThIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import { CatalogGrid } from "@components/CatalogGrid";
 import { FunctionComponent, useCallback, useState } from "react";
@@ -111,6 +112,10 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
                 />
               </ToggleGroup>
             </ToolbarItem>
+            <ToolbarItem variant="separator" />
+                        <ToolbarItem>
+                        <Button variant="secondary" icon={<CogIcon/>} onClick={()=>onDestinationSelection("")}>Use editor to create</Button>
+                        </ToolbarItem>
             <ToolbarGroup align={{ default: "alignEnd" }}>
               <ToolbarItem>
                 <Content component={ContentVariants.small}>
