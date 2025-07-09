@@ -151,8 +151,14 @@ const FormSyncManager: React.FC<{
             configMap.set(`key${index}`, { key, value: value as string });
           });
           setProperties(configMap);
-          if (code.name === "") {
+        }
+        if (updateSource.current === "code") {
+          if (!code.name || code.name.trim() === "") {
             setCodeAlert(t('statusMessage:smartEditor.connectorNameRequired'));
+            return;
+          }
+          if (!code.type || code.type.trim() === "") {
+            setCodeAlert(t('statusMessage:smartEditor.connectorTypeRequired'));
             return;
           }
         }
@@ -484,7 +490,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                 <Button
                   variant="primary"
                   isLoading={isLoading}
-                  isDisabled={isLoading || codeAlert !== ""}
+                  isDisabled={isLoading || (editorSelected !== "form-editor" && codeAlert !== "")}
                   type={ButtonType.submit}
                   onClick={(e) => {
                     e.preventDefault();

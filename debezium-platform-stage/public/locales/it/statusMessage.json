@@ -25,6 +25,7 @@
         "kafkaConnectFormatMsg": "Il JSON fornito è nel formato Kafka Connect, utilizzare <1>Formato automatico</1> per trasformarlo nel formato supportato dalla piattaforma Debezium.",
         "debeziumServerFormatMsg": "Questo sembra essere un file .properties per il server Debezium, utilizzare Formato automatico per trasformarlo nel formato supportato dalla piattaforma Debezium.",
         "connectorNameRequired": "Il nome del connettore è obbligatorio.",
+        "connectorTypeRequired": "Il tipo di connettore è obbligatorio.",
         "sourceNameRequired": "Il nome della sorgente è obbligatorio.",
         "autoFormat": "Formato automatico"
     }
