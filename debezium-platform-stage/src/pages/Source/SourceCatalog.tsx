@@ -12,6 +12,7 @@ import {
   ToolbarContent,
   ToolbarGroup,
   ToolbarItem,
+  Tooltip,
 } from "@patternfly/react-core";
 import { CogIcon, ListIcon, ThIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
@@ -115,7 +116,15 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
             </ToolbarItem>
             <ToolbarItem variant="separator" />
             <ToolbarItem>
-              <Button variant="secondary" icon={<CogIcon />} onClick={() => onSourceSelection("")}>Use editor to create</Button>
+              <Tooltip
+                content={
+                  <div>
+                    {t("smartEditorButtonTooltip", {val: "source"})}
+                  </div>
+                }
+              >
+                <Button variant="secondary" icon={<CogIcon />} onClick={() => onSourceSelection("")}>{t("smartEditorButton")}</Button>
+              </Tooltip>
             </ToolbarItem>
             <ToolbarGroup align={{ default: "alignEnd" }}>
               <ToolbarItem>

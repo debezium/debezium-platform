@@ -40,6 +40,8 @@
   "apiError": "Errore: caricamento fallito",
   "goTo": "Vai a {{val}}",
   "trademarkWarking": "Tutti i loghi e i marchi sono di proprietà dei rispettivi titolari",
+  "smartEditorButton": "Crea usando l'editor intelligente",
+  "smartEditorButtonTooltip": "Usa la configurazione grezza per creare un nuovo connettore {{val}} utilizzando l'editor intelligente.",
   "emptyState": {
     "title": "Nessun {{val}} disponibile",
     "description": "Nessun {{val}} è ancora configurato per questo cluster. Per trasmettere eventi di modifica da un {{val}}, puoi configurarlo cliccando sul pulsante 'Aggiungi {{val}}'."

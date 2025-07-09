@@ -17,12 +17,11 @@ import {
   PageSection,
 } from "@patternfly/react-core";
 import ConnectorImage from "./ComponentImage";
-import { DataSourceIcon, ExternalLinkAltIcon, PlusCircleIcon } from "@patternfly/react-icons";
+import { ExternalLinkAltIcon, PlusCircleIcon } from "@patternfly/react-icons";
 import "./CatalogGrid.css";
 import { Catalog } from "src/apis/types";
 import { openDBZJira } from "@utils/helpers";
 import { useTranslation } from "react-i18next";
-import { capitalize } from "lodash";
 
 export interface ICatalogGridProps {
   onCardSelect: (selectId: string) => void;
@@ -67,7 +66,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
     <PageSection>
       {displayType === "grid" ? (
         <Gallery hasGutter className="custom-gallery">
-          <GalleryItem>
+          {/* <GalleryItem>
             <Card isClickable variant={"default"} onClick={() => onCardSelect("")}>
               <CardHeader
                 selectableActions={{
@@ -87,7 +86,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                 {t("source:catalog.rawEditorDescription", { val: catalogType })}
               </CardBody>
             </Card>
-          </GalleryItem>
+          </GalleryItem> */}
 
           {searchResult.map((item) => (
             <GalleryItem key={item.id}>
@@ -140,7 +139,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
           onSelectableRowChange={handleInputChange}
         >
 
-          <DataListItem aria-labelledby="code-connector">
+          {/* <DataListItem aria-labelledby="code-connector">
             <DataListItemRow>
               <DataListItemCells
                 dataListCells={[
@@ -175,7 +174,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                 ]}
               />
             </DataListItemRow>
-          </DataListItem>
+          </DataListItem> */}
 
           {searchResult.map((item) => (
             <DataListItem

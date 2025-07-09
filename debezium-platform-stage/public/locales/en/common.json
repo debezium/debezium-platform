@@ -45,6 +45,8 @@
   "apiError": "Error : Failed to load",
   "goTo": "Go to {{val}}",
   "trademarkWarking": "All logos and trademarks are the property of their respective owners",
+  "smartEditorButton": "Create using smart editor",
+  "smartEditorButtonTooltip": " Use raw configuration to create a new {{val}} connector using smart editor.",
   "emptyState": {
     "title": "No {{val}} available",
     "shortDescription": "No {{val}} is configure for this cluster yet. Configure a one by selecting 'Create a {{val}}' option above.",

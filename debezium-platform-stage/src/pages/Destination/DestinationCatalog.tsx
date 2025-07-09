@@ -11,6 +11,7 @@ import {
   ToolbarContent,
   ToolbarGroup,
   ToolbarItem,
+  Tooltip,
 } from "@patternfly/react-core";
 import { CogIcon, ListIcon, ThIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
@@ -75,7 +76,7 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
       <PageSection isWidthLimited>
         <Content component="h1">{t("destination:catalog.title")}</Content>
         <Content component="p">
-        {t("destination:catalog.description")}
+          {t("destination:catalog.description")}
         </Content>
         <Toolbar
           id="toolbar-sticky"
@@ -113,9 +114,17 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
               </ToggleGroup>
             </ToolbarItem>
             <ToolbarItem variant="separator" />
-                        <ToolbarItem>
-                        <Button variant="secondary" icon={<CogIcon/>} onClick={()=>onDestinationSelection("")}>Use editor to create</Button>
-                        </ToolbarItem>
+            <ToolbarItem>
+              <Tooltip
+                content={
+                  <div>
+                      {t("smartEditorButtonTooltip", {val: "destination"})}
+                  </div>
+                }
+              >
+                <Button variant="secondary" icon={<CogIcon />} onClick={() => onDestinationSelection("")}>{t("smartEditorButton")}</Button>
+              </Tooltip>
+            </ToolbarItem>
             <ToolbarGroup align={{ default: "alignEnd" }}>
               <ToolbarItem>
                 <Content component={ContentVariants.small}>
