@@ -54,6 +54,7 @@ import { useNotification } from "@appContext/AppNotificationContext";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
 import { pipelineSchema } from "@utils/schemas";
+import style from "../../styles/createConnector.module.css"
 
 const ajv = new Ajv();
 
@@ -247,8 +248,8 @@ const ConfigurePipeline: React.FunctionComponent = () => {
     }
     addNotification(
       "success",
-      t('statusMessage:creation.successTitle', {val: t('pipeline')}),
-      t('statusMessage:creation.successDescription', {val: `${t('pipeline')} ${payload["name"]}`}),
+      t('statusMessage:creation.successTitle', { val: t('pipeline') }),
+      t('statusMessage:creation.successDescription', { val: `${t('pipeline')} ${payload["name"]}` }),
     );
     navigateTo("/pipeline");
 
@@ -343,8 +344,8 @@ const ConfigurePipeline: React.FunctionComponent = () => {
         title={t('pipeline:form.title')}
         description={t('pipeline:form.description')}
       />
-      <PageSection className="create_pipeline-toolbar">
-        <Toolbar id="create-editor-toggle" className="create_pipeline-toolbar">
+      <PageSection className={style.createConnector_toolbar}>
+        <Toolbar id="create-editor-toggle" >
           <ToolbarContent>
             <ToolbarItem>
               <ToggleGroup aria-label="Toggle between form editor and smart editor">
@@ -385,12 +386,10 @@ const ConfigurePipeline: React.FunctionComponent = () => {
               isWidthLimited={true}
               isCenterAligned
               isFilled
-              className={
-                editorSelected === "form-editor" ? "pipeline-page-section" : ""
-              }
+              className={`customPageSection ${style.createConnector_pageSection}`}
             >
               {editorSelected === "form-editor" ? (
-                <Card className="pipeline-card-body">
+                <Card >
                   <CardBody isFilled>
                     <Form isWidthLimited>
                       <FormGroup
@@ -497,7 +496,6 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                       <FormSection
                         title={t('pipeline:form.subsectionTitle')}
                         titleElement="h2"
-                        className="custom-form-group"
                       >
                         <FormGroup
                           label={t('pipeline:form.logLevelField')}
@@ -537,34 +535,37 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                       variant="danger"
                       isInline
                       title={t('statusMessage:codeAlert', { val: codeAlert })}
-                      style={{ marginBottom: "10px" }}
+                      className={style.createConnector_alert}
                     />
                   )}
-                  <CodeEditor
-                    isUploadEnabled
-                    isDownloadEnabled
-                    isCopyEnabled
-                    isLanguageLabelVisible
-                    isMinimapVisible
-                    language={Language.json}
-                    downloadFileName="pipeline.json"
-                    isFullHeight
-                    code={JSON.stringify(code, null, 2)}
-                    onCodeChange={(value) => {
-                      try {
-                        const parsedCode = JSON.parse(value);
-                        setCode(parsedCode);
-                      } catch (error) {
-                        console.error("Invalid JSON:", error);
-                      }
-                    }}
-                    onEditorDidMount={onEditorDidMount}
-                  />
+                  <div className={`${style.smartEditor} smartEditor`}>
+                    <CodeEditor
+                      isUploadEnabled
+                      isDownloadEnabled
+                      isCopyEnabled
+                      isLanguageLabelVisible
+                      isMinimapVisible
+                      language={Language.json}
+                      downloadFileName="pipeline.json"
+                      isFullHeight
+                      code={JSON.stringify(code, null, 2)}
+                      onCodeChange={(value) => {
+                        try {
+                          const parsedCode = JSON.parse(value);
+                          setCode(parsedCode);
+                        } catch (error) {
+                          console.error("Invalid JSON:", error);
+                        }
+                      }}
+                      onEditorDidMount={onEditorDidMount}
+                    />
+                  </div>
+
                 </>
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className="create_pipeline-footer">
+              <ActionGroup className={style.createConnector_footer}>
                 <Button
                   variant="primary"
                   isLoading={isLoading}

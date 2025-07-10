@@ -1,0 +1,26 @@
+.createConnector_pageSection {
+    padding-top: 0 !important;
+}
+
+.createConnector_pageSection>div:first-child {
+    display: flex;
+    flex-direction: column;
+}
+
+.createConnector_toolbar {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.createConnector_footer {
+    margin-top: 0 !important;
+}
+
+.createConnector_alert {
+    margin-bottom: 10px;
+}
+
+.smartEditor {
+    flex: 1 1 auto;
+    min-height: 0;
+  }

@@ -12,7 +12,7 @@
         "delete": "Delete"
     },
     "pipelinePage": {
-        "description": "Add a pipeline to streams change events from a pipeline database. To start select a connector below once you select a connector you can configure it using form or smart editor option. You can also search the connector by its name or toggle the catalog between the list view or card view.",
+        "description": "View and manage your configured pipelines. You can also create a new pipeline to stream change events from a source database.",
         "title": "Pipeline",
         "phase": "Phase",
         "Enabled": "Enabled",
@@ -22,7 +22,7 @@
         "welcomeDescriptionSufix": "Add a pipeline to stream change event from a pipeline source database. To create a pipeline, you can select an already configured or add a new source and destination.",
         "welcomeButtom": "Create your first pipeline",
         "designerTitle": "Pipeline designer",
-        "designerDescription": "Configure the pipeline by adding an existing source and destination or create a new one as per you need. Optionally you can also any number of transformation as needed."
+        "designerDescription": "Create a pipeline by selecting an existing source and destination, or create new ones as if needed. You can optionally add one or more transformations to apply to the pipeline."
     },
     "transformDrawer": {
         "description": "List of transform to be applied to pipeline you can delete or rearrange them on specific order for them to be applied.",

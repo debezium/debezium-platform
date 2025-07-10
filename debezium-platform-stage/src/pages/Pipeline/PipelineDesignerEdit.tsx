@@ -579,7 +579,6 @@ const PipelineDesignerEdit: React.FunctionComponent<
                           <FormSection
                             title={t('pipeline:form.subsectionTitle')}
                             titleElement="h2"
-                            className="custom-form-group"
                           >
                             <FormGroup
                               label={t('pipeline:form.logLevelField')}

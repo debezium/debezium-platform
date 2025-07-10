@@ -17,7 +17,6 @@ import {
 import { PencilAltIcon, CodeIcon, PlayIcon } from "@patternfly/react-icons";
 import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 import { useNavigate, useParams } from "react-router-dom";
-import "./CreateDestination.css";
 import { CodeEditor, CodeEditorControl, Language } from "@patternfly/react-code-editor";
 import { find } from "lodash";
 import { createPost, Destination, Payload } from "../../apis/apis";
@@ -32,6 +31,7 @@ import { useTranslation } from "react-i18next";
 import { connectorSchema } from "@utils/schemas";
 import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 import { formatCode } from "@utils/formatCodeUtils";
+import style from "../../styles/createConnector.module.css"
 
 const ajv = new Ajv();
 
@@ -370,7 +370,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
       )}
 
       {!rawConfiguration && (
-        <PageSection className="create_destination-toolbar">
+        <PageSection className={style.createConnector_toolbar}>
           <Toolbar id="destination-editor-toggle">
             <ToolbarContent>
               <ToolbarItem>
@@ -420,11 +420,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
               }
               isCenterAligned
               isFilled
-              className={
-                editorSelected === "form-editor"
-                  ? "custom-page-section create_destination-page_section"
-                  : "create_destination-page_section"
-              }
+              className={`customPageSection ${style.createConnector_pageSection}`}
             >
               {editorSelected === "form-editor" && !rawConfiguration ? (
                 <SourceSinkForm
@@ -448,13 +444,13 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                       variant={formatType === "dbz-platform" ? "danger" : "warning"}
                       isInline
                       title={formatType === "dbz-platform" ? `Invalid JSON format: ${codeAlert}` : "Invalid JSON"}
-                      style={{ marginBottom: "20px" }}
+                      className={style.createConnector_alert}
                     >
                       {formatType !== "dbz-platform" && codeAlert}
                     </Alert>
 
                   )}
-                  <div style={{ flex: '1 1 auto', minHeight: 0 }} className="smart-editor">
+                  <div className={`${style.smartEditor} smartEditor`}>
 
                     <CodeEditor
                       isUploadEnabled
@@ -486,7 +482,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className="create_destination-footer">
+              <ActionGroup className={style.createConnector_footer}>
                 <Button
                   variant="primary"
                   isLoading={isLoading}

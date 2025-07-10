@@ -58,6 +58,7 @@ import { find } from "lodash";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
 import { transformSchema } from "@utils/schemas";
+import style from "../../styles/createConnector.module.css"
 
 const ajv = new Ajv();
 
@@ -483,7 +484,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
           description={t("transform:create.description")}
         />
       )}
-      <PageSection className="create_source-toolbar">
+      <PageSection className={style.createConnector_toolbar}>
         <Toolbar id="transform-editor-toggle">
           <ToolbarContent>
             <ToolbarItem>
@@ -517,12 +518,10 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
               isWidthLimited={true}
               isCenterAligned
               isFilled
-              className={
-                editorSelected === "form-editor" ? "pipeline-page-section" : ""
-              }
+              className={`customPageSection ${style.createConnector_pageSection}`}
             >
               {editorSelected === "form-editor" ? (
-                <Card className="pipeline-card-body">
+                <Card>
                   <CardBody isFilled>
                     <Form isWidthLimited>
                       <FormGroup
@@ -872,10 +871,10 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                       variant="danger"
                       isInline
                       title={`Provided json is not valid: ${codeAlert}`}
-                      style={{ marginBottom: "10px" }}
+                      className={style.createConnector_alert}
                     />
                   )}
-                  <div style={{ flex: '1 1 auto', minHeight: 0 }} className="smart-editor">
+                  <div className={`${style.smartEditor} smartEditor`}>
                     <CodeEditor
                       isUploadEnabled
                       isDownloadEnabled
@@ -901,7 +900,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className="create_source-footer">
+              <ActionGroup className={style.createConnector_footer}>
                 <Button
                   variant="primary"
                   isLoading={isLoading}

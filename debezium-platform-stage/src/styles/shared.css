@@ -1,0 +1,18 @@
+.customPageSection .pf-v6-c-page__main-body {
+    max-width: var(--pf-v6-c-form--m-limit-width--MaxWidth, 55rem) !important;
+}
+
+.pf-v6-c-code-editor__main{
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.pf-v6-c-code-editor__upload{
+    height: 100% !important;
+}
+
+.smartEditor .monaco-editor,
+.smartEditor .code-editor {
+    height: 100% !important;
+    min-height: 300px !important;
+}

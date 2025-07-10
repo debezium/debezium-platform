@@ -15,7 +15,6 @@ import {
 } from "@patternfly/react-core";
 import { PencilAltIcon, CodeIcon } from "@patternfly/react-icons";
 import { useNavigate, useParams } from "react-router-dom";
-import "./CreateSource.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { useEffect, useState } from "react";
 import {
@@ -36,6 +35,7 @@ import PageHeader from "@components/PageHeader";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
 import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
+import style from "../../styles/createConnector.module.css";
 
 const ajv = new Ajv();
 
@@ -349,7 +349,7 @@ const EditSource: React.FunctionComponent = () => {
         title={t("source:edit.title")}
         description={t("source:edit.description")}
       />
-      <PageSection className="create_source-toolbar">
+      <PageSection className={style.createConnector_toolbar}>
         <Toolbar id="source-editor-toggle">
           <ToolbarContent>
             <ToolbarItem>
@@ -399,11 +399,7 @@ const EditSource: React.FunctionComponent = () => {
               isWidthLimited
               isCenterAligned
               isFilled
-              className={
-                navigationCollapsed && editorSelected === "form-editor"
-                  ? "custom-page-section create_source-page_section"
-                  : "create_source-page_section"
-              }
+              className={`customPageSection ${style.createConnector_pageSection}`}
             >
               {editorSelected === "form-editor" ? (
                 <SourceSinkForm
@@ -428,41 +424,44 @@ const EditSource: React.FunctionComponent = () => {
                       variant="danger"
                       isInline
                       title={`Provided json is not valid: ${codeAlert}`}
-                      style={{ marginBottom: "10px" }}
+                      className={style.createConnector_alert}
                     />
                   )}
-
-                  <CodeEditor
-                    isUploadEnabled
-                    isDownloadEnabled
-                    isCopyEnabled
-                    isLanguageLabelVisible
-                    isMinimapVisible
-                    language={Language.json}
-                    downloadFileName="source-connector.json"
-                    isFullHeight
-                    code={JSON.stringify(code, null, 2)}
-                    onCodeChange={(value) => {
-                      try {
-                        const parsedCode = JSON.parse(value);
-                        if (parsedCode.type !== source?.type) {
-                          setCodeAlert(
-                            "Connector type cannot be changed in the edit flow."
-                          );
-                        } else {
-                          setCode(parsedCode);
+                  <div className={`${style.smartEditor} smartEditor`}>
+                    <CodeEditor
+                      isUploadEnabled
+                      isDownloadEnabled
+                      isCopyEnabled
+                      isLanguageLabelVisible
+                      isMinimapVisible
+                      language={Language.json}
+                      downloadFileName="source-connector.json"
+                      isFullHeight
+                      code={JSON.stringify(code, null, 2)}
+                      onCodeChange={(value) => {
+                        try {
+                          const parsedCode = JSON.parse(value);
+                          if (parsedCode.type !== source?.type) {
+                            setCodeAlert(
+                              "Connector type cannot be changed in the edit flow."
+                            );
+                          } else {
+                            setCode(parsedCode);
+                          }
+                        } catch (error) {
+                          console.error("Invalid JSON:", error);
                         }
-                      } catch (error) {
-                        console.error("Invalid JSON:", error);
-                      }
-                    }}
-                    onEditorDidMount={onEditorDidMount}
-                  />
+                      }}
+                      onEditorDidMount={onEditorDidMount}
+                    />
+
+                  </div>
+
                 </>
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className="create_destination-footer">
+              <ActionGroup className={style.createConnector_footer}>
                 <Button
                   variant="primary"
                   isLoading={isLoading}

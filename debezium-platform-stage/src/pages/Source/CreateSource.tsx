@@ -16,7 +16,6 @@ import {
 } from "@patternfly/react-core";
 import { PencilAltIcon, CodeIcon, PlayIcon } from "@patternfly/react-icons";
 import { useNavigate, useParams } from "react-router-dom";
-import "./CreateSource.css";
 import { CodeEditor, CodeEditorControl, Language } from "@patternfly/react-code-editor";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPost, Payload, Source } from "../../apis/apis";
@@ -34,6 +33,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { connectorSchema } from "@utils/schemas";
 import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 import { formatCode } from "@utils/formatCodeUtils";
+import style from "../../styles/createConnector.module.css";
 
 const ajv = new Ajv();
 
@@ -382,7 +382,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         />
       )}
       {!rawConfiguration && (
-        <PageSection className="create_source-toolbar">
+        <PageSection className={style.createConnector_toolbar}>
           <Toolbar id="source-editor-toggle">
             <ToolbarContent>
               <ToolbarItem>
@@ -434,11 +434,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
               }
               isCenterAligned
               isFilled
-              className={
-                editorSelected === "form-editor"
-                  ? "custom-page-section create_source-page_section"
-                  : "create_source-page_section"
-              }
+            className={`customPageSection ${style.createConnector_pageSection}`}
             >
               {editorSelected === "form-editor" && !rawConfiguration ? (
                 <SourceSinkForm
@@ -462,13 +458,13 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                       variant={formatType === "dbz-platform" ? "danger" : "warning"}
                       isInline
                       title={formatType === "dbz-platform" ? "Invalid JSON: " + codeAlert : formatType === "kafka-connect" ? "Invalid json format" : "Invalid JSON"}
-                      style={{ marginBottom: "20px" }}
+                      className={style.createConnector_alert}
                     >
                       {formatType !== "dbz-platform" && codeAlert}
                     </Alert>
 
                   )}
-                  <div style={{ flex: '1 1 auto', minHeight: 0 }} className="smart-editor">
+                  <div className={`${style.smartEditor} smartEditor`}>
                     <CodeEditor
                       isUploadEnabled
                       isDownloadEnabled
@@ -499,7 +495,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className="create_source-footer">
+              <ActionGroup className={style.createConnector_footer}>
                 <Button
                   variant="primary"
                   isLoading={isLoading}

@@ -1,7 +1,7 @@
 {
     "source": "source",
     "page": {
-        "description": "Lists the available sources configured in the cluster streaming change events from a source database. You can search a source by its name or sort the list by the count of active pipelines using a source."
+        "description": "View the available sources configured to stream change events from source databases. You can search by name or sort the list by the number of active pipelines using each source."
     },
     "create": {
         "title": "Create source",

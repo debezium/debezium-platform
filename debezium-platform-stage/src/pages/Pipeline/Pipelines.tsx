@@ -27,6 +27,7 @@ import {
   ToolbarContent,
   ToolbarGroup,
   ToolbarItem,
+  Tooltip,
 } from "@patternfly/react-core";
 import { PlusIcon, SearchIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
@@ -366,6 +367,11 @@ const Pipelines: React.FunctionComponent = () => {
                             ).map((instance: Pipeline) => (
                               <Tr key={instance.id}>
                                 <Td dataLabel={t("name")}>
+                                  <Tooltip content={
+        <div>
+        View pipeline details for <b>{instance.name}</b><br />
+        </div>
+      }>
                                   <Button
                                     variant="link"
                                     isInline
@@ -373,6 +379,7 @@ const Pipelines: React.FunctionComponent = () => {
                                   >
                                     {instance.name}
                                   </Button>
+                                  </Tooltip>
                                 </Td>
                                 <SourceField pipelineSource={instance.source} />
                                 <DestinationField
