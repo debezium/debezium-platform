@@ -28,7 +28,7 @@ import {
   API_URL
 } from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
-import { useData } from "../../appLayout/AppContext";
+// import { useData } from "../../appLayout/AppContext";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
@@ -145,7 +145,7 @@ const EditSource: React.FunctionComponent = () => {
   };
   const { addNotification } = useNotification();
 
-  const { navigationCollapsed } = useData();
+  // const { navigationCollapsed } = useData();
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
   const [source, setSource] = useState<Source>();

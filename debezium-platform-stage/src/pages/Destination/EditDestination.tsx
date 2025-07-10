@@ -26,7 +26,7 @@ import {
 } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
-import { useData } from "../../appLayout/AppContext";
+// import { useData } from "../../appLayout/AppContext";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
@@ -140,7 +140,7 @@ const EditDestination: React.FunctionComponent = () => {
   const navigateTo = (url: string) => {
     navigate(url);
   };
-  const { navigationCollapsed } = useData();
+  // const { navigationCollapsed } = useData();
   const { addNotification } = useNotification();
 
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
