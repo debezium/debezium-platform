@@ -41,6 +41,8 @@ import TransformGroupNode from "./TransformGroupNode";
 import TransformSelectorNode from "./TransformSelectorNode";
 import TransformCollapsedNode from "./TransformCollapsedNode";
 import UnifiedCustomEdge from "./UnifiedCustomEdge";
+import { selectedDestinationAtom, selectedSourceAtom, selectedTransformAtom } from "@pipelinePage/PipelineDesigner";
+import { useAtom } from "jotai/react";
 
 const nodeTypes = {
   dataSelectorNode: DataSelectorNode,
@@ -58,31 +60,26 @@ const edgeTypes = {
 
 const proOptions = { hideAttribution: true };
 interface CreationFlowTransformProps {
-  updateIfSourceConfigured: (isConfigured: boolean) => void;
-  updateIfDestinationConfigured: (isConfigured: boolean) => void;
   updateSelectedSource: (source: Source) => void;
   updateSelectedDestination: (destination: Destination) => void;
   updateSelectedTransform: (transform: Transform) => void;
   onToggleDrawer: () => void;
-  isDestinationConfigured: boolean;
-  selectedTransform: Transform[];
-  rearrangeTrigger: boolean;
 }
 
 const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
-  updateIfSourceConfigured,
-  updateIfDestinationConfigured,
   updateSelectedSource,
   updateSelectedDestination,
   updateSelectedTransform,
   onToggleDrawer,
-  isDestinationConfigured,
-  selectedTransform,
-  rearrangeTrigger,
 }) => {
   const { darkMode } = useData();
 
   const reactFlowInstance = useReactFlow();
+
+  const [selectedTransform] = useAtom(selectedTransformAtom);
+  const [selectedSource] = useAtom(selectedSourceAtom);
+  const [selectedDestination] = useAtom(selectedDestinationAtom);
+
 
   const refitElements = () => {
     setTimeout(() => {
@@ -130,8 +127,8 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
             buttonText === "Source"
               ? handleSourceModalToggle
               : buttonText === "Destination"
-              ? handleDestinationModalToggle
-              : handleTransformModalToggle
+                ? handleDestinationModalToggle
+                : handleTransformModalToggle
           }
           style={{ paddingRight: 5, paddingLeft: 5, fontSize: ".8em" }}
           icon={<PlusIcon />}
@@ -223,6 +220,103 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     };
   }, [cardButton]);
 
+  useEffect(() => {
+    if (selectedTransform.length > 0) {
+      console.log("transform are selected", selectedTransform);
+
+      const dataSourceNode = {
+        id: "source",
+        data: {
+          connectorType: selectedSource?.type,
+          label: selectedSource?.name || "Source",
+          type: "source",
+          editAction: () => setIsSourceModalOpen(true),
+        },
+        position: { x: 50, y: 80 },
+        type: "dataNode",
+        draggable: false,
+      };
+
+      const linkTransforms = selectedTransform.map((transform, id) => {
+        const newId = `transform_${id + 1}`;
+        const xPosition = 25 + id * 150;
+        const newTransformNode = createNewTransformNode(
+          newId,
+          xPosition,
+          transform.name,
+          // transform.predicate
+        );
+        return newTransformNode;
+      });
+
+      const addTransformNode = {
+        id: "add_transform",
+        data: {
+          label: "SMT2",
+          action: cardButtonTransform(),
+        },
+        position: { x: 25 + selectedTransform.length * 150, y: 40 },
+        style: {
+          zIndex: 10,
+        },
+        targetPosition: "left",
+        type: "addTransformNode",
+        draggable: false,
+        parentId: "transform_group",
+        extent: "parent",
+      };
+
+      const transformGroupNode = {
+        id: "transform_group",
+        data: {
+          label: "Transform",
+          onToggleDrawer: onToggleDrawer,
+          handleCollapsed: handleCollapsed,
+        },
+        position: { x: 260, y: 57 },
+        style: {
+          width: 100 + 150 * selectedTransform.length - 10,
+          height: 80,
+          zIndex: 1,
+        },
+        type: "transformGroupNode",
+        draggable: false,
+      };
+
+      const dataDestinationNode = {
+        id: "destination",
+        data: {
+          connectorType: selectedDestination?.type,
+          label: selectedDestination?.name || "Destination",
+          type: "destination",
+          editAction: () => setIsDestinationModalOpen(true),
+        },
+        position: { x: 450 + 150 * selectedTransform.length, y: 80 },
+        type: "dataNode",
+        draggable: false,
+      };
+
+      setNodes([
+        dataSourceNode,
+        transformGroupNode,
+        ...linkTransforms,
+        addTransformNode,
+        dataDestinationNode,
+      ]);
+
+
+
+    } else {
+      if (selectedSource) {
+        onSourceSelection(selectedSource);
+      }
+      if (selectedDestination) {
+        onDestinationSelection(selectedDestination);
+      }
+    }
+  }, [
+  ]);
+
   const initialNodes = [
     dataSelectorSourceNode,
     transformSelectorNode,
@@ -289,7 +383,14 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
   const selectedTransformRef = useRef(selectedTransform);
   selectedTransformRef.current = selectedTransform;
 
+  const hasMounted = useRef(false);
+
   useEffect(() => {
+    if (!hasMounted.current) {
+      // Skip on the initial load
+      hasMounted.current = true;
+      return;
+    }
     const transformLinkNodes = nodes.filter(
       (node: any) => node.type === "transformLinkNode"
     );
@@ -325,23 +426,23 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
           const matchingNode = filteredTransformLinkNode.find(
             (filteredNode: any) =>
               filteredNode.data.label === selectedTransformRef.current[index]?.name
-            );
-            return {
+          );
+          return {
             ...node,
             data: {
               ...node.data,
               label: selectedTransformRef.current[index]?.name,
               ...(matchingNode?.data.predicate && {
-              predicate: {
-                ...matchingNode.data.predicate,
-              },
+                predicate: {
+                  ...matchingNode.data.predicate,
+                },
               }),
             },
             position: {
               ...node.position,
               x: 25 + index * 150,
             },
-            };
+          };
         }
       );
       const updateAddTransformNode = nodes.filter(
@@ -399,20 +500,21 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
           const matchingNode = filteredTransformLinkNode.find(
             (filteredNode: any) =>
               filteredNode.data.label === selectedTransformRef.current[index]?.name
-            );
+          );
           return {
-          ...node,
-          data: {
-            label: selectedTransformRef.current[index]?.name,
-            ...(matchingNode?.data.predicate && {
-            predicate: {
-              ...matchingNode.data.predicate,
+            ...node,
+            data: {
+              label: selectedTransformRef.current[index]?.name,
+              ...(matchingNode?.data.predicate && {
+                predicate: {
+                  ...matchingNode.data.predicate,
+                },
+              }),
             },
-            }),
-          },
-        }}
+          }
+        }
       );
-     
+
     }
     setNodes((prevNodes: any) => {
       return [
@@ -420,7 +522,17 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         ...updatedTransformLinkNodes,
       ];
     });
-  }, [rearrangeTrigger]);
+  }, [
+    selectedTransform,
+    setNodes,
+  ]);
+
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      hasMounted.current = false;
+    }
+  }, []);
 
   const handleExpand = useCallback(() => {
     const linkTransforms = selectedTransformRef.current.map((transform, id) => {
@@ -530,9 +642,6 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     };
   }, [handleExpand]);
 
-  const isDestinationConfiguredRef = useRef(isDestinationConfigured);
-  isDestinationConfiguredRef.current = isDestinationConfigured;
-
   const handleCollapsed = useCallback(() => {
     setNodes((prevNodes: any) => {
       const destinationNode = prevNodes.find(
@@ -547,17 +656,13 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         },
       };
 
-      const updatedDataSelectorDestinationNode = isDestinationConfiguredRef
-        ? updatedDestinationNode
-        : dataSelectorDestinationNode;
-
       return [
         ...prevNodes.filter(
           (node: any) =>
             !node.id.includes("transform") && node.id !== "destination"
         ),
         TransformCollapsedNode,
-        updatedDataSelectorDestinationNode,
+        updatedDestinationNode,
       ];
     });
     setEdges([
@@ -572,8 +677,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     ]);
   }, [
     TransformCollapsedNode,
-    dataSelectorDestinationNode,
-    isDestinationConfiguredRef,
+    dataSelectorDestinationNode
   ]);
 
   const transformGroupNode = useMemo(() => {
@@ -618,18 +722,15 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
       const transformLinkNode = transformNode.filter((node: any) => {
         return node.id !== "add_transform";
       });
-      // console.log("transformLinkNode", transformLinkNode);
       const transformID =
         noOfTransformNodes === 1
           ? 1
           : +transformLinkNode[transformLinkNode.length - 1].id.split("_")[1] +
-            1;
-      // console.log("transformID", transformID);
+          1;
 
       const newId = `transform_${transformID}`;
       const xPosition = 25 + (noOfTransformNodes - 1) * 150;
 
-      // console.log("xPosition", xPosition);
       const newTransformNode = createNewTransformNode(
         newId,
         xPosition,
@@ -722,7 +823,6 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         type: "dataNode",
         draggable: false,
       };
-      updateIfSourceConfigured(true);
       updateSelectedSource(source);
 
       setNodes((prevNodes: any) => {
@@ -732,14 +832,13 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         ];
       });
 
-      handleSourceModalToggle();
+      setIsSourceModalOpen(false);
     },
-    [updateIfSourceConfigured, updateSelectedSource, handleSourceModalToggle]
+    [updateSelectedSource]
   );
 
   const onDestinationSelection = useCallback(
     (destination: Destination) => {
-      updateIfDestinationConfigured(true);
       updateSelectedDestination(destination);
 
       setNodes((prevNodes: any) => {
@@ -765,12 +864,10 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         ];
       });
 
-      handleDestinationModalToggle();
+      setIsDestinationModalOpen(false);
     },
     [
-      updateIfDestinationConfigured,
       updateSelectedDestination,
-      handleDestinationModalToggle,
     ]
   );
   return (

@@ -84,10 +84,6 @@ const PipelineDesigner: React.FunctionComponent = () => {
 
   const [items, setItems] = React.useState<DraggableObject[]>([]);
 
-  const [isSourceConfigured, setIsSourceConfigured] = React.useState(false);
-  const [isDestinationConfigured, setIsDestinationConfigured] =
-    React.useState(false);
-
   const [selectedSource, setSelectedSource] = useAtom(selectedSourceAtom);
   const [selectedDestination, setSelectedDestination] = useAtom(
     selectedDestinationAtom
@@ -95,8 +91,6 @@ const PipelineDesigner: React.FunctionComponent = () => {
   const [selectedTransform, setSelectedTransform] = useAtom(
     selectedTransformAtom
   );
-
-  const [rearrangeTrigger, setRearrangeTrigger] = React.useState(false);
 
   const [isExpanded, setIsExpanded] = React.useState(false);
   const drawerRef = React.useRef<HTMLDivElement>();
@@ -130,20 +124,6 @@ const PipelineDesigner: React.FunctionComponent = () => {
     setItems(getItems(selectedTransform, handleTempDelete));
     setIsExpanded(false);
   };
-
-  const updateIfSourceConfigured = React.useCallback(
-    (isConfigured: boolean) => {
-      setIsSourceConfigured(isConfigured);
-    },
-    []
-  );
-
-  const updateIfDestinationConfigured = React.useCallback(
-    (isConfigured: boolean) => {
-      setIsDestinationConfigured(isConfigured);
-    },
-    []
-  );
 
   const updateSelectedSource = React.useCallback(
     (source: Source) => {
@@ -179,7 +159,6 @@ const PipelineDesigner: React.FunctionComponent = () => {
     });
 
     setSelectedTransform(...[updatedTransforms]);
-    setRearrangeTrigger((prev) => !prev);
     onToggleDrawer();
   };
 
@@ -251,17 +230,10 @@ const PipelineDesigner: React.FunctionComponent = () => {
                   <CardBody isFilled style={{ padding: "15px" }}>
                     <ReactFlowProvider>
                       <CreationFlowTransform
-                        updateIfSourceConfigured={updateIfSourceConfigured}
-                        updateIfDestinationConfigured={
-                          updateIfDestinationConfigured
-                        }
                         updateSelectedSource={updateSelectedSource}
                         updateSelectedDestination={updateSelectedDestination}
                         onToggleDrawer={onToggleDrawer}
                         updateSelectedTransform={updateSelectedTransform}
-                        selectedTransform={selectedTransform}
-                        isDestinationConfigured={isDestinationConfigured}
-                        rearrangeTrigger={rearrangeTrigger}
                       />
                     </ReactFlowProvider>
                   </CardBody>
@@ -274,7 +246,8 @@ const PipelineDesigner: React.FunctionComponent = () => {
                       <Button
                         variant="primary"
                         isDisabled={
-                          !(isSourceConfigured && isDestinationConfigured)
+                          selectedDestination === undefined ||
+                          selectedSource === undefined
                         }
                         onClick={() =>
                           navigateTo(
