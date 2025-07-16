@@ -13,6 +13,7 @@ import ReactFlow, {
   MiniMap,
   PanOnScrollMode,
   useReactFlow,
+  Panel,
 } from "reactflow";
 import TransformAdditionNode from "./TransformAdditionNode";
 
@@ -28,7 +29,7 @@ import {
   Transform,
   TransformData,
 } from "../../apis/apis";
-import { PlusIcon } from "@patternfly/react-icons";
+import { PlusIcon, UploadIcon } from "@patternfly/react-icons";
 import "./CreationFlow.css";
 import PipelineSourceModel from "./PipelineSourceModel";
 import PipelineDestinationModel from "./PipelineDestinationModel";
@@ -43,6 +44,7 @@ import TransformCollapsedNode from "./TransformCollapsedNode";
 import UnifiedCustomEdge from "./UnifiedCustomEdge";
 import { selectedDestinationAtom, selectedSourceAtom, selectedTransformAtom } from "@pipelinePage/PipelineDesigner";
 import { useAtom } from "jotai/react";
+import ServerConfigModal from "@components/ServerConfigModal";
 
 const nodeTypes = {
   dataSelectorNode: DataSelectorNode,
@@ -105,6 +107,8 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false);
   const [isTransformModalOpen, setIsTransformModalOpen] = useState(false);
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
+
+  const [isDbzServerConfigModalOpen, setIsDbzServerConfigModalOpen] = useState(false);
 
   const handleSourceModalToggle = useCallback(() => {
     setIsSourceModalOpen(!isSourceModalOpen);
@@ -893,6 +897,9 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
             instance.fitView({ padding: 0.2 });
           }}
         >
+          <Panel position="top-right"> <Button variant="secondary" icon={<UploadIcon />} onClick={() => setIsDbzServerConfigModalOpen(!isDbzServerConfigModalOpen)}>
+            DBZ server config
+          </Button></Panel>
           <MiniMap />
           <Background
             style={{
@@ -958,6 +965,11 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
           />
         </ModalBody>
       </Modal>
+      <ServerConfigModal
+        isModalOpen={isDbzServerConfigModalOpen}
+        toggleModal={() => setIsDbzServerConfigModalOpen(!isDbzServerConfigModalOpen)}
+      />
+
     </>
   );
 };
