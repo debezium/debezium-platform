@@ -968,6 +968,9 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
       <ServerConfigModal
         isModalOpen={isDbzServerConfigModalOpen}
         toggleModal={() => setIsDbzServerConfigModalOpen(!isDbzServerConfigModalOpen)}
+        updateSelectedSource={onSourceSelection}
+        updateSelectedDestination={onDestinationSelection}
+        updateSelectedTransform={updateSelectedTransform}
       />
 
     </>
