@@ -981,6 +981,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         updateSelectedSource={onSourceSelection}
         updateSelectedDestination={onDestinationSelection}
         updateSelectedTransform={updateSelectedTransform}
+        handleAddTransform={handleAddTransform}
       />
 
     </>

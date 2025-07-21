@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { FileRejection } from 'react-dropzone';
 import { faker } from '@faker-js/faker';
 import "./ServerConfigModal.css"
-import { formatCode } from "@utils/formatCodeUtils";
-import { createPost, Destination, Payload, Source, Transform } from "src/apis";
+import { extractTransformsAndPredicates, formatCode } from "@utils/formatCodeUtils";
+import { createPost, Destination, Payload, Source, Transform, TransformData } from "src/apis";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { getConnectorTypeName } from "@utils/helpers";
@@ -16,6 +16,7 @@ interface ServerConfigModalProps {
     updateSelectedSource: (source: Source) => void;
     updateSelectedDestination: (destination: Destination) => void;
     updateSelectedTransform: (transform: Transform) => void;
+    handleAddTransform: (transform: TransformData) => void;
 }
 
 interface readFile {
@@ -33,6 +34,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     updateSelectedSource,
     updateSelectedDestination,
     // updateSelectedTransform
+    handleAddTransform
 }) => {
 
     const { addNotification } = useNotification();
@@ -44,7 +46,8 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     const [statusIcon, setStatusIcon] = useState('inProgress');
 
     const [createdSource, setCreatedSource] = useState<Source | null>(null);
-    const [createdTransform, setCreatedTransform] = useState<Transform | null>(null);
+    const [createdTransform, setCreatedTransform] = useState<Transform[] | null>(null);
+    const [createdTransformData, setCreatedTransformData] = useState<TransformData[] | null>(null);
     const [createdDestination, setCreatedDestination] = useState<Destination | null>(null);
 
 
@@ -135,8 +138,6 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                 `Failed to create ${(response.data as Source)?.name}: ${response.error}`
             );
         } else {
-            // console.log("Source created successfully:", response.data);
-            //   modelLoaded && onSelection && onSelection(response.data as Source);
             resourceType === "source" && setCreatedSource(response.data as Source);
             resourceType === "source" && updateSelectedSource(response.data as Source);
             resourceType === "destination" && setCreatedDestination(response.data as Destination);
@@ -150,6 +151,8 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         }
     };
 
+
+
     const [isCreationLoading, setIsCreationLoading] = useState(false);
 
     const createPipelineSource = async () => {
@@ -160,17 +163,40 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         await createNewSource(sourcePayload, "source");
     }
 
+    const createNewTransform = async (payload: Payload) => {
+        const response = await createPost(`${API_URL}/api/transforms`, payload) as { data: TransformData | null, error: string | null };
+        if (response.error) {
+            addNotification(
+                "danger",
+                `Transforms creation failed`,
+                `Failed to create ${(response.data as Source)?.name}: ${response.error}`
+            );
+        } else {
+            setCreatedTransform([...(createdTransform || []), { name: response.data?.name, id: response.data?.id } as Transform]);
+            setCreatedTransformData([...(createdTransformData || []), response.data as TransformData]);
+            handleAddTransform(response.data as TransformData);
+            addNotification(
+                "success",
+                `Create successful`,
+                `Transforms "${(response.data as Source).name}" created successfully.`
+            );
+            setCreatedPipelineResources((prevResources) => [...prevResources, "transform"]);
+        }
+    };
+
     const createPipelineTransform = async () => {
         setCreatePipelineResource("transform");
-        // extractTransformsAndPredicates(dbzServerFileConfig);
-        setCreatedPipelineResources((prevResources) => [...prevResources, "transform"]);
+        const transformPayloads = extractTransformsAndPredicates(dbzServerFileConfig);
+        for (const transformPayload of transformPayloads) {
+            await createNewTransform(transformPayload);
+        }
+
     }
 
     const createPipelineDestination = async () => {
         setCreatePipelineResource("destination");
         const destinationPayload = formatCode("destination", "properties-file", dbzServerFileConfig);
         const name = `dbz-${faker.word.adjective()}-${faker.animal.type()}-${faker.number.int(1000)}`;
-        // console.log("Source payload for destination:", name);
         destinationPayload.name = name;
         await createNewSource(destinationPayload, "destination");
         setCreatePipelineResource("done");
@@ -186,6 +212,10 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         await createPipelineDestination();
         await new Promise((resolve) => setTimeout(resolve, 500));
         setIsCreationLoading(false);
+    }
+
+    const getTransformNames = () => {
+        return createdTransform?.map((transform) => transform.name).join(", ") || "";
     }
 
     return (
@@ -233,7 +263,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                     variant={createPipelineResource !== "transform" ? (createdPipelineResources.includes("transform") ? "success" : "pending") : undefined}
                                     isCurrent={createPipelineResource === "transform" ? true : undefined}
                                     icon={createPipelineResource === "transform" ? <InProgressIcon /> : !createdPipelineResources.includes("transform") ? <PendingIcon /> : undefined}
-                                    description={!!createdTransform ? "Created needed transforms" : createdPipelineResources.includes("transform") ? "": "Creating transforms..."}
+                                    description={createdTransform ? <>Created <b><i>{getTransformNames()}</i></b> transforms</> : createdPipelineResources.includes("transform") ? "" : "Creating transforms..."}
                                     id="transform-step"
                                     titleId="transform-step-title"
                                     aria-label="Create pipeline transformations"
@@ -244,7 +274,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                     variant={createPipelineResource !== "destination" ? (createdPipelineResources.includes("destination") ? "success" : "pending") : undefined}
                                     isCurrent={createPipelineResource === "destination" ? true : undefined}
                                     icon={createPipelineResource === "destination" ? <InProgressIcon /> : !createdPipelineResources.includes("destination") ? <PendingIcon /> : undefined}
-                                    description={!!createdDestination ? <>Created a {getConnectorTypeName(createdDestination?.type || "")} connector <b><i>{createdDestination?.name}</i></b></> : "Creating a destination connector..."}
+                                    description={createdDestination ? <>Created a {getConnectorTypeName(createdDestination?.type || "")} connector <b><i>{createdDestination?.name}</i></b></> : "Creating a destination connector..."}
                                     id="destination-step"
                                     titleId="destination-step-title"
                                     aria-label="Create a destination connector"
