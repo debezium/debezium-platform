@@ -8,13 +8,14 @@ import { formatCode } from "@utils/formatCodeUtils";
 import { createPost, Destination, Payload, Source, Transform } from "src/apis";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
+import { getConnectorTypeName } from "@utils/helpers";
 
 interface ServerConfigModalProps {
     isModalOpen: boolean;
     toggleModal: (event: KeyboardEvent | React.MouseEvent<Element>) => void;
-      updateSelectedSource: (source: Source) => void;
-      updateSelectedDestination: (destination: Destination) => void;
-      updateSelectedTransform: (transform: Transform) => void;
+    updateSelectedSource: (source: Source) => void;
+    updateSelectedDestination: (destination: Destination) => void;
+    updateSelectedTransform: (transform: Transform) => void;
 }
 
 interface readFile {
@@ -43,6 +44,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     const [statusIcon, setStatusIcon] = useState('inProgress');
 
     const [createdSource, setCreatedSource] = useState<Source | null>(null);
+    const [createdTransform, setCreatedTransform] = useState<Transform | null>(null);
     const [createdDestination, setCreatedDestination] = useState<Destination | null>(null);
 
 
@@ -133,7 +135,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                 `Failed to create ${(response.data as Source)?.name}: ${response.error}`
             );
         } else {
-            console.log("Source created successfully:", response.data);
+            // console.log("Source created successfully:", response.data);
             //   modelLoaded && onSelection && onSelection(response.data as Source);
             resourceType === "source" && setCreatedSource(response.data as Source);
             resourceType === "source" && updateSelectedSource(response.data as Source);
@@ -153,22 +155,24 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     const createPipelineSource = async () => {
         setCreatePipelineResource("source");
         const sourcePayload = formatCode("source", "properties-file", dbzServerFileConfig);
-        const name = `${faker.word.adjective()}-${faker.animal.type()}-${faker.number.int(1000)}`;
+        const name = `dbz-${faker.word.verb()}-${faker.word.noun()}-${faker.number.int(1000)}`;
         sourcePayload.name = name;
         await createNewSource(sourcePayload, "source");
     }
 
     const createPipelineTransform = async () => {
         setCreatePipelineResource("transform");
+        // extractTransformsAndPredicates(dbzServerFileConfig);
         setCreatedPipelineResources((prevResources) => [...prevResources, "transform"]);
     }
 
     const createPipelineDestination = async () => {
         setCreatePipelineResource("destination");
-        const sourcePayload = formatCode("destination", "properties-file", dbzServerFileConfig);
-        const name = `${faker.word.adjective()}-${faker.animal.type()}-${faker.number.int(1000)}`;
-        sourcePayload.name = name;
-        await createNewSource(sourcePayload, "destination");
+        const destinationPayload = formatCode("destination", "properties-file", dbzServerFileConfig);
+        const name = `dbz-${faker.word.adjective()}-${faker.animal.type()}-${faker.number.int(1000)}`;
+        // console.log("Source payload for destination:", name);
+        destinationPayload.name = name;
+        await createNewSource(destinationPayload, "destination");
         setCreatePipelineResource("done");
     }
 
@@ -182,54 +186,46 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         await createPipelineDestination();
         await new Promise((resolve) => setTimeout(resolve, 500));
         setIsCreationLoading(false);
-
-
-        // console.log("Creating pipeline resource with file", formatCode("source", "properties-file", dbzServerFile));
-
     }
-
 
     return (
         <Modal
-            variant={ModalVariant.medium}
+            variant={ModalVariant.large}
             isOpen={isModalOpen}
             onClose={toggleModal}
-            aria-labelledby="modal-with-description-title"
-            aria-describedby="modal-box-body-with-description"
+            aria-labelledby="debezium-server-config-modal"
+            aria-describedby="debezium-server-config-modal"
         >
             <ModalHeader
                 title="Create pipeline resources using Debezium server configuration"
-                labelId="modal-with-description-title"
-                description="Upload a Debezium server configuration file to automaticly create a pipeline. On uploading a file, the pipeline will be created by srychinsly  creating the source, transforms and destination defined finaly using these creased resource to create a pipeline."
+                labelId="debezium-server-config-modal"
+                description="Upload a Debezium server configuration file to automatically create a pipeline. On uploading a file, the pipeline will be created by synchronously creating the source, transforms and destination defined finally using these creased resource to create a pipeline."
 
             />
-
-            <ModalBody tabIndex={0} id="modal-box-body-with-description">
+            <ModalBody tabIndex={0}>
                 {!!modalText && <Alert
                     isInline
                     variant="warning"
                     title="Unsupported file"
-                    actionClose={<AlertActionCloseButton onClose={() => console.log('Clicked the close button')} />}
+                    actionClose={<AlertActionCloseButton onClose={() => setModalText("")} />}
                     style={{ marginBottom: '1rem' }}
                 >
                     <p>{modalText}</p>
                 </Alert>}
                 {showStatus ? (
                     <>
-
                         {createPipelineResource !== "" ? (
                             <ProgressStepper
-                                // isVertical
-                                aria-label="Basic progress stepper with alignment"
+                                aria-label="Pipeline resource creation progress stepper"
                             >
                                 <ProgressStep
                                     variant={createPipelineResource !== "source" ? (createdPipelineResources.includes("source") ? "success" : "pending") : undefined}
                                     isCurrent={createPipelineResource === "source" ? true : undefined}
                                     icon={createPipelineResource === "source" ? <InProgressIcon /> : !createdPipelineResources.includes("source") ? <PendingIcon /> : undefined}
-                                    description={createPipelineResource === "source" ? "Creating a postgres source connector" : <>Created a postgres connector <b><i>{createdSource?.name}</i></b></>}
-                                    id="basic-alignment-step1"
-                                    titleId="basic-alignment-step1-title"
-                                    aria-label="completed step, step with success"
+                                    description={createPipelineResource === "source" ? "Creating a source connector..." : <>Created a {getConnectorTypeName(createdSource?.type || "")} connector <b><i>{createdSource?.name}</i></b></>}
+                                    id="source-step"
+                                    titleId="source-step-title"
+                                    aria-label="Create a source connector"
                                 >
                                     Source
                                 </ProgressStep>
@@ -237,10 +233,10 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                     variant={createPipelineResource !== "transform" ? (createdPipelineResources.includes("transform") ? "success" : "pending") : undefined}
                                     isCurrent={createPipelineResource === "transform" ? true : undefined}
                                     icon={createPipelineResource === "transform" ? <InProgressIcon /> : !createdPipelineResources.includes("transform") ? <PendingIcon /> : undefined}
-                                    description={createPipelineResource === "transform" ? "Creating a pipeline transform" : "Done creating a pipeline transform"}
-                                    id="basic-alignment-step1"
-                                    titleId="basic-alignment-step1-title"
-                                    aria-label="completed step, step with success"
+                                    description={!!createdTransform ? "Created needed transforms" : createdPipelineResources.includes("transform") ? "": "Creating transforms..."}
+                                    id="transform-step"
+                                    titleId="transform-step-title"
+                                    aria-label="Create pipeline transformations"
                                 >
                                     Transforms
                                 </ProgressStep>
@@ -248,10 +244,10 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                     variant={createPipelineResource !== "destination" ? (createdPipelineResources.includes("destination") ? "success" : "pending") : undefined}
                                     isCurrent={createPipelineResource === "destination" ? true : undefined}
                                     icon={createPipelineResource === "destination" ? <InProgressIcon /> : !createdPipelineResources.includes("destination") ? <PendingIcon /> : undefined}
-                                    description={createPipelineResource === "destination" ? "Creating a kafka destination connector" : <>Created a kafka connector <b><i>{createdDestination?.name}</i></b></>}
-                                    id="basic-alignment-step2"
-                                    titleId="basic-alignment-step2-title"
-                                    aria-label="step with info"
+                                    description={!!createdDestination ? <>Created a {getConnectorTypeName(createdDestination?.type || "")} connector <b><i>{createdDestination?.name}</i></b></> : "Creating a destination connector..."}
+                                    id="destination-step"
+                                    titleId="destination-step-title"
+                                    aria-label="Create a destination connector"
                                 >
                                     Destination
                                 </ProgressStep>
@@ -280,11 +276,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                 <TextArea style={{ height: "300px" }} value={readFileData.map((file) => file.data).join('\n')} />
                             </>
                         )}
-
-
-
                     </>
-
                 ) : (
                     <MultipleFileUpload
                         onFileDrop={handleFileDrop}
@@ -317,32 +309,25 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                 ))}
                             </MultipleFileUploadStatus>
                         )}
-
                     </MultipleFileUpload>
                 )}
-
-
             </ModalBody>
             {!!showStatus && (
                 <ModalFooter>
-                    {createPipelineResource === "done" ? ( <Button key="confirm" variant="primary" onClick={toggleModal} >
+                    {createPipelineResource === "done" ? (<Button key="confirm" variant="primary" onClick={toggleModal} >
                         Done
-                    </Button>):( 
+                    </Button>) : (
                         <Button key="confirm" variant="primary" onClick={handleCreatePipelineResource} isLoading={isCreationLoading}>
-                       Create
-                    </Button>
-                     )}
-                   
-                    
+                            Create
+                        </Button>
+                    )}
                     <Button key="cancel" variant="link" onClick={() => { }}>
                         Cancel
                     </Button>
                 </ModalFooter>
             )}
-
         </Modal>
     );
-
 };
 
 export default ServerConfigModal;

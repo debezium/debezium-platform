@@ -21,7 +21,7 @@ import DataNode from "./DataNode";
 
 import { MdLogin, MdLogout } from "react-icons/md";
 import DataSelectorNode from "./DataSelectorNode";
-import { Button, Modal, ModalBody, ModalHeader } from "@patternfly/react-core";
+import { Button, Modal, ModalBody, ModalHeader, Tooltip } from "@patternfly/react-core";
 import {
   Destination,
   Predicate,
@@ -897,9 +897,19 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
             instance.fitView({ padding: 0.2 });
           }}
         >
-          <Panel position="top-right"> <Button variant="secondary" icon={<UploadIcon />} onClick={() => setIsDbzServerConfigModalOpen(!isDbzServerConfigModalOpen)}>
-            DBZ server config
-          </Button></Panel>
+          <Panel position="top-right">
+            <Tooltip
+              content={
+                <div>
+                  Upload the DBZ server config to create new source, transformations and destination for a pipeline.
+                  <br />
+                </div>
+              }>
+              <Button variant="secondary" icon={<UploadIcon />} onClick={() => setIsDbzServerConfigModalOpen(!isDbzServerConfigModalOpen)}>
+                DBZ server config
+              </Button>
+            </Tooltip>
+          </Panel>
           <MiniMap />
           <Background
             style={{
