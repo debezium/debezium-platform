@@ -36,5 +36,12 @@
         "title": "Delete transform",
         "description": "Enter {{val}} to delete transform",
         "confirm": "Delete"
+    },
+    "transformModal":{
+        "title": "Select a transform",
+        "description": "Select a already configured transform from the list below",
+        "createTitle": "Create a transform",
+        "createDescription": "Create a new transform for your data pipeline.",
+        "formDescription": "Fill out the below form or use the smart editor to create a transform. If you already have a configuration file, you can create a transform by uploading it in the smart editor."
     }
 }

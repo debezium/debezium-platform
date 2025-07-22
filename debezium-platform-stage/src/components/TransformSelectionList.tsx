@@ -17,10 +17,11 @@ import {
 import { API_URL } from "../utils/constants";
 import { useQuery } from "react-query";
 import { useTranslation } from "react-i18next";
+import { getActivePipelineCount } from "@utils/pipelineUtils";
 
 interface ITransformSelectionListProps {
   data: TransformApiResponse;
-  onSelection: (selection: TransformData) => void;
+  onSelection: (selection: TransformData[]) => void;
 }
 
 const TransformSelectionList: React.FunctionComponent<
@@ -28,7 +29,7 @@ const TransformSelectionList: React.FunctionComponent<
 > = ({ data, onSelection }) => {
   const { t } = useTranslation();
   const {
-    data: _pipelineList = [],
+    data: pipelineList = [],
     error: _pipelineError,
     isLoading: _isPipelineLoading,
   } = useQuery<Pipeline[], Error>(
@@ -55,7 +56,7 @@ const TransformSelectionList: React.FunctionComponent<
               data.map((instance) => (
                 <Tr
                   key={instance.id}
-                  onRowClick={() => onSelection(instance)}
+                  onRowClick={() => onSelection([instance])}
                   isSelectable
                   isClickable
                 >
@@ -65,12 +66,10 @@ const TransformSelectionList: React.FunctionComponent<
                   </Td>
                   <Td dataLabel={t('active')}>
                     <Label icon={<TagIcon />} color="blue">
-                      {/* {getActivePipelineCount(
+                      {getActivePipelineCount(
                         pipelineList,
-                        instance.id,
-                        tableType
-                      )} */}
-                      0
+                        instance.id
+                      )}
                     </Label>
                   </Td>
                 </Tr>
@@ -80,12 +79,12 @@ const TransformSelectionList: React.FunctionComponent<
       ) : (
         <EmptyState
           headingLevel="h2"
-          titleText={t('emptyState.title',{val: "Transform"})}
+          titleText={t('emptyState.title', { val: "Transform" })}
           icon={DataProcessorIcon}
           variant={EmptyStateVariant.lg}
         >
           <EmptyStateBody>
-          {t('emptyState.shortDescription',{val: "Transform"})}
+            {t('emptyState.shortDescription', { val: "Transform" })}
           </EmptyStateBody>
         </EmptyState>
       )}

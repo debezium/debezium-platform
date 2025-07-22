@@ -47,7 +47,7 @@ interface PipelineEditFlowProps {
   sourceName: string;
   sourceType: string;
   selectedTransform: Transform[];
-  updateSelectedTransform: (transform: Transform) => void;
+  updateSelectedTransform: (transform: Transform[]) => void;
   destinationName: string;
   destinationType: string;
   openTransformDrawer: () => void;
@@ -65,7 +65,7 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
   const { darkMode } = useData();
 
   const reactFlowInstance = useReactFlow();
-  
+
   const refitElements = useCallback(() => {
     setTimeout(() => {
       reactFlowInstance.fitView({
@@ -343,8 +343,108 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
     });
   }, [TransformCollapsedNode]);
 
+  // const handleAddTransform = useCallback(
+  //   (transform: TransformData) => {
+  //     const transformNode = nodes.filter((node: any) => {
+  //       return node.parentId === "transform_group";
+  //     });
+  //     let noOfTransformNodes = transformNode.length;
+  //     if (noOfTransformNodes === 0) {
+  //       handleProcessor();
+  //       noOfTransformNodes = 1;
+  //     }
+  //     const transformLinkNode = transformNode.filter((node: any) => {
+  //       return node.id !== "add_transform";
+  //     });
+  //     const transformID =
+  //       noOfTransformNodes === 1
+  //         ? 1
+  //         : +transformLinkNode[transformLinkNode.length - 1].id.split("_")[1] +
+  //           1;
+
+  //     const newId = `transform_${transformID}`;
+  //     const xPosition = 25 + (noOfTransformNodes - 1) * 150;
+
+  //     const newTransformNode = createNewTransformNode(
+  //       newId,
+  //       xPosition,
+  //       transform.name,
+  //       transform.predicate
+  //     );
+
+  //     setNodes((prevNodes: any) => {
+  //       const addTransformNode = prevNodes.find(
+  //         (node: any) => node.id === "add_transform"
+  //       );
+  //       const transformGroupNode = prevNodes.find(
+  //         (node: any) => node.id === "transform_group"
+  //       );
+  //       const dataSelectorDestinationNode = prevNodes.find(
+  //         (node: any) => node.id === "destination"
+  //       );
+
+  //       const updatedAddTransformNode = {
+  //         ...addTransformNode,
+  //         position: {
+  //           ...addTransformNode.position,
+  //           x: addTransformNode.position.x + 150,
+  //         },
+  //       };
+  //       const updatedDataSelectorDestinationNode = {
+  //         ...dataSelectorDestinationNode,
+  //         position: {
+  //           ...dataSelectorDestinationNode.position,
+  //           x: dataSelectorDestinationNode.position.x + 150,
+  //         },
+  //       };
+  //       const updatedTransformGroupNode = {
+  //         ...transformGroupNode,
+  //         style: {
+  //           ...transformGroupNode.style,
+  //           width: transformGroupNode.style.width + 150,
+  //         },
+  //       };
+
+  //       return [
+  //         ...prevNodes.filter(
+  //           (node: any) =>
+  //             node.id !== "add_transform" &&
+  //             node.id !== "transform_group" &&
+  //             node.id !== "destination"
+  //         ),
+  //         newTransformNode,
+  //         updatedAddTransformNode,
+  //         updatedTransformGroupNode,
+  //         updatedDataSelectorDestinationNode,
+  //       ];
+  //     });
+  //     let newEdge: {
+  //       id: string;
+  //       source: string;
+  //       target: string;
+  //       data: { throughNodeNo: number };
+  //       type: string;
+  //     }[] = [];
+
+  //     newEdge = [
+  //       {
+  //         id: "complete-multi-flow-path",
+  //         source: "source",
+  //         target: "destination",
+  //         type: "editUnifiedCustomEdge",
+  //         data: { throughNodeNo: noOfTransformNodes },
+  //       },
+  //     ];
+
+  //     setEdges([...newEdge]);
+  //     updateSelectedTransform({ name: transform.name, id: transform.id });
+  //     setIsTransformModalOpen(false);
+  //   },
+  //   [nodes, updateSelectedTransform, handleProcessor]
+  // );
+
   const handleAddTransform = useCallback(
-    (transform: TransformData) => {
+    (transforms: TransformData[]) => {
       const transformNode = nodes.filter((node: any) => {
         return node.parentId === "transform_group";
       });
@@ -360,17 +460,23 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
         noOfTransformNodes === 1
           ? 1
           : +transformLinkNode[transformLinkNode.length - 1].id.split("_")[1] +
-            1;
+          1;
 
-      const newId = `transform_${transformID}`;
-      const xPosition = 25 + (noOfTransformNodes - 1) * 150;
+      const newTransformNode: any[] = [];
 
-      const newTransformNode = createNewTransformNode(
-        newId,
-        xPosition,
-        transform.name,
-        transform.predicate
-      );
+      transforms.forEach((transform, index) => {
+        const newId = `transform_${transformID + index}`;
+        const xPosition = 25 + (noOfTransformNodes + index - 1) * 150;
+
+        newTransformNode.push(
+          createNewTransformNode(
+            newId,
+            xPosition,
+            transform.name,
+            transform.predicate
+          )
+        );
+      });
 
       setNodes((prevNodes: any) => {
         const addTransformNode = prevNodes.find(
@@ -387,21 +493,21 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
           ...addTransformNode,
           position: {
             ...addTransformNode.position,
-            x: addTransformNode.position.x + 150,
+            x: addTransformNode.position.x + 150 * transforms.length,
           },
         };
         const updatedDataSelectorDestinationNode = {
           ...dataSelectorDestinationNode,
           position: {
             ...dataSelectorDestinationNode.position,
-            x: dataSelectorDestinationNode.position.x + 150,
+            x: dataSelectorDestinationNode.position.x + 150 * transforms.length,
           },
         };
         const updatedTransformGroupNode = {
           ...transformGroupNode,
           style: {
             ...transformGroupNode.style,
-            width: transformGroupNode.style.width + 150,
+            width: transformGroupNode.style.width + 150 * transforms.length,
           },
         };
 
@@ -412,7 +518,7 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
               node.id !== "transform_group" &&
               node.id !== "destination"
           ),
-          newTransformNode,
+          ...newTransformNode,
           updatedAddTransformNode,
           updatedTransformGroupNode,
           updatedDataSelectorDestinationNode,
@@ -431,13 +537,18 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
           id: "complete-multi-flow-path",
           source: "source",
           target: "destination",
-          type: "editUnifiedCustomEdge",
+          type: "unifiedCustomEdge",
           data: { throughNodeNo: noOfTransformNodes },
         },
       ];
 
+      const updatedTransforms = transforms.map((transform) => ({
+        name: transform.name,
+        id: transform.id
+      }));
+
       setEdges([...newEdge]);
-      updateSelectedTransform({ name: transform.name, id: transform.id });
+      updateSelectedTransform(updatedTransforms);
       setIsTransformModalOpen(false);
     },
     [nodes, updateSelectedTransform, handleProcessor]
@@ -619,7 +730,7 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
 
   return (
     <>
-       <div
+      <div
         ref={reactFlowWrapper}
         style={{
           width: "100%",

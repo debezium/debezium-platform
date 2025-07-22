@@ -45,6 +45,7 @@ import UnifiedCustomEdge from "./UnifiedCustomEdge";
 import { selectedDestinationAtom, selectedSourceAtom, selectedTransformAtom } from "@pipelinePage/PipelineDesigner";
 import { useAtom } from "jotai/react";
 import ServerConfigModal from "@components/ServerConfigModal";
+import { useTranslation } from "react-i18next";
 
 const nodeTypes = {
   dataSelectorNode: DataSelectorNode,
@@ -64,7 +65,7 @@ const proOptions = { hideAttribution: true };
 interface CreationFlowTransformProps {
   updateSelectedSource: (source: Source) => void;
   updateSelectedDestination: (destination: Destination) => void;
-  updateSelectedTransform: (transform: Transform) => void;
+  updateSelectedTransform: (transform: Transform[]) => void;
   onToggleDrawer: () => void;
 }
 
@@ -74,6 +75,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
   updateSelectedTransform,
   onToggleDrawer,
 }) => {
+    const { t } = useTranslation();
   const { darkMode } = useData();
 
   const reactFlowInstance = useReactFlow();
@@ -714,7 +716,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
   }, [addTransformNode, transformGroupNode]);
 
   const handleAddTransform = useCallback(
-    (transform: TransformData) => {
+    (transforms: TransformData[]) => {
       const transformNode = nodes.filter((node: any) => {
         return node.parentId === "transform_group";
       });
@@ -732,15 +734,21 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
           : +transformLinkNode[transformLinkNode.length - 1].id.split("_")[1] +
           1;
 
-      const newId = `transform_${transformID}`;
-      const xPosition = 25 + (noOfTransformNodes - 1) * 150;
+      const newTransformNode: any[] = [];
 
-      const newTransformNode = createNewTransformNode(
-        newId,
-        xPosition,
-        transform.name,
-        transform.predicate
-      );
+      transforms.forEach((transform, index) => {
+        const newId = `transform_${transformID + index}`;
+        const xPosition = 25 + (noOfTransformNodes + index - 1) * 150;
+
+        newTransformNode.push(
+          createNewTransformNode(
+            newId,
+            xPosition,
+            transform.name,
+            transform.predicate
+          )
+        );
+      });
 
       setNodes((prevNodes: any) => {
         const addTransformNode = prevNodes.find(
@@ -757,21 +765,21 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
           ...addTransformNode,
           position: {
             ...addTransformNode.position,
-            x: addTransformNode.position.x + 150,
+            x: addTransformNode.position.x + 150 * transforms.length,
           },
         };
         const updatedDataSelectorDestinationNode = {
           ...dataSelectorDestinationNode,
           position: {
             ...dataSelectorDestinationNode.position,
-            x: dataSelectorDestinationNode.position.x + 150,
+            x: dataSelectorDestinationNode.position.x + 150 * transforms.length,
           },
         };
         const updatedTransformGroupNode = {
           ...transformGroupNode,
           style: {
             ...transformGroupNode.style,
-            width: transformGroupNode.style.width + 150,
+            width: transformGroupNode.style.width + 150 * transforms.length,
           },
         };
 
@@ -782,7 +790,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
               node.id !== "transform_group" &&
               node.id !== "destination"
           ),
-          newTransformNode,
+          ...newTransformNode,
           updatedAddTransformNode,
           updatedTransformGroupNode,
           updatedDataSelectorDestinationNode,
@@ -806,8 +814,13 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         },
       ];
 
+      const updatedTransforms = transforms.map((transform) => ({
+        name: transform.name,
+        id: transform.id
+      }));
+
       setEdges([...newEdge]);
-      updateSelectedTransform({ name: transform.name, id: transform.id });
+      updateSelectedTransform(updatedTransforms);
       setIsTransformModalOpen(false);
     },
     [nodes, updateSelectedTransform, handleProcessor]
@@ -901,12 +914,12 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
             <Tooltip
               content={
                 <div>
-                  Upload the DBZ server config to create new source, transformations and destination for a pipeline.
+                  {t('pipeline:dbzServerTooltip')}
                   <br />
                 </div>
               }>
               <Button variant="secondary" icon={<UploadIcon />} onClick={() => setIsDbzServerConfigModalOpen(!isDbzServerConfigModalOpen)}>
-                DBZ server config
+                {t('pipeline:dbzServerButton')}
               </Button>
             </Tooltip>
           </Panel>
@@ -980,7 +993,6 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         toggleModal={() => setIsDbzServerConfigModalOpen(!isDbzServerConfigModalOpen)}
         updateSelectedSource={onSourceSelection}
         updateSelectedDestination={onDestinationSelection}
-        updateSelectedTransform={updateSelectedTransform}
         handleAddTransform={handleAddTransform}
       />
 

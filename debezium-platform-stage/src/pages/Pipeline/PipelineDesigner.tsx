@@ -140,8 +140,8 @@ const PipelineDesigner: React.FunctionComponent = () => {
   );
 
   const updateSelectedTransform = React.useCallback(
-    (transform: Transform) => {
-      setSelectedTransform((prevTransforms) => [...prevTransforms, transform]);
+    (transforms: Transform[]) => {
+      setSelectedTransform((prevTransforms) => [...prevTransforms, ...transforms]);
     },
     [setSelectedTransform]
   );

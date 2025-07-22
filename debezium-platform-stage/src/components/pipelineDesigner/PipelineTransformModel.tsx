@@ -14,14 +14,17 @@ import { API_URL } from "../../utils/constants";
 import { useQuery } from "react-query";
 import TransformSelectionList from "@components/TransformSelectionList";
 import { CreateTransforms } from "src/pages/Transforms";
+import { useTranslation } from "react-i18next";
+
 
 type PipelineTransformModelProps = {
-  onTransformSelection: (source: TransformData) => void;
+  onTransformSelection: (transform: TransformData[]) => void;
 };
 
 const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
   onTransformSelection,
 }) => {
+  const { t } = useTranslation();
   const id1 = "pipeline-transform-select";
   const id2 = "pipeline-transform-create";
   const [isCreateChecked, setIsCreateChecked] = useState(id1);
@@ -63,10 +66,10 @@ const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
                 onChange,
               }}
             >
-              <CardTitle>Select a transform</CardTitle>
+              <CardTitle>{t('transform:transformModal.title')}</CardTitle>
             </CardHeader>
             <CardBody>
-              Select a already configured transform from the list below
+            {t('transform:transformModal.description')}
             </CardBody>
           </Card>
         </FlexItem>
@@ -86,9 +89,9 @@ const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
                 onChange,
               }}
             >
-              <CardTitle>Create a transform</CardTitle>
+              <CardTitle>{t('transform:transformModal.createTitle')}</CardTitle>
             </CardHeader>
-            <CardBody>Create a new transform for your data pipeline.</CardBody>
+            <CardBody>{t('transform:transformModal.createDescription')}</CardBody>
           </Card>
         </FlexItem>
       </Flex>
@@ -96,9 +99,7 @@ const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
       {isCreateChecked === id2 && (
         <Content component="p">
           <b>
-            Fill out the below form or use the smart editor to setup a new
-            source connector. If you already have a configuration file, you can
-            setup a new source connector by uploading it in the smart editor.
+            {t('transform:transformModal.formDescription')}
           </b>
         </Content>
       )}

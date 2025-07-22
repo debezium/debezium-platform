@@ -1,39 +1,45 @@
 {
-    "transform": "trasformazione",
-    "transformations": "trasformazioni",
-    "page": {
-      "title": "Trasformazione",
-      "description": "Aggiungi una pipeline per trasmettere eventi di modifica da un database pipeline. Per iniziare, seleziona un connettore qui sotto; una volta selezionato, puoi configurarlo utilizzando l'opzione modulo o editor intelligente. Puoi anche cercare il connettore per nome o alternare il catalogo tra vista elenco e vista schede."
-    },
-    "create": {
-      "title": "Crea trasformazione",
-      "description": "Aggiungi una trasformazione. Prima che i messaggi vengano inviati al sink, possono passare attraverso una sequenza di trasformazioni."
-    },
-    "form": {
-      "classField": "Classe della trasformazione",
-      "classFieldHelper": "Il nome della classe Java che implementa la trasformazione",
-      "nameField": "Nome della trasformazione",
-      "descriptionField": "Descrizione",
-      "subsectionTitle": "Proprietà di configurazione della trasformazione",
-      "subsectionDescription": "Inserisci il nome della trasformazione per abilitare le proprietà di configurazione.",
-      "subsectionDisabledDescription": "Proprietà di configurazione passate alla trasformazione con nome {{val}}",
-      "predicateTypeField": "Tipo di predicato",
-      "predicateTypeFieldHelper": "Il nome della classe Java che implementa il predicato",
-      "negateField": "Negare il predicato",
-      "negateFieldDescription": "Impostando questa opzione su True, il predicato verrà applicato solo ai record che **non** corrispondono alla condizione definita"
-    },
-    "predicates": {
-      "title": "Predicati",
-      "description": "Le trasformazioni vengono applicate solo ai record che soddisfano la condizione specificata dal predicato. Imposta 'negare' su 'true' per invertire questo comportamento."
-    },
-    "edit": {
-      "title": "Modifica trasformazione",
-      "description": "Modifica una trasformazione. Prima che i messaggi vengano inviati al sink, possono passare attraverso una sequenza di trasformazioni."
-    },
-    "delete": {
-      "title": "Elimina trasformazione",
-      "description": "Inserisci {{val}} per eliminare la trasformazione",
-      "confirm": "Elimina"
-    }
+  "transform": "trasformazione",
+  "transformations": "trasformazioni",
+  "page": {
+    "title": "Trasformazione",
+    "description": "Aggiungi una pipeline per trasmettere eventi di modifica da un database pipeline. Per iniziare, seleziona un connettore qui sotto; una volta selezionato, puoi configurarlo utilizzando l'opzione modulo o editor intelligente. Puoi anche cercare il connettore per nome o alternare il catalogo tra vista elenco e vista schede."
+  },
+  "create": {
+    "title": "Crea trasformazione",
+    "description": "Aggiungi una trasformazione. Prima che i messaggi vengano inviati al sink, possono passare attraverso una sequenza di trasformazioni."
+  },
+  "form": {
+    "classField": "Classe della trasformazione",
+    "classFieldHelper": "Il nome della classe Java che implementa la trasformazione",
+    "nameField": "Nome della trasformazione",
+    "descriptionField": "Descrizione",
+    "subsectionTitle": "Proprietà di configurazione della trasformazione",
+    "subsectionDescription": "Inserisci il nome della trasformazione per abilitare le proprietà di configurazione.",
+    "subsectionDisabledDescription": "Proprietà di configurazione passate alla trasformazione con nome {{val}}",
+    "predicateTypeField": "Tipo di predicato",
+    "predicateTypeFieldHelper": "Il nome della classe Java che implementa il predicato",
+    "negateField": "Negare il predicato",
+    "negateFieldDescription": "Impostando questa opzione su True, il predicato verrà applicato solo ai record che **non** corrispondono alla condizione definita"
+  },
+  "predicates": {
+    "title": "Predicati",
+    "description": "Le trasformazioni vengono applicate solo ai record che soddisfano la condizione specificata dal predicato. Imposta 'negare' su 'true' per invertire questo comportamento."
+  },
+  "edit": {
+    "title": "Modifica trasformazione",
+    "description": "Modifica una trasformazione. Prima che i messaggi vengano inviati al sink, possono passare attraverso una sequenza di trasformazioni."
+  },
+  "delete": {
+    "title": "Elimina trasformazione",
+    "description": "Inserisci {{val}} per eliminare la trasformazione",
+    "confirm": "Elimina"
+  },
+  "transformModal": {
+    "title": "Seleziona una trasformazione",
+    "description": "Seleziona una trasformazione già configurata dall'elenco sottostante",
+    "createTitle": "Crea una trasformazione",
+    "createDescription": "Crea una nuova trasformazione per la tua pipeline di dati.",
+    "formDescription": "Compila il modulo sottostante o utilizza l'editor intelligente per creare una trasformazione. Se hai già un file di configurazione, puoi creare una trasformazione caricandolo nell'editor intelligente."
   }
-  
+}

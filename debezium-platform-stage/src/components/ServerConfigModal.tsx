@@ -9,14 +9,15 @@ import { createPost, Destination, Payload, Source, Transform, TransformData } fr
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { getConnectorTypeName } from "@utils/helpers";
+import { useTranslation } from "react-i18next";
+
 
 interface ServerConfigModalProps {
     isModalOpen: boolean;
     toggleModal: (event: KeyboardEvent | React.MouseEvent<Element>) => void;
     updateSelectedSource: (source: Source) => void;
     updateSelectedDestination: (destination: Destination) => void;
-    updateSelectedTransform: (transform: Transform) => void;
-    handleAddTransform: (transform: TransformData) => void;
+    handleAddTransform: (transform: TransformData[]) => void;
 }
 
 interface readFile {
@@ -33,10 +34,9 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     toggleModal,
     updateSelectedSource,
     updateSelectedDestination,
-    // updateSelectedTransform
     handleAddTransform
 }) => {
-
+    const { t } = useTranslation();
     const { addNotification } = useNotification();
 
     const [currentFiles, setCurrentFiles] = useState<File[]>([]);
@@ -117,13 +117,13 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     // dropzone prop that communicates to the user that files they've attempted to upload are not an appropriate type
     const handleDropRejected = (fileRejections: FileRejection[]) => {
         if (fileRejections.length === 1) {
-            setModalText(`${fileRejections[0].file.name} is not an accepted file type`);
+            setModalText(t('pipeline:debeziumServerModal.nonSupportedFilesMsg',{val: fileRejections[0].file.name}));
         } else {
             const rejectedMessages = fileRejections.reduce(
                 (acc, fileRejection) => (acc += `${fileRejection.file.name}, `),
                 ''
             );
-            setModalText(`${rejectedMessages}are not accepted file types`);
+            setModalText(t('pipeline:debeziumServerModal.nonSupportedFilesMsg',{val: rejectedMessages}));
         }
     };
     const successfullyReadFileCount = readFileData.filter((fileData) => fileData.loadResult === 'success').length;
@@ -172,25 +172,30 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                 `Failed to create ${(response.data as Source)?.name}: ${response.error}`
             );
         } else {
-            setCreatedTransform([...(createdTransform || []), { name: response.data?.name, id: response.data?.id } as Transform]);
-            setCreatedTransformData([...(createdTransformData || []), response.data as TransformData]);
-            handleAddTransform(response.data as TransformData);
             addNotification(
                 "success",
                 `Create successful`,
                 `Transforms "${(response.data as Source).name}" created successfully.`
             );
             setCreatedPipelineResources((prevResources) => [...prevResources, "transform"]);
+            return response.data as TransformData;
         }
     };
 
     const createPipelineTransform = async () => {
         setCreatePipelineResource("transform");
         const transformPayloads = extractTransformsAndPredicates(dbzServerFileConfig);
+        const addedTransforms: TransformData[] = [];
         for (const transformPayload of transformPayloads) {
-            await createNewTransform(transformPayload);
+            const transform = await createNewTransform(transformPayload);
+            if (transform) {
+                addedTransforms.push(transform);
+            }
         }
-
+        const updatedCreatedTransform = addedTransforms.map((transform) => ({ name: transform.name, id: transform.id } as Transform));
+        setCreatedTransform([...(createdTransform || []), ...updatedCreatedTransform]);
+        setCreatedTransformData([...(createdTransformData || []), ...addedTransforms]);
+        handleAddTransform(addedTransforms);
     }
 
     const createPipelineDestination = async () => {
@@ -227,16 +232,15 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
             aria-describedby="debezium-server-config-modal"
         >
             <ModalHeader
-                title="Create pipeline resources using Debezium server configuration"
+                title={t('pipeline:debeziumServerModal.title')}
                 labelId="debezium-server-config-modal"
-                description="Upload a Debezium server configuration file to automatically create a pipeline. On uploading a file, the pipeline will be created by synchronously creating the source, transforms and destination defined finally using these creased resource to create a pipeline."
-
+                description={t('pipeline:debeziumServerModal.description')}
             />
             <ModalBody tabIndex={0}>
                 {!!modalText && <Alert
                     isInline
                     variant="warning"
-                    title="Unsupported file"
+                    title={t('pipeline:debeziumServerModal.nonSupportedFilesHeader')}
                     actionClose={<AlertActionCloseButton onClose={() => setModalText("")} />}
                     style={{ marginBottom: '1rem' }}
                 >
@@ -252,34 +256,34 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                     variant={createPipelineResource !== "source" ? (createdPipelineResources.includes("source") ? "success" : "pending") : undefined}
                                     isCurrent={createPipelineResource === "source" ? true : undefined}
                                     icon={createPipelineResource === "source" ? <InProgressIcon /> : !createdPipelineResources.includes("source") ? <PendingIcon /> : undefined}
-                                    description={createPipelineResource === "source" ? "Creating a source connector..." : <>Created a {getConnectorTypeName(createdSource?.type || "")} connector <b><i>{createdSource?.name}</i></b></>}
+                                    description={createPipelineResource === "source" ? t('pipeline:debeziumServerModal.creatingResource',{val: "source"}) : <>Created a {getConnectorTypeName(createdSource?.type || "")} connector <b><i>{createdSource?.name}</i></b></>}
                                     id="source-step"
                                     titleId="source-step-title"
                                     aria-label="Create a source connector"
                                 >
-                                    Source
+                                    {t('source')}
                                 </ProgressStep>
                                 <ProgressStep
                                     variant={createPipelineResource !== "transform" ? (createdPipelineResources.includes("transform") ? "success" : "pending") : undefined}
                                     isCurrent={createPipelineResource === "transform" ? true : undefined}
                                     icon={createPipelineResource === "transform" ? <InProgressIcon /> : !createdPipelineResources.includes("transform") ? <PendingIcon /> : undefined}
-                                    description={createdTransform ? <>Created <b><i>{getTransformNames()}</i></b> transforms</> : createdPipelineResources.includes("transform") ? "" : "Creating transforms..."}
+                                    description={createdTransform ? <>Created <b><i>{getTransformNames()}</i></b> transforms</> : createdPipelineResources.includes("transform") ? "" : t('pipeline:debeziumServerModal.creatingTransform')}
                                     id="transform-step"
                                     titleId="transform-step-title"
                                     aria-label="Create pipeline transformations"
                                 >
-                                    Transforms
+                                    {t('transforms')}
                                 </ProgressStep>
                                 <ProgressStep
                                     variant={createPipelineResource !== "destination" ? (createdPipelineResources.includes("destination") ? "success" : "pending") : undefined}
                                     isCurrent={createPipelineResource === "destination" ? true : undefined}
                                     icon={createPipelineResource === "destination" ? <InProgressIcon /> : !createdPipelineResources.includes("destination") ? <PendingIcon /> : undefined}
-                                    description={createdDestination ? <>Created a {getConnectorTypeName(createdDestination?.type || "")} connector <b><i>{createdDestination?.name}</i></b></> : "Creating a destination connector..."}
+                                    description={createdDestination ? <>Created a {getConnectorTypeName(createdDestination?.type || "")} connector <b><i>{createdDestination?.name}</i></b></> : t('pipeline:debeziumServerModal.creatingResource',{val: "destination"})}
                                     id="destination-step"
                                     titleId="destination-step-title"
                                     aria-label="Create a destination connector"
                                 >
-                                    Destination
+                                    {t('destination')}
                                 </ProgressStep>
 
                             </ProgressStepper>
@@ -319,9 +323,9 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                     >
                         <MultipleFileUploadMain
                             titleIcon={<UploadIcon />}
-                            titleText="Drag and drop files here"
+                            titleText={t('pipeline:debeziumServerModal.dragAndDrop')}
                             titleTextSeparator="or"
-                            infoText="Accepted file types: .properties"
+                            infoText={t('pipeline:debeziumServerModal.acceptedFiles', { val: ".properties" })}
                         />
                         {showStatus && (
                             <MultipleFileUploadStatus
@@ -345,14 +349,14 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
             {!!showStatus && (
                 <ModalFooter>
                     {createPipelineResource === "done" ? (<Button key="confirm" variant="primary" onClick={toggleModal} >
-                        Done
+                        {t('done')}
                     </Button>) : (
                         <Button key="confirm" variant="primary" onClick={handleCreatePipelineResource} isLoading={isCreationLoading}>
-                            Create
+                            {t('create')}
                         </Button>
                     )}
                     <Button key="cancel" variant="link" onClick={() => { }}>
-                        Cancel
+                        {t('cancel')}
                     </Button>
                 </ModalFooter>
             )}

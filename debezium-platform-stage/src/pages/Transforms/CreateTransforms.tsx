@@ -64,7 +64,7 @@ const ajv = new Ajv();
 
 export interface ICreateTransformsProps {
   modelLoaded?: boolean;
-  onSelection?: (selection: TransformData) => void;
+  onSelection?: (selection: TransformData[]) => void;
 }
 
 const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
@@ -363,7 +363,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
         `Failed to create ${(response.data as any).name}: ${response.error}`
       );
     } else {
-      modelLoaded && onSelection?.(response.data as any);
+      modelLoaded && onSelection?.([response.data as TransformData]);
       addNotification(
         "success",
         `Create successful`,

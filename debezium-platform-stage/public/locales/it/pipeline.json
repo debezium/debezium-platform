@@ -1,31 +1,52 @@
 {
-  "pipeline": "Pipeline",
+  "pipeline": "pipeline",
   "configuePipeline": "Configura pipeline",
   "createPipeline": "Crea pipeline",
+  "deletePipeline": "Elimina pipeline",
+  "dbzServerButton": "Configurazione server DBZ",
+  "debeziumServerModal": {
+    "title": "Crea risorse pipeline utilizzando la configurazione del server Debezium",
+    "description": "Carica un file di configurazione del server Debezium per creare automaticamente le risorse della pipeline. Caricando un file di configurazione verranno creati un'origine, trasformazioni e una destinazione in modo sincrono in base alla configurazione caricata e infine potrai creare una pipeline utilizzando queste risorse.",
+    "acceptedFiles": "Tipi di file accettati: {{val}}",
+    "dragAndDrop": "Trascina e rilascia i file qui",
+    "creatingResource": "Creazione di un connettore {{val}}...",
+    "creatingTransform": "Creazione delle trasformazioni...",
+    "nonSupportedFilesHeader": "File non supportato",
+    "nonSupportedFilesMsg": "{{val}} non sono tipi di file accettati."
+  },
+  "dbzServerTooltip": "Carica la configurazione del server DBZ per creare una nuova origine, trasformazioni e destinazione per una pipeline.",
+  "userActions": {
+    "overview": "Panoramica",
+    "logs": "Visualizza log",
+    "download": "Scarica log",
+    "actions": "Azioni",
+    "edit": "Modifica",
+    "delete": "Elimina"
+  },
   "pipelinePage": {
-    "description": "Aggiungi una pipeline per trasmettere eventi di modifica da un database. Per iniziare, seleziona un connettore qui sotto; una volta selezionato, puoi configurarlo usando l’editor modulo o l’editor intelligente. Puoi anche cercare il connettore per nome o passare dalla vista elenco alla vista a schede.",
+    "description": "Visualizza e gestisci le tue pipeline configurate. Puoi anche creare una nuova pipeline per trasmettere eventi di modifica da un database di origine.",
     "title": "Pipeline",
     "phase": "Fase",
     "Enabled": "Abilitato",
     "Actions": "Azioni",
     "welcomeTitle": "Benvenuto in Stage",
-    "welcomeDescription": "Stage UI fornisce uno strumento visivo per configurare e operare con pipeline di dati dove puoi definire la fonte, la destinazione e qualsiasi trasformazione dei dati.",
-    "welcomeDescriptionSufix": "Aggiungi una pipeline per trasmettere eventi di modifica da una fonte dati. Per creare una pipeline, puoi selezionarne una già configurata oppure aggiungere una nuova fonte e destinazione.",
+    "welcomeDescription": "L'interfaccia Stage fornisce uno strumento visivo per configurare e operare con pipeline di dati in cui puoi definire l'origine, la destinazione e qualsiasi trasformazione dei dati.",
+    "welcomeDescriptionSufix": "Aggiungi una pipeline per trasmettere eventi di modifica da un database di origine della pipeline. Per creare una pipeline, puoi selezionare un'origine e una destinazione già configurate o aggiungerne di nuove.",
     "welcomeButtom": "Crea la tua prima pipeline",
-    "designerTitle": "Designer della pipeline",
-    "designerDescription": "Configura la pipeline aggiungendo una fonte e una destinazione esistenti oppure creane di nuove secondo le tue necessità. Puoi anche aggiungere trasformazioni, se necessario."
+    "designerTitle": "Progettista di pipeline",
+    "designerDescription": "Crea una pipeline selezionando un'origine e una destinazione esistenti o creandone di nuove se necessario. Puoi opzionalmente aggiungere una o più trasformazioni da applicare alla pipeline."
   },
   "transformDrawer": {
-    "description": "Elenco delle trasformazioni da applicare alla pipeline. Puoi eliminarle o riordinarle per definire l’ordine di applicazione.",
+    "description": "Elenco delle trasformazioni da applicare alla pipeline. Puoi eliminarle o riordinarle in un ordine specifico per applicarle.",
     "title": "Elenco trasformazioni",
     "emptyState": "Nessuna trasformazione aggiunta alla pipeline"
   },
   "form": {
-    "title": "Configurazione pipeline",
-    "description": "Per configurare e creare una pipeline di dati, compila il modulo sottostante oppure utilizza l’editor intelligente. Se hai già un file di configurazione, puoi caricarlo tramite l’editor intelligente.",
+    "title": "Configurazione della pipeline",
+    "description": "Per configurare e creare una pipeline di dati, compila il modulo sottostante o utilizza l'editor intelligente per configurare una nuova pipeline di dati. Se hai già un file di configurazione, puoi configurare una nuova pipeline di dati caricandolo nell'editor intelligente.",
     "nameField": "Nome della pipeline",
     "descriptionField": "Descrizione",
-    "descriptionFieldHelperText": "Aggiungi una breve descrizione della pipeline o di cosa intendi acquisire.",
+    "descriptionFieldHelperText": "Aggiungi una breve descrizione per la tua pipeline o per ciò che intendi catturare.",
     "subsectionTitle": "Proprietà di configurazione",
     "logLevelField": "Livello di log",
     "flowField": "Flusso della pipeline"
@@ -37,27 +58,27 @@
     "action": "Azione pipeline"
   },
   "overview": {
-    "description": "Panoramica della pipeline per {{val}} con elenco di metriche essenziali, dettagli della composizione (fonte e destinazione), log della pipeline e opzione per modificarla.",
-    "title": "Panoramica pipeline",
+    "description": "Panoramica della pipeline per {{val}} con elenco di metriche essenziali, dettagli sulla composizione (origine e destinazione), log della pipeline e opzione per modificare la pipeline.",
+    "title": "Panoramica della pipeline",
     "updatePipeline": "Aggiorna pipeline",
-    "pipelineComposition": "Composizione pipeline",
+    "pipelineComposition": "Composizione della pipeline",
     "queueUsage": "Utilizzo della coda",
     "events": "Eventi"
   },
   "actions": {
-    "title": "Azioni della pipeline",
-    "description": "Usa il signaling per eseguire azioni sulla pipeline.",
+    "title": "Azioni pipeline",
+    "description": "Usa i segnali per eseguire azioni sulla pipeline.",
     "actionField": "Azione",
     "actionTypeField": "Tipo di azione",
     "messageField": "Messaggio",
     "collectionField": "Nome della collezione",
-    "collectionFieldDescription": "Una componente obbligatoria del campo dati di un segnale che specifica un array di nomi di collezioni o espressioni regolari per abbinare i nomi delle collezioni da includere nello snapshot.",
-    "messageFieldDescription": "Il parametro messaggio specifica la stringa da stampare nel log. Se aggiungi un segnaposto ({ }), verrà sostituito con le coordinate di streaming.",
+    "collectionFieldDescription": "Un componente richiesto del campo dati di un segnale che specifica un array di nomi di collezioni o espressioni regolari per abbinare i nomi delle collezioni da includere nello snapshot.",
+    "messageFieldDescription": "Il parametro del messaggio specifica la stringa da stampare nel log. Se aggiungi un segnaposto ({ }), viene sostituito con le coordinate di streaming.",
     "selectAnAction": "Seleziona un'azione",
-    "actionTypeFieldDescription": "Il parametro type specifica l'operazione che il segnale intende attivare.",
-    "actionIdHelper": "È precompilato con una stringa UUID, ma l'utente può modificarlo per fornire il proprio ID.",
+    "actionTypeFieldDescription": "Specifica il tipo di parametro che indica l'operazione che il segnale è destinato a innescare.",
+    "actionIdHelper": "È precompilato con una stringa UUID, l'utente può anche aggiornarlo per fornire il proprio ID.",
     "addFilter": "Aggiungi filtro",
-    "filterCondition": "Condizione filtro {{val}}",
+    "filterCondition": "Condizione del filtro {{val}}",
     "filterConditionFields": {
       "filtersField": "Filtri",
       "filtersHelperText": "Specifica i valori delle colonne che devono essere presenti in un record di raccolta dati affinché lo snapshot lo includa.",
@@ -71,9 +92,9 @@
     "download": "Scarica file di log",
     "fullScreen": "Schermo intero",
     "notification": {
-      "grepNotification": "Notifiche Grep",
+      "grepNotification": "Notifiche grep",
       "showTooltip": "Clicca per grep i log delle notifiche.",
-      "hideTooltip": "Clicca per interrompere il grep dei log delle notifiche."
+      "hideTooltip": "Clicca per interrompere grep i log delle notifiche."
     }
   }
 }
