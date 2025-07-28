@@ -33,8 +33,8 @@ Object.defineProperties(document, mockDocumentFullscreenMethods);
 vi.mock("@patternfly/react-log-viewer", () => ({
   LogViewer: ({ data, toolbar, id }: { data: string[]; toolbar: React.ReactNode; id: string }) => {
     return (
-      <div 
-        data-testid="mock-log-viewer" 
+      <div
+        data-testid="mock-log-viewer"
         id={id}
         ref={(node) => {
           if (node) {
@@ -119,36 +119,34 @@ describe("PipelineLog", () => {
     mockFullscreenElement.mockReturnValue(null);
   });
 
-  it("renders the log viewer component", async () => {
+  it("renders the loading state when component is mounted", async () => {
     render(<PipelineLog {...mockProps} />);
+
+    expect(screen.getByText("Loading pipeline log")).toBeInTheDocument();
+
+  });
+
+  it("fetches initial logs when tab is active", async () => {
+    render(<PipelineLog {...mockProps} />);
+
+    await waitFor(() => {
+      const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
+      expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
+      const request = mockFetch.mock.calls[0][0] as Request;
+      expect(request.url).toBe(expectedUrl);
+    });
 
     expect(screen.getByTestId("mock-log-viewer")).toBeInTheDocument();
     expect(screen.getByTestId("mock-log-viewer-toolbar")).toBeInTheDocument();
     expect(screen.getByTestId("mock-log-viewer-content")).toBeInTheDocument();
-    
-    expect(screen.getByTestId("log-viewer-search")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /download log file/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /view log viewer in full screen/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /grep notification log/i })).toBeInTheDocument();
+
+    // Verify that logs are displayed
+    // const logLines = screen.getAllByTestId("log-line");
+    // expect(logLines).toHaveLength(3);
+    // expect(logLines[0]).toHaveTextContent("log line 1");
+    // expect(logLines[1]).toHaveTextContent("log line 2");
+    // expect(logLines[2]).toHaveTextContent("log line 3");
   });
-
-//   it("fetches initial logs when tab is active", async () => {
-//     render(<PipelineLog {...mockProps} />);
-
-//     await waitFor(() => {
-//       const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
-//       expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
-//       const request = mockFetch.mock.calls[0][0] as Request;
-//       expect(request.url).toBe(expectedUrl);
-//     });
-
-//     // Verify that logs are displayed
-//     const logLines = screen.getAllByTestId("log-line");
-//     expect(logLines).toHaveLength(3);
-//     expect(logLines[0]).toHaveTextContent("log line 1");
-//     expect(logLines[1]).toHaveTextContent("log line 2");
-//     expect(logLines[2]).toHaveTextContent("log line 3");
-//   });
 
   it("does not fetch logs when tab is not active", () => {
     render(<PipelineLog {...mockProps} activeTabKey="details" />);
@@ -161,6 +159,13 @@ describe("PipelineLog", () => {
     mockFetch.mockResolvedValueOnce(mockBlob);
 
     render(<PipelineLog {...mockProps} />);
+
+    await waitFor(() => {
+      const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
+      expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
+      const request = mockFetch.mock.calls[0][0] as Request;
+      expect(request.url).toBe(expectedUrl);
+    });
 
     const downloadButton = screen.getByRole("button", { name: /download log file/i });
     fireEvent.click(downloadButton);
@@ -176,14 +181,20 @@ describe("PipelineLog", () => {
   describe("Fullscreen functionality", () => {
     it("enters fullscreen mode when fullscreen button is clicked", async () => {
       render(<PipelineLog {...mockProps} />);
+      await waitFor(() => {
+        const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
+        expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
+        const request = mockFetch.mock.calls[0][0] as Request;
+        expect(request.url).toBe(expectedUrl);
+      });
 
       const fullscreenButton = screen.getByRole("button", { name: /view log viewer in full screen/i });
-      
+
       const logViewer = screen.getByTestId("mock-log-viewer");
-      
+
       // Mock that the element has the fullscreen methods
       Object.defineProperties(logViewer, mockFullscreenMethods);
-      
+
       fireEvent.click(fullscreenButton);
 
       await waitFor(() => {
@@ -193,13 +204,19 @@ describe("PipelineLog", () => {
 
     it("exits fullscreen mode when fullscreen button is clicked in fullscreen", async () => {
       render(<PipelineLog {...mockProps} />);
+      await waitFor(() => {
+        const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
+        expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
+        const request = mockFetch.mock.calls[0][0] as Request;
+        expect(request.url).toBe(expectedUrl);
+      });
 
       const logViewer = screen.getByTestId("mock-log-viewer");
-      
+
       // First enter fullscreen
       Object.defineProperties(logViewer, mockFullscreenMethods);
       const fullscreenButton = screen.getByRole("button", { name: /view log viewer in full screen/i });
-      
+
       // Click to enter fullscreen
       fireEvent.click(fullscreenButton);
       await waitFor(() => {
@@ -207,7 +224,7 @@ describe("PipelineLog", () => {
       });
 
       mockFullscreenElement.mockReturnValue(logViewer);
-      
+
       // Simulate fullscreen change event
       act(() => {
         document.dispatchEvent(new Event('fullscreenchange'));
@@ -226,9 +243,15 @@ describe("PipelineLog", () => {
 
     it("updates fullscreen state when fullscreenchange event is fired", async () => {
       render(<PipelineLog {...mockProps} />);
+      await waitFor(() => {
+        const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
+        expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
+        const request = mockFetch.mock.calls[0][0] as Request;
+        expect(request.url).toBe(expectedUrl);
+      });
 
       const logViewer = screen.getByTestId("mock-log-viewer");
-      
+
       // Simulate entering fullscreen
       mockFullscreenElement.mockReturnValue(logViewer);
       act(() => {
@@ -249,6 +272,12 @@ describe("PipelineLog", () => {
       mockRequestFullscreen.mockRejectedValueOnce(new Error('Fullscreen request failed'));
 
       render(<PipelineLog {...mockProps} />);
+      await waitFor(() => {
+        const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
+        expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
+        const request = mockFetch.mock.calls[0][0] as Request;
+        expect(request.url).toBe(expectedUrl);
+      });
 
       const fullscreenButton = screen.getByRole("button", { name: /view log viewer in full screen/i });
       const logViewer = screen.getByTestId("mock-log-viewer");
