@@ -5,6 +5,7 @@ import {
   ToolbarItem,
   Button,
   Tooltip,
+  Skeleton,
 } from "@patternfly/react-core";
 import { BellIcon, DownloadIcon, ExpandIcon } from "@patternfly/react-icons";
 import { LogViewer, LogViewerSearch } from "@patternfly/react-log-viewer";
@@ -53,7 +54,8 @@ const PipelineLog: FC<PipelineLogProps> = ({
   // Set to track unique logs
   const logSet = useRef(new Set<string>());
 
-  const [isLogLoading, setIsLogLoading] = useState<boolean>(false);
+  const [isLogDownloading, setIsLogDownloading] = useState<boolean>(false);
+  const [isWebSocketLoading, setIsWebSocketLoading] = useState<boolean>(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const [logSearchText, setLogSearchText] = useState<string>("");
@@ -62,7 +64,6 @@ const PipelineLog: FC<PipelineLogProps> = ({
   // Close WebSocket connection when tab is not active
   useEffect(() => {
     const isActive = activeTabKey === "logs";
-
     if (!isActive && wsRef.current) {
       console.log("Closing WebSocket connection as log tab is not active");
       wsRef.current.close();
@@ -73,12 +74,13 @@ const PipelineLog: FC<PipelineLogProps> = ({
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
-      }
+      }   
     };
   }, [activeTabKey]);
 
   useEffect(() => {
     if (activeTabKey !== "logs") return;
+    setIsWebSocketLoading(true);
 
     // Only fetch logs when tab is active
     // Fetch initial logs via HTTP
@@ -113,6 +115,9 @@ const PipelineLog: FC<PipelineLogProps> = ({
         );
 
         wsRef.current.onmessage = (event) => {
+          // Set loading to false when we receive the first message
+          setIsWebSocketLoading(false);
+
           const newLogs = event.data.split("\n");
 
           const newUniqueLogs = newLogs.filter((logLine: string) => {
@@ -139,16 +144,22 @@ const PipelineLog: FC<PipelineLogProps> = ({
 
         wsRef.current.onerror = (error) => {
           console.error("WebSocket error:", error);
+          setIsWebSocketLoading(false);
         };
 
         wsRef.current.onclose = () => {
           console.log("WebSocket connection closed");
+          setIsWebSocketLoading(false);
         };
       })
-      .catch((error) => console.error("Error fetching initial logs:", error));
+      .catch((error) => {
+        console.error("Error fetching initial logs:", error);
+        setIsWebSocketLoading(false);
+      });
 
     // Cleanup
     return () => {
+      setIsWebSocketLoading(false);
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.close();
         wsRef.current = null;
@@ -169,7 +180,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
     pipelineId: string | undefined,
     pipelineName: string
   ) => {
-    setIsLogLoading(true);
+    setIsLogDownloading(true);
 
     if (pipelineId === undefined) {
       addNotification(
@@ -177,7 +188,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
         t('statusMessage:download.failedTitle'),
         t('statusMessage:download.pipelineLogFail'),
       );
-      setIsLogLoading(false);
+      setIsLogDownloading(false);
       return;
     }
 
@@ -205,7 +216,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
       document.body.removeChild(a);
     }
 
-    setIsLogLoading(false);
+    setIsLogDownloading(false);
   };
 
   // Listening escape key on full screen mode.
@@ -290,7 +301,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
           <Tooltip content={!notificationLogToggle ? t('pipeline:logs.notification.showTooltip') : t('pipeline:logs.notification.hideTooltip')}>
             <Button
               variant="stateful"
-              isDisabled={isLogLoading}
+              isDisabled={isLogDownloading}
               aria-label="grep notification log"
               icon={<BellIcon />}
               onClick={grepNotificationLog}
@@ -308,7 +319,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
               <Tooltip content={t('pipeline:logs.download')}>
                 <Button
                   variant="plain"
-                  isDisabled={isLogLoading}
+                  isDisabled={isLogDownloading}
                   aria-label="download log file"
                   icon={<DownloadIcon />}
                   onClick={() => downloadLogFile(pipelineId, pipelineName)}
@@ -334,18 +345,33 @@ const PipelineLog: FC<PipelineLogProps> = ({
 
   return (
     <div className="pipeline_log">
+      {isWebSocketLoading ? 
+      <>
+        <Skeleton width="25%" screenreaderText="Loading pipeline log" />
+        <br />
+        <Skeleton width="33%" />
+        <br />
+        <Skeleton width="50%" />
+        <br />
+        <Skeleton width="66%" />
+        <br />
+        <Skeleton width="75%" />
+        <br />
+        <Skeleton />
+      </> : 
       <LogViewer
         key={activeTabKey}
-        {...({ id: "pipeline-log-view" } as 
-{
-          id: string;
-        })}
-        hasLineNumbers={true}
+        {...({ id: "pipeline-log-view" } as
+          {
+            id: string;
+          })}
+        hasLineNumbers={false}
+        isTextWrapped={false}
         data={logs}
         theme={"light"}
         toolbar={logViewToolbar}
         height={(isFullScreen && "100%") || "calc(100vh - 350px)"}
-      />
+      />}
     </div>
   );
 };
