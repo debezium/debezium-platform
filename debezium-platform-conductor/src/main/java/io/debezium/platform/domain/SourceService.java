@@ -56,9 +56,9 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
             var conn = DriverManager.getConnection(jdbcUrl, sourceConnectionConf.username(), sourceConnectionConf.password());
 
             LOGGER.trace("Obtained connection to {}", jdbcUrl);
-            var table = TableId.parse(sourceConnectionConf.fullyQualifiedTableName());
+            var table = TableId.parse(sourceConnectionConf.fullyQualifiedTableName(), false);
 
-            boolean isConform = signalDataCollectionChecker.verifyTableStructure(conn, table.catalog(), table.schema(), table.table());
+            boolean isConform = signalDataCollectionChecker.verifyTableStructure(conn, sourceConnectionConf.dbName(), table.schema(), table.table());
 
             String message = isConform ? SIGNAL_DATA_COLLECTION_CONFIGURED_MESSAGE : SIGNAL_DATA_COLLECTION_MISS_CONFIGURED_MESSAGE;
 
