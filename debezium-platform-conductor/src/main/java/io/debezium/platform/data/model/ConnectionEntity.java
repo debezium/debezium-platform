@@ -37,7 +37,12 @@ public class ConnectionEntity {
     public Map<String, Object> config;
 
     public enum Type {
-        DB,
+        ORACLE,
+        MYSQL,
+        MARIADB,
+        SQLSERVER,
+        POSTGRESQL,
+        KAFKA
     }
 
     public Long getId() {

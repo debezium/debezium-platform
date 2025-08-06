@@ -11,28 +11,32 @@ import java.sql.SQLException;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @ApplicationScoped
 public class DatabaseConnectionFactory {
 
-    // TODO This could be improved to cache the connection
-    public Connection create(DatabaseConnectionConfiguration databaseConnectionConfiguration) {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConnectionFactory.class);
 
-        var jdbcUrl = buildJdbcUrl(databaseConnectionConfiguration);
+    private final DatabaseJdbcUrlBuilder databaseJdbcUrlBuilder;
+
+    public DatabaseConnectionFactory(DatabaseJdbcUrlBuilder databaseJdbcUrlBuilder) {
+        this.databaseJdbcUrlBuilder = databaseJdbcUrlBuilder;
+    }
+
+    // TODO This could be improved to cache the connection
+    public Connection create(DatabaseConnectionConfiguration databaseConnectionConfiguration) throws SQLException {
+
+        var jdbcUrl = databaseJdbcUrlBuilder.buildJdbcUrl(databaseConnectionConfiguration);
         try {
             return DriverManager.getConnection(jdbcUrl, databaseConnectionConfiguration.username(), databaseConnectionConfiguration.password());
         }
         catch (SQLException e) {
-            throw new RuntimeException(String.format("Unable to get connection to database %s", jdbcUrl), e);
-        }
-    }
 
-    public String buildJdbcUrl(DatabaseConnectionConfiguration conf) {
-        return switch (conf.databaseType()) {
-            case ORACLE -> "jdbc:oracle:thin:@" + conf.hostname() + ":" + conf.port() + "/" + conf.dbName();
-            case MYSQL -> "jdbc:mysql://" + conf.hostname() + ":" + conf.port() + "/" + conf.dbName();
-            case MARIADB -> "jdbc:mariadb://" + conf.hostname() + ":" + conf.port() + "/" + conf.dbName();
-            case SQLSERVER -> "jdbc:sqlserver://" + conf.hostname() + ":" + conf.port() + ";databaseName=" + conf.dbName();
-            case POSTGRESQL -> "jdbc:postgresql://" + conf.hostname() + ":" + conf.port() + "/" + conf.dbName();
-        };
+            LOGGER.error("Unable to get connection to database {}}", jdbcUrl, e);
+
+            throw e;
+        }
     }
 }

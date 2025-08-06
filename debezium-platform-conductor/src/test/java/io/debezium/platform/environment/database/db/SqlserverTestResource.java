@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.debezium.platform.environment.actions.db;
+package io.debezium.platform.environment.database.db;
 
 import java.util.Map;
 
@@ -17,6 +17,10 @@ public class SqlserverTestResource implements QuarkusTestResourceLifecycleManage
     private static final MSSQLServerContainer<?> SQLSERVER = new MSSQLServerContainer<>(
             DockerImageName.parse("mcr.microsoft.com/mssql/server:2019-latest").asCompatibleSubstituteFor("mssqlserver"))
             .acceptLicense();
+
+    public static MSSQLServerContainer<?> getContainer() {
+        return SQLSERVER;
+    }
 
     @Override
     public Map<String, String> start() {

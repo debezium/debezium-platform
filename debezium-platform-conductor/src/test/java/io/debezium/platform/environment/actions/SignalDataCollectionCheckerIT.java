@@ -15,11 +15,11 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import io.agroal.api.AgroalDataSource;
-import io.debezium.platform.environment.actions.db.MariaDbTestResource;
-import io.debezium.platform.environment.actions.db.MySQLTestResource;
-import io.debezium.platform.environment.actions.db.OracleTestResource;
-import io.debezium.platform.environment.actions.db.PostgresTestResource;
-import io.debezium.platform.environment.actions.db.SqlserverTestResource;
+import io.debezium.platform.environment.database.db.MariaDbTestResource;
+import io.debezium.platform.environment.database.db.MySQLTestResource;
+import io.debezium.platform.environment.database.db.OracleTestResource;
+import io.debezium.platform.environment.database.db.PostgresTestResource;
+import io.debezium.platform.environment.database.db.SqlserverTestResource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.arc.InjectableInstance;
 import io.quarkus.test.common.QuarkusTestResource;

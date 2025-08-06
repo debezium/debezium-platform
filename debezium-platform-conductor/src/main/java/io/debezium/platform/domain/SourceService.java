@@ -59,7 +59,7 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
 
             var table = TableId.parse(signalCollectionVerifyRequest.fullyQualifiedTableName(), false);
 
-            boolean isConform = signalDataCollectionChecker.verifyTableStructure(conn, signalCollectionVerifyRequest.connectionConfig().dbName(), table.schema(),
+            boolean isConform = signalDataCollectionChecker.verifyTableStructure(conn, signalCollectionVerifyRequest.connectionConfig().database(), table.schema(),
                     table.table());
 
             String message = isConform ? SIGNAL_DATA_COLLECTION_CONFIGURED_MESSAGE : SIGNAL_DATA_COLLECTION_MISS_CONFIGURED_MESSAGE;

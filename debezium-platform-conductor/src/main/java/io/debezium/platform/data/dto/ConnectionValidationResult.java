@@ -5,5 +5,10 @@
  */
 package io.debezium.platform.data.dto;
 
-public class ConnectionValidationResponse {
+public record ConnectionValidationResult(boolean valid, String message, String errorType) {
+
+    public ConnectionValidationResult(boolean valid) {
+
+        this(valid, "", "");
+    }
 }

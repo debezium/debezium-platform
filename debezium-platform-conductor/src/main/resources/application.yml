@@ -36,6 +36,10 @@ pipeline:
             history:
               table:
                 name: "@{pipeline_name}_schema_history"
+sources:
+  database:
+    connection:
+      timeout: 60
 
 quarkus:
   rest-client:

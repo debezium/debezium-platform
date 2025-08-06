@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.debezium.platform.environment.actions.db;
+package io.debezium.platform.environment.database.db;
 
 import java.util.Map;
 
@@ -16,6 +16,10 @@ public class MySQLTestResource implements QuarkusTestResourceLifecycleManager {
 
     private static final MySQLContainer<?> MYSQL = new MySQLContainer<>(
             DockerImageName.parse("quay.io/debezium/example-mysql-master:latest").asCompatibleSubstituteFor("mysql"));
+
+    public static MySQLContainer<?> getContainer() {
+        return MYSQL;
+    }
 
     @Override
     public Map<String, String> start() {

@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.debezium.platform.environment.actions.db;
+package io.debezium.platform.environment.database.db;
 
 import java.util.Map;
 
@@ -17,6 +17,10 @@ public class PostgresTestResource implements QuarkusTestResourceLifecycleManager
 
     private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
             DockerImageName.parse("quay.io/debezium/postgres:16-alpine").asCompatibleSubstituteFor("postgres"));
+
+    public static PostgreSQLContainer<?> getContainer() {
+        return POSTGRES;
+    }
 
     @Override
     public Map<String, String> start() {

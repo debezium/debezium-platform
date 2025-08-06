@@ -102,8 +102,9 @@ public class ConnectionResource {
     @POST
     @Path("/validate")
     public Response validateConnection(@NotNull @Valid Connection connection) {
-        var signalConfigurationStatus = connectionService.validateConnection(connection);
 
-        return Response.ok().entity(signalConfigurationStatus).build();
+        var connectionValidationResponse = connectionService.validateConnection(connection);
+
+        return Response.ok().entity(connectionValidationResponse).build();
     }
 }

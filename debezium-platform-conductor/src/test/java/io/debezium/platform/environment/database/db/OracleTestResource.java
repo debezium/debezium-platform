@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.debezium.platform.environment.actions.db;
+package io.debezium.platform.environment.database.db;
 
 import java.util.Map;
 
@@ -19,6 +19,10 @@ public class OracleTestResource implements QuarkusTestResourceLifecycleManager {
             .withUsername("debezium")
             .withPassword("dbz")
             .withDatabaseName("ORCLPDB1");
+
+    public static OracleContainer getContainer() {
+        return ORACLE;
+    }
 
     @Override
     public Map<String, String> start() {

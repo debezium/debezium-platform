@@ -21,7 +21,7 @@ public class ConnectionResourceIT {
         return """
                 {
                   "name": "test-connection-%s",
-                  "type": "DB",
+                  "type": "POSTGRESQL",
                   "config": {
                     "host": "localhost",
                     "port": 5432,
@@ -37,7 +37,7 @@ public class ConnectionResourceIT {
                 {
                   "id": %d,
                   "name": "updated-connection-%s",
-                  "type": "DB",
+                  "type": "POSTGRESQL",
                   "config": {
                     "host": "updated-host",
                     "port": 5433,
@@ -74,7 +74,7 @@ public class ConnectionResourceIT {
                 .header("Location", notNullValue())
                 .body("id", notNullValue())
                 .body("name", is("test-connection-" + nameSuffix))
-                .body("type", is("DB"))
+                .body("type", is("POSTGRESQL"))
                 .body("config.host", is("localhost"))
                 .body("config.port", is(5432))
                 .body("config.username", is("testuser"));
@@ -103,7 +103,7 @@ public class ConnectionResourceIT {
                 .statusCode(200)
                 .body("id", is(connectionId.intValue()))
                 .body("name", is("test-connection-" + nameSuffix))
-                .body("type", is("DB"))
+                .body("type", is("POSTGRESQL"))
                 .body("config.host", is("localhost"))
                 .body("config.port", is(5432))
                 .body("config.username", is("testuser"));
