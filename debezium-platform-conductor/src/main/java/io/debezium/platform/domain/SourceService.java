@@ -7,7 +7,7 @@ package io.debezium.platform.domain;
 
 import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
-import java.sql.DriverManager;
+import java.sql.Connection;
 import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,6 +26,7 @@ import io.debezium.platform.data.model.SourceEntity;
 import io.debezium.platform.domain.views.Source;
 import io.debezium.platform.domain.views.refs.SourceReference;
 import io.debezium.platform.environment.actions.SignalDataCollectionChecker;
+import io.debezium.platform.environment.database.DatabaseConnectionFactory;
 import io.debezium.relational.TableId;
 
 @ApplicationScoped
@@ -37,10 +38,13 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
     private static final String SIGNAL_DATA_COLLECTION_MISS_CONFIGURED_MESSAGE = "Signal data collection not present or misconfigured";
 
     private final SignalDataCollectionChecker signalDataCollectionChecker;
+    private final DatabaseConnectionFactory databaseConnectionFactory;
 
-    public SourceService(EntityManager em, CriteriaBuilderFactory cbf, EntityViewManager evm, SignalDataCollectionChecker signalDataCollectionChecker) {
+    public SourceService(EntityManager em, CriteriaBuilderFactory cbf, EntityViewManager evm, SignalDataCollectionChecker signalDataCollectionChecker,
+                         DatabaseConnectionFactory databaseConnectionFactory) {
         super(SourceEntity.class, Source.class, SourceReference.class, em, cbf, evm);
         this.signalDataCollectionChecker = signalDataCollectionChecker;
+        this.databaseConnectionFactory = databaseConnectionFactory;
     }
 
     @Transactional(SUPPORTS)
@@ -49,16 +53,14 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
         return Optional.ofNullable(result);
     }
 
-    public SignalDataCollectionVerifyResponse verifySignalDataCollection(SignalCollectionVerifyRequest sourceConnectionConf) {
+    public SignalDataCollectionVerifyResponse verifySignalDataCollection(SignalCollectionVerifyRequest signalCollectionVerifyRequest) {
 
-        try {
-            var jdbcUrl = buildJdbcUrl(sourceConnectionConf);
-            var conn = DriverManager.getConnection(jdbcUrl, sourceConnectionConf.username(), sourceConnectionConf.password());
+        try (Connection conn = databaseConnectionFactory.create(signalCollectionVerifyRequest.connectionConfig())) {
 
-            LOGGER.trace("Obtained connection to {}", jdbcUrl);
-            var table = TableId.parse(sourceConnectionConf.fullyQualifiedTableName(), false);
+            var table = TableId.parse(signalCollectionVerifyRequest.fullyQualifiedTableName(), false);
 
-            boolean isConform = signalDataCollectionChecker.verifyTableStructure(conn, sourceConnectionConf.dbName(), table.schema(), table.table());
+            boolean isConform = signalDataCollectionChecker.verifyTableStructure(conn, signalCollectionVerifyRequest.connectionConfig().dbName(), table.schema(),
+                    table.table());
 
             String message = isConform ? SIGNAL_DATA_COLLECTION_CONFIGURED_MESSAGE : SIGNAL_DATA_COLLECTION_MISS_CONFIGURED_MESSAGE;
 
@@ -70,15 +72,4 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
         }
 
     }
-
-    public String buildJdbcUrl(SignalCollectionVerifyRequest conf) {
-        return switch (conf.databaseType()) {
-            case ORACLE -> "jdbc:oracle:thin:@" + conf.hostname() + ":" + conf.port() + "/" + conf.dbName();
-            case MYSQL -> "jdbc:mysql://" + conf.hostname() + ":" + conf.port() + "/" + conf.dbName();
-            case MARIADB -> "jdbc:mariadb://" + conf.hostname() + ":" + conf.port() + "/" + conf.dbName();
-            case SQLSERVER -> "jdbc:sqlserver://" + conf.hostname() + ":" + conf.port() + ";databaseName=" + conf.dbName();
-            case POSTGRESQL -> "jdbc:postgresql://" + conf.hostname() + ":" + conf.port() + "/" + conf.dbName();
-        };
-    }
-
 }
