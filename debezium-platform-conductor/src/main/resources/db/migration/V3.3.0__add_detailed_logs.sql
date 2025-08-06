@@ -9,3 +9,13 @@ CREATE TABLE pipeline_log_levels (
         FOREIGN KEY (pipeline_id) REFERENCES pipeline (id)
         ON DELETE CASCADE
 );
+
+create sequence connection_seq start with 1 increment by 1;
+
+create table connection (
+    id bigint not null default nextval('connection_seq'),
+    name varchar(255) not null unique,
+    type varchar(255) not null,
+    config jsonb,
+    primary key (id)
+);
