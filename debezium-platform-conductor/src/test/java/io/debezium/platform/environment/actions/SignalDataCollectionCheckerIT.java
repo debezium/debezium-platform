@@ -56,12 +56,13 @@ public class SignalDataCollectionCheckerIT {
     @DataSource("mssql")
     InjectableInstance<AgroalDataSource> mssqlDataSource;
 
+    @Inject
+    private SignalDataCollectionChecker verifier;
+
     @Test
     void testVerifySchemaOnPostgres() throws SQLException {
 
         AgroalDataSource dataSource = postgresDataSource.get();
-
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker();
 
         assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "public", "debezium_signal")).isFalse();
 
@@ -79,8 +80,6 @@ public class SignalDataCollectionCheckerIT {
 
         AgroalDataSource dataSource = mysqlDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker();
-
         assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "", "debezium_signal")).isFalse();
 
         try (Statement statement = dataSource.getConnection().createStatement()) {
@@ -96,8 +95,6 @@ public class SignalDataCollectionCheckerIT {
     void testVerifySchemaOnMariaDb() throws SQLException {
 
         AgroalDataSource dataSource = mariadbDataSource.get();
-
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker();
 
         assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "test", "", "debezium_signal")).isFalse();
 
@@ -115,8 +112,6 @@ public class SignalDataCollectionCheckerIT {
 
         AgroalDataSource dataSource = oracleDataSource.get();
 
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker();
-
         assertThat(verifier.verifyTableStructure(dataSource.getConnection(), null, "DEBEZIUM", "DEBEZIUM_SIGNAL")).isFalse();
 
         try (Statement statement = dataSource.getConnection().createStatement()) {
@@ -132,8 +127,6 @@ public class SignalDataCollectionCheckerIT {
     void testVerifySchemaOnMSSQL() throws SQLException {
 
         AgroalDataSource dataSource = mssqlDataSource.get();
-
-        SignalDataCollectionChecker verifier = new SignalDataCollectionChecker();
 
         assertThat(verifier.verifyTableStructure(dataSource.getConnection(), "master", "dbo", "debezium_signal")).isFalse();
 

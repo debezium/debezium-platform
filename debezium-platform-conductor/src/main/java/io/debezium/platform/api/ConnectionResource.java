@@ -96,4 +96,14 @@ public class ConnectionResource {
         connectionService.delete(id);
         return Response.status(Response.Status.NO_CONTENT).build();
     }
+
+    @Operation(summary = "Verify that the connection is valid")
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
+    @POST
+    @Path("/validate")
+    public Response validateConnection(@NotNull @Valid Connection connection) {
+        var signalConfigurationStatus = connectionService.validateConnection(connection);
+
+        return Response.ok().entity(signalConfigurationStatus).build();
+    }
 }

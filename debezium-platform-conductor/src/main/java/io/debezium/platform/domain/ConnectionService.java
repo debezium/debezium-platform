@@ -12,6 +12,8 @@ import java.util.Optional;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import com.blazebit.persistence.CriteriaBuilderFactory;
 import com.blazebit.persistence.view.EntityViewManager;
 
+import io.debezium.platform.data.dto.ConnectionValidationResponse;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.domain.views.refs.ConnectionReference;
@@ -37,5 +40,10 @@ public class ConnectionService extends AbstractService<ConnectionEntity, Connect
     public Optional<ConnectionReference> findReferenceById(Long id) {
         var result = evm.find(em, ConnectionReference.class, id);
         return Optional.ofNullable(result);
+    }
+
+    public ConnectionValidationResponse validateConnection(@NotNull @Valid Connection connection) {
+
+        return null;
     }
 }
