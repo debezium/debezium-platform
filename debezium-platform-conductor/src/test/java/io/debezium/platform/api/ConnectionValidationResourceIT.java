@@ -233,11 +233,8 @@ public class ConnectionValidationResourceIT {
                 .when()
                 .post("api/connections/validate")
                 .then()
-                .statusCode(anyOf(equalTo(400), equalTo(200)))
+                .statusCode(anyOf(equalTo(400)))
                 .contentType(ContentType.JSON);
-
-        // If it returns 200, it should indicate the connection type is unsupported
-        // If it returns 400, it's a validation error for unsupported type
     }
 
     @Test
@@ -249,7 +246,7 @@ public class ConnectionValidationResourceIT {
                 .when()
                 .post("api/connections/validate")
                 .then()
-                .statusCode(anyOf(equalTo(400), equalTo(415))); // Bad Request or Unsupported Media Type
+                .statusCode(anyOf(equalTo(400)));
     }
 
     @Test
@@ -275,7 +272,7 @@ public class ConnectionValidationResourceIT {
                     "hostname": "localhost",
                     "port": 5432,
                     "username": "test@user!#$%",
-                    "password": "pass@word!#$%^&*()",
+                    "password": "testpass@word!#$%^&*()",
                     "database": "test_db-123"
                   }
                 }
@@ -289,13 +286,13 @@ public class ConnectionValidationResourceIT {
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("valid", anyOf(equalTo(true), equalTo(false)))
+                .body("valid", equalTo(false))
                 .body("message", notNullValue());
     }
 
     @Test
     public void testValidateConnection_EdgeCasePortValues() {
-        // Test with port 0 (invalid)
+
         String invalidPortJson = """
                 {
                   "name": "invalid-port-zero-connection",
@@ -316,10 +313,10 @@ public class ConnectionValidationResourceIT {
                 .when()
                 .post("api/connections/validate")
                 .then()
-                .statusCode(anyOf(equalTo(200), equalTo(400)))
-                .contentType(ContentType.JSON);
+                .statusCode(equalTo(200))
+                .contentType(ContentType.JSON)
+                .body("message", equalTo("Unable to parse URL jdbc:postgresql://localhost:0/testdb"));
 
-        // Test with port 65535 (maximum valid port)
         String maxPortJson = """
                 {
                   "name": "max-port-connection",
@@ -342,7 +339,8 @@ public class ConnectionValidationResourceIT {
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("valid", anyOf(equalTo(true), equalTo(false)))
-                .body("message", notNullValue());
+                .body("valid", equalTo(false))
+                .body("message", equalTo(
+                        "Connection to localhost:65535 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections."));
     }
 }
