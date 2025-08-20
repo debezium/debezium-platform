@@ -31,6 +31,7 @@ import {
   Toolbar,
   ToolbarContent,
   ToolbarItem,
+  Tooltip,
 } from "@patternfly/react-core";
 import {
   PencilAltIcon,
@@ -321,7 +322,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
           description: values["description"],
           logLevel: values["log-level"],
           logLevels: Array.from(pkgLevelLog.entries()).reduce(
-            (acc, [_key, value]) => ({
+            (acc, [, value]) => ({
               ...acc,
               [value.key]: value.value,
             }),
@@ -554,7 +555,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                         titleElement="h2"
                       >
                         <FormGroup
-                          label={"Root log level"}
+                          label={t("pipeline:form.rootLevelLog")}
                           //  labelInfo="Global setting for all packages"
                           isRequired
                           fieldId="log-level-field"
@@ -582,7 +583,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                           </FormSelect>
                           <FormHelperText>
                             <HelperText>
-                              <HelperTextItem>Global setting for all packages.</HelperTextItem>
+                              <HelperTextItem>{t("pipeline:form.logLevelFieldHelperText")}</HelperTextItem>
                             </HelperText>
                           </FormHelperText>
                         </FormGroup>
@@ -590,10 +591,10 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                           header={
                             <FormFieldGroupHeader
                               titleText={{
-                                text: "Package specific overrides",
+                                text: t("pipeline:form.logLevelSectionHeading"),
                                 id: `field-group--id`,
                               }}
-                              titleDescription={"Add custom log levels for specific packages"}
+                              titleDescription={t("pipeline:form.logLevelSectionDescription")}
                               actions={
                                 <>
                                   <Button
@@ -601,7 +602,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                                     icon={<PlusIcon />}
                                     onClick={handleAddProperty}
                                   >
-                                    Add package
+                                    {t("pipeline:form.addPackage")}
                                   </Button>
                                 </>
                               }
@@ -620,7 +621,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                                     <TextInput
                                       isRequired
                                       type="text"
-                                      placeholder="Enter package class name"
+                                      placeholder={t("pipeline:form.pkgLogLevelPlaceholder")}
                                       // validated={errorWarning.includes(key) ? "error" : "default"}
                                       id={`pkg-level-log-config-props-key-${key}`}
                                       name={`pkg-level-log-config-props-key-${key}`}
@@ -660,13 +661,22 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                                 </Grid>
                               </SplitItem>
                               <SplitItem>
-                                <Button
-                                  variant="plain"
-                                  aria-label="Remove"
-                                  onClick={() => handleDeleteProperty(key)}
+                                <Tooltip
+                                  content={
+                                    <div>
+                                      {t("delete")}
+                                    </div>
+                                  }
                                 >
-                                  <TrashIcon />
-                                </Button>
+                                  <Button
+                                    variant="plain"
+                                    aria-label="Remove"
+                                    onClick={() => handleDeleteProperty(key)}
+                                  >
+                                    <TrashIcon />
+                                  </Button>
+                                </Tooltip>
+
                               </SplitItem>
                             </Split>
                           ))}

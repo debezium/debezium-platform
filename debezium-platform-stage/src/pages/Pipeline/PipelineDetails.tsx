@@ -163,6 +163,7 @@ const PipelineDetails: React.FunctionComponent = () => {
                 name={pipeline?.name}
                 desc={pipeline.description || ""}
                 definedLogLevel={pipeline.logLevel}
+                definedLogLevels={pipeline?.logLevels}
                 pipelineId={pipeline.id}
               />
             )}

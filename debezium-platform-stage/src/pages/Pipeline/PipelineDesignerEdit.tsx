@@ -124,7 +124,7 @@ type PipelineDesignerEditProps = {
   name: string;
   desc: string;
   definedLogLevel: string;
-  definedLogLevels?: Record<string, string>;
+  definedLogLevels: Record<string, string>;
   pipelineId: number;
 };
 
@@ -647,7 +647,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
                             titleElement="h2"
                           >
                             <FormGroup
-                               label={"Root log level"}
+                               label={t("pipeline:form.rootLevelLog")}
                               isRequired
                               fieldId="logLevel-field"
                             >
@@ -668,7 +668,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
                               </FormSelect>
                               <FormHelperText>
                             <HelperText>
-                              <HelperTextItem>Global setting for all packages.</HelperTextItem>
+                              <HelperTextItem>{t("pipeline:form.logLevelFieldHelperText")}</HelperTextItem>
                             </HelperText>
                           </FormHelperText>
                             </FormGroup>
@@ -676,10 +676,10 @@ const PipelineDesignerEdit: React.FunctionComponent<
                           header={
                             <FormFieldGroupHeader
                               titleText={{
-                                text: "Package specific overrides",
+                                text: t("pipeline:form.logLevelSectionHeading"),
                                 id: `field-group--id`,
                               }}
-                              titleDescription={"Add custom log levels for specific packages"}
+                              titleDescription={t("pipeline:form.logLevelSectionDescription")}
                               actions={
                                 <>
                                   <Button
@@ -687,7 +687,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
                                     icon={<PlusIcon />}
                                     onClick={handleAddProperty}
                                   >
-                                    Add package
+                                    {t("pipeline:form.addPackage")}
                                   </Button>
                                 </>
                               }
@@ -706,7 +706,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
                                     <TextInput
                                       isRequired
                                       type="text"
-                                      placeholder="Enter package class name"
+                                      placeholder={t("pipeline:form.pkgLogLevelPlaceholder")}
                                       // validated={errorWarning.includes(key) ? "error" : "default"}
                                       id={`pkg-level-log-config-props-key-${key}`}
                                       name={`pkg-level-log-config-props-key-${key}`}

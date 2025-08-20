@@ -49,7 +49,13 @@
     "descriptionFieldHelperText": "Aggiungi una breve descrizione per la tua pipeline o per ciò che intendi catturare.",
     "subsectionTitle": "Proprietà di configurazione",
     "logLevelField": "Livello di log",
-    "flowField": "Flusso della pipeline"
+    "flowField": "Flusso della pipeline",
+    "rootLevelLog": "Livello di log root",
+    "pkgLogLevelPlaceholder": "Inserisci il nome della classe del pacchetto",
+    "logLevelFieldHelperText": "Impostazione globale per tutti i pacchetti",
+    "logLevelSectionDescription": "Aggiungi livelli di log personalizzati per pacchetti specifici",
+    "addPackage": "Aggiungi pacchetto",
+    "logLevelSectionHeading": "Sostituzioni specifiche per pacchetto"
   },
   "tabs": {
     "overview": "Panoramica",
