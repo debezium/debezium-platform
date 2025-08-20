@@ -25,15 +25,20 @@ import {
   FlexItem,
   Form,
   FormContextProvider,
+  FormFieldGroup,
+  FormFieldGroupHeader,
   FormGroup,
   FormHelperText,
   FormSection,
   FormSelect,
   FormSelectOption,
+  Grid,
   HelperText,
   HelperTextItem,
   PageSection,
   Skeleton,
+  Split,
+  SplitItem,
   TextInput,
   Tooltip,
 } from "@patternfly/react-core";
@@ -58,6 +63,7 @@ import {
 import {
   ArrowRightIcon,
   ExclamationCircleIcon,
+  PlusIcon,
   TrashIcon,
 } from "@patternfly/react-icons";
 import { ReactFlowProvider } from "reactflow";
@@ -69,6 +75,7 @@ import { useNotification } from "@appContext/AppNotificationContext";
 import ApiError from "@components/ApiError";
 import TrademarkMessage from "@components/TrademarkMessage";
 import { useTranslation } from "react-i18next";
+import { Properties } from "src/hooks/useConnectorForm";
 
 // Define Jotai atoms
 export const selectedSourceAtom = atom<Source | undefined>(undefined);
@@ -117,6 +124,7 @@ type PipelineDesignerEditProps = {
   name: string;
   desc: string;
   definedLogLevel: string;
+  definedLogLevels?: Record<string, string>;
   pipelineId: number;
 };
 
@@ -129,6 +137,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
   name,
   desc,
   definedLogLevel,
+  definedLogLevels = {},
   pipelineId,
 }) => {
     const navigate = useNavigate();
@@ -157,6 +166,61 @@ const PipelineDesignerEdit: React.FunctionComponent<
     const [isDestinationFetchLoading, setIsDestinationFetchLoading] =
       useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+
+
+  const [pkgLevelLog, setPkgLevelLog] = useState<Map<string, Properties>>(
+    new Map([["key0", { key: "", value: "" }]])
+  );
+  const [keyCount, setKeyCount] = useState<number>(1);
+
+  useEffect(() => {
+    if (definedLogLevels) {
+      const updatedPkgLevelLog = new Map<string, Properties>();
+      let count = 0;
+
+      Object.entries(definedLogLevels).forEach(([key, value]) => {
+        updatedPkgLevelLog.set(`key${count}`, { key, value });
+        count++;
+      });
+
+      setPkgLevelLog(updatedPkgLevelLog);
+      setKeyCount(count);
+    }
+  }, [definedLogLevels]);
+
+  const handleAddProperty = () => {
+    const newKey = `key${keyCount}`;
+    setPkgLevelLog(
+      (prevPkgLevelLog) =>
+        new Map(prevPkgLevelLog.set(newKey, { key: "", value: "" }))
+    );
+    setKeyCount((prevCount) => prevCount + 1);
+  };
+
+  const handlePropertyChange = (
+    key: string,
+    type: "key" | "value",
+    newValue: string
+  ) => {
+    setPkgLevelLog((prevPkgLevelLog) => {
+      const newProperties = new Map(prevPkgLevelLog);
+      const property = newProperties.get(key);
+      if (property) {
+        if (type === "key") property.key = newValue;
+        else if (type === "value") property.value = newValue;
+        newProperties.set(key, property);
+      }
+      return newProperties;
+    });
+  };
+
+  const handleDeleteProperty = (key: string) => {
+    setPkgLevelLog((prevPkgLevelLog) => {
+      const newProperties = new Map(prevPkgLevelLog);
+      newProperties.delete(key);
+      return newProperties;
+    });
+  };
 
     useEffect(() => {
       const fetchSource = async () => {
@@ -302,9 +366,11 @@ const PipelineDesignerEdit: React.FunctionComponent<
 
     const [logLevel, setLogLevel] = useState("");
 
+
     useEffect(() => {
       setLogLevel(definedLogLevel);
     }, [definedLogLevel]);
+
 
     const onChange = (
       _event: React.FormEvent<HTMLSelectElement>,
@@ -581,7 +647,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
                             titleElement="h2"
                           >
                             <FormGroup
-                              label={t('pipeline:form.logLevelField')}
+                               label={"Root log level"}
                               isRequired
                               fieldId="logLevel-field"
                             >
@@ -600,7 +666,97 @@ const PipelineDesignerEdit: React.FunctionComponent<
                                   />
                                 ))}
                               </FormSelect>
+                              <FormHelperText>
+                            <HelperText>
+                              <HelperTextItem>Global setting for all packages.</HelperTextItem>
+                            </HelperText>
+                          </FormHelperText>
                             </FormGroup>
+                            <FormFieldGroup
+                          header={
+                            <FormFieldGroupHeader
+                              titleText={{
+                                text: "Package specific overrides",
+                                id: `field-group--id`,
+                              }}
+                              titleDescription={"Add custom log levels for specific packages"}
+                              actions={
+                                <>
+                                  <Button
+                                    variant="secondary"
+                                    icon={<PlusIcon />}
+                                    onClick={handleAddProperty}
+                                  >
+                                    Add package
+                                  </Button>
+                                </>
+                              }
+                            />
+                          }
+                        >
+                          {Array.from(pkgLevelLog.keys()).map((key) => (
+                            <Split hasGutter key={key}>
+                              <SplitItem isFilled>
+                                <Grid hasGutter md={6}>
+                                  <FormGroup
+                                    label=""
+                                    isRequired
+                                    fieldId={`pkg-level-log-config-props-key-field-${key}`}
+                                  >
+                                    <TextInput
+                                      isRequired
+                                      type="text"
+                                      placeholder="Enter package class name"
+                                      // validated={errorWarning.includes(key) ? "error" : "default"}
+                                      id={`pkg-level-log-config-props-key-${key}`}
+                                      name={`pkg-level-log-config-props-key-${key}`}
+                                      value={pkgLevelLog.get(key)?.key || ""}
+                                      onChange={(_e, value) =>
+                                        handlePropertyChange(key, "key", value)
+                                      }
+                                    />
+                                  </FormGroup>
+                                  <FormGroup
+                                    label=""
+                                    isRequired
+                                    fieldId={`pkg-level-log-config-props-value-field-${key}`}
+                                  >
+
+                                    <FormSelect
+                                      value={pkgLevelLog.get(key)?.value || ""}
+                                      isRequired
+                                      id={`-config-props-value-${key}`}
+                                      name={`-config-props-value-${key}`}
+                                      onChange={(_event, value) => {
+                                        handlePropertyChange(key, "value", value)
+                                      }}
+                                      aria-label="FormSelect Input"
+                                      ouiaId="BasicFormSelect"
+                                    >
+                                      {options.map((option, index) => (
+                                        <FormSelectOption
+                                          isDisabled={option.disabled}
+                                          key={index}
+                                          value={option.value}
+                                          label={option.label}
+                                        />
+                                      ))}
+                                    </FormSelect>
+                                  </FormGroup>
+                                </Grid>
+                              </SplitItem>
+                              <SplitItem>
+                                <Button
+                                  variant="plain"
+                                  aria-label="Remove"
+                                  onClick={() => handleDeleteProperty(key)}
+                                >
+                                  <TrashIcon />
+                                </Button>
+                              </SplitItem>
+                            </Split>
+                          ))}
+                        </FormFieldGroup>
                           </FormSection>
                         </Form>
                       </CardBody>

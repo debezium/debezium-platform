@@ -68,6 +68,7 @@ export type Pipeline = {
   description?: string;
   transforms: Transform[];
   logLevel: string;
+  logLevels: Record<string, string>;
 };
 
 export type PipelinePayload = {
@@ -77,7 +78,9 @@ export type PipelinePayload = {
   description?: string;
   transforms: Transform[];
   logLevel: string;
+  logLevels: Record<string, string>;
 };
+
 
 export type DestinationApiResponse = Destination[];
 
