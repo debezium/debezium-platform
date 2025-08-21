@@ -16,7 +16,7 @@ import {
   ToolbarItem,
 } from "@patternfly/react-core";
 import { PencilAltIcon, CodeIcon } from "@patternfly/react-icons";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { PageHeader } from "@patternfly/react-component-groups"
 import { useEffect, useState } from "react";
@@ -31,7 +31,6 @@ import {
   API_URL
 } from "../../utils/constants";
 import { convertMapToObject, getConnectorTypeName } from "../../utils/helpers";
-// import { useData } from "../../appLayout/AppContext";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
 import Ajv from "ajv";
@@ -138,13 +137,9 @@ const FormSyncManager: React.FC<{
   };
 
 const EditSource: React.FunctionComponent = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { sourceId } = useParams<{ sourceId: string }>();
 
-  const navigateTo = (url: string) => {
-    navigate(url);
-  };
   const { addNotification } = useNotification();
 
   // const { navigationCollapsed } = useData();
@@ -367,8 +362,8 @@ const EditSource: React.FunctionComponent = () => {
         />
       ) : (
         <PageHeader
-          title={<>Edit <i>{source?.name}</i></>}
-          subtitle={"Edit the source connector details using the below form or smart editor."}
+          title={<>{t("edit")} <i>{source?.name}</i></>}
+          subtitle={t("source:edit.description")}
         />
       )}
 

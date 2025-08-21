@@ -14,6 +14,6 @@
     },
     "edit": {
         "title": "Edit destination",
-        "description": "To configure and create a connector fill out the below form or use the smart editor to setup a new Destination connector. If you already have a configuration file, you can setup a new Destination connector by uploading it in the smart editor."
+        "description": "Edit the destination connector details using the below form or smart editor."
     }
 }

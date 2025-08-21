@@ -172,7 +172,7 @@ const SourceSinkForm = ({
               fieldId={`${connectorType}-name-field`}
             >
               <TextInput
-              readOnlyVariant={viewMode ? "plain" : undefined}
+                readOnlyVariant={viewMode ? "plain" : undefined}
                 id={`${connectorType}-name`}
                 aria-label={`${connectorLabel} name`}
                 onChange={(_event, value) => {
@@ -188,7 +188,7 @@ const SourceSinkForm = ({
               fieldId={`${connectorType}-description-field`}
             >
               <TextInput
-              readOnlyVariant={viewMode ? "plain" : undefined}
+                readOnlyVariant={viewMode ? "plain" : undefined}
                 id={`${connectorType}-description`}
                 aria-label={`${connectorLabel} description`}
                 onChange={(_event, value) => setValue("description", value)}
@@ -207,21 +207,21 @@ const SourceSinkForm = ({
               header={
                 <FormFieldGroupHeader
                   titleText={{
-                    text:<span style={{fontWeight: 500}}>{t("form.subHeading.title")}</span> ,
+                    text: <span style={{ fontWeight: 500 }}>{t("form.subHeading.title")}</span>,
                     id: `field-group-${connectorType}-id`,
                   }}
                   titleDescription={!viewMode ? t("form.subHeading.description") : undefined}
                   actions={
                     viewMode ? null :
-                    <>
-                      <Button
-                        variant="secondary"
-                        icon={<PlusIcon />}
-                        onClick={handleAddProperty}
-                      >
-                        {t("form.addFieldButton")}
-                      </Button>
-                    </>
+                      <>
+                        <Button
+                          variant="secondary"
+                          icon={<PlusIcon />}
+                          onClick={handleAddProperty}
+                        >
+                          {t("form.addFieldButton")}
+                        </Button>
+                      </>
                   }
                 />
               }
@@ -236,7 +236,7 @@ const SourceSinkForm = ({
                         fieldId={`${connectorType}-config-props-key-field-${key}`}
                       >
                         <TextInput
-                          readOnlyVariant={viewMode ?"default" : undefined}
+                          readOnlyVariant={viewMode ? "default" : undefined}
                           isRequired
                           type="text"
                           placeholder="Key"
@@ -255,7 +255,7 @@ const SourceSinkForm = ({
                         fieldId={`${connectorType}-config-props-value-field-${key}`}
                       >
                         <TextInput
-                         readOnlyVariant={viewMode ?"default" : undefined}
+                          readOnlyVariant={viewMode ? "default" : undefined}
                           isRequired
                           type="text"
                           id={`${connectorType}-config-props-value-${key}`}

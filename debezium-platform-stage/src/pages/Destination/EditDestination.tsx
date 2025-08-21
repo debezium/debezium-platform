@@ -16,7 +16,7 @@ import {
   ToolbarItem,
 } from "@patternfly/react-core";
 import { PencilAltIcon, CodeIcon } from "@patternfly/react-icons";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -136,12 +136,8 @@ const FormSyncManager: React.FC<{
   };
 
 const EditDestination: React.FunctionComponent = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { destinationId } = useParams<{ destinationId: string }>();
-  const navigateTo = (url: string) => {
-    navigate(url);
-  };
   // const { navigationCollapsed } = useData();
   const { addNotification } = useNotification();
 
@@ -368,8 +364,8 @@ const EditDestination: React.FunctionComponent = () => {
         />
       ) : (
         <PageHeader
-          title={<>Edit <i>{destination?.name}</i></>}
-          subtitle={"Edit the destination connector details using the below form or smart editor."}
+          title={<>{t("edit")} <i>{destination?.name}</i></>}
+          subtitle={t("destination:edit.description")}
         />
       )}
 
@@ -506,7 +502,7 @@ const EditDestination: React.FunctionComponent = () => {
                     <ActionListItem>
                       <Button
                         variant="link"
-                        onClick={() => navigateTo("/destination")}
+                        onClick={() => setViewMode(true)}
                       >
                         {t("cancel")}
                       </Button>

@@ -16,7 +16,7 @@
     },
     "edit": {
         "title": "Modifica fonte",
-        "description": "Per configurare e creare un connettore, compila il modulo sottostante oppure utilizza l’editor intelligente per configurare una nuova fonte. Se hai già un file di configurazione, puoi configurare una nuova fonte caricandolo nell’editor intelligente."
+        "description": "Modifica i dettagli del connettore di origine utilizzando il modulo sottostante o l'editor intelligente."
     },
     "signal": {
         "title": "Abilita il signaling",

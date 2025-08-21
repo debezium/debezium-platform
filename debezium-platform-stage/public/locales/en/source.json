@@ -16,7 +16,7 @@
     },
     "edit": {
         "title": "Edit source",
-        "description": "To configure and create a connector fill out the below form or use the smart editor to setup a new source connector. If you already have a configuration file, you can setup a new source connector by uploading it in the smart editor."
+        "description": "Edit the source connector details using the below form or smart editor."
     },
     "signal": {
         "title": "Enable signalling",

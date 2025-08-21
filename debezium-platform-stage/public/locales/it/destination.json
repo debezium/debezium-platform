@@ -14,6 +14,6 @@
     },
     "edit": {
         "title": "Modifica destinazione",
-        "description": "Per configurare e creare un connettore, compila il modulo sottostante o utilizza l'editor intelligente per configurare un nuovo connettore di destinazione. Se hai già un file di configurazione, puoi configurare un nuovo connettore caricandolo nell'editor intelligente."
+        "description": "Modifica i dettagli del connettore di destinazione utilizzando il modulo sottostante o l'editor intelligente."
     }
 }
