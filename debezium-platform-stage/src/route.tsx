@@ -103,7 +103,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     component: EditSource,
-    path: "/source/edit_source/:sourceId",
+    path: "/source/:sourceId",
     navSection: "source",
     title: `${AppBranding} | Source`,
   },
@@ -150,7 +150,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     component: EditDestination,
-    path: "/destination/edit_destination/:destinationId",
+    path: "/destination/:destinationId",
     navSection: "destination",
     title: `${AppBranding} | Destination`,
   },

@@ -32,7 +32,7 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Catalog", true)}
           </BreadcrumbGenerator>
         );
-      case route.match("source/edit_source/[^/]+") !== null:
+      case route.match("source/[^/]+") !== null:
         return (
           <BreadcrumbGenerator>
             {generateBreadcrumbItem("/source", "Source")}
@@ -54,7 +54,7 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Catalog", true)}
           </BreadcrumbGenerator>
         );
-      case route.match("destination/edit_destination/[^/]+") !== null:
+      case route.match("destination/[^/]+") !== null:
         return (
           <BreadcrumbGenerator>
             {generateBreadcrumbItem("/destination", "Destination")}

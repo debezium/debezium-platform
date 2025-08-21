@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
-  ActionGroup,
+  ActionList,
+  ActionListGroup,
+  ActionListItem,
   Alert,
   Button,
   ButtonType,
@@ -14,8 +16,9 @@ import {
   ToolbarItem,
 } from "@patternfly/react-core";
 import { PencilAltIcon, CodeIcon } from "@patternfly/react-icons";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
+import { PageHeader } from "@patternfly/react-component-groups"
 import { useEffect, useState } from "react";
 import {
   editPut,
@@ -27,11 +30,10 @@ import {
 import {
   API_URL
 } from "../../utils/constants";
-import { convertMapToObject } from "../../utils/helpers";
+import { convertMapToObject, getConnectorTypeName } from "../../utils/helpers";
 // import { useData } from "../../appLayout/AppContext";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
-import PageHeader from "@components/PageHeader";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
 import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
@@ -157,6 +159,11 @@ const EditSource: React.FunctionComponent = () => {
   );
   const [keyCount, setKeyCount] = useState<number>(1);
 
+  const [searchParams] = useSearchParams();
+  const initialState = searchParams.get("state") as "view" | "edit" | null;
+
+  const [viewMode, setViewMode] = useState<boolean>(initialState === "view");
+
   const [code, setCode] = useState({
     name: "",
     description: "",
@@ -258,7 +265,7 @@ const EditSource: React.FunctionComponent = () => {
         t('statusMessage:edit.successTitle'),
         t("statusMessage:edit.successDescription", { val: `${(response.data as Source)?.name}` })
       );
-      navigateTo("/source");
+      setViewMode(true);
     }
   };
 
@@ -345,37 +352,56 @@ const EditSource: React.FunctionComponent = () => {
 
   return (
     <>
-      <PageHeader
-        title={t("source:edit.title")}
-        description={t("source:edit.description")}
-      />
-      <PageSection className={style.createConnector_toolbar}>
-        <Toolbar id="source-editor-toggle">
-          <ToolbarContent>
-            <ToolbarItem>
-              <ToggleGroup aria-label="Toggle between form editor and smart editor">
-                <ToggleGroupItem
-                  icon={<PencilAltIcon />}
-                  text={t('formEditor')}
-                  aria-label={t('formEditor')}
-                  buttonId="form-editor"
-                  isSelected={editorSelected === "form-editor"}
-                  onChange={handleItemClick}
-                />
+      {viewMode ? (
 
-                <ToggleGroupItem
-                  icon={<CodeIcon />}
-                  text={t('smartEditor')}
-                  aria-label={t('smartEditor')}
-                  buttonId="smart-editor"
-                  isSelected={editorSelected === "smart-editor"}
-                  onChange={handleItemClick}
-                />
-              </ToggleGroup>
-            </ToolbarItem>
-          </ToolbarContent>
-        </Toolbar>
-      </PageSection>
+        <PageHeader
+          title={source?.name || t("source:edit.title")}
+          subtitle={`${getConnectorTypeName(source?.type || sourceId || "")} source connector.`}
+          actionMenu={
+            <Button variant="secondary" ouiaId="Primary" icon={<PencilAltIcon />}
+              onClick={() => { setViewMode(false); }}>
+              {t("edit")}
+            </Button>
+          }
+        // icon={ <ConnectorImage connectorType={source?.type || sourceId || ""} size={35} />}
+        />
+      ) : (
+        <PageHeader
+          title={<>Edit <i>{source?.name}</i></>}
+          subtitle={"Edit the source connector details using the below form or smart editor."}
+        />
+      )}
+
+      {!viewMode && (
+        <PageSection className={style.createConnector_toolbar}>
+          <Toolbar id="source-editor-toggle">
+            <ToolbarContent>
+              <ToolbarItem>
+                <ToggleGroup aria-label="Toggle between form editor and smart editor">
+                  <ToggleGroupItem
+                    icon={<PencilAltIcon />}
+                    text={t('formEditor')}
+                    aria-label={t('formEditor')}
+                    buttonId="form-editor"
+                    isSelected={editorSelected === "form-editor"}
+                    onChange={handleItemClick}
+                  />
+
+                  <ToggleGroupItem
+                    icon={<CodeIcon />}
+                    text={t('smartEditor')}
+                    aria-label={t('smartEditor')}
+                    buttonId="smart-editor"
+                    isSelected={editorSelected === "smart-editor"}
+                    onChange={handleItemClick}
+                  />
+                </ToggleGroup>
+              </ToolbarItem>
+            </ToolbarContent>
+          </Toolbar>
+        </PageSection>
+      )}
+
 
       <FormContextProvider
         initialValues={{
@@ -416,6 +442,7 @@ const EditSource: React.FunctionComponent = () => {
                   handleDeleteProperty={handleDeleteProperty}
                   handlePropertyChange={handlePropertyChange}
                   editFlow={true}
+                  viewMode={viewMode}
                 />
               ) : (
                 <>
@@ -460,25 +487,34 @@ const EditSource: React.FunctionComponent = () => {
                 </>
               )}
             </PageSection>
-            <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className={style.createConnector_footer}>
-                <Button
-                  variant="primary"
-                  isLoading={isLoading}
-                  isDisabled={isLoading}
-                  type={ButtonType.submit}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleEditSource(values, setError);
-                  }}
-                >
-                  {t("saveChanges")}
-                </Button>
-                <Button variant="link" onClick={() => navigateTo("/source")}>
-                  {t("cancel")}
-                </Button>
-              </ActionGroup>
-            </PageSection>
+            {!viewMode && (
+              <PageSection className="pf-m-sticky-bottom" isFilled={false}>
+                <ActionList>
+                  <ActionListGroup>
+                    <ActionListItem>
+                      <Button
+                        variant="primary"
+                        isLoading={isLoading}
+                        isDisabled={isLoading}
+                        type={ButtonType.submit}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleEditSource(values, setError);
+                        }}
+                      >
+                        {t("saveChanges")}
+                      </Button>
+                    </ActionListItem>
+                    <ActionListItem>
+                      <Button variant="link" onClick={() => setViewMode(true)}>
+                        {t("cancel")}
+                      </Button>
+                    </ActionListItem>
+                  </ActionListGroup>
+                </ActionList>
+              </PageSection>
+            )}
+
           </>
         )}
       </FormContextProvider>

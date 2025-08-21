@@ -47,8 +47,10 @@ import { useNotification } from "../appLayout/AppNotificationContext";
 import { useDeleteData } from "src/apis";
 import { useTranslation } from "react-i18next";
 
+type TableType = "source" | "destination";
+
 interface ISourceSinkTableProps {
-  tableType: "source" | "destination";
+  tableType: TableType;
   data: SourceApiResponse | DestinationApiResponse;
   onClear: () => void;
 }
@@ -127,12 +129,16 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
   };
 
   const onEditHandler = (id: number, _name: string) => {
-    navigate(`/${tableType}/edit_${tableType}/${id}`);
+    navigate(`/${tableType}/${id}?state=edit`);
   };
 
   const modalToggle = (toggleValue: boolean) => {
     setDeleteInstanceName("");
     setIsOpen(toggleValue);
+  };
+
+  const onNameClick = (id: number, tableType: TableType) => () => {
+    navigate(`/${tableType}/${id}?state=view`);
   };
 
   const rowActions = (actionData: ActionData): IAction[] => [
@@ -161,7 +167,15 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
           {data.length > 0 ? (
             data.map((instance) => (
               <Tr key={instance.id}>
-                <Td dataLabel={t("name")}>{instance.name}</Td>
+                <Td dataLabel={t("name")}>
+                  <Button
+                    variant="link"
+                    isInline
+                    onClick={onNameClick(instance.id, tableType)}
+                  >
+                    {instance.name}
+                  </Button>
+                </Td>
                 <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
                   <Flex alignItems={{ default: "alignItemsCenter" }}>
                     <FlexItem>

@@ -49,6 +49,7 @@ interface SourceSinkFormProps {
     value: string
   ) => void;
   editFlow?: boolean;
+  viewMode?: boolean;
   updateSignalCollectionName?: (name: string) => void;
 }
 const SourceSinkForm = ({
@@ -65,6 +66,7 @@ const SourceSinkForm = ({
   handleDeleteProperty,
   handlePropertyChange,
   editFlow,
+  viewMode,
   updateSignalCollectionName
 }: SourceSinkFormProps) => {
   const { t } = useTranslation();
@@ -76,7 +78,7 @@ const SourceSinkForm = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const [signalColectionName, setSignalColectionName] = useState("");
+  const [signalCollectionName, setSignalCollectionName] = useState("");
   const [signalVerified, setSignalVerified] = useState(false);
   const [signalMissingPayloads, setSignalMissingPayload] = useState<string[]>([]);
 
@@ -104,7 +106,7 @@ const SourceSinkForm = ({
       username: formValuesCopy.get("database.user"),
       password: formValuesCopy.get("database.password"),
       dbName: formValuesCopy.get("database.dbname"),
-      fullyQualifiedTableName: signalColectionName
+      fullyQualifiedTableName: signalCollectionName
     }
 
     const requiredFields = ["hostname", "port", "username", "password", "dbName"];
@@ -131,7 +133,7 @@ const SourceSinkForm = ({
       addNotification(
         "success",
         `Signal verification succesfully`,
-        `Signal data collection verified succesfully: ${signalColectionName}`
+        `Signal data collection verified succesfully: ${signalCollectionName}`
       );
       setIsLoading(false);
     }
@@ -140,7 +142,7 @@ const SourceSinkForm = ({
   const configureSignalCollection = async () => {
     setIsLoading(true);
     if (updateSignalCollectionName) {
-      updateSignalCollectionName(signalColectionName);
+      updateSignalCollectionName(signalCollectionName);
     }
     setSetDone(true);
     setIsLoading(false);
@@ -170,6 +172,7 @@ const SourceSinkForm = ({
               fieldId={`${connectorType}-name-field`}
             >
               <TextInput
+              readOnlyVariant={viewMode ? "plain" : undefined}
                 id={`${connectorType}-name`}
                 aria-label={`${connectorLabel} name`}
                 onChange={(_event, value) => {
@@ -185,29 +188,31 @@ const SourceSinkForm = ({
               fieldId={`${connectorType}-description-field`}
             >
               <TextInput
+              readOnlyVariant={viewMode ? "plain" : undefined}
                 id={`${connectorType}-description`}
                 aria-label={`${connectorLabel} description`}
                 onChange={(_event, value) => setValue("description", value)}
                 value={getValue(`description`)}
               />
-              <FormHelperText>
+              {!viewMode && (<FormHelperText>
                 <HelperText>
                   <HelperTextItem>
                     {t("form.field.description.helper", { val: connectorType })}
                   </HelperTextItem>
                 </HelperText>
-              </FormHelperText>
+              </FormHelperText>)}
             </FormGroup>
 
             <FormFieldGroup
               header={
                 <FormFieldGroupHeader
                   titleText={{
-                    text: t("form.subHeading.title"),
+                    text:<span style={{fontWeight: 500}}>{t("form.subHeading.title")}</span> ,
                     id: `field-group-${connectorType}-id`,
                   }}
-                  titleDescription={t("form.subHeading.description")}
+                  titleDescription={!viewMode ? t("form.subHeading.description") : undefined}
                   actions={
+                    viewMode ? null :
                     <>
                       <Button
                         variant="secondary"
@@ -231,6 +236,7 @@ const SourceSinkForm = ({
                         fieldId={`${connectorType}-config-props-key-field-${key}`}
                       >
                         <TextInput
+                          readOnlyVariant={viewMode ?"default" : undefined}
                           isRequired
                           type="text"
                           placeholder="Key"
@@ -249,6 +255,7 @@ const SourceSinkForm = ({
                         fieldId={`${connectorType}-config-props-value-field-${key}`}
                       >
                         <TextInput
+                         readOnlyVariant={viewMode ?"default" : undefined}
                           isRequired
                           type="text"
                           id={`${connectorType}-config-props-value-${key}`}
@@ -266,6 +273,7 @@ const SourceSinkForm = ({
                   <SplitItem>
                     <Button
                       variant="plain"
+                      isDisabled={viewMode}
                       aria-label="Remove"
                       onClick={() => handleDeleteProperty(key)}
                     >
@@ -326,9 +334,9 @@ const SourceSinkForm = ({
                 aria-label={t("source:signal.signalingCollectionField.label")}
                 type="text"
                 onChange={(_event, value) => {
-                  setSignalColectionName(value);
+                  setSignalCollectionName(value);
                 }}
-                value={signalColectionName}
+                value={signalCollectionName}
               />
             </FormGroup>
             <FormGroup
@@ -336,7 +344,7 @@ const SourceSinkForm = ({
               fieldId={`ddl-query-name`}
             >
               <ClipboardCopy isReadOnly hoverTip={t('copy')} clickTip={t('copied')}>
-                {`CREATE TABLE ${signalColectionName} (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);`}
+                {`CREATE TABLE ${signalCollectionName} (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);`}
               </ClipboardCopy>
             </FormGroup>
 
