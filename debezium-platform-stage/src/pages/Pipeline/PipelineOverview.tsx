@@ -323,7 +323,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
-                <DescriptionListTerm>Configuration properties</DescriptionListTerm>
+                <DescriptionListTerm>{t("form.subHeading.title")}</DescriptionListTerm>
                 <DescriptionListDescription>
                   <DescriptionList isCompact isHorizontal horizontalTermWidthModifier={{
                     default: '12ch',
@@ -335,7 +335,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   }} aria-label="Compact horizontal">
                     {source?.config && Object.keys(source.config).map((key) => {
                       return (
-                        <DescriptionListGroup>
+                        <DescriptionListGroup key={key}>
                           <DescriptionListTerm>{key}</DescriptionListTerm>
                           <DescriptionListDescription>{source.config[key]}</DescriptionListDescription>
                         </DescriptionListGroup>
@@ -416,7 +416,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
-                <DescriptionListTerm>Configuration properties</DescriptionListTerm>
+                <DescriptionListTerm>{t("form.subHeading.title")}</DescriptionListTerm>
                 <DescriptionListDescription>
                   <DescriptionList isCompact isHorizontal horizontalTermWidthModifier={{
                     default: '12ch',
@@ -428,7 +428,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   }} aria-label="Compact horizontal">
                     {destination?.config && Object.keys(destination.config).map((key) => {
                       return (
-                        <DescriptionListGroup>
+                        <DescriptionListGroup key={key}>
                           <DescriptionListTerm>{key}</DescriptionListTerm>
                           <DescriptionListDescription>{destination.config[key]}</DescriptionListDescription>
                         </DescriptionListGroup>
