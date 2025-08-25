@@ -46,16 +46,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   const [notifications, setNotifications] = useState<NotificationProps[]>([]);
   const [isDrawerExpanded, setDrawerExpanded] = useState(false);
 
-  const getTimeCreated = () => {
-    const dateCreated = new Date();
-    return (
-      dateCreated.toDateString() +
-      " at " +
-      ("00" + dateCreated.getHours().toString()).slice(-2) +
-      ":" +
-      ("00" + dateCreated.getMinutes().toString()).slice(-2)
-    );
-  };
+  // const getTimeCreated = () => {
+  //   const dateCreated = new Date();
+  //   return (
+  //     dateCreated.toDateString() +
+  //     " at " +
+  //     ("00" + dateCreated.getHours().toString()).slice(-2) +
+  //     ":" +
+  //     ("00" + dateCreated.getMinutes().toString()).slice(-2)
+  //   );
+  // };
 
   const removeAlert = (key: React.Key) => {
     setAlerts((prevAlerts) =>
@@ -68,25 +68,25 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     alertHeader: string,
     alertMessage: string
   ) => {
-    const variantFormatted = variant.charAt(0).toUpperCase() + variant.slice(1);
+    // const variantFormatted = variant.charAt(0).toUpperCase() + variant.slice(1);
     const title = alertHeader;
-    const srTitle = variantFormatted + " alert";
+    // const srTitle = variantFormatted + " alert";
     const description = alertMessage;
     const key = getUniqueId();
-    const timestamp = getTimeCreated();
+    // const timestamp = getTimeCreated();
 
-    setNotifications((prevNotifications) => [
-      {
-        title,
-        srTitle,
-        variant,
-        key,
-        timestamp,
-        description,
-        isNotificationRead: false,
-      },
-      ...prevNotifications,
-    ]);
+    // setNotifications((prevNotifications) => [
+    //   {
+    //     title,
+    //     srTitle,
+    //     variant,
+    //     key,
+    //     timestamp,
+    //     description,
+    //     isNotificationRead: false,
+    //   },
+    //   ...prevNotifications,
+    // ]);
 
     if (!isDrawerExpanded) {
       setAlerts((prevAlerts) => [

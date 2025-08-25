@@ -12,7 +12,7 @@ vi.mock("src/config", () => ({
 
 vi.mock("@components/pipelineDesigner/CompositionFlow", () => ({
   __esModule: true,
-  default: (props: any) => (
+  default: (props: unknown) => (
     <div data-testid="composition-flow">{JSON.stringify(props)}</div>
   ),
 }));
