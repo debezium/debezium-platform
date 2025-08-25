@@ -269,7 +269,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   variant="link"
                   icon={<PencilAltIcon />}
                   onClick={() =>
-                    navigateTo(`/source/edit_source/${destination?.id}`)
+                    navigateTo(`/source/${source?.id}`)
                   }
                 >
                   {t("edit")}
@@ -280,7 +280,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
             <CardTitle>{t("source")}</CardTitle>
           </CardHeader>
           <CardBody>
-            <DescriptionList>
+            <DescriptionList isCompact>
               <DescriptionListGroup>
                 <DescriptionListTerm>{t("name")}</DescriptionListTerm>
                 <DescriptionListDescription>
@@ -322,17 +322,29 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   )}
                 </DescriptionListDescription>
               </DescriptionListGroup>
-              {/* Temporarily commented out schema section as its using mock value */}
-              {/* <DescriptionListGroup>
-                <DescriptionListTerm>{t('schema')}</DescriptionListTerm>
+              <DescriptionListGroup>
+                <DescriptionListTerm>Configuration properties</DescriptionListTerm>
                 <DescriptionListDescription>
-                  {isSourceFetchLoading ? (
-                    <Skeleton screenreaderText="Loading contents" />
-                  ) : (
-                    source?.schema
-                  )}
+                  <DescriptionList isCompact isHorizontal horizontalTermWidthModifier={{
+                    default: '12ch',
+                    sm: '15ch',
+                    md: '20ch',
+                    lg: '28ch',
+                    xl: '30ch',
+                    '2xl': '35ch'
+                  }} aria-label="Compact horizontal">
+                    {source?.config && Object.keys(source.config).map((key) => {
+                      return (
+                        <DescriptionListGroup>
+                          <DescriptionListTerm>{key}</DescriptionListTerm>
+                          <DescriptionListDescription>{source.config[key]}</DescriptionListDescription>
+                        </DescriptionListGroup>
+                      )
+                    })}
+
+                  </DescriptionList>
                 </DescriptionListDescription>
-              </DescriptionListGroup> */}
+              </DescriptionListGroup>
             </DescriptionList>
           </CardBody>
         </Card>
@@ -348,7 +360,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   icon={<PencilAltIcon />}
                   onClick={() =>
                     navigateTo(
-                      `/destination/edit_destination/${destination?.id}`
+                      `/destination/${destination?.id}`
                     )
                   }
                 >
@@ -360,7 +372,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
             <CardTitle>{t("destination")}</CardTitle>
           </CardHeader>
           <CardBody>
-            <DescriptionList>
+            <DescriptionList isCompact>
               <DescriptionListGroup>
                 <DescriptionListTerm>{t("name")}</DescriptionListTerm>
                 <DescriptionListDescription>
@@ -403,18 +415,31 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   )}
                 </DescriptionListDescription>
               </DescriptionListGroup>
-              {/* Temporarily commented out schema section as its using mock value */}
-              {/* <DescriptionListGroup>
-                <DescriptionListTerm>{t('schema')}</DescriptionListTerm>
+              <DescriptionListGroup>
+                <DescriptionListTerm>Configuration properties</DescriptionListTerm>
                 <DescriptionListDescription>
-                  {isDestinationFetchLoading ? (
-                    <Skeleton screenreaderText="Loading contents" />
-                  ) : (
-                    destination?.schema
-                  )}
+                  <DescriptionList isCompact isHorizontal horizontalTermWidthModifier={{
+                    default: '12ch',
+                    sm: '15ch',
+                    md: '20ch',
+                    lg: '28ch',
+                    xl: '30ch',
+                    '2xl': '35ch'
+                  }} aria-label="Compact horizontal">
+                    {destination?.config && Object.keys(destination.config).map((key) => {
+                      return (
+                        <DescriptionListGroup>
+                          <DescriptionListTerm>{key}</DescriptionListTerm>
+                          <DescriptionListDescription>{destination.config[key]}</DescriptionListDescription>
+                        </DescriptionListGroup>
+                      )
+                    })}
+
+                  </DescriptionList>
                 </DescriptionListDescription>
-              </DescriptionListGroup> */}
+              </DescriptionListGroup>
             </DescriptionList>
+
           </CardBody>
         </Card>
       </GridItem>
