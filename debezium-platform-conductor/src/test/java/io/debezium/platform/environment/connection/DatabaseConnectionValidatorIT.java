@@ -22,6 +22,7 @@ import org.testcontainers.shaded.org.awaitility.Awaitility;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.actions.DatabaseTestProfile;
+import io.debezium.platform.environment.connection.source.DatabaseConnectionValidator;
 import io.debezium.platform.environment.database.db.MariaDbTestResource;
 import io.debezium.platform.environment.database.db.MySQLTestResource;
 import io.debezium.platform.environment.database.db.OracleTestResource;

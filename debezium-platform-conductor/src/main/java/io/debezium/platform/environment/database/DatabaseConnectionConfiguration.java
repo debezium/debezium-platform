@@ -20,20 +20,26 @@ public record DatabaseConnectionConfiguration(DatabaseType databaseType,
         @JsonAlias("dbName") String database,
         Map<String, Object> additionalConfigs) {
 
+    public static final String HOSTNAME = "hostname";
+    public static final String PORT = "port";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
+    public static final String DATABASE = "database";
+
     public static DatabaseConnectionConfiguration from(Connection connectionConfig) {
         Map<String, Object> config = new HashMap<>(connectionConfig.getConfig());
 
-        String hostname = (String) config.get("hostname");
-        Integer port = (Integer) config.get("port");
-        String username = (String) config.get("username");
-        String password = (String) config.get("password");
-        String database = (String) config.get("database");
+        String hostname = (String) config.get(HOSTNAME);
+        Integer port = (Integer) config.get(PORT);
+        String username = (String) config.get(USERNAME);
+        String password = (String) config.get(PASSWORD);
+        String database = (String) config.get(DATABASE);
 
-        config.remove("hostname");
-        config.remove("port");
-        config.remove("username");
-        config.remove("password");
-        config.remove("database");
+        config.remove(HOSTNAME);
+        config.remove(PORT);
+        config.remove(USERNAME);
+        config.remove(PASSWORD);
+        config.remove(DATABASE);
 
         return new DatabaseConnectionConfiguration(DatabaseType.valueOf(connectionConfig.getType().name()),
                 hostname,
