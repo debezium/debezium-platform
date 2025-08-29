@@ -37,6 +37,7 @@ import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
 import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css";
+import EditConfirmationModel from "../components/EditConfirmationModel";
 
 const ajv = new Ajv();
 
@@ -139,6 +140,11 @@ const FormSyncManager: React.FC<{
 const EditSource: React.FunctionComponent = () => {
   const { t } = useTranslation();
   const { sourceId } = useParams<{ sourceId: string }>();
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
+  const [pendingSave, setPendingSave] = useState<{
+    values: Record<string, string>;
+    setError: (fieldId: string, error: string | undefined) => void;
+  } | null>(null);
 
   const { addNotification } = useNotification();
 
@@ -494,7 +500,8 @@ const EditSource: React.FunctionComponent = () => {
                         type={ButtonType.submit}
                         onClick={(e) => {
                           e.preventDefault();
-                          handleEditSource(values, setError);
+                          setPendingSave({ values, setError });
+                          setIsWarningOpen(true);
                         }}
                       >
                         {t("saveChanges")}
@@ -513,6 +520,13 @@ const EditSource: React.FunctionComponent = () => {
           </>
         )}
       </FormContextProvider>
+      <EditConfirmationModel 
+        type="source" 
+        isWarningOpen={isWarningOpen} 
+        setIsWarningOpen={setIsWarningOpen} 
+        pendingSave={pendingSave} 
+        setPendingSave={setPendingSave} 
+        handleEdit={handleEditSource} />
     </>
   );
 };

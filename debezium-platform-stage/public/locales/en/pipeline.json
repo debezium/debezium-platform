@@ -4,7 +4,7 @@
     "createPipeline": "Create pipeline",
     "deletePipeline": "Delete pipeline",
     "dbzServerButton": "DBZ server config",
-    "debeziumServerModal":{
+    "debeziumServerModal": {
         "title": "Create pipeline resources using Debezium server configuration",
         "description": "Upload a Debezium server configuration file to auto create pipeline resources. On uploading a config file a source, transforms and a destination will be created synchronously based on the uploaded config and then finally you can create a pipeline using these resources.",
         "acceptedFiles": "Accepted file types: {{val}}",
@@ -14,7 +14,7 @@
         "nonSupportedFilesHeader": "Unsupported file",
         "nonSupportedFilesMsg": "{{val}} are not accepted file types."
     },
-    "dbzServerTooltip": "Upload the DBZ server config to create new source, transformations and destination for a pipeline.",
+    "dbzServerTooltip": "Optionally you can upload the DBZ server config to directly create a pipeline.",
     "userActions": {
         "overview": "Overview",
         "logs": "View logs",
@@ -85,7 +85,7 @@
         "actionIdHelper": "Its prefilled with UUID string, user can also update it to provide their own ID.",
         "addFilter": "Add filter",
         "filterCondition": "Filter condition {{val}}",
-        "filterConditionFields":{
+        "filterConditionFields": {
             "filtersField": "Filters",
             "filtersHelperText": "Specifies the column values that must be present in a data collection record for the snapshot to include it.",
             "collectionsField": "Collection name",
@@ -93,7 +93,6 @@
         },
         "additionalConditions": "Additional conditions",
         "additioanlConditionsDesc": "Additional conditions that the connector evaluates to determine the subset of records to include in a snapshot."
-
     },
     "logs": {
         "download": "Download Log File",
@@ -103,5 +102,9 @@
             "showTooltip": "Click to grep the notification logs.",
             "hideTooltip": "Click to stopping grep the notification logs."
         }
+    },
+    "editConfirmationModel": {
+        "title": "{{val}} update will restart pipeline   ",
+        "description": "Updating the {{val}} configuration will restart any active pipelines using this {{val}}. Do you want to continue?"
     }
 }
