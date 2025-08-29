@@ -36,6 +36,7 @@ import { useTranslation } from "react-i18next";
 import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css"
 import { PageHeader } from "@patternfly/react-component-groups";
+import EditConfirmationModel from "../components/EditConfirmationModel";
 
 const ajv = new Ajv();
 
@@ -138,6 +139,11 @@ const FormSyncManager: React.FC<{
 const EditDestination: React.FunctionComponent = () => {
   const { t } = useTranslation();
   const { destinationId } = useParams<{ destinationId: string }>();
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
+  const [pendingSave, setPendingSave] = useState<{
+    values: Record<string, string>;
+    setError: (fieldId: string, error: string | undefined) => void;
+  } | null>(null);
   // const { navigationCollapsed } = useData();
   const { addNotification } = useNotification();
 
@@ -493,7 +499,8 @@ const EditDestination: React.FunctionComponent = () => {
                         type={ButtonType.submit}
                         onClick={(e) => {
                           e.preventDefault();
-                          handleEditDestination(values, setError);
+                          setPendingSave({ values, setError });
+                          setIsWarningOpen(true);
                         }}
                       >
                         {t("saveChanges")}
@@ -513,6 +520,13 @@ const EditDestination: React.FunctionComponent = () => {
           </>
         )}
       </FormContextProvider>
+      <EditConfirmationModel
+        type="destination"
+        isWarningOpen={isWarningOpen}
+        setIsWarningOpen={setIsWarningOpen}
+        pendingSave={pendingSave}
+        setPendingSave={setPendingSave}
+        handleEdit={handleEditDestination} />
     </>
   );
 };
