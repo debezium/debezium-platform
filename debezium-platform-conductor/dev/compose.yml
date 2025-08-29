@@ -19,13 +19,13 @@ services:
       POSTGRES_USER: conductor
       POSTGRES_PASSWORD: conductor
       POSTGRES_DB: conductor
-  # stage:
-  #   depends_on:
-  #     - conductor
-  #   container_name: stage
-  #   image: quay.io/debezium/platform-stage:nightly
-  #   pull_policy: always
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     CONDUCTOR_URL: http://localhost:8080
+  stage:
+    depends_on:
+      - conductor
+    container_name: stage
+    image: quay.io/debezium/platform-stage:nightly
+    pull_policy: always
+    ports:
+      - "3000:3000"
+    environment:
+      CONDUCTOR_URL: http://localhost:8080
