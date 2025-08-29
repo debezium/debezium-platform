@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.debezium.platform.environment.connection;
+package io.debezium.platform.environment.connection.source;
 
 import java.sql.SQLException;
 
@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
+import io.debezium.platform.environment.connection.ConnectionValidator;
 import io.debezium.platform.environment.database.DatabaseConnectionConfiguration;
 import io.debezium.platform.environment.database.DatabaseConnectionFactory;
 import io.debezium.platform.error.ErrorCodes;
