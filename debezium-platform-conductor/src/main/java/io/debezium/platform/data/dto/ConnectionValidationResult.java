@@ -11,4 +11,12 @@ public record ConnectionValidationResult(boolean valid, String message, String e
 
         this(valid, "", "");
     }
+
+    public static ConnectionValidationResult failed(String message) {
+        return new ConnectionValidationResult(false, message, "");
+    }
+
+    public static ConnectionValidationResult successful() {
+        return new ConnectionValidationResult(true);
+    }
 }
