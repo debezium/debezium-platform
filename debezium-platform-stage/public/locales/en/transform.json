@@ -8,7 +8,7 @@
     },
     "create": {
         "title": "Create transfor",
-        "description": "Add a transform, Before the messages are delivered to the sink, they can run through a sequence of transformations."
+        "description": "Add a transform, Before the messages are delivered to the destination, they can run through a sequence of transformations."
     },
     "form": {
         "classField": "Transform class",
@@ -30,7 +30,7 @@
     },
     "edit": {
         "title": "Edit transform",
-        "description": "Edit a transform, Before the messages are delivered to the sink, they can run through a sequence of transformations."
+        "description": "Edit a transform, Before the messages are delivered to the destination, they can run through a sequence of transformations."
     },
     "delete":{
         "title": "Delete transform",

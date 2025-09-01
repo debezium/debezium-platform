@@ -2,7 +2,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from "@patternfly/
 import { useTranslation } from "react-i18next";
 
 export type EditConfirmationModelProps = {
-    type: "source" | "destination";
+    type: "source" | "destination" | "transform";
     isWarningOpen: boolean;
     setIsWarningOpen: (isWarningOpen: boolean) => void;
     pendingSave: {

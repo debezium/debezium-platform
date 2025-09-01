@@ -123,7 +123,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     component: EditTransforms,
-    path: "/transform/edit_transform/:transformId",
+    path: "/transform/:transformId",
     navSection: "transform",
     title: `${AppBranding} | Transform`,
   },

@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import PageHeader from "@components/PageHeader";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import {
-  ActionGroup,
+  ActionList,
+  ActionListGroup,
+  ActionListItem,
   Alert,
   Button,
   ButtonType,
@@ -49,7 +50,7 @@ import * as React from "react";
 import transforms from "../../__mocks__/data/DebeziumTransfroms.json";
 import predicates from "../../__mocks__/data/Predicates.json";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import style from "../../styles/createConnector.module.css"
 import {
   editPut,
   fetchDataTypeTwo,
@@ -62,6 +63,9 @@ import { isEmpty } from "lodash";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
 import { transformSchema } from "@utils/schemas";
+import EditConfirmationModel from "../components/EditConfirmationModel";
+import { PageHeader } from "@patternfly/react-component-groups";
+import { useParams, useSearchParams } from "react-router-dom";
 
 const ajv = new Ajv();
 
@@ -72,12 +76,20 @@ export interface IEditTransformsProps {
 const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   onSelection,
 }) => {
-  const navigate = useNavigate();
+
   const { transformId } = useParams<{ transformId: string }>();
 
-  const navigateTo = (url: string) => {
-    navigate(url);
-  };
+
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
+  const [pendingSave, setPendingSave] = useState<{
+    values: Record<string, string>;
+    setError: (fieldId: string, error: string | undefined) => void;
+  } | null>(null);
+
+  const [searchParams] = useSearchParams();
+  const initialState = searchParams.get("state") as "view" | "edit" | null;
+
+  const [viewMode, setViewMode] = useState<boolean>(initialState === "view");
 
   const { addNotification } = useNotification();
   const { t } = useTranslation();
@@ -405,7 +417,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
         `Edit successful`,
         `Source "${(response.data as any).name}" edited successfully.`
       );
-      navigateTo("/transform");
+      setViewMode(true);
     }
   };
 
@@ -519,37 +531,54 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
 
   return (
     <>
-      <PageHeader
-        title={t("transform:edit.title")}
-        description={t("transform:edit.description")} />
+      {viewMode ? (
 
-      <PageSection className="create_source-toolbar">
-        <Toolbar id="create-editor-toggle">
-          <ToolbarContent>
-            <ToolbarItem>
-              <ToggleGroup aria-label="Toggle between form editor and smart editor">
-                <ToggleGroupItem
-                  icon={<PencilAltIcon />}
-                  text={t("formEditor")}
-                  aria-label={t("formEditor")}
-                  buttonId="form-editor"
-                  isSelected={editorSelected === "form-editor"}
-                  onChange={handleItemClick}
-                />
+        <PageHeader
+          title={transformData?.name || t("transform:edit.title")}
+          subtitle={`${transformData?.type} transform.`}
+          actionMenu={
+            <Button variant="secondary" ouiaId="Primary" icon={<PencilAltIcon />}
+              onClick={() => { setViewMode(false); }}>
+              {t("edit")}
+            </Button>
+          }
+        // icon={ <ConnectorImage connectorType={source?.type || sourceId || ""} size={35} />}
+        />
+      ) : (
+        <PageHeader
+          title={<>{t("edit")} <i>{transformData?.name}</i></>}
+          subtitle={t("transform:edit.description")}
+        />
+      )}
 
-                <ToggleGroupItem
-                  icon={<CodeIcon />}
-                  text={t("smartEditor")}
-                  aria-label={t("smartEditor")}
-                  buttonId="smart-editor"
-                  isSelected={editorSelected === "smart-editor"}
-                  onChange={handleItemClick}
-                />
-              </ToggleGroup>
-            </ToolbarItem>
-          </ToolbarContent>
-        </Toolbar>
-      </PageSection>
+      {!viewMode && (
+        <PageSection className={style.createConnector_toolbar}>
+          <Toolbar id="transform-editor-toggle">
+            <ToolbarContent>
+              <ToolbarItem>
+                <ToggleGroup aria-label="Toggle between form editor and smart editor">
+                  <ToggleGroupItem
+                    icon={<PencilAltIcon />}
+                    text={t("formEditor")}
+                    aria-label={t("formEditor")}
+                    buttonId="form-editor"
+                    isSelected={editorSelected === "form-editor"}
+                    onChange={handleItemClick}
+                  />
+
+                  <ToggleGroupItem
+                    icon={<CodeIcon />}
+                    text={t("smartEditor")}
+                    aria-label={t("smartEditor")}
+                    buttonId="smart-editor"
+                    isSelected={editorSelected === "smart-editor"}
+                    onChange={handleItemClick}
+                  />
+                </ToggleGroup>
+              </ToolbarItem>
+            </ToolbarContent>
+          </Toolbar>
+        </PageSection>)}
       {isFetchLoading ? (
         <div>{t("loading")}</div>
       ) : error ? (
@@ -639,6 +668,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                         >
                           <TextInput
                             id="transform-name"
+                            readOnlyVariant={viewMode ? "plain" : undefined}
                             name="transform-name"
                             aria-label={t("transform:form.nameField")}
                             onChange={(_event, value) => {
@@ -669,6 +699,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                         <FormGroup label={t("transform:form.descriptionField")} fieldId="description">
                           <TextInput
                             id="description"
+                            readOnlyVariant={viewMode ? "plain" : undefined}
                             name="description"
                             aria-label={t("transform:form.descriptionField")}
                             onChange={(_event, value) => {
@@ -733,7 +764,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                                     <Switch
                                       id={key}
                                       label="On"
-                                      isDisabled={transformName === ""}
+                                      isDisabled={transformName === "" || viewMode}
                                       isChecked={
                                         getValue(key) === "true" ||
                                         property?.defaultValue === "true"
@@ -751,7 +782,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                                       value={
                                         getValue(key) || property?.defaultValue
                                       }
-                                      isDisabled={transformName === ""}
+                                      isDisabled={transformName === "" || viewMode}
                                       onChange={(_event, value) => {
                                         setValue(key, value);
                                         setError(key, undefined);
@@ -775,6 +806,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                                   ) : (
                                     <TextInput
                                       id={key}
+                                      readOnlyVariant={viewMode ? "plain" : undefined}
                                       aria-label={key}
                                       isDisabled={transformName === ""}
                                       onChange={(_event, value) => {
@@ -839,6 +871,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                             <FormSelect
                               value={selectedPredicate}
                               onChange={onChange}
+                              isDisabled={viewMode}
                               aria-label={t("transform:form.predicateTypeField")}
                               ouiaId="BasicFormSelect"
                             >
@@ -885,6 +918,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                                   <TextInput
                                     isRequired
                                     id={property["x-name"]}
+                                    readOnlyVariant={viewMode ? "plain" : undefined}
                                     name={property["x-name"]}
                                     aria-label={property["x-name"]}
                                     onChange={(_event, value) => {
@@ -908,6 +942,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                             >
                               <Checkbox
                                 id="description-check-1"
+                                isDisabled={viewMode}
                                 label="Set negate to true"
                                 isChecked={
                                   getValue("predicate.negate") === "true"
@@ -960,33 +995,48 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                   </>
                 )}
               </PageSection>
-              <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-                <ActionGroup className="create_source-footer">
-                  <Button
-                    variant="primary"
-                    isLoading={isLoading}
-                    isDisabled={isLoading}
-                    type={ButtonType.submit}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleEdit(values, setError);
-                    }}
-                  >
-                    {t("saveChanges")}
-                  </Button>
-
-                  <Button
-                    variant="link"
-                    onClick={() => navigateTo("/transform")}
-                  >
-                    {t("cancel")}
-                  </Button>
-                </ActionGroup>
-              </PageSection>
+              {!viewMode && (
+                <PageSection className="pf-m-sticky-bottom" isFilled={false}>
+                  <ActionList>
+                    <ActionListGroup>
+                      <ActionListItem>
+                        <Button
+                          variant="primary"
+                          isLoading={isLoading}
+                          isDisabled={isLoading}
+                          type={ButtonType.submit}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setPendingSave({ values, setError });
+                            setIsWarningOpen(true);
+                          }}
+                        >
+                          {t("saveChanges")}
+                        </Button>
+                      </ActionListItem>
+                      <ActionListItem>
+                        <Button
+                          variant="link"
+                          onClick={() => setViewMode(true)}
+                        >
+                          {t("cancel")}
+                        </Button>
+                      </ActionListItem>
+                    </ActionListGroup>
+                  </ActionList>
+                </PageSection>)}
             </>
           )}
         </FormContextProvider>
+
       )}
+      <EditConfirmationModel
+        type="transform"
+        isWarningOpen={isWarningOpen}
+        setIsWarningOpen={setIsWarningOpen}
+        pendingSave={pendingSave}
+        setPendingSave={setPendingSave}
+        handleEdit={handleEdit} />
     </>
   );
 };

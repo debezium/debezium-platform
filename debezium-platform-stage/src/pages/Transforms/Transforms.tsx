@@ -182,7 +182,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
     {
       title: t("edit"),
       onClick: () => {
-        navigateTo(`/transform/edit_transform/${actionData.id}`);
+        navigate(`/transform/${actionData.id}?state=edit`);
       },
     },
     {
@@ -296,13 +296,21 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                                 : transformsList
                               ).map((instance: TransformData) => (
                                 <Tr key={instance.id}>
-                                  <Td dataLabel={t("name")}>{instance.name}</Td>
+                                  <Td dataLabel={t("name")}>
+                                    <Button
+                                      variant="link"
+                                      isInline
+                                      onClick={() => navigate(`/transform/${instance.id}?state=view`)}
+                                    >
+                                      {instance.name}
+                                    </Button>
+                                  </Td>
                                   <Td dataLabel={t("type")}>{instance.type}</Td>
                                   <Td dataLabel={t("active")}>
                                     <Tooltip
                                       content={
                                         <div>
-                                         {t("activePipelineTooltip",{val: "transform"})}
+                                          {t("activePipelineTooltip", { val: "transform" })}
                                         </div>
                                       }
                                     >
