@@ -14,7 +14,7 @@
     "nonSupportedFilesHeader": "File non supportato",
     "nonSupportedFilesMsg": "{{val}} non sono tipi di file accettati."
   },
-  "dbzServerTooltip": "Carica la configurazione del server DBZ per creare una nuova origine, trasformazioni e destinazione per una pipeline.",
+  "dbzServerTooltip": "Puoi anche caricare la configurazione del server DBZ per creare direttamente una pipeline.",
   "userActions": {
     "overview": "Panoramica",
     "logs": "Visualizza log",
@@ -102,5 +102,9 @@
       "showTooltip": "Clicca per grep i log delle notifiche.",
       "hideTooltip": "Clicca per interrompere grep i log delle notifiche."
     }
+  },
+  "editConfirmationModel": {
+    "title": "L'aggiornamento di {{val}} riavvierà la pipeline",
+    "description": "L'aggiornamento della configurazione di {{val}} riavvierà tutte le pipeline attive che utilizzano questo {{val}}. Vuoi continuare?"
   }
 }

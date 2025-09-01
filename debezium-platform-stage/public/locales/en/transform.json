@@ -7,7 +7,7 @@
         "description": "Add a pipeline to streams change events from a pipeline database. To start select a connector below once you select a connector you can configure it using form or smart editor option. You can also search the connector by its name or toggle the catalog between the list view or card view."
     },
     "create": {
-        "title": "Create transfor",
+        "title": "Create transform",
         "description": "Add a transform, Before the messages are delivered to the destination, they can run through a sequence of transformations."
     },
     "form": {

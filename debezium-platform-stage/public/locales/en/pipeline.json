@@ -104,7 +104,7 @@
         }
     },
     "editConfirmationModel": {
-        "title": "{{val}} update will restart pipeline   ",
+        "title": "{{val}} update will restart pipeline",
         "description": "Updating the {{val}} configuration will restart any active pipelines using this {{val}}. Do you want to continue?"
     }
 }
