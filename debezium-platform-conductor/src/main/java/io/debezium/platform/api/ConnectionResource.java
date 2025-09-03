@@ -17,7 +17,9 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
@@ -35,6 +37,7 @@ import org.jboss.logging.Logger;
 import com.blazebit.persistence.integration.jaxrs.EntityViewId;
 
 import io.debezium.platform.data.dto.ConnectionValidationResult;
+import io.debezium.platform.domain.ConnectionSchemaService;
 import io.debezium.platform.domain.ConnectionService;
 import io.debezium.platform.domain.views.Connection;
 
@@ -45,10 +48,12 @@ public class ConnectionResource {
 
     Logger logger;
     ConnectionService connectionService;
+    ConnectionSchemaService schemaService;
 
-    public ConnectionResource(Logger logger, ConnectionService connectionService) {
+    public ConnectionResource(Logger logger, ConnectionService connectionService, ConnectionSchemaService schemaService) {
         this.logger = logger;
         this.connectionService = connectionService;
+        this.schemaService = schemaService;
     }
 
     @Operation(summary = "Returns all available connections")
@@ -106,6 +111,20 @@ public class ConnectionResource {
 
         var connectionValidationResponse = connectionService.validateConnection(connection);
 
-        return Response.ok().entity(connectionValidationResponse).build();
+        return Response.ok()
+                .type(MediaType.APPLICATION_JSON)
+                .entity(connectionValidationResponse).build();
+    }
+
+    @Operation(summary = "Returns a list of JSON schema describing the required field for a Connection")
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(type = SchemaType.ARRAY)))
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/schemas")
+    public Response connectionSchemas() {
+
+        String schemasJson = schemaService.getSchemasJson();
+
+        return Response.ok(schemasJson).build();
     }
 }
