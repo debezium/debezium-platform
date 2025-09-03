@@ -1,0 +1,222 @@
+[
+  {
+    "type": "POSTGRESQL",
+    "schema": {
+      "title": "PostgreSQL connection properties",
+      "description": "PostgreSQL connection properties",
+      "type": "object",
+      "required": [
+        "hostname",
+        "port",
+        "username",
+        "password",
+        "database"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "title": "The hostname of the database"
+        },
+        "port": {
+          "type": "integer",
+          "title": "The port of the database"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username to connect to the database"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password to connect to the database"
+        },
+        "database": {
+          "type": "string",
+          "title": "The name of the database"
+        }
+      }
+    }
+  },
+  {
+    "type": "ORACLE",
+    "schema": {
+      "title": "Oracle connection properties",
+      "description": "Oracle connection properties",
+      "type": "object",
+      "required": [
+        "hostname",
+        "port",
+        "username",
+        "password",
+        "database"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "title": "The hostname of the database"
+        },
+        "port": {
+          "type": "integer",
+          "title": "The port of the database"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username to connect to the database"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password to connect to the database"
+        },
+        "database": {
+          "type": "string",
+          "title": "The name of the database"
+        }
+      }
+    }
+  },
+  {
+    "type": "MYSQL",
+    "schema": {
+      "title": "MySQL connection properties",
+      "description": "MySQL connection properties",
+      "type": "object",
+      "required": [
+        "hostname",
+        "port",
+        "username",
+        "password",
+        "database"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "title": "The hostname of the database"
+        },
+        "port": {
+          "type": "integer",
+          "title": "The port of the database"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username to connect to the database"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password to connect to the database"
+        },
+        "database": {
+          "type": "string",
+          "title": "The name of the database"
+        }
+      }
+    }
+  },
+  {
+    "type": "MARIADB",
+    "schema": {
+      "title": "MariaDB connection properties",
+      "description": "MariaDB connection properties",
+      "type": "object",
+      "required": [
+        "hostname",
+        "port",
+        "username",
+        "password",
+        "database"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "title": "The hostname of the database"
+        },
+        "port": {
+          "type": "integer",
+          "title": "The port of the database"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username to connect to the database"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password to connect to the database"
+        },
+        "database": {
+          "type": "string",
+          "title": "The name of the database"
+        }
+      }
+    }
+  },
+  {
+    "type": "SQLSERVER",
+    "schema": {
+      "title": "Microsoft SQL Server connection properties",
+      "description": "Microsoft SQL Server connection properties",
+      "type": "object",
+      "required": [
+        "hostname",
+        "port",
+        "username",
+        "password",
+        "database"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "title": "The hostname of the database"
+        },
+        "port": {
+          "type": "integer",
+          "title": "The port of the database"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username to connect to the database"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password to connect to the database"
+        },
+        "database": {
+          "type": "string",
+          "title": "The name of the database"
+        }
+      }
+    }
+  },
+  {
+    "type": "KAFKA",
+    "schema": {
+      "title": "Kafka connection properties",
+      "description": "Kafka connection properties",
+      "type": "object",
+      "required": [
+        "bootstrap.servers"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "bootstrap.servers": {
+          "type": "list",
+          "title": "List of “hostname:port” pairs that address one or more (even all) of the brokers."
+        }
+      }
+    }
+  }
+]
