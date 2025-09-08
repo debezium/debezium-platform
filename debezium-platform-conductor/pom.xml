@@ -29,7 +29,7 @@
         <blaze-persistence.version>1.6.11</blaze-persistence.version>
         <test-containers.version>1.20.0</test-containers.version>
         <json-schema-validator.version>5.3.2</json-schema-validator.version>
-        <kafka-clients.version>3.9.0</kafka-clients.version> <!-- Forcing it since it is compatible with quarkus platform 3.17.4 -->
+        <kafka-clients.version>3.9.1</kafka-clients.version> <!-- Forcing it since it is compatible with quarkus platform 3.17.4 -->
 
         <quarkus.container-image.registry>quay.io</quarkus.container-image.registry>
         <quarkus.container-image.group>debezium</quarkus.container-image.group>
