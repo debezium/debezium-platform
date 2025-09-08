@@ -4,12 +4,10 @@
   "type": "io.debezium.connector.postgresql.PostgresConnector",
   "schema": "dummy",
   "vaults": [],
+  "connection": {
+    "id": 1
+  },
   "config": {
-    "database.hostname": "postgresql",
-    "database.port": 5432,
-    "database.user": "debezium",
-    "database.password": "debezium",
-    "database.dbname": "debezium",
     "topic.prefix": "inventory",
     "schema.include.list": "inventory"
   }

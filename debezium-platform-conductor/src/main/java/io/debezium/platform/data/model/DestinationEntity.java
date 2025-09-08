@@ -16,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotEmpty;
 
 import org.hibernate.annotations.JdbcTypeCode;
@@ -39,6 +40,8 @@ public class DestinationEntity {
     @ManyToMany
     @JoinTable(joinColumns = @JoinColumn(name = "destination_id"), inverseJoinColumns = @JoinColumn(name = "vault_id"))
     private Set<VaultEntity> vaults = new HashSet<>();
+    @ManyToOne
+    private ConnectionEntity connection;
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> config;
 
@@ -88,6 +91,14 @@ public class DestinationEntity {
 
     public void setVaults(Set<VaultEntity> vaults) {
         this.vaults = vaults;
+    }
+
+    public ConnectionEntity getConnection() {
+        return connection;
+    }
+
+    public void setConnection(ConnectionEntity connection) {
+        this.connection = connection;
     }
 
     public Map<String, Object> getConfig() {

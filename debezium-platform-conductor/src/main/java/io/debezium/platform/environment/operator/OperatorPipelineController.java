@@ -156,6 +156,7 @@ public class OperatorPipelineController implements PipelineController {
 
     private static Sink createSink(PipelineFlat pipeline) {
         var sink = pipeline.getDestination();
+        // TODO get connection config based on the type of the connection sink.getConnection().getConfig()
         var sinkConfig = new ConfigProperties();
         sinkConfig.setAllProps(sink.getConfig());
 
@@ -168,6 +169,7 @@ public class OperatorPipelineController implements PipelineController {
     private Source createSource(PipelineFlat pipeline) {
 
         var source = pipeline.getSource();
+        // TODO get connection config based on the type of the connection source.getConnection().getConfig()
         var sourceConfig = new ConfigProperties();
         sourceConfig.setAllProps(source.getConfig());
         sourceConfig.setProps(SIGNAL_ENABLED_CHANNELS_CONFIG, DEFAULT_SIGNAL_CHANNELS);

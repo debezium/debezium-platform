@@ -3,21 +3,20 @@
  *
  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.debezium.platform.domain.views;
+package io.debezium.platform.domain.views.flat;
 
-import com.blazebit.persistence.view.CreatableEntityView;
 import com.blazebit.persistence.view.EntityView;
 import com.blazebit.persistence.view.UpdatableEntityView;
 
 import io.debezium.platform.data.model.DestinationEntity;
-import io.debezium.platform.domain.views.refs.ConnectionReference;
+import io.debezium.platform.domain.views.Connection;
+import io.debezium.platform.domain.views.PipelineComponent;
 
 @EntityView(DestinationEntity.class)
-@CreatableEntityView
 @UpdatableEntityView
-public interface Destination extends PipelineComponent {
+public interface DestinationFlat extends PipelineComponent {
 
-    ConnectionReference getConnection();
+    Connection getConnection();
 
-    void setConnection(ConnectionReference connectionReference);
+    void setConnection(Connection connection);
 }

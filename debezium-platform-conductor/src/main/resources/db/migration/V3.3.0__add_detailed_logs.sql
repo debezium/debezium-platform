@@ -19,3 +19,9 @@ create table connection (
     config jsonb,
     primary key (id)
 );
+
+-- DBZ-9333
+alter table if exists destination add column connection_id bigint;
+alter table if exists destination add constraint FK_destination_connection foreign key (connection_id) references connection;
+alter table if exists source add column connection_id bigint;
+alter table if exists source add constraint FK_source_connection foreign key (connection_id) references connection;

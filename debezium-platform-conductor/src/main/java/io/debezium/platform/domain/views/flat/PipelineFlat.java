@@ -16,8 +16,6 @@ import com.blazebit.persistence.view.UpdatableEntityView;
 import com.blazebit.persistence.view.UpdatableMapping;
 
 import io.debezium.platform.data.model.PipelineEntity;
-import io.debezium.platform.domain.views.Destination;
-import io.debezium.platform.domain.views.Source;
 import io.debezium.platform.domain.views.Transform;
 import io.debezium.platform.domain.views.base.NamedView;
 
@@ -27,10 +25,10 @@ public interface PipelineFlat extends NamedView {
     String getDescription();
 
     @NotNull
-    Source getSource();
+    SourceFlat getSource();
 
     @NotNull
-    Destination getDestination();
+    DestinationFlat getDestination();
 
     @UpdatableMapping
     List<Transform> getTransforms();
@@ -44,9 +42,9 @@ public interface PipelineFlat extends NamedView {
 
     void setName(String name);
 
-    void setSource(Source source);
+    void setSource(SourceFlat source);
 
-    void setDestination(Destination destination);
+    void setDestination(DestinationFlat destination);
 
     void setDefaultLogLevel(String logLevel);
 

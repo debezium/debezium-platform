@@ -1,0 +1,11 @@
+{
+  "name": "postgres-connection",
+  "type": "POSTGRESQL",
+  "config": {
+    "hostname": "postgresql",
+    "port": 5432,
+    "user": "debezium",
+    "password": "debezium",
+    "dbname": "debezium"
+  }
+}

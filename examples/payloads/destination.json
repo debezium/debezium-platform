@@ -4,8 +4,10 @@
   "description": "Some funny destination",
   "schema": "dummy",
   "vaults": [],
+  "connection": {
+    "id": 2
+  },
   "config": {
-    "producer.bootstrap.servers": "dbz-kafka-kafka-bootstrap.debezium-platform:9092",
     "producer.key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
     "producer.value.serializer": "org.apache.kafka.common.serialization.StringSerializer"
   }
