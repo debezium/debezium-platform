@@ -90,7 +90,7 @@
         "port",
         "username",
         "password",
-        "database"
+        "server.id"
       ],
       "additionalProperties": {
         "type": "string"
@@ -112,7 +112,7 @@
           "type": "string",
           "title": "Password to connect to the database"
         },
-        "database": {
+        "server.id": {
           "type": "string",
           "title": "The name of the database"
         }
