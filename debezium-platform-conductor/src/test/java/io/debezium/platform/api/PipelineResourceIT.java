@@ -48,6 +48,29 @@ class PipelineResourceIT {
 
         debeziumServerArgumentCaptor = ArgumentCaptor.forClass(DebeziumServer.class);
 
+        createResource("api/connections", """
+                {
+                       "name": "postgres-connection",
+                       "type": "POSTGRESQL",
+                       "config": {
+                         "hostname": "postgresql",
+                         "port": 5432,
+                         "user": "debezium",
+                         "password": "debezium",
+                         "dbname": "debezium"
+                       }
+                     }
+                  }""");
+
+        createResource("api/connections", """
+                {
+                     "name": "kafka-connection",
+                     "type": "KAFKA",
+                     "config": {
+                       "bootstrap.servers": "dbz-kafka-kafka-bootstrap.debezium-platform:9092"
+                     }
+                   }""");
+
         createResource("api/sources", """
                 {
                     "name": "test-source",
@@ -55,12 +78,10 @@ class PipelineResourceIT {
                     "type": "io.debezium.connector.postgresql.PostgresConnector",
                     "schema": "dummy",
                     "vaults": [],
+                    "connection": {
+                        "id": 1
+                    },
                     "config": {
-                      "database.hostname": "postgresql",
-                      "database.port": 5432,
-                      "database.user": "debezium",
-                      "database.password": "debezium",
-                      "database.dbname": "debezium",
                       "topic.prefix": "inventory",
                       "schema.include.list": "inventory"
                     }
@@ -73,8 +94,10 @@ class PipelineResourceIT {
                   "description": "Some funny destination",
                   "schema": "dummy",
                   "vaults": [],
+                   "connection": {
+                        "id":2
+                    },
                   "config": {
-                    "producer.bootstrap.servers": "dbz-kafka-kafka-bootstrap.debezium-platform:9092",
                     "producer.key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
                     "producer.value.serializer": "org.apache.kafka.common.serialization.StringSerializer"
                   }

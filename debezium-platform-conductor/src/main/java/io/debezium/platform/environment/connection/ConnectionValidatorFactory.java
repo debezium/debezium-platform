@@ -27,7 +27,7 @@ public class ConnectionValidatorFactory {
 
     private String mapToValidatorName(String connectionType) {
         return switch (connectionType) {
-            case "ORACLE", "MYSQL", "POSTGRESQL" -> "DATABASE";
+            case "ORACLE", "MYSQL", "MARIADB", "SQLSERVER", "POSTGRESQL" -> "DATABASE";
             default -> connectionType;
         };
     }
