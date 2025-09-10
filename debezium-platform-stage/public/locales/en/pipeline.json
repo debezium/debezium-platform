@@ -3,7 +3,7 @@
     "configuePipeline": "Configure pipeline",
     "createPipeline": "Create pipeline",
     "deletePipeline": "Delete pipeline",
-    "dbzServerButton": "DBZ server config",
+    "dbzServerButton": "Debezium server configuration",
     "debeziumServerModal": {
         "title": "Create pipeline resources using Debezium server configuration",
         "description": "Upload a Debezium server configuration file to auto create pipeline resources. On uploading a config file a source, transforms and a destination will be created synchronously based on the uploaded config and then finally you can create a pipeline using these resources.",
@@ -14,7 +14,7 @@
         "nonSupportedFilesHeader": "Unsupported file",
         "nonSupportedFilesMsg": "{{val}} are not accepted file types."
     },
-    "dbzServerTooltip": "Optionally you can upload the DBZ server config to directly create a pipeline.",
+    "dbzServerTooltip": "Optionally you can upload the Debezium server configuration to directly create a pipeline.",
     "userActions": {
         "overview": "Overview",
         "logs": "View logs",

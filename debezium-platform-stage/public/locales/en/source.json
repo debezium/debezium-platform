@@ -5,8 +5,8 @@
     },
     "create": {
         "title": "Create source",
-        "description": "To create a source connector, fill out the form below or use the Smart editor. If you have a configuration file, upload it in the editor to set up the connector. Kafka Connect format is also supported and can be auto-converted to the Debezium Platform format within the editor.",
-        "editorPageDescription": "To configure and create a new source connector use the editor below to add or upload an existing json configuration."
+        "description": "To create a source connector, fill out the form below or use the Smart Editor. In the Smart Editor, you can also directly use the configuration for a Debezium connector on Kafka Connect or in Debezium Server, as it automatically converts the configuration into the required Debezium Platform format.",
+        "editorPageDescription": "To configure and create a new source connector, use the editor below to add or upload an existing JSON configuration. You can also directly use the configuration for a Debezium connector on Kafka Connect or in Debezium Server, as the Smart Editor automatically converts it into the required Debezium Platform format."
     },
     "catalog": {
         "title": "Source catalog",
