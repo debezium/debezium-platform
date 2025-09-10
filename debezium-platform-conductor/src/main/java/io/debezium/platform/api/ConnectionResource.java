@@ -36,6 +36,7 @@ import org.jboss.logging.Logger;
 
 import com.blazebit.persistence.integration.jaxrs.EntityViewId;
 
+import io.debezium.platform.data.dto.CollectionTree;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.ConnectionSchemaService;
 import io.debezium.platform.domain.ConnectionService;
@@ -126,5 +127,16 @@ public class ConnectionResource {
         String schemasJson = schemaService.getSchemasJson();
 
         return Response.ok(schemasJson).build();
+    }
+
+    @Operation(summary = "Returns a list of collection names available on the source")
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = CollectionTree.class, type = SchemaType.OBJECT)))
+    @GET
+    @Path("/{id}/collections")
+    public Response listAvailableCollections(@PathParam("id") Long id) {
+
+        CollectionTree collections = connectionService.listAvailableCollections(id);
+
+        return Response.ok().entity(collections).build();
     }
 }

@@ -9,7 +9,9 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -20,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.debezium.DebeziumException;
+import io.debezium.platform.data.dto.CollectionNode;
 
 @ApplicationScoped
 public class DatabaseInspector {
@@ -31,6 +34,10 @@ public class DatabaseInspector {
     private static final String COLUMN_SIZE_ATTRIBUTE = "COLUMN_SIZE";
     private static final String NULLABLE_ATTRIBUTE = "NULLABLE";
     private static final String TABLE_TYPE = "TABLE";
+    private static final String MATCH_ALL_PATTERN = "%";
+    private static final String TABLE_CATALOG_COLUMN_NAME = "TABLE_CAT";
+    private static final String TABLE_SCHEMA_COLUMN_NAME = "TABLE_SCHEM";
+    private static final String TABLE_NAME_COLUMN_NAME = "TABLE_NAME";
 
     public DatabaseInspector() {
     }
@@ -80,6 +87,46 @@ public class DatabaseInspector {
 
         LOGGER.trace("Table {} metadata {}", tableName, actualColumns);
         return validateFunction.test(actualColumns);
+    }
+
+    /**
+     * Retrieves fully qualified table names grouped by schema and catalog (catalog.schema.table format)
+     *
+     * @param connection JDBC connection
+     * @return Map of fully qualified table names grouped by schema and catalog
+     * @throws SQLException if database access error occurs
+     */
+    public Map<String, Map<String, List<CollectionNode>>> getAllTableNames(Connection connection) throws SQLException {
+
+        Map<String, Map<String, List<CollectionNode>>> hierarchicalData = new HashMap<>();
+
+        try (Connection conn = connection) {
+            DatabaseMetaData metaData = conn.getMetaData();
+
+            try (ResultSet tables = metaData.getTables(null, null, MATCH_ALL_PATTERN, new String[]{ TABLE_TYPE })) {
+                while (tables.next()) {
+                    String catalog = tables.getString(TABLE_CATALOG_COLUMN_NAME);
+                    String schema = tables.getString(TABLE_SCHEMA_COLUMN_NAME);
+                    String tableName = tables.getString(TABLE_NAME_COLUMN_NAME);
+
+                    CollectionNode collectionNode = new CollectionNode(tableName, buildFullyQualifiedName(catalog, schema, tableName));
+
+                    hierarchicalData
+                            .computeIfAbsent(catalog, k -> new HashMap<>())
+                            .computeIfAbsent(schema, k -> new ArrayList<>())
+                            .add(collectionNode);
+                }
+            }
+        }
+
+        return hierarchicalData;
+    }
+
+    private String buildFullyQualifiedName(String catalog, String schema, String tableName) {
+        String catalogPart = (catalog != null && !catalog.trim().isEmpty()) ? catalog + "." : "";
+        String schemaPart = (schema != null && !schema.trim().isEmpty()) ? schema + "." : "";
+
+        return String.format("%s%s%s", catalogPart, schemaPart, tableName);
     }
 
     private ColumnMetadata getColumnMetadata(ResultSet columns) throws SQLException {
