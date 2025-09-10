@@ -365,7 +365,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
         <PageHeader
           title={t("destination:create.title")}
           description={rawConfiguration ?
-            "To configure and create a new source connector use the editor below to add or upload an existing json configuration." : t("destination:create.description")}
+            t("destination:create.editorPageDescription") : t("destination:create.description")}
         />
       )}
 
