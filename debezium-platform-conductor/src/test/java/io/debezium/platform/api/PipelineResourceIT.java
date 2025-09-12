@@ -55,9 +55,9 @@ class PipelineResourceIT {
                        "config": {
                          "hostname": "postgresql",
                          "port": 5432,
-                         "user": "debezium",
+                         "username": "debezium",
                          "password": "debezium",
-                         "dbname": "debezium"
+                         "database": "debezium"
                        }
                      }
                   }""");

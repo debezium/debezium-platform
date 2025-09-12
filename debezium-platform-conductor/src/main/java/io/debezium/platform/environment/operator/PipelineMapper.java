@@ -5,6 +5,9 @@
  */
 package io.debezium.platform.environment.operator;
 
+import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DATABASE;
+import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.USERNAME;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,22 +64,24 @@ public class PipelineMapper {
 
     private static final String KAFKA_CONNECTION_CONFIGURATION_PREFIX = "producer.";
     private static final String DATABASE_CONNECTION_CONFIGURATION_PREFIX = "database.";
-    public static final String MONGODB_CONNECTION_CONFIGURATION_PREFIX = "mongodb";
-    public static final String KINESIS_CONNECTION_CONFIGURATION_PREFIX = "kinesis";
-    public static final String PUBSUB_CONNECTION_CONFIGURATION_PREFIX = "pubsub";
-    public static final String HTTP_CONNECTION_CONFIGURATION_PREFIX = "http";
-    public static final String PULSAR_CONNECTION_CONFIGURATION_PREFIX = "pulsar.client";
-    public static final String EVENTHUBS_CONNECTION_CONFIGURATION_PREFIX = "eventhubs";
-    public static final String REDIS_CONNECTION_CONFIGURATION_PREFIX = "redis";
-    public static final String NATS_STREAMING_CONNECTION_CONFIGURATION_PREFIX = "nats-streaming";
-    public static final String NATS_JETSTREAM_CONNECTION_CONFIGURATION_PREFIX = "nats-jetstream";
-    public static final String PRAVEGA_CONNECTION_CONFIGURATION_PREFIX = "pravega.controller";
-    public static final String INFINISPAN_CONNECTION_CONFIGURATION_PREFIX = "infinispan";
-    public static final String ROCKETMQ_CONNECTION_CONFIGURATION_PREFIX = "rocketmq.producer";
-    public static final String RABBITMQ_CONNECTION_CONFIGURATION_PREFIX = "rabbitmq.connection";
-    public static final String RABBITMQ_STREAM_CONNECTION_CONFIGURATION_PREFIX = "rabbitmqstream.connection";
-    public static final String MILVUS_CONNECTION_CONFIGURATION_PREFIX = "milvus";
-    public static final String QDRANT_CONNECTION_CONFIGURATION_PREFIX = "qdrant";
+    private static final String MONGODB_CONNECTION_CONFIGURATION_PREFIX = "mongodb";
+    private static final String KINESIS_CONNECTION_CONFIGURATION_PREFIX = "kinesis";
+    private static final String PUBSUB_CONNECTION_CONFIGURATION_PREFIX = "pubsub";
+    private static final String HTTP_CONNECTION_CONFIGURATION_PREFIX = "http";
+    private static final String PULSAR_CONNECTION_CONFIGURATION_PREFIX = "pulsar.client";
+    private static final String EVENTHUBS_CONNECTION_CONFIGURATION_PREFIX = "eventhubs";
+    private static final String REDIS_CONNECTION_CONFIGURATION_PREFIX = "redis";
+    private static final String NATS_STREAMING_CONNECTION_CONFIGURATION_PREFIX = "nats-streaming";
+    private static final String NATS_JETSTREAM_CONNECTION_CONFIGURATION_PREFIX = "nats-jetstream";
+    private static final String PRAVEGA_CONNECTION_CONFIGURATION_PREFIX = "pravega.controller";
+    private static final String INFINISPAN_CONNECTION_CONFIGURATION_PREFIX = "infinispan";
+    private static final String ROCKETMQ_CONNECTION_CONFIGURATION_PREFIX = "rocketmq.producer";
+    private static final String RABBITMQ_CONNECTION_CONFIGURATION_PREFIX = "rabbitmq.connection";
+    private static final String RABBITMQ_STREAM_CONNECTION_CONFIGURATION_PREFIX = "rabbitmqstream.connection";
+    private static final String MILVUS_CONNECTION_CONFIGURATION_PREFIX = "milvus";
+    private static final String QDRANT_CONNECTION_CONFIGURATION_PREFIX = "qdrant";
+    private static final String DEBEZIUM_DATABASE_USERNAME_CONFIG = "user";
+    private static final String DEBEZIUM_DATABASE_NAME_CONFIG = "dbname";
 
     final PipelineConfigGroup pipelineConfigGroup;
     final TableNameResolver tableNameResolver;
@@ -173,7 +178,7 @@ public class PipelineMapper {
 
         if (source.getConnection() != null) { // backward compatibility
             String configPrefix = prefixResolver(source.getConnection().getType());
-            source.getConnection().getConfig().forEach((configName, configValue) -> sourceConfig.setProps(configPrefix + configName, configValue));
+            source.getConnection().getConfig().forEach((configName, configValue) -> sourceConfig.setProps(getName(configName, configPrefix), configValue));
         }
 
         sourceConfig.setAllProps(source.getConfig());
@@ -186,6 +191,14 @@ public class PipelineMapper {
                 .withSchemaHistory(getSchemaHistory(pipeline))
                 .withConfig(sourceConfig)
                 .build();
+    }
+
+    private static String getName(String configName, String configPrefix) {
+        return switch (configName) {
+            case USERNAME -> configPrefix + DEBEZIUM_DATABASE_USERNAME_CONFIG;
+            case DATABASE -> configPrefix + DEBEZIUM_DATABASE_NAME_CONFIG;
+            default -> configPrefix + configName;
+        };
     }
 
     private String prefixResolver(ConnectionEntity.Type connectionType) {
