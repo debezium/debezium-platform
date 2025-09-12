@@ -42,7 +42,23 @@ public class ConnectionEntity {
         MARIADB,
         SQLSERVER,
         POSTGRESQL,
-        KAFKA
+        MONGODB,
+        KAFKA,
+        REDIS,
+        AMAZON_KINESIS,
+        GOOGLE_PUB_SUB,
+        HTTP,
+        APACHE_PULSAR,
+        AZURE_EVENTS_HUBS,
+        NATS_STREAMING,
+        NATS_JETSTREAM,
+        PRAVEGA,
+        INFINISPAN,
+        APACHE_ROCKETMQ,
+        RABBITMQ_STREAM,
+        RABBITMQ_NATIVE_STREAM,
+        MILVUS,
+        QDRANT
     }
 
     public Long getId() {

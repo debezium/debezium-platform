@@ -57,9 +57,26 @@ public class PipelineMapper {
     private static final String LOG_MIN_LEVEL_PROP_NAME = "log.min-level";
     private static final String LOG_LEVEL_PROP_NAME = "log.level";
     private static final String LOG_CONSOLE_JSON_PROP_NAME = "log.console.json";
-    private static final String DATABASE_CONFIGURATION_PREFIX = "database.";
-    private static final String KAFKA_CONFIGURATION_PREFIX = "producer.";
     private static final List<String> RESOLVABLE_CONFIGS = List.of("jdbc.schema.history.table.name", "jdbc.offset.table.name");
+
+    private static final String KAFKA_CONNECTION_CONFIGURATION_PREFIX = "producer.";
+    private static final String DATABASE_CONNECTION_CONFIGURATION_PREFIX = "database.";
+    public static final String MONGODB_CONNECTION_CONFIGURATION_PREFIX = "mongodb";
+    public static final String KINESIS_CONNECTION_CONFIGURATION_PREFIX = "kinesis";
+    public static final String PUBSUB_CONNECTION_CONFIGURATION_PREFIX = "pubsub";
+    public static final String HTTP_CONNECTION_CONFIGURATION_PREFIX = "http";
+    public static final String PULSAR_CONNECTION_CONFIGURATION_PREFIX = "pulsar.client";
+    public static final String EVENTHUBS_CONNECTION_CONFIGURATION_PREFIX = "eventhubs";
+    public static final String REDIS_CONNECTION_CONFIGURATION_PREFIX = "redis";
+    public static final String NATS_STREAMING_CONNECTION_CONFIGURATION_PREFIX = "nats-streaming";
+    public static final String NATS_JETSTREAM_CONNECTION_CONFIGURATION_PREFIX = "nats-jetstream";
+    public static final String PRAVEGA_CONNECTION_CONFIGURATION_PREFIX = "pravega.controller";
+    public static final String INFINISPAN_CONNECTION_CONFIGURATION_PREFIX = "infinispan";
+    public static final String ROCKETMQ_CONNECTION_CONFIGURATION_PREFIX = "rocketmq.producer";
+    public static final String RABBITMQ_CONNECTION_CONFIGURATION_PREFIX = "rabbitmq.connection";
+    public static final String RABBITMQ_STREAM_CONNECTION_CONFIGURATION_PREFIX = "rabbitmqstream.connection";
+    public static final String MILVUS_CONNECTION_CONFIGURATION_PREFIX = "milvus";
+    public static final String QDRANT_CONNECTION_CONFIGURATION_PREFIX = "qdrant";
 
     final PipelineConfigGroup pipelineConfigGroup;
     final TableNameResolver tableNameResolver;
@@ -136,8 +153,10 @@ public class PipelineMapper {
         var sink = pipeline.getDestination();
         var sinkConfig = new ConfigProperties();
 
-        String configPrefix = prefixResolver(sink.getConnection().getType());
-        sink.getConnection().getConfig().forEach((configName, configValue) -> sinkConfig.setProps(configPrefix + configName, configValue));
+        if (sink.getConnection() != null) { // backward compatibility
+            String configPrefix = prefixResolver(sink.getConnection().getType());
+            sink.getConnection().getConfig().forEach((configName, configValue) -> sinkConfig.setProps(configPrefix + configName, configValue));
+        }
 
         sinkConfig.setAllProps(sink.getConfig());
 
@@ -152,8 +171,10 @@ public class PipelineMapper {
         var source = pipeline.getSource();
         var sourceConfig = new ConfigProperties();
 
-        String configPrefix = prefixResolver(source.getConnection().getType());
-        source.getConnection().getConfig().forEach((configName, configValue) -> sourceConfig.setProps(configPrefix + configName, configValue));
+        if (source.getConnection() != null) { // backward compatibility
+            String configPrefix = prefixResolver(source.getConnection().getType());
+            source.getConnection().getConfig().forEach((configName, configValue) -> sourceConfig.setProps(configPrefix + configName, configValue));
+        }
 
         sourceConfig.setAllProps(source.getConfig());
         sourceConfig.setProps(SIGNAL_ENABLED_CHANNELS_CONFIG, DEFAULT_SIGNAL_CHANNELS);
@@ -169,8 +190,24 @@ public class PipelineMapper {
 
     private String prefixResolver(ConnectionEntity.Type connectionType) {
         return switch (connectionType) {
-            case ORACLE, MYSQL, MARIADB, SQLSERVER, POSTGRESQL -> DATABASE_CONFIGURATION_PREFIX;
-            case KAFKA -> KAFKA_CONFIGURATION_PREFIX;
+            case ORACLE, MYSQL, MARIADB, SQLSERVER, POSTGRESQL -> DATABASE_CONNECTION_CONFIGURATION_PREFIX;
+            case MONGODB -> MONGODB_CONNECTION_CONFIGURATION_PREFIX;
+            case KAFKA -> KAFKA_CONNECTION_CONFIGURATION_PREFIX;
+            case AMAZON_KINESIS -> KINESIS_CONNECTION_CONFIGURATION_PREFIX;
+            case GOOGLE_PUB_SUB -> PUBSUB_CONNECTION_CONFIGURATION_PREFIX;
+            case HTTP -> HTTP_CONNECTION_CONFIGURATION_PREFIX;
+            case APACHE_PULSAR -> PULSAR_CONNECTION_CONFIGURATION_PREFIX;
+            case AZURE_EVENTS_HUBS -> EVENTHUBS_CONNECTION_CONFIGURATION_PREFIX;
+            case REDIS -> REDIS_CONNECTION_CONFIGURATION_PREFIX;
+            case NATS_STREAMING -> NATS_STREAMING_CONNECTION_CONFIGURATION_PREFIX;
+            case NATS_JETSTREAM -> NATS_JETSTREAM_CONNECTION_CONFIGURATION_PREFIX;
+            case PRAVEGA -> PRAVEGA_CONNECTION_CONFIGURATION_PREFIX;
+            case INFINISPAN -> INFINISPAN_CONNECTION_CONFIGURATION_PREFIX;
+            case APACHE_ROCKETMQ -> ROCKETMQ_CONNECTION_CONFIGURATION_PREFIX;
+            case RABBITMQ_STREAM -> RABBITMQ_CONNECTION_CONFIGURATION_PREFIX;
+            case RABBITMQ_NATIVE_STREAM -> RABBITMQ_STREAM_CONNECTION_CONFIGURATION_PREFIX;
+            case MILVUS -> MILVUS_CONNECTION_CONFIGURATION_PREFIX;
+            case QDRANT -> QDRANT_CONNECTION_CONFIGURATION_PREFIX;
         };
     }
 
