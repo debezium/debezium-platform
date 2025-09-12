@@ -207,6 +207,22 @@
         </dependency>
         <dependency>
             <groupId>io.debezium</groupId>
+            <artifactId>debezium-connector-oracle</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.debezium</groupId>
+            <artifactId>debezium-connector-mysql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.debezium</groupId>
+            <artifactId>debezium-connector-mariadb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.debezium</groupId>
+            <artifactId>debezium-connector-sqlserver</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.debezium</groupId>
             <artifactId>debezium-operator-api</artifactId>
         </dependency>
         <dependency>
