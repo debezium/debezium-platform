@@ -14,6 +14,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.debezium.jdbc.JdbcConnection;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.ConnectionValidator;
@@ -41,9 +42,9 @@ public class DatabaseConnectionValidator implements ConnectionValidator {
     public ConnectionValidationResult validate(Connection config) {
 
         DatabaseConnectionConfiguration databaseConnectionConfiguration = DatabaseConnectionConfiguration.from(config);
-        try (java.sql.Connection conn = databaseConnectionFactory.create(databaseConnectionConfiguration)) {
+        try (JdbcConnection jdbcConnection = databaseConnectionFactory.create(databaseConnectionConfiguration)) {
 
-            return new ConnectionValidationResult(conn.isValid(databaseConnectionValidationTimeout));
+            return new ConnectionValidationResult(jdbcConnection.connection().isValid(databaseConnectionValidationTimeout));
 
         }
         catch (SQLException sqlException) {

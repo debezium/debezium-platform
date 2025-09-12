@@ -39,6 +39,7 @@ class SourceResourceIT {
                     "username": "quarkus",
                     "password": "quarkus",
                     "dbName": "quarkus",
+                    "test": "test",
                     "fullyQualifiedTableName": "public.debezium_signal"
                 }""";
 

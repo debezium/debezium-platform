@@ -7,7 +7,6 @@ package io.debezium.platform.domain;
 
 import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
-import java.sql.Connection;
 import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -20,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.blazebit.persistence.CriteriaBuilderFactory;
 import com.blazebit.persistence.view.EntityViewManager;
 
+import io.debezium.jdbc.JdbcConnection;
 import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
 import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import io.debezium.platform.data.model.SourceEntity;
@@ -55,11 +55,12 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
 
     public SignalDataCollectionVerifyResponse verifySignalDataCollection(SignalCollectionVerifyRequest signalCollectionVerifyRequest) {
 
-        try (Connection conn = databaseConnectionFactory.create(signalCollectionVerifyRequest.connectionConfig())) {
+        try (JdbcConnection jdbcConnection = databaseConnectionFactory.create(signalCollectionVerifyRequest.connectionConfig())) {
 
             var table = TableId.parse(signalCollectionVerifyRequest.fullyQualifiedTableName(), false);
 
-            boolean isConform = signalDataCollectionChecker.verifyTableStructure(conn, signalCollectionVerifyRequest.connectionConfig().database(), table.schema(),
+            boolean isConform = signalDataCollectionChecker.verifyTableStructure(jdbcConnection.connection(), signalCollectionVerifyRequest.connectionConfig().database(),
+                    table.schema(),
                     table.table());
 
             String message = isConform ? SIGNAL_DATA_COLLECTION_CONFIGURED_MESSAGE : SIGNAL_DATA_COLLECTION_MISS_CONFIGURED_MESSAGE;

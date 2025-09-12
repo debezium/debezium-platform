@@ -6,7 +6,10 @@
 package io.debezium.platform.environment.operator;
 
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DATABASE;
+import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_DATABASE_NAME_CONFIG;
+import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_DATABASE_USERNAME_CONFIG;
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.USERNAME;
+import static io.debezium.platform.environment.database.DatabaseConnectionFactory.DATABASE_CONNECTION_CONFIGURATION_PREFIX;
 
 import java.util.HashMap;
 import java.util.List;
@@ -63,7 +66,6 @@ public class PipelineMapper {
     private static final List<String> RESOLVABLE_CONFIGS = List.of("jdbc.schema.history.table.name", "jdbc.offset.table.name");
 
     private static final String KAFKA_CONNECTION_CONFIGURATION_PREFIX = "producer.";
-    private static final String DATABASE_CONNECTION_CONFIGURATION_PREFIX = "database.";
     private static final String MONGODB_CONNECTION_CONFIGURATION_PREFIX = "mongodb";
     private static final String KINESIS_CONNECTION_CONFIGURATION_PREFIX = "kinesis";
     private static final String PUBSUB_CONNECTION_CONFIGURATION_PREFIX = "pubsub";
@@ -80,8 +82,6 @@ public class PipelineMapper {
     private static final String RABBITMQ_STREAM_CONNECTION_CONFIGURATION_PREFIX = "rabbitmqstream.connection";
     private static final String MILVUS_CONNECTION_CONFIGURATION_PREFIX = "milvus";
     private static final String QDRANT_CONNECTION_CONFIGURATION_PREFIX = "qdrant";
-    private static final String DEBEZIUM_DATABASE_USERNAME_CONFIG = "user";
-    private static final String DEBEZIUM_DATABASE_NAME_CONFIG = "dbname";
 
     final PipelineConfigGroup pipelineConfigGroup;
     final TableNameResolver tableNameResolver;

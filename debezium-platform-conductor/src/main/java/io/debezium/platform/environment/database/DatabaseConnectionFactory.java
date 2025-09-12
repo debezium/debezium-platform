@@ -5,38 +5,57 @@
  */
 package io.debezium.platform.environment.database;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_DATABASE_NAME_CONFIG;
+import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_DATABASE_USERNAME_CONFIG;
+
+import java.util.EnumSet;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.debezium.connector.mariadb.jdbc.MariaDbConnection;
+import io.debezium.connector.mariadb.jdbc.MariaDbConnectionConfiguration;
+import io.debezium.connector.mysql.jdbc.MySqlConnection;
+import io.debezium.connector.mysql.jdbc.MySqlConnectionConfiguration;
+import io.debezium.connector.oracle.OracleConnection;
+import io.debezium.connector.oracle.OracleConnectorConfig;
+import io.debezium.connector.postgresql.PostgresConnectorConfig;
+import io.debezium.connector.postgresql.connection.PostgresConnection;
+import io.debezium.connector.sqlserver.SqlServerConnection;
+import io.debezium.connector.sqlserver.SqlServerConnectorConfig;
+import io.debezium.data.Envelope;
+import io.debezium.jdbc.JdbcConfiguration;
+import io.debezium.jdbc.JdbcConnection;
 
 @ApplicationScoped
 public class DatabaseConnectionFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConnectionFactory.class);
+    public static final String DATABASE_CONNECTION_CONFIGURATION_PREFIX = "database.";
+    public static final String DRIVER_CONNECTION_CONFIGURATION_PREFIX = "driver.";
 
-    private final DatabaseJdbcUrlBuilder databaseJdbcUrlBuilder;
-
-    public DatabaseConnectionFactory(DatabaseJdbcUrlBuilder databaseJdbcUrlBuilder) {
-        this.databaseJdbcUrlBuilder = databaseJdbcUrlBuilder;
+    public DatabaseConnectionFactory() {
     }
 
-    // TODO This could be improved to cache the connection
-    public Connection create(DatabaseConnectionConfiguration databaseConnectionConfiguration) throws SQLException {
+    public JdbcConnection create(DatabaseConnectionConfiguration databaseConnectionConfiguration) {
 
-        var jdbcUrl = databaseJdbcUrlBuilder.buildJdbcUrl(databaseConnectionConfiguration);
-        try {
-            return DriverManager.getConnection(jdbcUrl, databaseConnectionConfiguration.username(), databaseConnectionConfiguration.password());
-        }
-        catch (SQLException e) {
+        JdbcConfiguration.Builder jdbcConfigurationBuilder = JdbcConfiguration.create()
+                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_NAME_CONFIG, databaseConnectionConfiguration.database())
+                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.HOSTNAME, databaseConnectionConfiguration.hostname())
+                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.PORT, databaseConnectionConfiguration.port())
+                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_USERNAME_CONFIG, databaseConnectionConfiguration.username())
+                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.PASSWORD, databaseConnectionConfiguration.password());
 
-            LOGGER.error("Unable to get connection to database {}}", jdbcUrl, e);
+        databaseConnectionConfiguration.additionalConfigs().forEach((k, v) -> jdbcConfigurationBuilder.with(DRIVER_CONNECTION_CONFIGURATION_PREFIX + k, v));
 
-            throw e;
-        }
+        return switch (databaseConnectionConfiguration.databaseType()) {
+            // Re-using connection from Debezium since there is some performances improvements
+            // in how the tables are retrieved by different databases
+            case ORACLE -> new OracleConnection(new OracleConnectorConfig(jdbcConfigurationBuilder.build()).getJdbcConfig());
+            case MYSQL -> new MySqlConnection(new MySqlConnectionConfiguration(jdbcConfigurationBuilder.build()), null);
+            case MARIADB -> new MariaDbConnection(new MariaDbConnectionConfiguration(jdbcConfigurationBuilder.build()), null);
+            case SQLSERVER ->
+                new SqlServerConnection(new SqlServerConnectorConfig(jdbcConfigurationBuilder.build()), null, EnumSet.noneOf(Envelope.Operation.class), true);
+            case POSTGRESQL -> new PostgresConnection(new PostgresConnectorConfig(jdbcConfigurationBuilder.build()), null, "Debezium-Platform");
+
+        };
     }
 }

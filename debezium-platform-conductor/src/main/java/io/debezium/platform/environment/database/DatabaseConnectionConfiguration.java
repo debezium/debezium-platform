@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 
 import io.debezium.platform.domain.views.Connection;
 
@@ -18,13 +20,16 @@ public record DatabaseConnectionConfiguration(DatabaseType databaseType,
         String username,
         String password,
         @JsonAlias("dbName") String database,
-        Map<String, Object> additionalConfigs) {
+        @JsonAnyGetter @JsonAnySetter Map<String, Object> additionalConfigs) {
 
     public static final String HOSTNAME = "hostname";
     public static final String PORT = "port";
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
     public static final String DATABASE = "database";
+
+    public static final String DEBEZIUM_DATABASE_USERNAME_CONFIG = "user";
+    public static final String DEBEZIUM_DATABASE_NAME_CONFIG = "dbname";
 
     public static DatabaseConnectionConfiguration from(Connection connectionConfig) {
         Map<String, Object> config = new HashMap<>(connectionConfig.getConfig());

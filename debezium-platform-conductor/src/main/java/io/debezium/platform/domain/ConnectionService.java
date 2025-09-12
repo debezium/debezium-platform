@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.blazebit.persistence.CriteriaBuilderFactory;
 import com.blazebit.persistence.view.EntityViewManager;
 
+import io.debezium.jdbc.JdbcConnection;
 import io.debezium.platform.data.dto.CatalogNode;
 import io.debezium.platform.data.dto.CollectionNode;
 import io.debezium.platform.data.dto.CollectionTree;
@@ -74,9 +75,9 @@ public class ConnectionService extends AbstractService<ConnectionEntity, Connect
         Connection connectionConfig = findById(id).orElseThrow(() -> new NotFoundException(id));
 
         DatabaseConnectionConfiguration databaseConnectionConfiguration = DatabaseConnectionConfiguration.from(connectionConfig);
-        try (java.sql.Connection conn = databaseConnectionFactory.create(databaseConnectionConfiguration)) {
+        try (JdbcConnection jdbcConnection = databaseConnectionFactory.create(databaseConnectionConfiguration)) {
 
-            Map<String, Map<String, List<CollectionNode>>> allTableNames = databaseInspector.getAllTableNames(conn);
+            Map<String, Map<String, List<CollectionNode>>> allTableNames = databaseInspector.getAllTableNames(jdbcConnection);
 
             List<CatalogNode> catalogs = allTableNames.entrySet().stream()
                     .map(this::extractCatalogNode)
