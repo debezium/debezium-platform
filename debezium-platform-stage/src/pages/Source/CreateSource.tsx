@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
-  ActionGroup,
+  ActionList,
+  ActionListGroup,
+  ActionListItem,
   Alert,
   Button,
   ButtonType,
@@ -434,7 +436,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
               }
               isCenterAligned
               isFilled
-            className={`customPageSection ${style.createConnector_pageSection}`}
+              className={`customPageSection ${style.createConnector_pageSection}`}
             >
               {editorSelected === "form-editor" && !rawConfiguration ? (
                 <SourceSinkForm
@@ -495,35 +497,42 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className={style.createConnector_footer}>
-                <Button
-                  variant="primary"
-                  isLoading={isLoading}
-                  isDisabled={isLoading || (editorSelected !== "form-editor" && codeAlert !== "")}
-                  type={ButtonType.submit}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleCreate(values, setError);
-                  }}
-                >
-                  {t('source:create.title')}
-                </Button>
-                {modelLoaded ? (
-                  <Button
-                    variant="link"
-                    onClick={() => selectSource && selectSource("")}
-                  >
-                    {t('back')}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="link"
-                    onClick={() => navigateTo("/source/catalog")}
-                  >
-                    {t('source:catalog.backToCatalog')}
-                  </Button>
-                )}
-              </ActionGroup>
+              <ActionList>
+                <ActionListGroup>
+                  <ActionListItem>
+                    <Button
+                      variant="primary"
+                      isLoading={isLoading}
+                      isDisabled={isLoading || (editorSelected !== "form-editor" && codeAlert !== "")}
+                      type={ButtonType.submit}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleCreate(values, setError);
+                      }}
+                    >
+                      {t('source:create.title')}
+                    </Button>
+                  </ActionListItem>
+                  <ActionListItem>
+                    {modelLoaded ? (
+                      <Button
+                        variant="link"
+                        onClick={() => selectSource && selectSource("")}
+                      >
+                        {t('back')}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="link"
+                        onClick={() => navigateTo("/source/catalog")}
+                      >
+                        {t('source:catalog.backToCatalog')}
+                      </Button>
+                    )}
+                  </ActionListItem>
+                </ActionListGroup>
+              </ActionList>
+
             </PageSection>
           </>
         )}

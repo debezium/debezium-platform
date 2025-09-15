@@ -2,7 +2,9 @@
 import PageHeader from "@components/PageHeader";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import {
-  ActionGroup,
+  ActionList,
+  ActionListGroup,
+  ActionListItem,
   Alert,
   Button,
   ButtonType,
@@ -900,28 +902,35 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className={style.createConnector_footer}>
-                <Button
-                  variant="primary"
-                  isLoading={isLoading}
-                  isDisabled={isLoading}
-                  type={ButtonType.submit}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleCreate(values, setError);
-                  }}
-                >
-                  {t("transform:create.title")}
-                </Button>
-                {!modelLoaded && (
-                  <Button
-                    variant="link"
-                    onClick={() => navigateTo("/transform")}
-                  >
-                    {t("back")}
-                  </Button>
-                )}
-              </ActionGroup>
+              <ActionList>
+                <ActionListGroup>
+                  <ActionListItem>
+                    <Button
+                      variant="primary"
+                      isLoading={isLoading}
+                      isDisabled={isLoading}
+                      type={ButtonType.submit}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleCreate(values, setError);
+                      }}
+                    >
+                      {t("transform:create.title")}
+                    </Button>
+                  </ActionListItem>
+                  <ActionListItem>
+                    {!modelLoaded && (
+                      <Button
+                        variant="link"
+                        onClick={() => navigateTo("/transform")}
+                      >
+                        {t("back")}
+                      </Button>
+                    )}
+                  </ActionListItem>
+                </ActionListGroup>
+              </ActionList>
+
             </PageSection>
           </>
         )}

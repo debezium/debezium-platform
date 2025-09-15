@@ -3,4 +3,5 @@ export type Catalog = {
   description: string;
   name: string;
   id: string;
+  role: string;
 };

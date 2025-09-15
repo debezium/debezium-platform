@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
-  ActionGroup,
+  ActionList,
+  ActionListGroup,
+  ActionListItem,
   Alert,
   Button,
   ButtonType,
@@ -482,36 +484,43 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className={style.createConnector_footer}>
-                <Button
-                  variant="primary"
-                  isLoading={isLoading}
-                  isDisabled={isLoading || (editorSelected !== "form-editor" && codeAlert !== "")}
-                  type={ButtonType.submit}
-                  onClick={(e) => {
-                    e.preventDefault();
+              <ActionList>
+                <ActionListGroup>
+                  <ActionListItem>
+                    <Button
+                      variant="primary"
+                      isLoading={isLoading}
+                      isDisabled={isLoading || (editorSelected !== "form-editor" && codeAlert !== "")}
+                      type={ButtonType.submit}
+                      onClick={(e) => {
+                        e.preventDefault();
 
-                    handleCreate(values, setError);
-                  }}
-                >
-                  {t("destination:create.title")}
-                </Button>
-                {modelLoaded ? (
-                  <Button
-                    variant="link"
-                    onClick={() => selectDestination && selectDestination("")}
-                  >
-                    {t("back")}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="link"
-                    onClick={() => navigateTo("/destination/catalog")}
-                  >
-                    {t("destination:catalog.backToCatalog")}
-                  </Button>
-                )}
-              </ActionGroup>
+                        handleCreate(values, setError);
+                      }}
+                    >
+                      {t("destination:create.title")}
+                    </Button>
+                  </ActionListItem>
+                  <ActionListItem>
+                    {modelLoaded ? (
+                      <Button
+                        variant="link"
+                        onClick={() => selectDestination && selectDestination("")}
+                      >
+                        {t("back")}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="link"
+                        onClick={() => navigateTo("/destination/catalog")}
+                      >
+                        {t("destination:catalog.backToCatalog")}
+                      </Button>
+                    )}
+                  </ActionListItem>
+                </ActionListGroup>
+              </ActionList>
+
             </PageSection>
           </>
         )}

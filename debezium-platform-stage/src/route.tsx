@@ -4,6 +4,7 @@ import {
   DataProcessorIcon,
   DataSinkIcon,
   DataSourceIcon,
+  InfrastructureIcon,
 } from "@patternfly/react-icons";
 import { MigrationIcon as PipelineIcon } from "@patternfly/react-icons";
 import { ServiceCatalogIcon as VaultIcon } from "@patternfly/react-icons";
@@ -31,6 +32,7 @@ import { CreateTransforms } from "./pages/Transforms/CreateTransforms";
 import { EditTransforms } from "./pages/Transforms/EditTransforms";
 import { Connections } from "./pages/Connection/Connections";
 import { CreateConnection } from "./pages/Connection/CreateConnection";
+import { ConnectionsCatalog } from "./pages/Connection/ConnectionsCatalog";
 
 export interface IAppRoute {
   label?: string; // Excluding the label will exclude the route from the nav sidebar in AppLayout
@@ -158,14 +160,20 @@ const routes: AppRouteConfig[] = [
   {
     component: Connections,
     label: "Connections",
-    icon: <DataSinkIcon style={{ outline: "none" }} />,
+    icon: <InfrastructureIcon style={{ outline: "none" }} />,
     title: `${AppBranding} | Connections`,
     path: "/connections",
     navSection: "connections",
   },
   {
+    component: ConnectionsCatalog,
+    path: "/connections/catalog",
+    navSection: "connections",
+    title: `${AppBranding} | Connections`,
+  },
+  {
     component: CreateConnection,
-    path: "/connections/create_connection",
+    path: "/connections/create_connection/:connectionId?",
     navSection: "connections",
     title: `${AppBranding} | Connections`,
   },

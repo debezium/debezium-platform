@@ -41,7 +41,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
             primaryMessage={"No connections is configured yet. Configure a one by selecting 'Add Connection' option below."}
             secondaryMessage=""
             primaryAction={
-              <Button variant="primary" icon={<PlusIcon />}>
+              <Button variant="primary" icon={<PlusIcon />}   onClick={() => navigateTo("/connections/catalog")}>
                Add connection
               </Button>
             }

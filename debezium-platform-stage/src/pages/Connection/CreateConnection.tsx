@@ -1,62 +1,324 @@
 import PageHeader from "@components/PageHeader";
-import { ActionGroup, Button, ButtonType, FormContextProvider, PageSection } from "@patternfly/react-core";
+import { ActionList, ActionListGroup, ActionListItem, Button, Card, CardBody, Content, Form, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, Grid, PageSection, Popover, Split, SplitItem, TextInput } from "@patternfly/react-core";
 import * as React from "react";
-import { useTranslation } from "react-i18next";
+import _, { } from "lodash";
+import { Controller, useForm } from "react-hook-form";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ConnectionPayload, ConnectionsSchema, createPost } from "src/apis";
 import style from "../../styles/createConnector.module.css"
+import ConnectorImage from "@components/ComponentImage";
+import { convertMapToObject, getConnectorTypeName } from "@utils/helpers";
+import { PlusIcon, TrashIcon } from "@patternfly/react-icons";
+import { t } from "i18next";
+import { useState } from "react";
+import { API_URL } from "@utils/constants";
+import { useNotification } from "@appContext/AppNotificationContext";
 
 export interface ICreateConnectionProps {
-
+    sampleProp?: string;
 }
 
-const CreateConnection:React.FunctionComponent<ICreateConnectionProps> = ({}) => {
-    const { t } = useTranslation();
-  return (
-    <>
-    <PageHeader
-        title={"Create connection"}
-        description={"Create connection by filling the form below"}
-      />
+type Properties = { key: string; value: string };
 
-    <FormContextProvider initialValues={{}}>
-      {({ setValue, getValue, setError, values, errors }) => (
+type ConnectionFormValues = {
+    name: string;
+    [key: string]: string;
+};
+
+const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => {
+    const navigate = useNavigate();
+    // const { t } = useTranslation();
+    const { addNotification } = useNotification();
+    const location = useLocation();
+
+    const { connectionId } = useParams<{ connectionId: string }>();
+
+
+    const state = location.state as { connectionType?: string, connectionSchema?: ConnectionsSchema } | null;
+    const connectionType = state?.connectionType;
+    const selectedSchema = state?.connectionSchema;
+    const selectedSchemaProperties = selectedSchema?.schema;
+
+    const [errorWarning] = useState<string[]>([]);
+    const [properties, setProperties] = useState<Map<string, Properties>>(
+        new Map([["key0", { key: "", value: "" }]])
+    );
+    const [keyCount, setKeyCount] = React.useState<number>(1);
+
+    //   const validate = ajv.compile(connectorSchema);
+
+    const handleAddProperty = () => {
+        const newKey = `key${keyCount}`;
+        setProperties(
+            (prevProperties) =>
+                new Map(prevProperties.set(newKey, { key: "", value: "" }))
+        );
+        setKeyCount((prevCount) => prevCount + 1);
+    };
+
+    const handleDeleteProperty = (key: string) => {
+        setProperties((prevProperties) => {
+            const newProperties = new Map(prevProperties);
+            newProperties.delete(key);
+            return newProperties;
+        });
+    };
+
+    const handlePropertyChange = (
+        key: string,
+        type: "key" | "value",
+        newValue: string
+    ) => {
+        setProperties((prevProperties) => {
+            const newProperties = new Map(prevProperties);
+            const property = newProperties.get(key);
+            if (property) {
+                if (type === "key") property.key = newValue;
+                else if (type === "value") property.value = newValue;
+                newProperties.set(key, property);
+            }
+            return newProperties;
+        });
+    };
+
+
+    const { control, handleSubmit } = useForm<ConnectionFormValues>(
+        //     {
+        //     defaultValues: {
+        //         fullName: ''
+        //     }
+        // }
+    );
+    // const onSubmit = (data: any) => {
+    //     console.log("data", data);
+    //     console.log("properties", properties);
+    // };
+
+    const validateConnection = async (payload: ConnectionPayload) => {
+        console.log("payload", payload);
+        const response = await createPost(`${API_URL}/api/connections/validate`, payload);
+
+        if (response.error) {
+            addNotification(
+                "danger",
+                `Connection validation failed`,
+                `Failed to validate `
+            );
+        } else {
+            //   modelLoaded && onSelection && onSelection(response.data as Source);
+            addNotification(
+                "success",
+                `Validation successful`,
+                `Connection validated successfully.`
+            );
+            //   !modelLoaded && navigateTo("/source");
+        }
+    };
+
+    const validateSubmit = (data: ConnectionFormValues) => {
+        console.log("data", data);
+        const { name, ...dataWithoutName } = data;
+        const payload = selectedSchema ? {
+            type: selectedSchema?.type.toUpperCase() || connectionId?.toUpperCase() || "",
+            // id: connectionId?.toUpperCase() || "",
+            config: { ...dataWithoutName },
+            name
+        } as ConnectionPayload : {
+            type: connectionId?.toUpperCase() || "",
+            // id: connectionId?.toUpperCase() || "",
+            config: convertMapToObject(properties),
+            name
+        };
+        validateConnection(payload);
+    }
+
+
+
+    return (
         <>
-        
-          <PageSection
-            isWidthLimited={true}
-            isCenterAligned
-            isFilled
-            className={`customPageSection ${style.createConnector_pageSection}`}
-          >
-          Connection form
-          </PageSection>
-          <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-            <ActionGroup className={style.createConnector_footer}>
-              <Button
-                variant="primary"
-                // isLoading={isLoading}
-                // isDisabled={isLoading || (editorSelected !== "form-editor" && codeAlert !== "")}
-                type={ButtonType.submit}
-                onClick={(e) => {
-                  e.preventDefault();
+            <PageHeader
+                title={"Create connection"}
+                description={"Create connection by filling the form below, you can create connection for both source and destination. And can be used when you are creating any source or destination in the future."}
+            />
+            <PageSection
+                isWidthLimited
+                isCenterAligned
+                isFilled
+                className={`customPageSection ${style.createConnector_pageSection}`}
+            >
 
-                 console.log(values, errors);
-                }}
-              >
-                {t("destination:create.title")}
-              </Button>
-              <Button
-                  variant="link"
-                  onClick={() => {}}
-                >
-                  {t("back")}
-                </Button>
-            </ActionGroup>
-          </PageSection>
+                <Card className="custom-card-body">
+                    <CardBody isFilled>
+                        <Form id="create-connection-form" onSubmit={handleSubmit(validateSubmit)} isWidthLimited>
+                            <FormGroup
+                                label={`${_.capitalize(connectionType)} connection`}
+                                fieldId={`connection-type-field`}
+                            >
+                                <>
+                                    <ConnectorImage connectorType={selectedSchema?.type.toLowerCase() || connectionId || ""} size={35} />
+                                    <Content component="p" style={{ paddingLeft: "10px" }}>
+                                        {getConnectorTypeName(selectedSchema?.type.toLowerCase() || connectionId || "")}
+                                    </Content>
+                                </>
+                            </FormGroup>
+                            <FormGroup
+
+                                label={"Name"}
+                                fieldId={"connection-name"}
+                                isRequired
+                            >
+                                <Controller
+                                    name={"name"}
+                                    control={control}
+                                    render={({ field }) => <TextInput {...field} />}
+                                />
+
+                            </FormGroup>
+                            <FormFieldGroup
+                                header={
+                                    <FormFieldGroupHeader
+                                        titleText={{
+                                            text: <span style={{ fontWeight: 500 }}>{selectedSchemaProperties ? selectedSchemaProperties.description : `${getConnectorTypeName(selectedSchema?.type.toLowerCase() || connectionId || "")} connection properties`}</span>,
+                                            id: `field-group-${connectionId}-id`,
+                                        }}
+                                        titleDescription={!selectedSchemaProperties ? t("form.subHeading.description") : "Enter the connection properties"}
+                                        actions={
+                                            !selectedSchemaProperties ?
+                                                <>
+                                                    <Button
+                                                        variant="secondary"
+                                                        icon={<PlusIcon />}
+                                                        onClick={handleAddProperty}
+                                                    >
+                                                        {t("form.addFieldButton")}
+                                                    </Button>
+                                                </>
+                                                : null
+                                        }
+                                    />
+                                }
+                            >
+
+
+                                {selectedSchemaProperties ?
+                                    (
+                                        Object.entries(selectedSchemaProperties.properties).map(([propertyName, propertySchema]) => (
+                                            <FormGroup
+                                                key={propertyName}
+                                                label={_.capitalize(propertyName)}
+                                                fieldId={propertyName}
+                                                isRequired={selectedSchemaProperties.required.includes(propertyName)}
+                                                labelHelp={
+                                                    <Popover
+
+
+                                                        bodyContent={
+                                                            <div>
+                                                                {propertySchema.title}
+                                                            </div>
+                                                        }
+                                                    >
+                                                        <FormGroupLabelHelp aria-label={propertySchema.title} />
+                                                    </Popover>
+                                                }
+                                            >
+                                                <Controller
+                                                    name={propertyName}
+                                                    control={control}
+                                                    render={({ field }) => <TextInput {...field} />}
+                                                />
+
+                                            </FormGroup>
+                                        ))
+
+                                    ) :
+                                    (
+
+                                        <>
+                                            {Array.from(properties.keys()).map((key) => (
+                                                <Split hasGutter key={key}>
+                                                    <SplitItem isFilled>
+                                                        <Grid hasGutter md={6}>
+                                                            <FormGroup
+                                                                label=""
+                                                                isRequired
+                                                                fieldId={`${connectionId}-config-props-key-field-${key}`}
+                                                            >
+                                                                <TextInput
+                                                                    // readOnlyVariant={viewMode ? "default" : undefined}
+                                                                    isRequired
+                                                                    type="text"
+                                                                    placeholder="Key"
+                                                                    validated={errorWarning.includes(key) ? "error" : "default"}
+                                                                    id={`${connectionId}-config-props-key-${key}`}
+                                                                    name={`${connectionId}-config-props-key-${key}`}
+                                                                    value={properties.get(key)?.key || ""}
+                                                                    onChange={(_e, value) =>
+                                                                        handlePropertyChange(key, "key", value)
+                                                                    }
+                                                                />
+                                                            </FormGroup>
+                                                            <FormGroup
+                                                                label=""
+                                                                isRequired
+                                                                fieldId={`${connectionId}-config-props-value-field-${key}`}
+                                                            >
+                                                                <TextInput
+                                                                    // readOnlyVariant={viewMode ? "default" : undefined}
+                                                                    isRequired
+                                                                    type="text"
+                                                                    id={`${connectionId}-config-props-value-${key}`}
+                                                                    placeholder="Value"
+                                                                    validated={errorWarning.includes(key) ? "error" : "default"}
+                                                                    name={`${connectionId}-config-props-value-${key}`}
+                                                                    value={properties.get(key)?.value || ""}
+                                                                    onChange={(_e, value) =>
+                                                                        handlePropertyChange(key, "value", value)
+                                                                    }
+                                                                />
+                                                            </FormGroup>
+                                                        </Grid>
+                                                    </SplitItem>
+                                                    <SplitItem>
+                                                        <Button
+                                                            variant="plain"
+                                                            // isDisabled={viewMode}
+                                                            aria-label="Remove"
+                                                            onClick={() => handleDeleteProperty(key)}
+                                                        >
+                                                            <TrashIcon />
+                                                        </Button>
+                                                    </SplitItem>
+                                                </Split>
+                                            ))}
+                                        </>
+                                    )}
+                            </FormFieldGroup>
+                        </Form>
+                    </CardBody>
+                </Card>
+
+            </PageSection>
+
+            <PageSection className="pf-m-sticky-bottom" isFilled={false}>
+                <ActionList>
+                    <ActionListGroup>
+                        <ActionListItem>
+                            {/* {selectedSchemaProperties ? <Button variant="primary" type="submit" form="create-connection-form"> {selectedSchemaProperties ? Validate : Create connection}</Button> : <Button variant="primary" type="submit" form="create-connection-form">Create connection</Button>} */}
+                            <Button variant="primary" type="submit" form="create-connection-form"> {selectedSchemaProperties ? "Validate" : "Create connection"}</Button>
+                        </ActionListItem>
+                        <ActionListItem>
+                            <Button variant="link" onClick={() => navigate("/connections/catalog")}>Back to catalog</Button>
+                        </ActionListItem>
+                    </ActionListGroup>
+                </ActionList>
+
+            </PageSection>
+
+
+
         </>
-      )}
-    </FormContextProvider>
-  </>
-  );
+    );
 };
 
 export { CreateConnection };

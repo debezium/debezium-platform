@@ -4,10 +4,10 @@
     border-style: var(--pf-t--global--border--style--default); */
     border-radius:  var(--pf-t--global--border--radius--medium);
     border-top: var(--pf-t--global--border--width--box--default) solid var(--pf-t--global--border--color--default);
-    padding: 0;
+    padding: 0 !important;
     
 }
-.custom-card-footer .pf-m-action {
+.custom-card-footer .pf-v6-c-action-list {
     padding: var(--pf-t--global--spacer--md) !important;
 }
 

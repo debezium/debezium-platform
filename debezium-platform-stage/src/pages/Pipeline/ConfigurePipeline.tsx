@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
-  ActionGroup,
+  ActionList,
+  ActionListGroup,
+  ActionListItem,
   Alert,
   Button,
   ButtonType,
@@ -722,8 +724,10 @@ const ConfigurePipeline: React.FunctionComponent = () => {
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className={style.createConnector_footer}>
-                <Button
+            <ActionList>
+      <ActionListGroup>
+        <ActionListItem>
+        <Button
                   variant="primary"
                   isLoading={isLoading}
                   isDisabled={isLoading}
@@ -735,10 +739,15 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                 >
                   {t('pipeline:createPipeline')}
                 </Button>
-                <Button variant="link" onClick={handleGoBack}>
+        </ActionListItem>
+        <ActionListItem>
+        <Button variant="link" onClick={handleGoBack}>
                   {t('back')}
                 </Button>
-              </ActionGroup>
+        </ActionListItem>
+      </ActionListGroup>
+    </ActionList>
+             
             </PageSection>
           </>
         )}
