@@ -1,4 +1,6 @@
 import { DatabaseType } from "./constants";
+import DestinationCatalog from "../__mocks__/data/DestinationCatalog.json";
+import SourceCatalog from "../__mocks__/data/SourceCatalog.json";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const convertMapToObject = (
@@ -45,6 +47,11 @@ export const getDatabaseType = (connectorType: string)  => {
   }
   return type;
 }
+export const getConnectionRole = (connectorType: string) => {
+  const connectionsCatalog = [...SourceCatalog, ...DestinationCatalog];
+  const connection = connectionsCatalog.find((connection) => connection.id === connectorType);
+  return connection?.role;
+}
 
 export const getConnectorTypeName = (connectorType: string) => {
   let name = "";
@@ -67,6 +74,9 @@ export const getConnectorTypeName = (connectorType: string) => {
       break;
     case connectorType.includes("apachepulsar"):
       name = "Apache Pulsar";
+      break;
+    case connectorType.includes("oracle"):
+      name = "Oracle";
       break;
     case connectorType.includes("rocketmq"):
       name = "RocketMQ";

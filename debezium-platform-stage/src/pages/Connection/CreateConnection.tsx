@@ -4,7 +4,7 @@ import * as React from "react";
 import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ConnectionPayload, ConnectionsSchema, createPost } from "src/apis";
+import { ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost } from "src/apis";
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
 import { convertMapToObject, getConnectorTypeName } from "@utils/helpers";
@@ -22,7 +22,7 @@ type Properties = { key: string; value: string };
 
 type ConnectionFormValues = {
     name: string;
-    [key: string]: string;
+    [key: string]: string | number;
 };
 
 const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => {
@@ -32,6 +32,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
     const location = useLocation();
 
     const { connectionId } = useParams<{ connectionId: string }>();
+    const [connectionValidated, setConnectionValidated] = useState<boolean>(false);
 
 
     const state = location.state as { connectionType?: string, connectionSchema?: ConnectionsSchema } | null;
@@ -104,14 +105,43 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                 `Connection validation failed`,
                 `Failed to validate `
             );
-        } else {
-            //   modelLoaded && onSelection && onSelection(response.data as Source);
+        }
+        else if ((response.data as ConnectionValidationResult).valid === false) {
+            addNotification(
+                "danger",
+                `Connection validation failed`,
+                `${(response.data as ConnectionValidationResult).errorType}: ${(response.data as ConnectionValidationResult).message}`
+            );
+        }
+        else {
+
             addNotification(
                 "success",
                 `Validation successful`,
                 `Connection validated successfully.`
             );
-            //   !modelLoaded && navigateTo("/source");
+            setConnectionValidated(true);
+        }
+    };
+
+    const createConnection = async (payload: ConnectionPayload) => {
+        console.log("payload", payload);
+        const response = await createPost(`${API_URL}/api/connections`, payload);
+
+        if (response.error) {
+            addNotification(
+                "danger",
+                `Connection validation failed`,
+                `Failed to validate `
+            );
+        }
+        else {
+            addNotification(
+                "success",
+                `Validation successful`,
+                `Connection validated successfully.`
+            );
+            navigate("/connections")
         }
     };
 
@@ -129,7 +159,12 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
             config: convertMapToObject(properties),
             name
         };
-        validateConnection(payload);
+        if (connectionValidated || !selectedSchemaProperties) {
+            createConnection(payload);
+        } else {
+            validateConnection(payload);
+        }
+
     }
 
 
@@ -170,7 +205,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                                 <Controller
                                     name={"name"}
                                     control={control}
-                                    render={({ field }) => <TextInput {...field} />}
+                                    render={({ field }) => <TextInput id="connection-name" {...field} />}
                                 />
 
                             </FormGroup>
@@ -205,7 +240,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                                         Object.entries(selectedSchemaProperties.properties).map(([propertyName, propertySchema]) => (
                                             <FormGroup
                                                 key={propertyName}
-                                                label={_.capitalize(propertyName)}
+                                                label={_.capitalize(propertySchema.title)}
                                                 fieldId={propertyName}
                                                 isRequired={selectedSchemaProperties.required.includes(propertyName)}
                                                 labelHelp={
@@ -222,11 +257,25 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                                                     </Popover>
                                                 }
                                             >
-                                                <Controller
+                                                {propertySchema.type === "string" && <Controller
                                                     name={propertyName}
                                                     control={control}
-                                                    render={({ field }) => <TextInput {...field} />}
-                                                />
+                                                    render={({ field }) => <TextInput id={propertyName}  {...field} />}
+                                                />}
+                                                {propertySchema.type === "integer" && <Controller
+                                                    name={propertyName}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <TextInput
+                                                            id={propertyName}
+                                                            type="number"
+                                                            {...field}
+                                                            onChange={(_e, value) => field.onChange(value === '' ? '' : Number(value))}
+                                                        />
+                                                    )}
+                                                />}
+
+
 
                                             </FormGroup>
                                         ))
@@ -304,9 +353,14 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                 <ActionList>
                     <ActionListGroup>
                         <ActionListItem>
-                            {/* {selectedSchemaProperties ? <Button variant="primary" type="submit" form="create-connection-form"> {selectedSchemaProperties ? Validate : Create connection}</Button> : <Button variant="primary" type="submit" form="create-connection-form">Create connection</Button>} */}
-                            <Button variant="primary" type="submit" form="create-connection-form"> {selectedSchemaProperties ? "Validate" : "Create connection"}</Button>
+                            {selectedSchema ?
+                                <Button variant="primary" type="submit" form="create-connection-form" isDisabled={!connectionValidated}>Create connection</Button>
+                                : <Button variant="primary" type="submit" form="create-connection-form" >Create connection</Button>}
+
                         </ActionListItem>
+                        {selectedSchema && <ActionListItem>
+                            <Button variant="secondary" type="submit" form="create-connection-form">Validate</Button>
+                        </ActionListItem>}
                         <ActionListItem>
                             <Button variant="link" onClick={() => navigate("/connections/catalog")}>Back to catalog</Button>
                         </ActionListItem>

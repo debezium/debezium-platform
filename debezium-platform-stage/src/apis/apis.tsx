@@ -32,7 +32,7 @@ export type DestinationConfig = {
 };
 
 export type ConnectionUnknownConfig = {
-  [key: string]: string; 
+  [key: string]: string | number; 
 };
 
 export type Payload = {
@@ -42,6 +42,12 @@ export type Payload = {
   config: DestinationConfig;
   description?: string;
   name: string;
+};
+
+export type ConnectionValidationResult = {
+  valid: boolean;
+  message: string;
+  errorType: string;
 };
 
 export type ConnectionPayload = {
@@ -164,6 +170,8 @@ export type TransformPayload = {
 export type TransformApiResponse = TransformData[];
 
 export type SourceApiResponse = Source[];
+
+export type ConnectionsApiResponse = Connection[];
 
 export type PipelineApiResponse = Pipeline[];
 
