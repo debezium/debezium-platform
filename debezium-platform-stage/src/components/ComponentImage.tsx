@@ -62,7 +62,7 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "SqlServer";
       src = sqlServer;
       break;
-    case connectorType.includes("apachepulsar"):
+    case connectorType.includes("apache_pulsar"):
       altText = "Apache Pulsar";
       src = apachePulsar;
       break;
@@ -70,7 +70,7 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "RocketMQ";
       src = rocketMq;
       break;
-    case connectorType.includes("eventhub"):
+    case connectorType.includes("events_hubs"):
       altText = "EventHub";
       src = eventHub;
       break;
@@ -79,10 +79,14 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "RabbitMQ";
       src = rabbitMq;
       break;
-    case connectorType.includes("natsstreaming"):
+    case connectorType.includes("nats_streaming"):
       altText = "NATS Stream";
       src = natsStreaming;
       break;
+    case connectorType.includes("nats_jetstream"):
+        altText = "NATS JetStream";
+        src = natsStreaming;
+        break;  
     case connectorType.includes("kafka"):
       altText = "Kafka";
       src = kafka;
@@ -91,11 +95,11 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "Infinispan";
       src = infinispan;
       break;
-    case connectorType.includes("pubsublite"):
+    case connectorType.includes("pub_sub_lite"):
       altText = "Pub/SUB";
       src = pubsubLite;
       break;
-    case connectorType.includes("pubsub"):
+    case connectorType.includes("pub_sub"):
       altText = "Pub/Sub liet";
       src = pubsub;
       break;

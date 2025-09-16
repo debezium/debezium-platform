@@ -1,22 +1,22 @@
 [
     {
         "name": "Amazon Kinesis",
-        "id": "kinesis",
-        "type": "kinesis",
+        "id": "amazon_kinesis",
+        "type": "amazon_kinesis",
         "role": "destination",
         "description": "Streams change events to Amazon Kinesis, a fully managed, distributed streaming platform."
     },
     {
         "name": "Apache Pulsar",
-        "id": "apachepulsar",
-        "type": "apachepulsar",
+        "id": "apache_pulsar",
+        "type": "apache_pulsar",
         "role": "destination",
         "description": "Streams CDC events into Apache Pulsar, a distributed messaging and event-streaming platform offering low-latency and high-throughput."
     },
     {
         "name": "Azure Event Hub",
-        "id": "eventhub",
-        "type": "eventhub",
+        "id": "azure_events_hubs",
+        "type": "azure_events_hubs",
         "role": "destination",
         "description": "Sends change events to Azure Event Hub, a real-time data ingestion service optimized for streaming millions of events per second."
     },
@@ -50,10 +50,17 @@
     },
     {
         "name": "NATS Streaming",
-        "id": "natsstreaming",
-        "type": "natsstreaming",
+        "id": "nats_streaming",
+        "type": "nats_streaming",
         "role": "destination",
         "description": "Sends change events to NATS Streaming, a messaging system designed for distributed systems and microservices architectures."
+    },
+    {
+        "name": "NATS JetStream",
+        "id": "nats_jetstream",
+        "type": "nats_jetstream",
+        "role": "destination",
+        "description": "Sends change events to NATS JetStream, a messaging system designed for distributed systems and microservices architectures."
     },
     {
         "name": "Pravega",
@@ -64,15 +71,15 @@
     },
     {
         "name": "Pub/Sub",
-        "id": "pubsub",
-        "type": "pubsub",
+        "id": "google_pub_sub",
+        "type": "google_pub_sub",
         "role": "destination",
         "description": "Sends real-time change events to Google Pub/Sub, a fully managed messaging service for building event-driven systems and real-time analytics."
     },
     {
         "name": "Pub/Sub Lite",
-        "id": "pubsublite",
-        "type": "pubsublite",
+        "id": "pub_sub_lite",
+        "type": "pub_sub_lite",
         "role": "destination",
         "description": "Streams events to Google Pub/Sub Lite, a cost-effective, low-latency message delivery service for simpler use cases."
     },
@@ -85,8 +92,8 @@
     },
     {
         "name": "RabbitMQ",
-        "id": "rabbitmq",
-        "type": "rabbitmq",
+        "id": "rabbitmq_stream",
+        "type": "rabbitmq_stream",
         "role": "destination",
         "description": "Publishes change events to RabbitMQ, an open-source message broker supporting various messaging protocols for inter-service communication."
     },
@@ -96,5 +103,12 @@
         "type": "redis",
         "role": "destination",
         "description": "Streams change events to Redis Streams, a high-performance, open-source, in-memory data structure store."
+    },
+    {
+        "name": "RocketMQ",
+        "id": "apache_rocketmq",
+        "type": "apache_rocketmq",
+        "role": "destination",
+        "description": "Streams change events to Apache RocketMQ, a high-throughput, low-latency messaging platform."
     }
 ]

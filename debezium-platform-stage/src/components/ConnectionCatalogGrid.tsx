@@ -125,6 +125,10 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
                         </FlexItem>
                       </Flex>
                     </DataListCell>,
+                    
+                    <DataListCell isFilled={false} alignRight key="support validation">
+                      {connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase()) && <StarIcon style={{ outline: "none" }} size={150} />}
+                  </DataListCell>
                   ]}
                 />
               </DataListItemRow>

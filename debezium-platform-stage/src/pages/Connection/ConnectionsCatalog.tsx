@@ -2,7 +2,7 @@
 import { Bullseye, Button, Content, ContentVariants, EmptyState, EmptyStateActions, EmptyStateBody, EmptyStateFooter, EmptyStateVariant, MenuToggle, MenuToggleElement, PageSection, SearchInput, Select, SelectList, SelectOption, Switch, ToggleGroup, ToggleGroupItem, Toolbar, ToolbarContent, ToolbarGroup, ToolbarItem } from "@patternfly/react-core";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { ThIcon, ListIcon, SearchIcon } from "@patternfly/react-icons";
+import { ThIcon, ListIcon, SearchIcon, FilterIcon } from "@patternfly/react-icons";
 import { useCallback, useEffect, useState } from "react";
 import { Catalog, ConnectionsSchema, fetchData } from "src/apis";
 import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
@@ -28,9 +28,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
   const [connectionsTypeSelected, setConnectionsTypeSelected] = useState('');
   const [isSelected, setIsSelected] = React.useState<"grid" | "list">("grid");
 
-  const handleChange = (_event: React.FormEvent<HTMLInputElement>, checked: boolean) => {
-    setIsValidationChecked(checked);
-  };
+
 
   const [searchResult, setSearchResult] = useState<Catalog[]>(
     _.sortBy([...sourceCatalog, ...destinationCatalog], (o) => o.name.toLowerCase())
@@ -131,6 +129,21 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     fetchData<ConnectionsSchema[]>(`${API_URL}/api/connections/schemas`)
   );
 
+  const handleChange = (_event: React.FormEvent<HTMLInputElement>, checked: boolean) => {
+    setIsValidationChecked(checked);
+    if (checked) {
+      setSearchResult(searchResult.filter((item) => connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase())));
+    } else {
+      if (connectionsTypeSelected === 'Source') {
+        setSearchResult(sourceCatalog);
+      } else if (connectionsTypeSelected === 'Destination') {
+        setSearchResult(destinationCatalog);
+      } else {
+        setSearchResult(_.sortBy([...sourceCatalog, ...destinationCatalog], (o) => o.name.toLowerCase()));
+      }
+    }
+  };
+
   return (
     <>
       <PageSection isWidthLimited>
@@ -188,9 +201,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
                   onClear={onClear}
                 />
               </ToolbarItem>
-            </ToolbarGroup>
-
-            <ToolbarItem>
+              <ToolbarItem>
               <ToggleGroup aria-label="Display variant toggle group">
                 <ToggleGroupItem
                   icon={<ThIcon />}
@@ -209,6 +220,9 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
                 />
               </ToggleGroup>
             </ToolbarItem>
+            </ToolbarGroup>
+
+           
             <ToolbarItem variant="separator" />
             <ToolbarItem>
 
@@ -217,6 +231,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
                 toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                   <MenuToggle
                     ref={toggleRef}
+                    icon={<FilterIcon />}
                     onClick={() => onConnectionsTypeToggle()}
                     isExpanded={connectionsTypeIsExpanded}
                     style={
@@ -245,18 +260,16 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
             </ToolbarItem>
             {/* <ToolbarItem variant="separator" /> */}
             <ToolbarItem style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+              <Switch
+                label="Supports validation"
+                id="checked-with-label-switch-on"
+                isChecked={isValidationChecked}
+                hasCheckIcon
+                onChange={handleChange}
+              // isReversed
+              />
 
-
-            <Switch
-      label="Supports validation"
-      id="checked-with-label-switch-on"
-      isChecked={isValidationChecked}
-      hasCheckIcon
-      onChange={handleChange}
-      // isReversed
-    />
-
-</ToolbarItem>
+            </ToolbarItem>
 
             <ToolbarGroup align={{ default: "alignEnd" }}>
               <ToolbarItem>

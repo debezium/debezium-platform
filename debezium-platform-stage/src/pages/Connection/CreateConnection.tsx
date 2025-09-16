@@ -131,15 +131,15 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
         if (response.error) {
             addNotification(
                 "danger",
-                `Connection validation failed`,
-                `Failed to validate `
+                `Connection creation failed`,
+                `Failed to create connection ${payload.name}: ${response.error}`
             );
         }
         else {
             addNotification(
                 "success",
-                `Validation successful`,
-                `Connection validated successfully.`
+                `Creation successful`,
+                `Connection ${payload.name} created successfully.`
             );
             navigate("/connections")
         }

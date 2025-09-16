@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Button, Card, Content, ContentVariants, EmptyState, MenuToggle, MenuToggleElement, PageSection, SearchInput, Select, SelectList, SelectOption, Spinner, ToggleGroup, Toolbar, ToolbarContent, ToolbarGroup, ToolbarItem } from "@patternfly/react-core";
-import { PlusIcon } from "@patternfly/react-icons";
+import { FilterIcon, PlusIcon } from "@patternfly/react-icons";
 import EmptyStatus from "../../components/EmptyStatus";
 import { useNavigate } from "react-router-dom";
 import comingSoonImage from "../../assets/comingSoon.png";
@@ -185,6 +185,9 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                         isSticky
                       >
                         <ToolbarContent>
+                          <ToolbarGroup variant="filter-group">
+
+                         
                           <ToolbarItem>
                             <SearchInput
                               aria-label="Items example search input"
@@ -194,22 +197,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                               onClear={onClear}
                             />
                           </ToolbarItem>
-                          <ToolbarItem>
-                            <ToggleGroup aria-label="Icon variant toggle group">
-                              <Button
-                                variant="primary"
-                                icon={<PlusIcon />}
-                                onClick={() =>
-                                  navigateTo("/connections/catalog")
-                                }
-                              >
-                                {t("addButton", {
-                                  val: "connection",
-                                })}
-                              </Button>
-                            </ToggleGroup>
-                          </ToolbarItem>
-                          <ToolbarItem variant="separator" />
+                          {/* <ToolbarItem variant="separator" /> */}
                           <ToolbarItem>
 
 
@@ -217,6 +205,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                               toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                                 <MenuToggle
                                   ref={toggleRef}
+                                  icon={<FilterIcon />}
                                   onClick={() => onConnectionsTypeToggle()}
                                   isExpanded={connectionsTypeIsExpanded}
                                   style={
@@ -243,6 +232,23 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                             </Select>
 
                           </ToolbarItem>
+                          </ToolbarGroup>
+                          <ToolbarItem>
+                            <ToggleGroup aria-label="Icon variant toggle group">
+                              <Button
+                                variant="primary"
+                                icon={<PlusIcon />}
+                                onClick={() =>
+                                  navigateTo("/connections/catalog")
+                                }
+                              >
+                                {t("addButton", {
+                                  val: "connection",
+                                })}
+                              </Button>
+                            </ToggleGroup>
+                          </ToolbarItem>
+                         
                           <ToolbarGroup align={{ default: "alignEnd" }}>
                             <ToolbarItem>
                               <Content component={ContentVariants.small}>
