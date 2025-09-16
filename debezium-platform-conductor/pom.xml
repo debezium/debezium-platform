@@ -39,6 +39,8 @@
         <test-containers.version>1.20.0</test-containers.version>
         <json-schema-validator.version>5.3.2</json-schema-validator.version>
         <kafka-clients.version>3.9.1</kafka-clients.version> <!-- Forcing it since it is compatible with quarkus platform 3.17.4 -->
+        <version.jackson>2.16.1</version.jackson>
+        <version.jackson.databind>2.16.2</version.jackson.databind>
 
         <quarkus.container-image.registry>quay.io</quarkus.container-image.registry>
         <quarkus.container-image.group>debezium</quarkus.container-image.group>
@@ -162,6 +164,22 @@
                 <version>${mockwebserver.version}</version>
             </dependency>
 
+            <!--Temporary forced since newer version are not compatible with current kubernetes client -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${version.jackson.databind}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
