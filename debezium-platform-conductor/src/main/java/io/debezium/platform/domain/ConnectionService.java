@@ -77,9 +77,7 @@ public class ConnectionService extends AbstractService<ConnectionEntity, Connect
         DatabaseConnectionConfiguration databaseConnectionConfiguration = DatabaseConnectionConfiguration.from(connectionConfig);
         try (JdbcConnection jdbcConnection = databaseConnectionFactory.create(databaseConnectionConfiguration)) {
 
-            Map<String, Map<String, List<CollectionNode>>> allTableNames = databaseInspector.getAllTableNames(jdbcConnection);
-
-            List<CatalogNode> catalogs = allTableNames.entrySet().stream()
+            List<CatalogNode> catalogs = databaseInspector.getAllTableNames(jdbcConnection).entrySet().stream()
                     .map(this::extractCatalogNode)
                     .toList();
 
@@ -102,7 +100,7 @@ public class ConnectionService extends AbstractService<ConnectionEntity, Connect
 
         return new CatalogNode(
                 catalogEntry.getKey(),
-                List.copyOf(schemas),
+                schemas,
                 totalTables);
     }
 
@@ -110,7 +108,7 @@ public class ConnectionService extends AbstractService<ConnectionEntity, Connect
         List<CollectionNode> tablesList = schemaEntry.getValue();
         return new SchemaNode(
                 schemaEntry.getKey(),
-                List.copyOf(tablesList),
+                tablesList,
                 tablesList.size());
 
     }
