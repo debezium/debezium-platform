@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from "react";
 import {
-  ActionGroup,
+  ActionList,
+  ActionListGroup,
+  ActionListItem,
   Button,
   ButtonType,
   Card,
@@ -168,59 +170,59 @@ const PipelineDesignerEdit: React.FunctionComponent<
     const [error, setError] = useState<string | null>(null);
 
 
-  const [pkgLevelLog, setPkgLevelLog] = useState<Map<string, Properties>>(
-    new Map([["key0", { key: "", value: "" }]])
-  );
-  const [keyCount, setKeyCount] = useState<number>(1);
-
-  useEffect(() => {
-    if (definedLogLevels) {
-      const updatedPkgLevelLog = new Map<string, Properties>();
-      let count = 0;
-
-      Object.entries(definedLogLevels).forEach(([key, value]) => {
-        updatedPkgLevelLog.set(`key${count}`, { key, value });
-        count++;
-      });
-
-      setPkgLevelLog(updatedPkgLevelLog);
-      setKeyCount(count);
-    }
-  }, [definedLogLevels]);
-
-  const handleAddProperty = () => {
-    const newKey = `key${keyCount}`;
-    setPkgLevelLog(
-      (prevPkgLevelLog) =>
-        new Map(prevPkgLevelLog.set(newKey, { key: "", value: "" }))
+    const [pkgLevelLog, setPkgLevelLog] = useState<Map<string, Properties>>(
+      new Map([["key0", { key: "", value: "" }]])
     );
-    setKeyCount((prevCount) => prevCount + 1);
-  };
+    const [keyCount, setKeyCount] = useState<number>(1);
 
-  const handlePropertyChange = (
-    key: string,
-    type: "key" | "value",
-    newValue: string
-  ) => {
-    setPkgLevelLog((prevPkgLevelLog) => {
-      const newProperties = new Map(prevPkgLevelLog);
-      const property = newProperties.get(key);
-      if (property) {
-        if (type === "key") property.key = newValue;
-        else if (type === "value") property.value = newValue;
-        newProperties.set(key, property);
+    useEffect(() => {
+      if (definedLogLevels) {
+        const updatedPkgLevelLog = new Map<string, Properties>();
+        let count = 0;
+
+        Object.entries(definedLogLevels).forEach(([key, value]) => {
+          updatedPkgLevelLog.set(`key${count}`, { key, value });
+          count++;
+        });
+
+        setPkgLevelLog(updatedPkgLevelLog);
+        setKeyCount(count);
       }
-      return newProperties;
-    });
-  };
+    }, [definedLogLevels]);
 
-  const handleDeleteProperty = (key: string) => {
-    setPkgLevelLog((prevPkgLevelLog) => {
-      const newProperties = new Map(prevPkgLevelLog);
-      newProperties.delete(key);
-      return newProperties;
-    });
-  };
+    const handleAddProperty = () => {
+      const newKey = `key${keyCount}`;
+      setPkgLevelLog(
+        (prevPkgLevelLog) =>
+          new Map(prevPkgLevelLog.set(newKey, { key: "", value: "" }))
+      );
+      setKeyCount((prevCount) => prevCount + 1);
+    };
+
+    const handlePropertyChange = (
+      key: string,
+      type: "key" | "value",
+      newValue: string
+    ) => {
+      setPkgLevelLog((prevPkgLevelLog) => {
+        const newProperties = new Map(prevPkgLevelLog);
+        const property = newProperties.get(key);
+        if (property) {
+          if (type === "key") property.key = newValue;
+          else if (type === "value") property.value = newValue;
+          newProperties.set(key, property);
+        }
+        return newProperties;
+      });
+    };
+
+    const handleDeleteProperty = (key: string) => {
+      setPkgLevelLog((prevPkgLevelLog) => {
+        const newProperties = new Map(prevPkgLevelLog);
+        newProperties.delete(key);
+        return newProperties;
+      });
+    };
 
     useEffect(() => {
       const fetchSource = async () => {
@@ -473,19 +475,24 @@ const PipelineDesignerEdit: React.FunctionComponent<
 
                     <CardFooter
                       className="custom-card-footer"
-                      style={{ padding: 0 }}
                     >
-                      <ActionGroup className="create_pipeline-footer">
-                        <Button
-                          variant="primary"
-                          onClick={() => {
-                            console.log("Save and next", selectedTransform);
-                            setEditStep((prevStep) => prevStep + 1);
-                          }}
-                        >
-                          {t('saveAndNext')}
-                        </Button>
-                      </ActionGroup>
+                      <ActionList>
+                        <ActionListGroup>
+                          <ActionListItem>
+                            <Button
+                              variant="primary"
+                              onClick={() => {
+                                console.log("Save and next", selectedTransform);
+                                setEditStep((prevStep) => prevStep + 1);
+                              }}
+                            >
+                              {t('saveAndNext')}
+                            </Button>
+                          </ActionListItem>
+
+                        </ActionListGroup>
+                      </ActionList>
+
                     </CardFooter>
                   </Card>
                 </PageSection>
@@ -647,7 +654,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
                             titleElement="h2"
                           >
                             <FormGroup
-                               label={t("pipeline:form.rootLevelLog")}
+                              label={t("pipeline:form.rootLevelLog")}
                               isRequired
                               fieldId="logLevel-field"
                             >
@@ -667,130 +674,137 @@ const PipelineDesignerEdit: React.FunctionComponent<
                                 ))}
                               </FormSelect>
                               <FormHelperText>
-                            <HelperText>
-                              <HelperTextItem>{t("pipeline:form.logLevelFieldHelperText")}</HelperTextItem>
-                            </HelperText>
-                          </FormHelperText>
+                                <HelperText>
+                                  <HelperTextItem>{t("pipeline:form.logLevelFieldHelperText")}</HelperTextItem>
+                                </HelperText>
+                              </FormHelperText>
                             </FormGroup>
                             <FormFieldGroup
-                          header={
-                            <FormFieldGroupHeader
-                              titleText={{
-                                text: t("pipeline:form.logLevelSectionHeading"),
-                                id: `field-group--id`,
-                              }}
-                              titleDescription={t("pipeline:form.logLevelSectionDescription")}
-                              actions={
-                                <>
-                                  <Button
-                                    variant="secondary"
-                                    icon={<PlusIcon />}
-                                    onClick={handleAddProperty}
-                                  >
-                                    {t("pipeline:form.addPackage")}
-                                  </Button>
-                                </>
+                              header={
+                                <FormFieldGroupHeader
+                                  titleText={{
+                                    text: t("pipeline:form.logLevelSectionHeading"),
+                                    id: `field-group--id`,
+                                  }}
+                                  titleDescription={t("pipeline:form.logLevelSectionDescription")}
+                                  actions={
+                                    <>
+                                      <Button
+                                        variant="secondary"
+                                        icon={<PlusIcon />}
+                                        onClick={handleAddProperty}
+                                      >
+                                        {t("pipeline:form.addPackage")}
+                                      </Button>
+                                    </>
+                                  }
+                                />
                               }
-                            />
-                          }
-                        >
-                          {Array.from(pkgLevelLog.keys()).map((key) => (
-                            <Split hasGutter key={key}>
-                              <SplitItem isFilled>
-                                <Grid hasGutter md={6}>
-                                  <FormGroup
-                                    label=""
-                                    isRequired
-                                    fieldId={`pkg-level-log-config-props-key-field-${key}`}
-                                  >
-                                    <TextInput
-                                      isRequired
-                                      type="text"
-                                      placeholder={t("pipeline:form.pkgLogLevelPlaceholder")}
-                                      // validated={errorWarning.includes(key) ? "error" : "default"}
-                                      id={`pkg-level-log-config-props-key-${key}`}
-                                      name={`pkg-level-log-config-props-key-${key}`}
-                                      value={pkgLevelLog.get(key)?.key || ""}
-                                      onChange={(_e, value) =>
-                                        handlePropertyChange(key, "key", value)
-                                      }
-                                    />
-                                  </FormGroup>
-                                  <FormGroup
-                                    label=""
-                                    isRequired
-                                    fieldId={`pkg-level-log-config-props-value-field-${key}`}
-                                  >
-
-                                    <FormSelect
-                                      value={pkgLevelLog.get(key)?.value || ""}
-                                      isRequired
-                                      id={`-config-props-value-${key}`}
-                                      name={`-config-props-value-${key}`}
-                                      onChange={(_event, value) => {
-                                        handlePropertyChange(key, "value", value)
-                                      }}
-                                      aria-label="FormSelect Input"
-                                      ouiaId="BasicFormSelect"
-                                    >
-                                      {options.map((option, index) => (
-                                        <FormSelectOption
-                                          isDisabled={option.disabled}
-                                          key={index}
-                                          value={option.value}
-                                          label={option.label}
+                            >
+                              {Array.from(pkgLevelLog.keys()).map((key) => (
+                                <Split hasGutter key={key}>
+                                  <SplitItem isFilled>
+                                    <Grid hasGutter md={6}>
+                                      <FormGroup
+                                        label=""
+                                        isRequired
+                                        fieldId={`pkg-level-log-config-props-key-field-${key}`}
+                                      >
+                                        <TextInput
+                                          isRequired
+                                          type="text"
+                                          placeholder={t("pipeline:form.pkgLogLevelPlaceholder")}
+                                          // validated={errorWarning.includes(key) ? "error" : "default"}
+                                          id={`pkg-level-log-config-props-key-${key}`}
+                                          name={`pkg-level-log-config-props-key-${key}`}
+                                          value={pkgLevelLog.get(key)?.key || ""}
+                                          onChange={(_e, value) =>
+                                            handlePropertyChange(key, "key", value)
+                                          }
                                         />
-                                      ))}
-                                    </FormSelect>
-                                  </FormGroup>
-                                </Grid>
-                              </SplitItem>
-                              <SplitItem>
-                                <Button
-                                  variant="plain"
-                                  aria-label="Remove"
-                                  onClick={() => handleDeleteProperty(key)}
-                                >
-                                  <TrashIcon />
-                                </Button>
-                              </SplitItem>
-                            </Split>
-                          ))}
-                        </FormFieldGroup>
+                                      </FormGroup>
+                                      <FormGroup
+                                        label=""
+                                        isRequired
+                                        fieldId={`pkg-level-log-config-props-value-field-${key}`}
+                                      >
+
+                                        <FormSelect
+                                          value={pkgLevelLog.get(key)?.value || ""}
+                                          isRequired
+                                          id={`-config-props-value-${key}`}
+                                          name={`-config-props-value-${key}`}
+                                          onChange={(_event, value) => {
+                                            handlePropertyChange(key, "value", value)
+                                          }}
+                                          aria-label="FormSelect Input"
+                                          ouiaId="BasicFormSelect"
+                                        >
+                                          {options.map((option, index) => (
+                                            <FormSelectOption
+                                              isDisabled={option.disabled}
+                                              key={index}
+                                              value={option.value}
+                                              label={option.label}
+                                            />
+                                          ))}
+                                        </FormSelect>
+                                      </FormGroup>
+                                    </Grid>
+                                  </SplitItem>
+                                  <SplitItem>
+                                    <Button
+                                      variant="plain"
+                                      aria-label="Remove"
+                                      onClick={() => handleDeleteProperty(key)}
+                                    >
+                                      <TrashIcon />
+                                    </Button>
+                                  </SplitItem>
+                                </Split>
+                              ))}
+                            </FormFieldGroup>
                           </FormSection>
                         </Form>
                       </CardBody>
                     </Card>
                   </PageSection>
                   <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-                    <ActionGroup className="create_pipeline-footer">
-                      <Button
-                        variant="primary"
-                        isLoading={isLoading}
-                        isDisabled={isLoading}
-                        type={ButtonType.submit}
-                        onClick={(e) => {
-                          e.preventDefault();
+                    <ActionList>
+                      <ActionListGroup>
+                        <ActionListItem>
+                          <Button
+                            variant="primary"
+                            isLoading={isLoading}
+                            isDisabled={isLoading}
+                            type={ButtonType.submit}
+                            onClick={(e) => {
+                              e.preventDefault();
 
-                          if (!values["pipeline-name"]) {
-                            setError(
-                              "pipeline-name",
-                              "Pipeline name is required."
-                            );
-                          } else {
-                            handleEditPipeline(values);
-                          }
-                        }}
-                      >
-                        {t('pipeline:overview.updatePipeline')}
-                      </Button>
-                      <Button
-                        variant="link"
-                        onClick={() => setEditStep((prevStep) => prevStep - 1)}
-                      >
-                        {t('back')}
-                      </Button>
-                    </ActionGroup>
+                              if (!values["pipeline-name"]) {
+                                setError(
+                                  "pipeline-name",
+                                  "Pipeline name is required."
+                                );
+                              } else {
+                                handleEditPipeline(values);
+                              }
+                            }}
+                          >
+                            {t('pipeline:overview.updatePipeline')}
+                          </Button>
+                        </ActionListItem>
+                        <ActionListItem>
+                          <Button
+                            variant="link"
+                            onClick={() => setEditStep((prevStep) => prevStep - 1)}
+                          >
+                            {t('back')}
+                          </Button>
+                        </ActionListItem>
+                      </ActionListGroup>
+                    </ActionList>
+
                   </PageSection>
                 </>
               )}

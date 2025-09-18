@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
-  ActionGroup,
+  ActionList,
+  ActionListGroup,
+  ActionListItem,
   Alert,
   Button,
   ButtonType,
@@ -19,7 +21,7 @@ import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 import { useNavigate, useParams } from "react-router-dom";
 import { CodeEditor, CodeEditorControl, Language } from "@patternfly/react-code-editor";
 import { find } from "lodash";
-import { createPost, Destination, Payload } from "../../apis/apis";
+import { ConnectionConfig, createPost, Destination, Payload } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
 import { useNotification } from "../../appLayout/AppNotificationContext";
@@ -199,6 +201,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
   const [isLoading, setIsLoading] = React.useState(false);
+  const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig | undefined>();
 
   const [properties, setProperties] = useState<Map<string, Properties>>(
     new Map([["key0", { key: "", value: "" }]])
@@ -365,7 +368,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
         <PageHeader
           title={t("destination:create.title")}
           description={rawConfiguration ?
-            "To configure and create a new source connector use the editor below to add or upload an existing json configuration." : t("destination:create.description")}
+            t("destination:create.editorPageDescription") : t("destination:create.description")}
         />
       )}
 
@@ -435,6 +438,8 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                   handleAddProperty={handleAddProperty}
                   handleDeleteProperty={handleDeleteProperty}
                   handlePropertyChange={handlePropertyChange}
+                  setSelectedConnection={setSelectedConnection}
+                  selectedConnection={selectedConnection}
                 />
               ) : (
                 <>
@@ -482,36 +487,43 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className={style.createConnector_footer}>
-                <Button
-                  variant="primary"
-                  isLoading={isLoading}
-                  isDisabled={isLoading || (editorSelected !== "form-editor" && codeAlert !== "")}
-                  type={ButtonType.submit}
-                  onClick={(e) => {
-                    e.preventDefault();
+              <ActionList>
+                <ActionListGroup>
+                  <ActionListItem>
+                    <Button
+                      variant="primary"
+                      isLoading={isLoading}
+                      isDisabled={isLoading || (editorSelected !== "form-editor" && codeAlert !== "")}
+                      type={ButtonType.submit}
+                      onClick={(e) => {
+                        e.preventDefault();
 
-                    handleCreate(values, setError);
-                  }}
-                >
-                  {t("destination:create.title")}
-                </Button>
-                {modelLoaded ? (
-                  <Button
-                    variant="link"
-                    onClick={() => selectDestination && selectDestination("")}
-                  >
-                    {t("back")}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="link"
-                    onClick={() => navigateTo("/destination/catalog")}
-                  >
-                    {t("destination:catalog.backToCatalog")}
-                  </Button>
-                )}
-              </ActionGroup>
+                        handleCreate(values, setError);
+                      }}
+                    >
+                      {t("destination:create.title")}
+                    </Button>
+                  </ActionListItem>
+                  <ActionListItem>
+                    {modelLoaded ? (
+                      <Button
+                        variant="link"
+                        onClick={() => selectDestination && selectDestination("")}
+                      >
+                        {t("back")}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="link"
+                        onClick={() => navigateTo("/destination/catalog")}
+                      >
+                        {t("destination:catalog.backToCatalog")}
+                      </Button>
+                    )}
+                  </ActionListItem>
+                </ActionListGroup>
+              </ActionList>
+
             </PageSection>
           </>
         )}

@@ -9,7 +9,7 @@ import apachePulsar from "../assets/apachePulsar.png";
 import rocketMq from "../assets/Apache_RocketMQ.png";
 import eventHub from "../assets/Azure-event-hub.png";
 import pubsub from "../assets/G_pubsub.png";
-import rabbitMq from "../assets/RabbitMQ.png";
+import rabbitMq from "../assets/RabbitMQ.svg";
 import natsStreaming from "../assets/NATS_stream.png";
 import kafka from "../assets/kafka.png";
 import infinispan from "../assets/infinispan.png";
@@ -21,6 +21,11 @@ import dbz from "../assets/dbz_logo.png";
 import databasePlaceholder from "../assets/database.png";
 import "./ComponentImage.css";
 import TrademarkMessage from "./TrademarkMessage";
+import kinesis from "../assets/kinesis.png";
+import milvus from "../assets/milvus.png";
+import qdrant from "../assets/qdrant.png";
+import redis from "../assets/redis.png";
+import http from "../assets/http2.png";
 
 interface ConnectorImageProps {
   connectorType: string;
@@ -57,7 +62,7 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "SqlServer";
       src = sqlServer;
       break;
-    case connectorType.includes("apachepulsar"):
+    case connectorType.includes("apache_pulsar"):
       altText = "Apache Pulsar";
       src = apachePulsar;
       break;
@@ -65,7 +70,7 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "RocketMQ";
       src = rocketMq;
       break;
-    case connectorType.includes("eventhub"):
+    case connectorType.includes("events_hubs"):
       altText = "EventHub";
       src = eventHub;
       break;
@@ -74,10 +79,14 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "RabbitMQ";
       src = rabbitMq;
       break;
-    case connectorType.includes("natsstreaming"):
+    case connectorType.includes("nats_streaming"):
       altText = "NATS Stream";
       src = natsStreaming;
       break;
+    case connectorType.includes("nats_jetstream"):
+        altText = "NATS JetStream";
+        src = natsStreaming;
+        break;  
     case connectorType.includes("kafka"):
       altText = "Kafka";
       src = kafka;
@@ -86,11 +95,11 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "Infinispan";
       src = infinispan;
       break;
-    case connectorType.includes("pubsublite"):
+    case connectorType.includes("pub_sub_lite"):
       altText = "Pub/SUB";
       src = pubsubLite;
       break;
-    case connectorType.includes("pubsub"):
+    case connectorType.includes("pub_sub"):
       altText = "Pub/Sub liet";
       src = pubsub;
       break;
@@ -105,6 +114,26 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
     case connectorType.includes("mariadb"):
       altText = "MariaDB";
       src = mariadb;
+      break;
+    case connectorType.includes("kinesis"):
+      altText = "Kinesis";
+      src = kinesis;
+      break;
+    case connectorType.includes("milvus"):
+      altText = "Milvus";
+      src = milvus;
+      break;
+    case connectorType.includes("qdrant"):
+      altText = "Qdrant";
+      src = qdrant;
+      break;
+    case connectorType.includes("redis"):
+      altText = "Redis(Stream)";
+      src = redis;
+      break;
+    case connectorType.includes("http"):
+      altText = "HTTP";
+      src = http;
       break;
     default:
       altText = "Debezium";

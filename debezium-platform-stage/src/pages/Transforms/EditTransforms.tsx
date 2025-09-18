@@ -195,7 +195,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   }, [filterValue, isOpen]);
 
   const createItemId = (value: any) =>
-    `select-typeahead-${value.replace(" ", "-")}`;
+    `select-typeahead-${String(value ?? '').replace(/\s+/g, '-')}`;
 
   const setActiveAndFocusedItem = (itemIndex: number) => {
     setFocusedItemIndex(itemIndex);

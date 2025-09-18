@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from "react";
 import {
-  ActionGroup,
+  ActionList,
+  ActionListGroup,
+  ActionListItem,
   Button,
   Card,
   CardBody,
@@ -240,30 +242,36 @@ const PipelineDesigner: React.FunctionComponent = () => {
 
                   <CardFooter
                     className="custom-card-footer"
-                    style={{ padding: 0 }}
                   >
-                    <ActionGroup className="create_pipeline-footer">
-                      <Button
-                        variant="primary"
-                        isDisabled={
-                          selectedDestination === undefined ||
-                          selectedSource === undefined
-                        }
-                        onClick={() =>
-                          navigateTo(
-                            `/pipeline/pipeline_designer/create_pipeline?sourceId=${selectedSource?.id}&destinationId=${selectedDestination?.id}`
-                          )
-                        }
-                      >
-                        {t('pipeline:configuePipeline')}
-                      </Button>
-                      <Button
-                        variant="link"
-                        onClick={() => navigateTo("/pipeline")}
-                      >
-                        {t('cancel')}
-                      </Button>
-                    </ActionGroup>
+                    <ActionList>
+                      <ActionListGroup >
+                        <ActionListItem>
+                          <Button
+                            variant="primary"
+                            isDisabled={
+                              selectedDestination === undefined ||
+                              selectedSource === undefined
+                            }
+                            onClick={() =>
+                              navigateTo(
+                                `/pipeline/pipeline_designer/create_pipeline?sourceId=${selectedSource?.id}&destinationId=${selectedDestination?.id}`
+                              )
+                            }
+                          >
+                            {t('pipeline:configuePipeline')}
+                          </Button>
+                        </ActionListItem>
+                        <ActionListItem>
+                          <Button
+                            variant="link"
+                            onClick={() => navigateTo("/pipeline")}
+                          >
+                            {t('cancel')}
+                          </Button>
+                        </ActionListItem>
+                      </ActionListGroup>
+                    </ActionList>
+
                   </CardFooter>
                 </Card>
               </PageSection>

@@ -5,7 +5,8 @@
     },
     "create": {
         "title": "Create destination",
-        "description": "To configure and create a connector fill out the below form or use the smart editor to setup a new destination connector. If you already have a configuration file, you can setup a new destination connector by uploading it in the smart editor."
+        "description": "To create a destination, fill out the form below or use the Smart Editor. In the Smart Editor, you can also directly use the Debezium Server configuration file, as it automatically extract and converts the configuration into the required Debezium Platform JSON format.",
+        "editorPageDescription": "To configure and create a new destination, use the editor below to add or upload an existing JSON configuration. You can also directly use the Debezium Server configuration file, as the Smart Editor automatically extract and converts it into the required Debezium Platform JSON format."
     },
     "catalog": {
         "title": "Destination catalog",

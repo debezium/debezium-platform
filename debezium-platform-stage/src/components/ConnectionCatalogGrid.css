@@ -1,0 +1,15 @@
+.custom-gallery {
+    /* --pf-l-gallery--GridTemplateColumns: repeat(auto-fill, minmax(150px, 1fr)) !important; */
+    --pf-v6-l-gallery--GridTemplateColumns--min: 220px !important;
+  }
+
+.custom-connection-card-header .pf-v6-c-card__actions{
+    display: block !important;
+    font-size: large !important;
+}
+
+.catalog-subtitle{
+    font-size: smaller;
+    color: var(--pf-v6-global--Color--200, #6a6e73);
+    margin-top: 2px;
+}

@@ -31,12 +31,35 @@ export type DestinationConfig = {
   [key: string]: string; // Dynamic keys with string values
 };
 
+export type ConnectionUnknownConfig = {
+  [key: string]: string | number; 
+};
+
+export type ConnectionConfig = {
+  id: number;
+  name: string;
+}
+
 export type Payload = {
   type: string;
   schema: string;
   vaults: Vault[];
   config: DestinationConfig;
+  connection?: ConnectionConfig;
   description?: string;
+  name: string;
+};
+
+export type ConnectionValidationResult = {
+  valid: boolean;
+  message: string;
+  errorType: string;
+};
+
+export type ConnectionPayload = {
+  type: string;
+  id?: string;
+  config: ConnectionUnknownConfig;
   name: string;
 };
 
@@ -49,13 +72,38 @@ export type PipelineSignalPayload = {
   }
 }
 
-
 export type Destination = {
   type: string;
   schema: string;
   vaults: Vault[];
   config: DestinationConfig;
   description?: string;
+  name: string;
+  id: number;
+};
+
+export type ConnectionsSchema = {
+  type: string;
+  schema: ConnectionSchema;
+}
+
+export type ConnectionSchema = {
+  type: string;
+  title: string;
+  description: string;
+  required: string[];
+  additionalProperties: {
+    type: string;
+  };
+  properties: Record<string, {
+    type: string;
+    title: string;
+  }>;
+};
+
+export type Connection = {
+  type: string;
+  config: ConnectionUnknownConfig;
   name: string;
   id: number;
 };
@@ -128,6 +176,8 @@ export type TransformPayload = {
 export type TransformApiResponse = TransformData[];
 
 export type SourceApiResponse = Source[];
+
+export type ConnectionsApiResponse = Connection[];
 
 export type PipelineApiResponse = Pipeline[];
 

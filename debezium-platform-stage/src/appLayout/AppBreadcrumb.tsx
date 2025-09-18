@@ -69,6 +69,21 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Create destination", true)}
           </BreadcrumbGenerator>
         );
+        case route === "/connections/catalog":
+        return (
+          <BreadcrumbGenerator>
+            {generateBreadcrumbItem("/connections", "Connections")}
+            {generateBreadcrumbItem("#", "Catalog", true)}
+          </BreadcrumbGenerator>
+        );
+        case route.includes("/connections/create_connection"):
+          return (
+            <BreadcrumbGenerator>
+              {generateBreadcrumbItem("/connections", "Connections")}
+              {generateBreadcrumbItem("/connections/catalog", "Catalog")}
+              {generateBreadcrumbItem("#", "Create connection", true)}
+            </BreadcrumbGenerator>
+          );
       case route === "/pipeline/pipeline_designer":
         return (
           <BreadcrumbGenerator>

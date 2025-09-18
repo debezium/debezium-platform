@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
-  ActionGroup,
+  ActionList,
+  ActionListGroup,
+  ActionListItem,
   Alert,
   Button,
   ButtonType,
@@ -18,7 +20,7 @@ import { PencilAltIcon, CodeIcon, PlayIcon } from "@patternfly/react-icons";
 import { useNavigate, useParams } from "react-router-dom";
 import { CodeEditor, CodeEditorControl, Language } from "@patternfly/react-code-editor";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPost, Payload, Source } from "../../apis/apis";
+import { ConnectionConfig, createPost, Payload, Source } from "../../apis/apis";
 import {
   API_URL,
 } from "../../utils/constants";
@@ -196,6 +198,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   const { addNotification } = useNotification();
 
   const [code, setCode] = useState<string | Payload>(initialCodeValue);
+  const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig|undefined>();
 
   const sourceIdParam = useParams<{ sourceId: string }>();
   const [codeAlert, setCodeAlert] = useState<string | React.ReactElement>("");
@@ -306,6 +309,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
           type: find(sourceCatalog, { id: sourceId })?.type || (code as Payload).type || "",
           schema: "schema321",
           vaults: [],
+          ...(selectedConnection ? { connection: selectedConnection } : {}),
           config: { "signal.data.collection": signalCollectionName, ...convertMapToObject(properties) },
           name: values["source-name"],
         } as unknown as Payload;
@@ -434,7 +438,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
               }
               isCenterAligned
               isFilled
-            className={`customPageSection ${style.createConnector_pageSection}`}
+              className={`customPageSection ${style.createConnector_pageSection}`}
             >
               {editorSelected === "form-editor" && !rawConfiguration ? (
                 <SourceSinkForm
@@ -450,6 +454,8 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   handleDeleteProperty={handleDeleteProperty}
                   handlePropertyChange={handlePropertyChange}
                   updateSignalCollectionName={updateSignalCollectionName}
+                  setSelectedConnection={setSelectedConnection}
+                  selectedConnection={selectedConnection}
                 />
               ) : (
                 <>
@@ -495,35 +501,42 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionGroup className={style.createConnector_footer}>
-                <Button
-                  variant="primary"
-                  isLoading={isLoading}
-                  isDisabled={isLoading || (editorSelected !== "form-editor" && codeAlert !== "")}
-                  type={ButtonType.submit}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleCreate(values, setError);
-                  }}
-                >
-                  {t('source:create.title')}
-                </Button>
-                {modelLoaded ? (
-                  <Button
-                    variant="link"
-                    onClick={() => selectSource && selectSource("")}
-                  >
-                    {t('back')}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="link"
-                    onClick={() => navigateTo("/source/catalog")}
-                  >
-                    {t('source:catalog.backToCatalog')}
-                  </Button>
-                )}
-              </ActionGroup>
+              <ActionList>
+                <ActionListGroup>
+                  <ActionListItem>
+                    <Button
+                      variant="primary"
+                      isLoading={isLoading}
+                      isDisabled={isLoading || (editorSelected !== "form-editor" && codeAlert !== "")}
+                      type={ButtonType.submit}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleCreate(values, setError);
+                      }}
+                    >
+                      {t('source:create.title')}
+                    </Button>
+                  </ActionListItem>
+                  <ActionListItem>
+                    {modelLoaded ? (
+                      <Button
+                        variant="link"
+                        onClick={() => selectSource && selectSource("")}
+                      >
+                        {t('back')}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="link"
+                        onClick={() => navigateTo("/source/catalog")}
+                      >
+                        {t('source:catalog.backToCatalog')}
+                      </Button>
+                    )}
+                  </ActionListItem>
+                </ActionListGroup>
+              </ActionList>
+
             </PageSection>
           </>
         )}
