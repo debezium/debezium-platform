@@ -40,7 +40,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
     const selectedSchema = state?.connectionSchema;
     const selectedSchemaProperties = selectedSchema?.schema;
 
-    const [errorWarning] = useState<string[]>([]);
+    const [errorWarning, setErrorWarning] = useState<string[]>([]);
     const [properties, setProperties] = useState<Map<string, Properties>>(
         new Map([["key0", { key: "", value: "" }]])
     );
@@ -151,12 +151,12 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
         const payload = selectedSchema ? {
             type: selectedSchema?.type.toUpperCase() || connectionId?.toUpperCase() || "",
             // id: connectionId?.toUpperCase() || "",
-            config: { ...dataWithoutName },
+            config: { ...dataWithoutName, ...convertMapToObject(properties, errorWarning, setErrorWarning) },
             name
         } as ConnectionPayload : {
             type: connectionId?.toUpperCase() || "",
             // id: connectionId?.toUpperCase() || "",
-            config: convertMapToObject(properties),
+            config: convertMapToObject(properties, errorWarning, setErrorWarning),
             name
         };
         if (connectionValidated || !selectedSchemaProperties) {
@@ -209,139 +209,150 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                                 />
 
                             </FormGroup>
+
+
+                            {selectedSchemaProperties &&
+                                (
+                                    <FormFieldGroup
+                                        header={
+                                            <FormFieldGroupHeader
+                                                titleText={{
+                                                    text: <span style={{ fontWeight: 500 }}>{selectedSchemaProperties.description}</span>,
+                                                    id: `field-group-${connectionId}-schema-id`,
+                                                }}
+                                                titleDescription={"Enter the connection properties"}
+
+                                            />
+                                        }
+                                    >{
+                                            Object.entries(selectedSchemaProperties.properties).map(([propertyName, propertySchema]) => (
+                                                <FormGroup
+                                                    key={propertyName}
+                                                    label={_.capitalize(propertySchema.title)}
+                                                    fieldId={propertyName}
+                                                    isRequired={selectedSchemaProperties.required.includes(propertyName)}
+                                                    labelHelp={
+                                                        <Popover
+
+
+                                                            bodyContent={
+                                                                <div>
+                                                                    {propertySchema.title}
+                                                                </div>
+                                                            }
+                                                        >
+                                                            <FormGroupLabelHelp aria-label={propertySchema.title} />
+                                                        </Popover>
+                                                    }
+                                                >
+                                                    {propertySchema.type === "string" && <Controller
+                                                        name={propertyName}
+                                                        control={control}
+                                                        render={({ field }) => <TextInput id={propertyName}  {...field} />}
+                                                    />}
+                                                    {propertySchema.type === "integer" && <Controller
+                                                        name={propertyName}
+                                                        control={control}
+                                                        render={({ field }) => (
+                                                            <TextInput
+                                                                id={propertyName}
+                                                                type="number"
+                                                                {...field}
+                                                                onChange={(_e, value) => field.onChange(value === '' ? '' : Number(value))}
+                                                            />
+                                                        )}
+                                                    />}
+
+
+
+                                                </FormGroup>
+                                            ))}
+                                    </FormFieldGroup>
+                                )}
+
+
                             <FormFieldGroup
                                 header={
                                     <FormFieldGroupHeader
                                         titleText={{
-                                            text: <span style={{ fontWeight: 500 }}>{selectedSchemaProperties ? selectedSchemaProperties.description : `${getConnectorTypeName(selectedSchema?.type.toLowerCase() || connectionId || "")} connection properties`}</span>,
-                                            id: `field-group-${connectionId}-id`,
+                                            text: <span style={{ fontWeight: 500 }}>{`Additional properties`}</span>,
+                                            id: `field-group-${connectionId}-properties-id`,
                                         }}
-                                        titleDescription={!selectedSchemaProperties ? t("form.subHeading.description") : "Enter the connection properties"}
+                                        titleDescription={t("form.subHeading.description")}
                                         actions={
-                                            !selectedSchemaProperties ?
-                                                <>
-                                                    <Button
-                                                        variant="secondary"
-                                                        icon={<PlusIcon />}
-                                                        onClick={handleAddProperty}
-                                                    >
-                                                        {t("form.addFieldButton")}
-                                                    </Button>
-                                                </>
-                                                : null
+
+                                            <>
+                                                <Button
+                                                    variant="secondary"
+                                                    icon={<PlusIcon />}
+                                                    onClick={handleAddProperty}
+                                                >
+                                                    {t("form.addFieldButton")}
+                                                </Button>
+                                            </>
+
                                         }
                                     />
                                 }
                             >
-
-
-                                {selectedSchemaProperties ?
-                                    (
-                                        Object.entries(selectedSchemaProperties.properties).map(([propertyName, propertySchema]) => (
-                                            <FormGroup
-                                                key={propertyName}
-                                                label={_.capitalize(propertySchema.title)}
-                                                fieldId={propertyName}
-                                                isRequired={selectedSchemaProperties.required.includes(propertyName)}
-                                                labelHelp={
-                                                    <Popover
-
-
-                                                        bodyContent={
-                                                            <div>
-                                                                {propertySchema.title}
-                                                            </div>
-                                                        }
+                                <>
+                                    {Array.from(properties.keys()).map((key) => (
+                                        <Split hasGutter key={key}>
+                                            <SplitItem isFilled>
+                                                <Grid hasGutter md={6}>
+                                                    <FormGroup
+                                                        label=""
+                                                        isRequired
+                                                        fieldId={`${connectionType}-config-props-key-field-${key}`}
                                                     >
-                                                        <FormGroupLabelHelp aria-label={propertySchema.title} />
-                                                    </Popover>
-                                                }
-                                            >
-                                                {propertySchema.type === "string" && <Controller
-                                                    name={propertyName}
-                                                    control={control}
-                                                    render={({ field }) => <TextInput id={propertyName}  {...field} />}
-                                                />}
-                                                {propertySchema.type === "integer" && <Controller
-                                                    name={propertyName}
-                                                    control={control}
-                                                    render={({ field }) => (
                                                         <TextInput
-                                                            id={propertyName}
-                                                            type="number"
-                                                            {...field}
-                                                            onChange={(_e, value) => field.onChange(value === '' ? '' : Number(value))}
+                                                            //   readOnlyVariant={viewMode ? "default" : undefined}
+                                                            isRequired
+                                                            type="text"
+                                                            placeholder="Key"
+                                                            validated={errorWarning.includes(key) ? "error" : "default"}
+                                                            id={`${connectionType}-config-props-key-${key}`}
+                                                            name={`${connectionType}-config-props-key-${key}`}
+                                                            value={properties.get(key)?.key || ""}
+                                                            onChange={(_e, value) =>
+                                                                handlePropertyChange(key, "key", value)
+                                                            }
                                                         />
-                                                    )}
-                                                />}
-
-
-
-                                            </FormGroup>
-                                        ))
-
-                                    ) :
-                                    (
-
-                                        <>
-                                            {Array.from(properties.keys()).map((key) => (
-                                                <Split hasGutter key={key}>
-                                                    <SplitItem isFilled>
-                                                        <Grid hasGutter md={6}>
-                                                            <FormGroup
-                                                                label=""
-                                                                isRequired
-                                                                fieldId={`${connectionId}-config-props-key-field-${key}`}
-                                                            >
-                                                                <TextInput
-                                                                    // readOnlyVariant={viewMode ? "default" : undefined}
-                                                                    isRequired
-                                                                    type="text"
-                                                                    placeholder="Key"
-                                                                    validated={errorWarning.includes(key) ? "error" : "default"}
-                                                                    id={`${connectionId}-config-props-key-${key}`}
-                                                                    name={`${connectionId}-config-props-key-${key}`}
-                                                                    value={properties.get(key)?.key || ""}
-                                                                    onChange={(_e, value) =>
-                                                                        handlePropertyChange(key, "key", value)
-                                                                    }
-                                                                />
-                                                            </FormGroup>
-                                                            <FormGroup
-                                                                label=""
-                                                                isRequired
-                                                                fieldId={`${connectionId}-config-props-value-field-${key}`}
-                                                            >
-                                                                <TextInput
-                                                                    // readOnlyVariant={viewMode ? "default" : undefined}
-                                                                    isRequired
-                                                                    type="text"
-                                                                    id={`${connectionId}-config-props-value-${key}`}
-                                                                    placeholder="Value"
-                                                                    validated={errorWarning.includes(key) ? "error" : "default"}
-                                                                    name={`${connectionId}-config-props-value-${key}`}
-                                                                    value={properties.get(key)?.value || ""}
-                                                                    onChange={(_e, value) =>
-                                                                        handlePropertyChange(key, "value", value)
-                                                                    }
-                                                                />
-                                                            </FormGroup>
-                                                        </Grid>
-                                                    </SplitItem>
-                                                    <SplitItem>
-                                                        <Button
-                                                            variant="plain"
-                                                            // isDisabled={viewMode}
-                                                            aria-label="Remove"
-                                                            onClick={() => handleDeleteProperty(key)}
-                                                        >
-                                                            <TrashIcon />
-                                                        </Button>
-                                                    </SplitItem>
-                                                </Split>
-                                            ))}
-                                        </>
-                                    )}
+                                                    </FormGroup>
+                                                    <FormGroup
+                                                        label=""
+                                                        isRequired
+                                                        fieldId={`${connectionId}-config-props-value-field-${key}`}
+                                                    >
+                                                        <TextInput
+                                                            // readOnlyVariant={viewMode ? "default" : undefined}
+                                                            isRequired
+                                                            type="text"
+                                                            id={`${connectionId}-config-props-value-${key}`}
+                                                            placeholder="Value"
+                                                            validated={errorWarning.includes(key) ? "error" : "default"}
+                                                            name={`${connectionId}-config-props-value-${key}`}
+                                                            value={properties.get(key)?.value || ""}
+                                                            onChange={(_e, value) =>
+                                                                handlePropertyChange(key, "value", value)
+                                                            }
+                                                        />
+                                                    </FormGroup>
+                                                </Grid>
+                                            </SplitItem>
+                                            <SplitItem>
+                                                <Button
+                                                    variant="plain"
+                                                    // isDisabled={viewMode}
+                                                    aria-label="Remove"
+                                                    onClick={() => handleDeleteProperty(key)}
+                                                >
+                                                    <TrashIcon />
+                                                </Button>
+                                            </SplitItem>
+                                        </Split>
+                                    ))}
+                                </>
                             </FormFieldGroup>
                         </Form>
                     </CardBody>

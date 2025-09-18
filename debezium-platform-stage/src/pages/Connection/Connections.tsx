@@ -174,7 +174,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                 <>
                   <PageHeader
                     title={"Connection"}
-                    description={"Lists the available connections. You can search a connection by its name or sort the list by source or destination type of connection."}
+                    description={"Lists the available connections. You can search a connection by its name or sort the list by source or destination connection type."}
                   />
 
                   <PageSection>
@@ -187,51 +187,51 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                         <ToolbarContent>
                           <ToolbarGroup variant="filter-group">
 
-                         
-                          <ToolbarItem>
-                            <SearchInput
-                              aria-label="Items example search input"
-                              value={searchQuery}
-                              placeholder={t("findByName")}
-                              onChange={(_event, value) => onSearch(value)}
-                              onClear={onClear}
-                            />
-                          </ToolbarItem>
-                          {/* <ToolbarItem variant="separator" /> */}
-                          <ToolbarItem>
+
+                            <ToolbarItem>
+                              <SearchInput
+                                aria-label="Items example search input"
+                                value={searchQuery}
+                                placeholder={t("findByName")}
+                                onChange={(_event, value) => onSearch(value)}
+                                onClear={onClear}
+                              />
+                            </ToolbarItem>
+                            {/* <ToolbarItem variant="separator" /> */}
+                            <ToolbarItem>
 
 
-                            <Select
-                              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                <MenuToggle
-                                  ref={toggleRef}
-                                  icon={<FilterIcon />}
-                                  onClick={() => onConnectionsTypeToggle()}
-                                  isExpanded={connectionsTypeIsExpanded}
-                                  style={
-                                    {
-                                      width: '150px'
-                                    } as React.CSSProperties
-                                  }
-                                >
-                                  {connectionsTypeSelected || 'Type'}
-                                </MenuToggle>
-                              )}
-                              onSelect={onConnectionsTypeSelect}
-                              onOpenChange={(isOpen) => setConnectionsTypeIsExpanded(isOpen)}
-                              selected={connectionsTypeSelected}
-                              isOpen={connectionsTypeIsExpanded}
-                            >
-                              <SelectList>
-                                {connectionsType.map((option, index) => (
-                                  <SelectOption key={index} value={option}>
-                                    {option}
-                                  </SelectOption>
-                                ))}
-                              </SelectList>
-                            </Select>
+                              <Select
+                                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                  <MenuToggle
+                                    ref={toggleRef}
+                                    icon={<FilterIcon />}
+                                    onClick={() => onConnectionsTypeToggle()}
+                                    isExpanded={connectionsTypeIsExpanded}
+                                    style={
+                                      {
+                                        width: '150px'
+                                      } as React.CSSProperties
+                                    }
+                                  >
+                                    {connectionsTypeSelected || 'Type'}
+                                  </MenuToggle>
+                                )}
+                                onSelect={onConnectionsTypeSelect}
+                                onOpenChange={(isOpen) => setConnectionsTypeIsExpanded(isOpen)}
+                                selected={connectionsTypeSelected}
+                                isOpen={connectionsTypeIsExpanded}
+                              >
+                                <SelectList>
+                                  {connectionsType.map((option, index) => (
+                                    <SelectOption key={index} value={option}>
+                                      {option}
+                                    </SelectOption>
+                                  ))}
+                                </SelectList>
+                              </Select>
 
-                          </ToolbarItem>
+                            </ToolbarItem>
                           </ToolbarGroup>
                           <ToolbarItem>
                             <ToggleGroup aria-label="Icon variant toggle group">
@@ -248,7 +248,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                               </Button>
                             </ToggleGroup>
                           </ToolbarItem>
-                         
+
                           <ToolbarGroup align={{ default: "alignEnd" }}>
                             <ToolbarItem>
                               <Content component={ContentVariants.small}>

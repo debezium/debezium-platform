@@ -149,7 +149,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
       <PageSection isWidthLimited>
         <Content component="h1">{"Connection catalog"}</Content>
         <Content component="p">
-          {"Create connection by filling the form below, you can create connection for both source and destination. And can be used when you are creating any source or destination in the future."}
+          {"Select a connection type from the catalog that you want to create. Connections that support validation are marked with a star icon. You can search by name and filter the list by source, destination, or validation support."}
         </Content>
         <Toolbar
           id="toolbar-sticky"
@@ -202,27 +202,27 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
                 />
               </ToolbarItem>
               <ToolbarItem>
-              <ToggleGroup aria-label="Display variant toggle group">
-                <ToggleGroupItem
-                  icon={<ThIcon />}
-                  aria-label="Grid view"
-                  buttonId="toggle-group-grid"
-                  isSelected={isSelected === "grid"}
-                  onChange={handleItemClick}
-                />
+                <ToggleGroup aria-label="Display variant toggle group">
+                  <ToggleGroupItem
+                    icon={<ThIcon />}
+                    aria-label="Grid view"
+                    buttonId="toggle-group-grid"
+                    isSelected={isSelected === "grid"}
+                    onChange={handleItemClick}
+                  />
 
-                <ToggleGroupItem
-                  icon={<ListIcon />}
-                  aria-label="List view"
-                  buttonId="toggle-group-list"
-                  isSelected={isSelected === "list"}
-                  onChange={handleItemClick}
-                />
-              </ToggleGroup>
-            </ToolbarItem>
+                  <ToggleGroupItem
+                    icon={<ListIcon />}
+                    aria-label="List view"
+                    buttonId="toggle-group-list"
+                    isSelected={isSelected === "list"}
+                    onChange={handleItemClick}
+                  />
+                </ToggleGroup>
+              </ToolbarItem>
             </ToolbarGroup>
 
-           
+
             <ToolbarItem variant="separator" />
             <ToolbarItem>
 

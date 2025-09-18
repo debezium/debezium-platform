@@ -4,13 +4,19 @@ import SourceCatalog from "../__mocks__/data/SourceCatalog.json";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const convertMapToObject = (
-  map: Map<string, { key: string; value: string }>
+  map: Map<string, { key: string; value: string }>,  errorWarning?: string[], setErrorWarning?: (errorWarning: string[]) => void
 ) => {
   const obj: { [key: string]: string } = {};
 
   map.forEach(({ key, value }) => {
+    if (key === "" || value === "") {
+      errorWarning?.push(key);
+      return;
+
+    }
     obj[key] = value;
   });
+  setErrorWarning?.(errorWarning || []);
 
   return obj;
 };

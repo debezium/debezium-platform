@@ -101,6 +101,7 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
               id={item.id}
               key={item.id}
               onClick={() => onCardClick(item.id, item.role)}
+              style={{ cursor: "pointer" }}
             >
               <DataListItemRow>
                 <DataListItemCells

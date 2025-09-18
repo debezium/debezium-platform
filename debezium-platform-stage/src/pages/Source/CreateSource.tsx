@@ -20,7 +20,7 @@ import { PencilAltIcon, CodeIcon, PlayIcon } from "@patternfly/react-icons";
 import { useNavigate, useParams } from "react-router-dom";
 import { CodeEditor, CodeEditorControl, Language } from "@patternfly/react-code-editor";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPost, Payload, Source } from "../../apis/apis";
+import { ConnectionConfig, createPost, Payload, Source } from "../../apis/apis";
 import {
   API_URL,
 } from "../../utils/constants";
@@ -198,6 +198,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   const { addNotification } = useNotification();
 
   const [code, setCode] = useState<string | Payload>(initialCodeValue);
+  const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig|undefined>();
 
   const sourceIdParam = useParams<{ sourceId: string }>();
   const [codeAlert, setCodeAlert] = useState<string | React.ReactElement>("");
@@ -308,6 +309,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
           type: find(sourceCatalog, { id: sourceId })?.type || (code as Payload).type || "",
           schema: "schema321",
           vaults: [],
+          ...(selectedConnection ? { connection: selectedConnection } : {}),
           config: { "signal.data.collection": signalCollectionName, ...convertMapToObject(properties) },
           name: values["source-name"],
         } as unknown as Payload;
@@ -452,6 +454,8 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   handleDeleteProperty={handleDeleteProperty}
                   handlePropertyChange={handlePropertyChange}
                   updateSignalCollectionName={updateSignalCollectionName}
+                  setSelectedConnection={setSelectedConnection}
+                  selectedConnection={selectedConnection}
                 />
               ) : (
                 <>

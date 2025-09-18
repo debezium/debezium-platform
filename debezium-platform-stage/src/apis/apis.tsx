@@ -35,11 +35,17 @@ export type ConnectionUnknownConfig = {
   [key: string]: string | number; 
 };
 
+export type ConnectionConfig = {
+  id: number;
+  name: string;
+}
+
 export type Payload = {
   type: string;
   schema: string;
   vaults: Vault[];
   config: DestinationConfig;
+  connection?: ConnectionConfig;
   description?: string;
   name: string;
 };

@@ -21,7 +21,7 @@ import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 import { useNavigate, useParams } from "react-router-dom";
 import { CodeEditor, CodeEditorControl, Language } from "@patternfly/react-code-editor";
 import { find } from "lodash";
-import { createPost, Destination, Payload } from "../../apis/apis";
+import { ConnectionConfig, createPost, Destination, Payload } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
 import { useNotification } from "../../appLayout/AppNotificationContext";
@@ -201,6 +201,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
   const [isLoading, setIsLoading] = React.useState(false);
+  const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig | undefined>();
 
   const [properties, setProperties] = useState<Map<string, Properties>>(
     new Map([["key0", { key: "", value: "" }]])
@@ -437,6 +438,8 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                   handleAddProperty={handleAddProperty}
                   handleDeleteProperty={handleDeleteProperty}
                   handlePropertyChange={handlePropertyChange}
+                  setSelectedConnection={setSelectedConnection}
+                  selectedConnection={selectedConnection}
                 />
               ) : (
                 <>
