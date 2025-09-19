@@ -214,7 +214,42 @@
       "properties": {
         "bootstrap.servers": {
           "type": "list",
-          "title": "List of “hostname:port” pairs that address one or more (even all) of the brokers."
+          "title": "List of "hostname:port" pairs that address one or more (even all) of the brokers."
+        }
+      }
+    }
+  },
+  {
+    "type": "QDRANT",
+    "schema": {
+      "title": "Qdrant connection properties",
+      "description": "Qdrant vector database connection properties",
+      "type": "object",
+      "required": [
+        "hostname",
+        "port"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "title": "The hostname of the Qdrant server"
+        },
+        "port": {
+          "type": "integer",
+          "title": "The port of the Qdrant server",
+          "default": 6334
+        },
+        "useTls": {
+          "type": "boolean",
+          "title": "Whether to use TLS/SSL for connection",
+          "default": false
+        },
+        "apiKey": {
+          "type": "string",
+          "title": "API key for authentication (optional)"
         }
       }
     }
