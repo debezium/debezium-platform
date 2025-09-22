@@ -247,5 +247,43 @@
         }
       }
     }
+  },
+  {
+    "type": "REDIS",
+    "schema": {
+      "title": "Redis connection properties",
+      "description": "Properties required to connect to a Redis server, including optional authentication and SSL",
+      "type": "object",
+      "required": [
+        "host",
+        "port"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "Redis server hostname or IP address"
+        },
+        "port": {
+          "type": "integer",
+          "title": "Redis server port"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username for Redis ACL authentication (optional)"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password for authentication (optional)"
+        },
+        "useSsl": {
+          "type": "string",
+          "enum": ["true", "false"],
+          "title": "Use SSL/TLS to connect to Redis (optional)"
+        }
+      }
+    }
   }
 ]

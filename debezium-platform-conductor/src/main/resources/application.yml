@@ -48,6 +48,7 @@ destinations:
     connection:
       timeout: 5
 
+
 quarkus:
   rest-client:
     debezium-server-api:
