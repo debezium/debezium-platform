@@ -44,7 +44,7 @@ destinations:
   kafka:
     connection:
       timeout: 60
-  kinesis:
+  redis:
     connection:
       timeout: 5
 

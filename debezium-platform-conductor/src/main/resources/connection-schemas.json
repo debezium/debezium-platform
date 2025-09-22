@@ -220,35 +220,6 @@
     }
   },
   {
-    "type": "KINESIS",
-    "schema": {
-      "title": "Amazon Kinesis stream connection properties",
-      "description": "Amazon Kinesis stream connection properties",
-      "type": "object",
-      "required": [
-        "region",
-        "stream"
-      ],
-      "additionalProperties": {
-        "type": "string"
-      },
-      "properties": {
-        "region": {
-          "type": "string",
-          "title": "AWS region where the Kinesis stream is located (e.g., us-east-1)"
-        },
-        "stream": {
-          "type": "string",
-          "title": "The name of the Kinesis stream to connect to"
-        },
-        "partitionKey": {
-          "type": "string",
-          "title": "The partition key used when sending a test record (optional, defaults to 'test-partition')"
-        }
-      }
-    }
-  },
-  {
     "type": "REDIS",
     "schema": {
       "title": "Redis connection properties",
