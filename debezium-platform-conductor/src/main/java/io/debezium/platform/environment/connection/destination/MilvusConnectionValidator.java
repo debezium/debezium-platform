@@ -37,7 +37,7 @@ import io.milvus.v2.client.MilvusClientV2;
  * </ul>
  * </p>
  *
- * @author Auto-generated
+ * @author Pranav Tiwari
  */
 @Named("MILVUS")
 public class MilvusConnectionValidator implements ConnectionValidator {
