@@ -44,6 +44,9 @@ destinations:
   kafka:
     connection:
       timeout: 60
+  milvus:
+    connection:
+      timeout: 60
 
 quarkus:
   rest-client:

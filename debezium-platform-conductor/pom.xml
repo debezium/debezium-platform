@@ -117,7 +117,7 @@
             <dependency>
                 <groupId>io.debezium</groupId>
                 <artifactId>debezium-operator-api</artifactId>
-                <version>${version.debezium}</version>
+                <version>3.2.2.Final</version>
             </dependency>
 
             <dependency>
@@ -357,6 +357,13 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>${kafka-clients.version}</version>
+        </dependency>
+
+        <!-- Milvus SDK for connection validation -->
+        <dependency>
+            <groupId>io.milvus</groupId>
+            <artifactId>milvus-sdk-java</artifactId>
+            <version>2.6.4</version>
         </dependency>
 
 
