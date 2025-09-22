@@ -32,7 +32,6 @@ import {
   TextInputGroup,
   TextInputGroupMain,
   TextInputGroupUtilities,
-  Spinner,
   Skeleton,
 } from "@patternfly/react-core";
 import { AddCircleOIcon, CheckCircleIcon, PlusIcon, TimesIcon, TrashIcon } from "@patternfly/react-icons";
@@ -130,8 +129,6 @@ const SourceSinkForm = ({
   const [setDone, setSetDone] = useState(false);
 
   const {
-    data: connectionsList = [],
-    error,
     isLoading: isConnectionsLoading,
   } = useQuery<Connection[], Error>(
     "connections",
@@ -144,21 +141,7 @@ const SourceSinkForm = ({
           ...conn,
           role: getConnectionRole(conn.type.toLowerCase()) || "",
         }));
-
-        let result = withRole;
-        // if (searchQuery.length > 0) {
-        //   result = result.filter((o) =>
-        //     o.name.toLowerCase().includes(searchQuery.toLowerCase())
-        //   );
-        // }
-        // if (connectionsTypeSelected === 'Source') {
-        //   result = result.filter((conn) => conn.role === 'source');
-        // } else if (connectionsTypeSelected === 'Destination') {
-        //   result = result.filter((conn) => conn.role === 'destination');
-        // } else {
-        //   result = _.sortBy(result, (o) => o.name.toLowerCase());
-        // }
-
+        const result = withRole;
         setConnections(result);
       },
     }
@@ -195,7 +178,7 @@ const SourceSinkForm = ({
     setSelectOptions(newSelectOptions);
   }, [filterValue, selectOptions]);
 
-  const createItemId = (value: any) => `select-typeahead-${String(value ?? '').replace(/\s+/g, '-')}`;
+  const createItemId = (value: unknown) => `select-typeahead-${String(value ?? '').replace(/\s+/g, '-')}`;
 
   const setActiveAndFocusedItem = (itemIndex: number) => {
     setFocusedItemIndex(itemIndex);
@@ -222,8 +205,6 @@ const SourceSinkForm = ({
   };
 
   const selectOption = (value: string | number, content: string | number) => {
-    // eslint-disable-next-line no-console
-    console.log('content', content, "values", value);
 
     setInputValue(String(content));
     setFilterValue('');
@@ -651,8 +632,6 @@ const SourceSinkForm = ({
         />
         <ModalBody tabIndex={0} id="modal-box-body-with-description">
           {signalMissingPayloads.length > 0 && (<Alert variant="danger" isInline isPlain title={t('source:signal.errorMsg', { val: signalMissingPayloads.join(", ") })} style={{ paddingBottom: "15px" }} />)}
-
-          {/* <Alert variant="danger" title="Danger alert title" ouiaId="DangerAlert" style={{paddingBottom: "15px"}} />  */}
 
           <Form isWidthLimited>
             <FormGroup

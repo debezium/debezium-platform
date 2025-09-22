@@ -21,6 +21,7 @@ import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { PageHeader } from "@patternfly/react-component-groups"
 import { useEffect, useState } from "react";
 import {
+  ConnectionConfig,
   editPut,
   fetchDataTypeTwo,
   Payload,
@@ -159,6 +160,8 @@ const EditSource: React.FunctionComponent = () => {
     new Map([["key0", { key: "", value: "" }]])
   );
   const [keyCount, setKeyCount] = useState<number>(1);
+
+  const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig | undefined>();
 
   const [searchParams] = useSearchParams();
   const initialState = searchParams.get("state") as "view" | "edit" | null;
@@ -444,6 +447,8 @@ const EditSource: React.FunctionComponent = () => {
                   handlePropertyChange={handlePropertyChange}
                   editFlow={true}
                   viewMode={viewMode}
+                  setSelectedConnection={setSelectedConnection}
+                  selectedConnection={selectedConnection}
                 />
               ) : (
                 <>
@@ -520,12 +525,12 @@ const EditSource: React.FunctionComponent = () => {
           </>
         )}
       </FormContextProvider>
-      <EditConfirmationModel 
-        type="source" 
-        isWarningOpen={isWarningOpen} 
-        setIsWarningOpen={setIsWarningOpen} 
-        pendingSave={pendingSave} 
-        setPendingSave={setPendingSave} 
+      <EditConfirmationModel
+        type="source"
+        isWarningOpen={isWarningOpen}
+        setIsWarningOpen={setIsWarningOpen}
+        pendingSave={pendingSave}
+        setPendingSave={setPendingSave}
         handleEdit={handleEditSource} />
     </>
   );

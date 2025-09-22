@@ -1,5 +1,5 @@
 import PageHeader from "@components/PageHeader";
-import { ActionList, ActionListGroup, ActionListItem, Button, Card, CardBody, Content, Form, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, Grid, PageSection, Popover, Split, SplitItem, TextInput } from "@patternfly/react-core";
+import { ActionList, ActionListGroup, ActionListItem, Alert, Button, Card, CardBody, Content, Form, FormAlert, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, FormHelperText, Grid, HelperText, HelperTextItem, PageSection, Popover, Split, SplitItem, TextInput } from "@patternfly/react-core";
 import * as React from "react";
 import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
@@ -8,11 +8,13 @@ import { ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, creat
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
 import { convertMapToObject, getConnectorTypeName } from "@utils/helpers";
-import { PlusIcon, TrashIcon } from "@patternfly/react-icons";
+import { ExclamationCircleIcon, PlusIcon, TrashIcon } from "@patternfly/react-icons";
 import { t } from "i18next";
 import { useState } from "react";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
+import * as yup from "yup";
+import { yupResolver } from '@hookform/resolvers/yup';
 
 export interface ICreateConnectionProps {
     sampleProp?: string;
@@ -21,7 +23,6 @@ export interface ICreateConnectionProps {
 type Properties = { key: string; value: string };
 
 type ConnectionFormValues = {
-    name: string;
     [key: string]: string | number;
 };
 
@@ -46,7 +47,14 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
     );
     const [keyCount, setKeyCount] = React.useState<number>(1);
 
-    //   const validate = ajv.compile(connectorSchema);
+    const schema = yup.object({
+        name: yup.string().required(),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(selectedSchemaProperties?.required?.reduce((acc: any, field: string) => {
+            acc[field] = yup.string().required();
+            return acc;
+        }, {}) || {})
+    }).required();
 
     const handleAddProperty = () => {
         const newKey = `key${keyCount}`;
@@ -83,17 +91,12 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
     };
 
 
-    const { control, handleSubmit } = useForm<ConnectionFormValues>(
-        //     {
-        //     defaultValues: {
-        //         fullName: ''
-        //     }
-        // }
+    const { formState: { errors }, control, handleSubmit } = useForm<ConnectionFormValues>(
+        {
+            resolver: yupResolver(schema)
+        }
     );
-    // const onSubmit = (data: any) => {
-    //     console.log("data", data);
-    //     console.log("properties", properties);
-    // };
+
 
     const validateConnection = async (payload: ConnectionPayload) => {
         console.log("payload", payload);
@@ -125,7 +128,6 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
     };
 
     const createConnection = async (payload: ConnectionPayload) => {
-        console.log("payload", payload);
         const response = await createPost(`${API_URL}/api/connections`, payload);
 
         if (response.error) {
@@ -146,18 +148,15 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
     };
 
     const validateSubmit = (data: ConnectionFormValues) => {
-        console.log("data", data);
         const { name, ...dataWithoutName } = data;
         const payload = selectedSchema ? {
             type: selectedSchema?.type.toUpperCase() || connectionId?.toUpperCase() || "",
-            // id: connectionId?.toUpperCase() || "",
             config: { ...dataWithoutName, ...convertMapToObject(properties, errorWarning, setErrorWarning) },
-            name
+            name: name as string
         } as ConnectionPayload : {
             type: connectionId?.toUpperCase() || "",
-            // id: connectionId?.toUpperCase() || "",
             config: convertMapToObject(properties, errorWarning, setErrorWarning),
-            name
+            name: name as string
         };
         if (connectionValidated || !selectedSchemaProperties) {
             createConnection(payload);
@@ -166,9 +165,6 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
         }
 
     }
-
-
-
     return (
         <>
             <PageHeader
@@ -185,6 +181,11 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                 <Card className="custom-card-body">
                     <CardBody isFilled>
                         <Form id="create-connection-form" onSubmit={handleSubmit(validateSubmit)} isWidthLimited>
+                            {!_.isEmpty(errors) && (
+                                <FormAlert>
+                                    <Alert variant="danger" title="Fill out all required fields before continuing." aria-live="polite" isInline />
+                                </FormAlert>
+                            )}
                             <FormGroup
                                 label={`${_.capitalize(connectionType)} connection`}
                                 fieldId={`connection-type-field`}
@@ -205,8 +206,17 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                                 <Controller
                                     name={"name"}
                                     control={control}
-                                    render={({ field }) => <TextInput id="connection-name" {...field} />}
+                                    rules={{ required: true }}
+                                    render={({ field }) => <TextInput id="connection-name" {...field} validated={errors.name ? "error" : "default"} />}
                                 />
+                                {errors.name && (
+                                    <FormHelperText>
+                                        <HelperText>
+                                            <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
+                                                Name field is required
+                                            </HelperTextItem>
+                                        </HelperText>
+                                    </FormHelperText>)}
 
                             </FormGroup>
 
@@ -247,23 +257,47 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                                                 >
                                                     {propertySchema.type === "string" && <Controller
                                                         name={propertyName}
+                                                        rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
                                                         control={control}
-                                                        render={({ field }) => <TextInput id={propertyName}  {...field} />}
+                                                        render={({ field }) => <TextInput id={propertyName}  {...field} validated={errors[propertyName] ? "error" : "default"} />}
+                                                    />}
+                                                    {propertySchema.type === "list" && <Controller
+                                                        name={propertyName}
+                                                        rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
+                                                        control={control}
+                                                        render={({ field }) => <TextInput id={propertyName}  {...field} validated={errors[propertyName] ? "error" : "default"} />}
                                                     />}
                                                     {propertySchema.type === "integer" && <Controller
                                                         name={propertyName}
                                                         control={control}
+                                                        rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
                                                         render={({ field }) => (
                                                             <TextInput
                                                                 id={propertyName}
                                                                 type="number"
                                                                 {...field}
+                                                                validated={errors[propertyName] ? "error" : "default"}
                                                                 onChange={(_e, value) => field.onChange(value === '' ? '' : Number(value))}
                                                             />
                                                         )}
                                                     />}
 
+                                                    {errors[propertyName] && (
+                                                        <FormHelperText>
+                                                            <HelperText>
+                                                                <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
+                                                                    {_.capitalize(propertyName)} field is required
+                                                                </HelperTextItem>
+                                                            </HelperText>
+                                                        </FormHelperText>)}
 
+                                                    {propertySchema.type === "integer" && (<FormHelperText>
+                                                        <HelperText>
+                                                            <HelperTextItem variant="default">
+                                                                Please enter numerical value for {_.capitalize(propertyName)} field
+                                                            </HelperTextItem>
+                                                        </HelperText>
+                                                    </FormHelperText>)}
 
                                                 </FormGroup>
                                             ))}
@@ -377,11 +411,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                         </ActionListItem>
                     </ActionListGroup>
                 </ActionList>
-
             </PageSection>
-
-
-
         </>
     );
 };

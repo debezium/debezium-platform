@@ -196,6 +196,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   const { addNotification } = useNotification();
 
   const [code, setCode] = useState<string | Payload>(initialCodeValue);
+  
   const [codeAlert, setCodeAlert] = useState<string | React.ReactElement>("");
   const [formatType, setFormatType] = useState("dbz-platform");
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
@@ -296,6 +297,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
           type: find(destinationCatalog, { id: destinationId })?.type || "",
           schema: "schema321",
           vaults: [],
+          ...(selectedConnection ? { connection: selectedConnection } : {}),
           config: convertMapToObject(properties),
           name: values["destination-name"],
         } as unknown as Payload;

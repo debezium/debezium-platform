@@ -75,10 +75,13 @@ export const getConnectorTypeName = (connectorType: string) => {
     case connectorType.includes("mysql"):
       name = "MySQL";
       break;
+    case connectorType.includes("mariadb"):
+      name = "MariaDB";
+      break;
     case connectorType.includes("sqlserver"):
       name = "SQL Server";
       break;
-    case connectorType.includes("apachepulsar"):
+    case connectorType.includes("apache_pulsar"):
       name = "Apache Pulsar";
       break;
     case connectorType.includes("oracle"):
@@ -87,14 +90,14 @@ export const getConnectorTypeName = (connectorType: string) => {
     case connectorType.includes("rocketmq"):
       name = "RocketMQ";
       break;
-    case connectorType.includes("eventhub"):
+    case connectorType.includes("events_hubs"):
       name = "Event Hub";
       break;
 
     case connectorType.includes("rabbitmq"):
       name = "RabbitMQ";
       break;
-    case connectorType.includes("natsstreaming"):
+    case connectorType.includes("nats_streaming"):
       name = "NATS Streaming";
       break;
     case connectorType.includes("kafka"):
@@ -103,10 +106,10 @@ export const getConnectorTypeName = (connectorType: string) => {
     case connectorType.includes("infinispan"):
       name = "Infinispan";
       break;
-    case connectorType.includes("pubsublite"):
+    case connectorType.includes("pub_sub_lite"):
       name = "Pub/Sub Lite";
       break;
-    case connectorType.includes("pubsub"):
+    case connectorType.includes("pub_sub"):
       name = "Pub/Sub";
       break;
     case connectorType.includes("pravega"):

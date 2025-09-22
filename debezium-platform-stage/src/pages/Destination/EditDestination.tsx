@@ -20,6 +20,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { useEffect, useRef, useState } from "react";
 import {
+  ConnectionConfig,
   Destination,
   DestinationConfig,
   editPut,
@@ -158,6 +159,7 @@ const EditDestination: React.FunctionComponent = () => {
   );
   const [keyCount, setKeyCount] = useState<number>(1);
 
+  const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig | undefined>();
   const [searchParams] = useSearchParams();
   const initialState = searchParams.get("state") as "view" | "edit" | null;
 
@@ -444,6 +446,8 @@ const EditDestination: React.FunctionComponent = () => {
                   handleDeleteProperty={handleDeleteProperty}
                   handlePropertyChange={handlePropertyChange}
                   viewMode={viewMode}
+                  setSelectedConnection={setSelectedConnection}
+                  selectedConnection={selectedConnection}
                 />
               ) : (
                 <>

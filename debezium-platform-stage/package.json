@@ -16,6 +16,7 @@
     "chromatic": "npx chromatic --project-token=chpt_1d6299fe0d5a2cd"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@patternfly/patternfly": "^6.3.0",
     "@patternfly/react-charts": "^8.3.0",
     "@patternfly/react-code-editor": "^6.3.0",
@@ -46,7 +47,8 @@
     "react-router-dom": "^7.5.3",
     "reactflow": "^11.11.4",
     "uuid": "^11.1.0",
-    "victory": "^37.3.2"
+    "victory": "^37.3.2",
+    "yup": "^1.7.1"
   },
   "resolutions": {
     "jackspeak": "2.1.1"

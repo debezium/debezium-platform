@@ -2,7 +2,6 @@
 import {
   Flex,
   FlexItem,
-  Label,
   Bullseye,
   EmptyState,
   EmptyStateVariant,
@@ -19,7 +18,7 @@ import {
   TextInput,
   Tooltip,
 } from "@patternfly/react-core";
-import { TagIcon, SearchIcon } from "@patternfly/react-icons";
+import { SearchIcon } from "@patternfly/react-icons";
 import {
   Table,
   Thead,

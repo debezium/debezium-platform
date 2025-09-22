@@ -1,5 +1,5 @@
 
-import { Bullseye, Button, Content, ContentVariants, EmptyState, EmptyStateActions, EmptyStateBody, EmptyStateFooter, EmptyStateVariant, MenuToggle, MenuToggleElement, PageSection, SearchInput, Select, SelectList, SelectOption, Switch, ToggleGroup, ToggleGroupItem, Toolbar, ToolbarContent, ToolbarGroup, ToolbarItem } from "@patternfly/react-core";
+import { Bullseye, Button, Content, ContentVariants, EmptyState, EmptyStateActions, EmptyStateBody, EmptyStateFooter, EmptyStateVariant, MenuToggle, MenuToggleElement, PageSection, SearchInput, Select, SelectList, SelectOption, ToggleGroup, ToggleGroupItem, Toolbar, ToolbarContent, ToolbarGroup, ToolbarItem } from "@patternfly/react-core";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { ThIcon, ListIcon, SearchIcon, FilterIcon } from "@patternfly/react-icons";
@@ -22,7 +22,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
   const { t } = useTranslation();
 
   const connectionsType = ['All', 'Source', 'Destination'];
-  const [isValidationChecked, setIsValidationChecked] = useState<boolean>(false);
+  // const [isValidationChecked, setIsValidationChecked] = useState<boolean>(false);
 
   const [connectionsTypeIsExpanded, setConnectionsTypeIsExpanded] = useState(false);
   const [connectionsTypeSelected, setConnectionsTypeSelected] = useState('');
@@ -66,12 +66,10 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
 
   const handleItemClick = (
     event:
-      | MouseEvent
-      | React.MouseEvent<any, MouseEvent>
-      | React.KeyboardEvent<Element>
+    React.MouseEvent | React.KeyboardEvent | MouseEvent
   ) => {
-    const id = event.currentTarget.id;
-    setIsSelected(id.split("-")[2]);
+    const id = (event.currentTarget as HTMLElement).id;
+    setIsSelected(id.split("-")[2] as "grid" | "list");
   };
 
   const debouncedSearch = useCallback(
@@ -129,20 +127,20 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     fetchData<ConnectionsSchema[]>(`${API_URL}/api/connections/schemas`)
   );
 
-  const handleChange = (_event: React.FormEvent<HTMLInputElement>, checked: boolean) => {
-    setIsValidationChecked(checked);
-    if (checked) {
-      setSearchResult(searchResult.filter((item) => connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase())));
-    } else {
-      if (connectionsTypeSelected === 'Source') {
-        setSearchResult(sourceCatalog);
-      } else if (connectionsTypeSelected === 'Destination') {
-        setSearchResult(destinationCatalog);
-      } else {
-        setSearchResult(_.sortBy([...sourceCatalog, ...destinationCatalog], (o) => o.name.toLowerCase()));
-      }
-    }
-  };
+  // const handleChange = (_event: React.FormEvent<HTMLInputElement>, checked: boolean) => {
+  //   setIsValidationChecked(checked);
+  //   if (checked) {
+  //     setSearchResult(searchResult.filter((item) => connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase())));
+  //   } else {
+  //     if (connectionsTypeSelected === 'Source') {
+  //       setSearchResult(sourceCatalog);
+  //     } else if (connectionsTypeSelected === 'Destination') {
+  //       setSearchResult(destinationCatalog);
+  //     } else {
+  //       setSearchResult(_.sortBy([...sourceCatalog, ...destinationCatalog], (o) => o.name.toLowerCase()));
+  //     }
+  //   }
+  // };
 
   return (
     <>
@@ -256,18 +254,6 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
                   ))}
                 </SelectList>
               </Select>
-
-            </ToolbarItem>
-            {/* <ToolbarItem variant="separator" /> */}
-            <ToolbarItem style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-              <Switch
-                label="Supports validation"
-                id="checked-with-label-switch-on"
-                isChecked={isValidationChecked}
-                hasCheckIcon
-                onChange={handleChange}
-              // isReversed
-              />
 
             </ToolbarItem>
 
