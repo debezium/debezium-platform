@@ -62,7 +62,7 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "SqlServer";
       src = sqlServer;
       break;
-    case connectorType.includes("apache_pulsar"):
+    case connectorType.includes("pulsar"):
       altText = "Apache Pulsar";
       src = apachePulsar;
       break;

@@ -20,6 +20,11 @@
         "createConnection": "Crea connessione",
         "backToCatalog": "Torna al catalogo"
     },
+    "edit": {
+        "title": "Modifica connessione",
+        "description": "Modifica i dettagli della connessione {{val}} utilizzando il modulo sottostante.",
+        "saveChanges": "Salva modifiche"
+    },
     "link":{
         "selectConnection": "Seleziona una connessione",
         "connectionFieldLabel": "Connessione a {{val}}",

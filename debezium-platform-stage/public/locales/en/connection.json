@@ -20,6 +20,11 @@
         "createConnection": "Create connection",
         "backToCatalog": "Back to catalog"
     },
+    "edit": {
+        "title": "Edit connection",
+        "description": "Edit the {{val}} connector details using the below form.",
+        "saveChanges": "Save changes"
+    },
     "link":{
         "selectConnection": "Select a connection",
         "connectionFieldLabel": "Connection to the {{val}}",

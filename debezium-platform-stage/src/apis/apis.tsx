@@ -35,6 +35,10 @@ export type ConnectionUnknownConfig = {
   [key: string]: string | number; 
 };
 
+export type ConnectionAdditionalConfig = {
+  [key: string]: string ; 
+};
+
 export type ConnectionConfig = {
   id: number;
   name: string;
@@ -59,7 +63,7 @@ export type ConnectionValidationResult = {
 export type ConnectionPayload = {
   type: string;
   id?: string;
-  config: ConnectionUnknownConfig;
+  config: ConnectionUnknownConfig | ConnectionAdditionalConfig;
   name: string;
 };
 
