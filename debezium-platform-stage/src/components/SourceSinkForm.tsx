@@ -332,7 +332,7 @@ const SourceSinkForm = ({
           id="typeahead-select-input"
           autoComplete="off"
           innerRef={textInputRef}
-          placeholder="Select a connection"
+          placeholder={t("connection:link.selectConnection")}
           {...(activeItemId && { 'aria-activedescendant': activeItemId })}
           role="combobox"
           isExpanded={isOpen}
@@ -465,13 +465,12 @@ const SourceSinkForm = ({
               </FormHelperText>)}
             </FormGroup>
             <FormGroup
-              label={`Connection to the ${connectorLabel}`}
+              label={t("connection:link.connectionFieldLabel", { val: connectorLabel })}
               fieldId={`${connectorType}-connection-field`}
             >
               <InputGroup>
 
                 <InputGroupItem isFill >
-                  {/* <TextInput id="textInput-with-dropdown" aria-label="input with dropdown and button" /> */}
                   <Select
                     id="typeahead-select"
                     isOpen={isOpen}
@@ -501,7 +500,7 @@ const SourceSinkForm = ({
                 </InputGroupItem>
                 <InputGroupItem>
                   <Button id="inputDropdownButton1" variant="control" icon={<PlusIcon />}>
-                    Create connection
+                    {t("connection:link.createConnection")}
                   </Button>
                 </InputGroupItem>
               </InputGroup>
@@ -509,7 +508,7 @@ const SourceSinkForm = ({
               {!viewMode && (<FormHelperText>
                 <HelperText>
                   <HelperTextItem>
-                    Select a connection from the list of already created connections or create a new connection.
+                    {t("connection:link.helperText")}
                   </HelperTextItem>
                 </HelperText>
               </FormHelperText>)}

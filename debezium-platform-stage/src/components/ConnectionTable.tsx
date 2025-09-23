@@ -59,7 +59,6 @@ type ActionData = {
 };
 
 const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
-  // tableType,
   data,
   onClear,
 }) => {
@@ -180,7 +179,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
                   <Tooltip
                     content={
                       <div>
-                        {t("activePipelineTooltip", { val: "Connection" })}
+                        {t("activePipelineTooltip", { val: "connection" })}
                       </div>
                     }
                   >
@@ -203,7 +202,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
                 <Bullseye>
                   <EmptyState
                     headingLevel="h2"
-                    titleText={t("search.title", { val: "Connection" })}
+                    titleText={t("search.title", { val: "connection" })}
                     icon={SearchIcon}
                     variant={EmptyStateVariant.sm}
                   >
@@ -236,7 +235,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
               {t("deleteModel.description", {
                 val: deleteInstance.name,
               })}
-              {`connection`}
+              {`${t("connection:connection")}`}
             </p>
           }
           titleIconVariant="warning"

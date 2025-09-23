@@ -1,87 +1,96 @@
 {
-  "name": "Name",
-  "schema": "Schema",
-  "description": "Description",
-  "type": "Type",
-  "edit": "Edit",
-  "items": "Items",
-  "loading": "Loading...",
-  "downloading": "Downloading...",
-  "enabled": "Enabled",
-  "findByName": "Find by name",
-  "searchByName": "Search by name",
-  "searchPlaceholder": "Search...",
-  "source": "Source",
-  "transform": "Transform",
-  "transforms": "Transforms",
-  "transformations": "Transformations",
-  "back": "Back",
-  "destination": "Destination",
-  "done": "Done",
-  "verify": "Verify",
-  "copy": "Copy",
-  "copied": "Copied",
-  "enterValue": "enter a value",
-  "pipeline": "Pipeline",
-  "cancel": "Cancel",
-  "create": "Create",
-  "saveChanges": "Save changes",
-  "apply": "Apply",
-  "vaults": "Vaults",
+  "actions": "Actions",
   "active": "Active",
   "activePipelineTooltip": " Number of active pipelines using this {{val}}.",
-  "formEditor": "Form editor",
-  "smartEditor": "Smart editor",
-  "saveAndNext": "Save and next",
-  "confirm": "Confirm",
-  "submit": "Submit",
+  "addButton": "Add {{val}}",
+  "apiError": "Error : Failed to load",
+  "apply": "Apply",
+  "back": "Back",
+  "backToCatalog": "Back to catalog",
+  "cancel": "Cancel",
   "clear": "Clear",
-  "actions": "Actions",
+  "comingSoon": "Coming soon",
+  "confirm": "Confirm",
+  "connection": "Connection",
+  "copied": "Copied",
+  "copy": "Copy",
+  "create": "Create",
   "delete": "Delete",
   "deleteAll": "Delete all",
-  "goToHome": "Go to home",
-  "addButton": "Add {{val}}",
-  "refresh": "Refresh",
+  "deleteModel": {
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "description": "Enter '{{val}}' to delete ",
+    "title": "Delete modal"
+  },
+  "description": "Description",
+  "destination": "Destination",
+  "done": "Done",
+  "downloading": "Downloading...",
+  "edit": "Edit",
+  "emptyState": {
+    "description": "No {{val}} is configure for this cluster yet. To streams change events from a {{val}} you can configure a {{val}} by click the 'Add {{val}}' button.",
+    "shortDescription": "No {{val}} is configure for this cluster yet. Configure a one by selecting 'Create a {{val}}' option above.",
+    "title": "No {{val}} available"
+  },
+  "enabled": "Enabled",
+  "enterValue": "enter a value",
   "error": "Error",
   "failedToLoad": "Failed to load",
-  "apiError": "Error : Failed to load",
-  "goTo": "Go to {{val}}",
-  "trademarkWarking": "All logos and trademarks are the property of their respective owners",
-  "smartEditorButton": "Create using smart editor",
-  "smartEditorButtonTooltip": " Use raw configuration to create a new {{val}} connector using smart editor.",
-  "emptyState": {
-    "title": "No {{val}} available",
-    "shortDescription": "No {{val}} is configure for this cluster yet. Configure a one by selecting 'Create a {{val}}' option above.",
-    "description": "No {{val}} is configure for this cluster yet. To streams change events from a {{val}} you can configure a {{val}} by click the 'Add {{val}}' button."
-  },
-  "search": {
-    "title": "No matching {{val}} is present.",
-    "description": "Clear search and try again.",
-    "button": "Clear search"
-  },
-  "deleteModel": {
-    "title": "Delete modal",
-    "description": "Enter '{{val}}' to delete ",
-    "confirm": "Delete",
-    "cancel": "Cancel"
-  },
+  "findByName": "Find by name",
   "form": {
+    "addFieldButton": "Add property",
+    "error":{
+      "title": "Fill out all required fields before continuing.",
+      "required": "{{val}} field is required",
+      "numerical": "Please enter numerical value for {{val}} field"
+    },
     "field": {
-      "type": "{{val}} type",
-      "name": "{{val}} name",
       "description": {
-        "label": "Description",
-        "helper": "Add a one liner to describe your {{val}} or where you plan to capture."
-      }
+        "helper": "Add a one liner to describe your {{val}} or where you plan to capture.",
+        "label": "Description"
+      },
+      "name": "{{val}} name",
+      "type": "{{val}} type"
     },
     "subHeading": {
-      "title": "Configuration properties",
-      "description": "Enter the both key and value pair to configure a property"
-    },
-    "addFieldButton": "Add property"
+      "description": "Enter the both key and value pair to configure a property",
+      "title": "Configuration properties"
+    }
   },
+  "formEditor": "Form editor",
+  "goTo": "Go to {{val}}",
+  "goToHome": "Go to home",
+  "items": "Items",
+  "loading": "Loading...",
+  "name": "Name",
+  "pipeline": "Pipeline",
+  "refresh": "Refresh",
   "requestNewResource": {
-    "title": "Request new {{val}}",
-    "description": "Fill our a request to create a new {{val}}."
-  }
+    "description": "Fill our a request to create a new {{val}}.",
+    "title": "Request new {{val}}"
+  },
+  "saveAndNext": "Save and next",
+  "saveChanges": "Save changes",
+  "schema": "Schema",
+  "search": {
+    "button": "Clear search",
+    "clearAll": "Clear all",
+    "description": "Clear search and try again.",
+    "title": "No matching {{val}} is present."
+  },
+  "searchByName": "Search by name",
+  "searchPlaceholder": "Search...",
+  "smartEditor": "Smart editor",
+  "smartEditorButton": "Create using smart editor",
+  "smartEditorButtonTooltip": " Use raw configuration to create a new {{val}} connector using smart editor.",
+  "source": "Source",
+  "submit": "Submit",
+  "transform": "Transform",
+  "transformations": "Transformations",
+  "transforms": "Transforms",
+  "trademarkWarking": "All logos and trademarks are the property of their respective owners",
+  "type": "Type",
+  "vaults": "Vaults",
+  "verify": "Verify"
 }

@@ -1,0 +1,30 @@
+{
+    "connection": "connection",
+    "page": {
+        "description": "Lists the available connections. You can search a connection by its name or sort the list by source or destination connection type.",
+        "emptyStateTitle": "No Connection available",
+        "emptyStateDescription": "No connections is configured yet. Configure a one by selecting 'Add Connection' option below."
+    },
+    "catalog": {
+        "title": "Connection catalog",
+        "description": "Select a connection type from the catalog that you want to create. Connections that support validation are marked with a star icon. You can search by name and filter the list by source, destination, or validation support.",
+        "emptyStateTitle": "No matching connection type is present",
+        "emptyStateDescription": "Clear all and try again."
+    },
+    "create": {
+        "title": "Create connection",
+        "description": "Create connection by filling the form below, you can create connection for both source and destination. And can be used when you are creating any source or destination in the future.",
+        "connectionType": "{{val}} connection",
+        "subHeading": "Enter the connection properties",
+        "validate": "Validate",
+        "createConnection": "Create connection",
+        "backToCatalog": "Back to catalog"
+    },
+    "link":{
+        "selectConnection": "Select a connection",
+        "connectionFieldLabel": "Connection to the {{val}}",
+        "createConnection": "Create connection",
+        "helperText": "Select a connection from the list of already created connections or create a new connection."
+    }
+
+}

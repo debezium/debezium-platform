@@ -1,0 +1,30 @@
+{
+    "connection": "connessione",
+    "page": {
+        "description": "Elenca le connessioni disponibili. Puoi cercare una connessione per nome oppure ordinare l'elenco per tipo di connessione di origine o di destinazione.",
+        "emptyStateTitle": "Nessuna connessione disponibile",
+        "emptyStateDescription": "Nessuna connessione è ancora configurata. Configurane una selezionando l'opzione 'Aggiungi connessione' qui sotto."
+    },
+    "catalog": {
+        "title": "Catalogo delle connessioni",
+        "description": "Seleziona dal catalogo il tipo di connessione che desideri creare. Le connessioni che supportano la convalida sono contrassegnate da un'icona a stella. Puoi cercare per nome e filtrare l'elenco per origine, destinazione o supporto alla convalida.",
+        "emptyStateTitle": "Nessun tipo di connessione corrispondente presente",
+        "emptyStateDescription": "Pulisci tutti i filtri e riprova."
+    },
+    "create": {
+        "title": "Crea connessione",
+        "description": "Crea una connessione compilando il modulo sottostante; puoi creare una connessione sia per l'origine sia per la destinazione, da riutilizzare quando creerai origini o destinazioni in futuro.",
+        "connectionType": "Connessione {{val}}",
+        "subHeading": "Inserisci le proprietà della connessione",
+        "validate": "Convalida",
+        "createConnection": "Crea connessione",
+        "backToCatalog": "Torna al catalogo"
+    },
+    "link":{
+        "selectConnection": "Seleziona una connessione",
+        "connectionFieldLabel": "Connessione a {{val}}",
+        "createConnection": "Crea connessione",
+        "helperText": "Seleziona una connessione dall'elenco di quelle già create oppure creane una nuova."
+    }
+
+}

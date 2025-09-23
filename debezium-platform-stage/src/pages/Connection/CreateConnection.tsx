@@ -9,12 +9,12 @@ import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
 import { convertMapToObject, getConnectorTypeName } from "@utils/helpers";
 import { ExclamationCircleIcon, PlusIcon, TrashIcon } from "@patternfly/react-icons";
-import { t } from "i18next";
 import { useState } from "react";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import * as yup from "yup";
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useTranslation } from "react-i18next";
 
 export interface ICreateConnectionProps {
     sampleProp?: string;
@@ -28,7 +28,7 @@ type ConnectionFormValues = {
 
 const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => {
     const navigate = useNavigate();
-    // const { t } = useTranslation();
+    const { t } = useTranslation();
     const { addNotification } = useNotification();
     const location = useLocation();
 
@@ -168,8 +168,8 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
     return (
         <>
             <PageHeader
-                title={"Create connection"}
-                description={"Create connection by filling the form below, you can create connection for both source and destination. And can be used when you are creating any source or destination in the future."}
+                title={t("connection:create.title")}
+                description={t("connection:create.description")}
             />
             <PageSection
                 isWidthLimited
@@ -183,11 +183,11 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                         <Form id="create-connection-form" onSubmit={handleSubmit(validateSubmit)} isWidthLimited>
                             {!_.isEmpty(errors) && (
                                 <FormAlert>
-                                    <Alert variant="danger" title="Fill out all required fields before continuing." aria-live="polite" isInline />
+                                    <Alert variant="danger" title={t("common:form.error.title")} aria-live="polite" isInline />
                                 </FormAlert>
                             )}
                             <FormGroup
-                                label={`${_.capitalize(connectionType)} connection`}
+                                label={`${t("connection:create.connectionType", { val: _.capitalize(connectionType) })}`}
                                 fieldId={`connection-type-field`}
                             >
                                 <>
@@ -199,7 +199,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                             </FormGroup>
                             <FormGroup
 
-                                label={"Name"}
+                                label={t("name")}
                                 fieldId={"connection-name"}
                                 isRequired
                             >
@@ -213,7 +213,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                                     <FormHelperText>
                                         <HelperText>
                                             <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
-                                                Name field is required
+                                                {t("common:form.error.required", { val: t("name") })}
                                             </HelperTextItem>
                                         </HelperText>
                                     </FormHelperText>)}
@@ -230,7 +230,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                                                     text: <span style={{ fontWeight: 500 }}>{selectedSchemaProperties.description}</span>,
                                                     id: `field-group-${connectionId}-schema-id`,
                                                 }}
-                                                titleDescription={"Enter the connection properties"}
+                                                titleDescription={t("connection:create.subHeading")}
 
                                             />
                                         }
@@ -286,7 +286,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                                                         <FormHelperText>
                                                             <HelperText>
                                                                 <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
-                                                                    {_.capitalize(propertyName)} field is required
+                                                                    {t("common:form.error.required", { val: _.capitalize(propertyName) })}
                                                                 </HelperTextItem>
                                                             </HelperText>
                                                         </FormHelperText>)}
@@ -294,7 +294,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
                                                     {propertySchema.type === "integer" && (<FormHelperText>
                                                         <HelperText>
                                                             <HelperTextItem variant="default">
-                                                                Please enter numerical value for {_.capitalize(propertyName)} field
+                                                                {t("common:form.error.numerical", { val: _.capitalize(propertyName) })}
                                                             </HelperTextItem>
                                                         </HelperText>
                                                     </FormHelperText>)}
@@ -397,17 +397,18 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = () => 
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
                 <ActionList>
                     <ActionListGroup>
-                        <ActionListItem>
-                            {selectedSchema ?
-                                <Button variant="primary" type="submit" form="create-connection-form" isDisabled={!connectionValidated}>Create connection</Button>
-                                : <Button variant="primary" type="submit" form="create-connection-form" >Create connection</Button>}
-
-                        </ActionListItem>
                         {selectedSchema && <ActionListItem>
-                            <Button variant="secondary" type="submit" form="create-connection-form">Validate</Button>
+                            <Button variant="secondary" type="submit" form="create-connection-form">{t("connection:create.validate")}</Button>
                         </ActionListItem>}
                         <ActionListItem>
-                            <Button variant="link" onClick={() => navigate("/connections/catalog")}>Back to catalog</Button>
+                            {selectedSchema ?
+                                <Button variant="primary" type="submit" form="create-connection-form" isDisabled={!connectionValidated}>{t("connection:create.createConnection")}</Button>
+                                : <Button variant="primary" type="submit" form="create-connection-form" >{t("connection:create.createConnection")}</Button>}
+
+                        </ActionListItem>
+
+                        <ActionListItem>
+                            <Button variant="link" onClick={() => navigate("/connections/catalog")}>{t("backToCatalog")}</Button>
                         </ActionListItem>
                     </ActionListGroup>
                 </ActionList>

@@ -62,7 +62,6 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     {
       refetchInterval: 7000,
       onSuccess: (data) => {
-        // Persist filters across polling refreshes by deriving from latest data
         const withRole = data.map((conn) => ({
           ...conn,
           role: getConnectionRole(conn.type.toLowerCase()) || "",
@@ -81,15 +80,13 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
         } else {
           result = _.sortBy(result, (o) => o.name.toLowerCase());
         }
-
         setSearchResult(result);
       },
     }
   );
 
   useEffect(() => {
-    // Derive list from latest data + current search/type filters
-    const withRole = connectionsList.map((conn) => ({
+   const withRole = connectionsList.map((conn) => ({
       ...conn,
       role: getConnectionRole(conn.type.toLowerCase()) || "",
     }));
@@ -176,7 +173,6 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                     title={"Connection"}
                     description={"Lists the available connections. You can search a connection by its name or sort the list by source or destination connection type."}
                   />
-
                   <PageSection>
                     <Card className="destination-card">
                       <Toolbar
@@ -186,8 +182,6 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                       >
                         <ToolbarContent>
                           <ToolbarGroup variant="filter-group">
-
-
                             <ToolbarItem>
                               <SearchInput
                                 aria-label="Items example search input"
@@ -197,10 +191,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                                 onClear={onClear}
                               />
                             </ToolbarItem>
-                            {/* <ToolbarItem variant="separator" /> */}
                             <ToolbarItem>
-
-
                               <Select
                                 toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                                   <MenuToggle
@@ -262,7 +253,6 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
                       <ConnectionTable
                         data={searchResult}
-                        // tableType="destination"
                         onClear={onClear}
                       />
                     </Card>
@@ -275,19 +265,19 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                       className="transformation_overlay"
                       style={darkMode ? { background: "rgba(41, 41, 41, 0.6)" } : {}}
                     >
-                      <img src={comingSoonImage} alt="Coming Soon" />
+                      <img src={comingSoonImage} alt={t("comingSoon")} />
                     </div>
                   )}
 
                   <div className="vault_overlay">
 
                     <EmptyStatus
-                      heading={"No Connection available"}
-                      primaryMessage={"No connections is configured yet. Configure a one by selecting 'Add Connection' option below."}
+                      heading={t("connection:page.emptyStateTitle")}
+                      primaryMessage={t("connection:page.emptyStateDescription")}
                       secondaryMessage=""
                       primaryAction={
                         <Button variant="primary" icon={<PlusIcon />} onClick={() => navigateTo("/connections/catalog")}>
-                          Add connection
+                          {t("addButton", { val: t("connection:connection") })}
                         </Button>
                       }
                       secondaryActions={
