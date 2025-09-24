@@ -81,6 +81,7 @@ export type Destination = {
   schema: string;
   vaults: Vault[];
   config: DestinationConfig;
+  connection?: ConnectionConfig;
   description?: string;
   name: string;
   id: number;
@@ -145,6 +146,7 @@ export type Source = {
   schema: string;
   vaults: Vault[];
   config: SourceConfig;
+  connection?: ConnectionConfig;
   description?: string;
   name: string;
   id: number;

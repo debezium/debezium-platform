@@ -8,6 +8,9 @@ import {
   Button,
   ButtonType,
   FormContextProvider,
+  Modal,
+  ModalBody,
+  ModalHeader,
   PageSection,
   ToggleGroup,
   ToggleGroupItem,
@@ -18,7 +21,7 @@ import {
 import { PencilAltIcon, CodeIcon } from "@patternfly/react-icons";
 import { useParams, useSearchParams } from "react-router-dom";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ConnectionConfig,
   Destination,
@@ -29,7 +32,6 @@ import {
 } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { convertMapToObject, getConnectorTypeName } from "../../utils/helpers";
-// import { useData } from "../../appLayout/AppContext";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
 import Ajv from "ajv";
@@ -38,6 +40,7 @@ import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css"
 import { PageHeader } from "@patternfly/react-component-groups";
 import EditConfirmationModel from "../components/EditConfirmationModel";
+import { CreateConnection } from "../Connection/CreateConnection";
 
 const ajv = new Ajv();
 
@@ -176,6 +179,13 @@ const EditDestination: React.FunctionComponent = () => {
   });
   const [codeAlert, setCodeAlert] = useState("");
 
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+
+
+  const handleConnectionModalToggle = useCallback(() => {
+    setIsConnectionModalOpen(!isConnectionModalOpen);
+  }, [isConnectionModalOpen]);
+
   const validate = ajv.compile(connectorSchema);
 
   const setConfigProperties = (configProp: DestinationConfig) => {
@@ -201,6 +211,7 @@ const EditDestination: React.FunctionComponent = () => {
       } else {
         setDestination(response.data as Destination);
         setConfigProperties(response.data?.config ?? { "": "" });
+        setSelectedConnection(response.data?.connection as ConnectionConfig);
         setCode((prevCode: any) => {
           return {
             ...prevCode,
@@ -213,7 +224,7 @@ const EditDestination: React.FunctionComponent = () => {
     };
 
     fetchDestinations();
-  }, [destinationId]);
+  }, [destinationId,setSelectedConnection]);
 
   const handleAddProperty = () => {
     const newKey = `key${keyCount}`;
@@ -302,6 +313,7 @@ const EditDestination: React.FunctionComponent = () => {
           description: values["description"],
           config: convertMapToObject(properties),
           name: values["destination-name"],
+          ...(selectedConnection ? { connection: selectedConnection } : {}),
         };
         await editDestination(payload as Payload);
         setIsLoading(false);
@@ -448,6 +460,7 @@ const EditDestination: React.FunctionComponent = () => {
                   viewMode={viewMode}
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
+                  handleConnectionModalToggle={handleConnectionModalToggle}
                 />
               ) : (
                 <>
@@ -531,7 +544,28 @@ const EditDestination: React.FunctionComponent = () => {
         pendingSave={pendingSave}
         setPendingSave={setPendingSave}
         handleEdit={handleEditDestination} />
+              <Modal
+        isOpen={isConnectionModalOpen}
+         width="80%"
+        onClose={handleConnectionModalToggle}
+        aria-labelledby="modal-with-description-title"
+        aria-describedby="modal-box-body-destination-with-description"
+      >
+        <ModalHeader
+          title="Create connection"
+          className="pipeline_flow-modal_header"
+          labelId="modal-with-destination-description-title"
+          description={`Create a new connection for your ${getConnectorTypeName(destinationId || "")} destination by filling the form below.`}
+        />
+        <ModalBody
+          tabIndex={0}
+          id="modal-box-body-destination-with-description"
+        >
+          <CreateConnection selectedConnectionType={"destination"} selectedConnectionId={selectedConnection?.name || ""} handleConnectionModalToggle={handleConnectionModalToggle} setSelectedConnection={setSelectedConnection} />
+        </ModalBody>
+      </Modal>
     </>
+    
   );
 };
 

@@ -8,6 +8,9 @@ import {
   Button,
   ButtonType,
   FormContextProvider,
+  Modal,
+  ModalBody,
+  ModalHeader,
   PageSection,
   ToggleGroup,
   ToggleGroupItem,
@@ -19,7 +22,7 @@ import { PencilAltIcon, CodeIcon } from "@patternfly/react-icons";
 import { useParams, useSearchParams } from "react-router-dom";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { PageHeader } from "@patternfly/react-component-groups"
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ConnectionConfig,
   editPut,
@@ -39,6 +42,7 @@ import { useTranslation } from "react-i18next";
 import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css";
 import EditConfirmationModel from "../components/EditConfirmationModel";
+import { CreateConnection } from "../Connection/CreateConnection";
 
 const ajv = new Ajv();
 
@@ -178,6 +182,13 @@ const EditSource: React.FunctionComponent = () => {
   });
   const [codeAlert, setCodeAlert] = useState("");
 
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+
+
+  const handleConnectionModalToggle = useCallback(() => {
+    setIsConnectionModalOpen(!isConnectionModalOpen);
+  }, [isConnectionModalOpen]);
+
   const validate = ajv.compile(connectorSchema);
 
   const setConfigProperties = (configProp: SourceConfig) => {
@@ -203,6 +214,7 @@ const EditSource: React.FunctionComponent = () => {
       } else {
         setSource(response.data as Source);
         setConfigProperties(response.data?.config ?? { "": "" });
+        setSelectedConnection(response.data?.connection as ConnectionConfig);
         setCode((prevCode: any) => {
           return {
             ...prevCode,
@@ -215,7 +227,7 @@ const EditSource: React.FunctionComponent = () => {
     };
 
     fetchSources();
-  }, [sourceId]);
+  }, [sourceId, setSelectedConnection]);
 
   const handleAddProperty = () => {
     const newKey = `key${keyCount}`;
@@ -301,6 +313,7 @@ const EditSource: React.FunctionComponent = () => {
         const payload = {
           description: values["description"],
           config: convertMapToObject(properties),
+          ...(selectedConnection ? { connection: selectedConnection } : {}),
           name: values["source-name"],
         };
         await editSource(payload as Payload);
@@ -449,6 +462,7 @@ const EditSource: React.FunctionComponent = () => {
                   viewMode={viewMode}
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
+                  handleConnectionModalToggle={handleConnectionModalToggle}
                 />
               ) : (
                 <>
@@ -532,6 +546,26 @@ const EditSource: React.FunctionComponent = () => {
         pendingSave={pendingSave}
         setPendingSave={setPendingSave}
         handleEdit={handleEditSource} />
+              <Modal
+        isOpen={isConnectionModalOpen}
+        width="80%"
+        onClose={handleConnectionModalToggle}
+        aria-labelledby="modal-with-description-title"
+        aria-describedby="modal-box-body-destination-with-description"
+      >
+        <ModalHeader
+          title="Create connection"
+          className="pipeline_flow-modal_header"
+          labelId="modal-with-destination-description-title"
+          description="Create a new connection for your source, select the connection type from the list below."
+        />
+        <ModalBody
+          tabIndex={0}
+          id="modal-box-body-destination-with-description"
+        >
+          <CreateConnection selectedConnectionType={"source"} selectedConnectionId={selectedConnection?.name || ""} handleConnectionModalToggle={handleConnectionModalToggle} setSelectedConnection={setSelectedConnection} />
+        </ModalBody>
+      </Modal>
     </>
   );
 };

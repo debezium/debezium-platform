@@ -33,8 +33,8 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
     const { addNotification } = useNotification();
 
     const { connectionId } = useParams<{ connectionId: string }>();
-    const [isFetchLoading, setIsFetchLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+    // const [isFetchLoading, setIsFetchLoading] = useState<boolean>(true);
+    // const [error, setError] = useState<string | null>(null);
     const [connection, setConnection] = useState<Connection>();
     const [schemas, setSchemas] = useState<ConnectionsSchema[]>([]);
     const [connectionValidated, setConnectionValidated] = useState<boolean>(false);
@@ -66,12 +66,12 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
     useEffect(() => {
         const fetchConnections = async () => {
-            setIsFetchLoading(true);
+            // setIsFetchLoading(true);
             const response = await fetchDataTypeTwo<Connection>(
                 `${API_URL}/api/connections/${connectionId}`
             );
             if (response.error) {
-                setError(response.error);
+                // setError(response.error);
             } else {
                 setConnection(response.data as Connection);
                 const selectedSchema = schemas.find(schema => schema.type === response.data?.type);
@@ -81,9 +81,9 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                     const schemaFields = Object.keys(selectedSchema.schema.properties);
                     const config = response.data.config;
                     // Fields that are in the schema
-                    const formFields: Record<string, any> = {};
+                    const formFields: Record<string, unknown> = {};
                     // Fields that are not in the schema
-                    const otherConfig: Record<string, any> = {};
+                    const otherConfig: Record<string, unknown> = {};
                     Object.entries(config).forEach(([key, value]) => {
                         if (schemaFields.includes(key)) {
                             formFields[key] = value;
@@ -111,7 +111,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
 
             }
-            setIsFetchLoading(false);
+            // setIsFetchLoading(false);
         };
 
         fetchConnections();
@@ -119,19 +119,18 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
     useEffect(() => {
         const fetchSchemas = async () => {
-            setIsFetchLoading(true);
+            // setIsFetchLoading(true);
             const response = await fetchDataTypeTwo<ConnectionsSchema[]>(
                 `${API_URL}/api/connections/schemas`
             );
 
             if (response.error) {
-                setError(response.error);
+                // setError(response.error);
             } else {
                 setSchemas(response.data as ConnectionsSchema[]);
-                // setConfigProperties(response.data?.config ?? { "": "" });
             }
 
-            setIsFetchLoading(false);
+            // setIsFetchLoading(false);
         };
 
         fetchSchemas();
@@ -139,6 +138,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
     const schema = yup.object({
         name: yup.string().required(),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(selectedSchema?.schema?.required?.reduce((acc: any, field: string) => {
             acc[field] = yup.string().required();
             return acc;

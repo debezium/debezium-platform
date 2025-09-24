@@ -65,7 +65,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
 
   const handleItemClick = (
     event:
-    React.MouseEvent | React.KeyboardEvent | MouseEvent
+      React.MouseEvent | React.KeyboardEvent | MouseEvent
   ) => {
     const id = (event.currentTarget as HTMLElement).id;
     setIsSelected(id.split("-")[2] as "grid" | "list");
@@ -113,9 +113,8 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
   );
 
   const onConnectionSelection = (connectionId: string, role: string) => {
-    const connectionSchema = connectionsSchema.find((schema) => schema.type.toLowerCase() === connectionId.toLowerCase());
 
-    navigate(`/connections/create_connection/${connectionId}`, { state: { connectionType: role, connectionSchema } });
+    navigate(`/connections/create_connection/${connectionId}`, { state: { connectionType: role } });
   };
 
   const {

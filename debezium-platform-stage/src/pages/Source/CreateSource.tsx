@@ -8,6 +8,9 @@ import {
   Button,
   ButtonType,
   FormContextProvider,
+  Modal,
+  ModalBody,
+  ModalHeader,
   PageSection,
   Spinner,
   ToggleGroup,
@@ -36,6 +39,7 @@ import { connectorSchema } from "@utils/schemas";
 import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 import { formatCode } from "@utils/formatCodeUtils";
 import style from "../../styles/createConnector.module.css";
+import { CreateConnection } from "../Connection/CreateConnection";
 
 const ajv = new Ajv();
 
@@ -198,7 +202,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   const { addNotification } = useNotification();
 
   const [code, setCode] = useState<string | Payload>(initialCodeValue);
-  const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig|undefined>();
+  const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig | undefined>();
 
   const sourceIdParam = useParams<{ sourceId: string }>();
   const [codeAlert, setCodeAlert] = useState<string | React.ReactElement>("");
@@ -214,6 +218,13 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     new Map([["key0", { key: "", value: "" }]])
   );
   const [keyCount, setKeyCount] = useState<number>(1);
+
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+
+
+  const handleConnectionModalToggle = useCallback(() => {
+    setIsConnectionModalOpen(!isConnectionModalOpen);
+  }, [isConnectionModalOpen]);
 
   const [signalCollectionName, setSignalCollectionName] = useState<string>("");
 
@@ -456,6 +467,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   updateSignalCollectionName={updateSignalCollectionName}
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
+                  handleConnectionModalToggle={handleConnectionModalToggle}
                 />
               ) : (
                 <>
@@ -541,6 +553,26 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
           </>
         )}
       </FormContextProvider>
+      <Modal
+        isOpen={isConnectionModalOpen}
+        width="80%"
+        onClose={handleConnectionModalToggle}
+        aria-labelledby="modal-with-description-title"
+        aria-describedby="modal-box-body-destination-with-description"
+      >
+        <ModalHeader
+          title="Create connection"
+          className="pipeline_flow-modal_header"
+          labelId="modal-with-destination-description-title"
+          description="Create a new connection for your source, select the connection type from the list below."
+        />
+        <ModalBody
+          tabIndex={0}
+          id="modal-box-body-destination-with-description"
+        >
+          <CreateConnection selectedConnectionType={"source"} selectedConnectionId={sourceId} handleConnectionModalToggle={handleConnectionModalToggle} setSelectedConnection={setSelectedConnection} />
+        </ModalBody>
+      </Modal>
     </>
   );
 };
