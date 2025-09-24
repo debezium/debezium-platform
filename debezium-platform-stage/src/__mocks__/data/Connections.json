@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1,
+        "config": {
+            "port": "5427",
+            "database": "debezium",
+            "hostname": "postgresql",
+            "password": "debezium",
+            "username": "debezium",
+            "additional-key": "additional-val"
+        },
+        "name": "mariaconnection",
+        "type": "MARIADB"
+    },
+    {
+        "id": 2,
+        "config": {
+            "test-value": "test-key"
+        },
+        "name": "kinesis-connection",
+        "type": "AMAZON_KINESIS"
+    }
+]

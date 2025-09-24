@@ -8,9 +8,6 @@ import {
   Button,
   ButtonType,
   FormContextProvider,
-  Modal,
-  ModalBody,
-  ModalHeader,
   PageSection,
   Spinner,
   ToggleGroup,
@@ -26,7 +23,7 @@ import { CodeEditor, CodeEditorControl, Language } from "@patternfly/react-code-
 import { find } from "lodash";
 import { ConnectionConfig, createPost, Destination, Payload } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
-import { convertMapToObject, getConnectorTypeName } from "../../utils/helpers";
+import { convertMapToObject } from "../../utils/helpers";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import PageHeader from "@components/PageHeader";
 import SourceSinkForm from "@components/SourceSinkForm";
@@ -37,7 +34,7 @@ import { connectorSchema } from "@utils/schemas";
 import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 import { formatCode } from "@utils/formatCodeUtils";
 import style from "../../styles/createConnector.module.css"
-import { CreateConnection } from "../Connection/CreateConnection";
+import CreateConnectionModal from "../components/CreateConnectionModal";
 
 const ajv = new Ajv();
 
@@ -200,7 +197,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   const { addNotification } = useNotification();
 
   const [code, setCode] = useState<string | Payload>(initialCodeValue);
-  
+
   const [codeAlert, setCodeAlert] = useState<string | React.ReactElement>("");
   const [formatType, setFormatType] = useState("dbz-platform");
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
@@ -542,26 +539,13 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
           </>
         )}
       </FormContextProvider>
-      <Modal
-        isOpen={isConnectionModalOpen}
-         width="80%"
-        onClose={handleConnectionModalToggle}
-        aria-labelledby="modal-with-description-title"
-        aria-describedby="modal-box-body-destination-with-description"
-      >
-        <ModalHeader
-          title="Create connection"
-          className="pipeline_flow-modal_header"
-          labelId="modal-with-destination-description-title"
-          description={`Create a new connection for your ${getConnectorTypeName(destinationId || "")} destination by filling the form below.`}
-        />
-        <ModalBody
-          tabIndex={0}
-          id="modal-box-body-destination-with-description"
-        >
-          <CreateConnection selectedConnectionType={"destination"} selectedConnectionId={destinationId} handleConnectionModalToggle={handleConnectionModalToggle} setSelectedConnection={setSelectedConnection} />
-        </ModalBody>
-      </Modal>
+      <CreateConnectionModal
+        isConnectionModalOpen={isConnectionModalOpen}
+        handleConnectionModalToggle={handleConnectionModalToggle}
+        selectedConnectionType={"destination"}
+        resourceId={destinationId}
+        setSelectedConnection={setSelectedConnection}
+      />
     </>
   );
 };

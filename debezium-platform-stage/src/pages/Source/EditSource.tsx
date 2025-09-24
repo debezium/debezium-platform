@@ -8,9 +8,6 @@ import {
   Button,
   ButtonType,
   FormContextProvider,
-  Modal,
-  ModalBody,
-  ModalHeader,
   PageSection,
   ToggleGroup,
   ToggleGroupItem,
@@ -42,7 +39,7 @@ import { useTranslation } from "react-i18next";
 import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css";
 import EditConfirmationModel from "../components/EditConfirmationModel";
-import { CreateConnection } from "../Connection/CreateConnection";
+import CreateConnectionModal from "../components/CreateConnectionModal";
 
 const ajv = new Ajv();
 
@@ -546,26 +543,14 @@ const EditSource: React.FunctionComponent = () => {
         pendingSave={pendingSave}
         setPendingSave={setPendingSave}
         handleEdit={handleEditSource} />
-              <Modal
-        isOpen={isConnectionModalOpen}
-        width="80%"
-        onClose={handleConnectionModalToggle}
-        aria-labelledby="modal-with-description-title"
-        aria-describedby="modal-box-body-destination-with-description"
-      >
-        <ModalHeader
-          title="Create connection"
-          className="pipeline_flow-modal_header"
-          labelId="modal-with-destination-description-title"
-          description="Create a new connection for your source, select the connection type from the list below."
-        />
-        <ModalBody
-          tabIndex={0}
-          id="modal-box-body-destination-with-description"
-        >
-          <CreateConnection selectedConnectionType={"source"} selectedConnectionId={selectedConnection?.name || ""} handleConnectionModalToggle={handleConnectionModalToggle} setSelectedConnection={setSelectedConnection} />
-        </ModalBody>
-      </Modal>
+
+      <CreateConnectionModal
+        isConnectionModalOpen={isConnectionModalOpen}
+        handleConnectionModalToggle={handleConnectionModalToggle}
+        selectedConnectionType={"source"}
+        resourceId={selectedConnection?.name || ""}
+        setSelectedConnection={setSelectedConnection}
+      />
     </>
   );
 };

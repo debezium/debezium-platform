@@ -8,9 +8,6 @@ import {
   Button,
   ButtonType,
   FormContextProvider,
-  Modal,
-  ModalBody,
-  ModalHeader,
   PageSection,
   ToggleGroup,
   ToggleGroupItem,
@@ -40,7 +37,7 @@ import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css"
 import { PageHeader } from "@patternfly/react-component-groups";
 import EditConfirmationModel from "../components/EditConfirmationModel";
-import { CreateConnection } from "../Connection/CreateConnection";
+import CreateConnectionModal from "../components/CreateConnectionModal";
 
 const ajv = new Ajv();
 
@@ -224,7 +221,7 @@ const EditDestination: React.FunctionComponent = () => {
     };
 
     fetchDestinations();
-  }, [destinationId,setSelectedConnection]);
+  }, [destinationId, setSelectedConnection]);
 
   const handleAddProperty = () => {
     const newKey = `key${keyCount}`;
@@ -544,28 +541,15 @@ const EditDestination: React.FunctionComponent = () => {
         pendingSave={pendingSave}
         setPendingSave={setPendingSave}
         handleEdit={handleEditDestination} />
-              <Modal
-        isOpen={isConnectionModalOpen}
-         width="80%"
-        onClose={handleConnectionModalToggle}
-        aria-labelledby="modal-with-description-title"
-        aria-describedby="modal-box-body-destination-with-description"
-      >
-        <ModalHeader
-          title="Create connection"
-          className="pipeline_flow-modal_header"
-          labelId="modal-with-destination-description-title"
-          description={`Create a new connection for your ${getConnectorTypeName(destinationId || "")} destination by filling the form below.`}
-        />
-        <ModalBody
-          tabIndex={0}
-          id="modal-box-body-destination-with-description"
-        >
-          <CreateConnection selectedConnectionType={"destination"} selectedConnectionId={selectedConnection?.name || ""} handleConnectionModalToggle={handleConnectionModalToggle} setSelectedConnection={setSelectedConnection} />
-        </ModalBody>
-      </Modal>
+      <CreateConnectionModal
+        isConnectionModalOpen={isConnectionModalOpen}
+        handleConnectionModalToggle={handleConnectionModalToggle}
+        selectedConnectionType={"destination"}
+        resourceId={selectedConnection?.name || ""}
+        setSelectedConnection={setSelectedConnection}
+      />
     </>
-    
+
   );
 };
 

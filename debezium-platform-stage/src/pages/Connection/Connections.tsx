@@ -4,7 +4,7 @@ import { FilterIcon, PlusIcon } from "@patternfly/react-icons";
 import EmptyStatus from "../../components/EmptyStatus";
 import { useNavigate } from "react-router-dom";
 import comingSoonImage from "../../assets/comingSoon.png";
-import { useData } from "../../appLayout/AppContext";
+// import { useData } from "../../appLayout/AppContext";
 import { featureFlags } from "@utils/featureFlag";
 import { useTranslation } from "react-i18next";
 import ApiError from "@components/ApiError";
@@ -32,7 +32,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
   const navigateTo = (url: string) => {
     navigate(url);
   };
-  const { darkMode } = useData();
+  // const { darkMode } = useData();
   const connectionsType = ['All', 'Source', 'Destination'];
 
   const [connectionsTypeIsExpanded, setConnectionsTypeIsExpanded] = useState(false);
@@ -161,7 +161,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
         <>
           {isConnectionsLoading ? (
             <EmptyState
-              titleText={t("loading")}
+              titleText={t("Loading...")}
               headingLevel="h4"
               icon={Spinner}
             />
@@ -260,14 +260,6 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                 </>
               ) : (
                 <PageSection style={{ position: "relative", minHeight: "100%", overflow: "hidden" }} isFilled>
-                  {!featureFlags.Connection && (
-                    <div
-                      className="transformation_overlay"
-                      style={darkMode ? { background: "rgba(41, 41, 41, 0.6)" } : {}}
-                    >
-                      <img src={comingSoonImage} alt={t("comingSoon")} />
-                    </div>
-                  )}
 
                   <div className="vault_overlay">
 

@@ -18,7 +18,8 @@
         "subHeading": "Inserisci le proprietà della connessione",
         "validate": "Convalida",
         "createConnection": "Crea connessione",
-        "backToCatalog": "Torna al catalogo"
+        "backToCatalog": "Torna al catalogo",
+        "modalDescription": "Crea una nuova connessione per il tuo {{val}}, seleziona il tipo di connessione dall'elenco sottostante."
     },
     "edit": {
         "title": "Modifica connessione",

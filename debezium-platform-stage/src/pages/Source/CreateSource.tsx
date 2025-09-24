@@ -8,9 +8,6 @@ import {
   Button,
   ButtonType,
   FormContextProvider,
-  Modal,
-  ModalBody,
-  ModalHeader,
   PageSection,
   Spinner,
   ToggleGroup,
@@ -39,7 +36,7 @@ import { connectorSchema } from "@utils/schemas";
 import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 import { formatCode } from "@utils/formatCodeUtils";
 import style from "../../styles/createConnector.module.css";
-import { CreateConnection } from "../Connection/CreateConnection";
+import CreateConnectionModal from "../components/CreateConnectionModal";
 
 const ajv = new Ajv();
 
@@ -553,26 +550,13 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
           </>
         )}
       </FormContextProvider>
-      <Modal
-        isOpen={isConnectionModalOpen}
-        width="80%"
-        onClose={handleConnectionModalToggle}
-        aria-labelledby="modal-with-description-title"
-        aria-describedby="modal-box-body-destination-with-description"
-      >
-        <ModalHeader
-          title="Create connection"
-          className="pipeline_flow-modal_header"
-          labelId="modal-with-destination-description-title"
-          description="Create a new connection for your source, select the connection type from the list below."
-        />
-        <ModalBody
-          tabIndex={0}
-          id="modal-box-body-destination-with-description"
-        >
-          <CreateConnection selectedConnectionType={"source"} selectedConnectionId={sourceId} handleConnectionModalToggle={handleConnectionModalToggle} setSelectedConnection={setSelectedConnection} />
-        </ModalBody>
-      </Modal>
+      <CreateConnectionModal
+        isConnectionModalOpen={isConnectionModalOpen}
+        handleConnectionModalToggle={handleConnectionModalToggle}
+        selectedConnectionType={"source"}
+        resourceId={sourceId}
+        setSelectedConnection={setSelectedConnection}
+      />
     </>
   );
 };

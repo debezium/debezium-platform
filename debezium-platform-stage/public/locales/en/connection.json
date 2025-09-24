@@ -18,7 +18,8 @@
         "subHeading": "Enter the connection properties",
         "validate": "Validate",
         "createConnection": "Create connection",
-        "backToCatalog": "Back to catalog"
+        "backToCatalog": "Back to catalog",
+        "modalDescription": "Create a new connection for your {{val}}, select the connection type from the list below."
     },
     "edit": {
         "title": "Edit connection",

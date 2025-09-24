@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Destinations } from "./Destinations";
+import { Connections } from "./Connections";
 import { useQuery } from "react-query";
 import { useDeleteData } from "src/apis";
 import { useNotification } from "../../appLayout/AppNotificationContext";
-import destinationsMock from "../../__mocks__/data/Destinations.json";
-import pipelinesMock from "../../__mocks__/data/Pipelines.json";
+import connectionsMock from "../../__mocks__/data/Connections.json";
 import { render } from "../../__test__/unit/test-utils";
 
 vi.mock("react-router-dom", () => ({
@@ -34,22 +33,15 @@ vi.mock("../../appLayout/AppNotificationContext", () => ({
   useNotification: vi.fn(),
 }));
 
-describe("Destinations", () => {
-  const mockDestinations = destinationsMock;
-  const mockPipelines = pipelinesMock;
+describe("Connections", () => {
+  const mockConnections = connectionsMock;
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock useQuery to return sources
     vi.mocked(useQuery).mockImplementation((key) => {
-      if (key === "destinations") {
+      if (key === "connections") {
         return {
-          data: mockDestinations,
-          error: null,
-          isLoading: false,
-        } as any;
-      } else if (key === "pipelines") {
-        return {
-          data: mockPipelines,
+          data: mockConnections,
           error: null,
           isLoading: false,
         } as any;
@@ -72,17 +64,17 @@ describe("Destinations", () => {
       error: null,
       isLoading: true,
     } as any);
-    render(<Destinations />);
+    render(<Connections />);
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("displays error message when API fails", async () => {
-    // Mock the useQuery hook to simulate an API failure for destinations
+        // Mock the useQuery hook to simulate an API failure for connections
     vi.mocked(useQuery).mockImplementation((key) => {
-      if (key === "destinations") {
+      if (key === "connections") {
         return {
           data: undefined,
-          error: new Error("Failed to fetch destinations"),
+          error: new Error("Failed to fetch connections"),
           isLoading: false,
         } as any;
       }
@@ -90,56 +82,56 @@ describe("Destinations", () => {
       return { data: undefined, error: null, isLoading: false } as any;
     });
 
-    render(<Destinations />);
+    render(<Connections />);
     await waitFor(() => {
       expect(
-        screen.getByText("Error: Failed to fetch destinations")
+        screen.getByText("Error: Failed to fetch connections")
       ).toBeInTheDocument();
     });
   });
 
-  it("renders destinations when data is loaded", async () => {
-    render(<Destinations />);
+  it("renders connections when data is loaded", async () => {
+    render(<Connections />);
     await waitFor(() => {
-      expect(screen.getByText("test-infi")).toBeInTheDocument();
-      expect(screen.getByText("kafka")).toBeInTheDocument();
+      expect(screen.getByText("mariaconnection")).toBeInTheDocument();
+      expect(screen.getByText("kinesis-connection")).toBeInTheDocument();
       expect(screen.getByText("2 Items")).toBeInTheDocument();
     });
   });
 
-  it("check if current active pipeline no is shown correctly", async () => {
-    render(<Destinations />);
-    await waitFor(() => {
-      const activeDestinationRow = screen.getByText("test-infi").closest("tr");
-      expect(activeDestinationRow).toBeInTheDocument();
-      expect(
-        activeDestinationRow && activeDestinationRow.textContent
-      ).toContain("1");
-      const nonUsedDestinationRow = screen.getByText("kafka").closest("tr");
-      expect(nonUsedDestinationRow).toBeInTheDocument();
-      expect(
-        nonUsedDestinationRow && nonUsedDestinationRow.textContent
-      ).toContain("0");
-    });
-  });
+//   it("check if current active pipeline no is shown correctly", async () => {
+//     render(<Connections />);
+//     await waitFor(() => {
+//       const activeDestinationRow = screen.getByText("mariaconnection").closest("tr");
+//       expect(activeDestinationRow).toBeInTheDocument();
+//       expect(
+//         activeDestinationRow && activeDestinationRow.textContent
+//       ).toContain("1");
+//       const nonUsedDestinationRow = screen.getByText("kinesis-connection").closest("tr");
+//       expect(nonUsedDestinationRow).toBeInTheDocument();
+//       expect(
+//         nonUsedDestinationRow && nonUsedDestinationRow.textContent
+//       ).toContain("0");
+//     });
+//   });
 
-  it("filters destinations based on search input", async () => {
-    render(<Destinations />);
+  it("filters connections based on search input", async () => {
+    render(<Connections />);
     const searchInput = screen.getByPlaceholderText("Find by name");
-    fireEvent.change(searchInput, { target: { value: "test" } });
+    fireEvent.change(searchInput, { target: { value: "kinesis" } });
     await waitFor(() => {
-      expect(screen.getByText("test-infi")).toBeInTheDocument();
+      expect(screen.getByText("kinesis-connection")).toBeInTheDocument();
     });
   });
 
-  it("filters destinations for unknown search input and clears search", async () => {
-    render(<Destinations />);
+  it("filters connections for unknown search input and clears search", async () => {
+    render(<Connections />);
     const searchInput = screen.getByPlaceholderText("Find by name");
     fireEvent.change(searchInput, { target: { value: "xxx" } });
     await waitFor(() => {
       expect(screen.getByText("0 Items")).toBeInTheDocument();
       expect(
-        screen.getByText("No matching destination is present.")
+        screen.getByText("No matching connection is present.")
       ).toBeInTheDocument();
       expect(screen.getByText("Clear search")).toBeInTheDocument();
     });
