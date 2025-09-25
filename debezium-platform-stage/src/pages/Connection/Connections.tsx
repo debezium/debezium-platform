@@ -3,9 +3,7 @@ import { Button, Card, Content, ContentVariants, EmptyState, MenuToggle, MenuTog
 import { FilterIcon, PlusIcon } from "@patternfly/react-icons";
 import EmptyStatus from "../../components/EmptyStatus";
 import { useNavigate } from "react-router-dom";
-import comingSoonImage from "../../assets/comingSoon.png";
 // import { useData } from "../../appLayout/AppContext";
-import { featureFlags } from "@utils/featureFlag";
 import { useTranslation } from "react-i18next";
 import ApiError from "@components/ApiError";
 import { Connection, fetchData } from "src/apis";
