@@ -268,11 +268,11 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
     const validateSubmit = (data: ConnectionFormValues) => {
         const { name, ...dataWithoutName } = data;
         const payload = selectedSchema ? {
-            type: selectedSchema?.type.toUpperCase() || connectionId?.toUpperCase() || "",
+            type: selectedSchema?.type.toUpperCase() || connection?.type.toUpperCase() || "",
             config: { ...dataWithoutName, ...convertMapToObject(properties, errorWarning, setErrorWarning) },
             name: name as string
         } as ConnectionPayload : {
-            type: connectionId?.toUpperCase() || "",
+            type: connection?.type.toUpperCase() || "",
             config: convertMapToObject(properties, errorWarning, setErrorWarning),
             name: name as string
         };
