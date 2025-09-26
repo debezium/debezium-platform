@@ -3,7 +3,7 @@ import { ActionList, ActionListGroup, ActionListItem, Alert, Button, Card, CardB
 import * as React from "react";
 import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Connection, ConnectionAdditionalConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost, editPut, fetchDataTypeTwo } from "src/apis";
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
@@ -71,6 +71,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                 `${API_URL}/api/connections/${connectionId}`
             );
             if (response.error) {
+                console.log("Error fetching connection:", response.error);
             } else {
                 setConnection(response.data as Connection);
                 const selectedSchema = schemas.find(schema => schema.type === response.data?.type);
@@ -123,6 +124,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
             );
 
             if (response.error) {
+                console.log("Error fetching schemas:", response.error);
 
             } else {
                 setSchemas(response.data as ConnectionsSchema[]);
