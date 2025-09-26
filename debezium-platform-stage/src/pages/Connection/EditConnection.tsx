@@ -4,7 +4,7 @@ import * as React from "react";
 import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Connection, ConnectionAdditionalConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost, fetchDataTypeTwo } from "src/apis";
+import { Connection, ConnectionAdditionalConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost, editPut, fetchDataTypeTwo } from "src/apis";
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
 import { convertMapToObject, getConnectorTypeName } from "@utils/helpers";
@@ -28,17 +28,17 @@ type ConnectionFormValues = {
 };
 
 const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const { t } = useTranslation();
     const { addNotification } = useNotification();
 
     const { connectionId } = useParams<{ connectionId: string }>();
-    // const [isFetchLoading, setIsFetchLoading] = useState<boolean>(true);
-    // const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
     const [connection, setConnection] = useState<Connection>();
     const [schemas, setSchemas] = useState<ConnectionsSchema[]>([]);
     const [connectionValidated, setConnectionValidated] = useState<boolean>(false);
     const [selectedSchema, setSelectedSchema] = useState<ConnectionsSchema>();
+
 
 
     const [errorWarning, setErrorWarning] = useState<string[]>([]);
@@ -66,12 +66,11 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
     useEffect(() => {
         const fetchConnections = async () => {
-            // setIsFetchLoading(true);
+
             const response = await fetchDataTypeTwo<Connection>(
                 `${API_URL}/api/connections/${connectionId}`
             );
             if (response.error) {
-                // setError(response.error);
             } else {
                 setConnection(response.data as Connection);
                 const selectedSchema = schemas.find(schema => schema.type === response.data?.type);
@@ -101,7 +100,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                     }
                 }
                 else if (schemas.length > 0 && selectedSchema === undefined) {
-                    // console.log("selectedSchema is undefined");
+
                     reset({
                         name: response.data?.name || "",
                     });
@@ -111,7 +110,6 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
 
             }
-            // setIsFetchLoading(false);
         };
 
         fetchConnections();
@@ -119,18 +117,18 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
     useEffect(() => {
         const fetchSchemas = async () => {
-            // setIsFetchLoading(true);
+
             const response = await fetchDataTypeTwo<ConnectionsSchema[]>(
                 `${API_URL}/api/connections/schemas`
             );
 
             if (response.error) {
-                // setError(response.error);
+
             } else {
                 setSchemas(response.data as ConnectionsSchema[]);
             }
 
-            // setIsFetchLoading(false);
+
         };
 
         fetchSchemas();
@@ -221,24 +219,48 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
         }
     };
 
-    const createConnection = async (payload: ConnectionPayload) => {
-        const response = await createPost(`${API_URL}/api/connections`, payload);
+    const editSource = async (payload: ConnectionPayload) => {
+        const response = await editPut(
+            `${API_URL}/api/connections/${connectionId}`,
+            payload
+        );
 
         if (response.error) {
             addNotification(
                 "danger",
-                `Connection creation failed`,
-                `Failed to create connection ${payload.name}: ${response.error}`
+                t('statusMessage:edit.failedTitle'),
+                t("statusMessage:edit.failedDescription", { val: `${(response.data as Connection)?.name}: ${response.error}` }),
             );
-        }
-        else {
+        } else {
             addNotification(
                 "success",
-                `Creation successful`,
-                `Connection ${payload.name} created successfully.`
+                t('statusMessage:edit.successTitle'),
+                t("statusMessage:edit.successDescription", { val: `${(response.data as Connection)?.name}` })
             );
-            navigate("/connections")
+            setViewMode(true);
         }
+    };
+
+    const handleEditConnection = async (payload: ConnectionPayload) => {
+        setIsLoading(true);
+        // const errorWarning = [] as string[];
+        // properties.forEach((value: Properties, key: string) => {
+        //     if (value.key === "" || value.value === "") {
+        //         errorWarning.push(key);
+        //     }
+        // });
+        // setErrorWarning(errorWarning);
+        // if (errorWarning.length > 0) {
+        //     addNotification(
+        //         "danger",
+        //         `Source edit failed`,
+        //         `Please fill both Key and Value fields for all the properties.`
+        //     );
+        //     setIsLoading(false);
+        //     return;
+        // }
+        await editSource(payload as ConnectionPayload);
+        setIsLoading(false);
     };
 
     const validateSubmit = (data: ConnectionFormValues) => {
@@ -253,7 +275,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
             name: name as string
         };
         if (connectionValidated || !selectedSchema?.schema) {
-            createConnection(payload);
+            handleEditConnection(payload)
         } else {
             validateConnection(payload);
         }
@@ -513,7 +535,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                             </ActionListItem>}
                             <ActionListItem>
                                 {selectedSchema ?
-                                    <Button variant="primary" type="submit" form="create-connection-form" isDisabled={!connectionValidated}>{t("connection:edit.saveChanges")}</Button>
+                                    <Button variant="primary" type="submit" form="create-connection-form" isDisabled={!connectionValidated} isLoading={isLoading}>{t("connection:edit.saveChanges")}</Button>
                                     : <Button variant="primary" type="submit" form="create-connection-form" >{t("connection:edit.saveChanges")}</Button>}
 
                             </ActionListItem>
@@ -527,6 +549,14 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                     </ActionList>
                 </PageSection>
             )}
+
+            {/* <EditConfirmationModel
+                type="connection"
+                isWarningOpen={isWarningOpen}
+                setIsWarningOpen={setIsWarningOpen}
+                pendingSave={pendingSave}
+                setPendingSave={setPendingSave}
+                handleEdit={handleEditConnection} /> */}
         </>
     );
 };
