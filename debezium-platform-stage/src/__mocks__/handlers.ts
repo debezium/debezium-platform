@@ -26,4 +26,8 @@ export const handlers = [
   http.get("/api/destinations/2", () => {
     return HttpResponse.json(destinationDetails_2);
   }),
+  //Connection
+  http.get("/api/connections", () => {
+    return HttpResponse.json(destinationsData);
+  }),
 ];
