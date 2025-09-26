@@ -258,12 +258,36 @@ export const deleteData = async (url: string): Promise<void> => {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      // Add any additional headers if needed
     },
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to delete data: ${response.statusText}`);
+    let errorMessage = `Failed to delete data: ${response.status} ${response.statusText}`;
+
+    try {
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const body = await response.json();
+        const serverMessage = body?.message || body?.error;
+        const details = Array.isArray(body?.details)
+          ? body.details.join("\n")
+          : body?.details;
+
+        if (serverMessage || details) {
+          errorMessage = [serverMessage, details].filter(Boolean).join(": ");
+        }
+      } else {
+        // Fallback to plain text 
+        const text = await response.text();
+        if (text) {
+          errorMessage = text;
+        }
+      }
+    } catch (e) {
+      console.error("Error deleting data:", e);
+    }
+
+    throw new Error(errorMessage);
   }
 };
 
