@@ -1,81 +1,96 @@
 {
-  "name": "Nome",
-  "schema": "Schema",
-  "description": "Descrizione",
-  "type": "Tipo",
-  "edit": "Modifica",
-  "items": "Elementi",
-  "loading": "Caricamento...",
-  "findByName": "Trova per nome",
-  "searchByName": "Cerca per nome",
-  "searchPlaceholder": "Cerca...",
-  "source": "Fonte",
-  "transform": "Trasforma",
-  "transforms": "Trasformazioni",
-  "transformations": "Trasformazioni",
-  "back": "Indietro",
-  "destination": "Destinazione",
-  "done": "Fatto",
-  "verify": "Verifica",
-  "copy": "Copia",
-  "copied": "Copiato",
-  "enterValue": "inserisci un valore",
-  "pipeline": "Pipeline",
-  "cancel": "Annulla",
-  "create": "Crea",
-  "saveChanges": "Salva le modifiche",
-  "apply": "Applica",
-  "vaults": "Vault",
-  "active": "Attivo",
-  "formEditor": "Editor modulo",
-  "smartEditor": "Editor intelligente",
-  "saveAndNext": "Salva e continua",
-  "confirm": "Conferma",
   "actions": "Azioni",
+  "active": "Attivo",
+  "activePipelineTooltip": " Numero di pipeline attive che utilizzano questo {{val}}.",
+  "addButton": "Aggiungi {{val}}",
+  "apiError": "Errore: caricamento non riuscito",
+  "apply": "Applica",
+  "back": "Indietro",
+  "backToCatalog": "Torna al catalogo",
+  "cancel": "Annulla",
+  "clear": "Cancella",
+  "comingSoon": "In arrivo",
+  "confirm": "Conferma",
+  "connection": "Connessione",
+  "copied": "Copiato",
+  "copy": "Copia",
+  "create": "Crea",
   "delete": "Elimina",
   "deleteAll": "Elimina tutto",
-  "goToHome": "Vai alla home",
-  "addButton": "Aggiungi {{val}}",
-  "refresh": "Aggiorna",
-  "error": "Errore",
-  "failedToLoad": "Caricamento fallito",
-  "apiError": "Errore: caricamento fallito",
-  "goTo": "Vai a {{val}}",
-  "trademarkWarking": "Tutti i loghi e i marchi sono di proprietà dei rispettivi titolari",
-  "smartEditorButton": "Crea usando l'editor intelligente",
-  "smartEditorButtonTooltip": "Usa la configurazione grezza per creare un nuovo connettore {{val}} utilizzando l'editor intelligente.",
-  "emptyState": {
-    "title": "Nessun {{val}} disponibile",
-    "description": "Nessun {{val}} è ancora configurato per questo cluster. Per trasmettere eventi di modifica da un {{val}}, puoi configurarlo cliccando sul pulsante 'Aggiungi {{val}}'."
-  },
-  "search": {
-    "title": "Nessun {{val}} corrispondente trovato.",
-    "description": "Cancella la ricerca e riprova.",
-    "button": "Cancella ricerca"
-  },
   "deleteModel": {
-    "title": "Finestra di eliminazione",
-    "description": "Inserisci '{{val}}' per eliminare",
+    "cancel": "Annulla",
     "confirm": "Elimina",
-    "cancel": "Annulla"
+    "description": "Inserisci '{{val}}' per eliminare",
+    "title": "Finestra modale di eliminazione"
   },
+  "description": "Descrizione",
+  "destination": "Destinazione",
+  "done": "Fatto",
+  "downloading": "Download in corso...",
+  "edit": "Modifica",
+  "emptyState": {
+    "description": "Nessun {{val}} è configurato per questo cluster. Per trasmettere eventi di modifica da un {{val}} puoi configurare un {{val}} facendo clic sul pulsante 'Aggiungi {{val}}'.",
+    "shortDescription": "Nessun {{val}} è configurato per questo cluster. Configurane uno selezionando l'opzione 'Crea un {{val}}' sopra.",
+    "title": "Nessun {{val}} disponibile"
+  },
+  "enabled": "Abilitato",
+  "enterValue": "inserisci un valore",
+  "error": "Errore",
+  "failedToLoad": "Caricamento non riuscito",
+  "findByName": "Cerca per nome",
   "form": {
+    "addFieldButton": "Aggiungi proprietà",
+    "error":{
+      "title": "Compila tutti i campi obbligatori prima di continuare.",
+      "required": "Il campo {{val}} è obbligatorio",
+      "numerical": "Inserisci un valore numerico per il campo {{val}}"
+    },
     "field": {
-      "type": "Tipo {{val}}",
-      "name": "Nome {{val}}",
       "description": {
-        "label": "Descrizione",
-        "helper": "Aggiungi una breve descrizione per il tuo {{val}} o dove intendi acquisirlo."
-      }
+        "helper": "Aggiungi una breve descrizione del tuo {{val}} o di dove intendi acquisire.",
+        "label": "Descrizione"
+      },
+      "name": "Nome {{val}}",
+      "type": "Tipo {{val}}"
     },
     "subHeading": {
-      "title": "Proprietà di configurazione",
-      "description": "Inserisci la coppia chiave-valore per configurare una proprietà"
-    },
-    "addFieldButton": "Aggiungi proprietà"
+      "description": "Inserisci sia chiave sia valore per configurare una proprietà",
+      "title": "Proprietà di configurazione"
+    }
   },
+  "formEditor": "Editor modulo",
+  "goTo": "Vai a {{val}}",
+  "goToHome": "Vai alla home",
+  "items": "Elementi",
+  "loading": "Caricamento...",
+  "name": "Nome",
+  "pipeline": "Pipeline",
+  "refresh": "Aggiorna",
   "requestNewResource": {
-    "title": "Richiedi nuovo {{val}}",
-    "description": "Compila una richiesta per creare un nuovo {{val}}."
-  }
+    "description": "Compila una richiesta per creare un nuovo {{val}}.",
+    "title": "Richiedi nuovo {{val}}"
+  },
+  "saveAndNext": "Salva e continua",
+  "saveChanges": "Salva modifiche",
+  "schema": "Schema",
+  "search": {
+    "button": "Cancella ricerca",
+    "clearAll": "Cancella tutto",
+    "description": "Cancella la ricerca e riprova.",
+    "title": "Nessun {{val}} corrispondente presente."
+  },
+  "searchByName": "Cerca per nome",
+  "searchPlaceholder": "Cerca...",
+  "smartEditor": "Editor intelligente",
+  "smartEditorButton": "Crea tramite editor intelligente",
+  "smartEditorButtonTooltip": " Usa la configurazione grezza per creare un nuovo connettore {{val}} utilizzando l'editor intelligente.",
+  "source": "Origine",
+  "submit": "Invia",
+  "transform": "Trasforma",
+  "transformations": "Trasformazioni",
+  "transforms": "Trasformazioni",
+  "trademarkWarking": "Tutti i loghi e i marchi sono di proprietà dei rispettivi titolari",
+  "type": "Tipo",
+  "vaults": "Vault",
+  "verify": "Verifica"
 }

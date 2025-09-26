@@ -33,6 +33,7 @@ import { EditTransforms } from "./pages/Transforms/EditTransforms";
 import { Connections } from "./pages/Connection/Connections";
 import { CreateConnection } from "./pages/Connection/CreateConnection";
 import { ConnectionsCatalog } from "./pages/Connection/ConnectionsCatalog";
+import { EditConnection } from "./pages/Connection/EditConnection";
 
 export interface IAppRoute {
   label?: string; // Excluding the label will exclude the route from the nav sidebar in AppLayout
@@ -178,7 +179,7 @@ const routes: AppRouteConfig[] = [
     title: `${AppBranding} | Connections`,
   },
   {
-    component: EditDestination,
+    component: EditConnection,
     path: "/connections/:connectionId",
     navSection: "connections",
     title: `${AppBranding} | Connections`,

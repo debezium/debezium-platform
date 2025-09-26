@@ -59,7 +59,6 @@ type ActionData = {
 };
 
 const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
-  // tableType,
   data,
   onClear,
 }) => {
@@ -98,14 +97,30 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
         `Connection deleted successfully`
       );
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       modalToggle(false);
       setIsLoading(false);
-      addNotification(
-        "danger",
-        `Delete failed`,
-        `Failed to delete Connection: ${error}`
-      );
+      const rawMessage = error?.message ?? "";
+      // Extract the [ERROR: ...]  (if present)
+      const errorSegmentMatch = rawMessage.match(/\[ERROR:([\s\S]*?)\]/) || rawMessage.match(/\[Error:([\s\S]*?)\]/);
+      const errorSegmentRaw = errorSegmentMatch ? errorSegmentMatch[1].trim() : "";
+      let errorSummary = errorSegmentRaw;
+      let errorDetail = "";
+      const detailIndex = errorSegmentRaw.indexOf("Detail:");
+      if (detailIndex >= 0) {
+        errorSummary = errorSegmentRaw.substring(0, detailIndex).trim();
+        errorDetail = errorSegmentRaw.substring(detailIndex + "Detail:".length).trim();
+      }
+
+      const descriptionParts = [
+        rawMessage.includes(": ") ? rawMessage.split(": ", 1)[0] : rawMessage,
+        errorSummary ? `ERROR: ${errorSummary}` : "",
+        errorDetail ? `Detail: ${errorDetail}` : "",
+      ].filter(Boolean);
+
+      const description = descriptionParts.join("\n");
+
+      addNotification("danger", `Delete failed`, description);
     },
   });
 
@@ -180,7 +195,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
                   <Tooltip
                     content={
                       <div>
-                        {t("activePipelineTooltip", { val: "Connection" })}
+                        {t("activePipelineTooltip", { val: "connection" })}
                       </div>
                     }
                   >
@@ -203,7 +218,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
                 <Bullseye>
                   <EmptyState
                     headingLevel="h2"
-                    titleText={t("search.title", { val: "Connection" })}
+                    titleText={t("search.title", { val: "connection" })}
                     icon={SearchIcon}
                     variant={EmptyStateVariant.sm}
                   >
@@ -236,7 +251,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
               {t("deleteModel.description", {
                 val: deleteInstance.name,
               })}
-              {`connection`}
+              {`${t("connection:connection")}`}
             </p>
           }
           titleIconVariant="warning"

@@ -27,13 +27,14 @@ import { convertMapToObject } from "../../utils/helpers";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import PageHeader from "@components/PageHeader";
 import SourceSinkForm from "@components/SourceSinkForm";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
 import { connectorSchema } from "@utils/schemas";
 import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 import { formatCode } from "@utils/formatCodeUtils";
 import style from "../../styles/createConnector.module.css"
+import CreateConnectionModal from "../components/CreateConnectionModal";
 
 const ajv = new Ajv();
 
@@ -196,7 +197,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   const { addNotification } = useNotification();
 
   const [code, setCode] = useState<string | Payload>(initialCodeValue);
-  
+
   const [codeAlert, setCodeAlert] = useState<string | React.ReactElement>("");
   const [formatType, setFormatType] = useState("dbz-platform");
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
@@ -208,6 +209,13 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     new Map([["key0", { key: "", value: "" }]])
   );
   const [keyCount, setKeyCount] = React.useState<number>(1);
+
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+
+
+  const handleConnectionModalToggle = useCallback(() => {
+    setIsConnectionModalOpen(!isConnectionModalOpen);
+  }, [isConnectionModalOpen]);
 
   const validate = ajv.compile(connectorSchema);
 
@@ -442,6 +450,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                   handlePropertyChange={handlePropertyChange}
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
+                  handleConnectionModalToggle={handleConnectionModalToggle}
                 />
               ) : (
                 <>
@@ -530,6 +539,13 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
           </>
         )}
       </FormContextProvider>
+      <CreateConnectionModal
+        isConnectionModalOpen={isConnectionModalOpen}
+        handleConnectionModalToggle={handleConnectionModalToggle}
+        selectedConnectionType={"destination"}
+        resourceId={destinationId}
+        setSelectedConnection={setSelectedConnection}
+      />
     </>
   );
 };

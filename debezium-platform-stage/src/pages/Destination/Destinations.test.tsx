@@ -6,7 +6,7 @@ import { useQuery } from "react-query";
 import { useDeleteData } from "src/apis";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import destinationsMock from "../../__mocks__/data/Destinations.json";
-import pipelinesMock from "../../__mocks__/data/Pipelines.json"; // Add this import
+import pipelinesMock from "../../__mocks__/data/Pipelines.json";
 import { render } from "../../__test__/unit/test-utils";
 
 vi.mock("react-router-dom", () => ({
@@ -36,7 +36,7 @@ vi.mock("../../appLayout/AppNotificationContext", () => ({
 
 describe("Destinations", () => {
   const mockDestinations = destinationsMock;
-  const mockPipelines = pipelinesMock; // Add this line
+  const mockPipelines = pipelinesMock;
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock useQuery to return sources

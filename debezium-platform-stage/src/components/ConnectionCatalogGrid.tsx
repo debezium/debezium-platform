@@ -22,6 +22,7 @@ import { StarIcon } from "@patternfly/react-icons";
 import { Catalog } from "src/apis/types";
 import "./ConnectionCatalogGrid.css";
 import { ConnectionsSchema } from "src/apis";
+import { useTranslation } from "react-i18next";
 
 export interface IConnectionCatalogGridProps {
   onCardSelect: (selectId: string, role: string) => void;
@@ -40,19 +41,14 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
   isSchemaLoading,
 
 }) => {
- 
-
-
+  const { t } = useTranslation();
   const onCardClick = (id: string, role: string) => {
     onCardSelect(id, role);
   };
 
-
-
   return (
     <PageSection>
       {displayType === "grid" ? (
-
         <Gallery hasGutter className="custom-gallery">
           {
             isSchemaLoading ? (
@@ -79,7 +75,7 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
                         {item.name}
                       </CardTitle>
 
-                      <div className="catalog-subtitle"> {item.role === "source" ? "Source connection" : "Destination connection"}</div>
+                      <div className="catalog-subtitle"> {item.role === "source" ? `${t("source")} ${t("connection:connection")}` : `${t("destination")} ${t("connection:connection")}`}</div>
 
                     </CardHeader>
                     <CardBody>{item.description}</CardBody>
@@ -119,17 +115,17 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
                       <Flex direction={{ default: "column" }}>
                         <FlexItem>
                           <Content component="h3" style={{ marginBottom: "0" }}>{item.name}</Content>
-                          <div className="catalog-subtitle"> {item.role === "source" ? "Source connection" : "Destination connection"}</div>
+                          <div className="catalog-subtitle"> {item.role === "source" ? `${t("source")} ${t("connection:connection")}` : `${t("destination")} ${t("connection:connection")}`}</div>
                         </FlexItem>
                         <FlexItem>
                           <Content component="p">{item.description}</Content>
                         </FlexItem>
                       </Flex>
                     </DataListCell>,
-                    
+
                     <DataListCell isFilled={false} alignRight key="support validation">
                       {connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase()) && <StarIcon style={{ outline: "none" }} size={150} />}
-                  </DataListCell>
+                    </DataListCell>
                   ]}
                 />
               </DataListItemRow>

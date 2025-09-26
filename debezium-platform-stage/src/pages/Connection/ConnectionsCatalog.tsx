@@ -22,7 +22,6 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
   const { t } = useTranslation();
 
   const connectionsType = ['All', 'Source', 'Destination'];
-  // const [isValidationChecked, setIsValidationChecked] = useState<boolean>(false);
 
   const [connectionsTypeIsExpanded, setConnectionsTypeIsExpanded] = useState(false);
   const [connectionsTypeSelected, setConnectionsTypeSelected] = useState('');
@@ -66,7 +65,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
 
   const handleItemClick = (
     event:
-    React.MouseEvent | React.KeyboardEvent | MouseEvent
+      React.MouseEvent | React.KeyboardEvent | MouseEvent
   ) => {
     const id = (event.currentTarget as HTMLElement).id;
     setIsSelected(id.split("-")[2] as "grid" | "list");
@@ -114,9 +113,8 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
   );
 
   const onConnectionSelection = (connectionId: string, role: string) => {
-    const connectionSchema = connectionsSchema.find((schema) => schema.type.toLowerCase() === connectionId.toLowerCase());
 
-    navigate(`/connections/create_connection/${connectionId}`, { state: { connectionType: role, connectionSchema } });
+    navigate(`/connections/create_connection/${connectionId}`, { state: { connectionType: role } });
   };
 
   const {
@@ -127,27 +125,12 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     fetchData<ConnectionsSchema[]>(`${API_URL}/api/connections/schemas`)
   );
 
-  // const handleChange = (_event: React.FormEvent<HTMLInputElement>, checked: boolean) => {
-  //   setIsValidationChecked(checked);
-  //   if (checked) {
-  //     setSearchResult(searchResult.filter((item) => connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase())));
-  //   } else {
-  //     if (connectionsTypeSelected === 'Source') {
-  //       setSearchResult(sourceCatalog);
-  //     } else if (connectionsTypeSelected === 'Destination') {
-  //       setSearchResult(destinationCatalog);
-  //     } else {
-  //       setSearchResult(_.sortBy([...sourceCatalog, ...destinationCatalog], (o) => o.name.toLowerCase()));
-  //     }
-  //   }
-  // };
-
   return (
     <>
       <PageSection isWidthLimited>
-        <Content component="h1">{"Connection catalog"}</Content>
+        <Content component="h1">{t("connection:catalog.title")}</Content>
         <Content component="p">
-          {"Select a connection type from the catalog that you want to create. Connections that support validation are marked with a star icon. You can search by name and filter the list by source, destination, or validation support."}
+          {t("connection:catalog.description")}
         </Content>
         <Toolbar
           id="toolbar-sticky"
@@ -157,39 +140,6 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
         >
           <ToolbarContent>
             <ToolbarGroup variant="filter-group">
-              {/* <ToolbarItem>
-
-
-                <Select
-                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                    <MenuToggle
-                      ref={toggleRef}
-                      onClick={() => onConnectionsTypeToggle()}
-                      isExpanded={connectionsTypeIsExpanded}
-                      style={
-                        {
-                          width: '150px'
-                        } as React.CSSProperties
-                      }
-                    >
-                      {connectionsTypeSelected || 'Type'}
-                    </MenuToggle>
-                  )}
-                  onSelect={onConnectionsTypeSelect}
-                  onOpenChange={(isOpen) => setConnectionsTypeIsExpanded(isOpen)}
-                  selected={connectionsTypeSelected}
-                  isOpen={connectionsTypeIsExpanded}
-                >
-                  <SelectList>
-                    {connectionsType.map((option, index) => (
-                      <SelectOption key={index} value={option}>
-                        {option}
-                      </SelectOption>
-                    ))}
-                  </SelectList>
-                </Select>
-
-              </ToolbarItem> */}
               <ToolbarItem>
                 <SearchInput
                   aria-label="Items  search input"
@@ -280,15 +230,15 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
         <Bullseye>
           <EmptyState
             headingLevel="h2"
-            titleText={"No matching connection type is present"}
+            titleText={t("connection:catalog.emptyStateTitle")}
             icon={SearchIcon}
             variant={EmptyStateVariant.sm}
           >
-            <EmptyStateBody>Clear all and try again.</EmptyStateBody>
+            <EmptyStateBody>{t("connection:catalog.emptyStateDescription")}</EmptyStateBody>
             <EmptyStateFooter>
               <EmptyStateActions>
                 <Button variant="link" onClick={onClear}>
-                  Clear all
+                  {t("search.clearAll")}
                 </Button>
               </EmptyStateActions>
             </EmptyStateFooter>

@@ -90,6 +90,9 @@ export const getConnectorTypeName = (connectorType: string) => {
     case connectorType.includes("rocketmq"):
       name = "RocketMQ";
       break;
+    case connectorType.includes("kinesis"):
+      name = "Amazon Kinesis";
+      break;
     case connectorType.includes("events_hubs"):
       name = "Event Hub";
       break;
@@ -114,6 +117,18 @@ export const getConnectorTypeName = (connectorType: string) => {
       break;
     case connectorType.includes("pravega"):
       name = "Pravega";
+      break;
+    case connectorType.includes("milvus"):
+      name = "Milvus";
+      break;
+    case connectorType.includes("qdrant"):
+      name = "Qdrant";
+      break;
+    case connectorType.includes("redis"):
+      name = "Redis(Stream)";
+      break;
+    case connectorType.includes("http"):
+      name = "HTTP";
       break;
   }
 

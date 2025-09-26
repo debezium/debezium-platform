@@ -36,6 +36,7 @@ import { connectorSchema } from "@utils/schemas";
 import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 import { formatCode } from "@utils/formatCodeUtils";
 import style from "../../styles/createConnector.module.css";
+import CreateConnectionModal from "../components/CreateConnectionModal";
 
 const ajv = new Ajv();
 
@@ -198,7 +199,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   const { addNotification } = useNotification();
 
   const [code, setCode] = useState<string | Payload>(initialCodeValue);
-  const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig|undefined>();
+  const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig | undefined>();
 
   const sourceIdParam = useParams<{ sourceId: string }>();
   const [codeAlert, setCodeAlert] = useState<string | React.ReactElement>("");
@@ -214,6 +215,13 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     new Map([["key0", { key: "", value: "" }]])
   );
   const [keyCount, setKeyCount] = useState<number>(1);
+
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+
+
+  const handleConnectionModalToggle = useCallback(() => {
+    setIsConnectionModalOpen(!isConnectionModalOpen);
+  }, [isConnectionModalOpen]);
 
   const [signalCollectionName, setSignalCollectionName] = useState<string>("");
 
@@ -456,6 +464,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   updateSignalCollectionName={updateSignalCollectionName}
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
+                  handleConnectionModalToggle={handleConnectionModalToggle}
                 />
               ) : (
                 <>
@@ -541,6 +550,13 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
           </>
         )}
       </FormContextProvider>
+      <CreateConnectionModal
+        isConnectionModalOpen={isConnectionModalOpen}
+        handleConnectionModalToggle={handleConnectionModalToggle}
+        selectedConnectionType={"source"}
+        resourceId={sourceId}
+        setSelectedConnection={setSelectedConnection}
+      />
     </>
   );
 };

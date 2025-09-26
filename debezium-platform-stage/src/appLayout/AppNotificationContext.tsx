@@ -106,7 +106,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
           key={key}
           id={key.toString()}
         >
-          <p>{description}</p>
+          <p style={{ whiteSpace: 'pre-line' }}>{description}</p>
         </Alert>,
         ...prevAlerts,
       ]);

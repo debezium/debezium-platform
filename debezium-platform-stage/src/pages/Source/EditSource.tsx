@@ -19,7 +19,7 @@ import { PencilAltIcon, CodeIcon } from "@patternfly/react-icons";
 import { useParams, useSearchParams } from "react-router-dom";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { PageHeader } from "@patternfly/react-component-groups"
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ConnectionConfig,
   editPut,
@@ -39,6 +39,7 @@ import { useTranslation } from "react-i18next";
 import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css";
 import EditConfirmationModel from "../components/EditConfirmationModel";
+import CreateConnectionModal from "../components/CreateConnectionModal";
 
 const ajv = new Ajv();
 
@@ -178,6 +179,13 @@ const EditSource: React.FunctionComponent = () => {
   });
   const [codeAlert, setCodeAlert] = useState("");
 
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+
+
+  const handleConnectionModalToggle = useCallback(() => {
+    setIsConnectionModalOpen(!isConnectionModalOpen);
+  }, [isConnectionModalOpen]);
+
   const validate = ajv.compile(connectorSchema);
 
   const setConfigProperties = (configProp: SourceConfig) => {
@@ -203,6 +211,7 @@ const EditSource: React.FunctionComponent = () => {
       } else {
         setSource(response.data as Source);
         setConfigProperties(response.data?.config ?? { "": "" });
+        setSelectedConnection(response.data?.connection as ConnectionConfig);
         setCode((prevCode: any) => {
           return {
             ...prevCode,
@@ -215,7 +224,7 @@ const EditSource: React.FunctionComponent = () => {
     };
 
     fetchSources();
-  }, [sourceId]);
+  }, [sourceId, setSelectedConnection]);
 
   const handleAddProperty = () => {
     const newKey = `key${keyCount}`;
@@ -301,6 +310,7 @@ const EditSource: React.FunctionComponent = () => {
         const payload = {
           description: values["description"],
           config: convertMapToObject(properties),
+          ...(selectedConnection ? { connection: selectedConnection } : {}),
           name: values["source-name"],
         };
         await editSource(payload as Payload);
@@ -449,6 +459,7 @@ const EditSource: React.FunctionComponent = () => {
                   viewMode={viewMode}
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
+                  handleConnectionModalToggle={handleConnectionModalToggle}
                 />
               ) : (
                 <>
@@ -532,6 +543,14 @@ const EditSource: React.FunctionComponent = () => {
         pendingSave={pendingSave}
         setPendingSave={setPendingSave}
         handleEdit={handleEditSource} />
+
+      <CreateConnectionModal
+        isConnectionModalOpen={isConnectionModalOpen}
+        handleConnectionModalToggle={handleConnectionModalToggle}
+        selectedConnectionType={"source"}
+        resourceId={selectedConnection?.name || ""}
+        setSelectedConnection={setSelectedConnection}
+      />
     </>
   );
 };
