@@ -33,7 +33,7 @@
         <surefire-plugin.version>3.2.5</surefire-plugin.version>
         <version.assertj>3.24.2</version.assertj>
         <version.mapstruct>1.5.5.Final</version.mapstruct>
-        <version.debezium>3.2.3.Final</version.debezium>
+        <version.debezium>${project.version}</version.debezium>
         <smallrye-open-api-core.version>4.0.5</smallrye-open-api-core.version>
         <blaze-persistence.version>1.6.11</blaze-persistence.version>
         <test-containers.version>1.20.0</test-containers.version>
