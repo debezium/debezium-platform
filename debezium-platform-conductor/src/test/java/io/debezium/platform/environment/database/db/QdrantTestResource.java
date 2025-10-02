@@ -14,12 +14,12 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
 /**
  * Test resource for Qdrant vector database using Testcontainers.
- * 
- * <p>This class provides a containerized Qdrant instance WITHOUT authentication 
- * for integration testing. It manages the lifecycle of a Docker container running 
- * Qdrant server in non-authenticated mode, making it suitable for testing basic 
+ *
+ * <p>This class provides a containerized Qdrant instance WITHOUT authentication
+ * for integration testing. It manages the lifecycle of a Docker container running
+ * Qdrant server in non-authenticated mode, making it suitable for testing basic
  * connection validation scenarios.</p>
- * 
+ *
  * <p>Key features:</p>
  * <ul>
  *   <li>No authentication required - server starts without API key validation</li>
@@ -27,12 +27,12 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
  *   <li>Port mapping and configuration injection for test scenarios</li>
  *   <li>Compatible with Quarkus test resource lifecycle</li>
  * </ul>
- * 
- * <p>This resource is ideal for testing connection validation logic, parameter 
- * handling, and network connectivity without the complexity of authentication 
- * setup. It uses Qdrant v1.7.4 and exposes the standard HTTP port (6333) for 
+ *
+ * <p>This resource is ideal for testing connection validation logic, parameter
+ * handling, and network connectivity without the complexity of authentication
+ * setup. It uses Qdrant v1.7.4 and exposes the standard HTTP port (6333) for
  * client connections.</p>
- * 
+ *
  * @author Pranav Tiwari
  * @since 1.0
  */
@@ -52,8 +52,7 @@ public class QdrantTestResource implements QuarkusTestResourceLifecycleManager {
         // Configure timeout for Qdrant connection validator
         return Map.of(
                 "destinations.qdrant.connection.timeout", "30",
-                "test.qdrant.auth.enabled", "false"
-        );
+                "test.qdrant.auth.enabled", "false");
     }
 
     @Override

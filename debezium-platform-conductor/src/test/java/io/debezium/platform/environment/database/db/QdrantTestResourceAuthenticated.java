@@ -14,12 +14,12 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
 /**
  * Test resource for Qdrant vector database using Testcontainers WITH authentication.
- * 
- * <p>This class provides a containerized Qdrant instance WITH API key authentication 
- * enabled for integration testing. It manages the lifecycle of a Docker container running 
- * Qdrant server in authenticated mode, making it suitable for testing secure connection 
+ *
+ * <p>This class provides a containerized Qdrant instance WITH API key authentication
+ * enabled for integration testing. It manages the lifecycle of a Docker container running
+ * Qdrant server in authenticated mode, making it suitable for testing secure connection
  * validation scenarios that mirror production environments.</p>
- * 
+ *
  * <p>Key features:</p>
  * <ul>
  *   <li>API key authentication required - server starts with authentication enabled</li>
@@ -29,17 +29,17 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
  *   <li>Compatible with Quarkus test resource lifecycle</li>
  *   <li>CORS enabled for web-based testing scenarios</li>
  * </ul>
- * 
+ *
  * <p>The container is configured with environment variables to enable authentication:</p>
  * <ul>
  *   <li>{@code QDRANT__SERVICE__API_KEY} - Sets the required API key</li>
  *   <li>{@code QDRANT__SERVICE__ENABLE_CORS} - Enables CORS for web clients</li>
  * </ul>
- * 
- * <p>The default API key used is "secure-test-api-key-123" which can be accessed 
- * via {@link #getApiKey()} method. This key is only suitable for testing environments 
+ *
+ * <p>The default API key used is "secure-test-api-key-123" which can be accessed
+ * via {@link #getApiKey()} method. This key is only suitable for testing environments
  * and should never be used in production.</p>
- * 
+ *
  * @author Pranav Tiwari
  * @since 1.0
  */
@@ -68,8 +68,7 @@ public class QdrantTestResourceAuthenticated implements QuarkusTestResourceLifec
         return Map.of(
                 "destinations.qdrant.connection.timeout", "30",
                 "test.qdrant.auth.enabled", "true",
-                "test.qdrant.api.key", API_KEY
-        );
+                "test.qdrant.api.key", API_KEY);
     }
 
     @Override

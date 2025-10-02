@@ -30,12 +30,12 @@ import io.quarkus.test.junit.QuarkusTest;
 
 /**
  * Integration tests for QdrantConnectionValidator using Testcontainers WITH authentication.
- * 
+ *
  * <p>This test class validates the QdrantConnectionValidator functionality against
  * a real Qdrant instance running in a Docker container WITH API key authentication
  * enabled. It provides comprehensive testing of authenticated connections, security
  * validation, and real-world production-like scenarios.</p>
- * 
+ *
  * <p>Test scenarios covered:</p>
  * <ul>
  *   <li><strong>Authentication Success:</strong> Valid API key connections</li>
@@ -44,18 +44,18 @@ import io.quarkus.test.junit.QuarkusTest;
  *   <li><strong>TLS with Authentication:</strong> Secure connections with API key validation</li>
  *   <li><strong>Parameter Validation:</strong> Required field validation in authenticated context</li>
  * </ul>
- * 
- * <p>The tests use {@link QdrantTestResourceAuthenticated} which provides a containerized 
- * Qdrant instance with authentication enabled. The container is configured with a test 
+ *
+ * <p>The tests use {@link QdrantTestResourceAuthenticated} which provides a containerized
+ * Qdrant instance with authentication enabled. The container is configured with a test
  * API key that can be accessed via {@code QdrantTestResourceAuthenticated.getApiKey()}.</p>
- * 
+ *
  * <p><strong>Test Categories:</strong></p>
  * <ul>
  *   <li><strong>Authentication Tests:</strong> Verify correct API key handling and rejection of invalid credentials</li>
  *   <li><strong>Network Tests:</strong> Ensure authentication errors are distinguished from network errors</li>
  *   <li><strong>Parameter Tests:</strong> Validate that parameter validation works in authenticated environments</li>
  * </ul>
- * 
+ *
  * <p><strong>Prerequisites:</strong></p>
  * <ul>
  *   <li>Docker must be running on the test environment</li>
@@ -63,11 +63,11 @@ import io.quarkus.test.junit.QuarkusTest;
  *   <li>Network access to pull Qdrant Docker image (qdrant/qdrant:v1.7.4)</li>
  *   <li>Container must support authentication configuration via environment variables</li>
  * </ul>
- * 
- * <p><strong>Security Note:</strong> This test uses a predefined test API key 
- * ("secure-test-api-key-123") which is only suitable for testing environments and should 
+ *
+ * <p><strong>Security Note:</strong> This test uses a predefined test API key
+ * ("secure-test-api-key-123") which is only suitable for testing environments and should
  * never be used in production.</p>
- * 
+ *
  * @author Pranav Tiwari
  * @since 1.0
  */
