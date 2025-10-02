@@ -30,12 +30,12 @@ import io.quarkus.test.junit.QuarkusTest;
 
 /**
  * Integration tests for QdrantConnectionValidator using Testcontainers WITHOUT authentication.
- * 
+ *
  * <p>This test class validates the QdrantConnectionValidator functionality against
  * a real Qdrant instance running in a Docker container WITHOUT authentication.
  * It provides comprehensive testing of basic connection validation, network connectivity,
  * and parameter handling in a non-authenticated environment.</p>
- * 
+ *
  * <p>Test scenarios covered:</p>
  * <ul>
  *   <li><strong>Successful Connections:</strong> Valid hostname and port configurations</li>
@@ -45,12 +45,12 @@ import io.quarkus.test.junit.QuarkusTest;
  *   <li><strong>TLS Configuration:</strong> SSL/TLS connection attempts and error handling</li>
  *   <li><strong>API Key Handling:</strong> Optional API key parameter processing (ignored by non-auth server)</li>
  * </ul>
- * 
- * <p>The tests use {@link QdrantTestResource} which provides a containerized Qdrant 
- * instance without authentication enabled. This makes it ideal for testing basic 
- * connection logic, parameter validation, and network error scenarios without the 
+ *
+ * <p>The tests use {@link QdrantTestResource} which provides a containerized Qdrant
+ * instance without authentication enabled. This makes it ideal for testing basic
+ * connection logic, parameter validation, and network error scenarios without the
  * complexity of authentication setup.</p>
- * 
+ *
  * <p><strong>Test Categories:</strong></p>
  * <ul>
  *   <li><strong>Connection Tests:</strong> Verify successful connections to running container</li>
@@ -58,18 +58,18 @@ import io.quarkus.test.junit.QuarkusTest;
  *   <li><strong>Parameter Tests:</strong> Validate required and optional parameter handling</li>
  *   <li><strong>Timeout Tests:</strong> Ensure proper timeout behavior for unreachable hosts</li>
  * </ul>
- * 
+ *
  * <p><strong>Prerequisites:</strong></p>
  * <ul>
  *   <li>Docker must be running on the test environment</li>
  *   <li>Testcontainers Qdrant dependency must be available</li>
  *   <li>Network access to pull Qdrant Docker image (qdrant/qdrant:v1.7.4)</li>
  * </ul>
- * 
- * <p>These tests are faster and more reliable than authenticated tests since they don't 
- * require complex container configuration, making them ideal for continuous integration 
+ *
+ * <p>These tests are faster and more reliable than authenticated tests since they don't
+ * require complex container configuration, making them ideal for continuous integration
  * and rapid feedback during development.</p>
- * 
+ *
  * @author Pranav Tiwari
  * @since 1.0
  */

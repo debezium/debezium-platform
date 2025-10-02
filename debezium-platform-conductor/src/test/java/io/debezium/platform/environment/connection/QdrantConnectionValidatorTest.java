@@ -24,12 +24,12 @@ import io.debezium.platform.environment.connection.destination.QdrantConnectionV
 
 /**
  * Unit tests for QdrantConnectionValidator.
- * 
+ *
  * <p>This test class focuses on parameter validation, error handling scenarios,
  * and business logic testing without requiring an actual Qdrant instance. It uses
  * mock connections and invalid configurations to test various edge cases and
  * validation rules.</p>
- * 
+ *
  * <p>Test coverage includes:</p>
  * <ul>
  *   <li><strong>Parameter Validation:</strong> Required fields (hostname, port) and their constraints</li>
@@ -39,7 +39,7 @@ import io.debezium.platform.environment.connection.destination.QdrantConnectionV
  *   <li><strong>Connection Failure Scenarios:</strong> Network errors and error message validation</li>
  *   <li><strong>Edge Cases:</strong> Null connections, boundary values, special characters</li>
  * </ul>
- * 
+ *
  * <p><strong>Test Categories:</strong></p>
  * <ul>
  *   <li><strong>Parameter Tests:</strong> Validate required and optional parameter handling</li>
@@ -47,12 +47,12 @@ import io.debezium.platform.environment.connection.destination.QdrantConnectionV
  *   <li><strong>Error Handling Tests:</strong> Verify proper error messages and failure modes</li>
  *   <li><strong>Timeout Tests:</strong> Test connection timeout behavior with unreachable hosts</li>
  * </ul>
- * 
+ *
  * <p>These tests are fast-running and don't require Docker or external dependencies,
  * making them ideal for continuous integration and rapid feedback during development.
- * They use the {@link TestConnectionView} helper class to create mock connection 
+ * They use the {@link TestConnectionView} helper class to create mock connection
  * configurations for testing various scenarios.</p>
- * 
+ *
  * <p><strong>Key Testing Techniques:</strong></p>
  * <ul>
  *   <li>Non-routable IP addresses (10.255.255.1) for reliable timeout testing</li>
@@ -60,7 +60,7 @@ import io.debezium.platform.environment.connection.destination.QdrantConnectionV
  *   <li>Null and empty value testing for required parameters</li>
  *   <li>Invalid data type testing (strings for numeric fields)</li>
  * </ul>
- * 
+ *
  * @author Pranav Tiwari
  * @since 1.0
  */
