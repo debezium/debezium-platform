@@ -60,18 +60,36 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
 
     const selectedSchemaProperties = selectedSchema?.schema;
 
-    console.log("connectionId", connectionId);
-    console.log("selectedSchema", selectedSchema);
-    console.log("selectedSchemaProperties", selectedSchemaProperties);
+    // const schema = yup.object({
+    //     name: yup.string().required(),
+    //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //     ...(selectedSchemaProperties?.required?.reduce((acc: any, field: string) => {
+    //         acc[field] = yup.string().required();
+    //         return acc;
+    //     }, {}) || {})
+    // }).required();
 
 
     const schema = yup.object({
         name: yup.string().required(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(selectedSchemaProperties?.required?.reduce((acc: any, field: string) => {
-            acc[field] = yup.string().required();
-            return acc;
-        }, {}) || {})
+        ...(selectedSchemaProperties?.properties
+            ? Object.entries(selectedSchemaProperties.properties).reduce((acc: any, [field, propSchema]) => {
+                const isRequired = selectedSchemaProperties.required?.includes(field);
+                const isNumeric = propSchema.type === "integer" || propSchema.type === "number";
+                let validator = isNumeric
+                    ? yup
+                        .number()
+                        .transform((currentValue, originalValue) => (originalValue === '' ? undefined : currentValue))
+                        .typeError("Must be a number")
+                    : yup.string();
+                if (propSchema.type === "integer") {
+                    validator = (validator as yup.NumberSchema<number | undefined>).integer("Must be an integer");
+                }
+                acc[field] = isRequired ? validator.required() : validator.notRequired();
+                return acc;
+            }, {})
+            : {})
     }).required();
 
     const handleAddProperty = () => {
@@ -117,7 +135,6 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
 
 
     const validateConnection = async (payload: ConnectionPayload) => {
-        console.log("payload", payload);
         const response = await createPost(`${API_URL}/api/connections/validate`, payload);
 
         if (response.error) {
@@ -297,7 +314,9 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                                     {propertySchema.type === "integer" && <Controller
                                                         name={propertyName}
                                                         control={control}
-                                                        rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
+                                                        rules={{
+                                                            required: selectedSchemaProperties.required.includes(propertyName)
+                                                        }}
                                                         render={({ field }) => (
                                                             <TextInput
                                                                 id={propertyName}
