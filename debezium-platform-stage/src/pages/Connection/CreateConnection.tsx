@@ -60,32 +60,20 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
 
     const selectedSchemaProperties = selectedSchema?.schema;
 
-    // const schema = yup.object({
-    //     name: yup.string().required(),
-    //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //     ...(selectedSchemaProperties?.required?.reduce((acc: any, field: string) => {
-    //         acc[field] = yup.string().required();
-    //         return acc;
-    //     }, {}) || {})
-    // }).required();
-
 
     const schema = yup.object({
         name: yup.string().required(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(selectedSchemaProperties?.properties
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ? Object.entries(selectedSchemaProperties.properties).reduce((acc: any, [field, propSchema]) => {
                 const isRequired = selectedSchemaProperties.required?.includes(field);
-                const isNumeric = propSchema.type === "integer" || propSchema.type === "number";
-                let validator = isNumeric
+                const isNumeric = propSchema.type === "integer";
+                const validator = isNumeric
                     ? yup
                         .number()
                         .transform((currentValue, originalValue) => (originalValue === '' ? undefined : currentValue))
-                        .typeError("Must be a number")
+                        .typeError("Must be a integer")
                     : yup.string();
-                if (propSchema.type === "integer") {
-                    validator = (validator as yup.NumberSchema<number | undefined>).integer("Must be an integer");
-                }
                 acc[field] = isRequired ? validator.required() : validator.notRequired();
                 return acc;
             }, {})
