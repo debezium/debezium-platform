@@ -7,6 +7,7 @@ package io.debezium.platform.environment.connection.destination;
 
 import java.util.Map;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -39,6 +40,7 @@ import io.milvus.v2.client.MilvusClientV2;
  *
  * @author Pranav Tiwari
  */
+@ApplicationScoped
 @Named("MILVUS")
 public class MilvusConnectionValidator implements ConnectionValidator {
 
