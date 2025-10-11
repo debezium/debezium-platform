@@ -220,7 +220,7 @@
     }
   },
   {
-    "type": "KINESIS",
+    "type": "AMAZON_KINESIS",
     "schema": {
       "title": "Amazon Kinesis stream connection properties",
       "description": "Amazon Kinesis stream connection properties",
