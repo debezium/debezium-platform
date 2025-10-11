@@ -214,7 +214,43 @@
       "properties": {
         "bootstrap.servers": {
           "type": "list",
-          "title": "List of “hostname:port” pairs that address one or more (even all) of the brokers."
+          "title": "List of "hostname:port" pairs that address one or more (even all) of the brokers."
+        }
+      }
+    }
+  },
+  {
+    "type": "MILVUS",
+    "schema": {
+      "title": "Milvus vector database connection properties",
+      "description": "Milvus vector database connection properties",
+      "type": "object",
+      "required": [
+        "uri"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "uri": {
+          "type": "string",
+          "title": "The URI of the Milvus server (e.g., http://localhost:19530)"
+        },
+        "database": {
+          "type": "string",
+          "title": "The name of the database to connect to (optional)"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username for authentication (optional)"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password for authentication (optional)"
+        },
+        "token": {
+          "type": "string",
+          "title": "Token for authentication (alternative to username/password, format: username:password)"
         }
       }
     }

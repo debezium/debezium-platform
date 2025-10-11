@@ -364,6 +364,13 @@
             <version>${kafka-clients.version}</version>
         </dependency>
 
+        <!-- Milvus SDK for connection validation -->
+        <dependency>
+            <groupId>io.milvus</groupId>
+            <artifactId>milvus-sdk-java</artifactId>
+            <version>2.6.4</version>
+        </dependency>
+
 
         <dependency>
             <groupId>io.quarkus</groupId>
