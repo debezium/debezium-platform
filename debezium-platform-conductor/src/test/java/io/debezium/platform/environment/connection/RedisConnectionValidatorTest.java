@@ -318,4 +318,3 @@ class RedisConnectionValidatorTest {
         Assertions.assertThat(result.message()).doesNotContain("must be specified");
     }
 }
-

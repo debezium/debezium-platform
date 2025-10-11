@@ -83,4 +83,3 @@ public class RedisTestResourceAuthenticated implements QuarkusTestResourceLifecy
         REDIS.stop();
     }
 }
-

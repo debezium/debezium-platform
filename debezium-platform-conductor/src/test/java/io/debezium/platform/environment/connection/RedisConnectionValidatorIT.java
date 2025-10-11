@@ -258,4 +258,3 @@ class RedisConnectionValidatorIT {
                 "timeout", "Failed to connect", "Connection refused");
     }
 }
-
