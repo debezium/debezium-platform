@@ -64,4 +64,3 @@ public class RedisTestResource implements QuarkusTestResourceLifecycleManager {
         REDIS.stop();
     }
 }
-
