@@ -1,6 +1,10 @@
 package io.debezium.platform.environment.connection.destination;
 
+import java.util.Map;
+
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,14 +13,10 @@ import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.ConnectionValidator;
 
+import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisClientConfig;
-import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.exceptions.JedisConnectionException;
-
-import javax.net.ssl.SSLParameters;
-import javax.net.ssl.SSLSocketFactory;
-import java.util.Map;
 
 /**
  * Redis connection validator with support for:
@@ -25,6 +25,7 @@ import java.util.Map;
  * - Optional password only (classic Redis auth)
  * - Optional TLS/SSL connection
  */
+@ApplicationScoped
 @Named("REDIS")
 public class RedisConnectionValidator implements ConnectionValidator {
 
@@ -39,7 +40,7 @@ public class RedisConnectionValidator implements ConnectionValidator {
     private final int defaultTimeout;
 
     public RedisConnectionValidator(
-            @ConfigProperty(name = "destinations.redis.connection.timeout") int defaultTimeout) {
+                                    @ConfigProperty(name = "destinations.redis.connection.timeout") int defaultTimeout) {
         this.defaultTimeout = defaultTimeout;
     }
 
@@ -60,7 +61,8 @@ public class RedisConnectionValidator implements ConnectionValidator {
             }
 
             return performConnectionValidation(redisConfig);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             LOGGER.error("Unexpected error during Redis connection validation", e);
             return ConnectionValidationResult.failed("Unexpected error: " + e.getMessage());
         }
@@ -79,7 +81,8 @@ public class RedisConnectionValidator implements ConnectionValidator {
         // Validate port is a number
         try {
             Integer.parseInt(config.get(PORT_KEY).toString());
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             return ConnectionValidationResult.failed("Port must be a valid integer");
         }
 
@@ -109,49 +112,55 @@ public class RedisConnectionValidator implements ConnectionValidator {
         try {
             LOGGER.debug("Connecting to Redis at {}:{} SSL={}", host, port, useSsl);
 
-            // Build Jedis client config with SSL if enabled
-            JedisClientConfig clientConfig = DefaultJedisClientConfig.builder()
+            // Build Jedis client config with authentication and SSL
+            DefaultJedisClientConfig.Builder configBuilder = DefaultJedisClientConfig.builder()
                     .ssl(useSsl)
-                    // You can customize SSL parameters or socket factory if needed here
                     .connectionTimeoutMillis(defaultTimeout * 1000)
-                    .socketTimeoutMillis(defaultTimeout * 1000)
-                    .build();
+                    .socketTimeoutMillis(defaultTimeout * 1000);
 
-            jedis = new Jedis(host, port, clientConfig);
-
-            // Authentication logic:
-            if (username != null && !username.isEmpty()) {
+            // Add authentication credentials to the config
+            if (username != null && !username.isEmpty() && password != null) {
                 // Redis 6+ ACL auth with username and password
-                LOGGER.debug("Authenticating with username and password");
-                jedis.auth(username, password);
-            } else if (password != null && !password.isEmpty()) {
+                LOGGER.debug("Configuring authentication with username and password");
+                configBuilder.user(username).password(password);
+            }
+            else if (password != null && !password.isEmpty()) {
                 // Classic password-only auth
-                LOGGER.debug("Authenticating with password only");
-                jedis.auth(password);
-            } else {
+                LOGGER.debug("Configuring authentication with password only");
+                configBuilder.password(password);
+            }
+            else {
                 LOGGER.debug("No authentication credentials provided");
             }
 
-            // Send a simple PING command
+            JedisClientConfig clientConfig = configBuilder.build();
+            jedis = new Jedis(host, port, clientConfig);
+
+            // Send a simple PING command to test the connection
             String response = jedis.ping();
             LOGGER.debug("Redis PING response: {}", response);
 
             if ("PONG".equalsIgnoreCase(response)) {
                 return ConnectionValidationResult.successful();
-            } else {
+            }
+            else {
                 return ConnectionValidationResult.failed("Unexpected PING response from Redis: " + response);
             }
-        } catch (JedisConnectionException e) {
+        }
+        catch (JedisConnectionException e) {
             LOGGER.warn("Failed to connect to Redis server", e);
             return ConnectionValidationResult.failed("Failed to connect to Redis: " + e.getMessage());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             LOGGER.error("Unexpected error during Redis validation", e);
             return ConnectionValidationResult.failed("Unexpected error: " + e.getMessage());
-        } finally {
+        }
+        finally {
             if (jedis != null) {
                 try {
                     jedis.close();
-                } catch (Exception ex) {
+                }
+                catch (Exception ex) {
                     LOGGER.warn("Error closing Redis client", ex);
                 }
             }

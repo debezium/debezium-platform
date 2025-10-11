@@ -41,13 +41,12 @@ sources:
     connection:
       timeout: 60
 destinations:
+  redis:
+    connection:
+      timeout: 60
   kafka:
     connection:
       timeout: 60
-  redis:
-    connection:
-      timeout: 5
-
 
 quarkus:
   rest-client:
