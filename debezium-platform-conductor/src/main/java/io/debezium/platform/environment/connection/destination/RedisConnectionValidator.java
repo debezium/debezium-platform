@@ -1,3 +1,9 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
+
 package io.debezium.platform.environment.connection.destination;
 
 import java.util.Map;
@@ -24,6 +30,7 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
  * - Optional username/password (Redis ACL support)
  * - Optional password only (classic Redis auth)
  * - Optional TLS/SSL connection
+ * @author Pranav Kumar Tiwari
  */
 @ApplicationScoped
 @Named("REDIS")
