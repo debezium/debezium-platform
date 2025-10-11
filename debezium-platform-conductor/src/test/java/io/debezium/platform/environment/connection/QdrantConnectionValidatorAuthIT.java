@@ -13,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import io.debezium.platform.environment.database.db.QdrantTestResourceAuthenticated;
 import jakarta.inject.Inject;
 
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +24,7 @@ import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.destination.QdrantConnectionValidator;
+import io.debezium.platform.environment.database.db.QdrantTestResourceAuthenticated;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 
