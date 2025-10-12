@@ -6,6 +6,7 @@
 
 package io.debezium.platform.environment.connection.destination;
 
+import java.net.URI;
 import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -36,6 +37,7 @@ public class KinesisConnectionValidator implements ConnectionValidator {
 
     private static final String REGION_KEY = "region";
     private static final String STREAM_NAME_KEY = "stream";
+    private static final String ENDPOINT_KEY = "endpoint";
     private static final String PARTITION_KEY = "partitionKey"; // Optional
     private static final String TEST_MESSAGE = "Kinesis validation test message";
 
@@ -90,20 +92,20 @@ public class KinesisConnectionValidator implements ConnectionValidator {
         try {
             String regionName = config.get(REGION_KEY).toString().trim();
             String streamName = config.get(STREAM_NAME_KEY).toString().trim();
-            String partitionKey = config.containsKey(PARTITION_KEY)
-                    ? config.get(PARTITION_KEY).toString()
-                    : "test-partition";
 
             LOGGER.debug("Connecting to Kinesis in region: {}, stream: {}", regionName, streamName);
 
-            kinesisClient = KinesisClient.builder()
-                    .region(Region.of(regionName))
-                    .build();
+            var builder = KinesisClient.builder()
+                    .region(Region.of(regionName));
 
-            kinesisClient.describeStreamSummary(builder -> builder.streamName(streamName));
+            // ✅ Allow custom endpoint for testing (LocalStack)
+            if (config.containsKey(ENDPOINT_KEY) && config.get(ENDPOINT_KEY) != null) {
+                builder.endpointOverride(URI.create(config.get(ENDPOINT_KEY).toString().trim()));
+            }
 
-            // Describe the stream without sending data
-            var response = kinesisClient.describeStreamSummary(builder -> builder.streamName(streamName));
+            kinesisClient = builder.build();
+
+            var response = kinesisClient.describeStreamSummary(r -> r.streamName(streamName));
 
             LOGGER.debug("Successfully described Kinesis stream '{}'. Status: {}",
                     streamName, response.streamDescriptionSummary().streamStatusAsString());
@@ -112,13 +114,19 @@ public class KinesisConnectionValidator implements ConnectionValidator {
 
         }
         catch (software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException e) {
-            return ConnectionValidationResult.failed("Stream not found: Please verify the stream name and region.");
+            String messages = "Stream not found: Please verify the stream name and region.";
+            LOGGER.error(messages, e);
+            return ConnectionValidationResult.failed(messages);
         }
         catch (software.amazon.awssdk.services.kinesis.model.AccessDeniedException e) {
-            return ConnectionValidationResult.failed("Access denied: Check IAM permissions or credentials.");
+            String messages = "Access denied: Check IAM permissions or credentials.";
+            LOGGER.error(messages, e);
+            return ConnectionValidationResult.failed(messages);
         }
         catch (software.amazon.awssdk.core.exception.SdkClientException e) {
-            return ConnectionValidationResult.failed("Client error: " + e.getMessage());
+            String messages = "Client error: " + e.getMessage();
+            LOGGER.error(messages, e);
+            return ConnectionValidationResult.failed(messages);
         }
         catch (Exception e) {
             LOGGER.warn("Generic exception during validation", e);
