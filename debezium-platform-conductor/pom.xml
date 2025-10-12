@@ -364,6 +364,12 @@
             <version>${kafka-clients.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-kinesis</artifactId>
+            <version>1.12.791</version>
+        </dependency>
+
 
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -424,6 +430,12 @@
             <artifactId>mssqlserver</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>localstack</artifactId>
+            <version>${test-containers.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -463,6 +475,12 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-test-kafka-companion</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>kinesis</artifactId>
+            <version>2.29.23</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
     <build>
