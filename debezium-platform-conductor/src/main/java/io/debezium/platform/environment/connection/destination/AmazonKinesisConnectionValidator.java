@@ -31,9 +31,9 @@ import software.amazon.awssdk.services.kinesis.KinesisClient;
  */
 @ApplicationScoped
 @Named("AMAZON_KINESIS")
-public class KinesisConnectionValidator implements ConnectionValidator {
+public class AmazonKinesisConnectionValidator implements ConnectionValidator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KinesisConnectionValidator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AmazonKinesisConnectionValidator.class);
 
     private static final String REGION_KEY = "region";
     private static final String STREAM_NAME_KEY = "stream";
@@ -43,8 +43,8 @@ public class KinesisConnectionValidator implements ConnectionValidator {
 
     private final int defaultTimeout;
 
-    public KinesisConnectionValidator(
-                                      @ConfigProperty(name = "destinations.kinesis.connection.timeout") int defaultTimeout) {
+    public AmazonKinesisConnectionValidator(
+                                            @ConfigProperty(name = "destinations.kinesis.connection.timeout") int defaultTimeout) {
         this.defaultTimeout = defaultTimeout;
     }
 

@@ -21,23 +21,23 @@ import org.junit.jupiter.api.Test;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
-import io.debezium.platform.environment.connection.destination.KinesisConnectionValidator;
-import io.debezium.platform.environment.database.db.KinesisTestResource;
+import io.debezium.platform.environment.connection.destination.AmazonKinesisConnectionValidator;
+import io.debezium.platform.environment.database.db.AmazonKinesisTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 
 /**
- * Integration tests for {@link KinesisConnectionValidator}.
+ * Integration tests for {@link AmazonKinesisConnectionValidator}.
  * Tests the validator against a real LocalStack container running Kinesis.
  *
  * @author Pranav Tiwari
  */
 @QuarkusTest
-@QuarkusTestResource(KinesisTestResource.class)
-public class KinesisConnectionValidatorIT {
+@QuarkusTestResource(AmazonKinesisTestResource.class)
+public class AmazonKinesisConnectionValidatorIT {
 
     @Inject
-    KinesisConnectionValidator validator;
+    AmazonKinesisConnectionValidator validator;
 
     // ==================== SUCCESSFUL CONNECTION TESTS ====================
 
