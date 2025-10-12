@@ -20,22 +20,22 @@ import org.junit.jupiter.api.Test;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
-import io.debezium.platform.environment.connection.destination.KinesisConnectionValidator;
+import io.debezium.platform.environment.connection.destination.AmazonKinesisConnectionValidator;
 
 /**
- * Unit tests for {@link KinesisConnectionValidator}.
+ * Unit tests for {@link AmazonKinesisConnectionValidator}.
  * Tests configuration validation logic without actual AWS connectivity.
  *
  * @author Pranav Tiwari
  */
-class KinesisConnectionValidatorTest {
+class AmazonKinesisConnectionValidatorTest {
 
     private static final int DEFAULT_TIMEOUT = 30;
-    private KinesisConnectionValidator validator;
+    private AmazonKinesisConnectionValidator validator;
 
     @BeforeEach
     void setUp() {
-        validator = new KinesisConnectionValidator(DEFAULT_TIMEOUT);
+        validator = new AmazonKinesisConnectionValidator(DEFAULT_TIMEOUT);
     }
 
     // ==================== NULL AND EMPTY CONFIGURATION TESTS ====================

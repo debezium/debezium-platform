@@ -68,7 +68,7 @@ import software.amazon.awssdk.services.kinesis.model.ResourceInUseException;
  *
  * @author Pranav Kumar Tiwari
  */
-public class KinesisTestResource implements QuarkusTestResourceLifecycleManager {
+public class AmazonKinesisTestResource implements QuarkusTestResourceLifecycleManager {
 
     private LocalStackContainer localStack;
     private final String streamName = "test-stream";
