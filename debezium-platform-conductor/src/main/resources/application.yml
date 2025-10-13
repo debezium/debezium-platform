@@ -145,7 +145,6 @@ quarkus:
     datasource:
       devservices:
         enabled: true
-        port: 5432
         image-name: quay.io/debezium/postgres:16-alpine
     flyway:
       baseline-on-migrate: true

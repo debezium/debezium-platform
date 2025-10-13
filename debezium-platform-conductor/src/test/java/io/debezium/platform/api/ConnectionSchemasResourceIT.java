@@ -24,7 +24,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 
 @QuarkusTest
-class ConnectionSchemasResourceTest {
+class ConnectionSchemasResourceIT {
 
     @Test
     void shouldReturnValidJsonArray() {

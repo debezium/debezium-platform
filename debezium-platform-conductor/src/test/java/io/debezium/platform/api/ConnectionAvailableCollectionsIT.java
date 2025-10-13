@@ -12,9 +12,11 @@ import static org.hamcrest.CoreMatchers.is;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.debezium.platform.util.TestDatasourceHelper;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
@@ -23,20 +25,31 @@ import io.restassured.response.Response;
 @QuarkusTest
 public class ConnectionAvailableCollectionsIT {
 
+    @ConfigProperty(name = "quarkus.datasource.jdbc.url")
+    String datasourceUrl;
+
+    @ConfigProperty(name = "quarkus.datasource.username")
+    String datasourceUsername;
+
+    @ConfigProperty(name = "quarkus.datasource.password")
+    String datasourcePassword;
+
     private String createConnectionRequest() {
+        TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
+
         return """
                 {
                   "name": "valid-test-connection",
                   "type": "POSTGRESQL",
                   "config": {
-                    "hostname": "localhost",
-                    "port": 5432,
-                    "username": "quarkus",
-                    "password": "quarkus",
-                    "database": "quarkus"
+                    "hostname": "%s",
+                    "port": %s,
+                    "username": "%s",
+                    "password": "%s",
+                    "database": "%s"
                   }
                 }
-                """;
+                """.formatted(dbHelper.getHostname(), dbHelper.getPort(), datasourceUsername, datasourcePassword, dbHelper.getDatabase());
     }
 
     private String createWrongConnectionRequest() {

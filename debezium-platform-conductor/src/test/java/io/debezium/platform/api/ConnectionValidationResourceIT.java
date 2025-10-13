@@ -11,28 +11,41 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
+import io.debezium.platform.util.TestDatasourceHelper;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 
 @QuarkusTest
 public class ConnectionValidationResourceIT {
 
+    @ConfigProperty(name = "quarkus.datasource.jdbc.url")
+    String datasourceUrl;
+
+    @ConfigProperty(name = "quarkus.datasource.username")
+    String datasourceUsername;
+
+    @ConfigProperty(name = "quarkus.datasource.password")
+    String datasourcePassword;
+
     private String createValidConnectionJson() {
+        TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
+
         return """
                 {
                   "name": "valid-test-connection",
                   "type": "POSTGRESQL",
                   "config": {
-                    "hostname": "localhost",
-                    "port": 5432,
-                    "username": "quarkus",
-                    "password": "quarkus",
-                    "database": "quarkus"
+                    "hostname": "%s",
+                    "port": %s,
+                    "username": "%s",
+                    "password": "%s",
+                    "database": "%s"
                   }
                 }
-                """;
+                """.formatted(dbHelper.getHostname(), dbHelper.getPort(), datasourceUsername, datasourcePassword, dbHelper.getDatabase());
     }
 
     private String createInvalidHostConnectionJson() {
@@ -68,35 +81,39 @@ public class ConnectionValidationResourceIT {
     }
 
     private String createInvalidCredentialsConnectionJson() {
+        TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
+
         return """
                 {
                   "name": "invalid-credentials-connection",
                   "type": "POSTGRESQL",
                   "config": {
-                    "hostname": "localhost",
-                    "port": 5432,
+                    "hostname": "%s",
+                    "port": %s,
                     "username": "wronguser",
                     "password": "wrongpass",
                     "database": "testdb"
                   }
                 }
-                """;
+                """.formatted(dbHelper.getHostname(), dbHelper.getPort());
     }
 
     private String createInvalidDatabaseConnectionJson() {
+        TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
+
         return """
                 {
                   "name": "invalid-database-connection",
                   "type": "POSTGRESQL",
                   "config": {
-                    "hostname": "localhost",
-                    "port": 5432,
-                    "username": "quarkus",
-                    "password": "quarkus",
+                    "hostname": "%s",
+                    "port": %s,
+                    "username": "%s",
+                    "password": "%s",
                     "database": "nonexistentdb"
                   }
                 }
-                """;
+                """.formatted(dbHelper.getHostname(), dbHelper.getPort(), datasourceUsername, datasourcePassword);
     }
 
     private String createUnsupportedTypeConnectionJson() {
@@ -264,19 +281,21 @@ public class ConnectionValidationResourceIT {
 
     @Test
     public void testValidateConnection_SpecialCharactersInConfig() {
+        TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
+
         String specialCharsJson = """
                 {
                   "name": "special-chars-connection",
                   "type": "POSTGRESQL",
                   "config": {
-                    "hostname": "localhost",
-                    "port": 5432,
-                    "username": "test@user!#$%",
-                    "password": "testpass@word!#$%^&*()",
+                    "hostname": "%s",
+                    "port": %s,
+                    "username": "test@user!#$%%",
+                    "password": "testpass@word!#$%%^&*()",
                     "database": "test_db-123"
                   }
                 }
-                """;
+                """.formatted(dbHelper.getHostname(), dbHelper.getPort());
 
         given()
                 .contentType(ContentType.JSON)

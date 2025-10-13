@@ -14,10 +14,12 @@ import java.sql.Statement;
 
 import jakarta.inject.Inject;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import io.agroal.api.AgroalDataSource;
+import io.debezium.platform.util.TestDatasourceHelper;
 import io.quarkus.arc.InjectableInstance;
 import io.quarkus.test.junit.QuarkusTest;
 
@@ -27,21 +29,31 @@ class SourceResourceIT {
     @Inject
     InjectableInstance<AgroalDataSource> dataSource;
 
+    @ConfigProperty(name = "quarkus.datasource.jdbc.url")
+    String datasourceUrl;
+
+    @ConfigProperty(name = "quarkus.datasource.username")
+    String datasourceUsername;
+
+    @ConfigProperty(name = "quarkus.datasource.password")
+    String datasourcePassword;
+
     @Test
     @DisplayName("When signal data collection is not setup then the verify will return exists false")
     void noSignalSetup() {
+        TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
 
         String jsonBody = """
                 {
                     "databaseType": "POSTGRESQL",
-                    "hostname": "localhost",
-                    "port": 5432,
-                    "username": "quarkus",
-                    "password": "quarkus",
-                    "dbName": "quarkus",
+                    "hostname": "%s",
+                    "port": %s,
+                    "username": "%s",
+                    "password": "%s",
+                    "dbName": "%s",
                     "test": "test",
                     "fullyQualifiedTableName": "public.debezium_signal"
-                }""";
+                }""".formatted(dbHelper.getHostname(), dbHelper.getPort(), datasourceUsername, datasourcePassword, dbHelper.getDatabase());
 
         given()
                 .header("Content-Type", "application/json")
@@ -59,16 +71,18 @@ class SourceResourceIT {
 
         createDataSignalDataCollection();
 
+        TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
+
         String jsonBody = """
                 {
                     "databaseType": "POSTGRESQL",
-                    "hostname": "localhost",
-                    "port": 5432,
-                    "username": "quarkus",
-                    "password": "quarkus",
-                    "dbName": "quarkus",
+                    "hostname": "%s",
+                    "port": %s,
+                    "username": "%s",
+                    "password": "%s",
+                    "dbName": "%s",
                     "fullyQualifiedTableName": "public.debezium_signal"
-                }""";
+                }""".formatted(dbHelper.getHostname(), dbHelper.getPort(), datasourceUsername, datasourcePassword, dbHelper.getDatabase());
 
         given()
                 .header("Content-Type", "application/json")

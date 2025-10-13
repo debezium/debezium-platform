@@ -29,7 +29,7 @@ import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
 
 @QuarkusTest
 @QuarkusTestResource(KafkaCompanionResource.class)
-class KafkaConnectionValidatorTest {
+class KafkaConnectionValidatorIT {
 
     public static final int DEFAULT_30_SECONDS_TIMEOUT = 30;
 

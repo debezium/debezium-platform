@@ -13,6 +13,7 @@ import java.time.temporal.ChronoUnit;
 
 import jakarta.inject.Inject;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import org.testcontainers.shaded.org.awaitility.Awaitility;
 import io.debezium.operator.api.model.DebeziumServer;
 import io.debezium.platform.MockedTestProfile;
 import io.debezium.platform.environment.operator.actions.DebeziumKubernetesAdapter;
+import io.debezium.platform.util.TestDatasourceHelper;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.EnableKubernetesMockClient;
 import io.quarkus.test.InjectMock;
@@ -41,6 +43,9 @@ class PipelineResourceIT {
     @InjectMock
     DebeziumKubernetesAdapter k8sAdapter;
 
+    @ConfigProperty(name = "quarkus.datasource.jdbc.url")
+    String datasourceUrl;
+
     ArgumentCaptor<DebeziumServer> debeziumServerArgumentCaptor;
 
     @BeforeEach
@@ -48,19 +53,21 @@ class PipelineResourceIT {
 
         debeziumServerArgumentCaptor = ArgumentCaptor.forClass(DebeziumServer.class);
 
+        TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
+
         createResource("api/connections", """
                 {
                        "name": "postgres-connection",
                        "type": "POSTGRESQL",
                        "config": {
                          "hostname": "postgresql",
-                         "port": 5432,
+                         "port": %s,
                          "username": "debezium",
                          "password": "debezium",
                          "database": "debezium"
                        }
                      }
-                  }""");
+                  }""".formatted(dbHelper.getPort()));
 
         createResource("api/connections", """
                 {
@@ -178,6 +185,9 @@ class PipelineResourceIT {
 
         DebeziumServer debeziumServer = debeziumServerArgumentCaptor.getValue();
 
+        TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
+        String expectedJdbcUrl = dbHelper.toJdbcUrl("loggerLevel=OFF");
+
         assertThat(debeziumServer.asConfiguration().getAsMapSimple())
                 .containsEntry("debezium.api.enabled", "true")
                 .containsEntry("debezium.format.header", "json")
@@ -194,19 +204,19 @@ class PipelineResourceIT {
                 .containsEntry("debezium.source.database.dbname", "debezium")
                 .containsEntry("debezium.source.database.hostname", "postgresql")
                 .containsEntry("debezium.source.database.password", "debezium")
-                .containsEntry("debezium.source.database.port", "5432")
+                .containsEntry("debezium.source.database.port", dbHelper.getPort())
                 .containsEntry("debezium.source.database.user", "debezium")
                 .containsEntry("debezium.source.notification.enabled.channels", "log")
                 .containsEntry("debezium.source.offset.flush.interval.ms", "60000")
                 .containsEntry("debezium.source.offset.storage", "io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore")
                 .containsEntry("debezium.source.offset.storage.jdbc.offset.table.name", "test_pipeline_offset")
                 .containsEntry("debezium.source.offset.storage.jdbc.password", "quarkus")
-                .containsEntry("debezium.source.offset.storage.jdbc.url", "jdbc:postgresql://localhost:5432/quarkus?loggerLevel=OFF")
+                .containsEntry("debezium.source.offset.storage.jdbc.url", expectedJdbcUrl)
                 .containsEntry("debezium.source.offset.storage.jdbc.user", "quarkus")
                 .containsEntry("debezium.source.schema.history.internal", "io.debezium.storage.jdbc.history.JdbcSchemaHistory")
                 .containsEntry("debezium.source.schema.history.internal.jdbc.password", "quarkus")
                 .containsEntry("debezium.source.schema.history.internal.jdbc.schema.history.table.name", "test_pipeline_schema_history")
-                .containsEntry("debezium.source.schema.history.internal.jdbc.url", "jdbc:postgresql://localhost:5432/quarkus?loggerLevel=OFF")
+                .containsEntry("debezium.source.schema.history.internal.jdbc.url", expectedJdbcUrl)
                 .containsEntry("debezium.source.schema.history.internal.jdbc.user", "quarkus")
                 .containsEntry("debezium.source.schema.include.list", "inventory")
                 .containsEntry("debezium.source.signal.enabled.channels", "source,in-process")
