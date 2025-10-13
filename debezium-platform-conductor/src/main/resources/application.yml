@@ -46,6 +46,10 @@ destinations:
       timeout: 60
 
 quarkus:
+  hibernate-orm:
+    mapping:
+      format:
+        global: ignore
   rest-client:
     debezium-server-api:
       url: http://localhost:8080

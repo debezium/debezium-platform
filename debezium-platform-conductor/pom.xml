@@ -10,10 +10,10 @@
 
     <artifactId>debezium-platform-conductor</artifactId>
     <version>3.4.0-SNAPSHOT</version>
-    <name>Debezium Platfrom Conductor</name>
+    <name>Debezium Platform Conductor</name>
 
     <properties>
-        <compiler-plugin.version>3.12.1</compiler-plugin.version>
+        <compiler-plugin.version>3.13.0</compiler-plugin.version>
         <!-- JDK version is controlled by Debezium Parent, do not change! -->
         <!--    the compiler setting may be different from the parent -->
         <!--    thus the setting must be here and use the referenced properties -->
@@ -28,19 +28,15 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.17.4</quarkus.platform.version>
+        <quarkus.platform.version>3.28.3</quarkus.platform.version>
         <skipITs>false</skipITs>
-        <surefire-plugin.version>3.2.5</surefire-plugin.version>
-        <version.assertj>3.24.2</version.assertj>
+        <surefire-plugin.version>3.5.1</surefire-plugin.version>
         <version.mapstruct>1.5.5.Final</version.mapstruct>
         <version.debezium>${project.version}</version.debezium>
-        <smallrye-open-api-core.version>4.0.5</smallrye-open-api-core.version>
-        <blaze-persistence.version>1.6.11</blaze-persistence.version>
-        <test-containers.version>1.20.0</test-containers.version>
-        <json-schema-validator.version>5.3.2</json-schema-validator.version>
-        <kafka-clients.version>3.9.1</kafka-clients.version> <!-- Forcing it since it is compatible with quarkus platform 3.17.4 -->
-        <version.jackson>2.16.1</version.jackson>
-        <version.jackson.databind>2.16.2</version.jackson.databind>
+        <smallrye-open-api-core.version>4.0.11</smallrye-open-api-core.version>
+        <blaze-persistence.version>1.6.17</blaze-persistence.version>
+        <test-containers.version>1.21.3</test-containers.version>
+        <mockwebserver.version>4.8.1</mockwebserver.version>
 
         <quarkus.container-image.registry>quay.io</quarkus.container-image.registry>
         <quarkus.container-image.group>debezium</quarkus.container-image.group>
@@ -61,20 +57,10 @@
         <dist.root.dir>${project.basedir}</dist.root.dir>
         <dist.app.source.dir>${dist.root.dir}/target/quarkus-app</dist.app.source.dir>
 
-
-        <mockwebserver.version>4.8.1</mockwebserver.version>
-
         <mockito.argLine>-javaagent:${org.mockito:mockito-core:jar}</mockito.argLine>
     </properties>
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>io.debezium</groupId>
-                <artifactId>debezium-bom</artifactId>
-                <version>${version.debezium}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
             <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>quarkus-bom</artifactId>
@@ -82,17 +68,11 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
             <dependency>
-                <groupId>${quarkus.platform.group-id}</groupId>
-                <artifactId>quarkus-blaze-persistence-bom</artifactId>
-                <version>${quarkus.platform.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>${quarkus.platform.group-id}</groupId>
-                <artifactId>quarkus-debezium-bom</artifactId>
-                <version>${quarkus.platform.version}</version>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${test-containers.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -109,53 +89,34 @@
             </dependency>
 
             <dependency>
-                <groupId>org.assertj</groupId>
-                <artifactId>assertj-core</artifactId>
-                <version>${version.assertj}</version>
+                <groupId>com.blazebit</groupId>
+                <artifactId>blaze-persistence-integration-quarkus-3</artifactId>
+                <version>${blaze-persistence.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.blazebit</groupId>
+                <artifactId>blaze-persistence-integration-hibernate-7.1</artifactId>
+                <version>${blaze-persistence.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>io.debezium</groupId>
                 <artifactId>debezium-operator-api</artifactId>
                 <version>${version.debezium}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
+            <!-- Forcing since this comes also from debezium-bom with a very old version -->
             <dependency>
                 <groupId>io.smallrye</groupId>
                 <artifactId>smallrye-open-api-core</artifactId>
                 <version>${smallrye-open-api-core.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>postgresql</artifactId>
-                <version>${test-containers.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>mysql</artifactId>
-                <version>${test-containers.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>mariadb</artifactId>
-                <version>${test-containers.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>oracle-xe</artifactId>
-                <version>${test-containers.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>mssqlserver</artifactId>
-                <version>${test-containers.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.rest-assured</groupId>
-                <artifactId>json-schema-validator</artifactId>
-                <version>${json-schema-validator.version}</version>
             </dependency>
 
             <dependency>
@@ -164,27 +125,6 @@
                 <version>${mockwebserver.version}</version>
             </dependency>
 
-            <!--Temporary forced since newer version are not compatible with current kubernetes client -->
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${version.jackson}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${version.jackson.databind}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>${version.jackson}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
-                <artifactId>jackson-dataformat-yaml</artifactId>
-                <version>${version.jackson}</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -205,6 +145,12 @@
         <dependency>
             <groupId>io.debezium</groupId>
             <artifactId>debezium-storage-configmap</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>kubernetes-client</artifactId>
+                    <groupId>io.fabric8</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.debezium</groupId>
@@ -274,6 +220,7 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-hibernate-orm</artifactId>
         </dependency>
+
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-hibernate-validator</artifactId>
@@ -338,7 +285,7 @@
         </dependency>
         <dependency>
             <groupId>com.blazebit</groupId>
-            <artifactId>blaze-persistence-integration-hibernate-6.2</artifactId>
+            <artifactId>blaze-persistence-integration-hibernate-7.1</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -357,13 +304,6 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-kafka-client</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka-clients.version}</version>
-        </dependency>
-
 
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -605,7 +545,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.8.1</version>
                 <executions>
                     <execution>
                         <goals>

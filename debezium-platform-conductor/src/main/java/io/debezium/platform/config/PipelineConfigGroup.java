@@ -11,7 +11,7 @@ import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithName;
 
 @ConfigMapping(prefix = "pipeline")
-@ConfigRoot(prefix = "pipeline", phase = ConfigPhase.RUN_TIME)
+@ConfigRoot(phase = ConfigPhase.RUN_TIME)
 public interface PipelineConfigGroup {
 
     OffsetConfigGroup offset();

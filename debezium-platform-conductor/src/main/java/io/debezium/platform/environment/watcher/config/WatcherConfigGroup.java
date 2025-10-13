@@ -13,7 +13,7 @@ import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
 
 @ConfigMapping(prefix = "conductor.watcher")
-@ConfigRoot(prefix = "conductor", phase = ConfigPhase.RUN_TIME)
+@ConfigRoot(phase = ConfigPhase.RUN_TIME)
 public interface WatcherConfigGroup {
 
     boolean enabled();
