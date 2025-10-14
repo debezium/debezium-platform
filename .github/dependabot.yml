@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "[ci] "
+  # Updates for Maven dependencies in the root pom
+  - package-ecosystem: "maven"
+    directory: "/debezium-platform-conductor"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "[ci] "
