@@ -14,3 +14,10 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "[ci] "
+  # Updates for Yarn dependencies
+  - package-ecosystem: "npm"
+    directory: "/debezium-platform-stage"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "[ci] "
