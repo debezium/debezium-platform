@@ -42,7 +42,7 @@
         <version.debezium>${project.version}</version.debezium>
         <version.smallrye-open-api-core>4.0.11</version.smallrye-open-api-core>
         <version.blaze-persistence>1.6.17</version.blaze-persistence>
-        <version.test-containers>1.21.3</version.test-containers>
+        <version.test-containers>2.0.0</version.test-containers>
         <version.mockwebserver>4.8.1</version.mockwebserver>
         <version.impsort>1.12.0</version.impsort>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
