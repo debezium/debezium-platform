@@ -79,7 +79,7 @@ Install the Strimzi operator
 ```shell
 helm repo add strimzi https://strimzi.io/charts/ &&
 helm repo update strimzi &&
-helm install strimzi-operator strimzi/strimzi-kafka-operator --version 0.44.0 --namespace debezium-platform
+helm install strimzi-operator strimzi/strimzi-kafka-operator --version 0.45.0 --namespace debezium-platform
 ```
 
 ```shell

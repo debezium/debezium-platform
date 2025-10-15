@@ -1,7 +1,7 @@
 {
   "actions": "Actions",
   "active": "Active",
-  "activePipelineTooltip": " Number of active pipelines using this {{val}}.",
+  "activeResourceUsingTooltip": " Number of active {{val1}} using this {{val2}}.",
   "addButton": "Add {{val}}",
   "apiError": "Error : Failed to load",
   "apply": "Apply",

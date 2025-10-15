@@ -188,12 +188,12 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
                   <Tooltip
                     content={
                       <div>
-                        {t("activePipelineTooltip", { val: tableType })}
+                        {t("activeResourceUsingTooltip", { val1: "pipelines", val2: tableType })}
                       </div>
                     }
                   >
                     <Label icon={<TagIcon />} color="blue">
-                      {getActivePipelineCount(
+                      &nbsp;{getActivePipelineCount(
                         pipelineList,
                         instance.id,
                         tableType

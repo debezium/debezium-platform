@@ -310,19 +310,18 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                                     <Tooltip
                                       content={
                                         <div>
-                                          {t("activePipelineTooltip", { val: "transform" })}
+                                          {t("activeResourceUsingTooltip", { val1: "pipelines", val2: "transform" })}
                                         </div>
                                       }
                                     >
                                       <Label icon={<TagIcon />} color="blue">
-                                        {getActivePipelineCount(
+                                        &nbsp;{getActivePipelineCount(
                                           pipelineList,
                                           instance.id
                                         )}
                                       </Label>
                                     </Tooltip>
                                   </Td>
-
                                   <Td dataLabel={t("actions")} isActionCell>
                                     <ActionsColumn
                                       items={rowActions({

@@ -1,7 +1,7 @@
 {
   "actions": "Azioni",
   "active": "Attivo",
-  "activePipelineTooltip": " Numero di pipeline attive che utilizzano questo {{val}}.",
+  "activeResourceUsingTooltip": "Numero di {{val1}} attivi che usano questo {{val2}}.",
   "addButton": "Aggiungi {{val}}",
   "apiError": "Errore: caricamento non riuscito",
   "apply": "Applica",
@@ -40,7 +40,7 @@
   "findByName": "Cerca per nome",
   "form": {
     "addFieldButton": "Aggiungi proprietà",
-    "error":{
+    "error": {
       "title": "Compila tutti i campi obbligatori prima di continuare.",
       "required": "Il campo {{val}} è obbligatorio",
       "numerical": "Inserisci un valore numerico per il campo {{val}}"

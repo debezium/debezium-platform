@@ -17,8 +17,9 @@ import {
   FormGroup,
   TextInput,
   Tooltip,
+  Label,
 } from "@patternfly/react-core";
-import { SearchIcon } from "@patternfly/react-icons";
+import { SearchIcon, TagIcon } from "@patternfly/react-icons";
 import {
   Table,
   Thead,
@@ -32,6 +33,8 @@ import {
 import React, { useState } from "react";
 import {
   ConnectionsApiResponse,
+  Destination,
+  Source,
 } from "../apis/apis";
 import { getConnectionRole, getConnectorTypeName } from "../utils/helpers";
 import ConnectorImage from "./ComponentImage";
@@ -40,11 +43,13 @@ import { useNavigate } from "react-router-dom";
 import { useNotification } from "../appLayout/AppNotificationContext";
 import { useDeleteData } from "src/apis";
 import { useTranslation } from "react-i18next";
-import { TagCount } from "@patternfly/react-component-groups";
+import { getActiveConnectionCount } from "@utils/connectionsUtils";
 
 
 interface IConnectionTableProps {
   data: ConnectionsApiResponse;
+  sourceList: Source[];
+  destinationList: Destination[];
   onClear: () => void;
 }
 
@@ -60,6 +65,8 @@ type ActionData = {
 
 const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
   data,
+  sourceList,
+  destinationList,
   onClear,
 }) => {
   const { t } = useTranslation();
@@ -74,18 +81,6 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
   });
   const [deleteInstanceName, setDeleteInstanceName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // const {
-  //   data: pipelineList = [],
-  //   error: _pipelineError,
-  //   isLoading: _isPipelineLoading,
-  // } = useQuery<Pipeline[], Error>(
-  //   "pipelines",
-  //   () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`),
-  //   {
-  //     refetchInterval: 7000,
-  //   }
-  // );
 
   const { mutate: deleteData } = useDeleteData({
     onSuccess: () => {
@@ -195,14 +190,16 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
                   <Tooltip
                     content={
                       <div>
-                        {t("activePipelineTooltip", { val: "connection" })}
+                        {t("activeResourceUsingTooltip", { val1: getConnectionRole(instance.type.toLowerCase())+"s", val2: "connection" })}
                       </div>
                     }
                   >
-                    {/* <Label icon={<TagIcon />} color="blue">
-                      0
-                    </Label> */}
-                    <TagCount />
+                    <Label icon={<TagIcon />} color="blue">
+                      &nbsp;{getActiveConnectionCount(
+                        getConnectionRole(instance.type.toLowerCase()) === "source" ? sourceList : destinationList,
+                        instance.id
+                      )}
+                    </Label>
                   </Tooltip>
                 </Td>
                 <Td dataLabel={t("actions")} isActionCell>

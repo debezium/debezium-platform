@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 // import { useData } from "../../appLayout/AppContext";
 import { useTranslation } from "react-i18next";
 import ApiError from "@components/ApiError";
-import { Connection, fetchData } from "src/apis";
+import { Connection, Destination, fetchData, Source } from "src/apis";
 import { useQuery } from "react-query";
 import { API_URL } from "@utils/constants";
 import _, { debounce } from "lodash";
@@ -49,6 +49,26 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     setConnectionsTypeSelected(selection ? String(selection) : "");
     setConnectionsTypeIsExpanded(false);
   };
+
+  const {
+    data: sourceList = [],
+  } = useQuery<Source[], Error>(
+    "sources",
+    () => fetchData<Source[]>(`${API_URL}/api/sources`),
+    {
+      refetchInterval: 7000,
+    }
+  );
+
+  const {
+    data: destinationList = [],
+  } = useQuery<Destination[], Error>(
+    "destinations",
+    () => fetchData<Destination[]>(`${API_URL}/api/destinations`),
+    {
+      refetchInterval: 7000,
+    }
+  );
 
   const {
     data: connectionsList = [],
@@ -251,6 +271,8 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
                       <ConnectionTable
                         data={searchResult}
+                        sourceList={sourceList}
+                        destinationList={destinationList}
                         onClear={onClear}
                       />
                     </Card>
