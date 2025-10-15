@@ -46,7 +46,7 @@
         <version.mockwebserver>4.8.1</version.mockwebserver>
         <version.impsort>1.12.0</version.impsort>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
-        <version.code.formatter>2.20.0</version.code.formatter>
+        <version.code.formatter>2.29.0</version.code.formatter>
 
         <format.formatter.goal>format</format.formatter.goal>
         <format.imports.goal>sort</format.imports.goal>
