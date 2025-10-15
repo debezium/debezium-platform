@@ -21,7 +21,7 @@ jobs:
       cache_key: ${{ steps.set-cache-key.outputs.cache_key }}
     steps:
       - name: Checkout core repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: debezium/debezium
           ref: main
@@ -56,7 +56,7 @@ jobs:
           --no-transfer-progress
           -T4
       - name: Checkout operator repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: debezium/debezium-operator
           ref: main
@@ -99,7 +99,7 @@ jobs:
         working-directory: debezium-platform-conductor
     steps:
       - name: Checkout Action
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -131,7 +131,7 @@ jobs:
         working-directory: debezium-platform-conductor
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java
         uses: actions/setup-java@v4
