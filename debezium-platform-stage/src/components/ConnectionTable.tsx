@@ -16,10 +16,8 @@ import {
   Form,
   FormGroup,
   TextInput,
-  Tooltip,
-  Label,
 } from "@patternfly/react-core";
-import { SearchIcon, TagIcon } from "@patternfly/react-icons";
+import { SearchIcon } from "@patternfly/react-icons";
 import {
   Table,
   Thead,
@@ -43,7 +41,7 @@ import { useNavigate } from "react-router-dom";
 import { useNotification } from "../appLayout/AppNotificationContext";
 import { useDeleteData } from "src/apis";
 import { useTranslation } from "react-i18next";
-import { getActiveConnectionCount } from "@utils/connectionsUtils";
+import UsedIn from "./UsedIn";
 
 
 interface IConnectionTableProps {
@@ -162,7 +160,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
           <Tr>
             <Th key={0}>{t("name")}</Th>
             <Th key={1} style={{ paddingLeft: "60px" }}>{t("type")}</Th>
-            <Th key={2}>{t("active")}</Th>
+            <Th key={2}>{t("usedIn")}</Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -186,21 +184,8 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
                     <FlexItem>{getConnectorTypeName(instance.type.toLowerCase())} {getConnectionRole(instance.type.toLowerCase())}</FlexItem>
                   </Flex>
                 </Td>
-                <Td dataLabel={t("active")}>
-                  <Tooltip
-                    content={
-                      <div>
-                        {t("activeResourceUsingTooltip", { val1: getConnectionRole(instance.type.toLowerCase())+"s", val2: "connection" })}
-                      </div>
-                    }
-                  >
-                    <Label icon={<TagIcon />} color="blue">
-                      &nbsp;{getActiveConnectionCount(
-                        getConnectionRole(instance.type.toLowerCase()) === "source" ? sourceList : destinationList,
-                        instance.id
-                      )}
-                    </Label>
-                  </Tooltip>
+                <Td dataLabel={t("usedIn")}>
+                  <UsedIn resourceList={getConnectionRole(instance.type.toLowerCase()) === "source" ? sourceList : destinationList} resourceType={getConnectionRole(instance.type.toLowerCase()) || ""} requestedPageType={"connection"} instance={instance} />
                 </Td>
                 <Td dataLabel={t("actions")} isActionCell>
                   <ActionsColumn

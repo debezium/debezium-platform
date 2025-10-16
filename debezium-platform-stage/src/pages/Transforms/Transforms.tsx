@@ -13,7 +13,6 @@ import {
   EmptyStateVariant,
   Form,
   FormGroup,
-  Label,
   Modal,
   ModalBody,
   ModalFooter,
@@ -27,13 +26,11 @@ import {
   ToolbarContent,
   ToolbarGroup,
   ToolbarItem,
-  Tooltip,
 } from "@patternfly/react-core";
 import {
   DataProcessorIcon,
   PlusIcon,
   SearchIcon,
-  TagIcon,
 } from "@patternfly/react-icons";
 import EmptyStatus from "../../components/EmptyStatus";
 import "./Transforms.css";
@@ -58,7 +55,7 @@ import {
 import { ActionData, DeleteInstance } from "@pipelinePage/index";
 import { useNotification } from "@appContext/index";
 import { useTranslation } from "react-i18next";
-import { getActivePipelineCount } from "@utils/pipelineUtils";
+import UsedIn from "@components/UsedIn";
 
 export interface ITransformsProps {
   sampleProp?: string;
@@ -282,7 +279,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                             <Tr>
                               <Th key={0}>{t("name")}</Th>
                               <Th key={1}>{t("type")}</Th>
-                              <Th key={2}>{t("active")}</Th>
+                              <Th key={2}>{t("usedIn")}</Th>
                             </Tr>
                           </Thead>
 
@@ -306,21 +303,9 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                                     </Button>
                                   </Td>
                                   <Td dataLabel={t("type")}>{instance.type}</Td>
-                                  <Td dataLabel={t("active")}>
-                                    <Tooltip
-                                      content={
-                                        <div>
-                                          {t("activeResourceUsingTooltip", { val1: "pipelines", val2: "transform" })}
-                                        </div>
-                                      }
-                                    >
-                                      <Label icon={<TagIcon />} color="blue">
-                                        &nbsp;{getActivePipelineCount(
-                                          pipelineList,
-                                          instance.id
-                                        )}
-                                      </Label>
-                                    </Tooltip>
+                                  <Td dataLabel={t("usedIn")}>
+                                    <UsedIn resourceList={pipelineList} resourceType={"pipeline"} requestedPageType={"transform"} instance={instance} />
+
                                   </Td>
                                   <Td dataLabel={t("actions")} isActionCell>
                                     <ActionsColumn

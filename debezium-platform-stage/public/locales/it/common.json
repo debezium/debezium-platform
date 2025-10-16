@@ -1,7 +1,7 @@
 {
   "actions": "Azioni",
   "active": "Attivo",
-  "activeResourceUsingTooltip": "Numero di {{val1}} attivi che usano questo {{val2}}.",
+  "activeResourceUsingTooltip": "Questo {{val1}} è utilizzato nei seguenti {{val2}}: ",
   "addButton": "Aggiungi {{val}}",
   "apiError": "Errore: caricamento non riuscito",
   "apply": "Applica",

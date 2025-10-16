@@ -54,6 +54,8 @@ export type Payload = {
   name: string;
 };
 
+export type ResourceType = "source" | "destination" | "transform" | "connection" | "pipeline";
+
 export type ConnectionValidationResult = {
   valid: boolean;
   message: string;

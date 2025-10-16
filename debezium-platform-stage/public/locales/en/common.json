@@ -1,7 +1,7 @@
 {
   "actions": "Actions",
   "active": "Active",
-  "activeResourceUsingTooltip": " Number of active {{val1}} using this {{val2}}.",
+  "activeResourceUsingTooltip": "This {{val1}} is used in the following {{val2}}: ",
   "addButton": "Add {{val}}",
   "apiError": "Error : Failed to load",
   "apply": "Apply",
@@ -91,6 +91,7 @@
   "transforms": "Transforms",
   "trademarkWarking": "All logos and trademarks are the property of their respective owners",
   "type": "Type",
+  "usedIn": "Used in",
   "vaults": "Vaults",
   "verify": "Verify"
 }

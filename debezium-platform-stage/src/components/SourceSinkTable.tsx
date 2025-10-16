@@ -2,7 +2,6 @@
 import {
   Flex,
   FlexItem,
-  Label,
   Bullseye,
   EmptyState,
   EmptyStateVariant,
@@ -17,9 +16,8 @@ import {
   Form,
   FormGroup,
   TextInput,
-  Tooltip,
 } from "@patternfly/react-core";
-import { TagIcon, SearchIcon } from "@patternfly/react-icons";
+import { SearchIcon } from "@patternfly/react-icons";
 import {
   Table,
   Thead,
@@ -41,11 +39,11 @@ import { getConnectorTypeName } from "../utils/helpers";
 import ConnectorImage from "./ComponentImage";
 import { API_URL } from "../utils/constants";
 import { useQuery } from "react-query";
-import { getActivePipelineCount } from "../utils/pipelineUtils";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../appLayout/AppNotificationContext";
 import { useDeleteData } from "src/apis";
 import { useTranslation } from "react-i18next";
+import UsedIn from "./UsedIn";
 
 type TableType = "source" | "destination";
 
@@ -160,7 +158,7 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
           <Tr>
             <Th key={0}>{t("name")}</Th>
             <Th key={1}>{t("type")}</Th>
-            <Th key={2}>{t("active")}</Th>
+            <Th key={2}>{t("usedIn")}</Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -184,22 +182,8 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
                     <FlexItem>{getConnectorTypeName(instance.type)}</FlexItem>
                   </Flex>
                 </Td>
-                <Td dataLabel={t("active")}>
-                  <Tooltip
-                    content={
-                      <div>
-                        {t("activeResourceUsingTooltip", { val1: "pipelines", val2: tableType })}
-                      </div>
-                    }
-                  >
-                    <Label icon={<TagIcon />} color="blue">
-                      &nbsp;{getActivePipelineCount(
-                        pipelineList,
-                        instance.id,
-                        tableType
-                      )}
-                    </Label>
-                  </Tooltip>
+                <Td dataLabel={t("usedIn")}>
+                  <UsedIn resourceList={pipelineList} resourceType={"pipeline"} requestedPageType={tableType} instance={instance} />
                 </Td>
                 <Td dataLabel={t("actions")} isActionCell>
                   <ActionsColumn
