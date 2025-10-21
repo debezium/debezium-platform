@@ -318,7 +318,10 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
           schema: "schema321",
           vaults: [],
           ...(selectedConnection ? { connection: selectedConnection } : {}),
-          config: { "signal.data.collection": signalCollectionName, ...convertMapToObject(properties) },
+          config: {
+            ...(signalCollectionName ? { "signal.data.collection": signalCollectionName } : {}),
+            ...convertMapToObject(properties)
+          },
           name: values["source-name"],
         } as unknown as Payload;
         await createNewSource(payload);

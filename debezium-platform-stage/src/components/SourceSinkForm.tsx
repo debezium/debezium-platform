@@ -348,6 +348,7 @@ const SourceSinkForm = ({
   );
 
   const handleModalToggle = () => {
+    setSignalCollectionName("");
     setIsModalOpen(!isModalOpen);
     setSignalMissingPayload([]);
   };
