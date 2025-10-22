@@ -12,6 +12,7 @@ import {
   Flex,
   FlexItem,
   Form,
+  FormAlert,
   FormContextProvider,
   FormFieldGroup,
   FormFieldGroupHeader,
@@ -157,7 +158,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
 
 
   const [pkgLevelLog, setPkgLevelLog] = useState<Map<string, Properties>>(
-    new Map([["key0", { key: "", value: "" }]])
+    new Map()
   );
   const [keyCount, setKeyCount] = useState<number>(1);
 
@@ -316,10 +317,19 @@ const ConfigurePipeline: React.FunctionComponent = () => {
       if (!values["pipeline-name"]) {
         setError("pipeline-name", "Pipeline name is required.");
       } else if (!values["log-level"]) {
-        setLogLevelError(true);
+        setError("log-level", "Root log level is required.");
         return;
       } else {
         setIsLoading(true);
+        const invalidLogEntries = Array.from(pkgLevelLog.entries())
+          .filter(([, entry]) => !entry.key || !entry.value)
+          .map(([key]) => key);
+        if (invalidLogEntries.length > 0) {
+          setError(`pkg-level-log-config-props-key-field-${invalidLogEntries[0]}`, "Key and value are required.");
+          setError(`pkg-level-log-config-props-value-field-${invalidLogEntries[0]}`, "Key and value are required.");
+          setIsLoading(false);
+          return;
+        }
         const payload = {
           description: values["description"],
           logLevel: values["log-level"],
@@ -357,8 +367,6 @@ const ConfigurePipeline: React.FunctionComponent = () => {
       }
     }
   };
-
-  const [logLevelError, setLogLevelError] = React.useState<boolean>(false);
 
   const options = [
     { value: "", label: "Select log level", disabled: true },
@@ -451,6 +459,12 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                 <Card >
                   <CardBody isFilled>
                     <Form isWidthLimited>
+                      {Object.keys(errors).length > 0 && (
+                        <FormAlert>
+                          <Alert variant="danger" title={t("common:form.error.title")} aria-live="polite" isInline>
+                          </Alert>
+                        </FormAlert>
+                      )}
                       <FormGroup
                         label={t('pipeline:form.flowField')}
                         isRequired
@@ -568,11 +582,11 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                             id={"log-level"}
                             onChange={(_event, value) => {
                               setValue("log-level", value);
-                              setLogLevelError(false);
+                              setError("log-level", undefined);
                             }}
                             aria-label="FormSelect Input"
                             ouiaId="BasicFormSelect"
-                            validated={logLevelError ? "error" : "default"}
+                            validated={ errors["log-level"] ? "error" : "default"}
                           >
                             {options.map((option, index) => (
                               <FormSelectOption
@@ -628,8 +642,16 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                                       id={`pkg-level-log-config-props-key-${key}`}
                                       name={`pkg-level-log-config-props-key-${key}`}
                                       value={pkgLevelLog.get(key)?.key || ""}
-                                      onChange={(_e, value) =>
-                                        handlePropertyChange(key, "key", value)
+                                      validated={
+                                        errors[`pkg-level-log-config-props-key-field-${key}`] ? "error" : "default"
+                                      }
+                                      onChange={(_e, value) => {
+                                        handlePropertyChange(key, "key", value);
+                                        setError(`pkg-level-log-config-props-key-field-${key}`, undefined);
+                                        setError(`pkg-level-log-config-props-value-field-${key}`, undefined);
+                                      }
+
+
                                       }
                                     />
                                   </FormGroup>
@@ -646,9 +668,14 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                                       name={`-config-props-value-${key}`}
                                       onChange={(_event, value) => {
                                         handlePropertyChange(key, "value", value)
+                                        setError(`pkg-level-log-config-props-key-field-${key}`, undefined);
+                                        setError(`pkg-level-log-config-props-value-field-${key}`, undefined);
                                       }}
                                       aria-label="FormSelect Input"
                                       ouiaId="BasicFormSelect"
+                                      validated={
+                                        errors[`pkg-level-log-config-props-value-field-${key}`] ? "error" : "default"
+                                      }
                                     >
                                       {options.map((option, index) => (
                                         <FormSelectOption
@@ -724,30 +751,30 @@ const ConfigurePipeline: React.FunctionComponent = () => {
               )}
             </PageSection>
             <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-            <ActionList>
-      <ActionListGroup>
-        <ActionListItem>
-        <Button
-                  variant="primary"
-                  isLoading={isLoading}
-                  isDisabled={isLoading}
-                  type={ButtonType.submit}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleCreate(values, setError);
-                  }}
-                >
-                  {t('pipeline:createPipeline')}
-                </Button>
-        </ActionListItem>
-        <ActionListItem>
-        <Button variant="link" onClick={handleGoBack}>
-                  {t('back')}
-                </Button>
-        </ActionListItem>
-      </ActionListGroup>
-    </ActionList>
-             
+              <ActionList>
+                <ActionListGroup>
+                  <ActionListItem>
+                    <Button
+                      variant="primary"
+                      isLoading={isLoading}
+                      isDisabled={isLoading}
+                      type={ButtonType.submit}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleCreate(values, setError);
+                      }}
+                    >
+                      {t('pipeline:createPipeline')}
+                    </Button>
+                  </ActionListItem>
+                  <ActionListItem>
+                    <Button variant="link" onClick={handleGoBack}>
+                      {t('back')}
+                    </Button>
+                  </ActionListItem>
+                </ActionListGroup>
+              </ActionList>
+
             </PageSection>
           </>
         )}
