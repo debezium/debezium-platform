@@ -294,7 +294,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
     if (response.error) {
       addNotification(
         "danger",
-        t('statusMessage:creation.failedTitle'),
+        t('statusMessage:creation.failedTitle', { val: t('pipeline') }),
         `${response.error}`
       );
       return;
