@@ -104,6 +104,81 @@
 
             <dependency>
                 <groupId>io.debezium</groupId>
+                <artifactId>debezium-quarkus-outbox</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-api</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-embedded</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+
+            <!-- Storages -->
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-storage-configmap</artifactId>
+                <version>${version.debezium}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>kubernetes-client</artifactId>
+                        <groupId>io.fabric8</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-storage-redis</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-storage-jdbc</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-storage-kafka</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-storage-file</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+
+            <!-- Connectors -->
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-connector-postgres</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-connector-oracle</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-connector-mysql</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-connector-mariadb</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-connector-sqlserver</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
                 <artifactId>debezium-operator-api</artifactId>
                 <version>${version.debezium}</version>
                 <exclusions>
@@ -147,12 +222,6 @@
         <dependency>
             <groupId>io.debezium</groupId>
             <artifactId>debezium-storage-configmap</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>kubernetes-client</artifactId>
-                    <groupId>io.fabric8</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.debezium</groupId>
