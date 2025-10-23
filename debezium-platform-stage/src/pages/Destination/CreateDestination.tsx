@@ -188,7 +188,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     ? destinationIdModel
     : destinationIdParam.destinationId;
 
-  const rawConfiguration = !destinationIdParam.destinationId;
+  const rawConfiguration = location.pathname.includes("create_destination") ? !destinationIdParam.destinationId : false;
 
   const navigateTo = (url: string) => {
     navigate(url);
@@ -427,10 +427,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
               setFormatType={setFormatType}
             />
             <PageSection
-              isWidthLimited={
-                (modelLoaded && editorSelected === "form-editor") ||
-                !modelLoaded
-              }
+             isWidthLimited={true}
               isCenterAligned
               isFilled
               className={`customPageSection ${style.createConnector_pageSection}`}

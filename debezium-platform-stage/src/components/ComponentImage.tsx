@@ -95,11 +95,11 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "Infinispan";
       src = infinispan;
       break;
-    case connectorType.includes("pub_sub_lite"):
+    case connectorType.includes("pubsub_lite"):
       altText = "Pub/SUB";
       src = pubsubLite;
       break;
-    case connectorType.includes("pub_sub"):
+    case connectorType.includes("pubsub"):
       altText = "Pub/Sub liet";
       src = pubsub;
       break;

@@ -206,7 +206,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   const [formatType, setFormatType] = useState("dbz-platform");
   const sourceIdModel = selectedId;
   const sourceId = modelLoaded ? sourceIdModel : sourceIdParam.sourceId;
-  const rawConfiguration = !sourceIdParam.sourceId
+  const rawConfiguration = location.pathname.includes("create_source") ? !sourceIdParam.sourceId : false;
 
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
@@ -443,10 +443,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
             />
 
             <PageSection
-              isWidthLimited={
-                (modelLoaded && editorSelected === "form-editor") ||
-                !modelLoaded
-              }
+              isWidthLimited={true}
               isCenterAligned
               isFilled
               className={`customPageSection ${style.createConnector_pageSection}`}
