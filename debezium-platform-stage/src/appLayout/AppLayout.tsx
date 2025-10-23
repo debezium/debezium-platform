@@ -13,6 +13,12 @@ import { useData } from "./AppContext";
 // import AppNotification from "./AppNotification";
 import { useNotification } from "./AppNotificationContext";
 import AppNotification from "./AppNotification";
+import { useSetAtom } from "jotai";
+import {
+  selectedSourceAtom,
+  selectedDestinationAtom,
+  selectedTransformAtom,
+} from "../pages/Pipeline/PipelineDesigner";
 
 interface IAppLayout {
   children: React.ReactNode;
@@ -39,6 +45,11 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
 
   const [overflowMessage, setOverflowMessage] = useState<string>("");
   const { updateNavigationCollapsed } = useData();
+
+
+  const setSelectedSource = useSetAtom(selectedSourceAtom);
+  const setSelectedDestination = useSetAtom(selectedDestinationAtom);
+  const setSelectedTransform = useSetAtom(selectedTransformAtom);
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen(!sidebarOpen);
@@ -78,6 +89,18 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   useEffect(() => {
     setOverflowMessage(buildOverflowMessage());
   }, [notifications, alerts]);
+
+  // Clear pipeline atoms when navigating away from pipeline designer
+  useEffect(() => {
+    const isPipelineDesignerPage = 
+      location.pathname.startsWith("/pipeline/pipeline_designer");
+
+    if (!isPipelineDesignerPage) {
+      setSelectedSource(undefined);
+      setSelectedDestination(undefined);
+      setSelectedTransform([]);
+    }
+  }, [location.pathname, setSelectedSource, setSelectedDestination, setSelectedTransform]);
 
   const removeAllAlerts = () => {
     setAlerts([]);
