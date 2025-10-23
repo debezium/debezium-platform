@@ -223,11 +223,17 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         return createdTransform?.map((transform) => transform.name).join(", ") || "";
     }
 
+    const closeModal = (event: KeyboardEvent | React.MouseEvent<Element>) => {
+        toggleModal(event);
+        setCurrentFiles([]);
+        setReadFileData([]);
+    }
+
     return (
         <Modal
             variant={ModalVariant.large}
             isOpen={isModalOpen}
-            onClose={toggleModal}
+            onClose={closeModal}
             aria-labelledby="debezium-server-config-modal"
             aria-describedby="debezium-server-config-modal"
         >
@@ -355,7 +361,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                             {t('create')}
                         </Button>
                     )}
-                    <Button key="cancel" variant="link" onClick={() => { }}>
+                    <Button key="cancel" variant="link" onClick={closeModal}>
                         {t('cancel')}
                     </Button>
                 </ModalFooter>
