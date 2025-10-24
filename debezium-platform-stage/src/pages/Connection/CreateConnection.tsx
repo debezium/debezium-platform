@@ -61,23 +61,62 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     const selectedSchemaProperties = selectedSchema?.schema;
 
 
+
+    const buildNestedSchema = () => {
+        if (!selectedSchemaProperties?.properties) return {};
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const schemaObj: any = {};
+        
+        Object.entries(selectedSchemaProperties.properties).forEach(([field, propSchema]) => {
+            const isRequired = selectedSchemaProperties['required']?.includes(field);
+            const isNumeric = propSchema.type === "integer";
+            const validator = isNumeric
+                ? yup
+                    .number()
+                    .transform((currentValue, originalValue) => (originalValue === '' ? undefined : currentValue))
+                    .typeError("Must be a integer")
+                : yup.string();
+            
+            const finalValidator = isRequired ? validator.required() : validator.notRequired();
+            
+            if (field.includes('.')) {
+                const parts = field.split('.');
+                let current = schemaObj;
+                
+                for (let i = 0; i < parts.length - 1; i++) {
+                    const part = parts[i];
+                    if (!current[part]) {
+                        current[part] = {};
+                    }
+                    current = current[part];
+                }
+                
+                current[parts[parts.length - 1]] = finalValidator;
+            } else {
+                schemaObj[field] = finalValidator;
+            }
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const convertToYupObjects = (obj: any): any => {
+             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const result: any = {};
+            for (const key in obj) {
+                if (obj[key] && typeof obj[key] === 'object' && !obj[key]._type) {
+                    result[key] = yup.object(convertToYupObjects(obj[key]));
+                } else {
+                    result[key] = obj[key];
+                }
+            }
+            return result;
+        };
+        
+        return convertToYupObjects(schemaObj);
+    };
+
     const schema = yup.object({
         name: yup.string().required(),
-        ...(selectedSchemaProperties?.properties
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ? Object.entries(selectedSchemaProperties.properties).reduce((acc: any, [field, propSchema]) => {
-                const isRequired = selectedSchemaProperties.required?.includes(field);
-                const isNumeric = propSchema.type === "integer";
-                const validator = isNumeric
-                    ? yup
-                        .number()
-                        .transform((currentValue, originalValue) => (originalValue === '' ? undefined : currentValue))
-                        .typeError("Must be a integer")
-                    : yup.string();
-                acc[field] = isRequired ? validator.required() : validator.notRequired();
-                return acc;
-            }, {})
-            : {})
+        ...buildNestedSchema()
     }).required();
 
     const handleAddProperty = () => {
@@ -177,12 +216,23 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     };
 
     const validateSubmit = (data: ConnectionFormValues) => {
-        const { name, ...dataWithoutName } = data;
-        const payload = selectedSchema ? {
+        const { name } = data;
+        const schemaPropertyKeys = selectedSchemaProperties?.properties
+            ? Object.keys(selectedSchemaProperties.properties)
+            : [];
+        const configFromForm = schemaPropertyKeys.reduce((acc: Record<string, string | number>, key) => {
+            const value = _.get(data, key) as string | number | undefined;
+            if (value !== undefined) {
+                acc[key] = value;
+            }
+            return acc;
+        }, {} as Record<string, string | number>);
+
+        const payload = selectedSchema ? ({
             type: selectedSchema?.type.toUpperCase() || connectionId?.toUpperCase() || "",
-            config: { ...dataWithoutName, ...convertMapToObject(properties, errorWarning, setErrorWarning) },
+            config: { ...configFromForm, ...convertMapToObject(properties, errorWarning, setErrorWarning) },
             name: name as string
-        } as ConnectionPayload : {
+        } as ConnectionPayload) : {
             type: connectionId?.toUpperCase() || "",
             config: convertMapToObject(properties, errorWarning, setErrorWarning),
             name: name as string
@@ -291,13 +341,13 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                                         name={propertyName}
                                                         rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
                                                         control={control}
-                                                        render={({ field }) => <TextInput id={propertyName}  {...field} validated={errors[propertyName] ? "error" : "default"} />}
+                                                        render={({ field }) => <TextInput id={propertyName}  {...field} validated={_.get(errors, propertyName) ? "error" : "default"} />}
                                                     />}
                                                     {propertySchema.type === "list" && <Controller
                                                         name={propertyName}
                                                         rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
                                                         control={control}
-                                                        render={({ field }) => <TextInput id={propertyName}  {...field} validated={errors[propertyName] ? "error" : "default"} />}
+                                                        render={({ field }) => <TextInput id={propertyName}  {...field} validated={_.get(errors, propertyName) ? "error" : "default"} />}
                                                     />}
                                                     {propertySchema.type === "integer" && <Controller
                                                         name={propertyName}
@@ -310,13 +360,13 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                                                 id={propertyName}
                                                                 type="number"
                                                                 {...field}
-                                                                validated={errors[propertyName] ? "error" : "default"}
+                                                                validated={_.get(errors, propertyName) ? "error" : "default"}
                                                                 onChange={(_e, value) => field.onChange(value === '' ? '' : Number(value))}
                                                             />
                                                         )}
                                                     />}
 
-                                                    {errors[propertyName] && (
+                                                    {_.get(errors, propertyName) && (
                                                         <FormHelperText>
                                                             <HelperText>
                                                                 <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
