@@ -18,7 +18,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@patternfly/patternfly": "^6.3.0",
-    "@patternfly/react-charts": "^8.3.0",
+    "@patternfly/react-charts": "^8.4.0",
     "@patternfly/react-code-editor": "^6.4.0",
     "@patternfly/react-component-groups": "^6.3.0",
     "@patternfly/react-core": "^6.3.0",
