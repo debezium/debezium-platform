@@ -35,6 +35,7 @@ import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 import { formatCode } from "@utils/formatCodeUtils";
 import style from "../../styles/createConnector.module.css"
 import CreateConnectionModal from "../components/CreateConnectionModal";
+import { useData } from "@appContext/AppContext";
 
 const ajv = new Ajv();
 
@@ -187,7 +188,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   const destinationId = modelLoaded
     ? destinationIdModel
     : destinationIdParam.destinationId;
-
+  const { darkMode } = useData();
   const rawConfiguration = location.pathname.includes("create_destination") ? !destinationIdParam.destinationId : false;
 
   const navigateTo = (url: string) => {
@@ -474,6 +475,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                       language={Language.json || Language.plaintext}
                       downloadFileName="source-connector.json"
                       isFullHeight
+                      isDarkTheme={darkMode}
                       code={isValidJson(code) ? JSON.stringify(code, null, 2) : code as string}
                       customControls={customControl}
                       onCodeChange={(value) => {

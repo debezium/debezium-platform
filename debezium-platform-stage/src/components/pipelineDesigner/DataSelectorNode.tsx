@@ -67,31 +67,13 @@ const DataSelectorNode: React.FC<DataSelectorNodeProps> = ({ data }) => {
                   <div>
                     {data.type === AppStrings.source ? (
                       <div
-                        style={{
-                          display: "inline-flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          backgroundColor:
-                            "var(--pf-global--palette--black-200, #f5f5f5)",
-                          borderRadius: "5px",
-                          width: "30px",
-                          height: "30px",
-                        }}
+                        className={darkMode ? "connectorImageWrapperDark" : "connectorImageWrapperLight"}
                       >
                         <DataSourceIcon style={{ fontSize: "15px" }} />
                       </div>
                     ) : (
                       <div
-                        style={{
-                          display: "inline-flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          backgroundColor:
-                            "var(--pf-global--palette--black-200, #f5f5f5)",
-                          borderRadius: "5px",
-                          width: "30px",
-                          height: "30px",
-                        }}
+                        className={darkMode ? "connectorImageWrapperDark" : "connectorImageWrapperLight"}
                       >
                         <DataSinkIcon style={{ fontSize: 15 }} />
                       </div>

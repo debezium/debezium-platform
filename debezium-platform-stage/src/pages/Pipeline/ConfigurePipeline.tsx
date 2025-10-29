@@ -67,6 +67,7 @@ import { useTranslation } from "react-i18next";
 import { pipelineSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css"
 import { Properties } from "src/hooks/useConnectorForm";
+import { useData } from "@appContext/AppContext";
 
 const ajv = new Ajv();
 
@@ -149,6 +150,7 @@ const FormSyncManager: React.FC<{
 };
 
 const ConfigurePipeline: React.FunctionComponent = () => {
+  const { darkMode } = useData();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -731,6 +733,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                       isCopyEnabled
                       isLanguageLabelVisible
                       isMinimapVisible
+                      isDarkTheme={darkMode}
                       language={Language.json}
                       downloadFileName="pipeline.json"
                       isFullHeight

@@ -38,6 +38,7 @@ import style from "../../styles/createConnector.module.css"
 import { PageHeader } from "@patternfly/react-component-groups";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import CreateConnectionModal from "../components/CreateConnectionModal";
+import { useData } from "@appContext/AppContext";
 
 const ajv = new Ajv();
 
@@ -147,7 +148,7 @@ const EditDestination: React.FunctionComponent = () => {
   } | null>(null);
   // const { navigationCollapsed } = useData();
   const { addNotification } = useNotification();
-
+  const { darkMode } = useData();
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
   const [destination, setDestination] = useState<Destination>();
@@ -476,6 +477,7 @@ const EditDestination: React.FunctionComponent = () => {
                       isCopyEnabled
                       isLanguageLabelVisible
                       isMinimapVisible
+                      isDarkTheme={darkMode}
                       language={Language.json}
                       downloadFileName="destination-connector.json"
                       isFullHeight

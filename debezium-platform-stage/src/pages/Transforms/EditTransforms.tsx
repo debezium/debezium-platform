@@ -66,6 +66,7 @@ import { transformSchema } from "@utils/schemas";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import { PageHeader } from "@patternfly/react-component-groups";
 import { useParams, useSearchParams } from "react-router-dom";
+import { useData } from "@appContext/AppContext";
 
 const ajv = new Ajv();
 
@@ -76,7 +77,7 @@ export interface IEditTransformsProps {
 const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   onSelection,
 }) => {
-
+  const { darkMode } = useData();
   const { transformId } = useParams<{ transformId: string }>();
 
 
@@ -981,6 +982,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                       language={Language.json}
                       downloadFileName="transforms.json"
                       isFullHeight
+                      isDarkTheme={darkMode}
                       code={JSON.stringify(code, null, 2)}
                       onCodeChange={(value) => {
                         try {

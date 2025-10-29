@@ -55,3 +55,25 @@
   flex-grow: 1;
   position: relative;
 }
+
+.connectorImageWrapperDark {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 5px;
+  width: 25px;
+  height: 25px;
+  padding: 5px;
+  background-color: var(--app-color--dark-blue);
+}
+
+.connectorImageWrapperLight {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 5px;
+  width: 25px;
+  height: 25px;
+  padding: 5px;
+  background-color: var(--pf-theme--global--background--color--secondary--default, #f2f2f2);
+}

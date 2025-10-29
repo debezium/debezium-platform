@@ -36,6 +36,9 @@
     "designerTitle": "Progettista di pipeline",
     "designerDescription": "Crea una pipeline selezionando un'origine e una destinazione esistenti o creandone di nuove se necessario. Puoi opzionalmente aggiungere una o più trasformazioni da applicare alla pipeline."
   },
+  "pipelineDesigner": {
+        "changePipeline": "Cambia pipeline {{val}}"
+  },
   "transformDrawer": {
     "description": "Elenco delle trasformazioni da applicare alla pipeline. Puoi eliminarle o riordinarle in un ordine specifico per applicarle.",
     "title": "Elenco trasformazioni",

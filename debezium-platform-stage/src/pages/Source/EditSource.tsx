@@ -40,6 +40,7 @@ import { connectorSchema, initialConnectorSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import CreateConnectionModal from "../components/CreateConnectionModal";
+import { useData } from "@appContext/AppContext";
 
 const ajv = new Ajv();
 
@@ -151,6 +152,7 @@ const EditSource: React.FunctionComponent = () => {
   const { addNotification } = useNotification();
 
   // const { navigationCollapsed } = useData();
+  const { darkMode } = useData();
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
   const [errorWarning, setErrorWarning] = useState<string[]>([]);
   const [source, setSource] = useState<Source>();
@@ -477,6 +479,7 @@ const EditSource: React.FunctionComponent = () => {
                       isDownloadEnabled
                       isCopyEnabled
                       isLanguageLabelVisible
+                      isDarkTheme={darkMode}
                       isMinimapVisible
                       language={Language.json}
                       downloadFileName="source-connector.json"

@@ -37,6 +37,7 @@ import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 import { formatCode } from "@utils/formatCodeUtils";
 import style from "../../styles/createConnector.module.css";
 import CreateConnectionModal from "../components/CreateConnectionModal";
+import { useData } from "@appContext/AppContext";
 
 const ajv = new Ajv();
 
@@ -196,6 +197,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   const navigateTo = (url: string) => {
     navigate(url);
   };
+  const { darkMode } = useData();
   const { addNotification } = useNotification();
 
   const [code, setCode] = useState<string | Payload>(initialCodeValue);
@@ -486,6 +488,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                       isCopyEnabled
                       isLanguageLabelVisible
                       isMinimapVisible
+                      isDarkTheme={darkMode}
                       language={Language.json || Language.plaintext}
                       downloadFileName="source-connector.json"
                       isFullHeight

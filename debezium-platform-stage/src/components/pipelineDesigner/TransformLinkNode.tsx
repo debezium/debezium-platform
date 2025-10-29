@@ -89,16 +89,7 @@ const TransformLinkNode: React.FC<TransformLinkNodeProps> = ({ data }) => {
                   }}
                 >
                   <div
-                    style={{
-                      display: "inline-flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      backgroundColor:
-                        "var(--pf-global--palette--black-200, #f5f5f5)",
-                      borderRadius: "4px",
-                      width: "25px",
-                      height: "25px",
-                    }}
+                    className={darkMode ? "connectorImageWrapperDark" : "connectorImageWrapperLight"}
                   >
                     <DataProcessorIcon style={{ fontSize: 15 }} />
                   </div>

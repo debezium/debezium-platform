@@ -61,6 +61,7 @@ import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
 import { transformSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css"
+import { useData } from "@appContext/AppContext";
 
 const ajv = new Ajv();
 
@@ -78,7 +79,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
   const navigateTo = (url: string) => {
     navigate(url);
   };
-
+  const { darkMode } = useData();
   const { addNotification } = useNotification();
 
   const [editorSelected, setEditorSelected] = useState("form-editor");
@@ -883,6 +884,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
                       isCopyEnabled
                       isLanguageLabelVisible
                       isMinimapVisible
+                      isDarkTheme={darkMode}
                       language={Language.json}
                       downloadFileName="transforms.json"
                       isFullHeight

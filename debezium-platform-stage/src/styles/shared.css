@@ -16,3 +16,26 @@
     height: 100% !important;
     min-height: 300px !important;
 }
+
+
+.connectorImageWrapperDark {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    width: 30px;
+    height: 30px;
+    padding: 5px;
+    background-color: var(--app-color--dark-blue);
+  }
+  
+  .connectorImageWrapperLight {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    width: 30px;
+    height: 30px;
+    padding: 5px;
+    background-color: var(--pf-theme--global--background--color--secondary--default, #f2f2f2);
+  }

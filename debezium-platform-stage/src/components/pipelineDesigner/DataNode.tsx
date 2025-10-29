@@ -13,6 +13,7 @@ import "./DataNode.css";
 import { PencilAltIcon } from "@patternfly/react-icons";
 import { useData } from "../../appLayout/AppContext";
 import { AppColors, AppStrings } from "../../utils/constants";
+import { useTranslation } from "react-i18next";
 
 interface DataNodeProps {
   data: {
@@ -25,7 +26,7 @@ interface DataNodeProps {
 
 const DataNode: React.FC<DataNodeProps> = ({ data }) => {
   const { darkMode } = useData();
-
+  const { t } = useTranslation();
   return (
     <>
       {data.editAction && (
@@ -37,7 +38,7 @@ const DataNode: React.FC<DataNodeProps> = ({ data }) => {
               : "gradientDestination editDataNodeDestination"
           }
         >
-          <Tooltip content={<div>Change pipeline {data.type}.</div>}>
+          <Tooltip content={<div>{t('pipeline:pipelineDesigner.changePipeline', { val: data.type })}</div>}>
             <div
               style={
                 darkMode
@@ -94,17 +95,7 @@ const DataNode: React.FC<DataNodeProps> = ({ data }) => {
                   }}
                 >
                   <div
-                    style={{
-                      display: "inline-flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      backgroundColor:
-                        "var(--pf-global--palette--black-200, #f5f5f5)",
-                      borderRadius: "5px",
-                      width: "35px",
-                      height: "35px",
-                      padding: "5px",
-                    }}
+                    className={darkMode ? "connectorImageWrapperDark" : "connectorImageWrapperLight"}
                   >
                     <ConnectorImage
                       connectorType={data.connectorType}
