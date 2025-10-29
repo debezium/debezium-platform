@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { Breadcrumb, BreadcrumbItem } from "@patternfly/react-core";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const BreadcrumbGenerator: FC<{ children: React.ReactNode }> = ({
   children,
@@ -11,10 +11,19 @@ const BreadcrumbGenerator: FC<{ children: React.ReactNode }> = ({
 const generateBreadcrumbItem = (
   url: string,
   label: string,
+  navigate: ReturnType<typeof useNavigate>,
   isCurrent: boolean = false
 ) => {
   return (
-    <BreadcrumbItem key={label} isActive={isCurrent} to={url}>
+    <BreadcrumbItem 
+      key={label} 
+      isActive={isCurrent}
+      onClick={(e) => {
+        e.preventDefault();
+        navigate(url);
+      }}
+      to={url}
+    >
       {label}
     </BreadcrumbItem>
   );
@@ -22,107 +31,109 @@ const generateBreadcrumbItem = (
 
 const AppBreadcrumb: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const appBreadcrumb = (route: string) => {
     switch (true) {
       case route.match("/source/catalog") !== null:
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/source", "Source")}
-            {generateBreadcrumbItem("#", "Catalog", true)}
+            {generateBreadcrumbItem("/source", "Source", navigate)}
+            {generateBreadcrumbItem("#", "Catalog", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route.match("source/[^/]+") !== null:
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/source", "Source")}
-            {generateBreadcrumbItem("#", "Edit source", true)}
+            {generateBreadcrumbItem("/source", "Source", navigate)}
+            {generateBreadcrumbItem("#", "Edit source", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route.includes("/source/create_source"):
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/source", "Source")}
-            {generateBreadcrumbItem("/source/catalog", "Catalog")}
-            {generateBreadcrumbItem("#", "Create source", true)}
+            {generateBreadcrumbItem("/source", "Source", navigate)}
+            {generateBreadcrumbItem("/source/catalog", "Catalog", navigate)}
+            {generateBreadcrumbItem("#", "Create source", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route === "/destination/catalog":
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/destination", "Destination")}
-            {generateBreadcrumbItem("#", "Catalog", true)}
+            {generateBreadcrumbItem("/destination", "Destination", navigate)}
+            {generateBreadcrumbItem("#", "Catalog", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route.match("destination/[^/]+") !== null:
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/destination", "Destination")}
-            {generateBreadcrumbItem("#", "Edit destination", true)}
+            {generateBreadcrumbItem("/destination", "Destination", navigate)}
+            {generateBreadcrumbItem("#", "Edit destination", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route.includes("/destination/create_destination"):
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/destination", "Destination")}
-            {generateBreadcrumbItem("/destination/catalog", "Catalog")}
-            {generateBreadcrumbItem("#", "Create destination", true)}
+            {generateBreadcrumbItem("/destination", "Destination", navigate)}
+            {generateBreadcrumbItem("/destination/catalog", "Catalog", navigate)}
+            {generateBreadcrumbItem("#", "Create destination", navigate, true)}
           </BreadcrumbGenerator>
         );
         case route === "/connections/catalog":
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/connections", "Connections")}
-            {generateBreadcrumbItem("#", "Catalog", true)}
+            {generateBreadcrumbItem("/connections", "Connections", navigate)}
+            {generateBreadcrumbItem("#", "Catalog", navigate, true)}
           </BreadcrumbGenerator>
         );
         case route.includes("/connections/create_connection"):
           return (
             <BreadcrumbGenerator>
-              {generateBreadcrumbItem("/connections", "Connections")}
-              {generateBreadcrumbItem("/connections/catalog", "Catalog")}
-              {generateBreadcrumbItem("#", "Create connection", true)}
+              {generateBreadcrumbItem("/connections", "Connections", navigate)}
+              {generateBreadcrumbItem("/connections/catalog", "Catalog", navigate)}
+              {generateBreadcrumbItem("#", "Create connection", navigate, true)}
             </BreadcrumbGenerator>
           );
       case route === "/pipeline/pipeline_designer":
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/pipeline", "Pipeline")}
-            {generateBreadcrumbItem("#", "Pipeline designer", true)}
+            {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
+            {generateBreadcrumbItem("#", "Pipeline designer", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route.match("/pipeline/[^/]+") !== null:
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/pipeline", "Pipeline")}
-            {generateBreadcrumbItem("#", "Overview", true)}
+            {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
+            {generateBreadcrumbItem("#", "Overview", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route.match("/pipeline/pipeline_edit/[^/]+") !== null:
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/pipeline", "Pipeline")}
-            {generateBreadcrumbItem("#", "indra-ui-test", true)}
-            {generateBreadcrumbItem("#", "Edit", true)}
+            {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
+            {generateBreadcrumbItem("#", "indra-ui-test", navigate, true)}
+            {generateBreadcrumbItem("#", "Edit", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route === "/pipeline/pipeline_designer/configure":
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/pipeline", "Pipeline")}
-            {generateBreadcrumbItem("#", "Pipeline designer")}
-            {generateBreadcrumbItem("#", "Create pipeline")}
+            {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
+            {generateBreadcrumbItem("#", "Pipeline designer", navigate)}
+            {generateBreadcrumbItem("#", "Create pipeline", navigate)}
           </BreadcrumbGenerator>
         );
       case route === "/pipeline/pipeline_designer/destination":
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/pipeline", "Pipeline")}
+            {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
             {generateBreadcrumbItem(
               "/pipeline/pipeline_designer",
-              " Pipeline designer"
+              " Pipeline designer",
+              navigate
             )}
-            {generateBreadcrumbItem("#", "Destination", true)}
+            {generateBreadcrumbItem("#", "Destination", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route.includes(
@@ -130,16 +141,18 @@ const AppBreadcrumb: React.FC = () => {
       ):
         return (
           <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/pipeline", "Pipeline")}
+            {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
             {generateBreadcrumbItem(
               "/pipeline/pipeline_designer",
-              "Pipeline designer"
+              "Pipeline designer",
+              navigate
             )}
             {generateBreadcrumbItem(
               "pipeline/pipeline_designer/destination",
-              "Destination"
+              "Destination",
+              navigate
             )}
-            {generateBreadcrumbItem("#", "Create destination", true)}
+            {generateBreadcrumbItem("#", "Create destination", navigate, true)}
           </BreadcrumbGenerator>
         );
       default:
