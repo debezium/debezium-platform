@@ -6,6 +6,21 @@ import "@testing-library/jest-dom";
 
 import { server } from "../../__mocks__/server";
 
+// Mock window.matchMedia 
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => true,
+  }),
+});
+
 // Establish API mocking before all tests.
 beforeAll(() => server.listen());
 

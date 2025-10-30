@@ -88,8 +88,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       {getThemeIcon(selectedTheme || 'system')}
     </MenuToggle>
   );
-  console.log("system dark theme",window.matchMedia('(prefers-color-scheme: dark)').matches);
-  console.log("locally set theme",localStorage.getItem("themeMode"));
 
   const toggleDarkMode = (val: string) => {
     let newDarkMode = val === "dark";
