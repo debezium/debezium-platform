@@ -70,12 +70,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
   const getThemeIcon = (theme: string) => {
     switch (theme) {
-      case 'system':
-        return <SystemThemeIcon color="var(--pf-global--Color--100)" />;
+      case 'light':
+        return <LightThemeIcon color="var(--pf-global--Color--100)" />;
       case 'dark':
         return <DarkThemeIcon color="var(--pf-global--Color--100)" />;
       default:
-        return <LightThemeIcon color="var(--pf-global--Color--100)" />;
+        return <SystemThemeIcon color="var(--pf-global--Color--100)" />;
     }
   };
 
@@ -85,14 +85,19 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       onClick={onThemeDropdownToggle}
       isExpanded={isThemeDropdownOpen}
     >
-      {getThemeIcon(selectedTheme || 'light')}
+      {getThemeIcon(selectedTheme || 'system')}
     </MenuToggle>
   );
+  console.log("system dark theme",window.matchMedia('(prefers-color-scheme: dark)').matches);
+  console.log("locally set theme",localStorage.getItem("themeMode"));
 
   const toggleDarkMode = (val: string) => {
-    const newDarkMode = val === "dark";
+    let newDarkMode = val === "dark";
+    if (val === "system") {
+      newDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
     setDarkMode(newDarkMode);
-    localStorage.setItem("themeMode", newDarkMode ? "dark" : "light");
+    localStorage.setItem("themeMode", val);
     if (newDarkMode) {
       if (!document.documentElement.classList.contains("pf-v6-theme-dark")) {
         document.documentElement.classList.add("pf-v6-theme-dark");
@@ -103,27 +108,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
   useEffect(() => {
     const storedThemeMode = localStorage.getItem("themeMode");
-    if (storedThemeMode === "dark") {
-      setSelectedTheme("dark");
-    } else {
-      setSelectedTheme("light");
-    }
-  }, [setSelectedTheme]);
-
-  useEffect(() => {
-    const storedThemeMode = localStorage.getItem("themeMode");
-    if (selectedTheme === "system") {
-      if (storedThemeMode === "dark") {
-        setDarkMode(true);
-        setSelectedTheme("dark");
-        document.documentElement.classList.add("pf-v6-theme-dark");
-      } else {
-        setSelectedTheme("light");
-        setDarkMode(false);
-        document.documentElement.classList.remove("pf-v6-theme-dark");
-      }
-    }
-  }, [setDarkMode, selectedTheme]);
+    setSelectedTheme(storedThemeMode || "system");
+    toggleDarkMode(storedThemeMode || "system");
+  }, []);
 
   return (
     <>
