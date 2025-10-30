@@ -15,6 +15,8 @@
   "copied": "Copied",
   "copy": "Copy",
   "create": "Create",
+  "dark": "Dark",
+  "darkMode": "Always use dark mode",
   "delete": "Delete",
   "deleteAll": "Delete all",
   "deleteModel": {
@@ -40,7 +42,7 @@
   "findByName": "Find by name",
   "form": {
     "addFieldButton": "Add property",
-    "error":{
+    "error": {
       "title": "Fill out all required fields before continuing.",
       "required": "{{val}} field is required",
       "numerical": "Please enter numerical value for {{val}} field"
@@ -62,6 +64,8 @@
   "goTo": "Go to {{val}}",
   "goToHome": "Go to home",
   "items": "Items",
+  "light": "Light",
+  "lightMode": "Always use light mode",
   "loading": "Loading...",
   "name": "Name",
   "pipeline": "Pipeline",
@@ -86,6 +90,8 @@
   "smartEditorButtonTooltip": " Use raw configuration to create a new {{val}} connector using smart editor.",
   "source": "Source",
   "submit": "Submit",
+  "system": "System",
+  "systemPreference": "Follow system preference",
   "transform": "Transform",
   "transformations": "Transformations",
   "transforms": "Transforms",

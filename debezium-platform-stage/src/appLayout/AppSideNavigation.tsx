@@ -6,11 +6,9 @@ import {
   NavItem,
   NavExpandable,
 } from "@patternfly/react-core";
-import { MoonIcon, SunIcon } from "@patternfly/react-icons";
-import React, { useEffect, useState } from "react";
+import React, {  } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { IAppRoute, IAppRouteGroup, routes } from "../route";
-import { useData } from "./AppContext";
 
 interface AppSideNavigationProps {
   isSidebarOpen: boolean;
@@ -20,28 +18,6 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
   isSidebarOpen,
 }) => {
   const location = useLocation();
-
-  const { setDarkMode } = useData();
-
-  const [isDarkMode, setIsDarkMode] = useState(
-    () => localStorage.getItem("themeMode") === "dark"
-  );
-
-  const toggleDarkMode = () => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    setDarkMode(newDarkMode);
-    localStorage.setItem("themeMode", newDarkMode ? "dark" : "light");
-    document.documentElement.classList.toggle("pf-v6-theme-dark");
-  };
-
-  useEffect(() => {
-    const storedThemeMode = localStorage.getItem("themeMode");
-    if (storedThemeMode === "dark") {
-      setDarkMode(storedThemeMode === "dark");
-      document.documentElement.classList.add("pf-v6-theme-dark");
-    }
-  }, [setDarkMode]);
 
   const renderNavItem = (route: IAppRoute, index: number) => (
     <NavItem
@@ -117,44 +93,6 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
     <PageSidebar style={isSidebarOpen ? {} : { width: "fit-content", maxWidth: "fit-content" }}>
       <PageSidebarBody isFilled={true} className="custom-app-page__sidebar-body">
         {isSidebarOpen ? Navigation : NavigationClosed}
-      </PageSidebarBody>
-
-      <PageSidebarBody isFilled={false} className="custom-app-page__sidebar-body">
-        {isSidebarOpen ? (
-          <Nav className="pf-v6-c-nav">
-            <NavList>
-              <NavItem onClick={toggleDarkMode}>
-                <div
-                  className="pf-v6-c-nav__link"
-                  style={{ cursor: "pointer" }}
-                >
-                  {isDarkMode ? (
-                    <>
-                      <SunIcon /> Light mode
-                    </>
-                  ) : (
-                    <>
-                      <MoonIcon /> Dark mode
-                    </>
-                  )}
-                </div>
-              </NavItem>
-            </NavList>
-          </Nav>
-        ) : (
-          <Nav className="pf-v6-c-nav">
-            <NavList>
-              <NavItem onClick={toggleDarkMode}>
-                <div
-                  className="pf-v6-c-nav__link"
-                  style={{ fontSize: "20px", cursor: "pointer" }}
-                >
-                  {isDarkMode ? <SunIcon /> : <MoonIcon />}
-                </div>
-              </NavItem>
-            </NavList>
-          </Nav>
-        )}
       </PageSidebarBody>
     </PageSidebar>
   );

@@ -14,15 +14,23 @@ import {
   NotificationBadgeVariant,
   PageToggleButton,
   MastheadLogo,
+  MenuToggleElement,
+  MenuToggle,
+  DropdownItem,
+  Dropdown,
+  DropdownList,
 } from "@patternfly/react-core";
 import { BarsIcon } from "@patternfly/react-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import dbz_logo_black from "../assets/color_black_debezium.svg";
 import dbz_svg from "../assets/debezium_logo.png";
-// import imgAvatar from "@patternfly/react-core/src/components/assets/avatarImg.svg";
 import { useNavigate } from "react-router-dom";
 import { useData } from "./AppContext";
 import { NotificationProps } from "./AppNotificationContext";
+import SystemThemeIcon from "src/assets/customeIcons/SystemThemeIcon";
+import LightThemeIcon from "src/assets/customeIcons/LightThemeIcon";
+import DarkThemeIcon from "src/assets/customeIcons/DarkThemeIcon";
+import { useTranslation } from "react-i18next";
 
 interface AppHeaderProps {
   toggleSidebar: () => void;
@@ -40,13 +48,82 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   handleNotificationBadgeClick,
   getNotificationBadgeVariant,
 }) => {
+  const { darkMode, setDarkMode } = useData();
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const [selectedTheme, setSelectedTheme] = useState<string>('');
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
 
-  const { darkMode } = useData();
+
+  const onSelect = (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
+    setSelectedTheme(value as string);
+    setIsThemeDropdownOpen(false);
+    toggleDarkMode(value as string);
+  };
+
+  const onThemeDropdownToggle = () => {
+    setIsThemeDropdownOpen(!isThemeDropdownOpen);
+  };
 
   const navigateTo = (url: string) => {
     navigate(url);
   };
+  const getThemeIcon = (theme: string) => {
+    switch (theme) {
+      case 'system':
+        return <SystemThemeIcon color="var(--pf-global--Color--100)" />;
+      case 'dark':
+        return <DarkThemeIcon color="var(--pf-global--Color--100)" />;
+      default:
+        return <LightThemeIcon color="var(--pf-global--Color--100)" />;
+    }
+  };
+
+  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+    <MenuToggle
+      ref={toggleRef}
+      onClick={onThemeDropdownToggle}
+      isExpanded={isThemeDropdownOpen}
+    >
+      {getThemeIcon(selectedTheme || 'light')}
+    </MenuToggle>
+  );
+
+  const toggleDarkMode = (val: string) => {
+    const newDarkMode = val === "dark";
+    setDarkMode(newDarkMode);
+    localStorage.setItem("themeMode", newDarkMode ? "dark" : "light");
+    if (newDarkMode) {
+      if (!document.documentElement.classList.contains("pf-v6-theme-dark")) {
+        document.documentElement.classList.add("pf-v6-theme-dark");
+      }
+    } else {
+      document.documentElement.classList.remove("pf-v6-theme-dark");
+    }
+  };
+  useEffect(() => {
+    const storedThemeMode = localStorage.getItem("themeMode");
+    if (storedThemeMode === "dark") {
+      setSelectedTheme("dark");
+    } else {
+      setSelectedTheme("light");
+    }
+  }, [setSelectedTheme]);
+
+  useEffect(() => {
+    const storedThemeMode = localStorage.getItem("themeMode");
+    if (selectedTheme === "system") {
+      if (storedThemeMode === "dark") {
+        setDarkMode(true);
+        setSelectedTheme("dark");
+        document.documentElement.classList.add("pf-v6-theme-dark");
+      } else {
+        setSelectedTheme("light");
+        setDarkMode(false);
+        document.documentElement.classList.remove("pf-v6-theme-dark");
+      }
+    }
+  }, [setDarkMode, selectedTheme]);
 
   return (
     <>
@@ -74,35 +151,49 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </MastheadBrand>
         </MastheadMain>
         <MastheadContent>
-          <Toolbar id="masthead-toggle" isStatic isFullHeight>
-            <ToolbarContent>
+          <Toolbar id="masthead-toggle" isStatic isFullHeight >
+            <ToolbarContent style={{ display: "flex", justifyContent: "flex-end" }}>
               <ToolbarGroup
                 variant="action-group-plain"
-                align={{ default: "alignEnd" }}
+              >
+                <ToolbarItem visibility={{ default: 'hidden', md: 'visible' }}>
+                  <Dropdown
+                    id="single-select"
+                    isOpen={isThemeDropdownOpen}
+                    selected={selectedTheme}
+                    onSelect={onSelect}
+                    onOpenChange={(isOpen) => setIsThemeDropdownOpen(isOpen)}
+                    toggle={toggle}
+                    popperProps={{ flipBehavior: ['bottom', 'bottom-start'], position: 'right' }}
+                  >
+                    <DropdownList>
+                      <DropdownItem value="system" icon={<SystemThemeIcon color="var(--pf-global--Color--100)" />} description={t('systemPreference')}>{t('system')}</DropdownItem>
+                      <DropdownItem value="light" icon={<LightThemeIcon color="var(--pf-global--Color--100)" />} description={t('lightMode')}>{t('light')}</DropdownItem>
+                      <DropdownItem value="dark" icon={<DarkThemeIcon color="var(--pf-global--Color--100)" />} description={t('darkMode')}>{t('dark')}</DropdownItem>
+                    </DropdownList>
+                  </Dropdown>
+                </ToolbarItem>
+              </ToolbarGroup>
+              <ToolbarItem variant="separator" />
+
+              <ToolbarGroup
+                variant="action-group-plain"
               >
                 <ToolbarItem>
                   <NotificationBadge
                     variant={
                       getNotificationBadgeVariant() as
-                        | NotificationBadgeVariant
-                        | "read"
-                        | "unread"
-                        | "attention"
-                        | undefined
+                      | NotificationBadgeVariant
+                      | "read"
+                      | "unread"
+                      | "attention"
+                      | undefined
                     }
                     onClick={handleNotificationBadgeClick}
                     aria-label="Notifications"
                   ></NotificationBadge>
                 </ToolbarItem>
               </ToolbarGroup>
-
-              {/*
-              // TODO: Add user avatar when multi tenancy is implemented
-              <ToolbarItem variant="separator" />
-
-              <ToolbarItem>
-                <Avatar src={imgAvatar} alt="user avatar" />
-              </ToolbarItem> */}
             </ToolbarContent>
           </Toolbar>
         </MastheadContent>
