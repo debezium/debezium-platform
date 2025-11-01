@@ -33,6 +33,7 @@ import {
   TextInputGroupMain,
   TextInputGroupUtilities,
   Skeleton,
+  FormFieldGroupExpandable,
 } from "@patternfly/react-core";
 import { AddCircleOIcon, CheckCircleIcon, PlusIcon, TimesIcon, TrashIcon } from "@patternfly/react-icons";
 import { getConnectionRole, getConnectorTypeName, getDatabaseType } from "@utils/helpers";
@@ -43,6 +44,7 @@ import { Connection, ConnectionConfig, fetchData, verifySignals } from "src/apis
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/index";
 import { useQuery } from "react-query";
+import TableViewComponent from "./TableViewComponent";
 
 
 const getInitialSelectOptions = (connections: connectionsList[]): SelectOptionProps[] => {
@@ -602,7 +604,7 @@ const SourceSinkForm = ({
                 header={
                   <FormFieldGroupHeader
                     titleText={{
-                      text: t("source:signal.title"),
+                      text: <span style={{ fontWeight: 500 }}>{t("source:signal.title")}</span>,
                       id: `field-group-signal-id`,
                     }}
                     titleDescription={t("source:signal.description")}
@@ -615,6 +617,23 @@ const SourceSinkForm = ({
 
               </FormFieldGroup>
             }
+
+            <FormFieldGroupExpandable
+            hasAnimations
+     
+              header={
+                <FormFieldGroupHeader
+                  titleText={{
+                    text: <span style={{ fontWeight: 500 }}>PostgreSQL data table</span>,
+                    id: `field-group-data-table-id`,
+                  }}
+                  titleDescription={"Select the data table to be sync"}
+                />
+              }
+            >
+              <TableViewComponent />
+
+            </FormFieldGroupExpandable>
 
           </Form>
         </CardBody>
