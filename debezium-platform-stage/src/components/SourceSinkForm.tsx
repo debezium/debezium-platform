@@ -39,8 +39,8 @@ import { AddCircleOIcon, CheckCircleIcon, PlusIcon, TimesIcon, TrashIcon } from 
 import { getConnectionRole, getConnectorTypeName, getDatabaseType } from "@utils/helpers";
 import ConnectorImage from "./ComponentImage";
 import { useTranslation } from "react-i18next";
-import { useEffect, useRef, useState } from "react";
-import { Connection, ConnectionConfig, fetchData, verifySignals } from "src/apis";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { Connection, ConnectionConfig, fetchData, fetchDataTypeTwo, TableData, verifySignals } from "src/apis";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/index";
 import { useQuery } from "react-query";
@@ -116,6 +116,9 @@ const SourceSinkForm = ({
   const [signalCollectionName, setSignalCollectionName] = useState("");
   const [signalVerified, setSignalVerified] = useState(false);
   const [signalMissingPayloads, setSignalMissingPayload] = useState<string[]>([]);
+
+  const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
+  const [collections, setCollections] = useState<TableData | undefined>(undefined);
 
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState<string>('');
@@ -415,6 +418,25 @@ const SourceSinkForm = ({
     setIsModalOpen(false);
   }
 
+  useEffect(() => {
+    const fetchCollections = async () => {
+      setIsCollectionsLoading(true);
+      const response = await fetchDataTypeTwo<TableData>(
+        `${API_URL}/api/connections/${selectedConnection?.id}/collections`
+      );
+      if (response.error) {
+        console.log(response.error);
+      } else {
+        setCollections(response.data as TableData);
+      }
+
+      setIsCollectionsLoading(false);
+    };
+    if (selectedConnection?.id) {
+      fetchCollections();
+    }
+  }, [selectedConnection]);
+
   return (
     <>
       <Card className="custom-card-body">
@@ -518,6 +540,32 @@ const SourceSinkForm = ({
               </FormHelperText>)}
             </FormGroup>
 
+
+            {
+              (!!selectedConnection?.id && !isCollectionsLoading) ?
+
+                <FormFieldGroupExpandable
+                  hasAnimations
+
+                  header={
+                    <FormFieldGroupHeader
+                      titleText={{
+                        text: <span style={{ fontWeight: 500 }}>PostgreSQL data table</span>,
+                        id: `field-group-data-table-id`,
+                      }}
+                      titleDescription={"Select the data table to be sync"}
+                    />
+                  }
+                >
+                  <TableViewComponent collections={collections} />
+
+
+                </FormFieldGroupExpandable>
+                : null}
+
+
+
+
             <FormFieldGroup
               header={
                 <FormFieldGroupHeader
@@ -618,22 +666,7 @@ const SourceSinkForm = ({
               </FormFieldGroup>
             }
 
-            <FormFieldGroupExpandable
-            hasAnimations
-     
-              header={
-                <FormFieldGroupHeader
-                  titleText={{
-                    text: <span style={{ fontWeight: 500 }}>PostgreSQL data table</span>,
-                    id: `field-group-data-table-id`,
-                  }}
-                  titleDescription={"Select the data table to be sync"}
-                />
-              }
-            >
-              <TableViewComponent />
 
-            </FormFieldGroupExpandable>
 
           </Form>
         </CardBody>

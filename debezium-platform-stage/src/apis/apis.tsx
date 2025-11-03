@@ -54,6 +54,27 @@ export type Payload = {
   name: string;
 };
 
+export type TableCollection = {
+  name: string;
+  fullyQualifiedName: string;
+};
+
+export type TableSchema = {
+  name: string;
+  collections: TableCollection[];
+  collectionCount: number;
+};
+
+export type TableCatalog = {
+  name: string | null;
+  schemas: TableSchema[];
+  totalCollections: number;
+};
+
+export type TableData = {
+  catalogs: TableCatalog[];
+};
+
 export type ResourceType = "source" | "destination" | "transform" | "connection" | "pipeline";
 
 export type ConnectionValidationResult = {
