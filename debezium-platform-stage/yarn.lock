@@ -2369,10 +2369,15 @@ check-error@^2.1.1:
   resolved "https://registry.yarnpkg.com/check-error/-/check-error-2.1.1.tgz#87eb876ae71ee388fa0471fe423f494be1d96ccc"
   integrity sha512-OAlb+T7V4Op9OwdkjmguYRqncdlx5JiofwOAUkmTF+jNdHwzTaTs4sRAGpzLF3oOz5xAyDGrPgeIDFQmDOTiJw==
 
-chromatic@^11.1.1, chromatic@^11.15.0:
+chromatic@^11.15.0:
   version "11.29.0"
   resolved "https://registry.yarnpkg.com/chromatic/-/chromatic-11.29.0.tgz#da556dbd3b043e8c6a3134d1afa3bb4ad7317410"
   integrity sha512-yisBlntp9hHVj19lIQdpTlcYIXuU9H/DbFuu6tyWHmj6hWT2EtukCCcxYXL78XdQt1vm2GfIrtgtKpj/Rzmo4A==
+
+chromatic@^13.3.3:
+  version "13.3.3"
+  resolved "https://registry.yarnpkg.com/chromatic/-/chromatic-13.3.3.tgz#d306a0076682b74f618d04518c60e0571368fa65"
+  integrity sha512-89w0hiFzIRqLbwGSkqSQzhbpuqaWpXYZuevSIF+570Wb+T/apeAkp3px8nMJcFw+zEdqw/i6soofkJtfirET1Q==
 
 classcat@^5.0.3, classcat@^5.0.4:
   version "5.0.5"
