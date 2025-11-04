@@ -9,6 +9,7 @@
   "backToCatalog": "Torna al catalogo",
   "cancel": "Annulla",
   "clear": "Cancella",
+  "collapseAll": "Chiudi tutto",
   "comingSoon": "In arrivo",
   "confirm": "Conferma",
   "connection": "Connessione",
@@ -38,6 +39,7 @@
   "enabled": "Abilitato",
   "enterValue": "inserisci un valore",
   "error": "Errore",
+  "expandAll": "Espandi tutto",
   "failedToLoad": "Caricamento non riuscito",
   "findByName": "Cerca per nome",
   "form": {

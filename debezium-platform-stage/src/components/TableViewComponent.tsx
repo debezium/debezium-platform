@@ -1,93 +1,32 @@
 import { Button, Toolbar, ToolbarContent, ToolbarItem, TreeView, TreeViewDataItem, TreeViewSearch } from "@patternfly/react-core";
+import { DatabaseIcon, ServerGroupIcon } from "@patternfly/react-icons";
 import { FC, useState, useEffect } from "react";
 import { Fragment } from "react/jsx-runtime";
 import { TableData } from "src/apis";
+import "./TableViewComponent.css";
+import { useTranslation } from "react-i18next";
 
 type TableViewComponentProps = {
     collections: TableData | undefined;
-    //   onToggle: () => void;
-    //   allExpanded: boolean;
-    //   tree: React.ReactNode;
 };
 
 const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
-
-    const [activeItems, setActiveItems] = useState<TreeViewDataItem[]>();
+    const { t } = useTranslation();
     const [allExpanded, setAllExpanded] = useState(false);
-
     const [filteredItems, setFilteredItems] = useState<TreeViewDataItem[]>([]);
     const [isFiltered, setIsFiltered] = useState(false);
+
     const [options, setOptions] = useState<TreeViewDataItem[]>([]);
 
-    const tableData = {
-        catalogs: [
-            {
-                name: null,
-                schemas: [
-                    {
-                        name: "inventory",
-                        collections: [
-                            {
-                                name: "spatial_ref_sys",
-                                fullyQualifiedName: "inventory.spatial_ref_sys"
-                            },
-                            {
-                                name: "geom",
-                                fullyQualifiedName: "inventory.geom"
-                            },
-                            {
-                                name: "products_on_hand",
-                                fullyQualifiedName: "inventory.products_on_hand"
-                            },
-                            {
-                                name: "customers",
-                                fullyQualifiedName: "inventory.customers"
-                            },
-                            {
-                                name: "orders",
-                                fullyQualifiedName: "inventory.orders"
-                            },
-                            {
-                                name: "products",
-                                fullyQualifiedName: "inventory.products"
-                            }
-                        ],
-                        collectionCount: 6
-                    },
-                    {
-                        name: "orders",
-                        collections: [
-                            {
-                                name: "ongoing_orders",
-                                fullyQualifiedName: "orders.ongoing_orders"
-                            },
-                            {
-                                name: "in_cart_orders",
-                                fullyQualifiedName: "orders.in_cart_orders"
-                            },
-                            {
-                                name: "completed_orders",
-                                fullyQualifiedName: "orders.completed_orders"
-                            },
-                            {
-                                name: "cancelled_orders",
-                                fullyQualifiedName: "orders.cancelled_orders"
-                            }
-                        ],
-                        collectionCount: 4
-                    }
-                ],
-                totalCollections: 4
-            }
-        ]
-    };
+    const [checkedItems, setCheckedItems] = useState<TreeViewDataItem[]>([]);
 
-    console.log("collections", collections, "tableData", tableData);
+    useEffect(() => {
+        console.log('Checked items: ', checkedItems);
+    }, [checkedItems]);
 
-    // Transform tableData into TreeViewDataItem compatible options
+
     useEffect(() => {
         const newOptions: TreeViewDataItem[] = [];
-        
         if (collections && collections.catalogs) {
             collections.catalogs.forEach((catalog) => {
                 if (catalog.schemas) {
@@ -98,51 +37,39 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
                                 collectionsChildren.push({
                                     name: collection.name,
                                     id: `schema${schemaIdx}-collection${collIdx}`,
+                                    icon: <ServerGroupIcon />,
+                                    checkProps: { checked: false }
                                 });
                             });
                         }
                         newOptions.push({
                             name: schema.name,
                             id: `schema${schemaIdx}`,
+                            icon: <DatabaseIcon />,
+                            checkProps: { 'aria-label': 'schema', checked: false },
                             children: collectionsChildren
                         });
                     });
                 }
             });
         }
-        
+
         setOptions(newOptions);
         setFilteredItems(newOptions);
     }, [collections]);
 
-    // if (tableData && tableData.catalogs) {
-    //     tableData.catalogs.forEach((catalog) => {
-    //         if (catalog.schemas) {
-    //             catalog.schemas.forEach((schema, schemaIdx) => {
-    //                 const collectionsChildren: TreeViewDataItem[] = [];
-    //                 if (schema.collections) {
-    //                     schema.collections.forEach((collection, collIdx) => {
-    //                         collectionsChildren.push({
-    //                             name: collection.name,
-    //                             id: `schema${schemaIdx}-collection${collIdx}`,
-    //                         });
-    //                     });
-    //                 }
-    //                 options.push({
-    //                     name: schema.name,
-    //                     id: `schema${schemaIdx}`,
-    //                     children: collectionsChildren
-    //                 });
-    //             });
-    //         }
-    //     });
-    // }
+    const onCheck = (event: React.ChangeEvent, treeViewItem: TreeViewDataItem) => {
+        const checked = (event.target as HTMLInputElement).checked;
+        const checkedItemTree = options
+            .map((opt) => Object.assign({}, opt))
+            .filter((item) => filterItemsForCheck(item, treeViewItem));
+        const flatCheckedItems = flattenTree(checkedItemTree);
 
-    const onSelect = (_event: React.MouseEvent, treeViewItem: TreeViewDataItem) => {
-        // Ignore folders for selection
-        if (treeViewItem && !treeViewItem.children) {
-            setActiveItems([treeViewItem]);
-        }
+        setCheckedItems((prevCheckedItems) =>
+            checked
+                ? prevCheckedItems.concat(flatCheckedItems.filter((item) => !checkedItems.some((i) => i.id === item.id)))
+                : prevCheckedItems.filter((item) => !flatCheckedItems.some((i) => i.id === item.id))
+        );
     };
 
     const onSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,7 +78,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
             setFilteredItems(options);
             setIsFiltered(false);
         } else {
-            const filtered = options.map((opt) => Object.assign({}, opt)).filter((item) => filterItems(item, input));
+            const filtered = options.map((opt) => Object.assign({}, opt)).filter((item) => filterItemsForSearch(item, input));
             setFilteredItems(filtered);
             setIsFiltered(true);
         }
@@ -161,7 +88,66 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
         setAllExpanded((prevAllExpanded) => !prevAllExpanded);
     };
 
-    const filterItems = (item: TreeViewDataItem, input: string): boolean => {
+    const isChecked = (dataItem: TreeViewDataItem): boolean => checkedItems.some((item) => item.id === dataItem.id);
+    const areAllDescendantsChecked = (dataItem: TreeViewDataItem): boolean =>
+        dataItem.children ? dataItem.children.every((child) => areAllDescendantsChecked(child)) : isChecked(dataItem);
+    const areSomeDescendantsChecked = (dataItem: TreeViewDataItem): boolean =>
+        dataItem.children ? dataItem.children.some((child) => areSomeDescendantsChecked(child)) : isChecked(dataItem);
+
+    const flattenTree = (tree: TreeViewDataItem[]) => {
+        let result: TreeViewDataItem[] = [];
+        tree.forEach((item) => {
+            result.push(item);
+            if (item.children) {
+                result = result.concat(flattenTree(item.children));
+            }
+        });
+        return result;
+    };
+
+    const mapTree = (item: TreeViewDataItem): TreeViewDataItem => {
+        const hasCheck = areAllDescendantsChecked(item);
+        // Reset checked properties to be updated
+        if (item.checkProps) {
+            item.checkProps.checked = false;
+
+            if (hasCheck) {
+                item.checkProps.checked = true;
+            } else {
+                const hasPartialCheck = areSomeDescendantsChecked(item);
+                if (hasPartialCheck) {
+                    item.checkProps.checked = null;
+                }
+            }
+
+            if (item.children) {
+                return {
+                    ...item,
+                    children: item.children.map((child) => mapTree(child))
+                };
+            }
+        }
+        return item;
+    };
+
+    // Filter function for checkbox selection - filters tree to find matching item and its descendants
+    const filterItemsForCheck = (item: TreeViewDataItem, checkedItem: TreeViewDataItem): boolean => {
+        if (item.id === checkedItem.id) {
+            return true;
+        }
+
+        if (item.children) {
+            return (
+                (item.children = item.children
+                    .map((opt) => Object.assign({}, opt))
+                    .filter((child) => filterItemsForCheck(child, checkedItem))).length > 0
+            );
+        }
+        return false;
+    };
+
+    // Filter function for search - filters tree based on name matching search input
+    const filterItemsForSearch = (item: TreeViewDataItem, input: string): boolean => {
         const itemName = typeof item.name === 'string' ? item.name : String(item.name || '');
         if (itemName.toLowerCase().includes(input.toLowerCase())) {
             return true;
@@ -170,13 +156,14 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
             return (
                 (item.children = item.children
                     .map((opt: TreeViewDataItem) => Object.assign({}, opt))
-                    .filter((child: TreeViewDataItem) => filterItems(child, input))).length > 0
+                    .filter((child: TreeViewDataItem) => filterItemsForSearch(child, input))).length > 0
             );
         }
         return false;
     };
 
-
+    // Map the filtered items with checkbox states
+    const mappedFilteredItems = filteredItems.map((item) => mapTree(item));
 
     const toolbar = (
         <Toolbar style={{ padding: 0 }}>
@@ -184,29 +171,29 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
                 <ToolbarItem>
                     <TreeViewSearch onSearch={onSearch} id="input-search" name="search-input" aria-label="Search input example" />
                 </ToolbarItem>
-                <ToolbarItem>
-                    <Button variant="link" onClick={onToggle} className="pf-v6-c-tree-view__search">
-                        {allExpanded && 'Collapse all'}
-                        {!allExpanded && 'Expand all'}
+                <ToolbarItem className="tree-view-component__toolbar-expand">
+                    <Button variant="link" onClick={onToggle} >
+                        {allExpanded && t('collapseAll')}
+                        {!allExpanded && t('expandAll')}
                     </Button>
                 </ToolbarItem>
             </ToolbarContent>
         </Toolbar>
     );
 
-    const tree = filteredItems.length > 0 ? (
+    const tree = mappedFilteredItems.length > 0 ? (
         <TreeView
             hasAnimations
-            aria-label="Tree View with memoization example"
-            data={filteredItems}
-            activeItems={activeItems}
-            onSelect={onSelect}
+            aria-label="Tree View with search and checkboxes"
+            data={mappedFilteredItems}
+            onCheck={onCheck}
+            hasCheckboxes
             allExpanded={allExpanded || isFiltered}
             toolbar={toolbar}
             useMemo={true}
         />
     ) : null;
-    
+
     return (
         <Fragment>
             {tree}

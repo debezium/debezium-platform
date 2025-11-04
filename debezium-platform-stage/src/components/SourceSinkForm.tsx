@@ -39,12 +39,13 @@ import { AddCircleOIcon, CheckCircleIcon, PlusIcon, TimesIcon, TrashIcon } from 
 import { getConnectionRole, getConnectorTypeName, getDatabaseType } from "@utils/helpers";
 import ConnectorImage from "./ComponentImage";
 import { useTranslation } from "react-i18next";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Connection, ConnectionConfig, fetchData, fetchDataTypeTwo, TableData, verifySignals } from "src/apis";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/index";
 import { useQuery } from "react-query";
 import TableViewComponent from "./TableViewComponent";
+import "./SourceSinkForm.css";
 
 
 const getInitialSelectOptions = (connections: connectionsList[]): SelectOptionProps[] => {
@@ -542,29 +543,28 @@ const SourceSinkForm = ({
 
 
             {
-              (!!selectedConnection?.id && !isCollectionsLoading) ?
-
-                <FormFieldGroupExpandable
+              (!!selectedConnection?.id && connectorType === "source") ? isCollectionsLoading ?
+                <FormFieldGroup>
+                  <Skeleton fontSize="2xl" width="50%" />
+                  <Skeleton fontSize="md" width="33%" />
+                  <Skeleton fontSize="md" width="33%" />
+                </FormFieldGroup> : <FormFieldGroupExpandable
+                className="table-explorer-section"
                   hasAnimations
-
+                  isExpanded
                   header={
                     <FormFieldGroupHeader
                       titleText={{
-                        text: <span style={{ fontWeight: 500 }}>PostgreSQL data table</span>,
+                        text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: getConnectorTypeName(dataType || ConnectorId || "") })}</span>,
                         id: `field-group-data-table-id`,
                       }}
-                      titleDescription={"Select the data table to be sync"}
+                      titleDescription={t("source:create.dataTableDescription")}
                     />
                   }
                 >
                   <TableViewComponent collections={collections} />
-
-
                 </FormFieldGroupExpandable>
                 : null}
-
-
-
 
             <FormFieldGroup
               header={

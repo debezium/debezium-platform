@@ -12,6 +12,7 @@
   "comingSoon": "Coming soon",
   "confirm": "Confirm",
   "connection": "Connection",
+  "collapseAll": "Collapse all",
   "copied": "Copied",
   "copy": "Copy",
   "create": "Create",
@@ -38,6 +39,7 @@
   "enabled": "Enabled",
   "enterValue": "enter a value",
   "error": "Error",
+  "expandAll": "Expand all",
   "failedToLoad": "Failed to load",
   "findByName": "Find by name",
   "form": {
