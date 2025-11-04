@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
 import org.apache.kafka.clients.admin.AdminClient;
@@ -43,6 +44,7 @@ import io.debezium.platform.environment.connection.ConnectionValidator;
  * @author Mario Fiore Vitale
  */
 @Named("KAFKA")
+@ApplicationScoped
 public class KafkaConnectionValidator implements ConnectionValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConnectionValidator.class);
@@ -51,7 +53,7 @@ public class KafkaConnectionValidator implements ConnectionValidator {
 
     private static final String BOOTSTRAP_SERVERS_KEY = "bootstrap.servers";
 
-    public KafkaConnectionValidator(@ConfigProperty(name = "destinations..kafka.connection.timeout") int defaultConnectionTimeout) {
+    public KafkaConnectionValidator(@ConfigProperty(name = "destinations.kafka.connection.timeout") int defaultConnectionTimeout) {
         this.defaultConnectionTimeout = defaultConnectionTimeout;
     }
 
