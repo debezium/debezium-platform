@@ -4,41 +4,41 @@
     "id": "mariadb",
     "type": "io.debezium.connector.mariadb.MariaDbConnector", 
     "role": "source",
-    "description": "Records all operations in the order in which they are committed to the database."
+    "description": "Captures row-level changes from a MariaDB database in near real-time."
   },
   {
     "name": "MongoDB",
     "id": "mongodb",
     "type": "io.debezium.connector.mongodb.MongoDbConnector",
     "role": "source",
-    "description": "Capture changes from a MongoDB database in real-time."
+    "description": "Captures document changes from a MongoDB database in near real-time."
   },
   {
     "name": "MySQL",
     "id": "mysql",
     "type": "io.debezium.connector.mysql.MySqlConnector",
     "role": "source",
-    "description": "Stream changes from a MySQL database to other systems."
+    "description": "Captures row-level changes from a MySQL database in near real-time."
   },
   {
     "name": "Oracle",
     "id": "oracle",
     "type": "io.debezium.connector.oracle.OracleConnector", 
     "role": "source",
-    "description": "Captures and records row-level changes that occur in databases on an Oracle server."
+    "description": "Captures row-level changes from an Oracle database in near real-time."
   },
   { 
     "name": "PostgreSQL",
     "id": "postgresql",
     "type": "io.debezium.connector.postgresql.PostgresConnector",
     "role": "source",
-    "description": "Monitor and capture changes from a PostgreSQL database."
+    "description": "Captures row-level changes from a PostgreSQL database in near real-time."
   },
   {
     "name": "SQL Server",
     "id": "sqlserver",
     "type": "io.debezium.connector.sqlserver.SqlServerConnector", 
     "role": "source",
-    "description": "Stream change events from a Microsoft SQL Server database."
+    "description": "Captures row-level changes from a SQL Server database in near real-time."
   }
 ]
