@@ -35,13 +35,13 @@ export function formatCode(connectorType: "source" | "destination", formatType: 
                     if (key === "debezium.source.connector.class") {
                         connectorClass = value;
                     } else if (key.startsWith("debezium.source.")) {
-                        config[key] = value;
+                        config[key.replace("debezium.source.", "")] = value;
                     }
                 } else {
                     if (key === "debezium.sink.type") {
                         connectorClass = value;
                     } else if (key.startsWith("debezium.sink.")) {
-                        config[key] = value;
+                        config[key.replace("debezium.sink.", "")] = value;
                     }
                 }
 
