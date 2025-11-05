@@ -90,7 +90,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
 
           {searchResult.map((item) => (
             <GalleryItem key={item.id}>
-              <Card isClickable variant={"default"}>
+              <Card isClickable variant={"default"} className={`catalog-grid-card-${catalogType}`}>
                 <CardHeader
                   selectableActions={{
                     onClickAction: () => onCardClick(item.id),
@@ -108,7 +108,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
           ))}
           {isAddButtonVisible && (
             <GalleryItem>
-              <Card isClickable variant={"secondary"} onClick={openDBZJira}>
+              <Card isClickable variant={"secondary"} onClick={openDBZJira} className={`catalog-grid-card-${catalogType}`}>
                 <CardHeader
                   selectableActions={{
                     onClickAction: () => { },

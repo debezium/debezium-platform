@@ -2,3 +2,13 @@
     /* --pf-l-gallery--GridTemplateColumns: repeat(auto-fill, minmax(150px, 1fr)) !important; */
     --pf-v6-l-gallery--GridTemplateColumns--min: 220px !important;
   }
+
+  .catalog-grid-card-source .pf-v6-c-card__body{
+    height: 80px;
+    overflow-y: auto;
+}
+
+.catalog-grid-card-destination .pf-v6-c-card__body{
+    height: 110px;
+    overflow-y: auto;
+}
