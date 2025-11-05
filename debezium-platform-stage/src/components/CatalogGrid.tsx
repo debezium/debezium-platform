@@ -117,7 +117,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                 >
                   <PlusCircleIcon
                     color="#0066CC"
-                    style={{ fontSize: "xxx-large", paddingBottom: "10px" }}
+                    style={{ fontSize: "60px", paddingBottom: "10px" }}
                   />
                   <CardTitle id={`catalog-card-id-fill-out-form`}>
                     {t("requestNewResource.title", { val: catalogType })} <ExternalLinkAltIcon />

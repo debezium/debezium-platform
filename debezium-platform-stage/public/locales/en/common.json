@@ -72,7 +72,7 @@
   "refresh": "Refresh",
   "requestNewResource": {
     "description": "Fill our a request to create a new {{val}}.",
-    "title": "Request new {{val}}"
+    "title": "Request {{val}}"
   },
   "saveAndNext": "Save and next",
   "saveChanges": "Save changes",
