@@ -9,7 +9,8 @@
         "title": "Catalogo delle connessioni",
         "description": "Seleziona dal catalogo il tipo di connessione che desideri creare. Le connessioni che supportano la convalida sono contrassegnate da un'icona a stella. Puoi cercare per nome e filtrare l'elenco per origine, destinazione o supporto alla convalida.",
         "emptyStateTitle": "Nessun tipo di connessione corrispondente presente",
-        "emptyStateDescription": "Pulisci tutti i filtri e riprova."
+        "emptyStateDescription": "Pulisci tutti i filtri e riprova.",
+        "supportsConnectionValidation": "Supporta la convalida della connessione"
     },
     "create": {
         "title": "Crea connessione",

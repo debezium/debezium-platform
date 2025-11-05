@@ -16,6 +16,7 @@ import {
   GalleryItem,
   PageSection,
   Skeleton,
+  Tooltip,
 } from "@patternfly/react-core";
 import ConnectorImage from "./ComponentImage";
 import { StarIcon } from "@patternfly/react-icons";
@@ -60,14 +61,29 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
             ) : (
               searchResult.map((item) => (
                 <GalleryItem key={item.id}>
-                  <Card isClickable variant={"default"} className="custom-connection-card">
+                  <Card
+                    variant={"default"}
+                    className="custom-connection-card"
+                    onClick={() => onCardClick(item.id, item.role)}
+
+                  >
                     <CardHeader
                       className="custom-connection-card-header"
                       // actions={{ actions: item.role === "source" ? <Tooltip content={<div>{t("source")}</div>}><DataSourceIcon style={{ outline: "none" }} size={150} /></Tooltip> : <Tooltip content={<div>{t("destination")}</div>}><DataSinkIcon style={{ outline: "none" }} size={150} /></Tooltip>, hasNoOffset: false }}
-                      actions={{ actions: connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase()) && <StarIcon style={{ outline: "none" }} size={150} /> }}
-                      selectableActions={{
-                        onClickAction: () => onCardClick(item.id, item.role),
-                        selectableActionAriaLabelledby: `catalog-card-id-${item.name}`,
+                      actions={{
+                        actions: connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase()) && <>
+                          <Tooltip
+                            content={
+                              <div>
+                                {t("connection:catalog.supportsConnectionValidation")}
+                              </div>
+                            }
+                            trigger="mouseenter focus"
+                          >
+
+                            <StarIcon style={{ outline: "none" }} size={150} />
+
+                          </Tooltip></>
                       }}
                     >
                       <ConnectorImage connectorType={item.id} />

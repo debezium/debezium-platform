@@ -9,7 +9,8 @@
         "title": "Connection catalog",
         "description": "Select a connection type from the catalog that you want to create. Connections that support validation are marked with a star icon. You can search by name and filter the list by source, destination, or validation support.",
         "emptyStateTitle": "No matching connection type is present",
-        "emptyStateDescription": "Clear all and try again."
+        "emptyStateDescription": "Clear all and try again.",
+        "supportsConnectionValidation": "Supports connection validation"
     },
     "create": {
         "title": "Create connection",
