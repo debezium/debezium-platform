@@ -40,12 +40,14 @@ import { getConnectionRole, getConnectorTypeName, getDatabaseType } from "@utils
 import ConnectorImage from "./ComponentImage";
 import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
-import { Connection, ConnectionConfig, fetchData, fetchDataTypeTwo, TableData, verifySignals } from "src/apis";
+import { Connection, ConnectionConfig, fetchData, fetchDataCall, TableData, verifySignals } from "src/apis";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/index";
 import { useQuery } from "react-query";
 import TableViewComponent from "./TableViewComponent";
 import "./SourceSinkForm.css";
+import ApiComponentError from "./ApiComponentError";
+import { error } from "ajv/dist/vocabularies/applicator/dependencies";
 
 
 const getInitialSelectOptions = (connections: connectionsList[]): SelectOptionProps[] => {
@@ -119,6 +121,7 @@ const SourceSinkForm = ({
   const [signalMissingPayloads, setSignalMissingPayload] = useState<string[]>([]);
 
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
+  const [collectionsError, setCollectionsError] = useState("");
   const [collections, setCollections] = useState<TableData | undefined>(undefined);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -422,11 +425,11 @@ const SourceSinkForm = ({
   useEffect(() => {
     const fetchCollections = async () => {
       setIsCollectionsLoading(true);
-      const response = await fetchDataTypeTwo<TableData>(
+      const response = await fetchDataCall<TableData>(
         `${API_URL}/api/connections/${selectedConnection?.id}/collections`
       );
       if (response.error) {
-        console.log(response.error);
+        setCollectionsError(response.error.body?.error || "");
       } else {
         setCollections(response.data as TableData);
       }
@@ -548,8 +551,8 @@ const SourceSinkForm = ({
                   <Skeleton fontSize="2xl" width="50%" />
                   <Skeleton fontSize="md" width="33%" />
                   <Skeleton fontSize="md" width="33%" />
-                </FormFieldGroup> : <FormFieldGroupExpandable
-                className="table-explorer-section"
+                </FormFieldGroup> : !!collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError}/>   </FormFieldGroup> : <FormFieldGroupExpandable
+                  className="table-explorer-section"
                   hasAnimations
                   isExpanded
                   header={

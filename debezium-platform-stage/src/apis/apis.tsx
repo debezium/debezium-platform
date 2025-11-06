@@ -32,11 +32,11 @@ export type DestinationConfig = {
 };
 
 export type ConnectionUnknownConfig = {
-  [key: string]: string | number; 
+  [key: string]: string | number;
 };
 
 export type ConnectionAdditionalConfig = {
-  [key: string]: string ; 
+  [key: string]: string;
 };
 
 export type ConnectionConfig = {
@@ -378,5 +378,54 @@ export const verifySignals = async <T,>(
   } catch (error) {
     console.error("Error verify the signals:", error);
     return { error: "An error occurred while verify the signals." };
+  }
+};
+
+
+export interface ApiResponseUpdated<T> {
+  data?: T;
+  error?: {
+    status: number;
+    statusText: string;
+    body?: any;
+  };
+}
+
+
+export const fetchDataCall = async <T,>(
+  url: string,
+): Promise<ApiResponseUpdated<T>> => {
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      let errorBody: any = null;
+      try {
+        errorBody = await response.json();
+      } catch {
+        // fallback if response is not JSON
+        errorBody = await response.text();
+      }
+
+      return {
+        error: {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorBody,
+        },
+      };
+    }
+
+    const data = (await response.json()) as T;
+    return { data };
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return {
+      error: {
+        status: 0, // network or unexpected error
+        statusText: "Network or unexpected error",
+        body: (error as Error).message,
+      },
+    };
   }
 };

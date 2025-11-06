@@ -1,13 +1,16 @@
-import { FormGroup, FormSelect, FormSelectOption, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, TextArea, FormGroupLabelHelp, Popover, FormHelperText, HelperText, HelperTextItem, FormFieldGroupExpandable, FormFieldGroupHeader, FormFieldGroup } from '@patternfly/react-core';
-import React from 'react';
+import { FormGroup, FormSelect, FormSelectOption, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, TextArea, FormGroupLabelHelp, Popover, FormHelperText, HelperText, HelperTextItem, FormFieldGroupExpandable, FormFieldGroupHeader, FormFieldGroup, Skeleton, Grid, GridItem } from '@patternfly/react-core';
+import React, { useEffect, useState } from 'react';
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form"
 import { useTranslation } from 'react-i18next';
 import signalActions from "../../__mocks__/data/Signals.json";
 import { API_URL } from '@utils/constants';
-import { createPost, PipelineSignalPayload } from 'src/apis';
+import { createPost, fetchDataCall, PipelineSignalPayload, TableData } from 'src/apis';
 import { useNotification } from '@appContext/index';
 import { TrashIcon } from '@patternfly/react-icons';
 import { v4 as uuidv4 } from 'uuid';
+import TableViewComponent from '@components/TableViewComponent';
+import { getConnectorTypeName } from '@utils/helpers';
+import ApiComponentError from '@components/ApiComponentError';
 
 
 const getSignalActions = () => {
@@ -68,6 +71,31 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     const { addNotification } = useNotification();
     const [pipelineAction, setPipelineAction] = React.useState('please choose');
     const [isLoading, setIsLoading] = React.useState(false);
+
+    const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
+    const [collectionsError, setCollectionsError] = useState("");
+    const [collections, setCollections] = useState<TableData | undefined>(undefined);
+
+    useEffect(() => {
+        const fetchCollections = async () => {
+          setIsCollectionsLoading(true);
+          const response = await fetchDataCall<TableData>(
+            // `${API_URL}/api/connections/${selectedConnection?.id}/collections`
+                        `${API_URL}/api/connections/1/collections`
+          );
+          if (response.error) {
+            setCollectionsError(response.error.body?.error || "");
+          } else {
+            setCollections(response.data as TableData);
+          }
+    
+          setIsCollectionsLoading(false);
+        };
+        // if (selectedConnection?.id) {
+          fetchCollections();
+        // }
+    //   }, [selectedConnection]);
+}, []);
 
     const {
         register,
@@ -193,6 +221,30 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
         <>
             <Form isHorizontal isWidthLimited onSubmit={handleSubmit(onSubmit)}>
                 <FormSection title={t("pipeline:actions.description")} titleElement="h2">
+           
+                {
+              isCollectionsLoading ?
+                <FormFieldGroup>
+                  <Skeleton fontSize="2xl" width="50%" />
+                  <Skeleton fontSize="md" width="33%" />
+                  <Skeleton fontSize="md" width="33%" />
+                </FormFieldGroup> : !!collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError}/>   </FormFieldGroup> : <FormFieldGroupExpandable
+                  className="table-explorer-section"
+                  hasAnimations
+                  isExpanded
+                  header={
+                    <FormFieldGroupHeader
+                      titleText={{
+                        text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: "PostgreSQL"})}</span>,
+                        id: `field-group-data-table-id`,
+                      }}
+                      titleDescription={t("source:create.dataTableDescription")}
+                    />
+                  }
+                >
+                  <TableViewComponent collections={collections} />
+                </FormFieldGroupExpandable>
+                }
                     <FormGroup label={t("pipeline:actions.actionField")} fieldId="action-type" isRequired>
                         <FormSelect
                             value={pipelineAction}
@@ -239,6 +291,29 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                     </FormHelperText>
 
                                 </FormGroup>
+                                {/* {
+              isCollectionsLoading ?
+                <FormFieldGroup>
+                  <Skeleton fontSize="2xl" width="50%" />
+                  <Skeleton fontSize="md" width="33%" />
+                  <Skeleton fontSize="md" width="33%" />
+                </FormFieldGroup> : !!collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError}/>   </FormFieldGroup> : <FormFieldGroupExpandable
+                  className="table-explorer-section"
+                  hasAnimations
+                  isExpanded
+                  header={
+                    <FormFieldGroupHeader
+                      titleText={{
+                        text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: "PostgreSQL"})}</span>,
+                        id: `field-group-data-table-id`,
+                      }}
+                      titleDescription={t("source:create.dataTableDescription")}
+                    />
+                  }
+                >
+                  <TableViewComponent collections={collections} />
+                </FormFieldGroupExpandable>
+                } */}
                             </>
                         )
                     }
@@ -400,6 +475,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                 return null;
                         }
                     })()}
+                    
                 </FormSection>
                 {
                     pipelineAction !== "" && pipelineAction !== "please choose" && (
