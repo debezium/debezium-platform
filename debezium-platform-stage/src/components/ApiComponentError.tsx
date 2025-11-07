@@ -1,16 +1,36 @@
-import { EmptyState, EmptyStateVariant, EmptyStateBody, EmptyStateFooter, EmptyStateActions, Button } from "@patternfly/react-core";
+import { EmptyState, EmptyStateVariant, EmptyStateBody, EmptyStateFooter, EmptyStateActions, Button, ExpandableSection, CodeBlock, CodeBlockCode } from "@patternfly/react-core";
 import { ExclamationCircleIcon, RedoIcon } from "@patternfly/react-icons";
+import { useState } from "react";
+import "./ApiComponentError.css";
 
 export interface ApiComponentErrorProps {
-    error: string;
+    error: object;
+    retry: () => void;
 }
-const ApiComponentError: React.FC<ApiComponentErrorProps> = ({ error }) => {
+const ApiComponentError: React.FC<ApiComponentErrorProps> = ({ error, retry }) => {
+
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const onToggle = (_event: React.MouseEvent, isExpanded: boolean) => {
+    setIsExpanded(isExpanded);
+  };
+  
     return (
-        <EmptyState variant={EmptyStateVariant.xs} titleText="Failed to load database table/collection" headingLevel="h4" status="danger" icon={ExclamationCircleIcon}>
-        <EmptyStateBody>{error}</EmptyStateBody>
+        <EmptyState className="api-component-error" variant={EmptyStateVariant.xs} titleText="Failed to load database table/collection" headingLevel="h4" status="danger" icon={ExclamationCircleIcon}>
+        <EmptyStateBody>
+        <ExpandableSection
+      toggleText={isExpanded ? 'Show details' : 'Hide details'}
+      onToggle={onToggle}
+      isExpanded={isExpanded}
+    >
+      <CodeBlock style={{textAlign: 'left'}} >
+      <CodeBlockCode id="code-content">{JSON.stringify(error, null, 2)}</CodeBlockCode>
+    </CodeBlock>
+    </ExpandableSection>
+          </EmptyStateBody>
         <EmptyStateFooter>
           <EmptyStateActions>
-            <Button variant="link" icon={<RedoIcon />} >Retry</Button>
+            <Button variant="link" icon={<RedoIcon />} onClick={retry}>Retry</Button>
           </EmptyStateActions>
         </EmptyStateFooter>
       </EmptyState>

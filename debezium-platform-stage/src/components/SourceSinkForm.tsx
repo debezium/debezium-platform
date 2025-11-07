@@ -47,6 +47,7 @@ import { useQuery } from "react-query";
 import TableViewComponent from "./TableViewComponent";
 import "./SourceSinkForm.css";
 import ApiComponentError from "./ApiComponentError";
+import _ from "lodash";
 
 
 const getInitialSelectOptions = (connections: connectionsList[]): SelectOptionProps[] => {
@@ -120,7 +121,7 @@ const SourceSinkForm = ({
   const [signalMissingPayloads, setSignalMissingPayload] = useState<string[]>([]);
 
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
-  const [collectionsError, setCollectionsError] = useState("");
+  const [collectionsError, setCollectionsError] = useState<{}>();
   const [collections, setCollections] = useState<TableData | undefined>(undefined);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -421,20 +422,22 @@ const SourceSinkForm = ({
     setIsModalOpen(false);
   }
 
-  useEffect(() => {
-    const fetchCollections = async () => {
-      setIsCollectionsLoading(true);
-      const response = await fetchDataCall<TableData>(
-        `${API_URL}/api/connections/${selectedConnection?.id}/collections`
-      );
-      if (response.error) {
-        setCollectionsError(response.error.body?.error || "");
-      } else {
-        setCollections(response.data as TableData);
-      }
+  const fetchCollections = async () => {
+    setIsCollectionsLoading(true);
+    const response = await fetchDataCall<TableData>(
+      `${API_URL}/api/connections/${selectedConnection?.id}/collections`
+    );
+    if (response.error) {
+      setCollectionsError(response.error.body || {});
+    } else {
+      setCollectionsError(undefined);
+      setCollections(response.data as TableData);
+    }
 
-      setIsCollectionsLoading(false);
-    };
+    setIsCollectionsLoading(false);
+  };
+
+  useEffect(() => {
     if (selectedConnection?.id) {
       fetchCollections();
     }
@@ -550,7 +553,18 @@ const SourceSinkForm = ({
                   <Skeleton fontSize="2xl" width="50%" />
                   <Skeleton fontSize="md" width="33%" />
                   <Skeleton fontSize="md" width="33%" />
-                </FormFieldGroup> : !!collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError} />   </FormFieldGroup> : <FormFieldGroupExpandable
+                </FormFieldGroup> : !_.isEmpty(collectionsError) ? (
+                  <FormFieldGroup>
+                    <ApiComponentError
+                      error={
+                        collectionsError
+                      }
+                      retry={() => {
+                        fetchCollections();
+                      }}
+                    />
+                  </FormFieldGroup>
+                ) : <FormFieldGroupExpandable
                   className="table-explorer-section"
                   hasAnimations
                   isExpanded

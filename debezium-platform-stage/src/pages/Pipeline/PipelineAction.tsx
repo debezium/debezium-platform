@@ -200,7 +200,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
         sendPipelineSignalAction(payload);
     }
 
-
     const handleOptionChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
         setPipelineAction(value);
     };
@@ -225,7 +224,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
             );
         }
     };
-
 
     return (
         <>
@@ -280,29 +278,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                             </FormHelperText>
 
                                         </FormGroup>
-                                        {/* {
-              isCollectionsLoading ?
-                <FormFieldGroup>
-                  <Skeleton fontSize="2xl" width="50%" />
-                  <Skeleton fontSize="md" width="33%" />
-                  <Skeleton fontSize="md" width="33%" />
-                </FormFieldGroup> : !!collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError}/>   </FormFieldGroup> : <FormFieldGroupExpandable
-                  className="table-explorer-section"
-                  hasAnimations
-                  isExpanded
-                  header={
-                    <FormFieldGroupHeader
-                      titleText={{
-                        text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: "PostgreSQL"})}</span>,
-                        id: `field-group-data-table-id`,
-                      }}
-                      titleDescription={t("source:create.dataTableDescription")}
-                    />
-                  }
-                >
-                  <TableViewComponent collections={collections} />
-                </FormFieldGroupExpandable>
-                } */}
+
                                     </>
                                 )
                             }
@@ -357,7 +333,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                         );
                                     case "blockingSnapshotActions":
                                     case "adhocSnapshotActions":
-
                                         return (
                                             <>
                                                 <FormGroup label={t("pipeline:actions.collectionField")} fieldId="collection-name"
@@ -393,7 +368,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                                         />
                                                     }
                                                 >
-
                                                     {fields.map((field, index) => (
                                                         <FormFieldGroup
                                                             key={field.id}
@@ -451,13 +425,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                                             </FormGroup>
                                                         </FormFieldGroup>
                                                     ))}
-
-
-
                                                 </FormFieldGroupExpandable>
-
-
-
                                             </>
                                         );
                                     default:
@@ -491,10 +459,8 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                 <br />
                                 <Skeleton fontSize="md" width="50%" />
                                 <br />
-                            </FormFieldGroup> : !!collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError} />   </FormFieldGroup> : <FormFieldGroup
+                            </FormFieldGroup> : collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError} />   </FormFieldGroup> : <FormFieldGroup
                                 className="table-explorer-section"
-                                //   hasAnimations
-                                //   isExpanded
                                 header={
                                     <FormFieldGroupHeader
                                         titleText={{
@@ -510,12 +476,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                     }
                 </GridItem>
             </Grid>
-
-
-
-
-
-
         </>
 
     );

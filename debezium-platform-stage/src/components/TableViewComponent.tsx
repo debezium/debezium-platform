@@ -84,7 +84,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
         }
     };
 
-    const onToggle = (_event: React.MouseEvent) => {
+    const onToggle = () => {
         setAllExpanded((prevAllExpanded) => !prevAllExpanded);
     };
 

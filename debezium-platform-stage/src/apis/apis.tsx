@@ -387,6 +387,7 @@ export interface ApiResponseUpdated<T> {
   error?: {
     status: number;
     statusText: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     body?: any;
   };
 }
@@ -399,6 +400,7 @@ export const fetchDataCall = async <T,>(
     const response = await fetch(url);
 
     if (!response.ok) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let errorBody: any = null;
       try {
         errorBody = await response.json();
