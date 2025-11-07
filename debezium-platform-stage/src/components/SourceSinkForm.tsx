@@ -121,7 +121,7 @@ const SourceSinkForm = ({
   const [signalMissingPayloads, setSignalMissingPayload] = useState<string[]>([]);
 
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
-  const [collectionsError, setCollectionsError] = useState<{}>();
+  const [collectionsError, setCollectionsError] = useState<object | undefined>(undefined);
   const [collections, setCollections] = useState<TableData | undefined>(undefined);
 
   const [isOpen, setIsOpen] = useState(false);

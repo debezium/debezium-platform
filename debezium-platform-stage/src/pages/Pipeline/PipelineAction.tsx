@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TableViewComponent from '@components/TableViewComponent';
 import { getConnectorTypeName } from '@utils/helpers';
 import ApiComponentError from '@components/ApiComponentError';
+import _ from 'lodash';
 
 
 const getSignalActions = () => {
@@ -75,35 +76,62 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     const [isLoading, setIsLoading] = React.useState(false);
 
     const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
-    const [collectionsError, setCollectionsError] = useState("");
+    const [collectionsError, setCollectionsError] = useState<object | undefined>(undefined);
     const [collections, setCollections] = useState<TableData | undefined>(undefined);
     const [sourceName, setSourceName] = useState<string | undefined>(undefined);
 
-    useEffect(() => {
-        let connectionId = undefined;
-        const fetchConnection = async () => {
-            setIsCollectionsLoading(true);
-            const sourceResponse = await fetchDataCall<Source>(
-                `${API_URL}/api/sources/${sourceId}`
+    const fetchConnectionCollections = async () => {
+        setIsCollectionsLoading(true);
+        const sourceResponse = await fetchDataCall<Source>(
+            `${API_URL}/api/sources/${sourceId}`
+        );
+        if (sourceResponse.error) {
+            setCollectionsError(sourceResponse);
+        } else {
+            const connectionId = sourceResponse.data?.connection?.id;
+            setCollectionsError(undefined);
+            setSourceName(getConnectorTypeName(sourceResponse.data?.type || ""));
+            const collectionResponse = await fetchDataCall<TableData>(
+                `${API_URL}/api/connections/${connectionId}/collections`
             );
-            if (sourceResponse.error) {
-                setCollectionsError(sourceResponse.error.body?.error || "");
+            if (collectionResponse.error) {
+                setCollectionsError(collectionResponse.error.body?.error || "");
+                setCollectionsError(collectionResponse);
             } else {
-                connectionId = sourceResponse.data?.connection?.id;
-                setSourceName(getConnectorTypeName(sourceResponse.data?.type || ""));
-                const collectionResponse = await fetchDataCall<TableData>(
-                    `${API_URL}/api/connections/${connectionId}/collections`
-                );
-                if (collectionResponse.error) {
-                    setCollectionsError(collectionResponse.error.body?.error || "");
-                } else {
-                    setCollections(collectionResponse.data as TableData);
-                }
+                setCollections(collectionResponse.data as TableData);
+                setCollectionsError(undefined);
             }
-            setIsCollectionsLoading(false);
-        };
+        }
+        setIsCollectionsLoading(false);
+    };
+
+    useEffect(() => {
+        // const fetchConnection = async () => {
+        //     setIsCollectionsLoading(true);
+        //     const sourceResponse = await fetchDataCall<Source>(
+        //         `${API_URL}/api/sources/${sourceId}`
+        //     );
+        //     if (sourceResponse.error) {
+        //         setCollectionsError(sourceResponse);
+        //     } else {
+        //         const connectionId = sourceResponse.data?.connection?.id;
+        //         setCollectionsError(undefined);
+        //         setSourceName(getConnectorTypeName(sourceResponse.data?.type || ""));
+        //         const collectionResponse = await fetchDataCall<TableData>(
+        //             `${API_URL}/api/connections/${connectionId}/collections`
+        //         );
+        //         if (collectionResponse.error) {
+        //             setCollectionsError(collectionResponse.error.body?.error || "");
+        //             setCollectionsError(collectionResponse);
+        //         } else {
+        //             setCollections(collectionResponse.data as TableData);
+        //             setCollectionsError(undefined);
+        //         }
+        //     }
+        //     setIsCollectionsLoading(false);
+        // };
         if (sourceId) {
-            fetchConnection();
+            fetchConnectionCollections();
         }
     }, [sourceId]);
 
@@ -459,7 +487,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                 <br />
                                 <Skeleton fontSize="md" width="50%" />
                                 <br />
-                            </FormFieldGroup> : collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError} />   </FormFieldGroup> : <FormFieldGroup
+                            </FormFieldGroup> : !_.isEmpty(collectionsError) ? <FormFieldGroup> <ApiComponentError error={collectionsError || {}} isCompact={true} retry={fetchConnectionCollections} />   </FormFieldGroup> : <FormFieldGroup
                                 className="table-explorer-section"
                                 header={
                                     <FormFieldGroupHeader

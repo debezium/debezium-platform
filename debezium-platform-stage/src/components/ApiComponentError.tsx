@@ -6,8 +6,9 @@ import "./ApiComponentError.css";
 export interface ApiComponentErrorProps {
     error: object;
     retry: () => void;
+    isCompact?: boolean;
 }
-const ApiComponentError: React.FC<ApiComponentErrorProps> = ({ error, retry }) => {
+const ApiComponentError: React.FC<ApiComponentErrorProps> = ({ error, retry, isCompact }) => {
 
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -16,7 +17,7 @@ const ApiComponentError: React.FC<ApiComponentErrorProps> = ({ error, retry }) =
   };
   
     return (
-        <EmptyState className="api-component-error" variant={EmptyStateVariant.xs} titleText="Failed to load database table/collection" headingLevel="h4" status="danger" icon={ExclamationCircleIcon}>
+        <EmptyState className={isCompact ? "":  "api-component-error"} variant={EmptyStateVariant.xs} titleText="Failed to load database table/collection" headingLevel="h4" status="danger" icon={ExclamationCircleIcon}>
         <EmptyStateBody>
         <ExpandableSection
       toggleText={isExpanded ? 'Show details' : 'Hide details'}
