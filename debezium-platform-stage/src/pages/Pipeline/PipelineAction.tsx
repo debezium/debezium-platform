@@ -4,7 +4,7 @@ import { useForm, SubmitHandler, useFieldArray } from "react-hook-form"
 import { useTranslation } from 'react-i18next';
 import signalActions from "../../__mocks__/data/Signals.json";
 import { API_URL } from '@utils/constants';
-import { createPost, fetchDataCall, PipelineSignalPayload, TableData } from 'src/apis';
+import { createPost, fetchDataCall, PipelineSignalPayload, Source, TableData } from 'src/apis';
 import { useNotification } from '@appContext/index';
 import { TrashIcon } from '@patternfly/react-icons';
 import { v4 as uuidv4 } from 'uuid';
@@ -62,10 +62,12 @@ interface Inputs {
 
 interface PipelineActionProps {
     pipelineId: string | undefined;
+    sourceId: number | undefined;
 }
 
 const PipelineAction: React.FC<PipelineActionProps> = ({
-    pipelineId
+    pipelineId,
+    sourceId
 }) => {
     const { t } = useTranslation();
     const { addNotification } = useNotification();
@@ -75,27 +77,35 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
     const [collectionsError, setCollectionsError] = useState("");
     const [collections, setCollections] = useState<TableData | undefined>(undefined);
+    const [sourceName, setSourceName] = useState<string | undefined>(undefined);
 
     useEffect(() => {
-        const fetchCollections = async () => {
-          setIsCollectionsLoading(true);
-          const response = await fetchDataCall<TableData>(
-            // `${API_URL}/api/connections/${selectedConnection?.id}/collections`
-                        `${API_URL}/api/connections/1/collections`
-          );
-          if (response.error) {
-            setCollectionsError(response.error.body?.error || "");
-          } else {
-            setCollections(response.data as TableData);
-          }
-    
-          setIsCollectionsLoading(false);
+        let connectionId = undefined;
+        const fetchConnection = async () => {
+            setIsCollectionsLoading(true);
+            const sourceResponse = await fetchDataCall<Source>(
+                `${API_URL}/api/sources/${sourceId}`
+            );
+            if (sourceResponse.error) {
+                setCollectionsError(sourceResponse.error.body?.error || "");
+            } else {
+                connectionId = sourceResponse.data?.connection?.id;
+                setSourceName(getConnectorTypeName(sourceResponse.data?.type || ""));
+                const collectionResponse = await fetchDataCall<TableData>(
+                    `${API_URL}/api/connections/${connectionId}/collections`
+                );
+                if (collectionResponse.error) {
+                    setCollectionsError(collectionResponse.error.body?.error || "");
+                } else {
+                    setCollections(collectionResponse.data as TableData);
+                }
+            }
+            setIsCollectionsLoading(false);
         };
-        // if (selectedConnection?.id) {
-          fetchCollections();
-        // }
-    //   }, [selectedConnection]);
-}, []);
+        if (sourceId) {
+            fetchConnection();
+        }
+    }, [sourceId]);
 
     const {
         register,
@@ -219,79 +229,58 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
 
     return (
         <>
-            <Form isHorizontal isWidthLimited onSubmit={handleSubmit(onSubmit)}>
-                <FormSection title={t("pipeline:actions.description")} titleElement="h2">
-           
-                {
-              isCollectionsLoading ?
-                <FormFieldGroup>
-                  <Skeleton fontSize="2xl" width="50%" />
-                  <Skeleton fontSize="md" width="33%" />
-                  <Skeleton fontSize="md" width="33%" />
-                </FormFieldGroup> : !!collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError}/>   </FormFieldGroup> : <FormFieldGroupExpandable
-                  className="table-explorer-section"
-                  hasAnimations
-                  isExpanded
-                  header={
-                    <FormFieldGroupHeader
-                      titleText={{
-                        text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: "PostgreSQL"})}</span>,
-                        id: `field-group-data-table-id`,
-                      }}
-                      titleDescription={t("source:create.dataTableDescription")}
-                    />
-                  }
-                >
-                  <TableViewComponent collections={collections} />
-                </FormFieldGroupExpandable>
-                }
-                    <FormGroup label={t("pipeline:actions.actionField")} fieldId="action-type" isRequired>
-                        <FormSelect
-                            value={pipelineAction}
-                            onChange={handleOptionChange}
-                            id="action-type"
-                            name="actionType"
-                            aria-label="action type"
-                        >
-                            {getSignalActions().map((group, index) => (
-                                <FormSelectOptionGroup isDisabled={group.disabled} key={index} label={group.groupLabel}>
-                                    {group.options.map((option, i) => (
-                                        <FormSelectOption isDisabled={option.disabled} key={i} value={option.value} label={option.label} />
+
+            <Grid hasGutter style={{ height: "calc(100vh - 200px)", alignItems: "stretch" }}>
+                <GridItem span={8} style={{ borderRight: "1px solid #ccc", paddingRight: "10px", height: "100%", overflowY: "auto" }}>
+                    <Form isHorizontal onSubmit={handleSubmit(onSubmit)}>
+                        <FormSection title={t("pipeline:actions.description")} titleElement="h2">
+                            <FormGroup label={t("pipeline:actions.actionField")} fieldId="action-type" isRequired>
+                                <FormSelect
+                                    value={pipelineAction}
+                                    onChange={handleOptionChange}
+                                    id="action-type"
+                                    name="actionType"
+                                    aria-label="action type"
+                                >
+                                    {getSignalActions().map((group, index) => (
+                                        <FormSelectOptionGroup isDisabled={group.disabled} key={index} label={group.groupLabel}>
+                                            {group.options.map((option, i) => (
+                                                <FormSelectOption isDisabled={option.disabled} key={i} value={option.value} label={option.label} />
+                                            ))}
+                                        </FormSelectOptionGroup>
                                     ))}
-                                </FormSelectOptionGroup>
-                            ))}
-                        </FormSelect>
-                    </FormGroup>
-                    {
-                        pipelineAction !== "" && pipelineAction !== "please choose" && (
-                            <>
-                                <FormGroup label={t("Action Id")} fieldId="action-id" isRequired
-                                    labelHelp={
-                                        <Popover
-                                            bodyContent={
-                                                <div>
-                                                    {t("pipeline:actions.actionTypeFieldDescription")}
-                                                </div>
+                                </FormSelect>
+                            </FormGroup>
+                            {
+                                pipelineAction !== "" && pipelineAction !== "please choose" && (
+                                    <>
+                                        <FormGroup label={t("Action Id")} fieldId="action-id" isRequired
+                                            labelHelp={
+                                                <Popover
+                                                    bodyContent={
+                                                        <div>
+                                                            {t("pipeline:actions.actionTypeFieldDescription")}
+                                                        </div>
+                                                    }
+                                                >
+                                                    <FormGroupLabelHelp aria-label={t("pipeline:actions.actionTypeFieldDescription")} />
+                                                </Popover>
                                             }
                                         >
-                                            <FormGroupLabelHelp aria-label={t("pipeline:actions.actionTypeFieldDescription")} />
-                                        </Popover>
-                                    }
-                                >
-                                    <TextInput isRequired type="text" id="action-id"
-                                        validated={errors.actionId ? "error" : "default"}
-                                        {...register("actionId", {
-                                            required: "Action Id is required",
-                                            minLength: { value: 5, message: "Action id be at least 5 characters" }
-                                        })} />
-                                    <FormHelperText>
-                                        <HelperText>
-                                            <HelperTextItem>{t("pipeline:actions.actionIdHelper")}</HelperTextItem>
-                                        </HelperText>
-                                    </FormHelperText>
+                                            <TextInput isRequired type="text" id="action-id"
+                                                validated={errors.actionId ? "error" : "default"}
+                                                {...register("actionId", {
+                                                    required: "Action Id is required",
+                                                    minLength: { value: 5, message: "Action id be at least 5 characters" }
+                                                })} />
+                                            <FormHelperText>
+                                                <HelperText>
+                                                    <HelperTextItem>{t("pipeline:actions.actionIdHelper")}</HelperTextItem>
+                                                </HelperText>
+                                            </FormHelperText>
 
-                                </FormGroup>
-                                {/* {
+                                        </FormGroup>
+                                        {/* {
               isCollectionsLoading ?
                 <FormFieldGroup>
                   <Skeleton fontSize="2xl" width="50%" />
@@ -314,179 +303,219 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                   <TableViewComponent collections={collections} />
                 </FormFieldGroupExpandable>
                 } */}
-                            </>
-                        )
-                    }
-                    {(() => {
-                        switch (pipelineAction) {
-                            case "logAction":
-                                return (
-                                    <FormGroup label={t("pipeline:actions.messageField")} fieldId="log-message" isRequired
-                                        labelHelp={
-                                            <Popover
-                                                bodyContent={
-                                                    <div>
-                                                        {t("pipeline:actions.messageFieldDescription")}
-                                                    </div>
+                                    </>
+                                )
+                            }
+                            {(() => {
+                                switch (pipelineAction) {
+                                    case "logAction":
+                                        return (
+                                            <FormGroup label={t("pipeline:actions.messageField")} fieldId="log-message" isRequired
+                                                labelHelp={
+                                                    <Popover
+                                                        bodyContent={
+                                                            <div>
+                                                                {t("pipeline:actions.messageFieldDescription")}
+                                                            </div>
+                                                        }
+                                                    >
+                                                        <FormGroupLabelHelp aria-label="Log helper msg" />
+                                                    </Popover>
+                                                }>
+                                                <TextArea
+                                                    isRequired
+                                                    id="log-message"
+                                                    aria-label="log message"
+                                                    validated={errors.logMessage ? "error" : "default"}
+                                                    {...register("logMessage", {
+                                                        required: "Log message is required",
+                                                    })}
+                                                />
+                                            </FormGroup>
+                                        );
+                                    case "stopAdhocSnapshotActions":
+                                        return (
+
+                                            <FormGroup label={t("pipeline:actions.collectionField")} fieldId="collection-name"
+                                                labelHelp={
+                                                    <Popover
+                                                        bodyContent={
+                                                            <div>
+
+                                                                {t("pipeline:actions.collectionFieldDescription")}
+                                                            </div>
+                                                        }
+                                                    >
+                                                        <FormGroupLabelHelp aria-label="More info for name field" />
+                                                    </Popover>
                                                 }
                                             >
-                                                <FormGroupLabelHelp aria-label="Log helper msg" />
-                                            </Popover>
-                                        }>
-                                        <TextArea
-                                            isRequired
-                                            id="log-message"
-                                            aria-label="log message"
-                                            validated={errors.logMessage ? "error" : "default"}
-                                            {...register("logMessage", {
-                                                required: "Log message is required",
-                                            })}
-                                        />
-                                    </FormGroup>
-                                );
-                            case "stopAdhocSnapshotActions":
-                                return (
+                                                <TextInput type="text" id="collection-name"
 
-                                    <FormGroup label={t("pipeline:actions.collectionField")} fieldId="collection-name"
-                                        labelHelp={
-                                            <Popover
-                                                bodyContent={
-                                                    <div>
+                                                    {...register("collectionName")} />
+                                            </FormGroup>
+                                        );
+                                    case "blockingSnapshotActions":
+                                    case "adhocSnapshotActions":
 
-                                                        {t("pipeline:actions.collectionFieldDescription")}
-                                                    </div>
-                                                }
-                                            >
-                                                <FormGroupLabelHelp aria-label="More info for name field" />
-                                            </Popover>
-                                        }
-                                    >
-                                        <TextInput type="text" id="collection-name"
+                                        return (
+                                            <>
+                                                <FormGroup label={t("pipeline:actions.collectionField")} fieldId="collection-name"
+                                                    labelHelp={
+                                                        <Popover
+                                                            bodyContent={
+                                                                <div>
 
-                                            {...register("collectionName")} />
-                                    </FormGroup>
-                                );
-                            case "blockingSnapshotActions":
-                            case "adhocSnapshotActions":
-
-                                return (
-                                    <>
-                                        <FormGroup label={t("pipeline:actions.collectionField")} fieldId="collection-name"
-                                            labelHelp={
-                                                <Popover
-                                                    bodyContent={
-                                                        <div>
-
-                                                            {t("pipeline:actions.collectionFieldDescription")}
-                                                        </div>
+                                                                    {t("pipeline:actions.collectionFieldDescription")}
+                                                                </div>
+                                                            }
+                                                        >
+                                                            <FormGroupLabelHelp aria-label="More info for name field" />
+                                                        </Popover>
                                                     }
                                                 >
-                                                    <FormGroupLabelHelp aria-label="More info for name field" />
-                                                </Popover>
-                                            }
-                                        >
-                                            <TextInput type="text" id="collection-name"
-                                                {...register("collectionName")} />
-                                        </FormGroup>
-                                        <FormFieldGroupExpandable
-                                            isExpanded
-                                            toggleAriaLabel="Details"
-                                            header={
-                                                <FormFieldGroupHeader
-                                                    titleText={{ text: t('pipeline:actions.additionalConditions'), id: 'action-filter-condition' }}
-                                                    titleDescription={t('pipeline:actions.additioanlConditionsDesc')}
-                                                    actions={
-                                                        <>
-                                                            <Button variant="link" onClick={deleteAllConditions}>{t("deleteAll")}</Button>
-                                                            <Button variant="secondary" onClick={addFilterCondition}>{t("pipeline:actions.addFilter")}</Button>
-                                                        </>
-                                                    }
-                                                />
-                                            }
-                                        >
-
-                                            {fields.map((field, index) => (
-                                                <FormFieldGroup
-                                                    key={field.id}
+                                                    <TextInput type="text" id="collection-name"
+                                                        {...register("collectionName")} />
+                                                </FormGroup>
+                                                <FormFieldGroupExpandable
+                                                    isExpanded
+                                                    toggleAriaLabel="Details"
                                                     header={
                                                         <FormFieldGroupHeader
-                                                            titleText={{ text: t("pipeline:actions.filterCondition",{val: index + 1}), id: `nested-field-group${index}-titleText-id` }}
+                                                            titleText={{ text: t('pipeline:actions.additionalConditions'), id: 'action-filter-condition' }}
+                                                            titleDescription={t('pipeline:actions.additioanlConditionsDesc')}
                                                             actions={
-                                                                <Button
-                                                                    variant="plain"
-                                                                    aria-label="Remove"
-                                                                    icon={<TrashIcon />}
-                                                                    onClick={() => deleteAdditionalCondition(index)}
-                                                                />
+                                                                <>
+                                                                    <Button variant="link" onClick={deleteAllConditions}>{t("deleteAll")}</Button>
+                                                                    <Button variant="secondary" onClick={addFilterCondition}>{t("pipeline:actions.addFilter")}</Button>
+                                                                </>
                                                             }
                                                         />
                                                     }
                                                 >
-                                                    <FormGroup label={t("pipeline:actions.filterConditionFields.filtersField")} fieldId={`filter-filed-${index}`}
-                                                        labelHelp={
-                                                            <Popover
-                                                                bodyContent={
-                                                                    <div>
-                                                                        {t("pipeline:actions.filterConditionFields.filtersHelperText")}
-                                                                    </div>
+
+                                                    {fields.map((field, index) => (
+                                                        <FormFieldGroup
+                                                            key={field.id}
+                                                            header={
+                                                                <FormFieldGroupHeader
+                                                                    titleText={{ text: t("pipeline:actions.filterCondition", { val: index + 1 }), id: `nested-field-group${index}-titleText-id` }}
+                                                                    actions={
+                                                                        <Button
+                                                                            variant="plain"
+                                                                            aria-label="Remove"
+                                                                            icon={<TrashIcon />}
+                                                                            onClick={() => deleteAdditionalCondition(index)}
+                                                                        />
+                                                                    }
+                                                                />
+                                                            }
+                                                        >
+                                                            <FormGroup label={t("pipeline:actions.filterConditionFields.filtersField")} fieldId={`filter-filed-${index}`}
+                                                                labelHelp={
+                                                                    <Popover
+                                                                        bodyContent={
+                                                                            <div>
+                                                                                {t("pipeline:actions.filterConditionFields.filtersHelperText")}
+                                                                            </div>
+                                                                        }
+                                                                    >
+                                                                        <FormGroupLabelHelp aria-label="More info for name field" />
+                                                                    </Popover>
                                                                 }
                                                             >
-                                                                <FormGroupLabelHelp aria-label="More info for name field" />
-                                                            </Popover>
-                                                        }
-                                                    >
-                                                        <TextInput
-                                                            type="text"
-                                                            id={`filter-condition-${index}`}
-                                                            {...register(`additionalConditions.${index}.filterCondition` as const)}
-                                                        />
-                                                    </FormGroup>
-                                                    <FormGroup label= {t("pipeline:actions.filterConditionFields.collectionsField")} fieldId={`filter-collection-name-field-${index}`}
-                                                        labelHelp={
-                                                            <Popover
-                                                                bodyContent={
-                                                                    <div>
-                                                                        {t("pipeline:actions.filterConditionFields.collectionsHelperText")}
-                                                                    </div>
+                                                                <TextInput
+                                                                    type="text"
+                                                                    id={`filter-condition-${index}`}
+                                                                    {...register(`additionalConditions.${index}.filterCondition` as const)}
+                                                                />
+                                                            </FormGroup>
+                                                            <FormGroup label={t("pipeline:actions.filterConditionFields.collectionsField")} fieldId={`filter-collection-name-field-${index}`}
+                                                                labelHelp={
+                                                                    <Popover
+                                                                        bodyContent={
+                                                                            <div>
+                                                                                {t("pipeline:actions.filterConditionFields.collectionsHelperText")}
+                                                                            </div>
+                                                                        }
+                                                                    >
+                                                                        <FormGroupLabelHelp aria-label="More info for name field" />
+                                                                    </Popover>
                                                                 }
                                                             >
-                                                                <FormGroupLabelHelp aria-label="More info for name field" />
-                                                            </Popover>
-                                                        }
-                                                    >
-                                                        <TextInput
-                                                            type="text"
-                                                            id={`filter-collection-name-${index}`}
-                                                            {...register(`additionalConditions.${index}.filterCollectionName` as const)}
-                                                        />
-                                                    </FormGroup>
-                                                </FormFieldGroup>
-                                            ))}
+                                                                <TextInput
+                                                                    type="text"
+                                                                    id={`filter-collection-name-${index}`}
+                                                                    {...register(`additionalConditions.${index}.filterCollectionName` as const)}
+                                                                />
+                                                            </FormGroup>
+                                                        </FormFieldGroup>
+                                                    ))}
 
 
 
-                                        </FormFieldGroupExpandable>
+                                                </FormFieldGroupExpandable>
 
 
 
-                                    </>
-                                );
-                            default:
-                                return null;
+                                            </>
+                                        );
+                                    default:
+                                        return null;
+                                }
+                            })()}
+                        </FormSection>
+                        {
+                            pipelineAction !== "" && pipelineAction !== "please choose" && (
+                                <ActionGroup>
+                                    <Button variant="primary" type="submit" isLoading={isLoading} isDisabled={isLoading}>{t("submit")}</Button>
+                                    {/* <Button variant="link">{t("clear")}</Button> */}
+                                </ActionGroup>
+                            )
                         }
-                    })()}
-                    
-                </FormSection>
-                {
-                    pipelineAction !== "" && pipelineAction !== "please choose" && (
-                        <ActionGroup>
-                            <Button variant="primary" type="submit" isLoading={isLoading} isDisabled={isLoading}>{t("submit")}</Button>
-                            {/* <Button variant="link">{t("clear")}</Button> */}
-                        </ActionGroup>
-                    )
-                }
 
-            </Form>
+                    </Form>
+                </GridItem>
+                <GridItem span={4} style={{ height: "100%", overflowY: "auto" }}>
+                    {
+                        isCollectionsLoading ?
+                            <FormFieldGroup>
+                                <br />
+                                <Skeleton fontSize="md" width="75%" />
+                                <br />
+                                <Skeleton fontSize="2xl" width="75%" />
+                                <br />
+                                <Skeleton fontSize="md" width="50%" />
+                                <br />
+                                <Skeleton fontSize="md" width="50%" />
+                                <br />
+                                <Skeleton fontSize="md" width="50%" />
+                                <br />
+                            </FormFieldGroup> : !!collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError} />   </FormFieldGroup> : <FormFieldGroup
+                                className="table-explorer-section"
+                                //   hasAnimations
+                                //   isExpanded
+                                header={
+                                    <FormFieldGroupHeader
+                                        titleText={{
+                                            text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: sourceName })}</span>,
+                                            id: `field-group-data-table-id`,
+                                        }}
+                                        titleDescription={t("source:create.dataTableDescription")}
+                                    />
+                                }
+                            >
+                                <TableViewComponent collections={collections} />
+                            </FormFieldGroup>
+                    }
+                </GridItem>
+            </Grid>
+
+
+
+
+
+
         </>
 
     );

@@ -47,7 +47,6 @@ import { useQuery } from "react-query";
 import TableViewComponent from "./TableViewComponent";
 import "./SourceSinkForm.css";
 import ApiComponentError from "./ApiComponentError";
-import { error } from "ajv/dist/vocabularies/applicator/dependencies";
 
 
 const getInitialSelectOptions = (connections: connectionsList[]): SelectOptionProps[] => {
@@ -551,7 +550,7 @@ const SourceSinkForm = ({
                   <Skeleton fontSize="2xl" width="50%" />
                   <Skeleton fontSize="md" width="33%" />
                   <Skeleton fontSize="md" width="33%" />
-                </FormFieldGroup> : !!collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError}/>   </FormFieldGroup> : <FormFieldGroupExpandable
+                </FormFieldGroup> : !!collectionsError ? <FormFieldGroup> <ApiComponentError error={collectionsError} />   </FormFieldGroup> : <FormFieldGroupExpandable
                   className="table-explorer-section"
                   hasAnimations
                   isExpanded

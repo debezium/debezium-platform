@@ -33,10 +33,10 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
                     catalog.schemas.forEach((schema, schemaIdx) => {
                         const collectionsChildren: TreeViewDataItem[] = [];
                         if (schema.collections) {
-                            schema.collections.forEach((collection, collIdx) => {
+                            schema.collections.forEach((collection) => {
                                 collectionsChildren.push({
                                     name: collection.name,
-                                    id: `schema${schemaIdx}-collection${collIdx}`,
+                                    id: `schema-${schemaIdx}-collection-${collection.name}`,
                                     icon: <ServerGroupIcon />,
                                     checkProps: { checked: false }
                                 });
@@ -44,7 +44,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
                         }
                         newOptions.push({
                             name: schema.name,
-                            id: `schema${schemaIdx}`,
+                            id: `schema-${schemaIdx}-${schema.name}`,
                             icon: <DatabaseIcon />,
                             checkProps: { 'aria-label': 'schema', checked: false },
                             children: collectionsChildren
@@ -181,22 +181,19 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
         </Toolbar>
     );
 
-    const tree = mappedFilteredItems.length > 0 ? (
-        <TreeView
-            hasAnimations
-            aria-label="Tree View with search and checkboxes"
-            data={mappedFilteredItems}
-            onCheck={onCheck}
-            hasCheckboxes
-            allExpanded={allExpanded || isFiltered}
-            toolbar={toolbar}
-            useMemo={true}
-        />
-    ) : null;
 
     return (
         <Fragment>
-            {tree}
+            <TreeView
+                hasAnimations
+                aria-label="Tree View with search and checkboxes"
+                data={mappedFilteredItems}
+                onCheck={onCheck}
+                hasCheckboxes
+                allExpanded={allExpanded || isFiltered}
+                toolbar={toolbar}
+                useMemo={true}
+            />
         </Fragment>
     );
 };
