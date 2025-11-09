@@ -42,9 +42,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
 
     const [errorWarning, setErrorWarning] = useState<string[]>([]);
-    const [properties, setProperties] = useState<Map<string, Properties>>(
-        new Map([["key0", { key: "", value: "" }]])
-    );
+    const [properties, setProperties] = useState<Map<string, Properties>>(new Map());
     const [keyCount, setKeyCount] = React.useState<number>(1);
 
     const [searchParams] = useSearchParams();

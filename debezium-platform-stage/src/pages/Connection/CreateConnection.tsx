@@ -45,9 +45,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     const connectionType = state ? state.connectionType : selectedConnectionType;
 
     const [errorWarning, setErrorWarning] = useState<string[]>([]);
-    const [properties, setProperties] = useState<Map<string, Properties>>(
-        new Map([["key0", { key: "", value: "" }]])
-    );
+    const [properties, setProperties] = useState<Map<string, Properties>>(new Map());
     const [keyCount, setKeyCount] = React.useState<number>(1);
 
     const { data: connectionsSchema = [] } = useQuery<ConnectionsSchema[], Error>("connectionsSchema", () =>
@@ -59,6 +57,12 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     }, [connectionsSchema, connectionId]);
 
     const selectedSchemaProperties = selectedSchema?.schema;
+
+    React.useEffect(() => {
+        if (!selectedSchema) {
+            setProperties(new Map([["key0", { key: "", value: "" }]]));
+        }
+    }, [selectedSchema]);
 
 
 
