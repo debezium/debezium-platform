@@ -449,6 +449,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
                   handleConnectionModalToggle={handleConnectionModalToggle}
+                  setSelectedDataListItems={() => {}}
                 />
               ) : (
                 <>

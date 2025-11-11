@@ -48,6 +48,7 @@ import TableViewComponent from "./TableViewComponent";
 import "./SourceSinkForm.css";
 import ApiComponentError from "./ApiComponentError";
 import _ from "lodash";
+import { SelectedDataListItem } from "@sourcePage/CreateSource";
 
 
 const getInitialSelectOptions = (connections: connectionsList[]): SelectOptionProps[] => {
@@ -85,6 +86,7 @@ interface SourceSinkFormProps {
   selectedConnection: ConnectionConfig | undefined;
   updateSignalCollectionName?: (name: string) => void;
   handleConnectionModalToggle: () => void;
+  setSelectedDataListItems: (dataListItems: SelectedDataListItem | undefined) => void;
 
 }
 const SourceSinkForm = ({
@@ -105,7 +107,8 @@ const SourceSinkForm = ({
   setSelectedConnection,
   selectedConnection,
   updateSignalCollectionName,
-  handleConnectionModalToggle
+  handleConnectionModalToggle,
+  setSelectedDataListItems
 }: SourceSinkFormProps) => {
   const { t } = useTranslation();
   const { addNotification } = useNotification();
@@ -578,7 +581,7 @@ const SourceSinkForm = ({
                     />
                   }
                 >
-                  <TableViewComponent collections={collections} />
+                  <TableViewComponent collections={collections} setSelectedDataListItems={setSelectedDataListItems} />
                 </FormFieldGroupExpandable>
                 : null}
 

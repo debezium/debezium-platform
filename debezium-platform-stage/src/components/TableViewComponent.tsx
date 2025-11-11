@@ -5,12 +5,68 @@ import { Fragment } from "react/jsx-runtime";
 import { TableData } from "src/apis";
 import "./TableViewComponent.css";
 import { useTranslation } from "react-i18next";
+import { SelectedDataListItem } from "@sourcePage/CreateSource";
 
 type TableViewComponentProps = {
     collections: TableData | undefined;
+    setSelectedDataListItems: (dataListItems: SelectedDataListItem | undefined) => void;
 };
 
-const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
+type SelectedItem = {
+    name: string;
+    id: string;
+    checkProps: { checked?: boolean | null; "aria-label"?: string };
+    children?: SelectedItem[];
+  };
+  
+  type SelectionResult = {
+    schemas: string[];
+    tables: string[];
+  };
+  
+  export function extractSelections(selectedItems: SelectedItem[]): SelectionResult {
+    const schemaSet = new Set<string>();
+    const tableSet = new Set<string>();
+  
+    for (const item of selectedItems) {
+    const isSchema = item.id.includes("schema") && !item.id.includes("collection");
+      const isTable = item.id.includes("collection");
+  
+      if (isSchema) {
+        if (item.checkProps.checked === true) {
+          schemaSet.add(item.name);
+        }
+
+      } else if (isTable ) {
+        const schemaFromId = item.id.match(/^schema-\d+-(.*?)-collection-/)?.[1];
+        const schemaName = schemaFromId ?? "unknown_schema";
+        tableSet.add(`${schemaName}.${item.name}`);
+      }
+    }
+  
+    // Remove tables belonging to fully selected schemas
+    for (const schema of schemaSet) {
+      const tables = Array.from(tableSet)
+        .filter((t) => t.startsWith(`${schema}.`))
+        .map((t) => t.substring(schema.length + 1));
+      const allTablesSelected = tables.every((t) =>
+        tableSet.has(`${schema}.${t}`)
+      );
+  
+      if (allTablesSelected) {
+        tables.forEach((t) => tableSet.delete(`${schema}.${t}`));
+      }
+    }
+  
+    return {
+      schemas: Array.from(schemaSet),
+      tables: Array.from(tableSet),
+    };
+  }
+  
+  
+
+const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelectedDataListItems }) => {
     const { t } = useTranslation();
     const [allExpanded, setAllExpanded] = useState(false);
     const [filteredItems, setFilteredItems] = useState<TreeViewDataItem[]>([]);
@@ -21,8 +77,9 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
     const [checkedItems, setCheckedItems] = useState<TreeViewDataItem[]>([]);
 
     useEffect(() => {
-        console.log('Checked items: ', checkedItems);
-    }, [checkedItems]);
+        const selections = extractSelections(checkedItems as SelectedItem[]);
+        setSelectedDataListItems(selections);
+    }, [checkedItems, isFiltered]);
 
 
     useEffect(() => {
@@ -36,7 +93,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections }) => {
                             schema.collections.forEach((collection) => {
                                 collectionsChildren.push({
                                     name: collection.name,
-                                    id: `schema-${schemaIdx}-collection-${collection.name}`,
+                                    id: `schema-${schemaIdx}-${schema.name}-collection-${collection.name}`,
                                     icon: <ServerGroupIcon />,
                                     checkProps: { checked: false }
                                 });

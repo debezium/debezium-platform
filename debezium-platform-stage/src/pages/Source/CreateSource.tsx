@@ -59,6 +59,11 @@ const initialCodeValue = {
 
 type Properties = { key: string; value: string };
 
+export type SelectedDataListItem = {
+  schemas: string[];
+  tables: string[];
+};
+
 const FormSyncManager: React.FC<{
   getFormValue: (key: string) => string;
   setFormValue: (key: string, value: string) => void;
@@ -226,6 +231,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   }, [isConnectionModalOpen]);
 
   const [signalCollectionName, setSignalCollectionName] = useState<string>("");
+  const [selectedDataListItems, setSelectedDataListItems] = useState<SelectedDataListItem | undefined>();
 
   const validate = ajv.compile(connectorSchema);
 
@@ -322,6 +328,8 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
           ...(selectedConnection ? { connection: selectedConnection } : {}),
           config: {
             ...(signalCollectionName ? { "signal.data.collection": signalCollectionName } : {}),
+            ...(selectedDataListItems && selectedDataListItems.tables.length > 0 ? { "table.include.list": selectedDataListItems.tables.join(",") } : {}),
+            ...(selectedDataListItems && selectedDataListItems.schemas.length > 0 ? { "schema.include.list": selectedDataListItems.schemas.join(",") } : {}),
             ...convertMapToObject(properties)
           },
           name: values["source-name"],
@@ -467,6 +475,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
                   handleConnectionModalToggle={handleConnectionModalToggle}
+                  setSelectedDataListItems={setSelectedDataListItems}
                 />
               ) : (
                 <>
