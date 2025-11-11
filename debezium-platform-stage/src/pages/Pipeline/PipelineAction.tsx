@@ -499,7 +499,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                     />
                                 }
                             >
-                                <TableViewComponent collections={collections} />
+                                <TableViewComponent collections={collections} setSelectedDataListItems={() => {}} />
                             </FormFieldGroup>
                     }
                 </GridItem>

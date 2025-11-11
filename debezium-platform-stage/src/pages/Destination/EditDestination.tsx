@@ -459,6 +459,7 @@ const EditDestination: React.FunctionComponent = () => {
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
                   handleConnectionModalToggle={handleConnectionModalToggle}
+                  setSelectedDataListItems={() => {}}
                 />
               ) : (
                 <>
