@@ -96,7 +96,6 @@ export const getConnectorTypeName = (connectorType: string) => {
     case connectorType.includes("events_hubs"):
       name = "Event Hub";
       break;
-
     case connectorType.includes("rabbitmq"):
       name = "RabbitMQ";
       break;

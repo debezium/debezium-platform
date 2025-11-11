@@ -49,6 +49,7 @@ import "./SourceSinkForm.css";
 import ApiComponentError from "./ApiComponentError";
 import _ from "lodash";
 import { SelectedDataListItem } from "@sourcePage/CreateSource";
+import { datatype as DatabaseItemsList } from "@utils/Datatype";
 
 
 const getInitialSelectOptions = (connections: connectionsList[]): SelectOptionProps[] => {
@@ -577,7 +578,7 @@ const SourceSinkForm = ({
                         text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: getConnectorTypeName(dataType || ConnectorId || "") })}</span>,
                         id: `field-group-data-table-id`,
                       }}
-                      titleDescription={t("source:create.dataTableDescription")}
+                      titleDescription={t("source:create.dataTableDescription", { val: DatabaseItemsList[ConnectorId as keyof typeof DatabaseItemsList].join(" and ") })}
                     />
                   }
                 >

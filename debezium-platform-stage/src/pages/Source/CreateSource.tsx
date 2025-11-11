@@ -38,6 +38,7 @@ import { formatCode } from "@utils/formatCodeUtils";
 import style from "../../styles/createConnector.module.css";
 import CreateConnectionModal from "../components/CreateConnectionModal";
 import { useData } from "@appContext/AppContext";
+import { getIncludeList } from "@utils/Datatype";
 
 const ajv = new Ajv();
 
@@ -320,6 +321,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
           setIsLoading(false);
           return;
         }
+
         const payload = {
           description: values["description"],
           type: find(sourceCatalog, { id: sourceId })?.type || (code as Payload).type || "",
@@ -328,8 +330,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
           ...(selectedConnection ? { connection: selectedConnection } : {}),
           config: {
             ...(signalCollectionName ? { "signal.data.collection": signalCollectionName } : {}),
-            ...(selectedDataListItems && selectedDataListItems.tables.length > 0 ? { "table.include.list": selectedDataListItems.tables.join(",") } : {}),
-            ...(selectedDataListItems && selectedDataListItems.schemas.length > 0 ? { "schema.include.list": selectedDataListItems.schemas.join(",") } : {}),
+            ...getIncludeList(selectedDataListItems, sourceId || ""),
             ...convertMapToObject(properties)
           },
           name: values["source-name"],
