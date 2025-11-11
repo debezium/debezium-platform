@@ -8,6 +8,7 @@
         "description": "Per configurare e creare un connettore, compila il modulo sottostante oppure utilizza l’editor intelligente per configurare una nuova fonte. Se hai già un file di configurazione, puoi configurare una nuova fonte caricandolo nell’editor intelligente.",
         "editorPageDescription": "Per configurare e creare un nuovo connettore sorgente, utilizzare l'editor sottostante per aggiungere o caricare una configurazione JSON esistente.",
         "dataTableDescription": "Seleziona il {{val}} da sincronizzare",
+        "dataTableDescriptionAction": "Seleziona il {{val}} da targetizzare per l'azione della pipeline",
          "dataTableTitle": "{{val}} database"
     },
     "catalog": {

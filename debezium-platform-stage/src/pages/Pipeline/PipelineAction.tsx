@@ -12,6 +12,7 @@ import TableViewComponent from '@components/TableViewComponent';
 import { getConnectorTypeName } from '@utils/helpers';
 import ApiComponentError from '@components/ApiComponentError';
 import _ from 'lodash';
+import { datatype as DatabaseItemsList } from "@utils/Datatype";
 
 
 const getSignalActions = () => {
@@ -106,30 +107,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     };
 
     useEffect(() => {
-        // const fetchConnection = async () => {
-        //     setIsCollectionsLoading(true);
-        //     const sourceResponse = await fetchDataCall<Source>(
-        //         `${API_URL}/api/sources/${sourceId}`
-        //     );
-        //     if (sourceResponse.error) {
-        //         setCollectionsError(sourceResponse);
-        //     } else {
-        //         const connectionId = sourceResponse.data?.connection?.id;
-        //         setCollectionsError(undefined);
-        //         setSourceName(getConnectorTypeName(sourceResponse.data?.type || ""));
-        //         const collectionResponse = await fetchDataCall<TableData>(
-        //             `${API_URL}/api/connections/${connectionId}/collections`
-        //         );
-        //         if (collectionResponse.error) {
-        //             setCollectionsError(collectionResponse.error.body?.error || "");
-        //             setCollectionsError(collectionResponse);
-        //         } else {
-        //             setCollections(collectionResponse.data as TableData);
-        //             setCollectionsError(undefined);
-        //         }
-        //     }
-        //     setIsCollectionsLoading(false);
-        // };
         if (sourceId) {
             fetchConnectionCollections();
         }
@@ -253,6 +230,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
         }
     };
 
+    console.log('sourceName: ', sourceName);
     return (
         <>
 
@@ -495,7 +473,14 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                             text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: sourceName })}</span>,
                                             id: `field-group-data-table-id`,
                                         }}
-                                        titleDescription={t("source:create.dataTableDescription")}
+                                        titleDescription={t("source:create.dataTableDescriptionAction", { 
+                                            val: sourceName ? 
+                                                (() => {
+                                                    const databaseType = _.find(Object.keys(DatabaseItemsList), (key) => sourceName.toLowerCase().includes(key));
+                                                    return databaseType ? DatabaseItemsList[databaseType as keyof typeof DatabaseItemsList].join(" and ") : "";
+                                                })() 
+                                                : "" 
+                                        })}
                                     />
                                 }
                             >
