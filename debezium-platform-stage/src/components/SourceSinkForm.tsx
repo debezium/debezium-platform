@@ -52,8 +52,8 @@ import { SelectedDataListItem } from "@sourcePage/CreateSource";
 import { datatype as DatabaseItemsList } from "@utils/Datatype";
 
 
-const getInitialSelectOptions = (connections: connectionsList[]): SelectOptionProps[] => {
-  return connections.map((connection) => ({
+const getInitialSelectOptions = (connections: connectionsList[], connectorId: string): SelectOptionProps[] => {
+  return connections.filter((connection) => connection.type.toLowerCase() === connectorId.toLowerCase()).map((connection) => ({
     value: connection.id,
     children: connection.name,
     icon: <ConnectorImage connectorType={connection.type.toLowerCase() || ""} size={25} />,
@@ -161,9 +161,8 @@ const SourceSinkForm = ({
     }
   );
 
-
   useEffect(() => {
-    setSelectOptions(getInitialSelectOptions(connections));
+    setSelectOptions(getInitialSelectOptions(connections, dataType || ConnectorId));
   }, [connections]);
 
   useEffect(() => {

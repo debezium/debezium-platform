@@ -1,4 +1,4 @@
-import { FormGroup, FormSelect, FormSelectOption, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, TextArea, FormGroupLabelHelp, Popover, FormHelperText, HelperText, HelperTextItem, FormFieldGroupExpandable, FormFieldGroupHeader, FormFieldGroup, Skeleton, Grid, GridItem } from '@patternfly/react-core';
+import { FormGroup, FormSelect, FormSelectOption, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, TextArea, FormGroupLabelHelp, Popover, FormHelperText, HelperText, HelperTextItem, FormFieldGroupExpandable, FormFieldGroupHeader, FormFieldGroup, Grid, GridItem } from '@patternfly/react-core';
 import React, { useEffect, useState } from 'react';
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form"
 import { useTranslation } from 'react-i18next';
@@ -8,11 +8,8 @@ import { createPost, fetchDataCall, PipelineSignalPayload, Source, TableData } f
 import { useNotification } from '@appContext/index';
 import { TrashIcon } from '@patternfly/react-icons';
 import { v4 as uuidv4 } from 'uuid';
-import TableViewComponent from '@components/TableViewComponent';
 import { getConnectorTypeName } from '@utils/helpers';
-import ApiComponentError from '@components/ApiComponentError';
-import _ from 'lodash';
-import { datatype as DatabaseItemsList } from "@utils/Datatype";
+import './PipelineAction.css';
 
 
 const getSignalActions = () => {
@@ -80,6 +77,11 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     const [collectionsError, setCollectionsError] = useState<object | undefined>(undefined);
     const [collections, setCollections] = useState<TableData | undefined>(undefined);
     const [sourceName, setSourceName] = useState<string | undefined>(undefined);
+
+    console.log(isCollectionsLoading);
+    console.log(collectionsError);
+    console.log(collections);
+    console.log(sourceName);
 
     const fetchConnectionCollections = async () => {
         setIsCollectionsLoading(true);
@@ -229,13 +231,13 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
             );
         }
     };
-
-    console.log('sourceName: ', sourceName);
     return (
         <>
 
-            <Grid hasGutter style={{ height: "calc(100vh - 200px)", alignItems: "stretch" }}>
-                <GridItem span={8} style={{ borderRight: "1px solid #ccc", paddingRight: "10px", height: "100%", overflowY: "auto" }}>
+            <Grid hasGutter className="pipeline-action-grid-container">
+                <GridItem span={8}
+                //  className="pipeline-action-grid"
+                 >
                     <Form isHorizontal onSubmit={handleSubmit(onSubmit)}>
                         <FormSection title={t("pipeline:actions.description")} titleElement="h2">
                             <FormGroup label={t("pipeline:actions.actionField")} fieldId="action-type" isRequired>
@@ -450,7 +452,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
 
                     </Form>
                 </GridItem>
-                <GridItem span={4} style={{ height: "100%", overflowY: "auto" }}>
+                {/* <GridItem span={4} style={{ height: "100%", overflowY: "auto" }}>
                     {
                         isCollectionsLoading ?
                             <FormFieldGroup>
@@ -473,21 +475,21 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                             text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: sourceName })}</span>,
                                             id: `field-group-data-table-id`,
                                         }}
-                                        titleDescription={t("source:create.dataTableDescriptionAction", { 
-                                            val: sourceName ? 
+                                        titleDescription={t("source:create.dataTableDescriptionAction", {
+                                            val: sourceName ?
                                                 (() => {
                                                     const databaseType = _.find(Object.keys(DatabaseItemsList), (key) => sourceName.toLowerCase().includes(key));
                                                     return databaseType ? DatabaseItemsList[databaseType as keyof typeof DatabaseItemsList].join(" and ") : "";
-                                                })() 
-                                                : "" 
+                                                })()
+                                                : ""
                                         })}
                                     />
                                 }
                             >
-                                <TableViewComponent collections={collections} setSelectedDataListItems={() => {}} />
+                                <TableViewComponent collections={collections} setSelectedDataListItems={() => { }} />
                             </FormFieldGroup>
                     }
-                </GridItem>
+                </GridItem> */}
             </Grid>
         </>
 

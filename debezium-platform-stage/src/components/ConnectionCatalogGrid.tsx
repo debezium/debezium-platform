@@ -15,32 +15,22 @@ import {
   Gallery,
   GalleryItem,
   PageSection,
-  Skeleton,
-  Tooltip,
 } from "@patternfly/react-core";
 import ConnectorImage from "./ComponentImage";
-import { StarIcon } from "@patternfly/react-icons";
 import { Catalog } from "src/apis/types";
 import "./ConnectionCatalogGrid.css";
-import { ConnectionsSchema } from "src/apis";
 import { useTranslation } from "react-i18next";
 
 export interface IConnectionCatalogGridProps {
   onCardSelect: (selectId: string, role: string) => void;
   searchResult: Catalog[];
   displayType: "grid" | "list";
-  connectionsSchema: ConnectionsSchema[];
-  isSchemaLoading: boolean;
-  error: Error | null;
 }
 
 const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps> = ({
   onCardSelect,
   searchResult,
   displayType,
-  connectionsSchema,
-  isSchemaLoading,
-
 }) => {
   const { t } = useTranslation();
   const onCardClick = (id: string, role: string) => {
@@ -52,13 +42,7 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
       {displayType === "grid" ? (
         <Gallery hasGutter className="custom-gallery">
           {
-            isSchemaLoading ? (
-              Array.from({ length: 6 }).map((_, index) => (
-                <GalleryItem key={`skeleton-${index}`}>
-                  <Skeleton shape="square" />
-                </GalleryItem>
-              ))
-            ) : (
+            (
               searchResult.map((item) => (
                 <GalleryItem key={item.id}>
                   <Card
@@ -69,22 +53,22 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
                   >
                     <CardHeader
                       className="custom-connection-card-header"
-                      // actions={{ actions: item.role === "source" ? <Tooltip content={<div>{t("source")}</div>}><DataSourceIcon style={{ outline: "none" }} size={150} /></Tooltip> : <Tooltip content={<div>{t("destination")}</div>}><DataSinkIcon style={{ outline: "none" }} size={150} /></Tooltip>, hasNoOffset: false }}
-                      actions={{
-                        actions: connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase()) && <>
-                          <Tooltip
-                            content={
-                              <div>
-                                {t("connection:catalog.supportsConnectionValidation")}
-                              </div>
-                            }
-                            trigger="mouseenter focus"
-                          >
+                    // actions={{ actions: item.role === "source" ? <Tooltip content={<div>{t("source")}</div>}><DataSourceIcon style={{ outline: "none" }} size={150} /></Tooltip> : <Tooltip content={<div>{t("destination")}</div>}><DataSinkIcon style={{ outline: "none" }} size={150} /></Tooltip>, hasNoOffset: false }}
+                    // actions={{
+                    //   actions: connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase()) && <>
+                    //     <Tooltip
+                    //       content={
+                    //         <div>
+                    //           {t("connection:catalog.supportsConnectionValidation")}
+                    //         </div>
+                    //       }
+                    //       trigger="mouseenter focus"
+                    //     >
 
-                            <StarIcon style={{ outline: "none" }} size={150} />
+                    //       <StarIcon style={{ outline: "none" }} size={150} />
 
-                          </Tooltip></>
-                      }}
+                    //     </Tooltip></>
+                    // }}
                     >
                       <ConnectorImage connectorType={item.id} />
                       <CardTitle id={`catalog-card-id-${item.name}`}>
@@ -139,9 +123,9 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
                       </Flex>
                     </DataListCell>,
 
-                    <DataListCell isFilled={false} alignRight key="support validation">
-                      {connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase()) && <StarIcon style={{ outline: "none" }} size={150} />}
-                    </DataListCell>
+                    // <DataListCell isFilled={false} alignRight key="support validation">
+                    //   {connectionsSchema.find((schema) => schema.type.toLowerCase() === item.id.toLowerCase()) && <StarIcon style={{ outline: "none" }} size={150} />}
+                    // </DataListCell>
                   ]}
                 />
               </DataListItemRow>

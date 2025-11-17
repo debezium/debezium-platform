@@ -4,14 +4,12 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { ThIcon, ListIcon, SearchIcon, FilterIcon } from "@patternfly/react-icons";
 import { useCallback, useEffect, useState } from "react";
-import { Catalog, ConnectionsSchema, fetchData } from "src/apis";
+import { Catalog } from "src/apis";
 import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
 import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 import _, { debounce } from "lodash";
 import { useNavigate } from "react-router-dom";
 import { ConnectionCatalogGrid } from "@components/ConnectionCatalogGrid";
-import { useQuery } from "react-query";
-import { API_URL } from "@utils/constants";
 
 export interface IConnectionsCatalogProps {
   sampleProp?: string;
@@ -117,14 +115,6 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     navigate(`/connections/create_connection/${connectionId}`, { state: { connectionType: role } });
   };
 
-  const {
-    data: connectionsSchema = [],
-    error,
-    isLoading: isSchemaLoading = true,
-  } = useQuery<ConnectionsSchema[], Error>("connectionsSchema", () =>
-    fetchData<ConnectionsSchema[]>(`${API_URL}/api/connections/schemas`)
-  );
-
   return (
     <>
       <PageSection isWidthLimited>
@@ -222,9 +212,6 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
           onCardSelect={onConnectionSelection}
           displayType={isSelected}
           searchResult={searchResult}
-          connectionsSchema={connectionsSchema}
-          isSchemaLoading={isSchemaLoading}
-          error={error}
         />) : (
 
         <Bullseye>
@@ -244,8 +231,6 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
             </EmptyStateFooter>
           </EmptyState>
         </Bullseye>
-
-
       )}
     </>
   );
