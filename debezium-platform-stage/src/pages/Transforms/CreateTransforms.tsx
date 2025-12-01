@@ -93,7 +93,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
   const [selectOptions, setSelectOptions] = useState<SelectOptionProps[]>();
   const [focusedItemIndex, setFocusedItemIndex] = useState<number | null>(null);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
-  const textInputRef = useRef<HTMLInputElement>();
+  const textInputRef = useRef<HTMLInputElement>(null);
 
   const [code, setCode] = useState({
     name: "",

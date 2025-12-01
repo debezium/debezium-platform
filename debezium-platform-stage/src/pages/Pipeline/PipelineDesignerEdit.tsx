@@ -159,7 +159,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
     const [isLoading, setIsLoading] = useState(false);
 
     const [isExpanded, setIsExpanded] = React.useState(false);
-    const drawerRef = React.useRef<HTMLDivElement>();
+    const drawerRef = React.useRef<HTMLDivElement>(null);
 
     const [source, setSource] = useState<Source>();
     const [destination, setDestination] = useState<Destination>();

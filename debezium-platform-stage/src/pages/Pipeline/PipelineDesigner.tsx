@@ -95,7 +95,7 @@ const PipelineDesigner: React.FunctionComponent = () => {
   );
 
   const [isExpanded, setIsExpanded] = React.useState(false);
-  const drawerRef = React.useRef<HTMLDivElement>();
+  const drawerRef = React.useRef<HTMLDivElement>(null);
 
   // Handle temporary deletion of items
   const handleTempDelete = React.useCallback((id: string) => {
