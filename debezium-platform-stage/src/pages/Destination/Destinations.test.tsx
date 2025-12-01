@@ -19,10 +19,9 @@ vi.mock("react-query", async (importOriginal) => {
   return {
     ...mod,
     useQuery: vi.fn(),
-    QueryClient: vi.fn().mockImplementation(() => ({
-      // Add any methods you need to mock from QueryClient
-      invalidateQueries: vi.fn(),
-    })),
+    QueryClient: class MockQueryClient {
+      invalidateQueries = vi.fn();
+    },
   };
 });
 

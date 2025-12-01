@@ -1,5 +1,7 @@
 import { screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
+import { http, HttpResponse } from 'msw';
+import { server } from '../../__mocks__/server';
 import PipelineLog from "./PipelineLog";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { render } from '../../__test__/unit/test-utils';
@@ -70,29 +72,27 @@ vi.mock("@appContext/AppNotificationContext", () => ({
   useNotification: vi.fn(),
 }));
 
-// Mock fetch and WebSocket
-const mockFetch = vi.fn();
+// Create a proper mock WebSocket class
+class MockWebSocket {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
 
-// Create a mock WebSocket constructor
-const MockWebSocket = vi.fn() as unknown as Mock & typeof WebSocket;
-Object.defineProperties(MockWebSocket, {
-  CONNECTING: { value: 0 },
-  OPEN: { value: 1 },
-  CLOSING: { value: 2 },
-  CLOSED: { value: 3 },
-});
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((event: Event) => void) | null = null;
+  onclose: (() => void) | null = null;
+  onopen: (() => void) | null = null;
+  readyState = MockWebSocket.OPEN;
+  close = vi.fn();
+  send = vi.fn();
+  url: string;
 
-const mockWsInstance = {
-  onmessage: null,
-  onerror: null,
-  onclose: null,
-  close: vi.fn(),
-  readyState: WebSocket.OPEN,
-};
+  constructor(url: string) {
+    this.url = url;
+  }
+}
 
-MockWebSocket.mockImplementation(() => mockWsInstance as unknown as WebSocket);
-
-global.fetch = mockFetch;
 global.WebSocket = MockWebSocket as unknown as typeof WebSocket;
 
 describe("PipelineLog", () => {
@@ -110,9 +110,16 @@ describe("PipelineLog", () => {
       addNotification: mockAddNotification,
     });
 
-    mockFetch.mockResolvedValueOnce({
-      text: () => Promise.resolve("log line 1\nlog line 2\nlog line 3"),
-    });
+    // Add MSW handler for pipeline logs
+    server.use(
+      http.get(`${API_URL}/api/pipelines/:pipelineId/logs`, () => {
+        return new HttpResponse("log line 1\nlog line 2\nlog line 3", {
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+        });
+      })
+    );
 
     mockRequestFullscreen.mockClear();
     mockExitFullscreen.mockClear();
@@ -129,63 +136,71 @@ describe("PipelineLog", () => {
   it("fetches initial logs when tab is active", async () => {
     render(<PipelineLog {...mockProps} />);
 
+    // Wait for logs to be fetched and displayed
     await waitFor(() => {
-      const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
-      expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
-      const request = mockFetch.mock.calls[0][0] as Request;
-      expect(request.url).toBe(expectedUrl);
+      const logLines = screen.getAllByTestId("log-line");
+      expect(logLines).toHaveLength(3);
     });
 
     expect(screen.getByTestId("mock-log-viewer")).toBeInTheDocument();
     expect(screen.getByTestId("mock-log-viewer-toolbar")).toBeInTheDocument();
     expect(screen.getByTestId("mock-log-viewer-content")).toBeInTheDocument();
 
-    // Verify that logs are displayed
-    // const logLines = screen.getAllByTestId("log-line");
-    // expect(logLines).toHaveLength(3);
-    // expect(logLines[0]).toHaveTextContent("log line 1");
-    // expect(logLines[1]).toHaveTextContent("log line 2");
-    // expect(logLines[2]).toHaveTextContent("log line 3");
+    const logLines = screen.getAllByTestId("log-line");
+    expect(logLines[0]).toHaveTextContent("log line 1");
+    expect(logLines[1]).toHaveTextContent("log line 2");
+    expect(logLines[2]).toHaveTextContent("log line 3");
   });
 
-  it("does not fetch logs when tab is not active", () => {
+  it("does not fetch logs when tab is not active", async () => {
     render(<PipelineLog {...mockProps} activeTabKey="details" />);
 
-    expect(mockFetch).not.toHaveBeenCalled();
+    // Wait a bit to ensure no fetch happened
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    expect(screen.getByTestId("mock-log-viewer")).toBeInTheDocument();
+    expect(screen.queryByTestId("log-line")).not.toBeInTheDocument();
   });
 
   it("handles download log file click", async () => {
-    const mockBlob = new Blob(["test log content"], { type: "text/plain" });
-    mockFetch.mockResolvedValueOnce(mockBlob);
+    const mockCreateObjectURL = vi.fn(() => 'blob:mock-url');
+    const mockRevokeObjectURL = vi.fn();
+    global.URL.createObjectURL = mockCreateObjectURL;
+    global.URL.revokeObjectURL = mockRevokeObjectURL;
+    
+    const mockAnchor = document.createElement('a');
+    const mockClick = vi.fn();
+    mockAnchor.click = mockClick;
+    const originalCreateElement = document.createElement.bind(document);
+    document.createElement = vi.fn((tagName: string) => {
+      if (tagName === 'a') {
+        return mockAnchor;
+      }
+      return originalCreateElement(tagName);
+    }) as typeof document.createElement;
 
     render(<PipelineLog {...mockProps} />);
 
+    // Wait for initial logs to be displayed
     await waitFor(() => {
-      const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
-      expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
-      const request = mockFetch.mock.calls[0][0] as Request;
-      expect(request.url).toBe(expectedUrl);
+      expect(screen.getByTestId("mock-log-viewer")).toBeInTheDocument();
     });
 
     const downloadButton = screen.getByRole("button", { name: /download log file/i });
     fireEvent.click(downloadButton);
 
     await waitFor(() => {
-      const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
-      expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
-      const request = mockFetch.mock.calls[0][0] as Request;
-      expect(request.url).toBe(expectedUrl);
+      expect(mockClick).toHaveBeenCalled();
+      expect(mockCreateObjectURL).toHaveBeenCalled();
     });
   });
 
   describe("Fullscreen functionality", () => {
     it("enters fullscreen mode when fullscreen button is clicked", async () => {
       render(<PipelineLog {...mockProps} />);
+      
       await waitFor(() => {
-        const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
-        expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
-        const request = mockFetch.mock.calls[0][0] as Request;
-        expect(request.url).toBe(expectedUrl);
+        expect(screen.getByTestId("mock-log-viewer")).toBeInTheDocument();
       });
 
       const fullscreenButton = screen.getByRole("button", { name: /view log viewer in full screen/i });
@@ -204,11 +219,9 @@ describe("PipelineLog", () => {
 
     it("exits fullscreen mode when fullscreen button is clicked in fullscreen", async () => {
       render(<PipelineLog {...mockProps} />);
+      
       await waitFor(() => {
-        const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
-        expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
-        const request = mockFetch.mock.calls[0][0] as Request;
-        expect(request.url).toBe(expectedUrl);
+        expect(screen.getByTestId("mock-log-viewer")).toBeInTheDocument();
       });
 
       const logViewer = screen.getByTestId("mock-log-viewer");
@@ -243,11 +256,9 @@ describe("PipelineLog", () => {
 
     it("updates fullscreen state when fullscreenchange event is fired", async () => {
       render(<PipelineLog {...mockProps} />);
+      
       await waitFor(() => {
-        const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
-        expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
-        const request = mockFetch.mock.calls[0][0] as Request;
-        expect(request.url).toBe(expectedUrl);
+        expect(screen.getByTestId("mock-log-viewer")).toBeInTheDocument();
       });
 
       const logViewer = screen.getByTestId("mock-log-viewer");
@@ -272,11 +283,9 @@ describe("PipelineLog", () => {
       mockRequestFullscreen.mockRejectedValueOnce(new Error('Fullscreen request failed'));
 
       render(<PipelineLog {...mockProps} />);
+      
       await waitFor(() => {
-        const expectedUrl = `${API_URL}/api/pipelines/${mockProps.pipelineId}/logs`;
-        expect(mockFetch).toHaveBeenCalledWith(expect.any(Request));
-        const request = mockFetch.mock.calls[0][0] as Request;
-        expect(request.url).toBe(expectedUrl);
+        expect(screen.getByTestId("mock-log-viewer")).toBeInTheDocument();
       });
 
       const fullscreenButton = screen.getByRole("button", { name: /view log viewer in full screen/i });

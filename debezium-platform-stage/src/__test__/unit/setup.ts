@@ -4,6 +4,21 @@ import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import "@testing-library/jest-dom";
 
+// Mock localStorage before importing MSW
+const localStorageMock = {
+  getItem: (key: string) => null,
+  setItem: (key: string, value: string) => {},
+  removeItem: (key: string) => {},
+  clear: () => {},
+  length: 0,
+  key: (index: number) => null,
+};
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+});
+
 import { server } from "../../__mocks__/server";
 
 // Mock window.matchMedia 
@@ -22,7 +37,19 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Establish API mocking before all tests.
-beforeAll(() => server.listen());
+// Configure to suppress warnings for WebSocket connections (they're mocked separately)
+beforeAll(() => server.listen({
+  onUnhandledRequest: (request, print) => {
+    // Suppress warnings for WebSocket connections
+    const url = request.url;
+    if (url.startsWith('ws://') || url.startsWith('wss://')) {
+      return; // Don't warn for WebSocket connections
+    }
+    
+    // For HTTP/HTTPS requests, show the default warning
+    print.warning();
+  },
+}));
 
 afterEach(() => {
   // Reset any request handlers that we may add during the tests,
