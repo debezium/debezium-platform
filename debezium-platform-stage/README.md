@@ -101,7 +101,7 @@ yarn dev
 # Run a production build (outputs to "dist" dir)
 yarn build
 
-# Run the test suite
+# Run the test suite (unit tests)
 yarn test
 
 # Run the linter
@@ -110,6 +110,42 @@ yarn lint
 # Start the dev server (run a production build first)
 yarn preview
 ```
+
+## End-to-End Testing with Cypress
+
+This project includes Cypress for E2E testing against the actual backend.
+
+### Prerequisites for E2E Tests
+
+1. Start the backend (Conductor + PostgreSQL):
+```bash
+cd ../debezium-platform-conductor/dev
+docker compose up -d
+```
+
+2. Wait for services to be ready (~30-60 seconds)
+
+### Running E2E Tests
+
+```sh
+# Run tests interactively (automatically starts dev server)
+yarn e2e
+
+# Run tests in headless mode (for CI/CD)
+yarn e2e:ci
+
+# Open Cypress Test Runner (requires dev server running)
+yarn cypress:open
+
+# Run all tests in headless mode (requires dev server running)
+yarn cypress:run
+
+# Run tests in specific browser
+yarn cypress:run:chrome
+yarn cypress:run:firefox
+```
+
+For more details, see [cypress/README.md](cypress/README.md).
 
 ## Contributing
 

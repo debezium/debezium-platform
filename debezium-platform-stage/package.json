@@ -13,7 +13,13 @@
     "coverage": "vitest run --coverage",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "chromatic": "npx chromatic --project-token=chpt_1d6299fe0d5a2cd"
+    "chromatic": "npx chromatic --project-token=chpt_1d6299fe0d5a2cd",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "cypress:run:chrome": "cypress run --browser chrome",
+    "cypress:run:firefox": "cypress run --browser firefox",
+    "e2e": "start-server-and-test dev http://localhost:3000 cypress:open",
+    "e2e:ci": "start-server-and-test dev http://localhost:3000 cypress:run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -76,7 +82,9 @@
     "@vitejs/plugin-react-swc": "^3.5.0",
     "@vitest/coverage-v8": "^4.0.10",
     "chromatic": "^13.3.3",
+    "cypress": "^13.6.2",
     "eslint": "^8.57.0",
+    "start-server-and-test": "^2.0.3",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.6",
