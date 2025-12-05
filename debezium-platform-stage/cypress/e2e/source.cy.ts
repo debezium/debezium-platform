@@ -275,7 +275,6 @@ describe('Source Management', () => {
       
       cy.contains('button', 'Edit').click();
       
-      const originalValue = cy.get('#source-description').invoke('val');
       cy.get('#source-description').clear().type('Temporary change');
       cy.contains('button', 'Cancel').click();
       cy.contains('button', 'Edit').should('be.visible');
@@ -310,7 +309,6 @@ describe('Source Management', () => {
     });
 
     it('should require typing source name to confirm delete', () => {
-      const sourceName = createTestSourceForDelete();
       
       cy.visit('/source');
       cy.get('table[aria-label="source table"] tbody tr').first()
@@ -325,7 +323,6 @@ describe('Source Management', () => {
     });
 
     it('should successfully delete source', () => {
-      const sourceName = createTestSourceForDelete();
       
       cy.visit('/source');
       
