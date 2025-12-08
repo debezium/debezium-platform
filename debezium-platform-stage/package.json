@@ -47,7 +47,7 @@
     "react-dom": "^19.2.0",
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.66.1",
-    "react-i18next": "^15.4.1",
+    "react-i18next": "^16.4.0",
     "react-icons": "^5.1.0",
     "react-query": "^3.39.3",
     "react-router-dom": "^7.5.3",
