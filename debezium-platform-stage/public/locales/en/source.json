@@ -31,6 +31,6 @@
             "helper": "Entered value will be suffixed with '{{val}}' to create signaling collection on the source database."
         },
         "ddlQuery": "DDL query",
-        "errorMsg": "Please fill out the {{val}} fields in the connector configuration properties."
+        "errorMsg": "Please select a {{val}} connection in the connector configuration form."
     }
 }

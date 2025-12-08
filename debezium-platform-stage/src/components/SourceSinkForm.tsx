@@ -122,7 +122,7 @@ const SourceSinkForm = ({
 
   const [signalCollectionName, setSignalCollectionName] = useState("");
   const [signalVerified, setSignalVerified] = useState(false);
-  const [signalMissingPayloads, setSignalMissingPayload] = useState<string[]>([]);
+  const [signalMissingConnection, setSignalMissingConnection] = useState<boolean>(false);
 
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
   const [collectionsError, setCollectionsError] = useState<object | undefined>(undefined);
@@ -362,7 +362,7 @@ const SourceSinkForm = ({
   const handleModalToggle = () => {
     setSignalCollectionName("");
     setIsModalOpen(!isModalOpen);
-    setSignalMissingPayload([]);
+    setSignalMissingConnection(false);
   };
 
   const verifySignalsHandler = async () => {
@@ -377,19 +377,11 @@ const SourceSinkForm = ({
 
     const payload = {
       databaseType: getDatabaseType(ConnectorId),
-      hostname: formValuesCopy.get("database.hostname"),
-      port: formValuesCopy.get("database.port"),
-      username: formValuesCopy.get("database.user"),
-      password: formValuesCopy.get("database.password"),
-      dbName: formValuesCopy.get("database.dbname"),
+      connectionConfig: selectedConnection,
       fullyQualifiedTableName: signalCollectionName
     }
-
-    const requiredFields = ["hostname", "port", "username", "password", "dbName"];
-    const missingFields = requiredFields.filter((field) => !payload[field as keyof typeof payload]);
-
-    if (missingFields.length > 0) {
-      setSignalMissingPayload(missingFields);
+    if (selectedConnection?.id === undefined) {
+      setSignalMissingConnection(true);
       setIsLoading(false);
       return;
 
@@ -445,6 +437,7 @@ const SourceSinkForm = ({
       fetchCollections();
     }
   }, [selectedConnection]);
+
 
   return (
     <>
@@ -577,7 +570,7 @@ const SourceSinkForm = ({
                         text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: getConnectorTypeName(dataType || ConnectorId || "") })}</span>,
                         id: `field-group-data-table-id`,
                       }}
-                      titleDescription={t("source:create.dataTableDescription", { val: DatabaseItemsList[ConnectorId as keyof typeof DatabaseItemsList].join(" and ") })}
+                      titleDescription={t("source:create.dataTableDescription", editFlow ? { val: DatabaseItemsList[dataType?.split(".")[3] as keyof typeof DatabaseItemsList].join(" and ") } : { val: DatabaseItemsList[ConnectorId as keyof typeof DatabaseItemsList].join(" and ") })}
                     />
                   }
                 >
@@ -703,7 +696,7 @@ const SourceSinkForm = ({
           description={t("source:signal.modelDescription")}
         />
         <ModalBody tabIndex={0} id="modal-box-body-with-description">
-          {signalMissingPayloads.length > 0 && (<Alert variant="danger" isInline isPlain title={t('source:signal.errorMsg', { val: signalMissingPayloads.join(", ") })} style={{ paddingBottom: "15px" }} />)}
+          {signalMissingConnection && (<Alert variant="danger" isInline isPlain title={t('source:signal.errorMsg', { val: { connectorType } })} style={{ paddingBottom: "15px" }} />)}
 
           <Form isWidthLimited>
             <FormGroup
