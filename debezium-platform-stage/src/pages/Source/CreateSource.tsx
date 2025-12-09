@@ -473,6 +473,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   handleDeleteProperty={handleDeleteProperty}
                   handlePropertyChange={handlePropertyChange}
                   updateSignalCollectionName={updateSignalCollectionName}
+                  signalCollectionName={signalCollectionName}
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
                   handleConnectionModalToggle={handleConnectionModalToggle}

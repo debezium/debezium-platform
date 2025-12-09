@@ -86,6 +86,7 @@ interface SourceSinkFormProps {
   setSelectedConnection: (connection: ConnectionConfig | undefined) => void;
   selectedConnection: ConnectionConfig | undefined;
   updateSignalCollectionName?: (name: string) => void;
+  signalCollectionName?: string;
   handleConnectionModalToggle: () => void;
   setSelectedDataListItems: (dataListItems: SelectedDataListItem | undefined) => void;
 
@@ -108,6 +109,7 @@ const SourceSinkForm = ({
   setSelectedConnection,
   selectedConnection,
   updateSignalCollectionName,
+  signalCollectionName,
   handleConnectionModalToggle,
   setSelectedDataListItems
 }: SourceSinkFormProps) => {
@@ -120,7 +122,7 @@ const SourceSinkForm = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const [signalCollectionName, setSignalCollectionName] = useState("");
+  const [signalCollectionNameVerify, setSignalCollectionNameVerify] = useState<string>("");
   const [signalVerified, setSignalVerified] = useState(false);
   const [signalMissingConnection, setSignalMissingConnection] = useState<boolean>(false);
 
@@ -140,7 +142,9 @@ const SourceSinkForm = ({
 
   const NO_RESULTS = 'no results';
 
-  const [setDone, setSetDone] = useState(false);
+  useEffect(() => {
+    setSignalCollectionNameVerify(signalCollectionName || "");
+  }, [signalCollectionName]);
 
   const {
     isLoading: isConnectionsLoading,
@@ -360,7 +364,7 @@ const SourceSinkForm = ({
   );
 
   const handleModalToggle = () => {
-    setSignalCollectionName("");
+    setSignalCollectionNameVerify( signalCollectionName || "");
     setIsModalOpen(!isModalOpen);
     setSignalMissingConnection(false);
   };
@@ -410,9 +414,8 @@ const SourceSinkForm = ({
   const configureSignalCollection = async () => {
     setIsLoading(true);
     if (updateSignalCollectionName) {
-      updateSignalCollectionName(signalCollectionName);
+      updateSignalCollectionName(signalCollectionNameVerify);
     }
-    setSetDone(true);
     setIsLoading(false);
     setIsModalOpen(false);
   }
@@ -437,6 +440,8 @@ const SourceSinkForm = ({
       fetchCollections();
     }
   }, [selectedConnection]);
+
+
 
 
   return (
@@ -659,7 +664,7 @@ const SourceSinkForm = ({
               ))}
             </FormFieldGroup>
             {
-              connectorType === "source" && !editFlow &&
+              connectorType === "source" && 
               <FormFieldGroup
                 header={
                   <FormFieldGroupHeader
@@ -671,7 +676,7 @@ const SourceSinkForm = ({
                   />
                 }
               >
-                <Button variant="link" size="lg" icon={setDone ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />} iconPosition="left" onClick={handleModalToggle}>
+                <Button variant="link" size="lg" icon={signalCollectionName ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />} iconPosition="left" onClick={handleModalToggle}>
                   {t("source:signal.setupSignaling")}
                 </Button>
 
@@ -709,9 +714,9 @@ const SourceSinkForm = ({
                 aria-label={t("source:signal.signalingCollectionField.label")}
                 type="text"
                 onChange={(_event, value) => {
-                  setSignalCollectionName(value);
+                  setSignalCollectionNameVerify(value);
                 }}
-                value={signalCollectionName}
+                value={signalCollectionNameVerify}
               />
             </FormGroup>
             <FormGroup

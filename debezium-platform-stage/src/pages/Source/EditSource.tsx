@@ -182,6 +182,7 @@ const EditSource: React.FunctionComponent = () => {
   const [codeAlert, setCodeAlert] = useState("");
 
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+  const [signalCollectionName, setSignalCollectionName] = useState<string>("");
 
 
   const handleConnectionModalToggle = useCallback(() => {
@@ -212,6 +213,12 @@ const EditSource: React.FunctionComponent = () => {
         setError(response.error);
       } else {
         setSource(response.data as Source);
+        const config = response.data?.config;
+        const signalCollectionName = response.data?.config?.["signal.data.collection"];
+        if (signalCollectionName) {
+          config && delete config["signal.data.collection"];
+          setSignalCollectionName(signalCollectionName);
+        }
         setConfigProperties(response.data?.config ?? { "": "" });
         setSelectedConnection(response.data?.connection as ConnectionConfig);
         setCode((prevCode: any) => {
@@ -244,7 +251,11 @@ const EditSource: React.FunctionComponent = () => {
       return newProperties;
     });
   };
-
+  const updateSignalCollectionName = useCallback(
+    (name: string) => {
+      setSignalCollectionName(name);
+    }
+    , []);
   const handlePropertyChange = (
     key: string,
     type: "key" | "value",
@@ -311,7 +322,11 @@ const EditSource: React.FunctionComponent = () => {
         }
         const payload = {
           description: values["description"],
-          config: convertMapToObject(properties),
+          config: {
+            ...(signalCollectionName ? { "signal.data.collection": signalCollectionName } : {}),
+            // ...getIncludeList(selectedDataListItems, sourceId || ""),
+            ...convertMapToObject(properties)
+          },
           ...(selectedConnection ? { connection: selectedConnection } : {}),
           name: values["source-name"],
         };
@@ -462,6 +477,8 @@ const EditSource: React.FunctionComponent = () => {
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
                   handleConnectionModalToggle={handleConnectionModalToggle}
+                  updateSignalCollectionName={updateSignalCollectionName}
+                  signalCollectionName={signalCollectionName}
                   setSelectedDataListItems={() => {}}
                 />
               ) : (
