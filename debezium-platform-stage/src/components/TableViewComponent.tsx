@@ -1,6 +1,6 @@
 import { Button, Toolbar, ToolbarContent, ToolbarItem, TreeView, TreeViewDataItem, TreeViewSearch } from "@patternfly/react-core";
 import { DatabaseIcon, ServerGroupIcon } from "@patternfly/react-icons";
-import { FC, useState, useEffect } from "react";
+import { FC, useState, useEffect, useRef } from "react";
 import { Fragment } from "react/jsx-runtime";
 import { TableData } from "src/apis";
 import "./TableViewComponent.css";
@@ -10,6 +10,7 @@ import { SelectedDataListItem } from "@sourcePage/CreateSource";
 type TableViewComponentProps = {
     collections: TableData | undefined;
     setSelectedDataListItems: (dataListItems: SelectedDataListItem | undefined) => void;
+    selectedDataListItems: SelectedDataListItem | undefined;
 };
 
 type SelectedItem = {
@@ -66,7 +67,7 @@ type SelectedItem = {
   
   
 
-const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelectedDataListItems }) => {
+const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelectedDataListItems, selectedDataListItems }) => {
     const { t } = useTranslation();
     const [allExpanded, setAllExpanded] = useState(false);
     const [filteredItems, setFilteredItems] = useState<TreeViewDataItem[]>([]);
@@ -75,11 +76,87 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     const [options, setOptions] = useState<TreeViewDataItem[]>([]);
 
     const [checkedItems, setCheckedItems] = useState<TreeViewDataItem[]>([]);
+    
+    const isInitializedRef = useRef(false);
+
+    const flattenTreeItems = (tree: TreeViewDataItem[]): TreeViewDataItem[] => {
+        let result: TreeViewDataItem[] = [];
+        tree.forEach((item) => {
+            result.push(item);
+            if (item.children) {
+                result = result.concat(flattenTreeItems(item.children));
+            }
+        });
+        return result;
+    };
 
     useEffect(() => {
+        if (options.length === 0) return;
+        
+        if (!selectedDataListItems) {
+            isInitializedRef.current = true;
+            setCheckedItems([]);
+            return;
+        }
+
+        const { schemas, tables } = selectedDataListItems;
+        
+        if (schemas.length === 0 && tables.length === 0) {
+            isInitializedRef.current = true;
+            if (checkedItems.length > 0) {
+                setCheckedItems([]);
+            }
+            return;
+        }
+
+        const currentSelections = extractSelections(checkedItems as SelectedItem[]);
+        const schemasMatch = 
+            currentSelections.schemas.length === schemas.length &&
+            currentSelections.schemas.every(s => schemas.includes(s)) &&
+            schemas.every(s => currentSelections.schemas.includes(s));
+        const tablesMatch = 
+            currentSelections.tables.length === tables.length &&
+            currentSelections.tables.every(t => tables.includes(t)) &&
+            tables.every(t => currentSelections.tables.includes(t));
+
+        if (schemasMatch && tablesMatch) {
+            isInitializedRef.current = true;
+            return; 
+        }
+
+        const flatItems = flattenTreeItems(options);
+        const newCheckedItems: TreeViewDataItem[] = [];
+
+        for (const item of flatItems) {
+            const itemId = item.id as string;
+            const itemName = item.name as string;
+            const isSchemaItem = itemId.includes("schema") && !itemId.includes("collection");
+            const isTableItem = itemId.includes("collection");
+
+            if (isSchemaItem && schemas.includes(itemName)) {
+                newCheckedItems.push(item);
+                if (item.children) {
+                    newCheckedItems.push(...item.children);
+                }
+            } else if (isTableItem) {
+                const schemaFromId = itemId.match(/^schema-\d+-(.*?)-collection-/)?.[1];
+                const tableName = `${schemaFromId}.${itemName}`;
+                if (tables.includes(tableName)) {
+                    newCheckedItems.push(item);
+                }
+            }
+        }
+
+        setCheckedItems(newCheckedItems);
+        isInitializedRef.current = true;
+    }, [selectedDataListItems, options]);
+
+    useEffect(() => {
+        if (!isInitializedRef.current) return;
+        
         const selections = extractSelections(checkedItems as SelectedItem[]);
         setSelectedDataListItems(selections);
-    }, [checkedItems, isFiltered]);
+    }, [checkedItems, setSelectedDataListItems]);
 
 
     useEffect(() => {

@@ -41,6 +41,8 @@ import style from "../../styles/createConnector.module.css";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import CreateConnectionModal from "../components/CreateConnectionModal";
 import { useData } from "@appContext/AppContext";
+import { SelectedDataListItem } from "./CreateSource";
+import { getIncludeList } from "@utils/Datatype";
 
 const ajv = new Ajv();
 
@@ -183,8 +185,9 @@ const EditSource: React.FunctionComponent = () => {
 
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
   const [signalCollectionName, setSignalCollectionName] = useState<string>("");
+  const [selectedDataListItems, setSelectedDataListItems] = useState<SelectedDataListItem | undefined>();
 
-
+  console.log("selectedDataListItems edit source", selectedDataListItems);
   const handleConnectionModalToggle = useCallback(() => {
     setIsConnectionModalOpen(!isConnectionModalOpen);
   }, [isConnectionModalOpen]);
@@ -215,9 +218,29 @@ const EditSource: React.FunctionComponent = () => {
         setSource(response.data as Source);
         const config = response.data?.config;
         const signalCollectionName = response.data?.config?.["signal.data.collection"];
+        const collectionIncludeListKey = Object.entries(response.data?.config || {}).find(
+          ([key, _]) => key.endsWith(".include.list")
+        )?.[0];
+        const collectionIncludeList = Object.entries(response.data?.config || {}).find(
+          ([key, _]) => key.endsWith(".include.list")
+        )?.[1];
         if (signalCollectionName) {
           config && delete config["signal.data.collection"];
           setSignalCollectionName(signalCollectionName);
+        }
+        if (collectionIncludeListKey && collectionIncludeList) {
+          config && delete config[collectionIncludeListKey];
+          if(collectionIncludeListKey.includes("schema")) {
+            setSelectedDataListItems({
+              schemas: [collectionIncludeList],
+              tables: [],
+            });
+          } else if(collectionIncludeListKey.includes("table")) {
+            setSelectedDataListItems({
+              schemas: [],
+              tables: [collectionIncludeList],
+            });
+          }
         }
         setConfigProperties(response.data?.config ?? { "": "" });
         setSelectedConnection(response.data?.connection as ConnectionConfig);
@@ -324,7 +347,7 @@ const EditSource: React.FunctionComponent = () => {
           description: values["description"],
           config: {
             ...(signalCollectionName ? { "signal.data.collection": signalCollectionName } : {}),
-            // ...getIncludeList(selectedDataListItems, sourceId || ""),
+            ...getIncludeList(selectedDataListItems, sourceId || ""),
             ...convertMapToObject(properties)
           },
           ...(selectedConnection ? { connection: selectedConnection } : {}),
@@ -479,7 +502,8 @@ const EditSource: React.FunctionComponent = () => {
                   handleConnectionModalToggle={handleConnectionModalToggle}
                   updateSignalCollectionName={updateSignalCollectionName}
                   signalCollectionName={signalCollectionName}
-                  setSelectedDataListItems={() => {}}
+                  setSelectedDataListItems={setSelectedDataListItems}
+                  selectedDataListItems={selectedDataListItems}
                 />
               ) : (
                 <>

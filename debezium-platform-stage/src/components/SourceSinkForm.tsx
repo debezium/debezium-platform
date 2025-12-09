@@ -89,6 +89,7 @@ interface SourceSinkFormProps {
   signalCollectionName?: string;
   handleConnectionModalToggle: () => void;
   setSelectedDataListItems: (dataListItems: SelectedDataListItem | undefined) => void;
+  selectedDataListItems?: SelectedDataListItem | undefined;
 
 }
 const SourceSinkForm = ({
@@ -111,7 +112,8 @@ const SourceSinkForm = ({
   updateSignalCollectionName,
   signalCollectionName,
   handleConnectionModalToggle,
-  setSelectedDataListItems
+  setSelectedDataListItems,
+  selectedDataListItems
 }: SourceSinkFormProps) => {
   const { t } = useTranslation();
   const { addNotification } = useNotification();
@@ -579,7 +581,7 @@ const SourceSinkForm = ({
                     />
                   }
                 >
-                  <TableViewComponent collections={collections} setSelectedDataListItems={setSelectedDataListItems} />
+                  <TableViewComponent collections={collections} setSelectedDataListItems={setSelectedDataListItems} selectedDataListItems={selectedDataListItems} />
                 </FormFieldGroupExpandable>
                 : null}
 
