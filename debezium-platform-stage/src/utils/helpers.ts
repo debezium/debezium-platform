@@ -25,8 +25,8 @@ export const isEmpty = (obj: any) => {
   return Object.keys(obj).length === 0;
 };
 
-export const openDBZJira = () => {
-  const newWindow = window.open("https://issues.redhat.com/projects/DBZ/issues", '_blank');
+export const openDBZIssues = () => {
+  const newWindow = window.open("https://github.com/debezium/dbz/issues", '_blank');
   if (newWindow) {
     newWindow.focus();
   }

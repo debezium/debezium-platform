@@ -20,7 +20,7 @@ import ConnectorImage from "./ComponentImage";
 import { ExternalLinkAltIcon, PlusCircleIcon } from "@patternfly/react-icons";
 import "./CatalogGrid.css";
 import { Catalog } from "src/apis/types";
-import { openDBZJira } from "@utils/helpers";
+import { openDBZIssues } from "@utils/helpers";
 import { useTranslation } from "react-i18next";
 
 export interface ICatalogGridProps {
@@ -108,7 +108,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
           ))}
           {isAddButtonVisible && (
             <GalleryItem>
-              <Card isClickable variant={"secondary"} onClick={openDBZJira} className={`catalog-grid-card-${catalogType}`}>
+              <Card isClickable variant={"secondary"} onClick={openDBZIssues} className={`catalog-grid-card-${catalogType}`}>
                 <CardHeader
                   selectableActions={{
                     onClickAction: () => { },
@@ -157,7 +157,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                       style={{ fontSize: "xxx-large", }}
                     />
                   </DataListCell>,
-                  <DataListCell key="secondary content" onClick={openDBZJira}>
+                  <DataListCell key="secondary content" onClick={openDBZIssues}>
                     <Flex direction={{ default: "column" }}>
                       <FlexItem>
                         <Content component="h3">
@@ -228,7 +228,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                         style={{ fontSize: "xxx-large", paddingBottom: "10px" }}
                       />
                     </DataListCell>,
-                    <DataListCell key="secondary content" onClick={openDBZJira}>
+                    <DataListCell key="secondary content" onClick={openDBZIssues}>
                       <Flex direction={{ default: "column" }}>
                         <FlexItem>
                           <Content component="h3">
