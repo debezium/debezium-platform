@@ -219,10 +219,10 @@ const EditSource: React.FunctionComponent = () => {
         const config = response.data?.config;
         const signalCollectionName = response.data?.config?.["signal.data.collection"];
         const collectionIncludeListKey = Object.entries(response.data?.config || {}).find(
-          ([key, _]) => key.endsWith(".include.list")
+          ([key]) => key.endsWith(".include.list")
         )?.[0];
         const collectionIncludeList = Object.entries(response.data?.config || {}).find(
-          ([key, _]) => key.endsWith(".include.list")
+          ([key]) => key.endsWith(".include.list")
         )?.[1];
         if (signalCollectionName) {
           config && delete config["signal.data.collection"];
