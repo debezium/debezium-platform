@@ -35,7 +35,7 @@ import {
   Skeleton,
   FormFieldGroupExpandable,
 } from "@patternfly/react-core";
-import { AddCircleOIcon, CheckCircleIcon, PlusIcon, TimesIcon, TrashIcon } from "@patternfly/react-icons";
+import { AddCircleOIcon, CheckCircleIcon, ExclamationCircleIcon, PlusIcon, TimesIcon, TrashIcon } from "@patternfly/react-icons";
 import { getConnectionRole, getConnectorTypeName, getDatabaseType } from "@utils/helpers";
 import ConnectorImage from "./ComponentImage";
 import { useTranslation } from "react-i18next";
@@ -235,6 +235,7 @@ const SourceSinkForm = ({
   };
 
   const onSelect = (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
+    setError("connection", undefined);
     if (value && value !== NO_RESULTS) {
       const optionText = selectOptions?.find((option) => option.value === value)?.children;
       selectOption(value, optionText as string);
@@ -341,6 +342,7 @@ const SourceSinkForm = ({
       onClick={onToggleClick}
       isExpanded={isOpen}
       isFullWidth
+      status={errors[`connection`] ? "danger" : undefined}
     >
       <TextInputGroup isPlain>
         <TextInputGroupMain
@@ -366,7 +368,7 @@ const SourceSinkForm = ({
   );
 
   const handleModalToggle = () => {
-    setSignalCollectionNameVerify( signalCollectionName || "");
+    setSignalCollectionNameVerify(signalCollectionName || "");
     setIsModalOpen(!isModalOpen);
     setSignalMissingConnection(false);
   };
@@ -444,8 +446,6 @@ const SourceSinkForm = ({
   }, [selectedConnection]);
 
 
-
-
   return (
     <>
       <Card className="custom-card-body">
@@ -479,6 +479,15 @@ const SourceSinkForm = ({
                 value={getValue(`${connectorType}-name`)}
                 validated={errors[`${connectorType}-name`] ? "error" : "default"}
               />
+              {errors[`${connectorType}-name`] && (
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
+                     {errors[`${connectorType}-name`]}
+                    </HelperTextItem>
+                  </HelperText>
+                </FormHelperText>)}
+
             </FormGroup>
             <FormGroup
               label={t("form.field.description.label")}
@@ -501,6 +510,7 @@ const SourceSinkForm = ({
             </FormGroup>
             <FormGroup
               label={t("connection:link.connectionFieldLabel", { val: connectorLabel })}
+              isRequired
               fieldId={`${connectorType}-connection-field`}
             >
               {viewMode ? (<>{selectedConnection?.name}</>) : (<InputGroup>
@@ -540,13 +550,22 @@ const SourceSinkForm = ({
               </InputGroup>)}
 
 
-              {!viewMode && (<FormHelperText>
+              {!viewMode && !errors[`connection`] && (<FormHelperText>
                 <HelperText>
                   <HelperTextItem>
                     {t("connection:link.helperText")}
                   </HelperTextItem>
                 </HelperText>
               </FormHelperText>)}
+
+              {errors[`connection`] ? (
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
+                      {errors[`connection`]}
+                    </HelperTextItem>
+                  </HelperText>
+                </FormHelperText>) : null}
             </FormGroup>
 
 
@@ -666,7 +685,7 @@ const SourceSinkForm = ({
               ))}
             </FormFieldGroup>
             {
-              connectorType === "source" && 
+              connectorType === "source" &&
               <FormFieldGroup
                 header={
                   <FormFieldGroupHeader

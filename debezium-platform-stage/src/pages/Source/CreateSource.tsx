@@ -303,6 +303,8 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     if (editorSelected === "form-editor") {
       if (!values["source-name"]) {
         setError("source-name", t("statusMessage:smartEditor.sourceNameRequired"));
+      }else if(selectedConnection === undefined){
+        setError("connection", t("statusMessage:smartEditor.connectionRequired"));
       } else {
         setIsLoading(true);
         const errorWarning = [] as string[];

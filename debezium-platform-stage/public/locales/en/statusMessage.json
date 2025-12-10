@@ -26,6 +26,7 @@
         "debeziumServerFormatMsg": "This appears to be .properties file for Debezium server, use Auto format to transform it to Debezium-platform supported format.",
         "connectorNameRequired": "Connector name is required.",
         "connectorTypeRequired": "Connector type is required.",
+        "connectionRequired": "Connection is required.",
         "sourceNameRequired": "Source name is required.",
         "autoFormat": "Auto format"
     }

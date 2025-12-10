@@ -186,8 +186,6 @@ const EditSource: React.FunctionComponent = () => {
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
   const [signalCollectionName, setSignalCollectionName] = useState<string>("");
   const [selectedDataListItems, setSelectedDataListItems] = useState<SelectedDataListItem | undefined>();
-
-  console.log("selectedDataListItems edit source", selectedDataListItems);
   const handleConnectionModalToggle = useCallback(() => {
     setIsConnectionModalOpen(!isConnectionModalOpen);
   }, [isConnectionModalOpen]);
@@ -325,6 +323,8 @@ const EditSource: React.FunctionComponent = () => {
     if (editorSelected === "form-editor") {
       if (!values["source-name"]) {
         setError("source-name", "Source name is required.");
+      } else if(selectedConnection === undefined){
+        setError("connection", t("statusMessage:smartEditor.connectionRequired"));
       } else {
         setIsLoading(true);
         const errorWarning = [] as string[];

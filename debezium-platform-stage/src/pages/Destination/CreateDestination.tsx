@@ -283,7 +283,10 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     if (editorSelected === "form-editor") {
       if (!values["destination-name"]) {
         setError("destination-name", "Destination name is required.");
-      } else {
+      } else if(selectedConnection === undefined){
+        setError("connection", t("statusMessage:smartEditor.connectionRequired"));
+      } 
+      else {
         setIsLoading(true);
         const errorWarning = [] as string[];
         properties.forEach((value: Properties, key: string) => {

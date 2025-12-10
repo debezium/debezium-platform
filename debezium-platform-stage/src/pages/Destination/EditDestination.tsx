@@ -289,7 +289,9 @@ const EditDestination: React.FunctionComponent = () => {
     if (editorSelected === "form-editor") {
       if (!values["destination-name"]) {
         setError("destination-name", "Destination name is required.");
-      } else {
+      } else if(selectedConnection === undefined){
+        setError("connection", t("statusMessage:smartEditor.connectionRequired"));
+      }else {
         setIsLoading(true);
         const errorWarning = [] as string[];
         properties.forEach((value: Properties, key: string) => {
@@ -517,7 +519,7 @@ const EditDestination: React.FunctionComponent = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           setPendingSave({ values, setError });
-                          setIsWarningOpen(true);
+                         setIsWarningOpen(true);
                         }}
                       >
                         {t("saveChanges")}
