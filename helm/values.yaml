@@ -1,5 +1,6 @@
 domain:
-  url: ""
+  hostname: ""
+  scheme: https
 stage:
   image: quay.io/debezium/platform-stage:nightly
 conductor:

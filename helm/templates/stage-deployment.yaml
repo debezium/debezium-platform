@@ -27,5 +27,5 @@ spec:
               protocol: TCP
           env:
             - name: CONDUCTOR_URL
-              value: http://{{ .Values.domain.url }}
+              value: {{ required "A valid domain URL required!" (include "debezium-platform.domainUrl" .) }}
       restartPolicy: Always

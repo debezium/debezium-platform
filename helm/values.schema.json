@@ -41,8 +41,17 @@
         },
         "domain": {
             "properties": {
-                "url": {
+                "hostname": {
                     "type": "string"
+                },
+                "scheme": {
+                    "type": "string",
+                    "enum": ["http", "https"],
+                    "default": "https"
+                },
+                "url": {
+                    "type": "string",
+                    "deprecated": true
                 }
             },
             "type": "object"

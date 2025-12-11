@@ -44,7 +44,7 @@ spec:
             - name: CONDUCTOR_WATCHER_OFFSET_STORAGE_CONFIG_CONFIGMAP_NAME
               value: {{ include "debezium-platform.offsetConfigMapName" . }}
             - name: QUARKUS_HTTP_CORS_ORIGINS
-              value: http://{{ .Values.domain.url }}
+              value: {{ required "A valid domain URL required!" (include "debezium-platform.domainUrl" .) }}
             - name: QUARKUS_DATASOURCE_JDBC_URL
               value: "jdbc:postgresql://{{ .Values.database.host }}:5432/{{ .Values.database.name }}"
             - name: QUARKUS_KUBERNETES_CLIENT_NAMESPACE

@@ -84,3 +84,26 @@ Common labels
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+{{/*
+Get the domain URL, with backward compatibility to deprecated .Values.domain.url. If only .Values.domain.url is set, default to http scheme.
+*/}}
+{{- define "debezium-platform.domainUrl" -}}
+{{- if and .Values.domain.scheme .Values.domain.hostname -}}
+"{{ .Values.domain.scheme }}://{{ .Values.domain.hostname }}"
+{{- else if .Values.domain.url -}}
+"http://{{ .Values.domain.url }}"
+{{- else -}}
+""
+{{- end -}}
+{{- end -}}
+
+{{- define "debezium-platform.domainHostname" -}}
+{{- if .Values.domain.hostname -}}
+{{- .Values.domain.hostname -}}
+{{- else if .Values.domain.url -}}
+{{- .Values.domain.url -}}
+{{- else -}}
+{{- "" -}}
+{{- end -}}
+{{- end }}

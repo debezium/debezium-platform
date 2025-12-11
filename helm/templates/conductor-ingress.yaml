@@ -4,7 +4,7 @@ metadata:
   name: conductor-ingress
 spec:
   rules:
-    - host: {{ required "A valid .Values.domain.url entry required!" .Values.domain.url }}
+    - host: {{ required "A valid domain hostname required!" (include "debezium-platform.domainHostname" .) }}
       http:
         paths:
           - path: /
