@@ -1,4 +1,4 @@
-name: Commit message format check
+name: Octocat commits check
 on:
   # ATTENTION: See https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
   # re security implications of using this trigger; in particular, no code from PR branches must
@@ -10,7 +10,6 @@ on:
       - 2.*
       - 3.*
       - 4.*
-
 jobs:
-  sanity-check:
-    uses: debezium/dbz/.github/workflows/sanity-check.yml@main
+  check-contributors:
+    uses: debezium/dbz/.github/workflows/octocat-commits-check.yml@main
