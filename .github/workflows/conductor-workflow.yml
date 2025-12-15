@@ -35,7 +35,7 @@ jobs:
         id: set-cache-key
         run: echo "cache_key=${{ hashFiles('./debezium-platform-conductor/core/**/pom.xml') }}" >> "$GITHUB_OUTPUT"
       - id: maven-cache-check
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.m2/repository
           key: maven-debezium-platform-test-build-${{ steps.set-cache-key.outputs.cache_key }}
@@ -70,7 +70,7 @@ jobs:
         id: set-operator-cache-key
         run: echo "cache_key=${{ hashFiles('./debezium-platform-conductor/operator/**/pom.xml') }}" >> "$GITHUB_OUTPUT"
       - id: maven-operator-cache-check
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.m2/repository
           key: maven-debezium-platform-test-build-${{ steps.set-operator-cache-key.outputs.cache_key }}
@@ -109,7 +109,7 @@ jobs:
 
       - name: Cache Maven Repository
         id: cache-check
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.m2/repository
           key: maven-debezium-platform-test-build-${{needs.build_cache.outputs.cache_key}}
@@ -141,7 +141,7 @@ jobs:
 
       - name: Cache Maven Repository
         id: cache-check
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.m2/repository
           key: maven-debezium-platform-test-build-${{needs.build_cache.outputs.cache_key}}
