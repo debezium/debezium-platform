@@ -36,7 +36,7 @@
         <quarkus.jib.platforms>linux/amd64,linux/arm64/v8</quarkus.jib.platforms>
 
         <version.compiler.plugin>3.14.1</version.compiler.plugin>
-        <version.quarkus.platform>3.28.3</version.quarkus.platform>
+        <version.quarkus.platform>3.30.3</version.quarkus.platform>
         <version.surefire-plugin>3.5.4</version.surefire-plugin>
         <version.mapstruct>1.5.5.Final</version.mapstruct>
         <version.debezium>${project.version}</version.debezium>
