@@ -482,7 +482,6 @@ const PipelineDesignerEdit: React.FunctionComponent<
                             <Button
                               variant="primary"
                               onClick={() => {
-                                console.log("Save and next", selectedTransform);
                                 setEditStep((prevStep) => prevStep + 1);
                               }}
                             >

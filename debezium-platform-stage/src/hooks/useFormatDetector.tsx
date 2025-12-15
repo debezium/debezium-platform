@@ -26,7 +26,7 @@ export function useFormatDetector(code: unknown, connectorType: "source" | "dest
             } else if (typeof code === "string" && code.includes("debezium.source.")) {
                 setFormatType("properties-file");
             } else {
-                console.log("Genuine invalid JSON");
+                console.log("Invalid JSON format");
             }
         }
     }, [code, connectorType]);

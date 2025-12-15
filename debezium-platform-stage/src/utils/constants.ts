@@ -37,3 +37,5 @@ export enum DatabaseType {
   SQLSERVER = "SQLSERVER",
   POSTGRESQL = "POSTGRESQL",
 }
+
+export const NOTIFICATION_SERVICE_LOG_PREFIX = "[Notification Service]";

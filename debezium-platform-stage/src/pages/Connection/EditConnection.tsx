@@ -191,7 +191,6 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
     };
 
     const validateConnection = async (payload: ConnectionPayload) => {
-        console.log("payload", payload);
         const response = await createPost(`${API_URL}/api/connections/validate`, payload);
 
         if (response.error) {

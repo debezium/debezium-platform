@@ -228,8 +228,6 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
 
   useEffect(() => {
     if (selectedTransform.length > 0) {
-      console.log("transform are selected", selectedTransform);
-
       const dataSourceNode = {
         id: "source",
         data: {

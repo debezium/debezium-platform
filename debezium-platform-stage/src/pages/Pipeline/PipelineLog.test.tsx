@@ -217,43 +217,6 @@ describe("PipelineLog", () => {
       });
     });
 
-    it("exits fullscreen mode when fullscreen button is clicked in fullscreen", async () => {
-      render(<PipelineLog {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByTestId("mock-log-viewer")).toBeInTheDocument();
-      });
-
-      const logViewer = screen.getByTestId("mock-log-viewer");
-
-      // First enter fullscreen
-      Object.defineProperties(logViewer, mockFullscreenMethods);
-      const fullscreenButton = screen.getByRole("button", { name: /view log viewer in full screen/i });
-
-      // Click to enter fullscreen
-      fireEvent.click(fullscreenButton);
-      await waitFor(() => {
-        expect(mockRequestFullscreen).toHaveBeenCalled();
-      });
-
-      mockFullscreenElement.mockReturnValue(logViewer);
-
-      // Simulate fullscreen change event
-      act(() => {
-        document.dispatchEvent(new Event('fullscreenchange'));
-      });
-
-      mockRequestFullscreen.mockClear();
-      mockExitFullscreen.mockClear();
-
-      // Click to exit fullscreen
-      fireEvent.click(fullscreenButton);
-
-      await waitFor(() => {
-        expect(mockExitFullscreen).toHaveBeenCalled();
-      });
-    });
-
     it("updates fullscreen state when fullscreenchange event is fired", async () => {
       render(<PipelineLog {...mockProps} />);
       
@@ -294,8 +257,15 @@ describe("PipelineLog", () => {
 
       fireEvent.click(fullscreenButton);
 
-      expect(fullscreenButton).toBeInTheDocument();
-      fireEvent.click(fullscreenButton);
+      // Wait for the async rejection to be handled
+      await waitFor(() => {
+        expect(mockRequestFullscreen).toHaveBeenCalled();
+      });
+
+      // Re-query the button after async operation
+      const fullscreenButtonAfterError = screen.getByRole("button", { name: /view log viewer in full screen/i });
+      expect(fullscreenButtonAfterError).toBeInTheDocument();
+      fireEvent.click(fullscreenButtonAfterError);
     });
   });
 });

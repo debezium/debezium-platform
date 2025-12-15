@@ -73,15 +73,14 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     const [pipelineAction, setPipelineAction] = React.useState('please choose');
     const [isLoading, setIsLoading] = React.useState(false);
 
-    const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
-    const [collectionsError, setCollectionsError] = useState<object | undefined>(undefined);
-    const [collections, setCollections] = useState<TableData | undefined>(undefined);
-    const [sourceName, setSourceName] = useState<string | undefined>(undefined);
+    /* eslint-disable @typescript-eslint/no-unused-vars -- intentionally unused until collections UI is wired */
+    const [_isCollectionsLoading, setIsCollectionsLoading] = useState(false);
+    const [_collectionsError, setCollectionsError] = useState<object | undefined>(undefined);
+    const [_collections, setCollections] = useState<TableData | undefined>(undefined);
+    const [_sourceName, setSourceName] = useState<string | undefined>(undefined);
+    /* eslint-enable @typescript-eslint/no-unused-vars */
 
-    console.log(isCollectionsLoading);
-    console.log(collectionsError);
-    console.log(collections);
-    console.log(sourceName);
+   
 
     const fetchConnectionCollections = async () => {
         setIsCollectionsLoading(true);

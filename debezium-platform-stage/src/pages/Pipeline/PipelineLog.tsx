@@ -9,12 +9,13 @@ import {
 } from "@patternfly/react-core";
 import { BellIcon, DownloadIcon, ExpandIcon } from "@patternfly/react-icons";
 import { LogViewer, LogViewerSearch } from "@patternfly/react-log-viewer";
-import { API_URL } from "@utils/constants";
-import { FC, useEffect, useState, useRef } from "react";
+import { API_URL, NOTIFICATION_SERVICE_LOG_PREFIX } from "@utils/constants";
+import { FC, useEffect, useState, useRef, useContext } from "react";
 import "./PipelineLog.css";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { fetchFile } from "src/apis/apis";
 import { useTranslation } from "react-i18next";
+import { LogViewerToolbarContext } from "@patternfly/react-log-viewer/dist/esm/LogViewer/LogViewerContext";
 
 // Extend the Document interface
 interface ExtendedDocument extends Document {
@@ -58,7 +59,6 @@ const PipelineLog: FC<PipelineLogProps> = ({
   const [isWebSocketLoading, setIsWebSocketLoading] = useState<boolean>(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
-  const [logSearchText, setLogSearchText] = useState<string>("");
   const [notificationLogToggle, setNotificationLogToggle] = useState(false);
 
   // Close WebSocket connection when tab is not active
@@ -83,7 +83,6 @@ const PipelineLog: FC<PipelineLogProps> = ({
     setIsWebSocketLoading(true);
 
     // Only fetch logs when tab is active
-    // Fetch initial logs via HTTP
     fetch(`${API_URL}/api/pipelines/${pipelineId}/logs`)
       .then((response) => response.text())
       .then((initialLogs) => {
@@ -166,15 +165,6 @@ const PipelineLog: FC<PipelineLogProps> = ({
       }
     };
   }, [activeTabKey, pipelineId]);
-
-  const grepNotificationLog = () => {
-    const notificationLog = logs.includes("[Notification Service]") || logs.includes("Notification Service");
-    console.log("grepNotificationLog", notificationLog);
-    setNotificationLogToggle(!notificationLogToggle);
-    // setLogSearchText(notificationLog ? "" : "[Notification Service]");
-    setLogSearchText("[Notification Service]");
-
-  }
 
   const downloadLogFile = async (
     pipelineId: string | undefined,
@@ -285,63 +275,100 @@ const PipelineLog: FC<PipelineLogProps> = ({
     }
   };
 
-  const logViewToolbar = (
-    <Toolbar>
-      <ToolbarContent>
+  const LogViewToolbar: FC = () => {
+    const logViewerToolbarContext = useContext(LogViewerToolbarContext);
+    const defaultRowInFocus = { rowIndex: -1, matchIndex: 0 };
 
-        <ToolbarItem>
-          <LogViewerSearch
-            placeholder={t('searchPlaceholder')}
-            minSearchChars={3}
-            {...(notificationLogToggle ? { value: logSearchText } : {})}
-          />
-        </ToolbarItem>
+    const applySearchText = (value: string) => {
+      if (!logViewerToolbarContext) {
+        return;
+      }
+      logViewerToolbarContext.setSearchedInput(value);
 
-        <ToolbarItem style={{ marginRight: "10px" }}>
-          <Tooltip content={!notificationLogToggle ? t('pipeline:logs.notification.showTooltip') : t('pipeline:logs.notification.hideTooltip')}>
-            <Button
-              variant="stateful"
-              isDisabled={isLogDownloading}
-              aria-label="grep notification log"
-              icon={<BellIcon />}
-              onClick={grepNotificationLog}
-              state={!notificationLogToggle ? "read" : "unread"}
-            >
-              {t('pipeline:logs.notification.grepNotification')}
-            </Button>
+      if (!value) {
+        logViewerToolbarContext.setCurrentSearchedItemCount(0);
+        logViewerToolbarContext.setSearchedWordIndexes([]);
+        logViewerToolbarContext.setRowInFocus(defaultRowInFocus);
+      }
+    };
 
-          </Tooltip>
-        </ToolbarItem>
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const handleManualChange = (_event: React.FormEvent<HTMLInputElement>, _value: string) => {
+      if (notificationLogToggle) {
+        setNotificationLogToggle(false);
+      }
+    };
 
-        <ToolbarGroup align={{ default: "alignEnd" }}>
-          <ToolbarGroup variant="action-group-plain">
-            <ToolbarItem>
-              <Tooltip content={t('pipeline:logs.download')}>
-                <Button
-                  variant="plain"
-                  isDisabled={isLogDownloading}
-                  aria-label="download log file"
-                  icon={<DownloadIcon />}
-                  onClick={() => downloadLogFile(pipelineId, pipelineName)}
-                />
-              </Tooltip>
-            </ToolbarItem>
+    const handleManualClear = () => {
+      if (notificationLogToggle) {
+        setNotificationLogToggle(false);
+      }
+    };
 
-            <ToolbarItem>
-              <Tooltip content={t('pipeline:logs.fullScreen')}>
-                <Button
-                  variant="plain"
-                  aria-label="View log viewer in full screen"
-                  icon={<ExpandIcon />}
-                  onClick={onExpandClick}
-                />
-              </Tooltip>
-            </ToolbarItem>
+    const handleNotificationToggle = () => {
+      const nextToggle = !notificationLogToggle;
+      const nextSearch = nextToggle ? NOTIFICATION_SERVICE_LOG_PREFIX : "";
+      setNotificationLogToggle(nextToggle);
+      applySearchText(nextSearch);
+    };
+
+    return (
+      <Toolbar>
+        <ToolbarContent>
+          <ToolbarItem>
+            <LogViewerSearch
+              placeholder={t('searchPlaceholder')}
+              minSearchChars={3}
+              onChange={handleManualChange}
+              onClear={handleManualClear}
+            />
+          </ToolbarItem>
+
+          <ToolbarItem style={{ marginRight: "10px" }}>
+            <Tooltip content={!notificationLogToggle ? t('pipeline:logs.notification.showTooltip') : t('pipeline:logs.notification.hideTooltip')}>
+              <Button
+                variant="stateful"
+                isDisabled={isLogDownloading}
+                aria-label="grep notification log"
+                icon={<BellIcon />}
+                onClick={handleNotificationToggle}
+                state={!notificationLogToggle ? "read" : "unread"}
+              >
+                {t('pipeline:logs.notification.grepNotification')}
+              </Button>
+            </Tooltip>
+          </ToolbarItem>
+
+          <ToolbarGroup align={{ default: "alignEnd" }}>
+            <ToolbarGroup variant="action-group-plain">
+              <ToolbarItem>
+                <Tooltip content={t('pipeline:logs.download')}>
+                  <Button
+                    variant="plain"
+                    isDisabled={isLogDownloading}
+                    aria-label="download log file"
+                    icon={<DownloadIcon />}
+                    onClick={() => downloadLogFile(pipelineId, pipelineName)}
+                  />
+                </Tooltip>
+              </ToolbarItem>
+
+              <ToolbarItem>
+                <Tooltip content={t('pipeline:logs.fullScreen')}>
+                  <Button
+                    variant="plain"
+                    aria-label="View log viewer in full screen"
+                    icon={<ExpandIcon />}
+                    onClick={onExpandClick}
+                  />
+                </Tooltip>
+              </ToolbarItem>
+            </ToolbarGroup>
           </ToolbarGroup>
-        </ToolbarGroup>
-      </ToolbarContent>
-    </Toolbar>
-  );
+        </ToolbarContent>
+      </Toolbar>
+    );
+  };
 
   return (
     <div className="pipeline_log">
@@ -369,7 +396,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
         isTextWrapped={false}
         data={logs}
         theme={"light"}
-        toolbar={logViewToolbar}
+        toolbar={<LogViewToolbar />}
         height={(isFullScreen && "100%") || "calc(100vh - 350px)"}
       />}
     </div>
