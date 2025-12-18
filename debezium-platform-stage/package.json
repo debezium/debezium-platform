@@ -91,7 +91,7 @@
     "eslint-plugin-storybook": "^9.0.7",
     "jsdom": "^24.1.0",
     "msw": "^2.11.6",
-    "storybook": "^8.0.0",
+    "storybook": "^8.6.15",
     "typescript": "^5.2.2",
     "vite": "^5.4.21",
     "vite-tsconfig-paths": "^5.1.4",
