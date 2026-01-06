@@ -238,7 +238,13 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
           labelId="delete-modal-title"
         />
         <ModalBody id="modal-box-body-variant">
-          <Form style={{ paddingRight: 45 }}>
+          <Form style={{ paddingRight: 45 }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (deleteInstanceName === deleteInstance.name) {
+                handleDelete(deleteInstance.id, tableType);
+              }
+            }}>
             <FormGroup isRequired fieldId={`${tableType}-delete-name`}>
               <TextInput
                 id="dalete-name"

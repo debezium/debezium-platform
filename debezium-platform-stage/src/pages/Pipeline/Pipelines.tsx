@@ -368,17 +368,17 @@ const Pipelines: React.FunctionComponent = () => {
                               <Tr key={instance.id}>
                                 <Td dataLabel={t("name")}>
                                   <Tooltip content={
-        <div>
-        View pipeline details for <b>{instance.name}</b><br />
-        </div>
-      }>
-                                  <Button
-                                    variant="link"
-                                    isInline
-                                    onClick={onPipelineClick(instance.id)}
-                                  >
-                                    {instance.name}
-                                  </Button>
+                                    <div>
+                                      View pipeline details for <b>{instance.name}</b><br />
+                                    </div>
+                                  }>
+                                    <Button
+                                      variant="link"
+                                      isInline
+                                      onClick={onPipelineClick(instance.id)}
+                                    >
+                                      {instance.name}
+                                    </Button>
                                   </Tooltip>
                                 </Td>
                                 <SourceField pipelineSource={instance.source} />
@@ -456,7 +456,14 @@ const Pipelines: React.FunctionComponent = () => {
               labelId="delete-modal-title"
             />
             <ModalBody id="modal-box-body-variant">
-              <Form>
+              <Form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (deleteInstanceName === deleteInstance.name) {
+                    handleDelete(deleteInstance.id);
+                  }
+                }}
+              >
                 <FormGroup isRequired fieldId={`pipeline-delete-name`}>
                   <TextInput
                     id="delete-name"

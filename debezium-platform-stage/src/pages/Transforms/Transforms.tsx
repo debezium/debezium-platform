@@ -405,7 +405,12 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                 labelId="delete-modal-title"
               />
               <ModalBody id="modal-box-body-variant">
-                <Form>
+                <Form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (deleteInstanceName === deleteInstance.name) {
+                    handleDelete(deleteInstance.id);
+                  }
+                }}>
                   <FormGroup isRequired fieldId={`transform-delete-name`}>
                     <TextInput
                       id="delete-name"

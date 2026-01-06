@@ -240,7 +240,14 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
           labelId="delete-modal-title"
         />
         <ModalBody id="modal-box-body-variant">
-          <Form style={{ paddingRight: 45 }}>
+          <Form style={{ paddingRight: 45 }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (deleteInstanceName === deleteInstance.name) {
+                handleDelete(deleteInstance.id);
+              }
+            }}
+          >
             <FormGroup isRequired fieldId={`connection-delete-name`}>
               <TextInput
                 id="dalete-name"

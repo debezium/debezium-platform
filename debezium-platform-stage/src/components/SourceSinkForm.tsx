@@ -745,7 +745,7 @@ const SourceSinkForm = ({
               fieldId={`ddl-query-name`}
             >
               <ClipboardCopy isReadOnly hoverTip={t('copy')} clickTip={t('copied')}>
-                {`CREATE TABLE ${signalCollectionName} (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);`}
+                {`CREATE TABLE ${signalCollectionNameVerify} (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);`}
               </ClipboardCopy>
             </FormGroup>
 
