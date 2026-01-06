@@ -11,8 +11,16 @@ on:
     branches:
       - main
 jobs:
+  # Checks that all commits contain sign-offs
+  check-signed-commits:
+    name: Check signed commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: debezium/dbz/.github/actions/check-dco@main
+
   build_cache:
     name: "Update Dependencies"
+    needs: [ check-signed-commits ]
     runs-on: ubuntu-latest
     defaults:
       run:
