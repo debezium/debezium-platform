@@ -13,14 +13,20 @@ The chart use an ingress to expose `debezium-stage (UI)` and `debezium-conductor
 this will require to have
 an [ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/) installed in you
 cluster.
-You need also to have domain that must point to the cluster IP and then configure the `domain.url` property in
+You need also to have domain that must point to the cluster IP and then configure the `domain.name` property in
 you `values.yaml` with your domain.
 
 ### Configurations
 
 | Name                                       | Description                                                                                                                                                                            | Default                                    |
 |:-------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
-| domain.url                                 | domain used as ingress host                                                                                                                                                            | ""                                         |
+| domain.name                                | domain used as ingress host                                                                                                                                                            | ""                                         |
+| domain.url                                 | domain used as ingress host (DEPRECATED). Use `domain.name` instead.)                                                                                                                  | ""                                         |
+| ingress.enabled                            | Enable ingress resource for conductor/stage                                                                                                                                            | true                                       |
+| ingress.className                          | Optional ingress class name                                                                                                                                                            | ""                                         |
+| ingress.annotations                        | Extra ingress annotations                                                                                                                                                              | {}                                         |
+| ingress.tls.enabled                        | Enable TLS section on ingress                                                                                                                                                          | false                                      |
+| ingress.tls.secretName                     | Secret name used when TLS is enabled                                                                                                                                                   | ""                                         |
 | stage.image                                | Image for the stage (UI)                                                                                                                                                               | quay.io/debezium/platform-stage:latest     |
 | conductor.image                            | Image for the conductor                                                                                                                                                                | quay.io/debezium/platform-conductor:latest |
 | conductor.offset.existingConfigMap         | Name of the config map used to store conductor offsets. If empty it will be automatically created.                                                                                     | ""                                         |

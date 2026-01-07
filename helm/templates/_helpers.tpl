@@ -84,3 +84,25 @@ Common labels
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+{{/*
+Get the scheme for the domain, derived from ingress TLS.
+*/}}
+{{- define "debezium-platform.domainScheme" -}}
+{{- if and .Values.ingress.enabled .Values.ingress.tls.enabled -}}
+https
+{{- else -}}
+http
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the domain URL, with backward compatibility to deprecated .Values.domain.url.
+*/}}
+{{- define "debezium-platform.domainUrl" -}}
+"{{ include "debezium-platform.domainScheme" . }}://{{ include "debezium-platform.domainName" . }}"
+{{- end -}}
+
+{{- define "debezium-platform.domainName" -}}
+{{ default .Values.domain.name .Values.domain.url }}
+{{- end -}}
