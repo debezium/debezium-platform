@@ -22,7 +22,7 @@
         "description": "Edit the source connector details using the below form or smart editor."
     },
     "signal": {
-        "title": "Enable signalling",
+        "title": "Enable signaling",
         "description": "To enable the signaling capability, set the Signaling collection name and confirm that databse DDL has ben execulted.",
         "modelDescription": "You need to create the signaling data collection on the source database, its designated exclusively for sending signals to Debezium. The signaling data collection must be unique to each connector instance.",
         "setupSignaling": "Setup signaling",
