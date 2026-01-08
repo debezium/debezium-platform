@@ -20,7 +20,7 @@ const ApiComponentError: React.FC<ApiComponentErrorProps> = ({ error, retry, isC
         <EmptyState className={isCompact ? "":  "api-component-error"} variant={EmptyStateVariant.xs} titleText="Failed to load database table/collection" headingLevel="h4" status="danger" icon={ExclamationCircleIcon}>
         <EmptyStateBody>
         <ExpandableSection
-      toggleText={isExpanded ? 'Show details' : 'Hide details'}
+      toggleText={isExpanded ?  'Hide details' : 'Show details'}
       onToggle={onToggle}
       isExpanded={isExpanded}
     >
