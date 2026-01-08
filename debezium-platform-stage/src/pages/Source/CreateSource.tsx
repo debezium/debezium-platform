@@ -400,6 +400,19 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     monaco.editor.getModels()[0].updateOptions({ tabSize: 5 });
   };
 
+  const getDisplayCode = () => {
+    if (!isValidJson(code)) return code as string;
+    if (signalCollectionName && typeof code === 'object') {
+      return JSON.stringify(
+        { ...(code as Payload), config: { ...(code as Payload).config, "signal.data.collection": signalCollectionName } },
+        null,
+        2
+      );
+    }
+    
+    return JSON.stringify(code, null, 2);
+  };
+
   return (
     <>
       {!modelLoaded && (
@@ -505,7 +518,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                       language={Language.json || Language.plaintext}
                       downloadFileName="source-connector.json"
                       isFullHeight
-                      code={isValidJson(code) ? JSON.stringify(code, null, 2) : code as string}
+                      code={getDisplayCode()}
                       customControls={customControl}
                       onCodeChange={(value) => {
                         try {

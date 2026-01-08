@@ -386,7 +386,7 @@ const SourceSinkForm = ({
     const payload = {
       databaseType: getDatabaseType(ConnectorId),
       connectionConfig: selectedConnection,
-      fullyQualifiedTableName: signalCollectionName
+      fullyQualifiedTableName: signalCollectionNameVerify
     }
     if (selectedConnection?.id === undefined) {
       setSignalMissingConnection(true);
@@ -409,7 +409,7 @@ const SourceSinkForm = ({
       addNotification(
         "success",
         `Signal verification succesfully`,
-        `Signal data collection verified succesfully: ${signalCollectionName}`
+        `Signal data collection verified succesfully: ${signalCollectionNameVerify}`
       );
       setIsLoading(false);
     }
@@ -697,7 +697,7 @@ const SourceSinkForm = ({
                   />
                 }
               >
-                <Button variant="link" size="lg" icon={signalCollectionName ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />} iconPosition="left" onClick={handleModalToggle}>
+                <Button variant="link" size="lg" icon={signalCollectionNameVerify ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />} iconPosition="left" onClick={handleModalToggle}>
                   {t("source:signal.setupSignaling")}
                 </Button>
 
