@@ -70,7 +70,7 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "RocketMQ";
       src = rocketMq;
       break;
-    case connectorType.includes("events_hubs"):
+    case connectorType.includes("eventhubs"):
       altText = "EventHub";
       src = eventHub;
       break;
@@ -79,11 +79,11 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "RabbitMQ";
       src = rabbitMq;
       break;
-    case connectorType.includes("nats_streaming"):
+    case connectorType.includes("nats-streaming"):
       altText = "NATS Stream";
       src = natsStreaming;
       break;
-    case connectorType.includes("nats_jetstream"):
+    case connectorType.includes("nats-jetstream"):
         altText = "NATS JetStream";
         src = natsStreaming;
         break;  
