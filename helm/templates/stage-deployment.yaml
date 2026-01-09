@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
+  annotations: {}
   labels:
     app.kubernetes.io/name: stage
     app.kubernetes.io/component: frontend
@@ -15,7 +15,7 @@ spec:
       app.kubernetes.io/name: stage
   template:
     metadata:
-      annotations:
+      annotations: {}
       labels:
         app.kubernetes.io/name: stage
     spec:
@@ -27,5 +27,5 @@ spec:
               protocol: TCP
           env:
             - name: CONDUCTOR_URL
-              value: http://{{ .Values.domain.url }}
+              value: {{ required "A valid domain URL required!" (include "debezium-platform.domainUrl" .) }}
       restartPolicy: Always

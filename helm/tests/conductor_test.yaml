@@ -176,3 +176,82 @@ tests:
       - equal:
           path: metadata.name
           value: conductor-role-binding
+
+  - it: should create ingress with TLS enabled and secretName
+    template: conductor-ingress.yaml
+    set:
+      domain.name: example.com
+      ingress.tls.enabled: true
+      ingress.tls.secretName: my-tls-secret
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: spec.tls[0].hosts[0]
+          value: example.com
+      - equal:
+          path: spec.tls[0].secretName
+          value: my-tls-secret
+      - equal:
+          path: spec.rules[0].host
+          value: example.com
+
+  - it: should create ingress with TLS enabled without secretName
+    template: conductor-ingress.yaml
+    set:
+      domain.name: example.com
+      ingress.tls.enabled: true
+      ingress.tls.secretName: ""
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: spec.tls[0].hosts[0]
+          value: example.com
+      - isNull:
+          path: spec.tls[0].secretName
+      - equal:
+          path: spec.rules[0].host
+          value: example.com
+
+  - it: should create ingress with custom className
+    template: conductor-ingress.yaml
+    set:
+      domain.name: example.com
+      ingress.className: nginx
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+
+  - it: should create ingress with custom annotations
+    template: conductor-ingress.yaml
+    values:
+      - ../../examples/example.yaml
+    set:
+      ingress.annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+          value: /
+      - equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: letsencrypt-prod
+
+  - it: should support backward compatibility with domain.url
+    template: conductor-ingress.yaml
+    set:
+      domain.url: legacy.example.com
+      domain.name: null
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: spec.rules[0].host
+          value: legacy.example.com

@@ -1,4 +1,4 @@
 domain:
-  url: platform.debezium.io
+  name: platform.debezium.io
 database:
   enabled: true

@@ -1,11 +1,19 @@
 domain:
   url: ""
+  name: ""
 stage:
   image: quay.io/debezium/platform-stage:nightly
 conductor:
   image: quay.io/debezium/platform-conductor:nightly
   offset:
     existingConfigMap: ""
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: ""
 offset:
   reusePlatformDatabase: true
   database:

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
+  annotations: {}
   labels:
     app.kubernetes.io/name: conductor
     app.kubernetes.io/component: backend
@@ -17,13 +17,18 @@ spec:
     type: Recreate
   template:
     metadata:
-      annotations:
+      annotations: {}
       labels:
         app.kubernetes.io/name: conductor
     spec:
       serviceAccountName: conductor-service-account
       containers:
-        - env:
+        - name: conductor
+          image: {{ .Values.conductor.image }}
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
             - name: QUARKUS_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -39,20 +44,15 @@ spec:
             - name: CONDUCTOR_WATCHER_OFFSET_STORAGE_CONFIG_CONFIGMAP_NAME
               value: {{ include "debezium-platform.offsetConfigMapName" . }}
             - name: QUARKUS_HTTP_CORS_ORIGINS
-              value: http://{{ .Values.domain.url }}
+              value: {{ required "A valid domain URL required!" (include "debezium-platform.domainUrl" .) }}
             - name: QUARKUS_DATASOURCE_JDBC_URL
-              value: jdbc:postgresql://{{ .Values.database.host }}:5432/{{ .Values.database.name }}
+              value: "jdbc:postgresql://{{ .Values.database.host }}:5432/{{ .Values.database.name }}"
             - name: QUARKUS_KUBERNETES_CLIENT_NAMESPACE
               value: {{ .Release.Namespace }}
 {{ include "debezium-platform.offsetConfig" . | indent 12 }}
 {{ include "debezium-platform.schemaHistoryConfig" . | indent 12 }}
-          {{- range .Values.env }}
+{{- range .Values.env }}
             - name: {{ .name }}
               value: {{ .value }}
-          {{- end }}
-          image: {{ .Values.conductor.image }}
-          name: conductor
-          ports:
-            - containerPort: 8080
-              protocol: TCP
+{{- end }}
       restartPolicy: Always

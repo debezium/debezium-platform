@@ -9,4 +9,4 @@ metadata:
 {{ include "common.labels" . | indent 4 }}
   name: {{ include "debezium-platform.offsetConfigMapName" . }}
 data: {}
-{{- end}}
+{{- end }}

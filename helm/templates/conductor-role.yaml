@@ -8,7 +8,7 @@ rules:
     verbs: ["patch", "create", "delete", "list", "deletecollection"]
   - apiGroups: [ "" ]
     resources: [ "configmaps" ]
-    resourceNames: [ {{ include "debezium-platform.offsetConfigMapName" . | quote}} ]
+    resourceNames: [ {{ include "debezium-platform.offsetConfigMapName" . | quote }} ]
     verbs: [ "create", "update", "patch", "get" ]
   - apiGroups: [ "apps" ]
     resources: [ "deployments", "replicasets" ]
