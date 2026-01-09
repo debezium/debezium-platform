@@ -43,6 +43,7 @@ import CreateConnectionModal from "../components/CreateConnectionModal";
 import { useData } from "@appContext/AppContext";
 import { SelectedDataListItem } from "./CreateSource";
 import { getIncludeList } from "@utils/Datatype";
+import { isValidJson } from "src/hooks/useFormatDetector";
 
 const ajv = new Ajv();
 
@@ -57,6 +58,7 @@ const FormSyncManager: React.FC<{
   properties: Map<string, Properties>;
   setProperties: (properties: Map<string, Properties>) => void;
   setCodeAlert: (alert: string) => void;
+  signalCollectionName: string;
 }> = ({
   getFormValue,
   setFormValue,
@@ -66,6 +68,7 @@ const FormSyncManager: React.FC<{
   properties,
   setProperties,
   setCodeAlert,
+  signalCollectionName,
 }) => {
     const validate = ajv.compile(initialConnectorSchema);
     // Ref to track the source of the update
@@ -85,6 +88,7 @@ const FormSyncManager: React.FC<{
         if (
           prevCode.name === getFormValue("source-name") &&
           prevCode.description === getFormValue("description") &&
+          prevCode.config["signal.data.collection"] === signalCollectionName &&
           JSON.stringify(prevCode.config) === JSON.stringify(configuration)
         ) {
           return prevCode;
@@ -92,7 +96,9 @@ const FormSyncManager: React.FC<{
 
         return {
           ...prevCode,
-          config: configuration,
+          config: signalCollectionName
+            ? { ...configuration, "signal.data.collection": signalCollectionName }
+            : configuration,
           name: getFormValue("source-name") || "",
           description: getFormValue("description") || "",
         };
@@ -102,6 +108,7 @@ const FormSyncManager: React.FC<{
       getFormValue("description"),
       properties,
       sourceId,
+      signalCollectionName,
     ]);
 
     // Update form values when code changes
@@ -178,6 +185,7 @@ const EditSource: React.FunctionComponent = () => {
     description: "",
     type: "",
     schema: "schema123",
+    connection: {},
     vaults: [],
     config: {},
   });
@@ -396,6 +404,24 @@ const EditSource: React.FunctionComponent = () => {
     monaco.editor.getModels()[0].updateOptions({ tabSize: 5 });
   };
 
+  const getDisplayCode = () => {
+    if (!isValidJson(code)) return code as unknown as string;
+    let displayCode: any = code;   
+    if (typeof code === 'object') {
+      displayCode = { ...(code as Payload) };
+      if (selectedConnection) {
+        displayCode = {
+          ...displayCode,
+          connection: {
+            id: selectedConnection.id,
+            name: selectedConnection.name
+          }
+        };
+      }      
+    }
+    return JSON.stringify(displayCode, null, 2);
+  };
+
   if (isFetchLoading) {
     return <div>{t('loading')}</div>;
   }
@@ -474,6 +500,7 @@ const EditSource: React.FunctionComponent = () => {
               properties={properties}
               setProperties={setProperties}
               setCodeAlert={setCodeAlert}
+              signalCollectionName={signalCollectionName}
             />
             <PageSection
               isWidthLimited
@@ -526,7 +553,7 @@ const EditSource: React.FunctionComponent = () => {
                       language={Language.json}
                       downloadFileName="source-connector.json"
                       isFullHeight
-                      code={JSON.stringify(code, null, 2)}
+                      code={getDisplayCode()}
                       onCodeChange={(value) => {
                         try {
                           const parsedCode = JSON.parse(value);

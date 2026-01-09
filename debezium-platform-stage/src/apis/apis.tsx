@@ -49,7 +49,7 @@ export type Payload = {
   schema: string;
   vaults: Vault[];
   config: DestinationConfig;
-  connection?: ConnectionConfig;
+  connection?: ConnectionConfig | Record<string, never>;
   description?: string;
   name: string;
 };
