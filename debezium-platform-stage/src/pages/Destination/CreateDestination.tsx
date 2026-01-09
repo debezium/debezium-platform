@@ -53,6 +53,7 @@ const initialCodeValue = {
   description: "",
   type: "",
   schema: "schema123",
+  connection: {},
   vaults: [],
   config: {},
 };
@@ -376,6 +377,24 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     monaco.editor.getModels()[0].updateOptions({ tabSize: 5 });
   };
 
+  const getDisplayCode = () => {
+    if (!isValidJson(code)) return code as string;
+    let displayCode = code;   
+    if (typeof code === 'object') {
+      displayCode = { ...(code as Payload) };
+      if (selectedConnection) {
+        displayCode = {
+          ...displayCode,
+          connection: {
+            id: selectedConnection.id,
+            name: selectedConnection.name
+          }
+        };
+      }      
+    }
+    return JSON.stringify(displayCode, null, 2);
+  };
+
   return (
     <>
       {!modelLoaded && (
@@ -480,7 +499,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                       downloadFileName="source-connector.json"
                       isFullHeight
                       isDarkTheme={darkMode}
-                      code={isValidJson(code) ? JSON.stringify(code, null, 2) : code as string}
+                      code={getDisplayCode()}
                       customControls={customControl}
                       onCodeChange={(value) => {
                         try {

@@ -39,6 +39,7 @@ import { PageHeader } from "@patternfly/react-component-groups";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import CreateConnectionModal from "../components/CreateConnectionModal";
 import { useData } from "@appContext/AppContext";
+import { isValidJson } from "src/hooks/useFormatDetector";
 
 const ajv = new Ajv();
 
@@ -172,6 +173,7 @@ const EditDestination: React.FunctionComponent = () => {
     description: "",
     type: "",
     schema: "schema123",
+    connection: {},
     vaults: [],
     config: {},
   });
@@ -358,6 +360,24 @@ const EditDestination: React.FunctionComponent = () => {
     monaco.editor.getModels()[0].updateOptions({ tabSize: 5 });
   };
 
+  const getDisplayCode = () => {
+    if (!isValidJson(code)) return code as unknown as string;
+    let displayCode: any = code;   
+    if (typeof code === 'object') {
+      displayCode = { ...(code as Payload) };
+      if (selectedConnection) {
+        displayCode = {
+          ...displayCode,
+          connection: {
+            id: selectedConnection.id,
+            name: selectedConnection.name
+          }
+        };
+      }      
+    }
+    return JSON.stringify(displayCode, null, 2);
+  };
+
   if (isFetchLoading) {
     return <div>{t("loading")}</div>;
   }
@@ -484,7 +504,7 @@ const EditDestination: React.FunctionComponent = () => {
                       language={Language.json}
                       downloadFileName="destination-connector.json"
                       isFullHeight
-                      code={JSON.stringify(code, null, 2)}
+                      code={getDisplayCode()}
                       onCodeChange={(value) => {
                         try {
                           const parsedCode = JSON.parse(value);

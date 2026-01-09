@@ -54,6 +54,7 @@ const initialCodeValue = {
   description: "",
   type: "",
   schema: "schema123",
+  connection: {},
   vaults: [],
   config: {},
 };
@@ -75,6 +76,7 @@ const FormSyncManager: React.FC<{
   setProperties: (properties: Map<string, Properties>) => void;
   setCodeAlert: (alert: string | React.ReactElement) => void;
   setFormatType: (type: string) => void;
+  signalCollectionName: string;
 }> = ({
   getFormValue,
   setFormValue,
@@ -85,6 +87,7 @@ const FormSyncManager: React.FC<{
   setProperties,
   setCodeAlert,
   setFormatType,
+  signalCollectionName,
 }) => {
     const { t } = useTranslation();
     // Ref to track the source of the update
@@ -103,7 +106,8 @@ const FormSyncManager: React.FC<{
       setCode((prevCode: any) => {
         if (
           prevCode.name === getFormValue("source-name") &&
-          prevCode.description === getFormValue("description") &&
+          prevCode.description === getFormValue("description") && 
+          prevCode.config["signal.data.collection"] === signalCollectionName &&
           JSON.stringify(prevCode.config) === JSON.stringify(configuration)
         ) {
           return prevCode;
@@ -111,7 +115,9 @@ const FormSyncManager: React.FC<{
         return {
           ...prevCode,
           type,
-          config: configuration,
+          config: signalCollectionName
+            ? { ...configuration, "signal.data.collection": signalCollectionName }
+            : configuration,
           name: getFormValue("source-name") || "",
           description: getFormValue("description") || "",
         };
@@ -121,6 +127,7 @@ const FormSyncManager: React.FC<{
       getFormValue("description"),
       properties,
       sourceId,
+      signalCollectionName,
     ]);
 
     // Use the useFormatDetector hook
@@ -402,15 +409,20 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
 
   const getDisplayCode = () => {
     if (!isValidJson(code)) return code as string;
-    if (signalCollectionName && typeof code === 'object') {
-      return JSON.stringify(
-        { ...(code as Payload), config: { ...(code as Payload).config, "signal.data.collection": signalCollectionName } },
-        null,
-        2
-      );
+    let displayCode = code;   
+    if (typeof code === 'object') {
+      displayCode = { ...(code as Payload) };
+      if (selectedConnection) {
+        displayCode = {
+          ...displayCode,
+          connection: {
+            id: selectedConnection.id,
+            name: selectedConnection.name
+          }
+        };
+      }      
     }
-    
-    return JSON.stringify(code, null, 2);
+    return JSON.stringify(displayCode, null, 2);
   };
 
   return (
@@ -466,6 +478,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
               setProperties={setProperties}
               setCodeAlert={setCodeAlert}
               setFormatType={setFormatType}
+              signalCollectionName={signalCollectionName}
             />
 
             <PageSection
