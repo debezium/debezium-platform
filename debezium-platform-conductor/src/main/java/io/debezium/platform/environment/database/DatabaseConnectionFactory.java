@@ -49,7 +49,7 @@ public class DatabaseConnectionFactory {
         return switch (databaseConnectionConfiguration.databaseType()) {
             // Re-using connection from Debezium since there is some performances improvements
             // in how the tables are retrieved by different databases
-            case ORACLE -> new OracleConnection(new OracleConnectorConfig(jdbcConfigurationBuilder.build()).getJdbcConfig());
+            case ORACLE -> new OracleConnection(new OracleConnectorConfig(jdbcConfigurationBuilder.build()).getJdbcConfig(), true);
             case MYSQL -> new MySqlConnection(new MySqlConnectionConfiguration(jdbcConfigurationBuilder.build()), null);
             case MARIADB -> new MariaDbConnection(new MariaDbConnectionConfiguration(jdbcConfigurationBuilder.build()), null);
             case SQLSERVER ->
