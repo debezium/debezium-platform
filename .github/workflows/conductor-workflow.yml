@@ -15,6 +15,7 @@ jobs:
   check-signed-commits:
     name: Check signed commits
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: debezium/dbz/.github/actions/check-dco@main
 
