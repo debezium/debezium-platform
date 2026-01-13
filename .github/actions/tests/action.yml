@@ -1,0 +1,44 @@
+name: "Run Tests"
+description: "Run Maven tests for Debezium platform"
+
+inputs:
+  working-directory:
+    description: 'Working directory for the tests'
+    required: true
+  cache-key:
+    description: 'Cache key for Maven repository'
+    required: true
+  java-version:
+    description: 'Java version to use'
+    required: false
+    default: '21'
+  java-distribution:
+    description: 'Java distribution to use'
+    required: false
+    default: 'temurin'
+  maven-command:
+    description: 'Maven command to run tests'
+    required: false
+    default: './mvnw clean verify'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Java
+      uses: actions/setup-java@v5
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+
+    - name: Cache Maven Repository
+      id: cache-check
+      uses: actions/cache@v5
+      with:
+        path: ~/.m2/repository
+        key: ${{ inputs.cache-key }}
+        restore-keys: ${{ inputs.cache-key }}
+
+    - name: Run tests
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${{ inputs.maven-command }}

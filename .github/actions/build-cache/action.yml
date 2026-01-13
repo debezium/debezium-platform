@@ -1,0 +1,172 @@
+name: "Build Cache"
+description: "Build and cache Debezium platform dependencies"
+
+inputs:
+  working-directory:
+    description: 'Working directory for the build'
+    required: true
+  java-version:
+    description: 'Java version to use'
+    required: false
+    default: '21'
+  java-distribution:
+    description: 'Java distribution to use'
+    required: false
+    default: 'temurin'
+  debezium-core-ref:
+    description: 'Debezium core repository ref'
+    required: false
+    default: 'main'
+  debezium-operator-ref:
+    description: 'Debezium operator repository ref'
+    required: false
+    default: 'main'
+  debezium-quarkus-ref:
+    description: 'Debezium Quarkus repository ref'
+    required: false
+    default: 'main'
+  debezium-db2-ref:
+    description: 'Debezium DB2 connector repository ref'
+    required: false
+    default: 'main'
+  maven-cache-key:
+    description: 'Existing Maven cache key to restore (e.g., from debezium CI build_cache job). If provided, core build will be skipped.'
+    required: false
+    default: ''
+  github-event-name:
+    description: 'GitHub event name (push or pull_request) to differentiate cache keys'
+    required: false
+    default: 'pull_request'
+
+outputs:
+  cache_key:
+    description: 'The cache key for the Maven repository'
+    value: ${{ steps.set-composite-cache-key.outputs.cache_key }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Java
+      uses: actions/setup-java@v5
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+
+    - name: Checkout core repository
+      if: ${{ inputs.maven-cache-key == '' }}
+      uses: actions/checkout@v6
+      with:
+        repository: debezium/debezium
+        ref: ${{ inputs.debezium-core-ref }}
+        path: ${{ inputs.working-directory }}/core
+
+    - name: Checkout operator repository
+      uses: actions/checkout@v6
+      with:
+        repository: debezium/debezium-operator
+        ref: ${{ inputs.debezium-operator-ref }}
+        path: ${{ inputs.working-directory }}/operator
+
+    - name: Checkout DB2 connector repository
+      uses: actions/checkout@v6
+      with:
+        repository: debezium/debezium-connector-db2
+        ref: ${{ inputs.debezium-db2-ref }}
+        path: ${{ inputs.working-directory }}/debezium-connector-db2
+
+    - name: Checkout Quarkus Extensions repository
+      uses: actions/checkout@v6
+      with:
+        repository: debezium/debezium-quarkus
+        ref: ${{ inputs.debezium-quarkus-ref }}
+        path: ${{ inputs.working-directory }}/debezium-quarkus
+
+    - name: Calculate composite cache key
+      id: set-composite-cache-key
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        CORE_HASH=${{ hashFiles(format('./{0}/core/**/pom.xml', inputs.working-directory)) }}
+        OPERATOR_HASH=${{ hashFiles(format('./{0}/operator/**/pom.xml', inputs.working-directory)) }}
+        DB2_HASH=${{ hashFiles(format('./{0}/debezium-connector-db2/**/pom.xml', inputs.working-directory)) }}
+        QUARKUS_HASH=${{ hashFiles(format('./{0}/debezium-quarkus/**/pom.xml', inputs.working-directory)) }}
+
+        # Differentiate between PR and push caches (like debezium CI does)
+        if [ "${{ inputs.github-event-name }}" = "push" ]; then
+          echo "cache_key=maven-debezium-platform-conductor-push-${CORE_HASH}-${OPERATOR_HASH}-${DB2_HASH}-${QUARKUS_HASH}" >> "$GITHUB_OUTPUT"
+        else
+          echo "cache_key=maven-debezium-platform-conductor-${CORE_HASH}-${OPERATOR_HASH}-${DB2_HASH}-${QUARKUS_HASH}" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Restore Maven cache
+      id: cache-check
+      uses: actions/cache@v5
+      with:
+        path: ~/.m2/repository
+        # Try to restore in order:
+        # 1. Exact composite match: all dependencies match (PR or push specific)
+        # 2. PR with same core OR debezium CI cache
+        # 3. Push cache with same core (more stable)
+        # 4. Any recent cache
+        key: ${{ steps.set-composite-cache-key.outputs.cache_key }}
+        restore-keys: |
+          ${{ inputs.maven-cache-key != '' && inputs.maven-cache-key || format('maven-debezium-platform-conductor-{0}', hashFiles(format('./{0}/core/**/pom.xml', inputs.working-directory))) }}
+          ${{ inputs.maven-cache-key != '' && '' || format('maven-debezium-platform-conductor-push-{0}', hashFiles(format('./{0}/core/**/pom.xml', inputs.working-directory))) }}
+          ${{ inputs.maven-cache-key != '' && 'maven-debezium-test-push-build-' || 'maven-debezium-platform-conductor-push-' }}
+          ${{ inputs.maven-cache-key != '' && '' || 'maven-debezium-platform-conductor-' }}
+
+    - name: Maven build core dependencies
+      if: ${{ inputs.maven-cache-key == '' && steps.cache-check.outputs.cache-hit != 'true' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        ./core/mvnw clean install -f core/pom.xml \
+          -DskipTests \
+          -DskipITs \
+          -Dformat.skip=true \
+          -Dcheckstyle.skip=true \
+          -Dhttp.keepAlive=false \
+          -Dmaven.wagon.http.pool=false \
+          -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
+          -Dmaven.javadoc.skip=true \
+          -Dstyle.color=always \
+          --no-transfer-progress \
+          -T4
+
+    - name: Maven build operator, DB2, and Quarkus dependencies
+      if: ${{ steps.cache-check.outputs.cache-hit != 'true' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        ./operator/mvnw clean install -f operator/pom.xml \
+          -DskipTests \
+          -DskipITs \
+          -Dformat.skip=true \
+          -Dcheckstyle.skip=true \
+          -Dhttp.keepAlive=false \
+          -Dmaven.wagon.http.pool=false \
+          -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
+          -Dmaven.javadoc.skip=true \
+          -Dstyle.color=always \
+          --no-transfer-progress \
+          -T4
+
+        ./debezium-connector-db2/mvnw clean install -f debezium-connector-db2/pom.xml \
+          -DskipTests \
+          -DskipITs \
+          -Dformat.skip=true \
+          -Dcheckstyle.skip=true \
+          -Dhttp.keepAlive=false \
+          -Dmaven.wagon.http.pool=false \
+          -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
+          -Dmaven.javadoc.skip=true \
+          -Dstyle.color=always \
+          --no-transfer-progress \
+          -T4
+
+        ./debezium-quarkus/mvnw clean install -f debezium-quarkus/pom.xml \
+          -DskipTests \
+          -DskipITs \
+          -Dformat.skip=true \
+          -Dcheckstyle.skip=true \
+          -T4
