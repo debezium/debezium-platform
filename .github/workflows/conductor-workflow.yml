@@ -3,11 +3,13 @@ on:
   push:
     paths:
       - "debezium-platform-conductor/**"
+      - ".github/**"
     branches:
       - main
   pull_request:
     paths:
       - "debezium-platform-conductor/**"
+      - ".github/**"
     branches:
       - main
 jobs:
@@ -22,6 +24,7 @@ jobs:
   build_cache:
     name: "Update Dependencies"
     needs: [ check-signed-commits ]
+    if: ${{ !cancelled() && (needs.check-signed-commits.result == 'success' || needs.check-signed-commits.result == 'skipped') }}
     runs-on: ubuntu-latest
     outputs:
       cache_key: ${{ steps.build-cache.outputs.cache_key }}
