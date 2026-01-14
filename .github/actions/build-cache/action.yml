@@ -130,8 +130,7 @@ runs:
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
           -Dmaven.javadoc.skip=true \
           -Dstyle.color=always \
-          --no-transfer-progress \
-          -T4
+          --no-transfer-progress
 
     - name: Maven build operator, DB2, and Quarkus dependencies
       if: ${{ steps.cache-check.outputs.cache-hit != 'true' }}
@@ -148,8 +147,7 @@ runs:
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
           -Dmaven.javadoc.skip=true \
           -Dstyle.color=always \
-          --no-transfer-progress \
-          -T4
+          --no-transfer-progress
 
         ./debezium-connector-db2/mvnw clean install -f debezium-connector-db2/pom.xml \
           -DskipTests \
@@ -161,12 +159,10 @@ runs:
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
           -Dmaven.javadoc.skip=true \
           -Dstyle.color=always \
-          --no-transfer-progress \
-          -T4
+          --no-transfer-progress
 
         ./debezium-quarkus/mvnw clean install -f debezium-quarkus/pom.xml \
           -DskipTests \
           -DskipITs \
           -Dformat.skip=true \
-          -Dcheckstyle.skip=true \
-          -T4
+          -Dcheckstyle.skip=true
