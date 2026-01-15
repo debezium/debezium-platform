@@ -41,6 +41,7 @@ jobs:
   check_style:
     name: "Checkstyle and Formatting"
     needs: [ build_cache ]
+    if: ${{ !cancelled() && needs.build_cache.result == 'success' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -72,6 +73,7 @@ jobs:
   tests:
     name: "Run tests"
     needs: [ build_cache, check_style ]
+    if: ${{ !cancelled() && needs.build_cache.result == 'success' && needs.check_style.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
