@@ -280,6 +280,80 @@ public class ConnectionResourceIT {
                 .statusCode(404);
     }
 
+    @Test
+    public void testCreateConnection_WithJsonPropertyMapping() {
+        String nameSuffix = String.valueOf(System.currentTimeMillis());
+        // Test that frontend sends "ROCKETMQ" which should map to APACHE_ROCKETMQ enum
+        String json = """
+                {
+                  "name": "test-rocketmq-connection-%s",
+                  "type": "ROCKETMQ",
+                  "config": {
+                    "host": "localhost",
+                    "port": 9876
+                  }
+                }
+                """.formatted(nameSuffix);
+
+        Integer connectionId = given()
+                .contentType(ContentType.JSON)
+                .body(json)
+                .when()
+                .post("api/connections")
+                .then()
+                .statusCode(201)
+                .contentType(ContentType.JSON)
+                .header("Location", notNullValue())
+                .body("id", notNullValue())
+                .body("name", is("test-rocketmq-connection-" + nameSuffix))
+                .body("type", is("ROCKETMQ"))
+                .body("config.host", is("localhost"))
+                .body("config.port", is(9876))
+                .extract()
+                .path("id");
+
+        // Verify GET also returns the mapped value
+        given()
+                .pathParam("id", connectionId)
+                .when()
+                .get("api/connections/{id}")
+                .then()
+                .statusCode(200)
+                .body("type", is("ROCKETMQ"));
+
+        cleanUp(connectionId);
+    }
+
+    @Test
+    public void testCreateConnection_WithJsonPropertyMapping_NatsStreaming() {
+        String nameSuffix = String.valueOf(System.currentTimeMillis());
+        // Test that frontend sends "NATS-STREAMING" with dash which should map to NATS_STREAMING enum
+        String json = """
+                {
+                  "name": "test-nats-connection-%s",
+                  "type": "NATS-STREAMING",
+                  "config": {
+                    "url": "nats://localhost:4222"
+                  }
+                }
+                """.formatted(nameSuffix);
+
+        Integer connectionId = given()
+                .contentType(ContentType.JSON)
+                .body(json)
+                .when()
+                .post("api/connections")
+                .then()
+                .statusCode(201)
+                .contentType(ContentType.JSON)
+                .body("name", is("test-nats-connection-" + nameSuffix))
+                .body("type", is("NATS-STREAMING"))
+                .extract()
+                .path("id");
+
+        cleanUp(connectionId);
+    }
+
     private static void cleanUp(Integer connectionId) {
         given()
                 .pathParam("id", connectionId)

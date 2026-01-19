@@ -18,6 +18,8 @@ import jakarta.validation.constraints.NotEmpty;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Entity(name = "connection")
 public class ConnectionEntity {
 
@@ -45,16 +47,24 @@ public class ConnectionEntity {
         MONGODB,
         KAFKA,
         REDIS,
+        @JsonProperty("KINESIS")
         AMAZON_KINESIS,
+        @JsonProperty("PUBSUB")
         GOOGLE_PUB_SUB,
         HTTP,
+        @JsonProperty("PULSAR")
         APACHE_PULSAR,
+        @JsonProperty("EVENTHUBS")
         AZURE_EVENTS_HUBS,
+        @JsonProperty("NATS-STREAMING")
         NATS_STREAMING,
+        @JsonProperty("NATS-JETSTREAM")
         NATS_JETSTREAM,
         PRAVEGA,
         INFINISPAN,
+        @JsonProperty("ROCKETMQ")
         APACHE_ROCKETMQ,
+        @JsonProperty("RABBITMQ")
         RABBITMQ_STREAM,
         RABBITMQ_NATIVE_STREAM,
         MILVUS,
