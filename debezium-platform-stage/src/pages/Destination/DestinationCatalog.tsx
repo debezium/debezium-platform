@@ -16,8 +16,8 @@ import {
 import { CogIcon, ListIcon, ThIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import { CatalogGrid } from "@components/CatalogGrid";
-import { FunctionComponent, useCallback, useState } from "react";
-import { Catalog } from "src/apis/types";
+import * as React from "react";
+import { FunctionComponent, useState } from "react";
 import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 import { debounce } from "lodash";
 import _ from "lodash";
@@ -31,9 +31,17 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
   const navigate = useNavigate();
   const [isSelected, setIsSelected] = useState<"list" | "grid">("grid");
   const { t } = useTranslation();
-  const [searchResult, setSearchResult] =
-    useState<Catalog[]>(destinationCatalog);
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Compute filtered results based on search query
+  const searchResult = React.useMemo(() => {
+    if (searchQuery.length === 0) {
+      return destinationCatalog;
+    }
+    return _.filter(destinationCatalog, (o) =>
+      o.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery]);
 
   const onClear = () => {
     onSearch?.("");
@@ -49,22 +57,26 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
     setIsSelected(id.split("-")[2]);
   };
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      const filteredSource = _.filter(destinationCatalog, function (o) {
-        return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-      });
-      setSearchResult(filteredSource);
+  // Debounce the search query state update
+  const debouncedSetSearchQuery = React.useMemo(
+    () => debounce((value: string) => {
+      setSearchQuery(value);
     }, 700),
     []
   );
 
-  const onSearch = useCallback(
+  // Cleanup debounced function on unmount
+  React.useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, [debouncedSetSearchQuery]);
+
+  const onSearch = React.useCallback(
     (value: string) => {
-      setSearchQuery(value);
-      debouncedSearch(value);
+      debouncedSetSearchQuery(value);
     },
-    [debouncedSearch]
+    [debouncedSetSearchQuery]
   );
 
   const onDestinationSelection = (destinationId: string) => {

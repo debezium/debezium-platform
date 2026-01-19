@@ -8,7 +8,7 @@ import {
   FlexItem,
   Content,
 } from "@patternfly/react-core";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { fetchData, Source } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useQuery } from "react-query";
@@ -26,7 +26,6 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
 }) => {
   const id1 = "pipeline-source-select";
   const id2 = "pipeline-source-create";
-  const [isCreateChecked, setIsCreateChecked] = useState(id1);
   const [selectedSource, setSelectedSource] = useState<string>("");
 
   const {
@@ -38,11 +37,13 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
     fetchData<Source[]>(`${API_URL}/api/sources`)
   );
 
-  useEffect(() => {
-    if (sourceList.length === 0 && isSourceLoading === false) {
-      setIsCreateChecked(id2);
-    }
-  }, [sourceList, isSourceLoading]);
+  // Track if user has manually selected a mode
+  const [userSelection, setUserSelection] = useState<string | null>(null);
+
+  // Derive the active mode: use user selection if available, otherwise auto-select based on data
+  const isCreateChecked = userSelection !== null 
+    ? userSelection 
+    : (!isSourceLoading && sourceList.length === 0 ? id2 : id1);
 
   const selectSource = useCallback(
     (sourceId: string) => {
@@ -52,7 +53,7 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
   );
 
   const onChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setIsCreateChecked(event.currentTarget.id);
+    setUserSelection(event.currentTarget.id);
   };
 
   return (

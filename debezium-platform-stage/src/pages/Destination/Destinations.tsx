@@ -23,7 +23,6 @@ import _, { debounce } from "lodash";
 import { useQuery } from "react-query";
 import SourceSinkTable from "../../components/SourceSinkTable";
 import ApiError from "../../components/ApiError";
-import { useCallback } from "react";
 import "./Destinations.css";
 import PageHeader from "@components/PageHeader";
 import { useTranslation } from "react-i18next";
@@ -34,12 +33,7 @@ const Destinations: React.FunctionComponent = () => {
     navigate(url);
   };
 
-  const [searchResult, setSearchResult] = React.useState<Destination[]>([]);
   const [searchQuery, setSearchQuery] = React.useState<string>("");
-
-  const onClear = () => {
-    onSearch?.("");
-  };
 
   const {
     data: destinationsList = [],
@@ -50,35 +44,43 @@ const Destinations: React.FunctionComponent = () => {
     () => fetchData<Destination[]>(`${API_URL}/api/destinations`),
     {
       refetchInterval: 7000,
-      onSuccess: (data) => {
-        if (searchQuery.length > 0) {
-          const filteredSource = _.filter(data, function (o) {
-            return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-          });
-          setSearchResult(filteredSource);
-        } else {
-          setSearchResult(data);
-        }
-      },
     }
   );
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      const filteredSource = _.filter(destinationsList, function (o) {
-        return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-      });
-      setSearchResult(filteredSource);
+  // Compute filtered results based on search query
+  const searchResult = React.useMemo(() => {
+    if (searchQuery.length === 0) {
+      return destinationsList;
+    }
+    return _.filter(destinationsList, (o) =>
+      o.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, destinationsList]);
+
+  const onClear = () => {
+    onSearch?.("");
+  };
+
+  // Debounce the search query state update
+  const debouncedSetSearchQuery = React.useMemo(
+    () => debounce((value: string) => {
+      setSearchQuery(value);
     }, 700),
-    [destinationsList]
+    []
   );
+
+  // Cleanup debounced function on unmount
+  React.useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, [debouncedSetSearchQuery]);
 
   const onSearch = React.useCallback(
     (value: string) => {
-      setSearchQuery(value);
-      debouncedSearch(value);
+      debouncedSetSearchQuery(value);
     },
-    [debouncedSearch]
+    [debouncedSetSearchQuery]
   );
 
   return (
@@ -150,13 +152,7 @@ const Destinations: React.FunctionComponent = () => {
                           <ToolbarGroup align={{ default: "alignEnd" }}>
                             <ToolbarItem>
                               <Content component={ContentVariants.small}>
-                                {
-                                  (searchQuery.length > 0
-                                    ? searchResult
-                                    : destinationsList
-                                  ).length
-                                }{" "}
-                                {t("items")}
+                                {searchResult.length} {t("items")}
                               </Content>
                             </ToolbarItem>
                           </ToolbarGroup>
@@ -164,11 +160,7 @@ const Destinations: React.FunctionComponent = () => {
                       </Toolbar>
 
                       <SourceSinkTable
-                        data={
-                          searchQuery.length > 0
-                            ? searchResult
-                            : destinationsList
-                        }
+                        data={searchResult}
                         tableType="destination"
                         onClear={onClear}
                       />

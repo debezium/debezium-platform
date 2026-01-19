@@ -85,10 +85,8 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
       };
     }, [refitElements]);
 
-    const initialNodes: never[] = [];
-    const initialEdges: never[] = [];
-    const [nodes, setNodes] = useState<any>(initialNodes);
-    const [edges, setEdges] = useState<any>(initialEdges);
+    const [nodes, setNodes] = useState<any>([]);
+    const [edges, setEdges] = useState<any>([]);
 
     const onNodesChange = useCallback(
       (changes: NodeChange[]) =>
@@ -139,7 +137,11 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
     }, [edges, nodes, refitElements]);
 
     const selectedTransformRef = useRef(selectedTransform);
-    selectedTransformRef.current = selectedTransform;
+    const handleExpandRef = useRef<() => void>(() => {});
+
+    useEffect(() => {
+      selectedTransformRef.current = selectedTransform;
+    }, [selectedTransform]);
 
     const createNewTransformNode = useCallback((
       id: string,
@@ -175,7 +177,7 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
       data: {
         label: "Transformation",
         selectedTransform: selectedTransformRef,
-        handleExpand: () => {},
+        handleExpand: () => handleExpandRef.current(),
       },
       position: { x: 280, y: 45 },
       targetPosition: "left",
@@ -271,10 +273,10 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
     ]);
 
     useEffect(() => {
-      transformCollapsedNodeConfig.data.handleExpand = handleExpand;
-    }, [handleExpand, transformCollapsedNodeConfig]);
+      handleExpandRef.current = handleExpand;
+    }, [handleExpand]);
 
-    useEffect(() => {
+    const computedNodes = useMemo(() => {
       if (selectedTransform.length > 0) {
         const linkTransforms = selectedTransform.map((transform, id) => {
           const newId = `transform_${id + 1}`;
@@ -310,14 +312,12 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
           draggable: false,
         };
 
-        setNodes([
+        return [
           dataSourceNode,
           transformGroupNode,
           ...linkTransforms,
           dataDestinationNode,
-        ]);
-
-        setEdges([...createEdges]);
+        ];
       } else {
         const defaultTransformationNode = {
           id: "add_transformation",
@@ -342,15 +342,13 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
           draggable: false,
         };
 
-        setNodes([
+        return [
           dataSourceNode,
           defaultTransformationNode,
           dataDestinationNode,
-        ]);
-        setEdges([...createEdges]);
+        ];
       }
     }, [
-      createEdges,
       dataSourceNode,
       destinationName,
       destinationType,
@@ -358,6 +356,15 @@ const CompositionFlow: React.FC<CreationFlowProps> = memo(
       selectedTransform,
       createNewTransformNode,
     ]);
+
+    // Synchronize computed nodes and edges with state
+    useEffect(() => {
+      // Always defer state updates to avoid cascading renders
+      queueMicrotask(() => {
+        setNodes(computedNodes);
+        setEdges([...createEdges]);
+      });
+    }, [computedNodes, createEdges]);
 
     const reactFlowProps = useMemo(() => ({
       nodes,

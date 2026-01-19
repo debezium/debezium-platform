@@ -8,7 +8,7 @@ import {
   FlexItem,
   Content,
 } from "@patternfly/react-core";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { fetchData, TransformData } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useQuery } from "react-query";
@@ -27,7 +27,6 @@ const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
   const { t } = useTranslation();
   const id1 = "pipeline-transform-select";
   const id2 = "pipeline-transform-create";
-  const [isCreateChecked, setIsCreateChecked] = useState(id1);
 
   const {
     data: transformList = [],
@@ -38,14 +37,16 @@ const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
     fetchData<TransformData[]>(`${API_URL}/api/transforms`)
   );
 
-  useEffect(() => {
-    if (transformList.length === 0 && isTransformLoading === false) {
-      setIsCreateChecked(id2);
-    }
-  }, [transformList, isTransformLoading]);
+  // Track if user has manually selected a mode
+  const [userSelection, setUserSelection] = useState<string | null>(null);
+
+  // Derive the active mode: use user selection if available, otherwise auto-select based on data
+  const isCreateChecked = userSelection !== null 
+    ? userSelection 
+    : (!isTransformLoading && transformList.length === 0 ? id2 : id1);
 
   const onChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setIsCreateChecked(event.currentTarget.id);
+    setUserSelection(event.currentTarget.id);
   };
 
   return (

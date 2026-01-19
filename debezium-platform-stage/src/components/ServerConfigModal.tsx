@@ -1,6 +1,6 @@
 import { Modal, ModalVariant, ModalHeader, ModalBody, ModalFooter, Button, MultipleFileUpload, MultipleFileUploadMain, MultipleFileUploadStatus, MultipleFileUploadStatusItem, Alert, AlertActionCloseButton, DropEvent, ProgressStep, ProgressStepper, TextArea } from "@patternfly/react-core";
 import { InProgressIcon, PendingIcon, UploadIcon } from "@patternfly/react-icons";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { FileRejection } from 'react-dropzone';
 import { faker } from '@faker-js/faker';
 import "./ServerConfigModal.css"
@@ -41,9 +41,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
 
     const [currentFiles, setCurrentFiles] = useState<File[]>([]);
     const [readFileData, setReadFileData] = useState<readFile[]>([]);
-    const [showStatus, setShowStatus] = useState(false);
     const [modalText, setModalText] = useState('');
-    const [statusIcon, setStatusIcon] = useState('inProgress');
 
     const [createdSource, setCreatedSource] = useState<Source | null>(null);
     const [createdTransform, setCreatedTransform] = useState<Transform[] | null>(null);
@@ -55,21 +53,18 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     const [createdPipelineResources, setCreatedPipelineResources] = useState<PipelineResourceType[]>([]);
     const [dbzServerFileConfig, setDbzServerFileConfig] = useState<string | object>("");
 
-    useEffect(() => {
+    const statusIcon = useMemo(() => {
         if (readFileData.length < currentFiles.length) {
-            setStatusIcon('inProgress');
+            return 'inProgress';
         } else if (readFileData.every((file) => file.loadResult === 'success')) {
-            setStatusIcon('success');
+            return 'success';
         } else {
-            setStatusIcon('danger');
+            return 'danger';
         }
     }, [readFileData, currentFiles]);
-    useEffect(() => {
-        if (currentFiles.length > 0) {
-            setShowStatus(true);
-        } else {
-            setShowStatus(false);
-        }
+
+    const showStatus = useMemo(() => {
+        return currentFiles.length > 0;
     }, [currentFiles]);
     // remove files from both state arrays based on their name
     const removeFiles = (namesOfFilesToRemove: string[]) => {

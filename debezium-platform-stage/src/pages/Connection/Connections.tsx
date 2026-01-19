@@ -11,7 +11,7 @@ import { useQuery } from "react-query";
 import { API_URL } from "@utils/constants";
 import _, { debounce } from "lodash";
 import PageHeader from "@components/PageHeader";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { getConnectionRole } from "@utils/helpers";
 import ConnectionTable from "@components/ConnectionTable";
 
@@ -35,7 +35,6 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
   const [connectionsTypeIsExpanded, setConnectionsTypeIsExpanded] = useState(false);
   const [connectionsTypeSelected, setConnectionsTypeSelected] = useState('');
-  const [searchResult, setSearchResult] = useState<connectionsList[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const onConnectionsTypeToggle = () => {
@@ -79,32 +78,12 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     () => fetchData<Connection[]>(`${API_URL}/api/connections`),
     {
       refetchInterval: 7000,
-      onSuccess: (data) => {
-        const withRole = data.map((conn) => ({
-          ...conn,
-          role: getConnectionRole(conn.type.toLowerCase()) || "",
-        }));
-
-        let result = withRole;
-        if (searchQuery.length > 0) {
-          result = result.filter((o) =>
-            o.name.toLowerCase().includes(searchQuery.toLowerCase())
-          );
-        }
-        if (connectionsTypeSelected === 'Source') {
-          result = result.filter((conn) => conn.role === 'source');
-        } else if (connectionsTypeSelected === 'Destination') {
-          result = result.filter((conn) => conn.role === 'destination');
-        } else {
-          result = _.sortBy(result, (o) => o.name.toLowerCase());
-        }
-        setSearchResult(result);
-      },
     }
   );
 
-  useEffect(() => {
-   const withRole = connectionsList.map((conn) => ({
+  // Compute filtered and sorted results
+  const searchResult = React.useMemo(() => {
+    const withRole = connectionsList.map((conn) => ({
       ...conn,
       role: getConnectionRole(conn.type.toLowerCase()) || "",
     }));
@@ -123,7 +102,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
       result = _.sortBy(result, (o) => o.name.toLowerCase());
     }
 
-    setSearchResult(result);
+    return result;
   }, [connectionsTypeSelected, connectionsList, searchQuery]);
 
   const onClear = () => {
@@ -131,26 +110,26 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     setConnectionsTypeSelected('');
   };
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      const withRole: connectionsList[] = connectionsList.map((conn) => ({
-        ...conn,
-        role: getConnectionRole(conn.type.toLowerCase()) || "",
-      }));
-      const filteredSource = _.filter(withRole, function (o: connectionsList) {
-        return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-      });
-      setSearchResult(filteredSource);
+  // Debounce the search query state update
+  const debouncedSetSearchQuery = React.useMemo(
+    () => debounce((value: string) => {
+      setSearchQuery(value);
     }, 700),
-    [connectionsList]
+    []
   );
+
+  // Cleanup debounced function on unmount
+  React.useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, [debouncedSetSearchQuery]);
 
   const onSearch = React.useCallback(
     (value: string) => {
-      setSearchQuery(value);
-      debouncedSearch(value);
+      debouncedSetSearchQuery(value);
     },
-    [debouncedSearch]
+    [debouncedSetSearchQuery]
   );
 
 

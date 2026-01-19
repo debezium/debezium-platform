@@ -8,7 +8,7 @@ import {
   Divider,
   Content,
 } from "@patternfly/react-core";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Destination, fetchData } from "../../apis/apis";
 import { useQuery } from "react-query";
 import { API_URL } from "../../utils/constants";
@@ -26,9 +26,8 @@ const PipelineDestinationModel: React.FC<PipelineDestinationModelProps> = ({
 }) => {
   const id1 = "pipeline-destination-select";
   const id2 = "pipeline-destination-create";
-  const [isCreateChecked, setIsCreateChecked] = useState(id1);
   const [selectedDestination, setSelectedDestination] = useState<string>("");
-
+  
   const {
     data: destinationList = [],
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -38,11 +37,13 @@ const PipelineDestinationModel: React.FC<PipelineDestinationModelProps> = ({
     fetchData<Destination[]>(`${API_URL}/api/destinations`)
   );
 
-  useEffect(() => {
-    if (destinationList.length === 0 && isDestinationLoading === false) {
-      setIsCreateChecked(id2);
-    }
-  }, [destinationList, isDestinationLoading]);
+  // Track if user has manually selected a mode
+  const [userSelection, setUserSelection] = useState<string | null>(null);
+
+  // Derive the active mode: use user selection if available, otherwise auto-select based on data
+  const isCreateChecked = userSelection !== null 
+    ? userSelection 
+    : (!isDestinationLoading && destinationList.length === 0 ? id2 : id1);
 
   const selectDestination = useCallback(
     (destinationId: string) => {
@@ -52,7 +53,7 @@ const PipelineDestinationModel: React.FC<PipelineDestinationModelProps> = ({
   );
 
   const onChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setIsCreateChecked(event.currentTarget.id);
+    setUserSelection(event.currentTarget.id);
   };
 
   return (

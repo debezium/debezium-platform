@@ -21,7 +21,7 @@ import {
   DropdownList,
 } from "@patternfly/react-core";
 import { BarsIcon } from "@patternfly/react-icons";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import dbz_logo_black from "../assets/color_black_debezium.svg";
 import dbz_svg from "../assets/debezium_logo.png";
 import { useNavigate } from "react-router-dom";
@@ -51,7 +51,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const { darkMode, setDarkMode } = useData();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [selectedTheme, setSelectedTheme] = useState<string>('');
+  const [selectedTheme, setSelectedTheme] = useState<string>(() => {
+    return localStorage.getItem("themeMode") || "system";
+  });
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
 
 
@@ -89,7 +91,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     </MenuToggle>
   );
 
-  const toggleDarkMode = (val: string) => {
+  const toggleDarkMode = useCallback((val: string) => {
     let newDarkMode = val === "dark";
     if (val === "system") {
       newDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -103,12 +105,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     } else {
       document.documentElement.classList.remove("pf-v6-theme-dark");
     }
-  };
+  }, [setDarkMode]);
   useEffect(() => {
-    const storedThemeMode = localStorage.getItem("themeMode");
-    setSelectedTheme(storedThemeMode || "system");
-    toggleDarkMode(storedThemeMode || "system");
-  }, []);
+    toggleDarkMode(selectedTheme || "system");
+  }, [toggleDarkMode]);
 
   return (
     <>

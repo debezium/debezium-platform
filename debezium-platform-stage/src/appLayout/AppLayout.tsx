@@ -3,14 +3,13 @@ import {
   NotificationBadgeVariant,
   Page,
 } from "@patternfly/react-core";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AppBreadcrumb from "./AppBreadcrumb";
 import "./AppLayout.css";
 import AppHeader from "./AppHeader";
 import AppSideNavigation from "./AppSideNavigation";
 import { useLocation } from "react-router-dom";
 import { useData } from "./AppContext";
-// import AppNotification from "./AppNotification";
 import { useNotification } from "./AppNotificationContext";
 import AppNotification from "./AppNotification";
 import { useSetAtom } from "jotai";
@@ -43,7 +42,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     setNotifications,
   } = useNotification();
 
-  const [overflowMessage, setOverflowMessage] = useState<string>("");
   const { updateNavigationCollapsed } = useData();
 
 
@@ -56,13 +54,13 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     updateNavigationCollapsed(sidebarOpen);
   }, [updateNavigationCollapsed, sidebarOpen]);
 
-  const buildOverflowMessage = () => {
+  const overflowMessage = useMemo(() => {
     const overflow = alerts.length - 3;
     if (overflow > 0 && 3 > 0) {
       return `View ${overflow} more notification(s) in notification drawer`;
     }
     return "";
-  };
+  }, [alerts]);
 
   const getUnreadNotificationsNumber = () =>
     notifications.filter(
@@ -85,10 +83,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     }
     return NotificationBadgeVariant.unread;
   };
-
-  useEffect(() => {
-    setOverflowMessage(buildOverflowMessage());
-  }, [notifications, alerts]);
 
   // Clear pipeline atoms when navigating away from pipeline designer
   useEffect(() => {

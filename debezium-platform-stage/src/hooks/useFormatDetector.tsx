@@ -1,35 +1,36 @@
 import { initialConnectorSchema, kafkaConnectSchema } from "@utils/schemas";
 import Ajv from "ajv";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 const ajv = new Ajv();
 
 export function useFormatDetector(code: unknown, connectorType: "source" | "destination") {
-    const [codeFormatType, setFormatType] = useState<string>("");
     const validate = ajv.compile(initialConnectorSchema);
     const validateKafkaSchema = ajv.compile(kafkaConnectSchema);
 
-    useEffect(() => {
-        if (code) {
-            if (isValidJson(code)) {
-                if (connectorType === "source") {
-                    const isKafkaConnectSchema = validateKafkaSchema(code);
-                    if (isKafkaConnectSchema) {
-                        setFormatType("kafka-connect");
-                        return;
-                    }
+    // Compute format type based on code and connectorType
+    const codeFormatType = useMemo(() => {
+        if (!code) return "";
+
+        if (isValidJson(code)) {
+            if (connectorType === "source") {
+                const isKafkaConnectSchema = validateKafkaSchema(code);
+                if (isKafkaConnectSchema) {
+                    return "kafka-connect";
                 }
-                const isValid = validate(code);
-                if (isValid) {
-                    setFormatType("dbz-platform");
-                }
-            } else if (typeof code === "string" && code.includes("debezium.source.")) {
-                setFormatType("properties-file");
-            } else {
-                console.log("Invalid JSON format");
             }
+            const isValid = validate(code);
+            if (isValid) {
+                return "dbz-platform";
+            }
+            return "";
+        } else if (typeof code === "string" && code.includes("debezium.source.")) {
+            return "properties-file";
+        } else {
+            console.log("Invalid JSON format");
+            return "";
         }
-    }, [code, connectorType]);
+    }, [code, connectorType, validate, validateKafkaSchema]);
 
     const formatDetection = {
         formatType: codeFormatType,

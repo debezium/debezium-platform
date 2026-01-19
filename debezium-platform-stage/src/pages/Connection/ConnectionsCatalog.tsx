@@ -3,7 +3,7 @@ import { Bullseye, Button, Content, ContentVariants, EmptyState, EmptyStateActio
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { ThIcon, ListIcon, SearchIcon, FilterIcon } from "@patternfly/react-icons";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Catalog } from "src/apis";
 import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
 import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
@@ -24,12 +24,6 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
   const [connectionsTypeIsExpanded, setConnectionsTypeIsExpanded] = useState(false);
   const [connectionsTypeSelected, setConnectionsTypeSelected] = useState('');
   const [isSelected, setIsSelected] = React.useState<"grid" | "list">("grid");
-
-
-
-  const [searchResult, setSearchResult] = useState<Catalog[]>(
-    _.sortBy([...sourceCatalog, ...destinationCatalog], (o) => o.name.toLowerCase())
-  );
   const [searchQuery, setSearchQuery] = useState<string>("");
 
 
@@ -45,16 +39,29 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     setConnectionsTypeIsExpanded(false);
   };
 
-  useEffect(() => {
+  // Compute filtered and sorted results
+  const searchResult = React.useMemo(() => {
+    let catalogData: Catalog[] = [];
+    
     if (connectionsTypeSelected === 'Source') {
-      setSearchResult(sourceCatalog);
+      catalogData = sourceCatalog;
     } else if (connectionsTypeSelected === 'Destination') {
-      setSearchResult(destinationCatalog);
+      catalogData = destinationCatalog;
     } else {
-      setSearchResult(_.sortBy([...sourceCatalog, ...destinationCatalog], (o) => o.name.toLowerCase()));
+      catalogData = [...sourceCatalog, ...destinationCatalog];
     }
 
-  }, [connectionsTypeSelected]);
+    // Apply search filter
+    let filtered = catalogData;
+    if (searchQuery.length > 0) {
+      filtered = _.filter(catalogData, (o) => 
+        o.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Sort by name
+    return _.sortBy(filtered, (o) => o.name.toLowerCase());
+  }, [connectionsTypeSelected, searchQuery]);
 
   const onClear = () => {
     onSearch?.("");
@@ -69,45 +76,26 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     setIsSelected(id.split("-")[2] as "grid" | "list");
   };
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      let filteredSource: Catalog[] = [];
-      if (connectionsTypeSelected === 'Source') {
-        filteredSource = _.filter(
-          sourceCatalog,
-          function (o) {
-            return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-          }
-        );
-
-      } else if (connectionsTypeSelected === 'Destination') {
-        filteredSource = _.filter(
-          destinationCatalog,
-          function (o) {
-            return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-          }
-        );
-      } else {
-        filteredSource = _.filter(
-          [...sourceCatalog, ...destinationCatalog],
-          function (o) {
-            return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-          }
-        );
-      }
-
-      const sortedFiltered = _.sortBy(filteredSource, (o) => o.name.toLowerCase());
-      setSearchResult(sortedFiltered);
+  // Debounce the search query state update
+  const debouncedSetSearchQuery = React.useMemo(
+    () => debounce((value: string) => {
+      setSearchQuery(value);
     }, 700),
-    [connectionsTypeSelected]
+    []
   );
 
-  const onSearch = useCallback(
+  // Cleanup debounced function on unmount
+  React.useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, [debouncedSetSearchQuery]);
+
+  const onSearch = React.useCallback(
     (value: string) => {
-      setSearchQuery(value);
-      debouncedSearch(value);
+      debouncedSetSearchQuery(value);
     },
-    [debouncedSearch]
+    [debouncedSetSearchQuery]
   );
 
   const onConnectionSelection = (connectionId: string, role: string) => {

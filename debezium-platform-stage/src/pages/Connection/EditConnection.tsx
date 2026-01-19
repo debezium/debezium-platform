@@ -61,6 +61,24 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
         setKeyCount(configMap.size);
     };
 
+    const schema = yup.object({
+        name: yup.string().required(),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(selectedSchema?.schema?.required?.reduce((acc: any, field: string) => {
+            acc[field] = yup.string().required();
+            return acc;
+        }, {}) || {})
+    }).required();
+
+    const { formState: { errors }, control, handleSubmit, reset } = useForm<ConnectionFormValues>(
+        {
+            defaultValues: {
+                name: connection?.name || "",
+                ...connection?.config
+            } as ConnectionFormValues,
+            resolver: yupResolver(schema)
+        }
+    );
 
     useEffect(() => {
         const fetchConnections = async () => {
@@ -112,7 +130,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
         };
 
         fetchConnections();
-    }, [connectionId, schemas]);
+    }, [connectionId, schemas, reset]);
 
     useEffect(() => {
         const fetchSchemas = async () => {
@@ -133,28 +151,6 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
         fetchSchemas();
     }, []);
-
-    const schema = yup.object({
-        name: yup.string().required(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(selectedSchema?.schema?.required?.reduce((acc: any, field: string) => {
-            acc[field] = yup.string().required();
-            return acc;
-        }, {}) || {})
-    }).required();
-
-
-
-
-    const { formState: { errors }, control, handleSubmit, reset } = useForm<ConnectionFormValues>(
-        {
-            defaultValues: {
-                name: connection?.name || "",
-                ...connection?.config
-            } as ConnectionFormValues,
-            resolver: yupResolver(schema)
-        }
-    );
 
     const handleAddProperty = () => {
         const newKey = `key${keyCount}`;
