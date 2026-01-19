@@ -19,6 +19,7 @@ import {
   selectedDestinationAtom,
   selectedTransformAtom,
 } from "../pages/Pipeline/PipelineDesigner";
+import { AIChatbot } from "../components/AIChatbot";
 
 interface IAppLayout {
   children: React.ReactNode;
@@ -159,6 +160,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
       >
         {alerts.slice(0, 3)}
       </AlertGroup>
+      <AIChatbot />
     </>
   );
 };
