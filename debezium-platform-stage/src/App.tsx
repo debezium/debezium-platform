@@ -5,16 +5,19 @@ import { AppLayout } from "./appLayout/AppLayout";
 import { AppRoutes } from "./AppRoutes";
 import { AppContextProvider } from "./appLayout/AppContext";
 import { NotificationProvider } from "./appLayout/AppNotificationContext";
+import { ChatbotProvider } from "./components/AIChatbot";
 
 function App() {
   return (
     <Router>
       <AppContextProvider>
         <NotificationProvider>
-      <AppLayout>
-        <AppRoutes />
-      </AppLayout>
-      </NotificationProvider>
+          <ChatbotProvider>
+            <AppLayout>
+              <AppRoutes />
+            </AppLayout>
+          </ChatbotProvider>
+        </NotificationProvider>
       </AppContextProvider>
     </Router>
   );
