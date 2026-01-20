@@ -44,7 +44,7 @@ import {
   TextInput,
   Tooltip,
 } from "@patternfly/react-core";
-import { atom, useAtom } from "jotai";
+import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
 import "./PipelineDesigner.css";
 import {
