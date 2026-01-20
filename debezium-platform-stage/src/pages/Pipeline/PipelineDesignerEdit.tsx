@@ -78,11 +78,7 @@ import ApiError from "@components/ApiError";
 import TrademarkMessage from "@components/TrademarkMessage";
 import { useTranslation } from "react-i18next";
 import { Properties } from "src/hooks/useConnectorForm";
-
-// Define Jotai atoms
-export const selectedSourceAtom = atom<Source | undefined>(undefined);
-export const selectedDestinationAtom = atom<Destination | undefined>(undefined);
-export const selectedTransformAtom = atom<Transform[]>([]);
+import { selectedTransformAtom } from "./PipelineDesigner";
 
 const getItems = (
   selectedTransform: Transform[],

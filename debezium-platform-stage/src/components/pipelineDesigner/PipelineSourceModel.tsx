@@ -37,10 +37,8 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
     fetchData<Source[]>(`${API_URL}/api/sources`)
   );
 
-  // Track if user has manually selected a mode
   const [userSelection, setUserSelection] = useState<string | null>(null);
 
-  // Derive the active mode: use user selection if available, otherwise auto-select based on data
   const isCreateChecked = userSelection !== null 
     ? userSelection 
     : (!isSourceLoading && sourceList.length === 0 ? id2 : id1);

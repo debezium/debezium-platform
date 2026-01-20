@@ -147,7 +147,6 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
     refitElements();
   }, [edges, nodes, refitElements]);
 
-  // Define createNewTransformNode before it's used (memoized to prevent dependency issues)
   const createNewTransformNode = useCallback(
     (
       id: string,

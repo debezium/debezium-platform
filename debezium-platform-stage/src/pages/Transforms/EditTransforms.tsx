@@ -154,8 +154,6 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
       value: item.transform,
       children: item.transform,
     }));
-
-    // Filter menu items based on the text input value when one exists
     if (filterValue) {
       const filteredOptions = baseOptions.filter((menuItem) =>
         String(menuItem.children)
@@ -389,27 +387,30 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
     fetchDestinations();
   }, [transformId]);
 
-  const editTransform = async (payload: TransformPayload) => {
-    const response = await editPut(
-      `${API_URL}/api/transforms/${transformData?.id}`,
-      payload
-    );
-    if (response.error) {
-      addNotification(
-        "danger",
-        `Source edit failed`,
-        `Failed to create ${(response.data as any).name}: ${response.error}`
+  const editTransform = React.useCallback(
+    async (payload: TransformPayload) => {
+      const response = await editPut(
+        `${API_URL}/api/transforms/${transformData?.id}`,
+        payload
       );
-    } else {
-      onSelection?.(response.data as any);
-      addNotification(
-        "success",
-        `Edit successful`,
-        `Source "${(response.data as any).name}" edited successfully.`
-      );
-      setViewMode(true);
-    }
-  };
+      if (response.error) {
+        addNotification(
+          "danger",
+          `Source edit failed`,
+          `Failed to create ${(response.data as any).name}: ${response.error}`
+        );
+      } else {
+        onSelection?.(response.data as any);
+        addNotification(
+          "success",
+          `Edit successful`,
+          `Source "${(response.data as any).name}" edited successfully.`
+        );
+        setViewMode(true);
+      }
+    },
+    [transformData?.id, addNotification, onSelection]
+  );
 
   const handleEdit = React.useCallback(
     async (

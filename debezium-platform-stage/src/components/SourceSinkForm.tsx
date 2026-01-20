@@ -144,11 +144,9 @@ const SourceSinkForm = ({
 
   const NO_RESULTS = 'no results';
 
-  // Track previous signalCollectionName to detect external changes
   const prevSignalCollectionNameRef = useRef(signalCollectionName);
   
   useEffect(() => {
-    // Only update if signalCollectionName prop changed externally
     if (prevSignalCollectionNameRef.current !== signalCollectionName) {
       prevSignalCollectionNameRef.current = signalCollectionName;
       setSignalCollectionNameVerify(signalCollectionName || "");
@@ -174,36 +172,27 @@ const SourceSinkForm = ({
     }
   );
 
-  // Sync inputValue when selectedConnection changes externally
   React.useEffect(() => {
     setInputValue(selectedConnection?.name || '');
   }, [selectedConnection]);
 
-  // Compute base select options from connections
   const baseSelectOptions = React.useMemo(() => {
     return getInitialSelectOptions(connections, dataType || ConnectorId);
   }, [connections, dataType, ConnectorId]);
 
-  // Compute filtered select options based on filterValue
   const selectOptions = React.useMemo(() => {
     if (!baseSelectOptions) return undefined;
-
-    // Filter menu items based on the text input value when one exists
     if (filterValue) {
       const filtered = baseSelectOptions.filter((menuItem) =>
         String(menuItem.children).toLowerCase().includes(filterValue.toLowerCase())
       );
-
-      // When no options are found after filtering, display 'No results found'
       if (!filtered.length) {
         return [
           { isAriaDisabled: true, children: `No results found for "${filterValue}"`, value: NO_RESULTS }
         ];
       }
-
       return filtered;
     }
-
     return baseSelectOptions;
   }, [baseSelectOptions, filterValue, NO_RESULTS]);
 
@@ -255,7 +244,6 @@ const SourceSinkForm = ({
     if (value !== selectedConnection?.name) {
       setSelectedConnection(undefined);
     }
-    // Open the menu when the input value changes and the new value is not empty
     if (value && !isOpen) {
       setIsOpen(true);
     }
@@ -280,7 +268,6 @@ const SourceSinkForm = ({
         indexToFocus = focusedItemIndex - 1;
       }
 
-      // Skip disabled options
       while (selectOptions && selectOptions[indexToFocus]?.isDisabled) {
         indexToFocus--;
         if (indexToFocus === -1) {

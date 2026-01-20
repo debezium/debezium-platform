@@ -241,11 +241,9 @@ const ConfigurePipeline: React.FunctionComponent = () => {
 
   const [selectedTransform] = useAtom(selectedTransformAtom);
 
-  // Update code state when source, destination, or transforms change
   React.useEffect(() => {
     if (source?.name && destination?.name) {
       setCode((prev) => {
-        // Only update if these specific fields changed
         const hasChanged = 
           prev.source.id !== source.id ||
           prev.source.name !== source.name ||
