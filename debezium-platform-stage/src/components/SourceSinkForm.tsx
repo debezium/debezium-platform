@@ -39,6 +39,7 @@ import { AddCircleOIcon, CheckCircleIcon, ExclamationCircleIcon, PlusIcon, Times
 import { getConnectionRole, getConnectorTypeName, getDatabaseType } from "@utils/helpers";
 import ConnectorImage from "./ComponentImage";
 import { useTranslation } from "react-i18next";
+import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Connection, ConnectionConfig, fetchData, fetchDataCall, TableData, verifySignals } from "src/apis";
 import { API_URL } from "@utils/constants";
@@ -124,7 +125,7 @@ const SourceSinkForm = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const [signalCollectionNameVerify, setSignalCollectionNameVerify] = useState<string>("");
+  const [signalCollectionNameVerify, setSignalCollectionNameVerify] = useState<string>(() => signalCollectionName || "");
   const [signalVerified, setSignalVerified] = useState(false);
   const [signalMissingConnection, setSignalMissingConnection] = useState<boolean>(false);
 
@@ -135,7 +136,6 @@ const SourceSinkForm = ({
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState<string>('');
   const [filterValue, setFilterValue] = useState<string>('');
-  const [selectOptions, setSelectOptions] = useState<SelectOptionProps[]>();
   const [focusedItemIndex, setFocusedItemIndex] = useState<number | null>(null);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
@@ -144,8 +144,15 @@ const SourceSinkForm = ({
 
   const NO_RESULTS = 'no results';
 
+  // Track previous signalCollectionName to detect external changes
+  const prevSignalCollectionNameRef = useRef(signalCollectionName);
+  
   useEffect(() => {
-    setSignalCollectionNameVerify(signalCollectionName || "");
+    // Only update if signalCollectionName prop changed externally
+    if (prevSignalCollectionNameRef.current !== signalCollectionName) {
+      prevSignalCollectionNameRef.current = signalCollectionName;
+      setSignalCollectionNameVerify(signalCollectionName || "");
+    }
   }, [signalCollectionName]);
 
   const {
@@ -167,39 +174,38 @@ const SourceSinkForm = ({
     }
   );
 
-  useEffect(() => {
-    setSelectOptions(getInitialSelectOptions(connections, dataType || ConnectorId));
-  }, [connections]);
-
-  useEffect(() => {
-    setInputValue(selectedConnection?.name || "");
+  // Sync inputValue when selectedConnection changes externally
+  React.useEffect(() => {
+    setInputValue(selectedConnection?.name || '');
   }, [selectedConnection]);
 
-  useEffect(() => {
-    if (!selectOptions) return;
-    let newSelectOptions: SelectOptionProps[] = selectOptions;
+  // Compute base select options from connections
+  const baseSelectOptions = React.useMemo(() => {
+    return getInitialSelectOptions(connections, dataType || ConnectorId);
+  }, [connections, dataType, ConnectorId]);
+
+  // Compute filtered select options based on filterValue
+  const selectOptions = React.useMemo(() => {
+    if (!baseSelectOptions) return undefined;
 
     // Filter menu items based on the text input value when one exists
     if (filterValue) {
-      newSelectOptions = selectOptions.filter((menuItem) =>
+      const filtered = baseSelectOptions.filter((menuItem) =>
         String(menuItem.children).toLowerCase().includes(filterValue.toLowerCase())
       );
 
       // When no options are found after filtering, display 'No results found'
-      if (!newSelectOptions.length) {
-        newSelectOptions = [
+      if (!filtered.length) {
+        return [
           { isAriaDisabled: true, children: `No results found for "${filterValue}"`, value: NO_RESULTS }
         ];
       }
 
-      // Open the menu when the input value changes and the new value is not empty
-      if (!isOpen) {
-        setIsOpen(true);
-      }
+      return filtered;
     }
 
-    setSelectOptions(newSelectOptions);
-  }, [filterValue, selectOptions]);
+    return baseSelectOptions;
+  }, [baseSelectOptions, filterValue, NO_RESULTS]);
 
   const createItemId = (value: unknown) => `select-typeahead-${String(value ?? '').replace(/\s+/g, '-')}`;
 
@@ -248,6 +254,10 @@ const SourceSinkForm = ({
     resetActiveAndFocusedItem();
     if (value !== selectedConnection?.name) {
       setSelectedConnection(undefined);
+    }
+    // Open the menu when the input value changes and the new value is not empty
+    if (value && !isOpen) {
+      setIsOpen(true);
     }
   };
 
@@ -424,10 +434,12 @@ const SourceSinkForm = ({
     setIsModalOpen(false);
   }
 
-  const fetchCollections = async () => {
+  const fetchCollections = React.useCallback(async () => {
+    if (!selectedConnection?.id) return;
+
     setIsCollectionsLoading(true);
     const response = await fetchDataCall<TableData>(
-      `${API_URL}/api/connections/${selectedConnection?.id}/collections`
+      `${API_URL}/api/connections/${selectedConnection.id}/collections`
     );
     if (response.error) {
       setCollectionsError(response.error.body || {});
@@ -437,13 +449,14 @@ const SourceSinkForm = ({
     }
 
     setIsCollectionsLoading(false);
-  };
+  }, [selectedConnection]);
 
   useEffect(() => {
     if (selectedConnection?.id) {
       fetchCollections();
     }
-  }, [selectedConnection]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConnection?.id]);
 
 
   return (

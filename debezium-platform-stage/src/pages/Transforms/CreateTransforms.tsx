@@ -51,7 +51,7 @@ import {
 import * as React from "react";
 import transforms from "../../__mocks__/data/DebeziumTransfroms.json";
 import predicates from "../../__mocks__/data/Predicates.json";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPost, TransformData, TransformPayload } from "src/apis";
 import { API_URL } from "@utils/constants";
@@ -90,10 +90,11 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
   const [selected, setSelected] = useState<string>("");
   const [inputValue, setInputValue] = useState<string>("");
   const [filterValue, setFilterValue] = useState<string>("");
-  const [selectOptions, setSelectOptions] = useState<SelectOptionProps[]>();
   const [focusedItemIndex, setFocusedItemIndex] = useState<number | null>(null);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
+
+  const NO_RESULTS = "no results";
 
   const [code, setCode] = useState({
     name: "",
@@ -106,36 +107,21 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
   const [codeAlert, setCodeAlert] = useState("");
 
   const validate = ajv.compile(transformSchema);
-  const NO_RESULTS = "no results";
-
-  useEffect(() => {
-    const selectOption: SelectOptionProps[] = transforms.map((item) => {
-      return {
-        value: item.transform,
-        children: item.transform,
-      };
-    });
-    setSelectOptions(selectOption);
-  }, []);
 
   const [selectedPredicate, setSelectedPredicate] = React.useState<string>("");
-  const [selectPredicateOptions, setSelectPredicateOptions] =
-    React.useState<FormSelectOptionProps[]>();
-
-  useEffect(() => {
-    const selectOption: FormSelectOptionProps[] = predicates.map((item) => {
-      return {
+  const [selectPredicateOptions] =
+    React.useState<FormSelectOptionProps[]>(() => {
+      const selectOption: FormSelectOptionProps[] = predicates.map((item) => ({
         value: item.predicate,
         label: item.predicate,
-      };
+      }));
+      selectOption.unshift({
+        value: "",
+        label: "Select a predicate type",
+        isPlaceholder: true,
+      });
+      return selectOption;
     });
-    selectOption.unshift({
-      value: "",
-      label: "Select a predicate type",
-      isPlaceholder: true,
-    });
-    setSelectPredicateOptions(selectOption);
-  }, []);
 
   const onChange = (
     _event: React.FormEvent<HTMLSelectElement>,
@@ -144,24 +130,23 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
     setSelectedPredicate(value);
   };
 
-  useEffect(() => {
-    const selectOption: SelectOptionProps[] = transforms.map((item) => {
-      return {
-        value: item.transform,
-        children: item.transform,
-      };
-    });
-    let newSelectOptions: SelectOptionProps[] = selectOption;
+  // Compute filtered select options based on filterValue
+  const selectOptions = React.useMemo(() => {
+    const baseOptions: SelectOptionProps[] = transforms.map((item) => ({
+      value: item.transform,
+      children: item.transform,
+    }));
 
     // Filter menu items based on the text input value when one exists
     if (filterValue) {
-      newSelectOptions = selectOption.filter((menuItem) =>
+      const filteredOptions = baseOptions.filter((menuItem) =>
         String(menuItem.children)
           .toLowerCase()
           .includes(filterValue.toLowerCase())
       );
-      if (!newSelectOptions.length) {
-        newSelectOptions = [
+      
+      if (!filteredOptions.length) {
+        return [
           {
             isAriaDisabled: true,
             children: `No results found for "${filterValue}"`,
@@ -169,13 +154,12 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
           },
         ];
       }
-      // Open the menu when the input value changes and the new value is not empty
-      if (!isOpen) {
-        setIsOpen(true);
-      }
+      
+      return filteredOptions;
     }
-    setSelectOptions(newSelectOptions);
-  }, [filterValue, isOpen]);
+
+    return baseOptions;
+  }, [filterValue, NO_RESULTS]);
 
   const createItemId = (value: any) =>
     `select-typeahead-${String(value ?? '').replace(/\s+/g, '-')}`;
@@ -234,6 +218,11 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
 
     if (value !== selected) {
       setSelected("");
+    }
+
+    // Open the menu when the input value changes and the new value is not empty
+    if (value && !isOpen) {
+      setIsOpen(true);
     }
   };
 

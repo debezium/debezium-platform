@@ -29,7 +29,8 @@ const PipelineDetails: React.FunctionComponent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [activeTabKey, setActiveTabKey] = React.useState("overview");
+  // Initialize activeTabKey from URL param
+  const [activeTabKey, setActiveTabKey] = React.useState(() => detailsTab || "overview");
 
   const [pipeline, setPipeline] = useState<Pipeline>();
 
@@ -37,15 +38,18 @@ const PipelineDetails: React.FunctionComponent = () => {
 
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (detailsTab === "overview") {
-      setActiveTabKey("overview");
-    } else if (detailsTab === "logs") {
-      setActiveTabKey("logs");
-    } else if (detailsTab === "edit") {
-      setActiveTabKey("edit");
-    } else if (detailsTab === "action") {
-      setActiveTabKey("action");
+  // Track previous detailsTab to detect changes
+  const prevDetailsTabRef = React.useRef(detailsTab);
+
+  React.useEffect(() => {
+    // Only update if detailsTab has changed and is a valid value
+    if (prevDetailsTabRef.current !== detailsTab && detailsTab) {
+      prevDetailsTabRef.current = detailsTab;
+      
+      const validTabs = ["overview", "logs", "edit", "action"];
+      if (validTabs.includes(detailsTab)) {
+        setActiveTabKey(detailsTab);
+      }
     }
   }, [detailsTab]);
 

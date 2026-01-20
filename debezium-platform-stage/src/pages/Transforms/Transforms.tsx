@@ -39,7 +39,7 @@ import { fetchData, Pipeline, TransformData, useDeleteData } from "src/apis";
 import { API_URL } from "@utils/constants";
 import { useQuery } from "react-query";
 import _, { debounce } from "lodash";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import ApiError from "@components/ApiError";
 import PageHeader from "@components/PageHeader";
 import {
@@ -79,12 +79,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
   });
   const [deleteInstanceName, setDeleteInstanceName] = useState<string>("");
 
-  const [searchResult, setSearchResult] = React.useState<TransformData[]>([]);
   const [searchQuery, setSearchQuery] = React.useState<string>("");
-
-  const onClear = () => {
-    onSearch?.("");
-  };
 
   const {
     data: pipelineList = [],
@@ -107,18 +102,22 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
     () => fetchData<TransformData[]>(`${API_URL}/api/transforms`),
     {
       refetchInterval: 7000,
-      onSuccess: (data) => {
-        if (searchQuery.length > 0) {
-          const filteredSource = _.filter(data, function (o) {
-            return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-          });
-          setSearchResult(filteredSource);
-        } else {
-          setSearchResult(data);
-        }
-      },
     }
   );
+
+  // Compute filtered results based on search query
+  const searchResult = React.useMemo(() => {
+    if (searchQuery.length === 0) {
+      return transformsList;
+    }
+    return _.filter(transformsList, (o) =>
+      o.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, transformsList]);
+
+  const onClear = () => {
+    onSearch?.("");
+  };
 
   const { mutate: deleteData } = useDeleteData({
     onSuccess: () => {
@@ -152,22 +151,24 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
     setIsOpen(toggleValue);
   };
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      const filteredSource = _.filter(transformsList, function (o) {
-        return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-      });
-      setSearchResult(filteredSource);
+  const debouncedSetSearchQuery = React.useMemo(
+    () => debounce((value: string) => {
+      setSearchQuery(value);
     }, 700),
-    [transformsList]
+    []
   );
+
+  React.useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, [debouncedSetSearchQuery]);
 
   const onSearch = React.useCallback(
     (value: string) => {
-      setSearchQuery(value);
-      debouncedSearch(value);
+      debouncedSetSearchQuery(value);
     },
-    [debouncedSearch]
+    [debouncedSetSearchQuery]
   );
 
   const onDeleteHandler = (id: number, name: string) => {

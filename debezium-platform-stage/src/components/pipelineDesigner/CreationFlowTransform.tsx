@@ -226,6 +226,116 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     };
   }, [cardButton]);
 
+  const createNewTransformNode = (
+    id: string,
+    xPosition: number,
+    transformName: string,
+    transformPredicate?: Predicate
+  ) => {
+    return {
+      id,
+      data: {
+        label: transformName,
+        ...(transformPredicate?.type && {
+          predicate: {
+            label: transformPredicate.type.split(".").pop(),
+            negate: transformPredicate.negate,
+          },
+        }),
+      },
+      position: { x: xPosition, y: 31 },
+      targetPosition: "left",
+      style: {
+        zIndex: 999,
+      },
+      type: "transformLinkNode",
+      parentId: "transform_group",
+      extent: "parent",
+      draggable: false,
+    };
+  };
+
+  // Use ref to break circular dependency
+  const handleCollapsedRef = useRef<(() => void) | null>(null);
+
+  const initialNodes = [
+    dataSelectorSourceNode,
+    transformSelectorNode,
+    dataSelectorDestinationNode,
+  ];
+  const initialEdges = [
+    {
+      id: "complete-flow-path",
+      source: "source",
+      target: "destination",
+      type: "unifiedCustomEdge",
+      data: { throughNode: "add_transformation" },
+      sourceHandle: "a",
+    },
+  ];
+  const [nodes, setNodes] = useState<any>(initialNodes);
+  const [edges, setEdges] = useState<any>(initialEdges);
+
+  const onSourceSelection = useCallback(
+    (source: Source) => {
+      const selectedSourceNode = {
+        id: "source",
+        data: {
+          connectorType: source.type,
+          label: source.name,
+          type: "source",
+          editAction: () => setIsSourceModalOpen(true),
+        },
+        position: { x: 50, y: 80 },
+        type: "dataNode",
+        draggable: false,
+      };
+      updateSelectedSource(source);
+
+      setNodes((prevNodes: any) => {
+        return [
+          ...prevNodes.filter((node: any) => node.id !== "source"),
+          selectedSourceNode,
+        ];
+      });
+
+      setIsSourceModalOpen(false);
+    },
+    [updateSelectedSource]
+  );
+
+  const onDestinationSelection = useCallback(
+    (destination: Destination) => {
+      updateSelectedDestination(destination);
+
+      setNodes((prevNodes: any) => {
+        const defaultDestinationNode = prevNodes.find(
+          (node: any) => node.id === "destination"
+        );
+
+        const updatedDefaultDestinationNode = {
+          ...defaultDestinationNode,
+          data: {
+            connectorType: destination.type,
+            label: destination.name,
+            type: "destination",
+            editAction: () => setIsDestinationModalOpen(true),
+          },
+          type: "dataNode",
+          draggable: false,
+        };
+
+        return [
+          ...prevNodes.filter((node: any) => node.id !== "destination"),
+          updatedDefaultDestinationNode,
+        ];
+      });
+
+      setIsDestinationModalOpen(false);
+    },
+    [updateSelectedDestination]
+  );
+
   useEffect(() => {
     if (selectedTransform.length > 0) {
       const dataSourceNode = {
@@ -275,7 +385,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         data: {
           label: "Transform",
           onToggleDrawer: onToggleDrawer,
-          handleCollapsed: handleCollapsed,
+          handleCollapsed: () => handleCollapsedRef.current?.(),
         },
         position: { x: 260, y: 57 },
         style: {
@@ -318,26 +428,9 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         onDestinationSelection(selectedDestination);
       }
     }
-  }, [
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const initialNodes = [
-    dataSelectorSourceNode,
-    transformSelectorNode,
-    dataSelectorDestinationNode,
-  ];
-  const initialEdges = [
-    {
-      id: "complete-flow-path",
-      source: "source",
-      target: "destination",
-      type: "unifiedCustomEdge",
-      data: { throughNode: "add_transformation" },
-      sourceHandle: "a",
-    },
-  ];
-  const [nodes, setNodes] = useState<any>(initialNodes);
-  const [edges, setEdges] = useState<any>(initialEdges);
   const onNodesChange = useCallback(
     (changes: NodeChange[]) =>
       setNodes((nds: Node[]) => applyNodeChanges(changes, nds)),
@@ -355,37 +448,12 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     [setEdges]
   );
 
-  const createNewTransformNode = (
-    id: string,
-    xPosition: number,
-    transformName: string,
-    transformPredicate?: Predicate
-  ) => {
-    return {
-      id,
-      data: {
-        label: transformName,
-        ...(transformPredicate?.type && {
-          predicate: {
-            label: transformPredicate.type.split(".").pop(),
-            negate: transformPredicate.negate,
-          },
-        }),
-      },
-      position: { x: xPosition, y: 31 },
-      targetPosition: "left",
-      style: {
-        zIndex: 999,
-      },
-      type: "transformLinkNode",
-      parentId: "transform_group",
-      extent: "parent",
-      draggable: false,
-    };
-  };
-
   const selectedTransformRef = useRef(selectedTransform);
-  selectedTransformRef.current = selectedTransform;
+
+  // Update ref when selectedTransform changes
+  useEffect(() => {
+    selectedTransformRef.current = selectedTransform;
+  }, [selectedTransform]);
 
   const hasMounted = useRef(false);
 
@@ -526,9 +594,9 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         ...updatedTransformLinkNodes,
       ];
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedTransform,
-    setNodes,
   ]);
 
 
@@ -554,7 +622,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
       data: {
         label: "Transform",
         onToggleDrawer: onToggleDrawer,
-        handleCollapsed: handleCollapsed,
+        handleCollapsed: () => handleCollapsedRef.current?.(),
       },
       position: { x: 260, y: 57 },
       style: {
@@ -684,13 +752,18 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     dataSelectorDestinationNode
   ]);
 
+  // Update ref whenever handleCollapsed changes
+  useEffect(() => {
+    handleCollapsedRef.current = handleCollapsed;
+  }, [handleCollapsed]);
+
   const transformGroupNode = useMemo(() => {
     return {
       id: "transform_group",
       data: {
         label: "Transform",
         onToggleDrawer: onToggleDrawer,
-        handleCollapsed: handleCollapsed,
+        handleCollapsed: () => handleCollapsedRef.current?.(),
       },
       position: { x: 260, y: 57 },
       style: {
@@ -701,7 +774,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
       type: "transformGroupNode",
       draggable: false,
     };
-  }, [handleCollapsed, onToggleDrawer]);
+  }, [onToggleDrawer]);
 
   const handleProcessor = useCallback(() => {
     setNodes((prevNodes: any) => {
@@ -824,67 +897,6 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     [nodes, updateSelectedTransform, handleProcessor]
   );
 
-  const onSourceSelection = useCallback(
-    (source: Source) => {
-      const selectedSourceNode = {
-        id: "source",
-        data: {
-          connectorType: source.type,
-          label: source.name,
-          type: "source",
-          editAction: () => setIsSourceModalOpen(true),
-        },
-        position: { x: 50, y: 80 },
-        type: "dataNode",
-        draggable: false,
-      };
-      updateSelectedSource(source);
-
-      setNodes((prevNodes: any) => {
-        return [
-          ...prevNodes.filter((node: any) => node.id !== "source"),
-          selectedSourceNode,
-        ];
-      });
-
-      setIsSourceModalOpen(false);
-    },
-    [updateSelectedSource]
-  );
-
-  const onDestinationSelection = useCallback(
-    (destination: Destination) => {
-      updateSelectedDestination(destination);
-
-      setNodes((prevNodes: any) => {
-        const defaultDestinationNode = prevNodes.find(
-          (node: any) => node.id === "destination"
-        );
-
-        const updatedDefaultDestinationNode = {
-          ...defaultDestinationNode,
-          data: {
-            connectorType: destination.type,
-            label: destination.name,
-            type: "destination",
-            editAction: () => setIsDestinationModalOpen(true),
-          },
-          type: "dataNode",
-          draggable: false,
-        };
-
-        return [
-          ...prevNodes.filter((node: any) => node.id !== "destination"),
-          updatedDefaultDestinationNode,
-        ];
-      });
-
-      setIsDestinationModalOpen(false);
-    },
-    [
-      updateSelectedDestination,
-    ]
-  );
   return (
     <>
       <div ref={reactFlowWrapper} style={{ width: "100%", height: "100%" }}>

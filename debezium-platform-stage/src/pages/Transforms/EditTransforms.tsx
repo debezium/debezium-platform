@@ -49,7 +49,7 @@ import {
 import * as React from "react";
 import transforms from "../../__mocks__/data/DebeziumTransfroms.json";
 import predicates from "../../__mocks__/data/Predicates.json";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import style from "../../styles/createConnector.module.css"
 import {
   editPut,
@@ -107,8 +107,6 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   const [selected, setSelected] = React.useState<string>("");
   const [inputValue, setInputValue] = React.useState<string>("");
   const [filterValue, setFilterValue] = React.useState<string>("");
-  const [selectOptions, setSelectOptions] =
-    React.useState<SelectOptionProps[]>();
   const [focusedItemIndex, setFocusedItemIndex] = React.useState<number | null>(
     null
   );
@@ -128,34 +126,20 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   const [codeAlert, setCodeAlert] = useState("");
   const validate = ajv.compile(transformSchema);
 
-  useEffect(() => {
-    const selectOption: SelectOptionProps[] = transforms.map((item) => {
-      return {
-        value: item.transform,
-        children: item.transform,
-      };
-    });
-    setSelectOptions(selectOption);
-  }, []);
-
   const [selectedPredicate, setSelectedPredicate] = React.useState<string>("");
-  const [selectPredicateOptions, setSelectPredicateOptions] =
-    React.useState<FormSelectOptionProps[]>();
-
-  useEffect(() => {
-    const selectOption: FormSelectOptionProps[] = predicates.map((item) => {
-      return {
+  const [selectPredicateOptions] =
+    React.useState<FormSelectOptionProps[]>(() => {
+      const selectOption: FormSelectOptionProps[] = predicates.map((item) => ({
         value: item.predicate,
         label: item.predicate,
-      };
+      }));
+      selectOption.unshift({
+        value: "",
+        label: "Select a predicate type",
+        isPlaceholder: true,
+      });
+      return selectOption;
     });
-    selectOption.unshift({
-      value: "",
-      label: "Select a predicate type",
-      isPlaceholder: true,
-    });
-    setSelectPredicateOptions(selectOption);
-  }, []);
 
   const onChange = (
     _event: React.FormEvent<HTMLSelectElement>,
@@ -164,23 +148,23 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
     setSelectedPredicate(value);
   };
 
-  useEffect(() => {
-    const selectOption: SelectOptionProps[] = transforms.map((item) => {
-      return {
-        value: item.transform,
-        children: item.transform,
-      };
-    });
-    let newSelectOptions: SelectOptionProps[] = selectOption;
+  // Compute filtered select options based on filterValue
+  const selectOptions = React.useMemo(() => {
+    const baseOptions: SelectOptionProps[] = transforms.map((item) => ({
+      value: item.transform,
+      children: item.transform,
+    }));
 
+    // Filter menu items based on the text input value when one exists
     if (filterValue) {
-      newSelectOptions = selectOption.filter((menuItem) =>
+      const filteredOptions = baseOptions.filter((menuItem) =>
         String(menuItem.children)
           .toLowerCase()
           .includes(filterValue.toLowerCase())
       );
-      if (!newSelectOptions.length) {
-        newSelectOptions = [
+
+      if (!filteredOptions.length) {
+        return [
           {
             isAriaDisabled: true,
             children: `No results found for "${filterValue}"`,
@@ -188,12 +172,12 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
           },
         ];
       }
-      if (!isOpen) {
-        setIsOpen(true);
-      }
+
+      return filteredOptions;
     }
-    setSelectOptions(newSelectOptions);
-  }, [filterValue, isOpen]);
+
+    return baseOptions;
+  }, [filterValue, NO_RESULTS]);
 
   const createItemId = (value: any) =>
     `select-typeahead-${String(value ?? '').replace(/\s+/g, '-')}`;
@@ -252,6 +236,11 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
 
     if (value !== selected) {
       setSelected("");
+    }
+
+    // Open the menu when the input value changes and the new value is not empty
+    if (value && !isOpen) {
+      setIsOpen(true);
     }
   };
 

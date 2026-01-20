@@ -17,11 +17,10 @@ import {
 import { CogIcon, ListIcon, ThIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import { CatalogGrid } from "@components/CatalogGrid";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { debounce } from "lodash";
 import _ from "lodash";
 import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
-import { Catalog } from "src/apis/types";
 import { useTranslation } from "react-i18next";
 
 export interface ISinkProps {
@@ -32,9 +31,17 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [isSelected, setIsSelected] = React.useState<"grid" | "list">("grid");
-
-  const [searchResult, setSearchResult] = useState<Catalog[]>(sourceCatalog);
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Compute filtered results based on search query
+  const searchResult = React.useMemo(() => {
+    if (searchQuery.length === 0) {
+      return sourceCatalog;
+    }
+    return _.filter(sourceCatalog, (o) =>
+      o.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery]);
 
   const onClear = () => {
     onSearch?.("");
@@ -50,22 +57,24 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
     setIsSelected(id.split("-")[2]);
   };
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      const filteredSource = _.filter(sourceCatalog, function (o) {
-        return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-      });
-      setSearchResult(filteredSource);
+  const debouncedSetSearchQuery = React.useMemo(
+    () => debounce((value: string) => {
+      setSearchQuery(value);
     }, 700),
     []
   );
 
-  const onSearch = useCallback(
+  React.useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, [debouncedSetSearchQuery]);
+
+  const onSearch = React.useCallback(
     (value: string) => {
-      setSearchQuery(value);
-      debouncedSearch(value);
+      debouncedSetSearchQuery(value);
     },
-    [debouncedSearch]
+    [debouncedSetSearchQuery]
   );
 
   const onSourceSelection = (sourceId: string) => {

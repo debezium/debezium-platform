@@ -76,7 +76,7 @@ const WelcomeFlow: React.FC = () => {
       type: "dataNodeSelector",
       draggable: false,
     };
-  }, []);
+  }, [t]);
 
   const defaultTransformationNode = useMemo(() => {
     return {
@@ -91,7 +91,7 @@ const WelcomeFlow: React.FC = () => {
       type: "debeziumNode",
       draggable: false,
     };
-  }, []);
+  }, [t]);
 
   const defaultDestinationNode = useMemo(() => {
     return {
@@ -107,7 +107,7 @@ const WelcomeFlow: React.FC = () => {
       type: "dataNodeSelector",
       draggable: false,
     };
-  }, []);
+  }, [t]);
 
   const initialNodes = [
     defaultSourceNode,

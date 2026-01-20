@@ -6,7 +6,6 @@ import {
   Card,
   Content,
   ContentVariants,
-  debounce,
   EmptyState,
   EmptyStateActions,
   EmptyStateBody,
@@ -42,10 +41,10 @@ import {
   ActionsColumn,
   IAction,
 } from "@patternfly/react-table";
-import _ from "lodash";
+import _, { debounce } from "lodash";
 import { useQuery } from "react-query";
 import { API_URL } from "../../utils/constants";
-import { ReactNode, useCallback, useState } from "react";
+import { ReactNode, useState } from "react";
 import SourceField from "../../components/SourceField";
 import DestinationField from "../../components/DestinationField";
 import ApiError from "../../components/ApiError";
@@ -86,8 +85,29 @@ const Pipelines: React.FunctionComponent = () => {
   const [deleteInstanceName, setDeleteInstanceName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const [searchResult, setSearchResult] = useState<Pipeline[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const {
+    data: pipelinesList = [],
+    error: pipelinesError,
+    isLoading: pipelinesLoading,
+  } = useQuery<Pipeline[], Error>(
+    "pipelines",
+    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`),
+    {
+      refetchInterval: 7000,
+    }
+  );
+
+  // Compute filtered results based on search query
+  const searchResult = React.useMemo(() => {
+    if (searchQuery.length === 0) {
+      return pipelinesList;
+    }
+    return _.filter(pipelinesList, (o) =>
+      o.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, pipelinesList]);
 
   const onClear = () => {
     onSearch?.("");
@@ -100,28 +120,6 @@ const Pipelines: React.FunctionComponent = () => {
       <>{t("pipeline:userActions.download")}</>
     );
   };
-
-  const {
-    data: pipelinesList = [],
-    error: pipelinesError,
-    isLoading: pipelinesLoading,
-  } = useQuery<Pipeline[], Error>(
-    "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`),
-    {
-      refetchInterval: 7000,
-      onSuccess: (data) => {
-        if (searchQuery.length > 0) {
-          const filteredPipeline = _.filter(data, function (o) {
-            return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-          });
-          setSearchResult(filteredPipeline);
-        } else {
-          setSearchResult(data);
-        }
-      },
-    }
-  );
 
   const downloadLogFile = async (pipelineId: string, pipelineName: string) => {
     setIsLogLoading(true);
@@ -179,23 +177,25 @@ const Pipelines: React.FunctionComponent = () => {
     deleteData(url);
   };
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      const filteredPipeline = _.filter(pipelinesList, function (o) {
-        return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-      });
 
-      setSearchResult(filteredPipeline);
+  const debouncedSetSearchQuery = React.useMemo(
+    () => debounce((value: string) => {
+      setSearchQuery(value);
     }, 500),
-    [pipelinesList]
+    []
   );
+
+  React.useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, [debouncedSetSearchQuery]);
 
   const onSearch = React.useCallback(
     (value: string) => {
-      setSearchQuery(value);
-      debouncedSearch(value);
+      debouncedSetSearchQuery(value);
     },
-    [debouncedSearch]
+    [debouncedSetSearchQuery]
   );
 
   const onPipelineClick = (id: number) => () => {

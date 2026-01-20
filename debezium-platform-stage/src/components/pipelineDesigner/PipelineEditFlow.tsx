@@ -137,11 +137,51 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
   );
 
   const selectedTransformRef = useRef(selectedTransform);
-  selectedTransformRef.current = selectedTransform;
+
+  // Update ref when selectedTransform changes
+  useEffect(() => {
+    selectedTransformRef.current = selectedTransform;
+  }, [selectedTransform]);
 
   useEffect(() => {
     refitElements();
   }, [edges, nodes, refitElements]);
+
+  // Define createNewTransformNode before it's used (memoized to prevent dependency issues)
+  const createNewTransformNode = useCallback(
+    (
+      id: string,
+      xPosition: number,
+      transformName: string,
+      transformPredicate?: Predicate
+    ) => {
+      return {
+        id,
+        data: {
+          label: transformName,
+          ...(transformPredicate?.type && {
+            predicate: {
+              label: transformPredicate.type.split(".").pop(),
+              negate: transformPredicate.negate,
+            },
+          }),
+        },
+        position: { x: xPosition, y: 24 },
+        targetPosition: "left",
+        style: {
+          zIndex: 999,
+        },
+        type: "transformLinkNode",
+        parentId: "transform_group",
+        extent: "parent",
+        draggable: false,
+      };
+    },
+    []
+  );
+
+  // Use ref to break circular dependency
+  const handleCollapsedRef = useRef<(() => void) | null>(null);
 
   const handleProcessor = useCallback(() => {
     const transformGroupNode = {
@@ -149,7 +189,7 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
       data: {
         label: "Transform",
         onToggleDrawer: openTransformDrawer,
-        handleCollapsed: handleCollapsed,
+        handleCollapsed: () => handleCollapsedRef.current?.(),
       },
       position: { x: 260, y: 25 },
       style: {
@@ -202,7 +242,7 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
       data: {
         label: "Transform",
         onToggleDrawer: openTransformDrawer,
-        handleCollapsed: handleCollapsed,
+        handleCollapsed: () => handleCollapsedRef.current?.(),
       },
       position: { x: 260, y: 25 },
       style: {
@@ -275,7 +315,7 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
     ];
 
     setEdges([...newEdge]);
-  }, [destinationName, destinationType, selectedTransformRef.current.length]);
+  }, [cardButtonTransform, createNewTransformNode, destinationName, destinationType, openTransformDrawer]);
 
   const TransformCollapsedNode = useMemo(() => {
     return {
@@ -290,36 +330,7 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
       type: "transformCollapsedNode",
       draggable: false,
     };
-  }, [selectedTransformRef]);
-
-  const createNewTransformNode = (
-    id: string,
-    xPosition: number,
-    transformName: string,
-    transformPredicate?: Predicate
-  ) => {
-    return {
-      id,
-      data: {
-        label: transformName,
-        ...(transformPredicate?.type && {
-          predicate: {
-            label: transformPredicate.type.split(".").pop(),
-            negate: transformPredicate.negate,
-          },
-        }),
-      },
-      position: { x: xPosition, y: 24 },
-      targetPosition: "left",
-      style: {
-        zIndex: 999,
-      },
-      type: "transformLinkNode",
-      parentId: "transform_group",
-      extent: "parent",
-      draggable: false,
-    };
-  };
+  }, [handleExpand]);
 
   const handleCollapsed = useCallback(() => {
     setNodes((prevNodes: any) => {
@@ -342,6 +353,11 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
       ];
     });
   }, [TransformCollapsedNode]);
+
+  // Update ref whenever handleCollapsed changes
+  useEffect(() => {
+    handleCollapsedRef.current = handleCollapsed;
+  }, [handleCollapsed]);
 
   const handleAddTransform = useCallback(
     (transforms: TransformData[]) => {
@@ -500,7 +516,7 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
         data: {
           label: "Transform",
           onToggleDrawer: openTransformDrawer,
-          handleCollapsed: handleCollapsed,
+          handleCollapsed: () => handleCollapsedRef.current?.(),
         },
         position: { x: 260, y: 25 },
         style: {
@@ -577,17 +593,13 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
         sourceHandle: "a",
       },
     ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    openTransformDrawer,
     destinationName,
     destinationType,
-    handleCollapsed,
     selectedTransform,
-    setNodes,
     sourceName,
     sourceType,
-    cardButtonTransform,
-    handleTransformModalToggle,
   ]);
 
   const reactFlowProps = useMemo(() => ({

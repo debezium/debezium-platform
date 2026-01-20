@@ -78,6 +78,11 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     const [checkedItems, setCheckedItems] = useState<TreeViewDataItem[]>([]);
     
     const isInitializedRef = useRef(false);
+    const prevSelectionRef = useRef<{ selectedDataListItems: SelectedDataListItem | undefined; options: TreeViewDataItem[] }>({ 
+        selectedDataListItems: undefined, 
+        options: [] 
+    });
+    const prevCollectionsRef = useRef<TableData | undefined>(undefined);
 
     const flattenTreeItems = (tree: TreeViewDataItem[]): TreeViewDataItem[] => {
         let result: TreeViewDataItem[] = [];
@@ -93,62 +98,62 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     useEffect(() => {
         if (options.length === 0) return;
         
-        if (!selectedDataListItems) {
-            isInitializedRef.current = true;
-            setCheckedItems([]);
-            return;
-        }
-
-        const { schemas, tables } = selectedDataListItems;
+        // Check if inputs have changed to avoid unnecessary processing
+        const prev = prevSelectionRef.current;
+        const selectionChanged = prev.selectedDataListItems !== selectedDataListItems;
+        const optionsChanged = prev.options !== options;
         
-        if (schemas.length === 0 && tables.length === 0) {
-            isInitializedRef.current = true;
-            if (checkedItems.length > 0) {
-                setCheckedItems([]);
-            }
+        if (!selectionChanged && !optionsChanged) {
             return;
         }
+        
+        // Update the ref
+        prevSelectionRef.current = { selectedDataListItems, options };
+        
+        // Defer state update to avoid cascading renders
+        queueMicrotask(() => {
+            // Determine the desired checked items based on selectedDataListItems
+            if (!selectedDataListItems) {
+                setCheckedItems([]);
+                isInitializedRef.current = true;
+                return;
+            }
 
-        const currentSelections = extractSelections(checkedItems as SelectedItem[]);
-        const schemasMatch = 
-            currentSelections.schemas.length === schemas.length &&
-            currentSelections.schemas.every(s => schemas.includes(s)) &&
-            schemas.every(s => currentSelections.schemas.includes(s));
-        const tablesMatch = 
-            currentSelections.tables.length === tables.length &&
-            currentSelections.tables.every(t => tables.includes(t)) &&
-            tables.every(t => currentSelections.tables.includes(t));
+            const { schemas, tables } = selectedDataListItems;
+            
+            if (schemas.length === 0 && tables.length === 0) {
+                setCheckedItems([]);
+                isInitializedRef.current = true;
+                return;
+            }
 
-        if (schemasMatch && tablesMatch) {
-            isInitializedRef.current = true;
-            return; 
-        }
+            // Build new checked items from scratch
+            const flatItems = flattenTreeItems(options);
+            const newCheckedItems: TreeViewDataItem[] = [];
 
-        const flatItems = flattenTreeItems(options);
-        const newCheckedItems: TreeViewDataItem[] = [];
+            for (const item of flatItems) {
+                const itemId = item.id as string;
+                const itemName = item.name as string;
+                const isSchemaItem = itemId.includes("schema") && !itemId.includes("collection");
+                const isTableItem = itemId.includes("collection");
 
-        for (const item of flatItems) {
-            const itemId = item.id as string;
-            const itemName = item.name as string;
-            const isSchemaItem = itemId.includes("schema") && !itemId.includes("collection");
-            const isTableItem = itemId.includes("collection");
-
-            if (isSchemaItem && schemas.includes(itemName)) {
-                newCheckedItems.push(item);
-                if (item.children) {
-                    newCheckedItems.push(...item.children);
-                }
-            } else if (isTableItem) {
-                const schemaFromId = itemId.match(/^schema-\d+-(.*?)-collection-/)?.[1];
-                const tableName = `${schemaFromId}.${itemName}`;
-                if (tables.includes(tableName)) {
+                if (isSchemaItem && schemas.includes(itemName)) {
                     newCheckedItems.push(item);
+                    if (item.children) {
+                        newCheckedItems.push(...item.children);
+                    }
+                } else if (isTableItem) {
+                    const schemaFromId = itemId.match(/^schema-\d+-(.*?)-collection-/)?.[1];
+                    const tableName = `${schemaFromId}.${itemName}`;
+                    if (tables.includes(tableName)) {
+                        newCheckedItems.push(item);
+                    }
                 }
             }
-        }
 
-        setCheckedItems(newCheckedItems);
-        isInitializedRef.current = true;
+            setCheckedItems(newCheckedItems);
+            isInitializedRef.current = true;
+        });
     }, [selectedDataListItems, options]);
 
     useEffect(() => {
@@ -160,36 +165,45 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
 
 
     useEffect(() => {
-        const newOptions: TreeViewDataItem[] = [];
-        if (collections && collections.catalogs) {
-            collections.catalogs.forEach((catalog) => {
-                if (catalog.schemas) {
-                    catalog.schemas.forEach((schema, schemaIdx) => {
-                        const collectionsChildren: TreeViewDataItem[] = [];
-                        if (schema.collections) {
-                            schema.collections.forEach((collection) => {
-                                collectionsChildren.push({
-                                    name: collection.name,
-                                    id: `schema-${schemaIdx}-${schema.name}-collection-${collection.name}`,
-                                    icon: <ServerGroupIcon />,
-                                    checkProps: { checked: false }
-                                });
-                            });
-                        }
-                        newOptions.push({
-                            name: schema.name,
-                            id: `schema-${schemaIdx}-${schema.name}`,
-                            icon: <DatabaseIcon />,
-                            checkProps: { 'aria-label': 'schema', checked: false },
-                            children: collectionsChildren
-                        });
-                    });
-                }
-            });
+        // Check if collections reference has changed
+        if (prevCollectionsRef.current === collections) {
+            return;
         }
+        prevCollectionsRef.current = collections;
 
-        setOptions(newOptions);
-        setFilteredItems(newOptions);
+        // Defer state update to avoid cascading renders
+        queueMicrotask(() => {
+            const newOptions: TreeViewDataItem[] = [];
+            if (collections && collections.catalogs) {
+                collections.catalogs.forEach((catalog) => {
+                    if (catalog.schemas) {
+                        catalog.schemas.forEach((schema, schemaIdx) => {
+                            const collectionsChildren: TreeViewDataItem[] = [];
+                            if (schema.collections) {
+                                schema.collections.forEach((collection) => {
+                                    collectionsChildren.push({
+                                        name: collection.name,
+                                        id: `schema-${schemaIdx}-${schema.name}-collection-${collection.name}`,
+                                        icon: <ServerGroupIcon />,
+                                        checkProps: { checked: false }
+                                    });
+                                });
+                            }
+                            newOptions.push({
+                                name: schema.name,
+                                id: `schema-${schemaIdx}-${schema.name}`,
+                                icon: <DatabaseIcon />,
+                                checkProps: { 'aria-label': 'schema', checked: false },
+                                children: collectionsChildren
+                            });
+                        });
+                    }
+                });
+            }
+
+            setOptions(newOptions);
+            setFilteredItems(newOptions);
+        });
     }, [collections]);
 
     const onCheck = (event: React.ChangeEvent, treeViewItem: TreeViewDataItem) => {

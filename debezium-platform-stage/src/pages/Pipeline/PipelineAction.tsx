@@ -82,35 +82,35 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
 
    
 
-    const fetchConnectionCollections = async () => {
-        setIsCollectionsLoading(true);
-        const sourceResponse = await fetchDataCall<Source>(
-            `${API_URL}/api/sources/${sourceId}`
-        );
-        if (sourceResponse.error) {
-            setCollectionsError(sourceResponse);
-        } else {
-            const connectionId = sourceResponse.data?.connection?.id;
-            setCollectionsError(undefined);
-            setSourceName(getConnectorTypeName(sourceResponse.data?.type || ""));
-            const collectionResponse = await fetchDataCall<TableData>(
-                `${API_URL}/api/connections/${connectionId}/collections`
-            );
-            if (collectionResponse.error) {
-                setCollectionsError(collectionResponse.error.body?.error || "");
-                setCollectionsError(collectionResponse);
-            } else {
-                setCollections(collectionResponse.data as TableData);
-                setCollectionsError(undefined);
-            }
-        }
-        setIsCollectionsLoading(false);
-    };
-
     useEffect(() => {
-        if (sourceId) {
-            fetchConnectionCollections();
-        }
+        if (!sourceId) return;
+
+        const fetchConnectionCollections = async () => {
+            setIsCollectionsLoading(true);
+            const sourceResponse = await fetchDataCall<Source>(
+                `${API_URL}/api/sources/${sourceId}`
+            );
+            if (sourceResponse.error) {
+                setCollectionsError(sourceResponse);
+            } else {
+                const connectionId = sourceResponse.data?.connection?.id;
+                setCollectionsError(undefined);
+                setSourceName(getConnectorTypeName(sourceResponse.data?.type || ""));
+                const collectionResponse = await fetchDataCall<TableData>(
+                    `${API_URL}/api/connections/${connectionId}/collections`
+                );
+                if (collectionResponse.error) {
+                    setCollectionsError(collectionResponse.error.body?.error || "");
+                    setCollectionsError(collectionResponse);
+                } else {
+                    setCollections(collectionResponse.data as TableData);
+                    setCollectionsError(undefined);
+                }
+            }
+            setIsCollectionsLoading(false);
+        };
+
+        fetchConnectionCollections();
     }, [sourceId]);
 
     const {

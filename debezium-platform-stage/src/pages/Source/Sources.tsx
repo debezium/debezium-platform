@@ -4,7 +4,6 @@ import {
   Card,
   Content,
   ContentVariants,
-  debounce,
   EmptyState,
   PageSection,
   SearchInput,
@@ -19,7 +18,7 @@ import { DataSourceIcon, PlusIcon } from "@patternfly/react-icons";
 import EmptyStatus from "../../components/EmptyStatus";
 import { useNavigate } from "react-router-dom";
 import { Source, fetchData } from "../../apis/apis";
-import _ from "lodash";
+import _, { debounce } from "lodash";
 import { useQuery } from "react-query";
 import { API_URL } from "../../utils/constants";
 import SourceSinkTable from "../../components/SourceSinkTable";
@@ -39,12 +38,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
     navigate(url);
   };
 
-  const [searchResult, setSearchResult] = React.useState<Source[]>([]);
   const [searchQuery, setSearchQuery] = React.useState<string>("");
-
-  const onClear = () => {
-    onSearch?.("");
-  };
 
   const {
     data: sourcesList = [],
@@ -55,35 +49,41 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
     () => fetchData<Source[]>(`${API_URL}/api/sources`),
     {
       refetchInterval: 7000,
-      onSuccess: (data) => {
-        if (searchQuery.length > 0) {
-          const filteredSource = _.filter(data, function (o) {
-            return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-          });
-          setSearchResult(filteredSource);
-        } else {
-          setSearchResult(data);
-        }
-      },
     }
   );
 
-  const debouncedSearch = React.useCallback(
-    debounce((searchQuery: string) => {
-      const filteredSource = _.filter(sourcesList, function (o) {
-        return o.name.toLowerCase().includes(searchQuery.toLowerCase());
-      });
-      setSearchResult(filteredSource);
+  // Compute filtered results based on search query
+  const searchResult = React.useMemo(() => {
+    if (searchQuery.length === 0) {
+      return sourcesList;
+    }
+    return _.filter(sourcesList, (o) =>
+      o.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, sourcesList]);
+
+  const onClear = () => {
+    onSearch?.("");
+  };
+
+  const debouncedSetSearchQuery = React.useMemo(
+    () => debounce((value: string) => {
+      setSearchQuery(value);
     }, 700),
-    [sourcesList]
+    []
   );
+
+  React.useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, [debouncedSetSearchQuery]);
 
   const onSearch = React.useCallback(
     (value: string) => {
-      setSearchQuery(value);
-      debouncedSearch(value);
+      debouncedSetSearchQuery(value);
     },
-    [debouncedSearch]
+    [debouncedSetSearchQuery]
   );
   return (
     <>
@@ -149,22 +149,14 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                           <ToolbarGroup align={{ default: "alignEnd" }}>
                             <ToolbarItem>
                               <Content component={ContentVariants.small}>
-                                {
-                                  (searchQuery.length > 0
-                                    ? searchResult
-                                    : sourcesList
-                                  ).length
-                                }{" "}
-                                {t("items")}
+                                {searchResult.length} {t("items")}
                               </Content>
                             </ToolbarItem>
                           </ToolbarGroup>
                         </ToolbarContent>
                       </Toolbar>
                       <SourceSinkTable
-                        data={
-                          searchQuery.length > 0 ? searchResult : sourcesList
-                        }
+                        data={searchResult}
                         tableType="source"
                         onClear={onClear}
                       />
