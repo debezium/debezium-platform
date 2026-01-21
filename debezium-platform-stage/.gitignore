@@ -14,9 +14,6 @@ dist-ssr
 *.local
 coverage
 
-# Environment variables
-.env
-
 # Cypress
 cypress/videos
 cypress/screenshots
