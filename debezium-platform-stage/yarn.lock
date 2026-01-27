@@ -7304,10 +7304,10 @@ victory@^37.3.2:
     victory-voronoi-container "37.3.6"
     victory-zoom-container "37.3.6"
 
-vite-tsconfig-paths@^6.0.3:
-  version "6.0.3"
-  resolved "https://registry.yarnpkg.com/vite-tsconfig-paths/-/vite-tsconfig-paths-6.0.3.tgz#df8c11b56a6247707e76b472af084fc6e5e68c35"
-  integrity sha512-7bL7FPX/DSviaZGYUKowWF1AiDVWjMjxNbE8lyaVGDezkedWqfGhlnQ4BZXre0ZN5P4kAgIJfAlgFDVyjrCIyg==
+vite-tsconfig-paths@^6.0.5:
+  version "6.0.5"
+  resolved "https://registry.yarnpkg.com/vite-tsconfig-paths/-/vite-tsconfig-paths-6.0.5.tgz#5bcbb44d6ae0d12fe42f5915a6ad9846b0ed7805"
+  integrity sha512-f/WvY6ekHykUF1rWJUAbCU7iS/5QYDIugwpqJA+ttwKbxSbzNlqlE8vZSrsnxNQciUW+z6lvhlXMaEyZn9MSig==
   dependencies:
     debug "^4.1.1"
     globrex "^0.1.2"
