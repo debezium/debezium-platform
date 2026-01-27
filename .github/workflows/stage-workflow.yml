@@ -3,17 +3,20 @@ on:
   push:
     paths:
       - "debezium-platform-stage/**"
+      - ".github/**"
     branches:
       - main
   pull_request:
     paths:
       - "debezium-platform-stage/**"
+      - ".github/**"
     branches:
       - main
 jobs:
   # Checks that all commits contain sign-offs
   check-signed-commits:
     name: Check signed commits
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: debezium/dbz/.github/actions/check-dco@main
