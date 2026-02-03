@@ -35,7 +35,7 @@
         <quarkus.container-image.tag>nightly</quarkus.container-image.tag>
         <quarkus.jib.platforms>linux/amd64,linux/arm64/v8</quarkus.jib.platforms>
 
-        <version.compiler.plugin>3.14.1</version.compiler.plugin>
+        <version.compiler.plugin>3.15.0</version.compiler.plugin>
         <version.quarkus.platform>3.30.8</version.quarkus.platform>
         <version.surefire-plugin>3.5.4</version.surefire-plugin>
         <version.mapstruct>1.5.5.Final</version.mapstruct>
