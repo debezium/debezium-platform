@@ -27,7 +27,7 @@
     "@patternfly/react-charts": "^8.4.0",
     "@patternfly/react-code-editor": "^6.4.0",
     "@patternfly/react-component-groups": "^6.3.0",
-    "@patternfly/react-core": "^6.3.0",
+    "@patternfly/react-core": "^6.4.1",
     "@patternfly/react-drag-drop": "^6.3.0",
     "@patternfly/react-icons": "^6.3.0",
     "@patternfly/react-log-viewer": "^6.3.0",

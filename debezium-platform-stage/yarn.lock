@@ -1003,10 +1003,10 @@
     "@patternfly/react-table" "^6.0.0"
     react-jss "^10.10.0"
 
-"@patternfly/react-core@^6.0.0", "@patternfly/react-core@^6.3.0", "@patternfly/react-core@^6.4.0":
-  version "6.4.0"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-core/-/react-core-6.4.0.tgz#a2c0b60c1a4f34f708d079e92e86b007b0c88c3c"
-  integrity sha512-zMgJmcFohp2FqgAoZHg7EXZS7gnaFESquk0qIavemYI0FsqspVlzV2/PUru7w+86+jXfqebRhgubPRsv1eJwEg==
+"@patternfly/react-core@^6.0.0", "@patternfly/react-core@^6.4.0", "@patternfly/react-core@^6.4.1":
+  version "6.4.1"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-core/-/react-core-6.4.1.tgz#219afce931b49804903f2e12156f9bb4d46f91b7"
+  integrity sha512-EUSV76Eifkt4R3q2JIaiB6/FHeQqOCttK1DQMXNoOCNa3ODkZ7H+KlMdminufMDfRzhwAgTVihZ62K9PFfc8Vg==
   dependencies:
     "@patternfly/react-icons" "^6.4.0"
     "@patternfly/react-styles" "^6.4.0"
