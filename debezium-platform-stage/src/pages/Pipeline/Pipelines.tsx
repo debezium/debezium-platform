@@ -324,6 +324,7 @@ const Pipelines: React.FunctionComponent = () => {
                                 onClick={() =>
                                   navigateTo("/pipeline/pipeline_designer")
                                 }
+                                data-tour="add-pipeline"
                               >
                                 {t("addButton", {
                                   val: t("pipeline:pipeline"),
