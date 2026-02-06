@@ -40,8 +40,8 @@ describe("Vaults Component", () => {
       screen.getByText(/No vault is configure for this cluster yet/)
     ).toBeInTheDocument();
     expect(screen.getByText("Add vault")).toBeInTheDocument();
-    expect(screen.getByText("Source")).toBeInTheDocument();
-    expect(screen.getByText("Destination")).toBeInTheDocument();
-    expect(screen.getByText("Pipeline")).toBeInTheDocument();
+    expect(screen.getByText("Sources")).toBeInTheDocument();
+    expect(screen.getByText("Destinations")).toBeInTheDocument();
+    expect(screen.getByText("Pipelines")).toBeInTheDocument();
   });
 });
