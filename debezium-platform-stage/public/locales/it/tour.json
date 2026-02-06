@@ -1,0 +1,37 @@
+{
+  "welcome": {
+    "title": "Benvenuto in Debezium Platform!",
+    "content": "Facciamo un breve tour della piattaforma. Puoi saltare in qualsiasi momento."
+  },
+  "sidebarNav": {
+    "title": "Navigazione",
+    "content": "Usa la barra laterale per navigare tra le sezioni principali: Pipeline, Sorgenti, Trasformazioni, Destinazioni, Connessioni e Vault."
+  },
+  "pipelineNav": {
+    "title": "Pipeline",
+    "content": "Qui puoi gestire le tue pipeline di dati — il cuore della piattaforma."
+  },
+  "sourceNav": {
+    "title": "Sorgenti",
+    "content": "Definisci le connessioni sorgente per catturare gli eventi di modifica dei dati dai tuoi database."
+  },
+  "destinationNav": {
+    "title": "Destinazioni",
+    "content": "Configura dove vengono consegnati i dati catturati."
+  },
+  "themeSelector": {
+    "title": "Tema",
+    "content": "Passa tra tema chiaro, scuro o di sistema secondo le tue preferenze."
+  },
+  "addPipeline": {
+    "title": "Crea una Pipeline",
+    "content": "Inizia creando la tua prima pipeline per trasmettere gli eventi di modifica da una sorgente a una destinazione."
+  },
+  "buttons": {
+    "back": "Indietro",
+    "close": "Chiudi",
+    "last": "Fine",
+    "next": "Avanti",
+    "skip": "Salta il tour"
+  }
+}

@@ -25,7 +25,7 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
       id={`${route.label}-${index}`}
       isActive={location.pathname.includes(route.navSection)}
     >
-      <NavLink to={route.path}>
+      <NavLink to={route.path} data-tour={`nav-${route.navSection}`}>
         {route.icon}
         {route.label}
       </NavLink>
@@ -62,6 +62,7 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
   );
 
   const Navigation = (
+    <div data-tour="sidebar-nav">
     <Nav id="nav-primary-simple">
       <NavList id="nav-list-simple">
         {routes.map(
@@ -73,9 +74,11 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
         )}
       </NavList>
     </Nav>
+    </div>
   );
 
   const NavigationClosed = (
+    <div data-tour="sidebar-nav">
     <Nav id="nav-primary-simple">
       <NavList id="nav-list-simple">
         {routes.map(
@@ -87,6 +90,7 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
         )}
       </NavList>
     </Nav>
+    </div>
   );
 
   return (

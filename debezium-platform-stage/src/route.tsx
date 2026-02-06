@@ -62,7 +62,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     component: Pipelines,
-    label: "Pipeline",
+    label: "Pipelines",
     icon: <PipelineIcon style={{ outline: "none" }} />,
     path: "/pipeline",
     navSection: "pipeline",
@@ -88,7 +88,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     component: Sources,
-    label: "Source",
+    label: "Sources",
     icon: <DataSourceIcon style={{ outline: "none" }} />,
     path: "/source",
     navSection: "source",
@@ -120,7 +120,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     component: Transforms,
-    label: "Transform",
+    label: "Transforms",
     icon: <DataProcessorIcon style={{ outline: "none" }} />,
     path: "/transform",
     navSection: "transform",
@@ -134,7 +134,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     component: Destinations,
-    label: "Destination",
+    label: "Destinations",
     icon: <DataSinkIcon style={{ outline: "none" }} />,
     title: `${AppBranding} | Destination`,
     path: "/destination",

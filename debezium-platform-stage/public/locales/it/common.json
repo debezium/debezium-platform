@@ -70,7 +70,7 @@
   "lightMode": "Usa sempre la modalità chiara",
   "loading": "Caricamento...",
   "name": "Nome",
-  "pipeline": "Pipeline",
+  "pipeline": "Pipelines",
   "refresh": "Aggiorna",
   "requestNewResource": {
     "description": "Compila una richiesta per creare un nuovo {{val}}.",

@@ -29,10 +29,10 @@ test("renders the side navigation Expanded", () => {
   expect(sideNavItems).toHaveLength(6);
 
   const expectedTexts = [
-    "Pipeline",
-    "Source",
-    "Transform",
-    "Destination",
+    "Pipelines",
+    "Sources",
+    "Transforms",
+    "Destinations",
     "Connections",
     "Vaults",
   ];

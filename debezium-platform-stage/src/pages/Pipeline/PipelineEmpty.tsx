@@ -49,6 +49,7 @@ const PipelineEmpty: React.FunctionComponent = () => {
             <Button
               variant="primary"
               onClick={() => navigateTo(`/pipeline/pipeline_designer`)}
+              data-tour="add-pipeline"
             >
               {t('pipeline:pipelinePage.welcomeButtom')}
             </Button>

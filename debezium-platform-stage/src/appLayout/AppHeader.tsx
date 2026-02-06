@@ -142,6 +142,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 variant="action-group-plain"
               >
                 <ToolbarItem visibility={{ default: 'hidden', md: 'visible' }}>
+                  <div data-tour="theme-selector">
                   <Dropdown
                     id="single-select"
                     isOpen={isThemeDropdownOpen}
@@ -157,6 +158,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                       <DropdownItem value="dark" icon={<DarkThemeIcon color="var(--pf-global--Color--100)" />} description={t('darkMode')}>{t('dark')}</DropdownItem>
                     </DropdownList>
                   </Dropdown>
+                  </div>
                 </ToolbarItem>
               </ToolbarGroup>
               <ToolbarItem variant="separator" />
