@@ -1,5 +1,8 @@
 import {
   AlertGroup,
+  Drawer,
+  DrawerContent,
+  DrawerContentBody,
   NotificationBadgeVariant,
   Page,
 } from "@patternfly/react-core";
@@ -18,14 +21,16 @@ import {
   selectedDestinationAtom,
   selectedTransformAtom,
 } from "../pages/Pipeline/PipelineDesigner";
+import { DocDrawerProvider, DocDrawerPanel, useDocDrawer } from "../components/DocDrawer";
 
 interface IAppLayout {
   children: React.ReactNode;
 }
 
-const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
+const AppLayoutInner: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const location = useLocation();
   const pageId = "primary-app-container";
+  const { isOpen: isDocDrawerOpen, closeDoc } = useDocDrawer();
 
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const savedPreference = localStorage.getItem("side-nav-collapsed");
@@ -43,7 +48,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   } = useNotification();
 
   const { updateNavigationCollapsed } = useData();
-
 
   const setSelectedSource = useSetAtom(selectedSourceAtom);
   const setSelectedDestination = useSetAtom(selectedDestinationAtom);
@@ -86,7 +90,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
 
   // Clear pipeline atoms when navigating away from pipeline designer
   useEffect(() => {
-    const isPipelineDesignerPage = 
+    const isPipelineDesignerPage =
       location.pathname.startsWith("/pipeline/pipeline_designer");
 
     if (!isPipelineDesignerPage) {
@@ -110,41 +114,57 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     setDrawerExpanded(!isDrawerExpanded);
   };
 
+  useEffect(() => {
+    closeDoc();
+  }, [location.pathname, closeDoc]);
+
+  const page = (
+    <Page
+      className={sidebarOpen ? "" : "custom-app-page"}
+      mainContainerId={pageId}
+      masthead={
+        <AppHeader
+          toggleSidebar={toggleSidebar}
+          handleNotificationBadgeClick={onNotificationBadgeClick}
+          getNotificationBadgeVariant={getNotificationBadgeVariant}
+          addNotification={addNotification}
+        />
+      }
+      sidebar={<AppSideNavigation isSidebarOpen={sidebarOpen} />}
+      isManagedSidebar
+      isContentFilled
+      breadcrumb={
+        location.pathname.split("/").length <= 2 ? undefined : (
+          <AppBreadcrumb />
+        )
+      }
+      groupProps={{
+        stickyOnBreakpoint: { default: "top" },
+      }}
+      notificationDrawer={
+        <AppNotification
+          notifications={notifications}
+          setNotifications={setNotifications}
+          setDrawerExpanded={setDrawerExpanded}
+        />
+      }
+      isNotificationDrawerExpanded={isDrawerExpanded}
+    >
+      {children}
+    </Page>
+  );
+
   return (
     <>
-      <Page
-        className={sidebarOpen ? "" : "custom-app-page"}
-        mainContainerId={pageId}
-        masthead={
-          <AppHeader
-            toggleSidebar={toggleSidebar}
-            handleNotificationBadgeClick={onNotificationBadgeClick}
-            getNotificationBadgeVariant={getNotificationBadgeVariant}
-            addNotification={addNotification}
-          />
-        }
-        sidebar={<AppSideNavigation isSidebarOpen={sidebarOpen} />}
-        isManagedSidebar
-        isContentFilled
-        breadcrumb={
-          location.pathname.split("/").length <= 2 ? undefined : (
-            <AppBreadcrumb />
-          )
-        }
-        groupProps={{
-          stickyOnBreakpoint: { default: "top" },
-        }}
-        notificationDrawer={
-          <AppNotification
-            notifications={notifications}
-            setNotifications={setNotifications}
-            setDrawerExpanded={setDrawerExpanded}
-          />
-        }
-        isNotificationDrawerExpanded={isDrawerExpanded}
-      >
-        {children}
-      </Page>
+      {isDocDrawerOpen ? (
+        <Drawer isExpanded position="end">
+          <DrawerContent panelContent={<DocDrawerPanel />}>
+            <DrawerContentBody>{page}</DrawerContentBody>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        page
+      )}
       <AlertGroup
         isToast
         isLiveRegion
@@ -154,6 +174,14 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
         {alerts.slice(0, 3)}
       </AlertGroup>
     </>
+  );
+};
+
+const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
+  return (
+    <DocDrawerProvider>
+      <AppLayoutInner>{children}</AppLayoutInner>
+    </DocDrawerProvider>
   );
 };
 

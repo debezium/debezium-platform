@@ -51,6 +51,8 @@ import ApiComponentError from "./ApiComponentError";
 import _ from "lodash";
 import { SelectedDataListItem } from "@sourcePage/CreateSource";
 import { datatype as DatabaseItemsList } from "@utils/Datatype";
+import ContextualHelp from "./ContextualHelp";
+import { connectorDocLinks, featureDocLinks } from "@utils/debeziumDocLinks";
 
 
 const getInitialSelectOptions = (connections: connectionsList[], connectorId: string): SelectOptionProps[] => {
@@ -611,7 +613,19 @@ const SourceSinkForm = ({
                     text: <span style={{ fontWeight: 500 }}>{t("form.subHeading.title")}</span>,
                     id: `field-group-${connectorType}-id`,
                   }}
-                  titleDescription={!viewMode ? t("form.subHeading.description") : undefined}
+                  titleDescription={!viewMode ? (
+                    <>
+                      {t("form.subHeading.description")}
+                      {connectorDocLinks[ConnectorId] && (
+                        <>
+                          <ContextualHelp
+                            href={connectorDocLinks[ConnectorId].href}
+                            label={connectorDocLinks[ConnectorId].label}
+                          />
+                        </>
+                      )}
+                    </>
+                  ) : undefined}
                   actions={
                     viewMode ? null :
                       <>
@@ -693,7 +707,15 @@ const SourceSinkForm = ({
                       text: <span style={{ fontWeight: 500 }}>{t("source:signal.title")}</span>,
                       id: `field-group-signal-id`,
                     }}
-                    titleDescription={t("source:signal.description")}
+                    titleDescription={
+                      <>
+                        {t("source:signal.description")}{" "}
+                        <ContextualHelp
+                          href={featureDocLinks["signal-data-collection"].href}
+                          label={featureDocLinks["signal-data-collection"].label}
+                        />
+                      </>
+                    }
                   />
                 }
               >

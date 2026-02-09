@@ -100,5 +100,9 @@
   "trademarkWarking": "Tutti i loghi e i marchi sono di proprietà dei rispettivi titolari",
   "type": "Tipo",
   "vaults": "Vault",
-  "verify": "Verifica"
+  "verify": "Verifica",
+  "helpTopic": {
+    "readMoreInDocs": "Leggi di più nella documentazione",
+    "openInNewTab": "Apri in una nuova scheda"
+  }
 }
