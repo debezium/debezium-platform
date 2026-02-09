@@ -101,5 +101,9 @@
   "type": "Type",
   "usedIn": "Used in",
   "vaults": "Vaults",
-  "verify": "Verify"
+  "verify": "Verify",
+  "helpTopic": {
+    "readMoreInDocs": "Read more in docs",
+    "openInNewTab": "Open in new tab"
+  }
 }

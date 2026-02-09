@@ -233,7 +233,6 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
 
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
 
-
   const handleConnectionModalToggle = useCallback(() => {
     setIsConnectionModalOpen(!isConnectionModalOpen);
   }, [isConnectionModalOpen]);
