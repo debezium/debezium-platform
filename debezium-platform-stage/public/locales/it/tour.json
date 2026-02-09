@@ -19,6 +19,10 @@
     "title": "Destinazioni",
     "content": "Configura dove vengono consegnati i dati catturati."
   },
+  "connectionNav": {
+    "title": "Connessioni",
+    "content": "Gestisci le connessioni alle tue sorgenti e destinazioni."
+  },
   "themeSelector": {
     "title": "Tema",
     "content": "Passa tra tema chiaro, scuro o di sistema secondo le tue preferenze."

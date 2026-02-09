@@ -1,7 +1,7 @@
 {
   "welcome": {
     "title": "Welcome to Debezium Platform!",
-    "content": "Let us give you a quick tour of the platform. You can skip at any time."
+    "content": "Let's take a quick tour of the platform. You can skip ahead at any time."
   },
   "sidebarNav": {
     "title": "Navigation",
@@ -17,11 +17,15 @@
   },
   "destinationNav": {
     "title": "Destinations",
-    "content": "Configure where your captured data changes are delivered."
+    "content": "Specify where the platform delivers captured data changes."
+  },
+  "connectionNav": {
+    "title": "Connections",
+    "content": "Manage connections to your sources and destinations."
   },
   "themeSelector": {
     "title": "Theme",
-    "content": "Switch between light, dark, or system theme to suit your preference."
+    "content": "Switch between light, dark, or system themes to suit your preference."
   },
   "addPipeline": {
     "title": "Create a Pipeline",
