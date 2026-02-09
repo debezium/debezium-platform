@@ -176,12 +176,19 @@ const GuidedTour: React.FC = () => {
       disableBeacon: true,
     },
     {
-      target: '[data-tour="theme-selector"]',
-      placement: "bottom",
-      title: t("themeSelector.title"),
-      content: t("themeSelector.content"),
+      target: '[data-tour="nav-connections"]',
+      placement: "right",
+      title: t("connectionNav.title"),
+      content: t("connectionNav.content"),
       disableBeacon: true,
     },
+    // {
+    //   target: '[data-tour="theme-selector"]',
+    //   placement: "bottom",
+    //   title: t("themeSelector.title"),
+    //   content: t("themeSelector.content"),
+    //   disableBeacon: true,
+    // },
     {
       target: '[data-tour="add-pipeline"]',
       placement: "bottom",
