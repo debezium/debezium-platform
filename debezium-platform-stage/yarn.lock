@@ -4977,10 +4977,10 @@ joi@^18.0.1:
     "@hapi/topo" "^6.0.2"
     "@standard-schema/spec" "^1.0.0"
 
-jotai@^2.16.2:
-  version "2.16.2"
-  resolved "https://registry.npmjs.org/jotai/-/jotai-2.16.2.tgz"
-  integrity sha512-DH0lBiTXvewsxtqqwjDW6Hg9JPTDnq9LcOsXSFWCAUEt+qj5ohl9iRVX9zQXPPHKLXCdH+5mGvM28fsXMl17/g==
+jotai@^2.17.1:
+  version "2.17.1"
+  resolved "https://registry.yarnpkg.com/jotai/-/jotai-2.17.1.tgz#ae7b50b003cb5f06ce334ca9eda45cdca98dceef"
+  integrity sha512-TFNZZDa/0ewCLQyRC/Sq9crtixNj/Xdf/wmj9631xxMuKToVJZDbqcHIYN0OboH+7kh6P6tpIK7uKWClj86PKw==
 
 js-sha3@0.8.0:
   version "0.8.0"
