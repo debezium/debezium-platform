@@ -83,7 +83,7 @@
     "@vitejs/plugin-react-swc": "^4.2.3",
     "@vitest/coverage-v8": "^4.0.10",
     "chromatic": "^13.3.5",
-    "cypress": "^15.7.1",
+    "cypress": "^15.10.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^7.0.1",
