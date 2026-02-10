@@ -40,7 +40,7 @@
         <version.surefire-plugin>3.5.4</version.surefire-plugin>
         <version.mapstruct>1.5.5.Final</version.mapstruct>
         <version.debezium>${project.version}</version.debezium>
-        <version.smallrye-open-api-core>4.2.3</version.smallrye-open-api-core>
+        <version.smallrye-open-api-core>4.2.4</version.smallrye-open-api-core>
         <version.blaze-persistence>1.6.18</version.blaze-persistence>
         <version.test-containers>2.0.3</version.test-containers>
         <version.mockwebserver>5.3.2</version.mockwebserver>
