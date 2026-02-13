@@ -1,5 +1,5 @@
 import PageHeader from "@components/PageHeader";
-import { ActionList, ActionListGroup, ActionListItem, Alert, Button, Card, CardBody, Content, Form, FormAlert, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, FormHelperText, Grid, HelperText, HelperTextItem, PageSection, Popover, Split, SplitItem, TextInput } from "@patternfly/react-core";
+import { ActionList, ActionListGroup, ActionListItem, Alert, Button, Card, CardBody, Content, Form, FormAlert, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, FormHelperText, Grid, HelperText, HelperTextItem, InputGroup, InputGroupItem, PageSection, Popover, Split, SplitItem, TextInput } from "@patternfly/react-core";
 import * as React from "react";
 import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
@@ -8,7 +8,7 @@ import { Connection, ConnectionConfig, ConnectionPayload, ConnectionsSchema, Con
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
 import { convertMapToObject, getConnectorTypeName } from "@utils/helpers";
-import { ExclamationCircleIcon, PlusIcon, TrashIcon } from "@patternfly/react-icons";
+import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon, PlusIcon, TrashIcon } from "@patternfly/react-icons";
 import { useState } from "react";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
@@ -39,6 +39,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     const { connectionId: connectionIdParam } = useParams<{ connectionId: string }>();
     const connectionId = selectedConnectionId ? selectedConnectionId : connectionIdParam || "";
     const [connectionValidated, setConnectionValidated] = useState<boolean>(false);
+    const [passwordVisible, setPasswordVisible] = useState<Record<string, boolean>>({});
 
 
     const state = location.state as { connectionType?: string } | null;
@@ -157,6 +158,10 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
         });
     };
 
+
+    const togglePasswordVisibility = (fieldName: string) => {
+        setPasswordVisible(prev => ({ ...prev, [fieldName]: !prev[fieldName] }));
+    };
 
     const { formState: { errors }, control, handleSubmit } = useForm<ConnectionFormValues>(
         {
@@ -341,7 +346,33 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                                         </Popover>
                                                     }
                                                 >
-                                                    {propertySchema.type === "string" && <Controller
+                                                    {propertySchema.type === "string" && propertySchema.title.toLowerCase().includes("password") && <Controller
+                                                        name={propertyName}
+                                                        rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
+                                                        control={control}
+                                                        render={({ field }) => (
+                                                            <InputGroup>
+                                                                <InputGroupItem isFill>
+                                                                    <TextInput
+                                                                        id={propertyName}
+                                                                        type={passwordVisible[propertyName] ? "text" : "password"}
+                                                                        {...field}
+                                                                        validated={_.get(errors, propertyName) ? "error" : "default"}
+                                                                    />
+                                                                </InputGroupItem>
+                                                                <InputGroupItem>
+                                                                    <Button
+                                                                        variant="control"
+                                                                        onClick={() => togglePasswordVisibility(propertyName)}
+                                                                        aria-label={passwordVisible[propertyName] ? "Hide password" : "Show password"}
+                                                                    >
+                                                                        {passwordVisible[propertyName] ? <EyeSlashIcon /> : <EyeIcon />}
+                                                                    </Button>
+                                                                </InputGroupItem>
+                                                            </InputGroup>
+                                                        )}
+                                                    />}
+                                                    {propertySchema.type === "string" && !propertySchema.title.toLowerCase().includes("password") && <Controller
                                                         name={propertyName}
                                                         rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
                                                         control={control}
