@@ -22,6 +22,35 @@ import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 import { debounce } from "lodash";
 import _ from "lodash";
 import { useTranslation } from "react-i18next";
+import PageTour from "../../components/PageTour";
+import { Step } from "react-joyride";
+
+const useDestinationCatalogTourSteps = (): Step[] => {
+  const { t } = useTranslation("tour");
+  return [
+    {
+      target: '[data-tour="destination-catalog-smart-editor"]',
+      placement: "bottom",
+      title: t("destinationCatalog.smartEditor.title"),
+      content: t("destinationCatalog.smartEditor.content"),
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="destination-catalog-search"]',
+      placement: "bottom",
+      title: t("destinationCatalog.search.title"),
+      content: t("destinationCatalog.search.content"),
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="catalog-card-kafka"]',
+      placement: "bottom",
+      title: t("destinationCatalog.kafkaCard.title"),
+      content: t("destinationCatalog.kafkaCard.content"),
+      disableBeacon: true,
+    },
+  ];
+};
 
 export interface ISinkProps {
   sampleProp?: string;
@@ -32,8 +61,8 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
   const [isSelected, setIsSelected] = useState<"list" | "grid">("grid");
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const catalogTourSteps = useDestinationCatalogTourSteps();
 
-  // Compute filtered results based on search query
   const searchResult = React.useMemo(() => {
     if (searchQuery.length === 0) {
       return destinationCatalog;
@@ -97,7 +126,7 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
           isSticky
         >
           <ToolbarContent>
-            <ToolbarItem>
+            <ToolbarItem data-tour="destination-catalog-search">
               <SearchInput
                 aria-label="Items  search input"
                 placeholder={t("searchByName")}
@@ -134,7 +163,7 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
                   </div>
                 }
               >
-                <Button variant="secondary" icon={<CogIcon />} onClick={() => onDestinationSelection("")}>{t("smartEditorButton")}</Button>
+                <Button variant="secondary" icon={<CogIcon />} data-tour="destination-catalog-smart-editor" onClick={() => onDestinationSelection("")}>{t("smartEditorButton")}</Button>
               </Tooltip>
             </ToolbarItem>
             <ToolbarGroup align={{ default: "alignEnd" }}>
@@ -154,6 +183,7 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
         isAddButtonVisible={searchQuery.length === 0}
         searchResult={searchResult}
       />
+      <PageTour pageKey="destination-catalog" steps={catalogTourSteps} />
     </>
   );
 };

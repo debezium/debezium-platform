@@ -22,6 +22,35 @@ import { debounce } from "lodash";
 import _ from "lodash";
 import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
 import { useTranslation } from "react-i18next";
+import PageTour from "../../components/PageTour";
+import { Step } from "react-joyride";
+
+const useSourceCatalogTourSteps = (): Step[] => {
+  const { t } = useTranslation("tour");
+  return [
+    {
+      target: '[data-tour="source-catalog-smart-editor"]',
+      placement: "bottom",
+      title: t("sourceCatalog.smartEditor.title"),
+      content: t("sourceCatalog.smartEditor.content"),
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="source-catalog-search"]',
+      placement: "bottom",
+      title: t("sourceCatalog.search.title"),
+      content: t("sourceCatalog.search.content"),
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="catalog-card-postgresql"]',
+      placement: "bottom",
+      title: t("sourceCatalog.postgresqlCard.title"),
+      content: t("sourceCatalog.postgresqlCard.content"),
+      disableBeacon: true,
+    },
+  ];
+};
 
 export interface ISinkProps {
   sampleProp?: string;
@@ -81,6 +110,8 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
     navigate(`/source/create_source/${sourceId}`);
   };
 
+  const catalogTourSteps = useSourceCatalogTourSteps();
+
   return (
     <>
       <PageSection isWidthLimited>
@@ -95,7 +126,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
           isSticky
         >
           <ToolbarContent>
-            <ToolbarItem>
+            <ToolbarItem data-tour="source-catalog-search">
               <SearchInput
                 aria-label="Items  search input"
                 placeholder={t("searchByName")}
@@ -132,7 +163,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
                   </div>
                 }
               >
-                <Button variant="secondary" icon={<CogIcon />} onClick={() => onSourceSelection("")}>{t("smartEditorButton")}</Button>
+                <Button variant="secondary" icon={<CogIcon />} data-tour="source-catalog-smart-editor" onClick={() => onSourceSelection("")}>{t("smartEditorButton")}</Button>
               </Tooltip>
             </ToolbarItem>
             <ToolbarGroup align={{ default: "alignEnd" }}>
@@ -153,6 +184,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
         isAddButtonVisible={searchQuery.length === 0}
         searchResult={searchResult}
       />
+      <PageTour pageKey="source-catalog" steps={catalogTourSteps} />
     </>
   );
 };

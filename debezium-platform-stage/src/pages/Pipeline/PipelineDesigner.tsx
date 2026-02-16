@@ -248,6 +248,7 @@ const PipelineDesigner: React.FunctionComponent = () => {
                         <ActionListItem>
                           <Button
                             variant="primary"
+                            data-tour="configure-pipeline-btn"
                             isDisabled={
                               selectedDestination === undefined ||
                               selectedSource === undefined

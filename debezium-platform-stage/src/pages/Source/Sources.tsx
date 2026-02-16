@@ -26,10 +26,32 @@ import ApiError from "../../components/ApiError";
 import "./Sources.css";
 import PageHeader from "@components/PageHeader";
 import { useTranslation } from "react-i18next";
+import PageTour from "../../components/PageTour";
+import { Step } from "react-joyride";
 
 export interface ISourceProps {
   sampleProp?: string;
 }
+
+const useSourcePageTourSteps = (): Step[] => {
+  const { t } = useTranslation("tour");
+  return [
+    {
+      target: '[data-tour="source-page"]',
+      placement: "center",
+      title: t("sourcePage.welcome.title"),
+      content: t("sourcePage.welcome.content"),
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="add-source"]',
+      placement: "bottom",
+      title: t("sourcePage.addSource.title"),
+      content: t("sourcePage.addSource.content"),
+      disableBeacon: true,
+    },
+  ];
+};
 
 const Sources: React.FunctionComponent<ISourceProps> = () => {
   const navigate = useNavigate();
@@ -37,6 +59,8 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
   const navigateTo = (url: string) => {
     navigate(url);
   };
+
+  const sourcePageTourSteps = useSourcePageTourSteps();
 
   const [searchQuery, setSearchQuery] = React.useState<string>("");
 
@@ -86,7 +110,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
     [debouncedSetSearchQuery]
   );
   return (
-    <>
+    <div data-tour="source-page" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
       {error ? (
         <ApiError
           errorType="large"
@@ -126,7 +150,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                         isSticky
                       >
                         <ToolbarContent>
-                          <ToolbarItem>
+                          <ToolbarItem data-tour="source-search">
                             <SearchInput
                               aria-label="Items example search input"
                               placeholder={t('findByName')}
@@ -140,6 +164,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                               <Button
                                 variant="primary"
                                 icon={<PlusIcon />}
+                                data-tour="add-source"
                                 onClick={() => navigateTo("/source/catalog")}
                               >
                                 {t('addButton', { val: t('source:source') })}
@@ -155,11 +180,13 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                           </ToolbarGroup>
                         </ToolbarContent>
                       </Toolbar>
-                      <SourceSinkTable
-                        data={searchResult}
-                        tableType="source"
-                        onClear={onClear}
-                      />
+                      <div data-tour="source-table">
+                        <SourceSinkTable
+                          data={searchResult}
+                          tableType="source"
+                          onClear={onClear}
+                        />
+                      </div>
                     </Card>
                   </PageSection>
                 </>
@@ -173,6 +200,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                     <Button
                       variant="primary"
                       icon={<PlusIcon />}
+                      data-tour="add-source"
                       onClick={() => navigateTo("/source/catalog")}
                     >
                       {t('addButton', { val: t('source:source') })}
@@ -206,7 +234,8 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
           )}
         </>
       )}
-    </>
+      <PageTour pageKey="source" steps={sourcePageTourSteps} />
+    </div>
   );
 };
 

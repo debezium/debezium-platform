@@ -18,7 +18,8 @@ import {
   selectedDestinationAtom,
   selectedTransformAtom,
 } from "../pages/Pipeline/PipelineDesigner";
-import GuidedTour, { isWalkthroughCompleted } from "../components/GuidedTour";
+import GuidedTour from "../components/GuidedTour";
+import { useGuidedTour } from "../components/GuidedTourContext";
 
 interface IAppLayout {
   children: React.ReactNode;
@@ -28,7 +29,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const location = useLocation();
   const pageId = "primary-app-container";
 
-  const [showTour] = useState(() => !isWalkthroughCompleted());
+  const { isTourActive } = useGuidedTour();
 
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const savedPreference = localStorage.getItem("side-nav-collapsed");
@@ -115,7 +116,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
 
   return (
     <>
-      {showTour && <GuidedTour />}
+      {isTourActive && <GuidedTour />}
       <Page
         className={sidebarOpen ? "" : "custom-app-page"}
         mainContainerId={pageId}

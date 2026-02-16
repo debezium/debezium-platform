@@ -20,7 +20,7 @@ import {
   Dropdown,
   DropdownList,
 } from "@patternfly/react-core";
-import { BarsIcon } from "@patternfly/react-icons";
+import { BarsIcon, QuestionCircleIcon } from "@patternfly/react-icons";
 import React, { useCallback, useEffect, useState } from "react";
 import dbz_logo_black from "../assets/color_black_debezium.svg";
 import dbz_svg from "../assets/debezium_logo.png";
@@ -31,6 +31,7 @@ import SystemThemeIcon from "src/assets/customeIcons/SystemThemeIcon";
 import LightThemeIcon from "src/assets/customeIcons/LightThemeIcon";
 import DarkThemeIcon from "src/assets/customeIcons/DarkThemeIcon";
 import { useTranslation } from "react-i18next";
+import { useGuidedTour } from "../components/GuidedTourContext";
 
 interface AppHeaderProps {
   toggleSidebar: () => void;
@@ -51,10 +52,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const { darkMode, setDarkMode } = useData();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { replayTour } = useGuidedTour();
   const [selectedTheme, setSelectedTheme] = useState<string>(() => {
     return localStorage.getItem("themeMode") || "system";
   });
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
 
 
   const onSelect = (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
@@ -179,6 +182,44 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                     onClick={handleNotificationBadgeClick}
                     aria-label="Notifications"
                   ></NotificationBadge>
+                </ToolbarItem>
+              </ToolbarGroup>
+              <ToolbarItem variant="separator" />
+              <ToolbarGroup variant="action-group-plain">
+                <ToolbarItem>
+                  <Dropdown
+                    isOpen={isHelpDropdownOpen}
+                    onSelect={() => setIsHelpDropdownOpen(false)}
+                    onOpenChange={(isOpen) => setIsHelpDropdownOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() =>
+                          setIsHelpDropdownOpen(!isHelpDropdownOpen)
+                        }
+                        isExpanded={isHelpDropdownOpen}
+                        variant="plain"
+                        aria-label="Help menu"
+                      >
+                        <QuestionCircleIcon />
+                      </MenuToggle>
+                    )}
+                    popperProps={{
+                      position: "right",
+                    }}
+                  >
+                    <DropdownList>
+                      <DropdownItem
+                        key="replay-tour"
+                        onClick={() => {
+                          replayTour();
+                          navigate("/pipeline");
+                        }}
+                      >
+                        {t("replayTour")}
+                      </DropdownItem>
+                    </DropdownList>
+                  </Dropdown>
                 </ToolbarItem>
               </ToolbarGroup>
             </ToolbarContent>

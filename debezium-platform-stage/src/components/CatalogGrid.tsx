@@ -89,7 +89,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
           </GalleryItem> */}
 
           {searchResult.map((item) => (
-            <GalleryItem key={item.id}>
+            <GalleryItem key={item.id} data-tour={`catalog-card-${item.id}`}>
               <Card isClickable variant={"default"} className={`catalog-grid-card-${catalogType}`}>
                 <CardHeader
                   selectableActions={{

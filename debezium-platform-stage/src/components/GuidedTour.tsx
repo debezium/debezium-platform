@@ -1,6 +1,8 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import Joyride, {
   CallBackProps,
+  ACTIONS,
+  EVENTS,
   STATUS,
   Step,
   TooltipRenderProps,
@@ -19,16 +21,10 @@ import {
   Title,
 } from "@patternfly/react-core";
 import { TimesIcon } from "@patternfly/react-icons";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useGuidedTour, TourMode } from "./GuidedTourContext";
 
-const WALKTHROUGH_STORAGE_KEY = "dbz-walkthrough-completed";
 
-export const isWalkthroughCompleted = (): boolean => {
-  return localStorage.getItem(WALKTHROUGH_STORAGE_KEY) === "true";
-};
-
-export const markWalkthroughCompleted = (): void => {
-  localStorage.setItem(WALKTHROUGH_STORAGE_KEY, "true");
-};
 
 const PatternFlyTooltip: React.FC<TooltipRenderProps> = ({
   continuous,
@@ -48,8 +44,7 @@ const PatternFlyTooltip: React.FC<TooltipRenderProps> = ({
         style={{
           maxWidth: "500px",
           minWidth: "250px",
-              }
-      }
+        }}
       >
         <CardHeader
           actions={{
@@ -135,11 +130,113 @@ const PatternFlyTooltip: React.FC<TooltipRenderProps> = ({
   );
 };
 
-const GuidedTour: React.FC = () => {
-  const { t } = useTranslation("tour");
-  const [run, setRun] = useState(true);
 
-  const steps: Step[] = [
+interface FlowSelectorProps {
+  onSelect: (mode: TourMode) => void;
+  onDefer: () => void;
+}
+
+const FlowSelector: React.FC<FlowSelectorProps> = ({ onSelect, onDefer }) => {
+  const { t } = useTranslation("tour");
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 10000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+      }}
+    >
+      <Card
+        style={{
+          maxWidth: "550px",
+          minWidth: "400px",
+        }}
+      >
+        <CardHeader>
+          <Title headingLevel="h3" size="xl">
+            {t("flowSelector.title")}
+          </Title>
+        </CardHeader>
+        <CardBody>
+          <Content component={ContentVariants.p} style={{ marginBottom: "16px" }}>
+            {t("flowSelector.description")}
+          </Content>
+
+          <Flex direction={{ default: "column" }} gap={{ default: "gapMd" }}>
+            <FlexItem>
+              <Button
+                variant="stateful"
+                state="read"
+                isBlock
+                onClick={() => onSelect("basic")}
+                style={{
+                  padding: "16px",
+                  textAlign: "left",
+                  whiteSpace: "normal",
+                  height: "auto",
+                }}
+              >
+                <Title headingLevel="h4" size="md">
+                  {t("flowSelector.basicLabel")}
+                </Title>
+                <Content
+                  component={ContentVariants.small}
+                  style={{ fontWeight: "normal", marginTop: "4px" }}
+                >
+                  {t("flowSelector.basicDescription")}
+                </Content>
+              </Button>
+            </FlexItem>
+            <FlexItem>
+              <Button
+                variant="stateful"
+                state="read"
+                isBlock
+                onClick={() => onSelect("advanced")}
+                style={{
+                  padding: "16px",
+                  textAlign: "left",
+                  whiteSpace: "normal",
+                  height: "auto",
+                }}
+              >
+                <Title headingLevel="h4" size="md">
+                  {t("flowSelector.advancedLabel")}
+                </Title>
+                <Content
+                  component={ContentVariants.small}
+                  style={{ fontWeight: "normal", marginTop: "4px" }}
+                >
+                  {t("flowSelector.advancedDescription")}
+                </Content>
+              </Button>
+            </FlexItem>
+          </Flex>
+        </CardBody>
+        <CardFooter>
+          <Button variant="link" onClick={onDefer}>
+            {t("flowSelector.maybeLater")}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+};
+
+interface TourStepDef extends Omit<Step, "target"> {
+  target: string;
+  requiredPath?: string; 
+}
+
+const useBasicSteps = (): TourStepDef[] => {
+  const { t } = useTranslation("tour");
+
+  return [
     {
       target: "body",
       placement: "center",
@@ -182,35 +279,274 @@ const GuidedTour: React.FC = () => {
       content: t("connectionNav.content"),
       disableBeacon: true,
     },
-    // {
-    //   target: '[data-tour="theme-selector"]',
-    //   placement: "bottom",
-    //   title: t("themeSelector.title"),
-    //   content: t("themeSelector.content"),
-    //   disableBeacon: true,
-    // },
     {
       target: '[data-tour="add-pipeline"]',
       placement: "bottom",
       title: t("addPipeline.title"),
       content: t("addPipeline.content"),
       disableBeacon: true,
+      requiredPath: "/pipeline",
+    },
+  ];
+};
+
+const useAdvancedSteps = (): TourStepDef[] => {
+  const { t } = useTranslation("tour");
+  const basicSteps = useBasicSteps();
+
+  const basicWithoutLast = basicSteps.slice(0, -1);
+
+  const advancedSteps: TourStepDef[] = [
+
+    // Pipeline creation flow steps
+    {
+      target: '[data-tour="add-pipeline"]',
+      placement: "bottom",
+      title: t("advAddPipeline.title"),
+      content: t("advAddPipeline.content"),
+      disableBeacon: true,
+      requiredPath: "/pipeline",
+    },
+    {
+      target: '.react-flow__node[data-id="source"]',
+      placement: "bottom",
+      title: t("advDesignerSource.title"),
+      content: t("advDesignerSource.content"),
+      disableBeacon: true,
+      requiredPath: "/pipeline/pipeline_designer",
+    },
+    {
+      target: '.react-flow__node[data-id="destination"]',
+      placement: "bottom",
+      title: t("advDesignerDestination.title"),
+      content: t("advDesignerDestination.content"),
+      disableBeacon: true,
+      requiredPath: "/pipeline/pipeline_designer",
+    },
+    {
+      target: '.react-flow__node[data-id="transform_selector"]',
+      placement: "bottom",
+      title: t("advDesignerTransform.title"),
+      content: t("advDesignerTransform.content"),
+      disableBeacon: true,
+      requiredPath: "/pipeline/pipeline_designer",
+    },
+    {
+      target: '[data-tour="dbz-server-config"]',
+      placement: "bottom",
+      title: t("advDbzServerConfig.title"),
+      content: t("advDbzServerConfig.content"),
+      disableBeacon: true,
+      requiredPath: "/pipeline/pipeline_designer",
+    },
+    {
+      target: '[data-tour="configure-pipeline-btn"]',
+      placement: "top",
+      title: t("advConfigurePipeline.title"),
+      content: t("advConfigurePipeline.content"),
+      disableBeacon: true,
+      requiredPath: "/pipeline/pipeline_designer",
     },
   ];
 
-  const handleCallback = useCallback((data: CallBackProps) => {
-    const { status } = data;
+  return [...basicWithoutLast, ...advancedSteps];
+};
 
-    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-      setRun(false);
-      markWalkthroughCompleted();
-    }
+// Main GuidedTour Component
+
+const GuidedTour: React.FC = () => {
+  const { t } = useTranslation("tour");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const {
+    isTourActive,
+    tourMode,
+    stepIndex,
+    setTourMode,
+    setStepIndex,
+    completeTour,
+    deferTour,
+  } = useGuidedTour();
+
+  const [run, setRun] = useState(false);
+  const isNavigatingRef = useRef(false);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 3;
+
+  const basicSteps = useBasicSteps();
+  const advancedSteps = useAdvancedSteps();
+
+  const steps: TourStepDef[] =
+    tourMode === "advanced" ? advancedSteps : basicSteps;
+
+  // Clean up 
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+    };
   }, []);
+
+  useEffect(() => {
+    if (isTourActive && tourMode) {
+      setRun(true);
+    } else {
+      setRun(false);
+    }
+  }, [isTourActive, tourMode]);
+
+  useEffect(() => {
+    if (!isTourActive || !tourMode) return;
+    if (!isNavigatingRef.current) return;
+
+    const currentStep = steps[stepIndex];
+    if (!currentStep?.requiredPath) return;
+
+    const onCorrectPage =
+      location.pathname === currentStep.requiredPath ||
+      location.pathname.startsWith(currentStep.requiredPath + "/");
+
+    if (onCorrectPage) {
+      const timer = setTimeout(() => {
+        isNavigatingRef.current = false;
+        retryCountRef.current = 0;
+        setRun(true);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname, stepIndex, isTourActive, tourMode, steps]);
+
+  const handleFlowSelect = useCallback(
+    (mode: TourMode) => {
+      setTourMode(mode);
+      setStepIndex(0);
+    },
+    [setTourMode, setStepIndex]
+  );
+
+  const handleDefer = useCallback(() => {
+    deferTour();
+  }, [deferTour]);
+
+  const stopTour = useCallback(() => {
+    setRun(false);
+    isNavigatingRef.current = false;
+    retryCountRef.current = 0;
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    completeTour();
+  }, [completeTour]);
+
+  const handleCallback = useCallback(
+    (data: CallBackProps) => {
+      const { status, action, index, type } = data;
+
+      if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+        stopTour();
+        return;
+      }
+
+      if (type === EVENTS.STEP_AFTER) {
+        if (action === ACTIONS.CLOSE) {
+          stopTour();
+          return;
+        }
+
+        const nextIndex =
+          action === ACTIONS.PREV ? index - 1 : index + 1;
+
+        retryCountRef.current = 0;
+
+        if (nextIndex >= steps.length) {
+          stopTour();
+          return;
+        }
+
+        if (nextIndex < 0) {
+          return;
+        }
+
+        const nextStep = steps[nextIndex];
+
+        if (nextStep.requiredPath) {
+          const onCorrectPage =
+            window.location.pathname === nextStep.requiredPath ||
+            window.location.pathname.startsWith(
+              nextStep.requiredPath + "/"
+            );
+
+          if (!onCorrectPage) {
+            setRun(false);
+            isNavigatingRef.current = true;
+            setStepIndex(nextIndex);
+            navigate(nextStep.requiredPath);
+            return;
+          }
+        }
+
+        setStepIndex(nextIndex);
+        return;
+      }
+
+      // Handle target not found — navigate to the required page or retry
+      if (type === EVENTS.TARGET_NOT_FOUND) {
+        if (retryCountRef.current >= MAX_RETRIES) {
+          retryCountRef.current = 0;
+          const nextIndex = index + 1;
+          if (nextIndex < steps.length) {
+            setStepIndex(nextIndex);
+          } else {
+            stopTour();
+          }
+          return;
+        }
+
+        const currentStep = steps[index];
+        if (currentStep?.requiredPath) {
+          const onCorrectPage =
+            window.location.pathname === currentStep.requiredPath ||
+            window.location.pathname.startsWith(
+              currentStep.requiredPath + "/"
+            );
+          if (!onCorrectPage) {
+            setRun(false);
+            isNavigatingRef.current = true;
+            navigate(currentStep.requiredPath);
+            return;
+          }
+        }
+
+        retryCountRef.current += 1;
+        setRun(false);
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current);
+        }
+        retryTimeoutRef.current = setTimeout(() => {
+          retryTimeoutRef.current = null;
+          setRun(true);
+        }, 800);
+      }
+    },
+    [steps, navigate, setStepIndex, stopTour]
+  );
+
+  if (!isTourActive) {
+    return null;
+  }
+  if (!tourMode) {
+    return <FlowSelector onSelect={handleFlowSelect} onDefer={handleDefer} />;
+  }
 
   return (
     <Joyride
-      steps={steps}
+      steps={steps as Step[]}
       run={run}
+      stepIndex={stepIndex}
       continuous
       showSkipButton
       showProgress

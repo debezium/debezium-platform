@@ -26,9 +26,33 @@ import ApiError from "../../components/ApiError";
 import "./Destinations.css";
 import PageHeader from "@components/PageHeader";
 import { useTranslation } from "react-i18next";
+import PageTour from "../../components/PageTour";
+import { Step } from "react-joyride";
+
+const useDestinationPageTourSteps = (): Step[] => {
+  const { t } = useTranslation("tour");
+  return [
+    {
+      target: '[data-tour="destination-page"]',
+      placement: "center",
+      title: t("destinationPage.welcome.title"),
+      content: t("destinationPage.welcome.content"),
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="add-destination"]',
+      placement: "bottom",
+      title: t("destinationPage.addDestination.title"),
+      content: t("destinationPage.addDestination.content"),
+      disableBeacon: true,
+    },
+  ];
+};
+
 const Destinations: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const destinationPageTourSteps = useDestinationPageTourSteps();
   const navigateTo = (url: string) => {
     navigate(url);
   };
@@ -84,7 +108,7 @@ const Destinations: React.FunctionComponent = () => {
   );
 
   return (
-    <>
+    <div data-tour="destination-page" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
       {error ? (
         <ApiError
           errorType="large"
@@ -139,6 +163,7 @@ const Destinations: React.FunctionComponent = () => {
                               <Button
                                 variant="primary"
                                 icon={<PlusIcon />}
+                                data-tour="add-destination"
                                 onClick={() =>
                                   navigateTo("/destination/catalog")
                                 }
@@ -177,6 +202,7 @@ const Destinations: React.FunctionComponent = () => {
                     <Button
                       variant="primary"
                       icon={<PlusIcon />}
+                      data-tour="add-destination"
                       onClick={() => navigateTo("/destination/catalog")}
                     >
                       {t("addButton", {
@@ -212,7 +238,8 @@ const Destinations: React.FunctionComponent = () => {
           )}
         </>
       )}
-    </>
+      <PageTour pageKey="destination" steps={destinationPageTourSteps} />
+    </div>
   );
 };
 

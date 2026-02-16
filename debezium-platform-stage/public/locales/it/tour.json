@@ -31,6 +31,123 @@
     "title": "Crea una Pipeline",
     "content": "Inizia creando la tua prima pipeline per trasmettere gli eventi di modifica da una sorgente a una destinazione."
   },
+  "flowSelector": {
+    "title": "Benvenuto nel Tour Guidato!",
+    "description": "Scegli come esplorare la piattaforma:",
+    "basicLabel": "Tour Base",
+    "basicDescription": "Una panoramica rapida della navigazione e delle sezioni principali. Perfetto per iniziare subito.",
+    "advancedLabel": "Tour Avanzato",
+    "advancedDescription": "Una guida completa che include tutte le pagine e il flusso di creazione pipeline. Ideale per i nuovi utenti.",
+    "maybeLater": "Forse più tardi"
+  },
+  "advSourceNav": {
+    "title": "Naviga alle Sorgenti",
+    "content": "Clicca su Sorgenti nella barra laterale per esplorare la pagina di gestione delle sorgenti."
+  },
+  "advSourcePage": {
+    "title": "Pagina Sorgenti",
+    "content": "Qui gestisci le connessioni sorgente. Puoi aggiungere, modificare e monitorare le sorgenti che catturano gli eventi di modifica dai tuoi database."
+  },
+  "advDestinationNav": {
+    "title": "Naviga alle Destinazioni",
+    "content": "Clicca su Destinazioni nella barra laterale per esplorare la pagina di gestione delle destinazioni."
+  },
+  "advDestinationPage": {
+    "title": "Pagina Destinazioni",
+    "content": "Qui gestisci dove vengono consegnati i dati catturati. Aggiungi e configura gli endpoint di destinazione per le tue pipeline."
+  },
+  "advTransformNav": {
+    "title": "Naviga alle Trasformazioni",
+    "content": "Clicca su Trasformazioni nella barra laterale per vedere come i dati possono essere trasformati in transito."
+  },
+  "advTransformPage": {
+    "title": "Pagina Trasformazioni",
+    "content": "Le trasformazioni ti permettono di modificare, filtrare o instradare i dati mentre fluiscono attraverso le tue pipeline. Crea trasformazioni riutilizzabili qui."
+  },
+  "advConnectionNav": {
+    "title": "Naviga alle Connessioni",
+    "content": "Clicca su Connessioni nella barra laterale per gestire le configurazioni di connessione."
+  },
+  "advConnectionPage": {
+    "title": "Pagina Connessioni",
+    "content": "Le connessioni contengono i dettagli di configurazione per connettersi alle sorgenti e alle destinazioni. Gestisci tutti i profili di connessione qui."
+  },
+  "advPipelineNav": {
+    "title": "Torna alle Pipeline",
+    "content": "Ora clicca su Pipeline per tornare indietro e creare la tua prima pipeline."
+  },
+  "advAddPipeline": {
+    "title": "Aggiungi una Pipeline",
+    "content": "Clicca questo pulsante per aprire il Designer Pipeline e iniziare a costruire la tua prima pipeline di dati."
+  },
+  "advDesignerSource": {
+    "title": "Seleziona una Sorgente",
+    "content": "Nel Designer Pipeline, inizia selezionando una sorgente. Questo determina da dove verranno catturati gli eventi di modifica dei dati."
+  },
+  "advDesignerDestination": {
+    "title": "Seleziona una Destinazione",
+    "content": "Successivamente, scegli una destinazione dove verranno consegnati i dati catturati."
+  },
+  "advDesignerTransform": {
+    "title": "Aggiungi Trasformazioni (Opzionale)",
+    "content": "Opzionalmente aggiungi trasformazioni per modificare i dati mentre fluiscono dalla sorgente alla destinazione. Puoi riordinarle o rimuoverle in seguito."
+  },
+  "advDbzServerConfig": {
+    "title": "Configurazione Server Debezium",
+    "content": "Usa questo pulsante per importare o configurare le impostazioni del server Debezium. Puoi caricare una configurazione esistente per popolare automaticamente le selezioni di sorgente, destinazione e trasformazione."
+  },
+  "advConfigurePipeline": {
+    "title": "Configura Pipeline",
+    "content": "Una volta selezionati sorgente e destinazione, clicca qui per configurare e creare la tua pipeline."
+  },
+  "destinationPage": {
+    "welcome": {
+      "title": "Benvenuto nelle Destinazioni",
+      "content": "Questa è la pagina Destinazioni dove gestisci gli endpoint di destinazione. Vediamo le funzionalità principali."
+    },
+    "addDestination": {
+      "title": "Aggiungi una Destinazione",
+      "content": "Clicca qui per sfogliare il catalogo dei connettori destinazione e crearne uno nuovo. Scegli tra piattaforme di streaming come Kafka, Kinesis, Pub/Sub e altre."
+    }
+  },
+  "destinationCatalog": {
+    "smartEditor": {
+      "title": "Crea con Smart Editor",
+      "content": "Usa lo Smart Editor per creare una destinazione compilando un modulo guidato. Questo ti dà il controllo completo sulla configurazione del connettore senza scegliere un preset."
+    },
+    "search": {
+      "title": "Cerca Connettori",
+      "content": "Usa la barra di ricerca per filtrare rapidamente i connettori destinazione per nome. Utile quando navighi tra i tipi di destinazione disponibili."
+    },
+    "kafkaCard": {
+      "title": "Connettore Apache Kafka",
+      "content": "Questo è il connettore Apache Kafka — la destinazione più popolare. Cliccalo per configurare una connessione e iniziare a trasmettere gli eventi di modifica al tuo cluster Kafka."
+    }
+  },
+  "sourcePage": {
+    "welcome": {
+      "title": "Benvenuto nelle Sorgenti",
+      "content": "Questa è la pagina Sorgenti dove gestisci le connessioni ai database sorgente. Vediamo le funzionalità principali."
+    },
+    "addSource": {
+      "title": "Aggiungi una Sorgente",
+      "content": "Clicca qui per sfogliare il catalogo dei connettori sorgente e crearne uno nuovo. Puoi scegliere tra vari connettori come PostgreSQL, MySQL, MongoDB e altri."
+    }
+  },
+  "sourceCatalog": {
+    "smartEditor": {
+      "title": "Crea con Smart Editor",
+      "content": "Usa lo Smart Editor per creare una sorgente compilando un modulo guidato. Ideale quando vuoi il controllo completo sulla configurazione del connettore senza scegliere un preset."
+    },
+    "search": {
+      "title": "Cerca Connettori",
+      "content": "Usa la barra di ricerca per filtrare rapidamente i connettori per nome. Utile quando navighi tra i tipi di sorgente disponibili."
+    },
+    "postgresqlCard": {
+      "title": "Connettore PostgreSQL",
+      "content": "Questo è il connettore PostgreSQL — una delle sorgenti più popolari. Cliccalo per configurare una connessione al tuo database PostgreSQL e iniziare a catturare gli eventi di modifica."
+    }
+  },
   "buttons": {
     "back": "Indietro",
     "close": "Chiudi",

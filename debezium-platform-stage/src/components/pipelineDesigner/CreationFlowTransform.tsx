@@ -928,7 +928,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
                   <br />
                 </div>
               }>
-              <Button variant="secondary" icon={<UploadIcon />} onClick={() => setIsDbzServerConfigModalOpen(!isDbzServerConfigModalOpen)}>
+              <Button variant="secondary" icon={<UploadIcon />} data-tour="dbz-server-config" onClick={() => setIsDbzServerConfigModalOpen(!isDbzServerConfigModalOpen)}>
                 {t('pipeline:dbzServerButton')}
               </Button>
             </Tooltip>

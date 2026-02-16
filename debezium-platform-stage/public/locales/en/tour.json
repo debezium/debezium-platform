@@ -31,6 +31,103 @@
     "title": "Create a Pipeline",
     "content": "Start by creating your first pipeline to stream change events from a source to a destination."
   },
+  "flowSelector": {
+    "title": "Welcome to the Guided Tour!",
+    "description": "Choose how you'd like to explore the platform:",
+    "basicLabel": "Quick Tour",
+    "basicDescription": "A quick overview of the platform navigation and key sections. Perfect if you want to get started fast.",
+    "advancedLabel": "Advanced Tour",
+    "advancedDescription": "A comprehensive walkthrough following the pipeline creation flow. Ideal for first-time users.",
+    "maybeLater": "Maybe later"
+  },
+  "advSourceNav": {
+    "title": "Sources",
+    "content": "Define source connections to capture data change events from your databases."
+  },
+  "advDestinationNav": {
+    "title": "Destinations",
+    "content": "Specify where the platform delivers captured data changes."
+  },
+  "advTransformNav": {
+    "title": "Transforms",
+    "content": "Click on Transforms in the sidebar to see how data can be transformed in-flight."
+  },
+  "advConnectionNav": {
+    "title": "Connections",
+    "content": "Manage connections to your sources and destinations."
+  },
+  "advAddPipeline": {
+    "title": "Add a Pipeline",
+    "content": "Click this button to open the Pipeline Designer and start building your first data pipeline."
+  },
+  "advDesignerSource": {
+    "title": "Select a Source",
+    "content": "In the Pipeline Designer, start by selecting a source. This determines where your change data events will be captured from."
+  },
+  "advDesignerDestination": {
+    "title": "Select a Destination",
+    "content": "Next, choose a destination where the captured data changes will be delivered."
+  },
+  "advDesignerTransform": {
+    "title": "Add Transforms (Optional)",
+    "content": "Optionally add transforms to modify data as it flows from source to destination. You can reorder or remove them later."
+  },
+  "advDbzServerConfig": {
+    "title": "Debezium Server Configuration",
+    "content": "Use this to import the Debezium server settings. You can upload an existing configuration to auto-populate source, destination, and transform selections."
+  },
+  "advConfigurePipeline": {
+    "title": "Configure Pipeline",
+    "content": "Once you've selected a source and destination, click here to configure and create your pipeline."
+  },
+  "sourcePage": {
+    "welcome": {
+      "title": "Welcome to Sources",
+      "content": "This is the Sources page where you manage your source database connections. Let's walk through the key features."
+    },
+    "addSource": {
+      "title": "Add a Source",
+      "content": "Click here to browse the source connector catalog and create a new source. You can choose from a variety of database connectors like PostgreSQL, MySQL, MongoDB, and more."
+    }
+  },
+  "destinationPage": {
+    "welcome": {
+      "title": "Welcome to Destinations",
+      "content": "This is the Destinations page where you manage your destination endpoints. Let's walk through the key features."
+    },
+    "addDestination": {
+      "title": "Add a Destination",
+      "content": "Click here to browse the destination connector catalog and create a new destination. Choose from streaming platforms like Kafka, Kinesis, Pub/Sub, and more."
+    }
+  },
+  "destinationCatalog": {
+    "smartEditor": {
+      "title": "Create Using Smart Editor",
+      "content": "Use the Smart Editor to create a destination by directly configuring in JSON."
+    },
+    "search": {
+      "title": "Search Connectors",
+      "content": "Use the search bar to quickly filter destination connectors by name. Helpful when browsing through the available destination types."
+    },
+    "kafkaCard": {
+      "title": "Apache Kafka Connector",
+      "content": "This is the Apache Kafka connector — the most popular destination. Click it to configure a connection and start streaming change events to your Kafka cluster."
+    }
+  },
+  "sourceCatalog": {
+    "smartEditor": {
+      "title": "Create Using Smart Editor",
+      "content": "Use the Smart Editor to create a source by directly configuring in JSON."
+    },
+    "search": {
+      "title": "Search Connectors",
+      "content": "Use the search bar to quickly filter connectors by name. Helpful when browsing through the available source types."
+    },
+    "postgresqlCard": {
+      "title": "PostgreSQL Connector",
+      "content": "This is the PostgreSQL connector — one of the most popular sources. Click it to configure a connection to your PostgreSQL database and start capturing change events."
+    }
+  },
   "buttons": {
     "back": "Back",
     "close": "Close",

@@ -134,7 +134,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
 
   return (
-    <>
+    <div data-tour="connection-page" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
 
       {error ? (
         <ApiError
@@ -294,7 +294,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
           )}
         </>
       )}
-    </>
+    </div>
   );
 };
 
