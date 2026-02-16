@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { expect, test, vi, describe, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { GuidedTourProvider } from "../components/GuidedTourContext";
 
 // Mocking modules
 vi.mock("react-router-dom", async () => {
@@ -37,12 +38,14 @@ const renderAppHeader = (darkMode = false) => {
 
   render(
     <MemoryRouter initialEntries={["/"]}>
-      <AppHeader
-        toggleSidebar={mockToggleSidebar}
-        handleNotificationBadgeClick={mockHandleNotificationBadgeClick}
-        getNotificationBadgeVariant={mockGetNotificationBadgeVariant}
-        addNotification={mockAddNotification}
-      />
+      <GuidedTourProvider>
+        <AppHeader
+          toggleSidebar={mockToggleSidebar}
+          handleNotificationBadgeClick={mockHandleNotificationBadgeClick}
+          getNotificationBadgeVariant={mockGetNotificationBadgeVariant}
+          addNotification={mockAddNotification}
+        />
+      </GuidedTourProvider>
     </MemoryRouter>
   );
 };

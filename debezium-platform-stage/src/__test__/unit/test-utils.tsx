@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { GuidedTourProvider } from '../../components/GuidedTourContext';
 
 import commonEN from '../../../public/locales/en/common.json';
 import pipelineEN from '../../../public/locales/en/pipeline.json';
@@ -24,7 +25,9 @@ i18n
 const customRender = (ui: React.ReactElement, options?: import('@testing-library/react').RenderOptions) =>
     render(ui, {
         wrapper: ({ children }) => (
-            <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
+            <GuidedTourProvider>
+                <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
+            </GuidedTourProvider>
         ),
         ...options
     });
