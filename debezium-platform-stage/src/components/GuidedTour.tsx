@@ -368,7 +368,8 @@ const GuidedTour: React.FC = () => {
     deferTour,
   } = useGuidedTour();
 
-  const [run, setRun] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const run = isTourActive && !!tourMode && !paused;
   const isNavigatingRef = useRef(false);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryCountRef = useRef(0);
@@ -391,14 +392,6 @@ const GuidedTour: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (isTourActive && tourMode) {
-      setRun(true);
-    } else {
-      setRun(false);
-    }
-  }, [isTourActive, tourMode]);
-
-  useEffect(() => {
     if (!isTourActive || !tourMode) return;
     if (!isNavigatingRef.current) return;
 
@@ -413,7 +406,7 @@ const GuidedTour: React.FC = () => {
       const timer = setTimeout(() => {
         isNavigatingRef.current = false;
         retryCountRef.current = 0;
-        setRun(true);
+        setPaused(false);
       }, 600);
       return () => clearTimeout(timer);
     }
@@ -432,7 +425,7 @@ const GuidedTour: React.FC = () => {
   }, [deferTour]);
 
   const stopTour = useCallback(() => {
-    setRun(false);
+    setPaused(false);
     isNavigatingRef.current = false;
     retryCountRef.current = 0;
     if (retryTimeoutRef.current) {
@@ -481,7 +474,7 @@ const GuidedTour: React.FC = () => {
             );
 
           if (!onCorrectPage) {
-            setRun(false);
+            setPaused(true);
             isNavigatingRef.current = true;
             setStepIndex(nextIndex);
             navigate(nextStep.requiredPath);
@@ -514,7 +507,7 @@ const GuidedTour: React.FC = () => {
               currentStep.requiredPath + "/"
             );
           if (!onCorrectPage) {
-            setRun(false);
+            setPaused(true);
             isNavigatingRef.current = true;
             navigate(currentStep.requiredPath);
             return;
@@ -522,13 +515,13 @@ const GuidedTour: React.FC = () => {
         }
 
         retryCountRef.current += 1;
-        setRun(false);
+        setPaused(true);
         if (retryTimeoutRef.current) {
           clearTimeout(retryTimeoutRef.current);
         }
         retryTimeoutRef.current = setTimeout(() => {
           retryTimeoutRef.current = null;
-          setRun(true);
+          setPaused(false);
         }, 800);
       }
     },
