@@ -36,14 +36,7 @@ const useDestinationCatalogTourSteps = (): Step[] => {
       disableBeacon: true,
     },
     {
-      target: '[data-tour="destination-catalog-search"]',
-      placement: "bottom",
-      title: t("destinationCatalog.search.title"),
-      content: t("destinationCatalog.search.content"),
-      disableBeacon: true,
-    },
-    {
-      target: '[data-tour="catalog-card-kafka"]',
+      target: '[data-tour="catalog-grid"] .custom-gallery > :first-child',
       placement: "bottom",
       title: t("destinationCatalog.kafkaCard.title"),
       content: t("destinationCatalog.kafkaCard.content"),

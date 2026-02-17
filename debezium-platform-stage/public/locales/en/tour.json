@@ -9,7 +9,7 @@
   },
   "pipelineNav": {
     "title": "Pipelines",
-    "content": "This is where you manage your data pipelines — the core of the platform."
+    "content": "This is where you manage your data pipelines, the core of the platform."
   },
   "sourceNav": {
     "title": "Sources",
@@ -33,7 +33,7 @@
   },
   "flowSelector": {
     "title": "Welcome to the Guided Tour!",
-    "description": "Choose how you'd like to explore the platform:",
+    "description": "Choose how you want to explore the platform:",
     "basicLabel": "Quick Tour",
     "basicDescription": "A quick overview of the platform navigation and key sections. Perfect if you want to get started fast.",
     "advancedLabel": "Advanced Tour",
@@ -74,7 +74,7 @@
   },
   "advDbzServerConfig": {
     "title": "Debezium Server Configuration",
-    "content": "Use this to import the Debezium server settings. You can upload an existing configuration to auto-populate source, destination, and transform selections."
+    "content": "Use this to import the Debezium server settings. You can upload an existing configuration to create and auto-populate source, destination, and transform selections."
   },
   "advConfigurePipeline": {
     "title": "Configure Pipeline",
@@ -103,29 +103,41 @@
   "destinationCatalog": {
     "smartEditor": {
       "title": "Create Using Smart Editor",
-      "content": "Use the Smart Editor to create a destination by directly configuring in JSON."
+      "content": "Use the Smart Editor to create a destination by directly configuring in JSON. You can also upload an debezium server configuration to create a destination."
     },
     "search": {
       "title": "Search Connectors",
       "content": "Use the search bar to quickly filter destination connectors by name. Helpful when browsing through the available destination types."
     },
     "kafkaCard": {
-      "title": "Apache Kafka Connector",
-      "content": "This is the Apache Kafka connector — the most popular destination. Click it to configure a connection and start streaming change events to your Kafka cluster."
+      "title": "Select a Destination",
+      "content": "Select a destination from the list below to configure it."
     }
   },
   "sourceCatalog": {
     "smartEditor": {
       "title": "Create Using Smart Editor",
-      "content": "Use the Smart Editor to create a source by directly configuring in JSON."
+      "content": "Use the Smart Editor to create a source by directly configuring in JSON. You can also upload an kafka connect based source definition or debezium server configuration to create a source."
     },
     "search": {
       "title": "Search Connectors",
       "content": "Use the search bar to quickly filter connectors by name. Helpful when browsing through the available source types."
     },
     "postgresqlCard": {
-      "title": "PostgreSQL Connector",
-      "content": "This is the PostgreSQL connector — one of the most popular sources. Click it to configure a connection to your PostgreSQL database and start capturing change events."
+      "title": "Select a Source",
+      "content": "Select a source from the list below to configure it."
+    }
+  },
+  "createSource": {
+    "editorToggle": {
+      "title": "Editor Mode",
+      "content": "Use the Form Editor for a guided, field-by-field setup or switch to the Smart Editor to configure directly in JSON. The Smart Editor is great for pasting existing configurations."
+    }
+  },
+  "createDestination": {
+    "editorToggle": {
+      "title": "Editor Mode",
+      "content": "Use the Form Editor for a guided, field-by-field setup or switch to the Smart Editor to configure directly in JSON. The Smart Editor is great for pasting existing configurations."
     }
   },
   "buttons": {

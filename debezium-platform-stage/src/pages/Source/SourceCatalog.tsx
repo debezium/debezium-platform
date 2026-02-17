@@ -36,14 +36,7 @@ const useSourceCatalogTourSteps = (): Step[] => {
       disableBeacon: true,
     },
     {
-      target: '[data-tour="source-catalog-search"]',
-      placement: "bottom",
-      title: t("sourceCatalog.search.title"),
-      content: t("sourceCatalog.search.content"),
-      disableBeacon: true,
-    },
-    {
-      target: '[data-tour="catalog-card-postgresql"]',
+      target: '[data-tour="catalog-grid"]',
       placement: "bottom",
       title: t("sourceCatalog.postgresqlCard.title"),
       content: t("sourceCatalog.postgresqlCard.content"),

@@ -37,8 +37,8 @@ const useSourcePageTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
   return [
     {
-      target: '[data-tour="source-page"]',
-      placement: "center",
+      target: '[data-tour="source-table"] tbody tr:first-child',
+      placement: "bottom",
       title: t("sourcePage.welcome.title"),
       content: t("sourcePage.welcome.content"),
       disableBeacon: true,

@@ -63,7 +63,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
   };
 
   return (
-    <PageSection>
+    <PageSection data-tour="catalog-grid">
       {displayType === "grid" ? (
         <Gallery hasGutter className="custom-gallery">
           {/* <GalleryItem>

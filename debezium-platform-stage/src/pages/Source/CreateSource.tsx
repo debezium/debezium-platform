@@ -32,6 +32,8 @@ import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
 import Ajv from "ajv";
 import { Trans, useTranslation } from "react-i18next";
+import PageTour from "../../components/PageTour";
+import { Step } from "react-joyride";
 import { connectorSchema } from "@utils/schemas";
 import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 import { formatCode } from "@utils/formatCodeUtils";
@@ -41,6 +43,19 @@ import { useData } from "@appContext/AppContext";
 import { getIncludeList } from "@utils/Datatype";
 
 const ajv = new Ajv();
+
+const useCreateSourceTourSteps = (): Step[] => {
+  const { t } = useTranslation("tour");
+  return [
+    {
+      target: "#source-editor-toggle",
+      placement: "bottom",
+      title: t("createSource.editorToggle.title"),
+      content: t("createSource.editorToggle.content"),
+      disableBeacon: true,
+    },
+  ];
+};
 
 interface CreateSourceProps {
   modelLoaded?: boolean;
@@ -207,6 +222,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const createSourceTourSteps = useCreateSourceTourSteps();
   const navigateTo = (url: string) => {
     navigate(url);
   };
@@ -599,6 +615,9 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         resourceId={sourceId}
         setSelectedConnection={setSelectedConnection}
       />
+      {!modelLoaded && !rawConfiguration && (
+        <PageTour pageKey="create-source" steps={createSourceTourSteps} />
+      )}
     </>
   );
 };

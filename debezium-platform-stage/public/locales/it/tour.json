@@ -148,6 +148,18 @@
       "content": "Questo è il connettore PostgreSQL — una delle sorgenti più popolari. Cliccalo per configurare una connessione al tuo database PostgreSQL e iniziare a catturare gli eventi di modifica."
     }
   },
+  "createSource": {
+    "editorToggle": {
+      "title": "Modalità Editor",
+      "content": "Usa l'Editor Modulo per una configurazione guidata campo per campo oppure passa allo Smart Editor per configurare direttamente in JSON. Lo Smart Editor è ideale per incollare configurazioni esistenti."
+    }
+  },
+  "createDestination": {
+    "editorToggle": {
+      "title": "Modalità Editor",
+      "content": "Usa l'Editor Modulo per una configurazione guidata campo per campo oppure passa allo Smart Editor per configurare direttamente in JSON. Lo Smart Editor è ideale per incollare configurazioni esistenti."
+    }
+  },
   "buttons": {
     "back": "Indietro",
     "close": "Chiudi",

@@ -33,8 +33,8 @@ const useDestinationPageTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
   return [
     {
-      target: '[data-tour="destination-page"]',
-      placement: "center",
+      target: '[data-tour="destination-table"] tbody tr:first-child',
+      placement: "bottom",
       title: t("destinationPage.welcome.title"),
       content: t("destinationPage.welcome.content"),
       disableBeacon: true,
@@ -183,12 +183,13 @@ const Destinations: React.FunctionComponent = () => {
                           </ToolbarGroup>
                         </ToolbarContent>
                       </Toolbar>
-
+                      <div data-tour="destination-table">
                       <SourceSinkTable
                         data={searchResult}
-                        tableType="destination"
-                        onClear={onClear}
-                      />
+                          tableType="destination"
+                          onClear={onClear}
+                        />
+                      </div>
                     </Card>
                   </PageSection>
                 </>

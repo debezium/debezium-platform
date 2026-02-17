@@ -30,6 +30,8 @@ import SourceSinkForm from "@components/SourceSinkForm";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
+import PageTour from "../../components/PageTour";
+import { Step } from "react-joyride";
 import { connectorSchema } from "@utils/schemas";
 import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
 import { formatCode } from "@utils/formatCodeUtils";
@@ -38,6 +40,19 @@ import CreateConnectionModal from "../components/CreateConnectionModal";
 import { useData } from "@appContext/AppContext";
 
 const ajv = new Ajv();
+
+const useCreateDestinationTourSteps = (): Step[] => {
+  const { t } = useTranslation("tour");
+  return [
+    {
+      target: "#destination-editor-toggle",
+      placement: "bottom",
+      title: t("createDestination.editorToggle.title"),
+      content: t("createDestination.editorToggle.content"),
+      disableBeacon: true,
+    },
+  ];
+};
 
 interface CreateDestinationProps {
   modelLoaded?: boolean;
@@ -184,6 +199,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const createDestinationTourSteps = useCreateDestinationTourSteps();
   const destinationIdParam = useParams<{ destinationId: string }>();
   const destinationIdModel = selectedId;
   const destinationId = modelLoaded
@@ -568,6 +584,9 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
         resourceId={destinationId}
         setSelectedConnection={setSelectedConnection}
       />
+      {!modelLoaded && !rawConfiguration && (
+        <PageTour pageKey="create-destination" steps={createDestinationTourSteps} />
+      )}
     </>
   );
 };
