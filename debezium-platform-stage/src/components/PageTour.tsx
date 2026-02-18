@@ -253,7 +253,6 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
       stepIndex={stepIndex}
       continuous
       showSkipButton
-      showProgress
       disableOverlayClose={false}
       callback={handleCallback}
       tooltipComponent={PageTourTooltip}

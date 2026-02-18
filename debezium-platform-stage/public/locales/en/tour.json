@@ -82,8 +82,8 @@
   },
   "sourcePage": {
     "welcome": {
-      "title": "Welcome to Sources",
-      "content": "This is the Sources page where you manage your source database connections. Let's walk through the key features."
+      "title": "Source Details",
+      "content": "Each source row shows its name, connector type, and which pipelines it's used in. You can also edit or delete a source from the actions menu."
     },
     "addSource": {
       "title": "Add a Source",
@@ -92,8 +92,8 @@
   },
   "destinationPage": {
     "welcome": {
-      "title": "Welcome to Destinations",
-      "content": "This is the Destinations page where you manage your destination endpoints. Let's walk through the key features."
+      "title": "Destination Details",
+      "content": "Each destination row shows its name, connector type, and which pipelines it's used in. You can also edit or delete a destination from the actions menu."
     },
     "addDestination": {
       "title": "Add a Destination",
@@ -129,15 +129,23 @@
     }
   },
   "createSource": {
-    "editorToggle": {
-      "title": "Editor Mode",
-      "content": "Use the Form Editor for a guided, field-by-field setup or switch to the Smart Editor to configure directly in JSON. The Smart Editor is great for pasting existing configurations."
+    "formEditor": {
+      "title": "Form Editor",
+      "content": "The Form Editor provides a guided, field-by-field interface for configuring your source connector. Ideal if you prefer a structured approach."
+    },
+    "smartEditor": {
+      "title": "Smart Editor",
+      "content": "Switch to the Smart Editor to configure your source directly in JSON. Great for advanced users or when pasting an existing configuration."
     }
   },
   "createDestination": {
-    "editorToggle": {
-      "title": "Editor Mode",
-      "content": "Use the Form Editor for a guided, field-by-field setup or switch to the Smart Editor to configure directly in JSON. The Smart Editor is great for pasting existing configurations."
+    "formEditor": {
+      "title": "Form Editor",
+      "content": "The Form Editor provides a guided, field-by-field interface for configuring your destination connector. Ideal if you prefer a structured approach."
+    },
+    "smartEditor": {
+      "title": "Smart Editor",
+      "content": "Switch to the Smart Editor to configure your destination directly in JSON. Great for advanced users or when pasting an existing configuration."
     }
   },
   "buttons": {

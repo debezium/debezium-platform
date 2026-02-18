@@ -36,7 +36,7 @@ const useSourceCatalogTourSteps = (): Step[] => {
       disableBeacon: true,
     },
     {
-      target: '[data-tour="catalog-grid"]',
+      target: '[data-tour="catalog-grid"] .custom-gallery > :first-child',
       placement: "bottom",
       title: t("sourceCatalog.postgresqlCard.title"),
       content: t("sourceCatalog.postgresqlCard.content"),

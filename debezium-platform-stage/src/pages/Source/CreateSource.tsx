@@ -48,10 +48,17 @@ const useCreateSourceTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
   return [
     {
-      target: "#source-editor-toggle",
+      target: "#form-editor",
       placement: "bottom",
-      title: t("createSource.editorToggle.title"),
-      content: t("createSource.editorToggle.content"),
+      title: t("createSource.formEditor.title"),
+      content: t("createSource.formEditor.content"),
+      disableBeacon: true,
+    },
+    {
+      target: "#smart-editor",
+      placement: "bottom",
+      title: t("createSource.smartEditor.title"),
+      content: t("createSource.smartEditor.content"),
       disableBeacon: true,
     },
   ];

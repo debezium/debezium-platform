@@ -102,8 +102,8 @@
   },
   "destinationPage": {
     "welcome": {
-      "title": "Benvenuto nelle Destinazioni",
-      "content": "Questa è la pagina Destinazioni dove gestisci gli endpoint di destinazione. Vediamo le funzionalità principali."
+      "title": "Dettagli Destinazione",
+      "content": "Ogni riga mostra il nome della destinazione, il tipo di connettore e in quali pipeline è utilizzata. Puoi anche modificare o eliminare una destinazione dal menu azioni."
     },
     "addDestination": {
       "title": "Aggiungi una Destinazione",
@@ -126,8 +126,8 @@
   },
   "sourcePage": {
     "welcome": {
-      "title": "Benvenuto nelle Sorgenti",
-      "content": "Questa è la pagina Sorgenti dove gestisci le connessioni ai database sorgente. Vediamo le funzionalità principali."
+      "title": "Dettagli Sorgente",
+      "content": "Ogni riga mostra il nome della sorgente, il tipo di connettore e in quali pipeline è utilizzata. Puoi anche modificare o eliminare una sorgente dal menu azioni."
     },
     "addSource": {
       "title": "Aggiungi una Sorgente",
@@ -149,15 +149,23 @@
     }
   },
   "createSource": {
-    "editorToggle": {
-      "title": "Modalità Editor",
-      "content": "Usa l'Editor Modulo per una configurazione guidata campo per campo oppure passa allo Smart Editor per configurare direttamente in JSON. Lo Smart Editor è ideale per incollare configurazioni esistenti."
+    "formEditor": {
+      "title": "Editor Modulo",
+      "content": "L'Editor Modulo fornisce un'interfaccia guidata campo per campo per configurare il connettore sorgente. Ideale se preferisci un approccio strutturato."
+    },
+    "smartEditor": {
+      "title": "Smart Editor",
+      "content": "Passa allo Smart Editor per configurare la sorgente direttamente in JSON. Perfetto per utenti avanzati o per incollare una configurazione esistente."
     }
   },
   "createDestination": {
-    "editorToggle": {
-      "title": "Modalità Editor",
-      "content": "Usa l'Editor Modulo per una configurazione guidata campo per campo oppure passa allo Smart Editor per configurare direttamente in JSON. Lo Smart Editor è ideale per incollare configurazioni esistenti."
+    "formEditor": {
+      "title": "Editor Modulo",
+      "content": "L'Editor Modulo fornisce un'interfaccia guidata campo per campo per configurare il connettore destinazione. Ideale se preferisci un approccio strutturato."
+    },
+    "smartEditor": {
+      "title": "Smart Editor",
+      "content": "Passa allo Smart Editor per configurare la destinazione direttamente in JSON. Perfetto per utenti avanzati o per incollare una configurazione esistente."
     }
   },
   "buttons": {

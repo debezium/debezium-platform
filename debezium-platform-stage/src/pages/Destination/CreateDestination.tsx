@@ -45,10 +45,17 @@ const useCreateDestinationTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
   return [
     {
-      target: "#destination-editor-toggle",
+      target: "#form-editor",
       placement: "bottom",
-      title: t("createDestination.editorToggle.title"),
-      content: t("createDestination.editorToggle.content"),
+      title: t("createDestination.formEditor.title"),
+      content: t("createDestination.formEditor.content"),
+      disableBeacon: true,
+    },
+    {
+      target: "#smart-editor",
+      placement: "bottom",
+      title: t("createDestination.smartEditor.title"),
+      content: t("createDestination.smartEditor.content"),
       disableBeacon: true,
     },
   ];
