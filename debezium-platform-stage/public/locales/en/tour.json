@@ -23,10 +23,6 @@
     "title": "Connections",
     "content": "Manage connections to your sources and destinations."
   },
-  "themeSelector": {
-    "title": "Theme",
-    "content": "Switch between light, dark, or system themes to suit your preference."
-  },
   "addPipeline": {
     "title": "Create a Pipeline",
     "content": "Start by creating your first pipeline to stream change events from a source to a destination."
@@ -39,22 +35,6 @@
     "advancedLabel": "Advanced Tour",
     "advancedDescription": "A comprehensive walkthrough following the pipeline creation flow. Ideal for first-time users.",
     "maybeLater": "Maybe later"
-  },
-  "advSourceNav": {
-    "title": "Sources",
-    "content": "Define source connections to capture data change events from your databases."
-  },
-  "advDestinationNav": {
-    "title": "Destinations",
-    "content": "Specify where the platform delivers captured data changes."
-  },
-  "advTransformNav": {
-    "title": "Transforms",
-    "content": "Click on Transforms in the sidebar to see how data can be transformed in-flight."
-  },
-  "advConnectionNav": {
-    "title": "Connections",
-    "content": "Manage connections to your sources and destinations."
   },
   "advAddPipeline": {
     "title": "Add a Pipeline",
@@ -100,32 +80,24 @@
       "content": "Click here to browse the destination connector catalog and create a new destination. Choose from streaming platforms like Kafka, Kinesis, Pub/Sub, and more."
     }
   },
-  "destinationCatalog": {
-    "smartEditor": {
-      "title": "Create Using Smart Editor",
-      "content": "Use the Smart Editor to create a destination by directly configuring in JSON. You can also upload an debezium server configuration to create a destination."
-    },
-    "search": {
-      "title": "Search Connectors",
-      "content": "Use the search bar to quickly filter destination connectors by name. Helpful when browsing through the available destination types."
-    },
-    "kafkaCard": {
-      "title": "Select a Destination",
-      "content": "Select a destination from the list below to configure it."
-    }
-  },
   "sourceCatalog": {
     "smartEditor": {
       "title": "Create Using Smart Editor",
       "content": "Use the Smart Editor to create a source by directly configuring in JSON. You can also upload an kafka connect based source definition or debezium server configuration to create a source."
     },
-    "search": {
-      "title": "Search Connectors",
-      "content": "Use the search bar to quickly filter connectors by name. Helpful when browsing through the available source types."
-    },
     "postgresqlCard": {
       "title": "Select a Source",
       "content": "Select a source from the list below to configure it."
+    }
+  },
+  "destinationCatalog": {
+    "smartEditor": {
+      "title": "Create Using Smart Editor",
+      "content": "Use the Smart Editor to create a destination by directly configuring in JSON. You can also upload an debezium server configuration to create a destination."
+    },
+    "kafkaCard": {
+      "title": "Select a Destination",
+      "content": "Select a destination from the list below to configure it."
     }
   },
   "createSource": {

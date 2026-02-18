@@ -23,10 +23,6 @@
     "title": "Connessioni",
     "content": "Gestisci le connessioni alle tue sorgenti e destinazioni."
   },
-  "themeSelector": {
-    "title": "Tema",
-    "content": "Passa tra tema chiaro, scuro o di sistema secondo le tue preferenze."
-  },
   "addPipeline": {
     "title": "Crea una Pipeline",
     "content": "Inizia creando la tua prima pipeline per trasmettere gli eventi di modifica da una sorgente a una destinazione."
@@ -39,42 +35,6 @@
     "advancedLabel": "Tour Avanzato",
     "advancedDescription": "Una guida completa che include tutte le pagine e il flusso di creazione pipeline. Ideale per i nuovi utenti.",
     "maybeLater": "Forse più tardi"
-  },
-  "advSourceNav": {
-    "title": "Naviga alle Sorgenti",
-    "content": "Clicca su Sorgenti nella barra laterale per esplorare la pagina di gestione delle sorgenti."
-  },
-  "advSourcePage": {
-    "title": "Pagina Sorgenti",
-    "content": "Qui gestisci le connessioni sorgente. Puoi aggiungere, modificare e monitorare le sorgenti che catturano gli eventi di modifica dai tuoi database."
-  },
-  "advDestinationNav": {
-    "title": "Naviga alle Destinazioni",
-    "content": "Clicca su Destinazioni nella barra laterale per esplorare la pagina di gestione delle destinazioni."
-  },
-  "advDestinationPage": {
-    "title": "Pagina Destinazioni",
-    "content": "Qui gestisci dove vengono consegnati i dati catturati. Aggiungi e configura gli endpoint di destinazione per le tue pipeline."
-  },
-  "advTransformNav": {
-    "title": "Naviga alle Trasformazioni",
-    "content": "Clicca su Trasformazioni nella barra laterale per vedere come i dati possono essere trasformati in transito."
-  },
-  "advTransformPage": {
-    "title": "Pagina Trasformazioni",
-    "content": "Le trasformazioni ti permettono di modificare, filtrare o instradare i dati mentre fluiscono attraverso le tue pipeline. Crea trasformazioni riutilizzabili qui."
-  },
-  "advConnectionNav": {
-    "title": "Naviga alle Connessioni",
-    "content": "Clicca su Connessioni nella barra laterale per gestire le configurazioni di connessione."
-  },
-  "advConnectionPage": {
-    "title": "Pagina Connessioni",
-    "content": "Le connessioni contengono i dettagli di configurazione per connettersi alle sorgenti e alle destinazioni. Gestisci tutti i profili di connessione qui."
-  },
-  "advPipelineNav": {
-    "title": "Torna alle Pipeline",
-    "content": "Ora clicca su Pipeline per tornare indietro e creare la tua prima pipeline."
   },
   "advAddPipeline": {
     "title": "Aggiungi una Pipeline",
@@ -100,30 +60,6 @@
     "title": "Configura Pipeline",
     "content": "Una volta selezionati sorgente e destinazione, clicca qui per configurare e creare la tua pipeline."
   },
-  "destinationPage": {
-    "welcome": {
-      "title": "Dettagli Destinazione",
-      "content": "Ogni riga mostra il nome della destinazione, il tipo di connettore e in quali pipeline è utilizzata. Puoi anche modificare o eliminare una destinazione dal menu azioni."
-    },
-    "addDestination": {
-      "title": "Aggiungi una Destinazione",
-      "content": "Clicca qui per sfogliare il catalogo dei connettori destinazione e crearne uno nuovo. Scegli tra piattaforme di streaming come Kafka, Kinesis, Pub/Sub e altre."
-    }
-  },
-  "destinationCatalog": {
-    "smartEditor": {
-      "title": "Crea con Smart Editor",
-      "content": "Usa lo Smart Editor per creare una destinazione compilando un modulo guidato. Questo ti dà il controllo completo sulla configurazione del connettore senza scegliere un preset."
-    },
-    "search": {
-      "title": "Cerca Connettori",
-      "content": "Usa la barra di ricerca per filtrare rapidamente i connettori destinazione per nome. Utile quando navighi tra i tipi di destinazione disponibili."
-    },
-    "kafkaCard": {
-      "title": "Connettore Apache Kafka",
-      "content": "Questo è il connettore Apache Kafka — la destinazione più popolare. Cliccalo per configurare una connessione e iniziare a trasmettere gli eventi di modifica al tuo cluster Kafka."
-    }
-  },
   "sourcePage": {
     "welcome": {
       "title": "Dettagli Sorgente",
@@ -134,18 +70,34 @@
       "content": "Clicca qui per sfogliare il catalogo dei connettori sorgente e crearne uno nuovo. Puoi scegliere tra vari connettori come PostgreSQL, MySQL, MongoDB e altri."
     }
   },
+  "destinationPage": {
+    "welcome": {
+      "title": "Dettagli Destinazione",
+      "content": "Ogni riga mostra il nome della destinazione, il tipo di connettore e in quali pipeline è utilizzata. Puoi anche modificare o eliminare una destinazione dal menu azioni."
+    },
+    "addDestination": {
+      "title": "Aggiungi una Destinazione",
+      "content": "Clicca qui per sfogliare il catalogo dei connettori destinazione e crearne uno nuovo. Scegli tra piattaforme di streaming come Kafka, Kinesis, Pub/Sub e altre."
+    }
+  },
   "sourceCatalog": {
     "smartEditor": {
       "title": "Crea con Smart Editor",
-      "content": "Usa lo Smart Editor per creare una sorgente compilando un modulo guidato. Ideale quando vuoi il controllo completo sulla configurazione del connettore senza scegliere un preset."
-    },
-    "search": {
-      "title": "Cerca Connettori",
-      "content": "Usa la barra di ricerca per filtrare rapidamente i connettori per nome. Utile quando navighi tra i tipi di sorgente disponibili."
+      "content": "Usa lo Smart Editor per creare una sorgente configurando direttamente in JSON. Puoi anche caricare una definizione Kafka Connect o una configurazione del server Debezium."
     },
     "postgresqlCard": {
-      "title": "Connettore PostgreSQL",
-      "content": "Questo è il connettore PostgreSQL — una delle sorgenti più popolari. Cliccalo per configurare una connessione al tuo database PostgreSQL e iniziare a catturare gli eventi di modifica."
+      "title": "Seleziona una Sorgente",
+      "content": "Seleziona una sorgente dall'elenco sottostante per configurarla."
+    }
+  },
+  "destinationCatalog": {
+    "smartEditor": {
+      "title": "Crea con Smart Editor",
+      "content": "Usa lo Smart Editor per creare una destinazione configurando direttamente in JSON. Puoi anche caricare una configurazione del server Debezium."
+    },
+    "kafkaCard": {
+      "title": "Seleziona una Destinazione",
+      "content": "Seleziona una destinazione dall'elenco sottostante per configurarla."
     }
   },
   "createSource": {

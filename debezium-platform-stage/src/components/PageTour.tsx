@@ -27,12 +27,8 @@ import {
   isWalkthroughCompleted,
 } from "./GuidedTourContext";
 
-
 const PageTourTooltip: React.FC<TooltipRenderProps> = ({
-  continuous,
   index,
-  isLastStep,
-  size,
   step,
   backProps,
   closeProps,
@@ -94,13 +90,6 @@ const PageTourTooltip: React.FC<TooltipRenderProps> = ({
                 gap={{ default: "gapSm" }}
                 alignItems={{ default: "alignItemsCenter" }}
               >
-                {step.showProgress && (
-                  <FlexItem>
-                    <Content component={ContentVariants.small}>
-                      {index + 1} / {size}
-                    </Content>
-                  </FlexItem>
-                )}
                 {index > 0 && !step.hideBackButton && (
                   <FlexItem>
                     <Button
@@ -118,9 +107,7 @@ const PageTourTooltip: React.FC<TooltipRenderProps> = ({
                     onClick={primaryProps.onClick}
                     aria-label={primaryProps["aria-label"]}
                   >
-                    {continuous && !isLastStep
-                      ? primaryProps.title
-                      : primaryProps.title}
+                    {primaryProps.title}
                   </Button>
                 </FlexItem>
               </Flex>
@@ -151,7 +138,6 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryCountRef = useRef(0);
   const MAX_RETRIES = 3;
-
 
   const isAdvanced = getStoredTourLevel() === "advanced";
   const mainTourDone = isWalkthroughCompleted();

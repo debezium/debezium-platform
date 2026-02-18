@@ -24,12 +24,8 @@ import { TimesIcon } from "@patternfly/react-icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGuidedTour, TourMode } from "./GuidedTourContext";
 
-
-
 const PatternFlyTooltip: React.FC<TooltipRenderProps> = ({
-  continuous,
   index,
-  isLastStep,
   size,
   step,
   backProps,
@@ -116,9 +112,7 @@ const PatternFlyTooltip: React.FC<TooltipRenderProps> = ({
                     onClick={primaryProps.onClick}
                     aria-label={primaryProps["aria-label"]}
                   >
-                    {continuous && !isLastStep
-                      ? primaryProps.title
-                      : primaryProps.title}
+                    {primaryProps.title}
                   </Button>
                 </FlexItem>
               </Flex>
@@ -129,7 +123,6 @@ const PatternFlyTooltip: React.FC<TooltipRenderProps> = ({
     </div>
   );
 };
-
 
 interface FlowSelectorProps {
   onSelect: (mode: TourMode) => void;
@@ -297,8 +290,6 @@ const useAdvancedSteps = (): TourStepDef[] => {
   const basicWithoutLast = basicSteps.slice(0, -1);
 
   const advancedSteps: TourStepDef[] = [
-
-    // Pipeline creation flow steps
     {
       target: '[data-tour="add-pipeline"]',
       placement: "bottom",
