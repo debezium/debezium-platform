@@ -23,8 +23,8 @@ import {
 import { TimesIcon } from "@patternfly/react-icons";
 import {
   useGuidedTour,
-  getStoredTourLevel,
   isWalkthroughCompleted,
+  arePageToursDisabled,
 } from "./GuidedTourContext";
 
 const PageTourTooltip: React.FC<TooltipRenderProps> = ({
@@ -36,6 +36,8 @@ const PageTourTooltip: React.FC<TooltipRenderProps> = ({
   skipProps,
   tooltipProps,
 }) => {
+  const { skipAllPageTours } = useGuidedTour();
+
   return (
     <div {...tooltipProps}>
       <Card
@@ -77,7 +79,10 @@ const PageTourTooltip: React.FC<TooltipRenderProps> = ({
               {step.showSkipButton && (
                 <Button
                   variant="link"
-                  onClick={skipProps.onClick}
+                  onClick={(e) => {
+                    skipAllPageTours();
+                    skipProps.onClick(e as unknown as React.MouseEvent<HTMLElement>);
+                  }}
                   aria-label={skipProps["aria-label"]}
                   isDanger
                 >
@@ -128,24 +133,27 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
   const { t } = useTranslation("tour");
   const {
     isTourActive,
+    isAdvancedUser,
     isPageTourCompleted,
     markPageTourCompleted,
+    skipAllPageTours,
   } = useGuidedTour();
 
   const [run, setRun] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  const [hideBackOnCurrentStep, setHideBackOnCurrentStep] = useState(false);
 
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryCountRef = useRef(0);
   const MAX_RETRIES = 3;
 
-  const isAdvanced = getStoredTourLevel() === "advanced";
   const mainTourDone = isWalkthroughCompleted();
 
   const shouldShow =
-    isAdvanced &&
+    isAdvancedUser &&
     mainTourDone &&
     !isTourActive &&
+    !arePageToursDisabled() &&
     !isPageTourCompleted(pageKey);
 
   useEffect(() => {
@@ -169,6 +177,7 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
   const handleComplete = useCallback(() => {
     setRun(false);
     setStepIndex(0);
+    setHideBackOnCurrentStep(false);
     markPageTourCompleted(pageKey);
   }, [pageKey, markPageTourCompleted]);
 
@@ -176,14 +185,29 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
     (data: CallBackProps) => {
       const { status, action, index, type } = data;
 
-      if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+      if (status === STATUS.FINISHED) {
         handleComplete();
+        return;
+      }
+
+      if (status === STATUS.SKIPPED) {
+        setRun(false);
+        setStepIndex(0);
+        skipAllPageTours();
         return;
       }
 
       if (type === EVENTS.STEP_AFTER) {
         if (action === ACTIONS.CLOSE) {
           handleComplete();
+          return;
+        }
+
+        if (action === ACTIONS.SKIP) {
+          setRun(false);
+          setStepIndex(0);
+          setHideBackOnCurrentStep(false);
+          skipAllPageTours();
           return;
         }
 
@@ -198,6 +222,7 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
         }
 
         if (nextIndex >= 0) {
+          setHideBackOnCurrentStep(false);
           setStepIndex(nextIndex);
         }
         return;
@@ -208,6 +233,7 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
           retryCountRef.current = 0;
           const nextIndex = index + 1;
           if (nextIndex < steps.length) {
+            setHideBackOnCurrentStep(true);
             setStepIndex(nextIndex);
           } else {
             handleComplete();
@@ -225,16 +251,22 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
         }, 800);
       }
     },
-    [steps.length, handleComplete]
+    [steps.length, handleComplete, skipAllPageTours]
   );
 
   if (!shouldShow || steps.length === 0) {
     return null;
   }
 
+  const joyrideSteps = steps.map((step, index) =>
+    index === stepIndex && hideBackOnCurrentStep
+      ? { ...step, hideBackButton: true }
+      : step
+  );
+
   return (
     <Joyride
-      steps={steps}
+      steps={joyrideSteps}
       run={run}
       stepIndex={stepIndex}
       continuous

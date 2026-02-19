@@ -6,6 +6,15 @@ const WALKTHROUGH_STORAGE_KEY = "dbz-walkthrough-completed";
 const WALKTHROUGH_MODE_KEY = "dbz-walkthrough-mode";
 const TOUR_LEVEL_KEY = "dbz-tour-level";
 const PAGE_TOURS_COMPLETED_KEY = "dbz-page-tours-completed";
+const PAGE_TOURS_DISABLED_KEY = "dbz-page-tours-disabled";
+const ALL_PAGE_TOUR_KEYS = [
+  "source",
+  "source-catalog",
+  "create-source",
+  "destination",
+  "destination-catalog",
+  "create-destination",
+];
 
 export const isWalkthroughCompleted = (): boolean => {
   return localStorage.getItem(WALKTHROUGH_STORAGE_KEY) === "true";
@@ -77,6 +86,14 @@ const clearPageToursInStorage = (): void => {
   localStorage.removeItem(PAGE_TOURS_COMPLETED_KEY);
 };
 
+const setCompletedPageToursInStorage = (pageKeys: string[]): void => {
+  localStorage.setItem(PAGE_TOURS_COMPLETED_KEY, JSON.stringify(pageKeys));
+};
+
+export const arePageToursDisabled = (): boolean => {
+  return localStorage.getItem(PAGE_TOURS_DISABLED_KEY) === "true";
+};
+
 interface GuidedTourContextType {
   isTourActive: boolean;
   tourMode: TourMode;
@@ -91,6 +108,7 @@ interface GuidedTourContextType {
   isAdvancedUser: boolean;
   isPageTourCompleted: (pageKey: string) => boolean;
   markPageTourCompleted: (pageKey: string) => void;
+  skipAllPageTours: () => void;
 }
 
 const GuidedTourContext = createContext<GuidedTourContextType | undefined>(
@@ -131,6 +149,7 @@ export const GuidedTourProvider: React.FC<{ children: React.ReactNode }> = ({
   const replayTour = useCallback(() => {
     clearWalkthrough();
     clearPageToursInStorage();
+    localStorage.removeItem(PAGE_TOURS_DISABLED_KEY);
     setCompletedPageTours([]);
     setIsAdvancedUser(false);
     setTourModeState(null);
@@ -164,6 +183,15 @@ export const GuidedTourProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   }, []);
 
+  const skipAllPageTours = useCallback(() => {
+    localStorage.setItem(PAGE_TOURS_DISABLED_KEY, "true");
+    setCompletedPageToursInStorage(ALL_PAGE_TOUR_KEYS);
+    setCompletedPageTours(ALL_PAGE_TOUR_KEYS);
+    markWalkthroughCompleted();
+    setStoredTourLevel(null);
+    setIsAdvancedUser(false);
+  }, []);
+
   return (
     <GuidedTourContext.Provider
       value={{
@@ -179,6 +207,7 @@ export const GuidedTourProvider: React.FC<{ children: React.ReactNode }> = ({
         isAdvancedUser,
         isPageTourCompleted,
         markPageTourCompleted,
+        skipAllPageTours,
       }}
     >
       {children}

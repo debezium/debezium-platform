@@ -416,6 +416,7 @@ const GuidedTour: React.FC = () => {
   }, [deferTour]);
 
   const stopTour = useCallback(() => {
+    const wasAdvanced = tourMode === "advanced";
     setPaused(false);
     isNavigatingRef.current = false;
     retryCountRef.current = 0;
@@ -424,7 +425,10 @@ const GuidedTour: React.FC = () => {
       retryTimeoutRef.current = null;
     }
     completeTour();
-  }, [completeTour]);
+    if (wasAdvanced) {
+      navigate("/pipeline");
+    }
+  }, [completeTour, tourMode, navigate]);
 
   const handleCallback = useCallback(
     (data: CallBackProps) => {
