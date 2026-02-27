@@ -6,19 +6,23 @@ import { AppRoutes } from "./AppRoutes";
 import { AppContextProvider } from "./appLayout/AppContext";
 import { NotificationProvider } from "./appLayout/AppNotificationContext";
 import { GuidedTourProvider } from "./components/GuidedTourContext";
+import { ChatContextProvider, ChatWidget } from "./app/chat";
 
 function App() {
   return (
     <Router>
-      <AppContextProvider>
-        <NotificationProvider>
-          <GuidedTourProvider>
-            <AppLayout>
-              <AppRoutes />
-            </AppLayout>
-          </GuidedTourProvider>
-        </NotificationProvider>
-      </AppContextProvider>
+      <ChatContextProvider>
+        <AppContextProvider>
+          <NotificationProvider>
+            <GuidedTourProvider>
+              <AppLayout>
+                <AppRoutes />
+              </AppLayout>
+              <ChatWidget />
+            </GuidedTourProvider>
+          </NotificationProvider>
+        </AppContextProvider>
+      </ChatContextProvider>
     </Router>
   );
 }

@@ -38,6 +38,15 @@ nb-configuration.xml
 .env
 **/.env
 
+# Node.js
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+
+# Cursor IDE
+.cursor/
+
 # Logs
 *.log
 
