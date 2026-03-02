@@ -214,7 +214,7 @@
       "properties": {
         "bootstrap.servers": {
           "type": "list",
-          "title": "List of “hostname:port” pairs that address one or more (even all) of the brokers."
+          "title": "List of \"hostname:port\" pairs that address one or more (even all) of the brokers."
         }
       }
     }
@@ -319,6 +319,49 @@
         "password": {
           "type": "string",
           "title": "Password for NATS Streaming authentication"
+        }
+      }
+    }
+  },
+  {
+    "type": "RABBITMQ",
+    "schema": {
+      "title": "RabbitMQ connection properties",
+      "description": "RabbitMQ connection properties",
+      "type": "object",
+      "required": [
+        "host",
+        "port",
+        "username",
+        "password"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "RabbitMQ broker host"
+        },
+        "port": {
+          "type": "integer",
+          "title": "RabbitMQ broker port"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username for RabbitMQ authentication"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password for RabbitMQ authentication"
+        },
+        "virtualHost": {
+          "type": "string",
+          "title": "Optional virtual host to connect to"
+        },
+        "ssl.enabled": {
+          "type": "boolean",
+          "title": "Enable TLS for the connection"
         }
       }
     }

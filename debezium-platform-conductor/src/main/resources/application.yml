@@ -63,7 +63,10 @@ destinations:
   pravega:
     connection:
       timeout: 60
-
+  rabbitmq:
+    connection:
+      timeout: 60
+      
 quarkus:
   hibernate-orm:
     mapping:
