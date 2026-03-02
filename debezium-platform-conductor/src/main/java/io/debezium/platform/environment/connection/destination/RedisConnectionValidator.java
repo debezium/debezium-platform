@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.ConnectionValidator;
+import io.debezium.util.Strings;
 
 import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.Jedis;
@@ -77,8 +78,7 @@ public class RedisConnectionValidator implements ConnectionValidator {
     }
 
     private ConnectionValidationResult validateConfiguration(Map<String, Object> config) {
-        if (!config.containsKey(HOST_KEY) || config.get(HOST_KEY) == null ||
-                !Strings.isNullOrBlank(config.get(HOST_KEY).toString())) {
+        if (!config.containsKey(HOST_KEY) || config.get(HOST_KEY) == null || Strings.isNullOrBlank(config.get(HOST_KEY).toString())) {
             return ConnectionValidationResult.failed("Host must be specified");
         }
 
