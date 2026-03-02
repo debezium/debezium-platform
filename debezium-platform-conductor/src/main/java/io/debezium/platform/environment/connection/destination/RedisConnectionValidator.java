@@ -38,11 +38,12 @@ public class RedisConnectionValidator implements ConnectionValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisConnectionValidator.class);
 
+    private static final String PING_RESPONSE = "PONG";
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
     private static final String PASSWORD_KEY = "password";
     private static final String USERNAME_KEY = "username";
-    private static final String USE_SSL_KEY = "useSsl"; // "true" or "false"
+    private static final String USE_SSL_KEY = "use.ssl"; // "true" or "false"
 
     private final int defaultTimeout;
 
@@ -96,7 +97,7 @@ public class RedisConnectionValidator implements ConnectionValidator {
         if (config.containsKey(USE_SSL_KEY)) {
             String useSslValue = config.get(USE_SSL_KEY).toString().trim().toLowerCase();
             if (!useSslValue.equals("true") && !useSslValue.equals("false")) {
-                return ConnectionValidationResult.failed("useSsl must be 'true' or 'false' if specified");
+                return ConnectionValidationResult.failed("use.ssl must be 'true' or 'false' if specified");
             }
         }
 
@@ -147,7 +148,7 @@ public class RedisConnectionValidator implements ConnectionValidator {
             String response = jedis.ping();
             LOGGER.debug("Redis PING response: {}", response);
 
-            if ("PONG".equalsIgnoreCase(response)) {
+            if (PING_RESPONSE.equalsIgnoreCase(response)) {
                 return ConnectionValidationResult.successful();
             }
             else {
