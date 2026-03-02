@@ -77,7 +77,7 @@ public class RedisConnectionValidator implements ConnectionValidator {
 
     private ConnectionValidationResult validateConfiguration(Map<String, Object> config) {
         if (!config.containsKey(HOST_KEY) || config.get(HOST_KEY) == null ||
-                config.get(HOST_KEY).toString().trim().isEmpty()) {
+                !Strings.isNullOrBlank(config.get(HOST_KEY).toString())) {
             return ConnectionValidationResult.failed("Host must be specified");
         }
 
@@ -126,12 +126,12 @@ public class RedisConnectionValidator implements ConnectionValidator {
                     .socketTimeoutMillis(defaultTimeout * 1000);
 
             // Add authentication credentials to the config
-            if (username != null && !username.isEmpty() && password != null) {
+            if (!Strings.isNullOrEmpty(username) && password != null) {
                 // Redis 6+ ACL auth with username and password
                 LOGGER.debug("Configuring authentication with username and password");
                 configBuilder.user(username).password(password);
             }
-            else if (password != null && !password.isEmpty()) {
+            else if (!Strings.isNullOrEmpty(password)) {
                 // Classic password-only auth
                 LOGGER.debug("Configuring authentication with password only");
                 configBuilder.password(password);
