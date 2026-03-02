@@ -218,5 +218,48 @@
         }
       }
     }
+  },
+  {
+    "type": "RABBITMQ",
+    "schema": {
+      "title": "RabbitMQ connection properties",
+      "description": "RabbitMQ connection properties",
+      "type": "object",
+      "required": [
+        "host",
+        "port",
+        "username",
+        "password"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "RabbitMQ broker host"
+        },
+        "port": {
+          "type": "integer",
+          "title": "RabbitMQ broker port"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username for RabbitMQ authentication"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password for RabbitMQ authentication"
+        },
+        "virtualHost": {
+          "type": "string",
+          "title": "Optional virtual host to connect to"
+        },
+        "use.ssl": {
+          "type": "boolean",
+          "title": "Enable TLS for the connection"
+        }
+      }
+    }
   }
 ]
