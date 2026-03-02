@@ -249,7 +249,7 @@
           "type": "string",
           "title": "Password for authentication (optional)"
         },
-        "useSsl": {
+        "use.ssl": {
           "type": "string",
           "enum": [
             "true",

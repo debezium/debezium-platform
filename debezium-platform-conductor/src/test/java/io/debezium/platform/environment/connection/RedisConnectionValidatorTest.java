@@ -259,7 +259,7 @@ class RedisConnectionValidatorTest {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "10.255.255.1"); // Will fail connection but pass validation
         config.put("port", 6379);
-        // password, username, and useSsl are optional, so not providing them should be fine
+        // password, username, and use.ssl are optional, so not providing them should be fine
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
         ConnectionValidationResult result = validator.validate(connection);
@@ -308,7 +308,7 @@ class RedisConnectionValidatorTest {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "10.255.255.1"); // Will fail connection but pass validation
         config.put("port", 6379);
-        config.put("useSsl", "true");
+        config.put("use.ssl", "true");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
         ConnectionValidationResult result = validator.validate(connection);
