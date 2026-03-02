@@ -65,6 +65,7 @@ public class ConnectionEntity {
         @JsonProperty("ROCKETMQ")
         APACHE_ROCKETMQ,
         @JsonProperty("RABBITMQ")
+        RABBITMQ,
         RABBITMQ_STREAM,
         RABBITMQ_NATIVE_STREAM,
         MILVUS,

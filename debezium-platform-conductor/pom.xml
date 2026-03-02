@@ -376,6 +376,11 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-kafka-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+            <version>5.20.0</version>
+        </dependency>
 
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -434,6 +439,11 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-mssqlserver</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>rabbitmq</artifactId>
             <scope>test</scope>
         </dependency>
 
