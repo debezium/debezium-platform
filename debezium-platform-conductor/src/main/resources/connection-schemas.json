@@ -220,6 +220,31 @@
     }
   },
   {
+    "type": "PRAVEGA",
+    "schema": {
+      "title": "Pravega connection properties",
+      "description": "Pravega connection properties",
+      "type": "object",
+      "required": [
+        "controllerUri",
+        "scope"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "controllerUri": {
+          "type": "string",
+          "title": "The URI of the Pravega controller"
+        },
+        "scope": {
+          "type": "string",
+          "title": "The Pravega scope that contains the target streams"
+        }
+      }
+    }
+  },
+  {
     "type": "REDIS",
     "schema": {
       "title": "Redis connection properties",
