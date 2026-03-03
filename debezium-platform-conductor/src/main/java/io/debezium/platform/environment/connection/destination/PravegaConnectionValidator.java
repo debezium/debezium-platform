@@ -1,3 +1,8 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.connection.destination;
 
 import java.net.URI;
@@ -41,7 +46,7 @@ public class PravegaConnectionValidator implements ConnectionValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PravegaConnectionValidator.class);
 
-    private static final String CONTROLLER_URI_KEY = "controllerUri";
+    private static final String CONTROLLER_URI_KEY = "controller.uri";
     private static final String SCOPE_KEY = "scope";
 
     private final int defaultConnectionTimeoutSeconds;
