@@ -255,7 +255,7 @@
           "type": "string",
           "title": "Optional virtual host to connect to"
         },
-        "use.ssl": {
+        "ssl.enabled": {
           "type": "boolean",
           "title": "Enable TLS for the connection"
         }
