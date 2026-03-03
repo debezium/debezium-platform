@@ -44,7 +44,7 @@ public class RedisConnectionValidator implements ConnectionValidator {
     private static final String PORT_KEY = "port";
     private static final String PASSWORD_KEY = "password";
     private static final String USERNAME_KEY = "username";
-    private static final String USE_SSL_KEY = "use.ssl"; // "true" or "false"
+    private static final String USE_SSL_KEY = "ssl.enabled"; // "true" or "false"
 
     private final int defaultTimeout;
 
@@ -97,7 +97,7 @@ public class RedisConnectionValidator implements ConnectionValidator {
         if (config.containsKey(USE_SSL_KEY)) {
             String useSslValue = config.get(USE_SSL_KEY).toString().trim().toLowerCase();
             if (!useSslValue.equals("true") && !useSslValue.equals("false")) {
-                return ConnectionValidationResult.failed("use.ssl must be 'true' or 'false' if specified");
+                return ConnectionValidationResult.failed("ssl.enabled must be 'true' or 'false' if specified");
             }
         }
 
