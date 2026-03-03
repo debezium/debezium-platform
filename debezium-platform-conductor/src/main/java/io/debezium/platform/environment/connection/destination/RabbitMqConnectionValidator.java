@@ -39,7 +39,7 @@ public class RabbitMqConnectionValidator implements ConnectionValidator {
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
     private static final String VIRTUAL_HOST = "virtualHost";
-    private static final String SSL_ENABLED = "use.ssl";
+    private static final String SSL_ENABLED = "ssl.enabled";
 
     private final int defaultConnectionTimeoutSeconds;
 
