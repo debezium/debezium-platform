@@ -66,6 +66,10 @@ destinations:
   pravega:
     connection:
       timeout: 60
+  pulsar:
+    connection:
+      timeout: 60
+
   rabbitmq:
     connection:
       timeout: 60
