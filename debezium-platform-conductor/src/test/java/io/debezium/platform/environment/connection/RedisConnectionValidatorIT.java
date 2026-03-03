@@ -172,7 +172,7 @@ class RedisConnectionValidatorIT {
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
                 "host", container.getHost(),
                 "port", container.getMappedPort(6379).toString(),
-                "use.ssl", "true"));
+                "ssl.enabled", "true"));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 

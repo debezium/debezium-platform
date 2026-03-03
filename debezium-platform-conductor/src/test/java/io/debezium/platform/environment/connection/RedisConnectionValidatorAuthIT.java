@@ -201,7 +201,7 @@ class RedisConnectionValidatorAuthIT {
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
                 "host", container.getHost(),
                 "port", container.getMappedPort(6379).toString(),
-                "use.ssl", "true",
+                "ssl.enabled", "true",
                 "password", RedisTestResourceAuthenticated.getPassword()));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
