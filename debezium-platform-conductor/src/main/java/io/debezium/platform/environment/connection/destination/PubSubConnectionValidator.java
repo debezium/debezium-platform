@@ -1,3 +1,8 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.connection.destination;
 
 import java.io.ByteArrayInputStream;
@@ -48,7 +53,7 @@ public class PubSubConnectionValidator implements ConnectionValidator {
     private final int defaultTimeout;
 
     public PubSubConnectionValidator(
-            @ConfigProperty(name = "destinations.pubsub.connection.timeout") int defaultTimeout) {
+                                     @ConfigProperty(name = "destinations.pubsub.connection.timeout") int defaultTimeout) {
         this.defaultTimeout = defaultTimeout;
     }
 
@@ -71,7 +76,8 @@ public class PubSubConnectionValidator implements ConnectionValidator {
 
             // Then attempt to perform an actual connection validation using the provided configuration
             return performConnectionValidation(config);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             LOGGER.error("Unexpected error during Google Pub/Sub connection validation", e);
             return ConnectionValidationResult.failed("Unexpected error: " + e.getMessage());
         }
@@ -123,7 +129,8 @@ public class PubSubConnectionValidator implements ConnectionValidator {
                 LOGGER.debug("Successfully validated Google Pub/Sub connection for project '{}'", projectId);
                 return ConnectionValidationResult.successful();
             }
-        } catch (ApiException e) {
+        }
+        catch (ApiException e) {
             LOGGER.warn("Google Pub/Sub API error during validation for project '{}'", projectId, e);
             return switch (e.getStatusCode().getCode()) {
                 case NOT_FOUND -> ConnectionValidationResult.failed(
@@ -137,13 +144,16 @@ public class PubSubConnectionValidator implements ConnectionValidator {
                 default -> ConnectionValidationResult.failed(
                         "Pub/Sub validation failed: " + e.getMessage());
             };
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             LOGGER.warn("Failed to load Google Pub/Sub credentials", e);
             return ConnectionValidationResult.failed("Failed to load credentials: " + e.getMessage());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             LOGGER.error("Unexpected error during Google Pub/Sub connection validation", e);
             return ConnectionValidationResult.failed("Unexpected error: " + e.getMessage());
-        } finally {
+        }
+        finally {
             // Ensure that the channel is properly shut down if it was created for emulator testing
             if (channel != null && !channel.isShutdown()) {
                 channel.shutdownNow();
@@ -154,15 +164,16 @@ public class PubSubConnectionValidator implements ConnectionValidator {
     private TopicAdminSettings buildTopicAdminSettings(Map<String, Object> config, ManagedChannel channel)
             throws IOException {
         TopicAdminSettings.Builder builder = TopicAdminSettings.newBuilder();
-        
-        // If a custom endpoint is provided, configure the client to use it with no credentials (emulator mode). 
+
+        // If a custom endpoint is provided, configure the client to use it with no credentials (emulator mode).
         // Otherwise, configure credentials based on the provided configuration or rely on ADC.
         if (channel != null) {
             LOGGER.debug("Using custom Pub/Sub endpoint (emulator): {}", config.get(ENDPOINT_KEY));
             builder.setTransportChannelProvider(
                     FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel)));
             builder.setCredentialsProvider(NoCredentialsProvider.create());
-        } else {
+        }
+        else {
             Object credentialsFilePath = config.get(CREDENTIALS_FILE_KEY);
             Object credentialsJson = config.get(CREDENTIALS_JSON_KEY);
 
@@ -173,7 +184,8 @@ public class PubSubConnectionValidator implements ConnectionValidator {
                             .createScoped(PUBSUB_SCOPE);
                     builder.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
                 }
-            } else if (credentialsJson != null && !Strings.isNullOrBlank(credentialsJson.toString())) {
+            }
+            else if (credentialsJson != null && !Strings.isNullOrBlank(credentialsJson.toString())) {
                 LOGGER.debug("Loading Pub/Sub credentials from inline JSON key");
                 byte[] credentialBytes = credentialsJson.toString().getBytes(StandardCharsets.UTF_8);
                 try (InputStream stream = new ByteArrayInputStream(credentialBytes)) {
