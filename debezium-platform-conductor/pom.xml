@@ -384,9 +384,16 @@
             <artifactId>quarkus-kafka-client</artifactId>
         </dependency>
 
+        <!-- Exclude to avoid BouncyCastle version conflict with bcprov-jdk18on -->
         <dependency>
             <groupId>io.pravega</groupId>
             <artifactId>pravega-client</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-ext-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
