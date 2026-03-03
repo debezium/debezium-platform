@@ -47,6 +47,9 @@ destinations:
   kafka:
     connection:
       timeout: 60
+  pravega:
+    connection:
+      timeout: 60
 
 quarkus:
   hibernate-orm:
