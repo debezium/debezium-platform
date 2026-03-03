@@ -251,14 +251,14 @@
       "description": "Properties required to connect to a Redis server, including optional authentication and SSL",
       "type": "object",
       "required": [
-        "host",
+        "hostname",
         "port"
       ],
       "additionalProperties": {
         "type": "string"
       },
       "properties": {
-        "host": {
+        "hostname": {
           "type": "string",
           "title": "Redis server hostname or IP address"
         },
@@ -319,6 +319,35 @@
         "password": {
           "type": "string",
           "title": "Password for NATS Streaming authentication"
+        }
+      }
+    }
+  },
+  {
+    "type": "QDRANT",
+    "schema": {
+      "title": "Qdrant connection properties",
+      "description": "Qdrant connection properties",
+      "type": "object",
+      "required": [
+        "host",
+        "port"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "The hostname or IP address of the Qdrant instance"
+        },
+        "port": {
+          "type": "integer",
+          "title": "The port of the Qdrant instance (default: 6333)"
+        },
+        "api.key": {
+          "type": "string",
+          "title": "Optional API key for authentication"
         }
       }
     }

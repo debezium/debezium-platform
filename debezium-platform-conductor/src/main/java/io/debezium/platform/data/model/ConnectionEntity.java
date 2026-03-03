@@ -68,6 +68,7 @@ public class ConnectionEntity {
         RABBITMQ_STREAM,
         RABBITMQ_NATIVE_STREAM,
         MILVUS,
+        @JsonProperty("QDRANT")
         QDRANT
     }
 
