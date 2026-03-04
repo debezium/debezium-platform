@@ -445,6 +445,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>rabbitmq</artifactId>
+            <version>${version.test-containers}</version>
             <scope>test</scope>
         </dependency>
 
