@@ -42,8 +42,6 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
  * {@link #getUsername()} which returns "testuser". These credentials are only suitable
  * for testing environments and should never be used in production.</p>
  *
- * @author Pranav Kumar Tiwari
- * @since 1.0
  */
 public class RedisTestResourceAuthenticated implements QuarkusTestResourceLifecycleManager {
 

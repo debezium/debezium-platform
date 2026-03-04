@@ -69,8 +69,6 @@ import io.quarkus.test.junit.QuarkusTest;
  * ("test-redis-password-123") which is only suitable for testing environments and should
  * never be used in production.</p>
  *
- * @author Pranav Kumar Tiwari
- * @since 1.0
  */
 @QuarkusTest
 @QuarkusTestResource(value = RedisTestResourceAuthenticated.class, restrictToAnnotatedClass = true)

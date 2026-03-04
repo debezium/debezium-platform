@@ -69,8 +69,6 @@ import io.quarkus.test.junit.QuarkusTest;
  * require complex container configuration, making them ideal for continuous integration
  * and rapid feedback during development.</p>
  *
- * @author Pranav Kumar Tiwari
- * @since 1.0
  */
 @QuarkusTest
 @QuarkusTestResource(value = RedisTestResource.class, restrictToAnnotatedClass = true)
