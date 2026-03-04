@@ -34,8 +34,6 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
  * setup. It uses Redis 7-alpine and exposes the standard port (6379) for
  * client connections.</p>
  *
- * @author Pranav Kumar Tiwari
- * @since 1.0
  */
 public class RedisTestResource implements QuarkusTestResourceLifecycleManager {
 

@@ -62,8 +62,6 @@ import io.debezium.platform.environment.connection.destination.RedisConnectionVa
  *   <li>Invalid data type testing (strings for numeric fields)</li>
  * </ul>
  *
- * @author Pranav Kumar Tiwari
- * @since 1.0
  */
 class RedisConnectionValidatorTest {
 
