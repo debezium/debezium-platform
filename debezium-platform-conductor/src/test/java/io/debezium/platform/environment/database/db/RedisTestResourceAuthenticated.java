@@ -49,7 +49,7 @@ public class RedisTestResourceAuthenticated implements QuarkusTestResourceLifecy
     public static final String USERNAME = "testuser";
 
     private static final GenericContainer<?> REDIS = new GenericContainer<>(
-            DockerImageName.parse("redis:7-alpine"))
+            DockerImageName.parse("mirror.gcr.io/redis:7-alpine"))
             .withCommand("redis-server", "--requirepass", PASSWORD)
             .withExposedPorts(RedisConnectionValidator.DEFAULT_PORT);
 
