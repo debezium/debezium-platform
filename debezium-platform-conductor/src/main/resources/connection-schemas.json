@@ -218,5 +218,30 @@
         }
       }
     }
+  },
+  {
+    "type": "EVENTHUBS",
+    "schema": {
+      "title": "Azure Event Hubs connection properties",
+      "description": "Azure Event Hubs connection properties",
+      "type": "object",
+      "required": [
+        "connectionstring",
+        "hubname"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "connectionstring": {
+          "type": "string",
+          "title": "Connection string for the Azure Event Hubs namespace"
+        },
+        "hubname": {
+          "type": "string",
+          "title": "Name of the Event Hub"
+        }
+      }
+    }
   }
 ]

@@ -44,6 +44,7 @@
         <version.blaze-persistence>1.6.18</version.blaze-persistence>
         <version.test-containers>2.0.3</version.test-containers>
         <version.mockwebserver>5.3.2</version.mockwebserver>
+        <version.azure-messaging-eventhubs>5.21.3</version.azure-messaging-eventhubs>
         <version.impsort>1.13.0</version.impsort>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
         <version.code.formatter>2.29.0</version.code.formatter>
@@ -201,6 +202,12 @@
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>mockwebserver</artifactId>
                 <version>${version.mockwebserver}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.azure</groupId>
+                <artifactId>azure-messaging-eventhubs</artifactId>
+                <version>${version.azure-messaging-eventhubs}</version>
             </dependency>
 
         </dependencies>
@@ -376,6 +383,10 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-kafka-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-messaging-eventhubs</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -434,6 +445,11 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-mssqlserver</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-azure</artifactId>
             <scope>test</scope>
         </dependency>
 
