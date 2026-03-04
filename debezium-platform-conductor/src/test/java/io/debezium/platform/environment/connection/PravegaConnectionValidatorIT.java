@@ -46,7 +46,7 @@ public class PravegaConnectionValidatorIT {
         String controllerUri = "tcp://" + container.getHost() + ":" + container.getMappedPort(9090);
 
         Map<String, Object> config = new HashMap<>();
-        config.put("controllerUri", controllerUri);
+        config.put("controller.uri", controllerUri);
         config.put("scope", "testScope");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.PRAVEGA, config);
 
@@ -74,7 +74,7 @@ public class PravegaConnectionValidatorIT {
     void shouldFailValidationWithNullControllerUri() {
 
         Map<String, Object> config = new HashMap<>();
-        config.put("controllerUri", null);
+        config.put("controller.uri", null);
         config.put("scope", "testScope");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.PRAVEGA, config);
 
@@ -89,7 +89,7 @@ public class PravegaConnectionValidatorIT {
     void shouldFailValidationWithEmptyControllerUri() {
 
         Map<String, Object> config = new HashMap<>();
-        config.put("controllerUri", "");
+        config.put("controller.uri", "");
         config.put("scope", "testScope");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.PRAVEGA, config);
 
@@ -106,7 +106,7 @@ public class PravegaConnectionValidatorIT {
         String controllerUri = "tcp://" + container.getHost() + ":" + container.getMappedPort(9090);
 
         Map<String, Object> config = new HashMap<>();
-        config.put("controllerUri", controllerUri);
+        config.put("controller.uri", controllerUri);
         Connection connection = new TestConnectionView(ConnectionEntity.Type.PRAVEGA, config);
 
         ConnectionValidationResult result = validator.validate(connection);
@@ -122,7 +122,7 @@ public class PravegaConnectionValidatorIT {
         String controllerUri = "tcp://" + container.getHost() + ":" + container.getMappedPort(9090);
 
         Map<String, Object> config = new HashMap<>();
-        config.put("controllerUri", controllerUri);
+        config.put("controller.uri", controllerUri);
         config.put("scope", "");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.PRAVEGA, config);
 
@@ -139,7 +139,7 @@ public class PravegaConnectionValidatorIT {
         String controllerUri = "tcp://" + container.getHost() + ":" + container.getMappedPort(9090);
 
         Map<String, Object> config = new HashMap<>();
-        config.put("controllerUri", controllerUri);
+        config.put("controller.uri", controllerUri);
         config.put("scope", null);
         Connection connection = new TestConnectionView(ConnectionEntity.Type.PRAVEGA, config);
 
@@ -164,7 +164,7 @@ public class PravegaConnectionValidatorIT {
     void shouldFailValidationWithUnreachableController() {
 
         Map<String, Object> config = new HashMap<>();
-        config.put("controllerUri", "tcp://localhost:19999");
+        config.put("controller.uri", "tcp://localhost:19999");
         config.put("scope", "testScope");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.PRAVEGA, config);
 
@@ -178,7 +178,7 @@ public class PravegaConnectionValidatorIT {
     void shouldHandleTimeoutScenarios() {
 
         Map<String, Object> config = new HashMap<>();
-        config.put("controllerUri", "tcp://10.255.255.1:9090");
+        config.put("controller.uri", "tcp://10.255.255.1:9090");
         config.put("scope", "testScope");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.PRAVEGA, config);
 
