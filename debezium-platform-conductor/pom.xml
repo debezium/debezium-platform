@@ -36,13 +36,13 @@
         <quarkus.jib.platforms>linux/amd64,linux/arm64/v8</quarkus.jib.platforms>
 
         <version.compiler.plugin>3.15.0</version.compiler.plugin>
-        <version.quarkus.platform>3.31.4</version.quarkus.platform>
+        <version.quarkus.platform>3.32.1</version.quarkus.platform>
         <version.surefire-plugin>3.5.5</version.surefire-plugin>
         <version.mapstruct>1.5.5.Final</version.mapstruct>
         <version.debezium>${project.version}</version.debezium>
         <version.smallrye-open-api-core>4.2.4</version.smallrye-open-api-core>
         <version.blaze-persistence>1.6.18</version.blaze-persistence>
-        <version.test-containers>1.20.4</version.test-containers>
+        <version.test-containers>1.20.3</version.test-containers>
         <version.mockwebserver>5.3.2</version.mockwebserver>
         <version.impsort>1.13.0</version.impsort>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
@@ -385,7 +385,7 @@
 
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit</artifactId>
+            <artifactId>quarkus-junit5</artifactId>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -412,7 +412,7 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit-mockito</artifactId>
+            <artifactId>quarkus-junit5-mockito</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -495,14 +495,6 @@
                 <artifactId>quarkus-maven-plugin</artifactId>
                 <version>${version.quarkus.platform}</version>
                 <extensions>true</extensions>
-                <dependencies>
-                    <!-- Ensure JUnit 4 API is available to the plugin classloader -->
-                    <dependency>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                        <version>4.13.2</version>
-                    </dependency>
-                </dependencies>
                 <executions>
                     <execution>
                         <goals>
