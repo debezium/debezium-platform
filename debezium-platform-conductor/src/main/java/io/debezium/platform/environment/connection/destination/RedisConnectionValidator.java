@@ -40,6 +40,8 @@ public class RedisConnectionValidator implements ConnectionValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisConnectionValidator.class);
 
+    public static final int DEFAULT_PORT = 6379;
+
     private static final String PING_RESPONSE = "PONG";
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
