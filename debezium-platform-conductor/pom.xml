@@ -50,6 +50,7 @@
         <version.code.formatter>2.29.0</version.code.formatter>
         <version.nats>2.17.6</version.nats>
         <version.oras>0.1.3</version.oras>
+        <version.rabbitmq>5.20.0</version.rabbitmq>
 
         <format.formatter.goal>format</format.formatter.goal>
         <format.imports.goal>sort</format.imports.goal>
@@ -434,7 +435,7 @@
         <dependency>
             <groupId>com.rabbitmq</groupId>
             <artifactId>amqp-client</artifactId>
-            <version>5.20.0</version>
+            <version>${version.rabbitmq}</version>
         </dependency>
 
         <!-- Exclude to avoid BouncyCastle version conflict with bcprov-jdk18on -->
@@ -515,7 +516,7 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>rabbitmq</artifactId>
+            <artifactId>testcontainers-rabbitmq</artifactId>
             <scope>test</scope>
         </dependency>
 

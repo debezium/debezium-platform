@@ -7,10 +7,6 @@ package io.debezium.platform.environment.connection;
 
 import java.util.Map;
 
-
-
-import io.debezium.util.Strings;
-
 /**
  * Small helpers to safely extract typed values from connection configuration maps.
  */
@@ -49,10 +45,6 @@ public final class ConnectionConfigUtils {
             return b;
         }
         return Boolean.parseBoolean(value.toString());
-    }
-
-    public static boolean isBlank(String value) {
-        return Strings.isNullOrBlank(value);
     }
 
 }

@@ -5,8 +5,6 @@
  */
 package io.debezium.platform.environment.connection.destination;
 
-import io.debezium.platform.environment.connection.ConnectionConfigUtils;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
@@ -23,12 +21,14 @@ import com.rabbitmq.client.ConnectionFactory;
 
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
+import io.debezium.platform.environment.connection.ConnectionConfigUtils;
 import io.debezium.platform.environment.connection.ConnectionValidator;
+import io.debezium.util.Strings;
 
 /**
  * Validates connectivity to a RabbitMQ broker using the AMQP protocol.
  */
-@Named("RABBITMQ")
+@Named("RABBITMQ_STREAM")
 @ApplicationScoped
 public class RabbitMqConnectionValidator implements ConnectionValidator {
 
@@ -59,10 +59,10 @@ public class RabbitMqConnectionValidator implements ConnectionValidator {
         String username = ConnectionConfigUtils.getString(config, USERNAME);
         String password = ConnectionConfigUtils.getString(config, PASSWORD);
 
-        if (ConnectionConfigUtils.isBlank(host) || port == null || port <= 0) {
+        if (Strings.isNullOrBlank(host) || port == null || port <= 0) {
             return ConnectionValidationResult.failed("Host and port must be specified");
         }
-        if (ConnectionConfigUtils.isBlank(username) || ConnectionConfigUtils.isBlank(password)) {
+        if (Strings.isNullOrBlank(username) || Strings.isNullOrBlank(password)) {
             return ConnectionValidationResult.failed("Username and password must be specified");
         }
 
@@ -75,7 +75,7 @@ public class RabbitMqConnectionValidator implements ConnectionValidator {
         factory.setUsername(username);
         factory.setPassword(password);
         factory.setConnectionTimeout((int) Duration.ofSeconds(defaultConnectionTimeoutSeconds).toMillis());
-        if (!ConnectionConfigUtils.isBlank(virtualHost)) {
+        if (!Strings.isNullOrBlank(virtualHost)) {
             factory.setVirtualHost(virtualHost);
         }
         if (sslEnabled) {

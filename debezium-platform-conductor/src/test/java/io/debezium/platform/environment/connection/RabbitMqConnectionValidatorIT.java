@@ -44,7 +44,7 @@ class RabbitMqConnectionValidatorIT {
         config.put("username", RabbitMqTestResource.getContainer().getAdminUsername());
         config.put("password", RabbitMqTestResource.getContainer().getAdminPassword());
 
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.RABBITMQ, config);
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.RABBITMQ_STREAM, config);
 
         ConnectionValidationResult result = validator.validate(connection);
 
@@ -59,7 +59,7 @@ class RabbitMqConnectionValidatorIT {
         config.put("username", "guest");
         config.put("password", "guest");
 
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.RABBITMQ, config);
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.RABBITMQ_STREAM, config);
 
         ConnectionValidationResult result = validator.validate(connection);
 
@@ -75,7 +75,7 @@ class RabbitMqConnectionValidatorIT {
         config.put("username", "wrong");
         config.put("password", "wrong");
 
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.RABBITMQ, config);
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.RABBITMQ_STREAM, config);
 
         ConnectionValidationResult result = validator.validate(connection);
 
