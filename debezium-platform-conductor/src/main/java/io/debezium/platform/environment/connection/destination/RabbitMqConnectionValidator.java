@@ -5,8 +5,6 @@
  */
 package io.debezium.platform.environment.connection.destination;
 
-import io.debezium.platform.environment.connection.ConnectionConfigUtils;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
@@ -23,6 +21,7 @@ import com.rabbitmq.client.ConnectionFactory;
 
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
+import io.debezium.platform.environment.connection.ConnectionConfigUtils;
 import io.debezium.platform.environment.connection.ConnectionValidator;
 
 /**
