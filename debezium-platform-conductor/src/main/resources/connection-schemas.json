@@ -246,7 +246,7 @@
           "title": "Protocol to use (http or https)",
           "default": "http"
         },
-        "apiKey": {
+        "api.key": {
           "type": "string",
           "title": "Optional API key for authentication"
         }
