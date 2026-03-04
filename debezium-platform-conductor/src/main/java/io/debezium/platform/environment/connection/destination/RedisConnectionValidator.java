@@ -6,6 +6,7 @@
 
 package io.debezium.platform.environment.connection.destination;
 
+import java.time.Duration;
 import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -46,10 +47,10 @@ public class RedisConnectionValidator implements ConnectionValidator {
     private static final String USERNAME_KEY = "username";
     private static final String USE_SSL_KEY = "ssl.enabled"; // "true" or "false"
 
-    private final int defaultTimeout;
+    private final Duration defaultTimeout;
 
     public RedisConnectionValidator(
-                                    @ConfigProperty(name = "destinations.redis.connection.timeout") int defaultTimeout) {
+                                    @ConfigProperty(name = "destinations.redis.connection.timeout") Duration defaultTimeout) {
         this.defaultTimeout = defaultTimeout;
     }
 
@@ -123,8 +124,8 @@ public class RedisConnectionValidator implements ConnectionValidator {
             // Build Jedis client config with authentication and SSL
             DefaultJedisClientConfig.Builder configBuilder = DefaultJedisClientConfig.builder()
                     .ssl(useSsl)
-                    .connectionTimeoutMillis(defaultTimeout * 1000)
-                    .socketTimeoutMillis(defaultTimeout * 1000);
+                    .connectionTimeoutMillis((int) defaultTimeout.toMillis())
+                    .socketTimeoutMillis((int) defaultTimeout.toMillis());
 
             // Add authentication credentials to the config
             if (!Strings.isNullOrEmpty(username) && password != null) {
