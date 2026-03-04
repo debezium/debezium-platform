@@ -38,7 +38,7 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 public class RedisTestResource implements QuarkusTestResourceLifecycleManager {
 
     private static final GenericContainer<?> REDIS = new GenericContainer<>(
-            DockerImageName.parse("redis:7-alpine"));
+        DockerImageName.parse("mirror.gcr.io/redis:7-alpine"));
 
     static {
         REDIS.withExposedPorts(RedisConnectionValidator.DEFAULT_PORT);
