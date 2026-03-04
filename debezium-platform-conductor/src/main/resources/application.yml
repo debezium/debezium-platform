@@ -66,7 +66,9 @@ destinations:
   rabbitmq:
     connection:
       timeout: 60
-      
+  qdrant:
+    connection:
+      timeout: 60
 quarkus:
   hibernate-orm:
     mapping:
