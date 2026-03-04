@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import jakarta.inject.Inject;
 
@@ -86,7 +85,7 @@ class RedisConnectionValidatorIT {
         GenericContainer<?> container = RedisTestResource.getContainer();
 
         Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
+                .atMost(TestHelper.waitTimeForContainer())
                 .until(container::isRunning);
 
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
@@ -105,7 +104,7 @@ class RedisConnectionValidatorIT {
         GenericContainer<?> container = RedisTestResource.getContainer();
 
         Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
+                .atMost(TestHelper.waitTimeForContainer())
                 .until(container::isRunning);
 
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
@@ -124,7 +123,7 @@ class RedisConnectionValidatorIT {
         GenericContainer<?> container = RedisTestResource.getContainer();
 
         Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
+                .atMost(TestHelper.waitTimeForContainer())
                 .until(container::isRunning);
 
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
@@ -143,7 +142,7 @@ class RedisConnectionValidatorIT {
         GenericContainer<?> container = RedisTestResource.getContainer();
 
         Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
+                .atMost(TestHelper.waitTimeForContainer())
                 .until(container::isRunning);
 
         // Test with password when container doesn't require authentication
@@ -165,7 +164,7 @@ class RedisConnectionValidatorIT {
         GenericContainer<?> container = RedisTestResource.getContainer();
 
         Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
+                .atMost(TestHelper.waitTimeForContainer())
                 .until(container::isRunning);
 
         // Test with SSL enabled (should fail since container doesn't use SSL)
