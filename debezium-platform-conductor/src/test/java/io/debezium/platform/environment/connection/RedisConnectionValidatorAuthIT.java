@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import jakarta.inject.Inject;
 
@@ -86,7 +85,7 @@ class RedisConnectionValidatorAuthIT {
         GenericContainer<?> container = RedisTestResourceAuthenticated.getContainer();
 
         Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
+                .atMost(TestHelper.waitTimeForContainer())
                 .until(container::isRunning);
 
         // Use the correct password
@@ -107,7 +106,7 @@ class RedisConnectionValidatorAuthIT {
         GenericContainer<?> container = RedisTestResourceAuthenticated.getContainer();
 
         Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
+                .atMost(TestHelper.waitTimeForContainer())
                 .until(container::isRunning);
 
         // Use wrong password
@@ -129,7 +128,7 @@ class RedisConnectionValidatorAuthIT {
         GenericContainer<?> container = RedisTestResourceAuthenticated.getContainer();
 
         Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
+                .atMost(TestHelper.waitTimeForContainer())
                 .until(container::isRunning);
 
         // Don't provide password
@@ -150,7 +149,7 @@ class RedisConnectionValidatorAuthIT {
         GenericContainer<?> container = RedisTestResourceAuthenticated.getContainer();
 
         Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
+                .atMost(TestHelper.waitTimeForContainer())
                 .until(container::isRunning);
 
         // Provide empty password
@@ -172,7 +171,7 @@ class RedisConnectionValidatorAuthIT {
         GenericContainer<?> container = RedisTestResourceAuthenticated.getContainer();
 
         Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
+                .atMost(TestHelper.waitTimeForContainer())
                 .until(container::isRunning);
 
         // Test with wrong port but correct password
@@ -194,7 +193,7 @@ class RedisConnectionValidatorAuthIT {
         GenericContainer<?> container = RedisTestResourceAuthenticated.getContainer();
 
         Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
+                .atMost(TestHelper.waitTimeForContainer())
                 .until(container::isRunning);
 
         // Test with SSL enabled and correct password
