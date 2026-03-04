@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,7 +67,7 @@ import io.debezium.platform.environment.connection.destination.RedisConnectionVa
  */
 class RedisConnectionValidatorTest {
 
-    public static final int DEFAULT_30_SECONDS_TIMEOUT = 30;
+    public static final Duration DEFAULT_30_SECONDS_TIMEOUT = Duration.ofSeconds(30);
 
     private RedisConnectionValidator validator;
 
@@ -79,7 +80,7 @@ class RedisConnectionValidatorTest {
     @DisplayName("Should fail validation when host is not provided")
     void shouldFailValidationWithoutHost() {
         Map<String, Object> config = new HashMap<>();
-        config.put("port", 6379);
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
         ConnectionValidationResult result = validator.validate(connection);
@@ -93,7 +94,7 @@ class RedisConnectionValidatorTest {
     void shouldFailValidationWithEmptyHost() {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "");
-        config.put("port", 6379);
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
         ConnectionValidationResult result = validator.validate(connection);
@@ -107,7 +108,7 @@ class RedisConnectionValidatorTest {
     void shouldFailValidationWithNullHost() {
         Map<String, Object> config = new HashMap<>();
         config.put("host", null);
-        config.put("port", 6379);
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
         ConnectionValidationResult result = validator.validate(connection);
@@ -121,7 +122,7 @@ class RedisConnectionValidatorTest {
     void shouldFailValidationWithWhitespaceHost() {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "   ");
-        config.put("port", 6379);
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
         ConnectionValidationResult result = validator.validate(connection);
@@ -185,7 +186,7 @@ class RedisConnectionValidatorTest {
     void shouldFailValidationWithInvalidHost() {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "invalid-host-that-does-not-exist");
-        config.put("port", 6379);
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
         ConnectionValidationResult result = validator.validate(connection);
@@ -200,7 +201,7 @@ class RedisConnectionValidatorTest {
     void shouldHandleTimeoutScenarios() {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "10.255.255.1"); // Non-routable IP
-        config.put("port", 6379);
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
         ConnectionValidationResult result = validator.validate(connection);
@@ -218,7 +219,7 @@ class RedisConnectionValidatorTest {
         // Test with common Redis port
         Map<String, Object> config1 = new HashMap<>();
         config1.put("host", "10.255.255.1"); // Will fail connection but pass validation
-        config1.put("port", 6379);
+        config1.put("port", RedisConnectionValidator.DEFAULT_PORT);
         Connection connection1 = new TestConnectionView(ConnectionEntity.Type.REDIS, config1);
 
         ConnectionValidationResult result1 = validator.validate(connection1);
@@ -243,7 +244,7 @@ class RedisConnectionValidatorTest {
     void shouldHandleStringPortValues() {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "10.255.255.1"); // Will fail connection but pass validation
-        config.put("port", "6379"); // String representation of valid port
+        config.put("port", String.valueOf(RedisConnectionValidator.DEFAULT_PORT)); // String representation of valid port
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
         ConnectionValidationResult result = validator.validate(connection);
@@ -258,7 +259,7 @@ class RedisConnectionValidatorTest {
     void shouldHandleOptionalParameters() {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "10.255.255.1"); // Will fail connection but pass validation
-        config.put("port", 6379);
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
         // password, username, and ssl.enabled are optional, so not providing them should be fine
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
@@ -274,7 +275,7 @@ class RedisConnectionValidatorTest {
     void shouldHandlePasswordParameter() {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "10.255.255.1"); // Will fail connection but pass validation
-        config.put("port", 6379);
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
         config.put("password", "test-password");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
@@ -290,7 +291,7 @@ class RedisConnectionValidatorTest {
     void shouldHandleUsernameAndPasswordParameters() {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "10.255.255.1"); // Will fail connection but pass validation
-        config.put("port", 6379);
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
         config.put("username", "testuser");
         config.put("password", "test-password");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
@@ -307,7 +308,7 @@ class RedisConnectionValidatorTest {
     void shouldHandleSslParameter() {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "10.255.255.1"); // Will fail connection but pass validation
-        config.put("port", 6379);
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
         config.put("ssl.enabled", "true");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 

@@ -90,7 +90,7 @@ class RedisConnectionValidatorIT {
 
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
                 "host", container.getHost(),
-                "port", container.getMappedPort(6379).toString()));
+                "port", container.getMappedPort(RedisConnectionValidator.DEFAULT_PORT).toString()));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
@@ -109,7 +109,7 @@ class RedisConnectionValidatorIT {
 
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
                 "host", "non-existent-host",
-                "port", container.getMappedPort(6379).toString()));
+                "port", container.getMappedPort(RedisConnectionValidator.DEFAULT_PORT).toString()));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
@@ -148,7 +148,7 @@ class RedisConnectionValidatorIT {
         // Test with password when container doesn't require authentication
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
                 "host", container.getHost(),
-                "port", container.getMappedPort(6379).toString(),
+                "port", container.getMappedPort(RedisConnectionValidator.DEFAULT_PORT).toString(),
                 "password", "unused-password"));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
@@ -170,7 +170,7 @@ class RedisConnectionValidatorIT {
         // Test with SSL enabled (should fail since container doesn't use SSL)
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
                 "host", container.getHost(),
-                "port", container.getMappedPort(6379).toString(),
+                "port", container.getMappedPort(RedisConnectionValidator.DEFAULT_PORT).toString(),
                 "ssl.enabled", "true"));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
@@ -187,7 +187,7 @@ class RedisConnectionValidatorIT {
     @DisplayName("Should fail validation when host is missing")
     void shouldFailValidationWithoutHost() {
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
-                "port", "6379"));
+                "port", String.valueOf(RedisConnectionValidator.DEFAULT_PORT)));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
@@ -212,7 +212,7 @@ class RedisConnectionValidatorIT {
     void shouldFailValidationWithEmptyHost() {
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
                 "host", "",
-                "port", "6379"));
+                "port", String.valueOf(RedisConnectionValidator.DEFAULT_PORT)));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
@@ -248,7 +248,7 @@ class RedisConnectionValidatorIT {
         // Use a non-routable IP address to simulate timeout
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
                 "host", "10.255.255.1", // Non-routable IP
-                "port", "6379"));
+                "port", String.valueOf(RedisConnectionValidator.DEFAULT_PORT)));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 

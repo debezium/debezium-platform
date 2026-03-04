@@ -10,6 +10,7 @@ import java.util.Map;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import io.debezium.platform.environment.connection.destination.RedisConnectionValidator;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
 /**
@@ -52,7 +53,7 @@ public class RedisTestResourceAuthenticated implements QuarkusTestResourceLifecy
     private static final GenericContainer<?> REDIS = new GenericContainer<>(
             DockerImageName.parse("redis:7-alpine"))
             .withCommand("redis-server", "--requirepass", PASSWORD)
-            .withExposedPorts(6379);
+            .withExposedPorts(RedisConnectionValidator.DEFAULT_PORT);
 
     public static GenericContainer<?> getContainer() {
         return REDIS;
