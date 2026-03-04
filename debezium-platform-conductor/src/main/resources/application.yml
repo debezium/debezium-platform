@@ -88,6 +88,9 @@ destinations:
   pulsar:
     connection:
       timeout: 60
+  eventhubs:
+    connection:
+      timeout: 60
 
   rabbitmq:
     connection:

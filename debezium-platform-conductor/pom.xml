@@ -47,6 +47,7 @@
         <version.infinispan>16.1.3</version.infinispan>
         <version.pravega>0.13.0</version.pravega>
         <version.google.cloud.pubsub>1.150.0</version.google.cloud.pubsub>
+        <version.azure-messaging-eventhubs>5.21.3</version.azure-messaging-eventhubs>
         <version.impsort>1.13.0</version.impsort>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
         <version.code.formatter>2.29.0</version.code.formatter>
@@ -286,6 +287,12 @@
                 <groupId>com.google.cloud</groupId>
                 <artifactId>google-cloud-pubsub</artifactId>
                 <version>${version.google.cloud.pubsub}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.azure</groupId>
+                <artifactId>azure-messaging-eventhubs</artifactId>
+                <version>${version.azure-messaging-eventhubs}</version>
             </dependency>
 
         </dependencies>
@@ -561,6 +568,10 @@
             <groupId>io.quarkiverse.oras</groupId>
             <artifactId>quarkus-oras</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-messaging-eventhubs</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -647,6 +658,11 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-gcloud</artifactId>
             <version>${version.test-containers}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-azure</artifactId>
             <scope>test</scope>
         </dependency>
 

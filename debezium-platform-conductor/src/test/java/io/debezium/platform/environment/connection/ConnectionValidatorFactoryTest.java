@@ -36,4 +36,10 @@ class ConnectionValidatorFactoryTest {
         ConnectionValidator validator = factory.getValidator("KAFKA");
         assertFalse(validator.validate(new TestConnectionView(ConnectionEntity.Type.KAFKA, Map.of())).valid());
     }
+
+    @Test
+    void shouldReturnEventHubsValidator() {
+        ConnectionValidator validator = factory.getValidator(ConnectionEntity.Type.AZURE_EVENTS_HUBS.name());
+        assertFalse(validator.validate(new TestConnectionView(ConnectionEntity.Type.AZURE_EVENTS_HUBS, Map.of())).valid());
+    }
 }

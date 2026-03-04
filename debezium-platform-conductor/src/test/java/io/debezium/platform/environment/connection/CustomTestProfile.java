@@ -20,7 +20,7 @@ public class CustomTestProfile implements QuarkusTestProfile {
 
     @Override
     public Set<Class<?>> getEnabledAlternatives() {
-        return Set.of(TestDatabaseConnectionValidator.class, TestKafkaConnectionValidator.class);
+        return Set.of(TestDatabaseConnectionValidator.class, TestKafkaConnectionValidator.class, TestAzureEventHubsConnectionValidator.class);
     }
 
     @Override
