@@ -32,7 +32,6 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
  * - Optional username/password (Redis ACL support)
  * - Optional password only (classic Redis auth)
  * - Optional TLS/SSL connection
- * @author Pranav Kumar Tiwari
  */
 @ApplicationScoped
 @Named("REDIS")
