@@ -218,8 +218,6 @@
         }
       }
     }
-<<<<<<< HEAD
-=======
   },
   {
     "type": "RABBITMQ",
@@ -286,9 +284,9 @@
         },
         "port": {
           "type": "integer",
-          "title": "NATS Streaming server host"
+          "title": "NATS Streaming server port"
         },
-        "cluseterId": {
+        "clusterId": {
           "type": "string",
           "title": "NATS Streaming cluster ID"
         },
@@ -306,7 +304,6 @@
         }
       }
     }
->>>>>>> b7b7119 (debezium/dbz#1090 Add connection validator for)
   }
 
 ]
