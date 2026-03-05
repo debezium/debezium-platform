@@ -66,12 +66,15 @@ public class RedisConnectionValidator implements ConnectionValidator {
 
             Map<String, Object> redisConfig = connectionConfig.getConfig();
 
-            ConnectionValidationResult configValidation = validateConfiguration(redisConfig);
+            // Validate configuration and parse port early to avoid re-parsing later
+            String portStr = getStringConfig(redisConfig, PORT_KEY);
+            ConnectionValidationResult configValidation = validateConfiguration(redisConfig, portStr);
             if (!configValidation.valid()) {
                 return configValidation;
             }
 
-            return performConnectionValidation(redisConfig);
+            int port = Integer.parseInt(portStr);
+            return performConnectionValidation(redisConfig, port);
         }
         catch (Exception e) {
             LOGGER.error("Unexpected error during Redis connection validation", e);
@@ -79,26 +82,43 @@ public class RedisConnectionValidator implements ConnectionValidator {
         }
     }
 
-    private ConnectionValidationResult validateConfiguration(Map<String, Object> config) {
-        if (!config.containsKey(HOST_KEY) || config.get(HOST_KEY) == null || Strings.isNullOrBlank(config.get(HOST_KEY).toString())) {
+    private ConnectionValidationResult validateConfiguration(Map<String, Object> config, String portStr) {
+        String host = getStringConfig(config, HOST_KEY);
+        if (Strings.isNullOrBlank(host)) {
             return ConnectionValidationResult.failed("Host must be specified");
         }
+        if (hasLeadingOrTrailingWhitespace(host)) {
+            return ConnectionValidationResult.failed("Host cannot contain leading or trailing whitespace");
+        }
 
-        if (!config.containsKey(PORT_KEY) || config.get(PORT_KEY) == null) {
+        if (portStr == null) {
             return ConnectionValidationResult.failed("Port must be specified");
         }
 
-        // Validate port is a number
+        // Validate port is a number and within valid range
+        int port;
         try {
-            Integer.parseInt(config.get(PORT_KEY).toString());
+            port = Integer.parseInt(portStr);
         }
         catch (NumberFormatException e) {
             return ConnectionValidationResult.failed("Port must be a valid integer");
         }
 
-        if (config.containsKey(USE_SSL_KEY)) {
-            String useSslValue = config.get(USE_SSL_KEY).toString().trim().toLowerCase();
-            if (!useSslValue.equals("true") && !useSslValue.equals("false")) {
+        if (port <= 0 || port > 65535) {
+            return ConnectionValidationResult.failed("Port must be between 1 and 65535");
+        }
+
+        String username = getStringConfig(config, USERNAME_KEY);
+        if (username != null && hasLeadingOrTrailingWhitespace(username)) {
+            return ConnectionValidationResult.failed("Username cannot contain leading or trailing whitespace");
+        }
+
+        String useSslValue = getStringConfig(config, USE_SSL_KEY);
+        if (useSslValue != null) {
+            if (hasLeadingOrTrailingWhitespace(useSslValue)) {
+                return ConnectionValidationResult.failed("ssl.enabled cannot contain leading or trailing whitespace");
+            }
+            if (!useSslValue.equalsIgnoreCase("true") && !useSslValue.equalsIgnoreCase("false")) {
                 return ConnectionValidationResult.failed("ssl.enabled must be 'true' or 'false' if specified");
             }
         }
@@ -106,16 +126,25 @@ public class RedisConnectionValidator implements ConnectionValidator {
         return ConnectionValidationResult.successful();
     }
 
-    private ConnectionValidationResult performConnectionValidation(Map<String, Object> config) {
-        String host = config.get(HOST_KEY).toString().trim();
-        int port = Integer.parseInt(config.get(PORT_KEY).toString().trim());
+    private boolean hasLeadingOrTrailingWhitespace(String value) {
+        return !value.equals(value.trim());
+    }
 
-        String username = config.containsKey(USERNAME_KEY) ? config.get(USERNAME_KEY).toString().trim() : null;
-        String password = config.containsKey(PASSWORD_KEY) ? config.get(PASSWORD_KEY).toString() : null;
+    private String getStringConfig(Map<String, Object> config, String key) {
+        Object value = config.get(key);
+        return value != null ? value.toString() : null;
+    }
+
+    private ConnectionValidationResult performConnectionValidation(Map<String, Object> config, int port) {
+        String host = getStringConfig(config, HOST_KEY);
+
+        String username = getStringConfig(config, USERNAME_KEY);
+        String password = getStringConfig(config, PASSWORD_KEY);
 
         boolean useSsl = false;
-        if (config.containsKey(USE_SSL_KEY)) {
-            useSsl = Boolean.parseBoolean(config.get(USE_SSL_KEY).toString().trim());
+        String useSslValue = getStringConfig(config, USE_SSL_KEY);
+        if (useSslValue != null) {
+            useSsl = Boolean.parseBoolean(useSslValue);
         }
 
         Jedis jedis = null;

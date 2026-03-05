@@ -130,6 +130,100 @@ class RedisConnectionValidatorTest {
     }
 
     @Test
+    @DisplayName("Should fail validation when host has trailing whitespace")
+    void shouldFailValidationWithTrailingWhitespaceHost() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("host", "localhost ");
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
+
+        ConnectionValidationResult result = validator.validate(connection);
+
+        assertFalse(result.valid(), "Connection validation should fail");
+        assertEquals("Host cannot contain leading or trailing whitespace", result.message());
+    }
+
+    @Test
+    @DisplayName("Should fail validation when port has trailing whitespace")
+    void shouldFailValidationWithTrailingWhitespacePort() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("host", "localhost");
+        config.put("port", "6379 ");
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
+
+        ConnectionValidationResult result = validator.validate(connection);
+
+        assertFalse(result.valid(), "Connection validation should fail");
+        assertEquals("Port must be a valid integer", result.message());
+    }
+
+    @Test
+    @DisplayName("Should fail validation when port is zero or negative")
+    void shouldFailValidationWithZeroOrNegativePort() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("host", "localhost");
+        config.put("port", 0);
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
+
+        ConnectionValidationResult result = validator.validate(connection);
+
+        assertFalse(result.valid(), "Connection validation should fail");
+        assertEquals("Port must be between 1 and 65535", result.message());
+
+        config.put("port", -1);
+        connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
+
+        result = validator.validate(connection);
+
+        assertFalse(result.valid(), "Connection validation should fail");
+        assertEquals("Port must be between 1 and 65535", result.message());
+    }
+
+    @Test
+    @DisplayName("Should fail validation when port is greater than 65535")
+    void shouldFailValidationWithTooLargePort() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("host", "localhost");
+        config.put("port", 65536);
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
+
+        ConnectionValidationResult result = validator.validate(connection);
+
+        assertFalse(result.valid(), "Connection validation should fail");
+        assertEquals("Port must be between 1 and 65535", result.message());
+    }
+
+    @Test
+    @DisplayName("Should fail validation when username has trailing whitespace")
+    void shouldFailValidationWithTrailingWhitespaceUsername() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("host", "localhost");
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
+        config.put("username", "user ");
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
+
+        ConnectionValidationResult result = validator.validate(connection);
+
+        assertFalse(result.valid(), "Connection validation should fail");
+        assertEquals("Username cannot contain leading or trailing whitespace", result.message());
+    }
+
+    @Test
+    @DisplayName("Should fail validation when ssl.enabled has trailing whitespace")
+    void shouldFailValidationWithTrailingWhitespaceSsl() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("host", "localhost");
+        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
+        config.put("ssl.enabled", "true ");
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
+
+        ConnectionValidationResult result = validator.validate(connection);
+
+        assertFalse(result.valid(), "Connection validation should fail");
+        assertEquals("ssl.enabled cannot contain leading or trailing whitespace", result.message());
+    }
+
+    @Test
     @DisplayName("Should fail validation when port is not provided")
     void shouldFailValidationWithoutPort() {
         Map<String, Object> config = new HashMap<>();
