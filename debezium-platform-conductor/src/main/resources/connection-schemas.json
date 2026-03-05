@@ -218,5 +218,39 @@
         }
       }
     }
+  },
+  {
+    "type": "QDRANT",
+    "schema": {
+      "title": "Qdrant connection properties",
+      "description": "Qdrant connection properties",
+      "type": "object",
+      "required": [
+        "host",
+        "port"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "The hostname or IP address of the Qdrant instance"
+        },
+        "port": {
+          "type": "integer",
+          "title": "The port of the Qdrant instance (default: 6333)"
+        },
+        "protocol": {
+          "type": "string",
+          "title": "Protocol to use (http or https)",
+          "default": "http"
+        },
+        "api.key": {
+          "type": "string",
+          "title": "Optional API key for authentication"
+        }
+      }
+    }
   }
 ]
