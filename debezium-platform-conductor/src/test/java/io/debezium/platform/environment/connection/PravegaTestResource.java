@@ -16,7 +16,7 @@ public class PravegaTestResource implements QuarkusTestResourceLifecycleManager 
     private static final int CONTROLLER_PORT = 9090;
 
     private static final GenericContainer<?> PRAVEGA = new GenericContainer<>(
-            DockerImageName.parse("pravega/pravega:0.13.0"))
+            DockerImageName.parse("mirror.gcr.io/pravega/pravega:0.13.0"))
             .withCommand("standalone")
             .withExposedPorts(CONTROLLER_PORT);
 

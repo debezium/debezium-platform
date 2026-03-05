@@ -226,14 +226,14 @@
       "description": "Pravega connection properties",
       "type": "object",
       "required": [
-        "controllerUri",
+        "git add .",
         "scope"
       ],
       "additionalProperties": {
         "type": "string"
       },
       "properties": {
-        "controllerUri": {
+        "controller.uri": {
           "type": "string",
           "title": "The URI of the Pravega controller"
         },
