@@ -514,6 +514,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                 <SourceSinkForm
                   ConnectorId={sourceId || ""}
                   connectorType="source"
+                  dataType={sourceId}
                   properties={properties}
                   setValue={setValue}
                   getValue={getValue}
@@ -523,6 +524,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
                   handleAddProperty={handleAddProperty}
                   handleDeleteProperty={handleDeleteProperty}
                   handlePropertyChange={handlePropertyChange}
+                  setProperties={setProperties}
                   updateSignalCollectionName={updateSignalCollectionName}
                   signalCollectionName={signalCollectionName}
                   setSelectedConnection={setSelectedConnection}
