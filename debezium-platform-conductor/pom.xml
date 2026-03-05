@@ -47,6 +47,7 @@
         <version.impsort>1.13.0</version.impsort>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
         <version.code.formatter>2.29.0</version.code.formatter>
+        <version.nats>2.17.6</version.nats>
 
         <format.formatter.goal>format</format.formatter.goal>
         <format.imports.goal>sort</format.imports.goal>
@@ -70,6 +71,12 @@
                 <version>${version.test-containers}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.nats</groupId>
+                <artifactId>jnats</artifactId>
+                <version>${version.nats}</version>
             </dependency>
 
             <dependency>
@@ -480,6 +487,12 @@
             <artifactId>quarkus-test-kafka-companion</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>io.nats</groupId>
+            <artifactId>jnats</artifactId>
+        </dependency>
+        
     </dependencies>
     <build>
         <plugins>
