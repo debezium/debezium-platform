@@ -261,5 +261,49 @@
         }
       }
     }
+  },
+  {
+    "type": "NATS_STREAMING",
+    "schema":{
+      "title": "NATS Streaming connection properties",
+      "description": "NATS Streaming connection properties",
+      "type": "object",
+      "required": [
+        "host",
+        "port",
+        "clusterId",
+        "clientId"
+      ],
+      "additionalProperties": {
+        "type":"string"
+      },
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "NATS Streaming server host"
+        },
+        "port": {
+          "type": "integer",
+          "title": "NATS Streaming server host"
+        },
+        "cluseterId": {
+          "type": "string",
+          "title": "NATS Streaming cluster ID"
+        },
+        "clientId": {
+          "type":"string",
+          "title": "NATS Streaming client ID"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username for NATS Streaming authentication"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password for NATS Streaming authentication"
+        }
+      }
+    }
   }
+
 ]
