@@ -15,8 +15,11 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 public class PravegaTestResource implements QuarkusTestResourceLifecycleManager {
     private static final int CONTROLLER_PORT = 9090;
 
+    private static final String PRAVEGA_VERSION = "0.13.0";
+    private static final String PRAVEGA_IMAGE = "mirror.gcr.io/pravega/pravega:" + PRAVEGA_VERSION;
+
     private static final GenericContainer<?> PRAVEGA = new GenericContainer<>(
-            DockerImageName.parse("mirror.gcr.io/pravega/pravega:0.13.0"))
+            DockerImageName.parse(PRAVEGA_IMAGE))
             .withCommand("standalone")
             .withExposedPorts(CONTROLLER_PORT);
 
