@@ -218,5 +218,95 @@
         }
       }
     }
+<<<<<<< HEAD
+=======
+  },
+  {
+    "type": "RABBITMQ",
+    "schema": {
+      "title": "RabbitMQ connection properties",
+      "description": "RabbitMQ connection properties",
+      "type": "object",
+      "required": [
+        "host",
+        "port",
+        "username",
+        "password"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "RabbitMQ broker host"
+        },
+        "port": {
+          "type": "integer",
+          "title": "RabbitMQ broker port"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username for RabbitMQ authentication"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password for RabbitMQ authentication"
+        },
+        "virtualHost": {
+          "type": "string",
+          "title": "Optional virtual host to connect to"
+        },
+        "ssl.enabled": {
+          "type": "boolean",
+          "title": "Enable TLS for the connection"
+        }
+      }
+    }
+  },
+  {
+    "type": "NATS_STREAMING",
+    "schema":{
+      "title": "NATS Streaming connection properties",
+      "description": "NATS Streaming connection properties",
+      "type": "object",
+      "required": [
+        "host",
+        "port",
+        "clusterId",
+        "clientId"
+      ],
+      "additionalProperties": {
+        "type":"string"
+      },
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "NATS Streaming server host"
+        },
+        "port": {
+          "type": "integer",
+          "title": "NATS Streaming server host"
+        },
+        "cluseterId": {
+          "type": "string",
+          "title": "NATS Streaming cluster ID"
+        },
+        "clientId": {
+          "type":"string",
+          "title": "NATS Streaming client ID"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username for NATS Streaming authentication"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password for NATS Streaming authentication"
+        }
+      }
+    }
+>>>>>>> b7b7119 (debezium/dbz#1090 Add connection validator for)
   }
+
 ]
