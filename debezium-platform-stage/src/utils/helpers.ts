@@ -21,6 +21,40 @@ export const convertMapToObject = (
   return obj;
 };
 
+/**
+ * Returns connector type id for schema lookup (oracle, postgresql, etc).
+ * POC: Oracle schema is used for all; when backend has per-connector schemas, this selects the right one.
+ */
+export const getConnectorSchemaType = (
+  connectorId: string,
+  dataType?: string
+): string => {
+  const catalogIds = ['oracle', 'postgresql', 'mysql', 'mariadb', 'mongodb', 'sqlserver'];
+  if (connectorId && catalogIds.includes(connectorId.toLowerCase())) {
+    return connectorId.toLowerCase();
+  }
+  if (dataType) {
+    const m = dataType.toLowerCase().match(/oracle|postgresql|mysql|mariadb|mongodb|sqlserver/);
+    if (m) return m[0];
+  }
+  return 'oracle';
+};
+
+/**
+ * Converts a config object to the properties Map format used by CreateSource/CreateDestination.
+ * Inverse of convertMapToObject.
+ */
+export const convertObjectToMap = (
+  obj: Record<string, string | number | boolean | undefined>
+): Map<string, { key: string; value: string }> => {
+  const map = new Map<string, { key: string; value: string }>();
+  Object.entries(obj).forEach(([key, value], index) => {
+    if (value === undefined || value === null) return;
+    map.set(`key${index}`, { key, value: String(value) });
+  });
+  return map;
+};
+
 export const isEmpty = (obj: any) => {
   return Object.keys(obj).length === 0;
 };
