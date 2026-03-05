@@ -14,7 +14,7 @@ export default [
       'react-refresh': reactRefresh,
     },
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 2022,
       globals: { ...globals.browser },
     },
     rules: {
