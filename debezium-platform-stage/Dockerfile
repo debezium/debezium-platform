@@ -5,14 +5,9 @@ RUN mkdir -p /app && chown 1001:1001 /app
 USER 1001
 RUN npm install -g yarn
 
-RUN yarn config set network-timeout 600000 && \
-    yarn config set registry https://registry.yarnpkg.com && \
-    yarn config set network-concurrency 2
-
-
 WORKDIR /app
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --non-interactive
+RUN yarn install --frozen-lockfile
 COPY . .
 
 RUN yarn build
