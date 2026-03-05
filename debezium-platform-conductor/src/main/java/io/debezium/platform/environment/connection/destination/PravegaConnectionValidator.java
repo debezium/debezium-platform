@@ -68,18 +68,18 @@ public class PravegaConnectionValidator implements ConnectionValidator {
 
             if (!config.containsKey(CONTROLLER_URI_KEY) ||
                     config.get(CONTROLLER_URI_KEY) == null ||
-                    config.get(CONTROLLER_URI_KEY).toString().trim().isEmpty()) {
+                    config.get(CONTROLLER_URI_KEY).toString().isEmpty()) {
                 return ConnectionValidationResult.failed("Controller URI must be specified");
             }
 
             if (!config.containsKey(SCOPE_KEY) ||
                     config.get(SCOPE_KEY) == null ||
-                    config.get(SCOPE_KEY).toString().trim().isEmpty()) {
+                    config.get(SCOPE_KEY).toString().isEmpty()) {
                 return ConnectionValidationResult.failed("Scope must be specified");
             }
 
-            String controllerUri = config.get(CONTROLLER_URI_KEY).toString().trim();
-            String scope = config.get(SCOPE_KEY).toString().trim();
+            String controllerUri = config.get(CONTROLLER_URI_KEY).toString();
+            String scope = config.get(SCOPE_KEY).toString();
 
             return performConnectionValidation(controllerUri, scope);
         }
