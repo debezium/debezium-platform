@@ -226,7 +226,7 @@
       "description": "Pravega connection properties",
       "type": "object",
       "required": [
-        "git add .",
+        "controller.uri",
         "scope"
       ],
       "additionalProperties": {
