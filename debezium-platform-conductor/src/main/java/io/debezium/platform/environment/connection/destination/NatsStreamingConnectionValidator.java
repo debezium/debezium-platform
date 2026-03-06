@@ -18,10 +18,12 @@ import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.ConnectionConfigUtils;
 import io.debezium.platform.environment.connection.ConnectionValidator;
+import io.debezium.util.Strings;
 
 import io.nats.client.ConnectionFactory;
 import io.nats.client.NATS;
 import io.nats.client.Options;
+
 
 /**
  * Validates connectivity to a NATS Streaming server.
@@ -59,16 +61,16 @@ public class NatsStreamingConnectionValidator implements ConnectionValidator {
         String clusterId = ConnectionConfigUtils.getString(config, CLUSTER_ID);
         String clientId = ConnectionConfigUtils.getString(config, CLIENT_ID);
 
-        if (ConnectionConfigUtils.isBlank(host) || port == null || port <= 0) {
+        if (Strings.isNullOrBlank(host) || port == null || port <= 0) {
             return ConnectionValidationResult.failed("Host and port must be specified");
         }
-        if (ConnectionConfigUtils.isBlank(clusterId) || ConnectionConfigUtils.isBlank(clientId)) {
+        if (Strings.isNullOrBlank(clusterId) || Strings.isNullOrBlank(clientId)) {
             return ConnectionValidationResult.failed("Cluster ID and Client ID must be specified");
         }
 
         String url = String.format("nats://%s:%d", host, port);
         Options.Builder builder = new Options.Builder().server(url).connectionTimeout(defaultConnectionTimeoutSeconds * 1000);
-        if (!ConnectionConfigUtils.isBlank(username)) {
+        if (!Strings.isNullOrBlank(username)) {
             builder.userInfo(username, password != null ? password : "");
         }
 
