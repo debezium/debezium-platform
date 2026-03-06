@@ -49,7 +49,4 @@ public final class ConnectionConfigUtils {
         return Boolean.parseBoolean(value.toString());
     }
 
-    public static boolean isBlank(String value) {
-        return Strings.isNullOrBlank(value);
-    }
 }
