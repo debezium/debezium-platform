@@ -28,6 +28,7 @@ public class ConnectionValidatorFactory {
     private String mapToValidatorName(String connectionType) {
         return switch (connectionType) {
             case "ORACLE", "MYSQL", "MARIADB", "SQLSERVER", "POSTGRESQL" -> "DATABASE";
+            case "NATS-STREAMING" -> "NATS_STREAMING";
             default -> connectionType;
         };
     }
