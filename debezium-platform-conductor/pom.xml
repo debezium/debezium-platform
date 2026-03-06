@@ -216,6 +216,10 @@
         </dependency>
         <dependency>
             <groupId>io.debezium</groupId>
+            <artifactId>debezium-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.debezium</groupId>
             <artifactId>debezium-embedded</artifactId>
         </dependency>
 
