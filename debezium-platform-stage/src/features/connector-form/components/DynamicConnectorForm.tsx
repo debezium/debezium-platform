@@ -1,7 +1,7 @@
 import { useForm, type Resolver, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useAtom } from 'jotai';
-import { useMemo, useRef, useEffect, useState } from 'react';
+import { useAtom, useAtomValue } from 'jotai';
+import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import {
   Form,
   Tabs,
@@ -11,13 +11,16 @@ import {
   Button,
   Spinner,
   Alert,
+  Content,
+  Bullseye,
 } from '@patternfly/react-core';
 import type { NormalizedSchema } from '../types';
 import { useConnectorSchema } from '../hooks/useConnectorSchema';
 import { useFieldVisibility } from '../hooks/useFieldVisibility';
 import { buildYupSchema } from '../validation/buildYupSchema';
 import { ConnectorFormGroup } from './ConnectorFormGroup';
-import { savedConnectorConfigAtom } from '../store/connectorAtoms';
+import { savedConnectorConfigAtom, rawConnectorSchemaAtom } from '../store/connectorAtoms';
+import { NavigationBlocker } from './NavigationBlocker';
 
 interface DynamicConnectorFormProps {
   connectorType: string;
@@ -27,6 +30,8 @@ interface DynamicConnectorFormProps {
   mode?: 'standalone' | 'embedded';
   /** Called when form values change (embedded mode). Receives only visible field values. */
   onConfigChange?: (config: Record<string, unknown>) => void;
+  /** Exposes isDirty to parent for embedded mode navigation guards */
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 function getDefaultValuesFromSchema(
@@ -56,21 +61,31 @@ export function DynamicConnectorForm({
   initialValues = {},
   mode = 'standalone',
   onConfigChange,
+  onDirtyChange,
 }: DynamicConnectorFormProps) {
-  const { normalizedSchema, isLoading, error } = useConnectorSchema(connectorType);
+  const { normalizedSchema, isLoading, error, refetch } = useConnectorSchema(connectorType);
+  const rawSchema = useAtomValue(rawConnectorSchemaAtom);
   const [savedConfig, setSavedConfig] = useAtom(savedConnectorConfigAtom);
   const [activeTab, setActiveTab] = useState<string | number>(0);
 
+  // Stabilize initialValues so a new object reference with identical content
+  // doesn't trigger cascading re-renders in embedded mode.
+  const initialValuesKey = JSON.stringify(initialValues);
+  const stableInitialValues = useMemo(
+    () => initialValues,
+    [initialValuesKey] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   const defaultValues = useMemo(() => {
-    const fromInitial = initialValues && Object.keys(initialValues).length > 0;
+    const fromInitial = stableInitialValues && Object.keys(stableInitialValues).length > 0;
     const fromSaved = savedConfig && Object.keys(savedConfig).length > 0;
-    if (fromInitial) return initialValues;
+    if (fromInitial) return stableInitialValues;
     if (fromSaved) return savedConfig;
     if (normalizedSchema) {
       return getDefaultValuesFromSchema(normalizedSchema.groups);
     }
     return {};
-  }, [initialValues, savedConfig, normalizedSchema]);
+  }, [stableInitialValues, savedConfig, normalizedSchema]);
 
   const yupSchemaRef = useRef<ReturnType<typeof buildYupSchema> | null>(null);
 
@@ -90,6 +105,12 @@ export function DynamicConnectorForm({
 
   const { control, handleSubmit, reset, formState } = form;
   const { isSubmitting, isDirty } = formState;
+
+  const isEmbedded = mode === 'embedded';
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const emptySchema: NormalizedSchema = useMemo(
     () => ({
@@ -117,25 +138,38 @@ export function DynamicConnectorForm({
   }, [yupSchema]);
 
   useEffect(() => {
-    if (normalizedSchema && (Object.keys(initialValues).length > 0 || Object.keys(savedConfig).length > 0)) {
+    if (normalizedSchema && (Object.keys(stableInitialValues).length > 0 || Object.keys(savedConfig).length > 0)) {
       reset(defaultValues);
     }
   }, [normalizedSchema]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const watchedValues = useWatch({ control });
+  const prevConfigRef = useRef<string>('');
+  const onConfigChangeRef = useRef(onConfigChange);
+  onConfigChangeRef.current = onConfigChange;
+
   useEffect(() => {
-    if (mode === 'embedded' && onConfigChange && watchedValues && typeof watchedValues === 'object') {
-      const filtered = Object.fromEntries(
-        Object.entries(watchedValues as Record<string, unknown>).filter(([key]) =>
-          visibleFields.has(key)
-        )
-      );
-      onConfigChange(filtered);
-    }
-  }, [watchedValues, visibleFields, mode, onConfigChange]);
+    if (mode !== 'embedded' || !onConfigChangeRef.current || !watchedValues || typeof watchedValues !== 'object') return;
+
+    const filtered = Object.fromEntries(
+      Object.entries(watchedValues as Record<string, unknown>).filter(([key]) =>
+        visibleFields.has(key)
+      )
+    );
+
+    const serialized = JSON.stringify(filtered);
+    if (serialized === prevConfigRef.current) return;
+    prevConfigRef.current = serialized;
+
+    onConfigChangeRef.current(filtered);
+  }, [watchedValues, visibleFields, mode]);
 
   if (isLoading) {
-    return <Spinner aria-label="Loading form schema" />;
+    return (
+      <Bullseye>
+        <Spinner aria-label="Loading form schema" />
+      </Bullseye>
+    );
   }
 
   if (error || !normalizedSchema) {
@@ -143,7 +177,14 @@ export function DynamicConnectorForm({
       <Alert
         variant="danger"
         title="Failed to load connector configuration"
-      />
+        actionLinks={
+          <Button variant="link" onClick={() => refetch()}>
+            Retry
+          </Button>
+        }
+      >
+        {error instanceof Error ? error.message : 'An unexpected error occurred while loading the schema.'}
+      </Alert>
     );
   }
 
@@ -156,13 +197,26 @@ export function DynamicConnectorForm({
   });
 
   const handleReset = () => {
-    reset(initialValues && Object.keys(initialValues).length > 0 ? initialValues : savedConfig);
+    reset(stableInitialValues && Object.keys(stableInitialValues).length > 0 ? stableInitialValues : savedConfig);
   };
 
-  const isEmbedded = mode === 'embedded';
+  const connectorDisplayName = rawSchema?.name ?? normalizedSchema.connectorName;
+  const connectorVersion = rawSchema?.version;
 
-  return (
-    <Form onSubmit={handleFormSubmit}>
+  const formContent = (
+    <>
+      {connectorDisplayName && (
+        <div style={{ marginBottom: '1rem' }}>
+          <Content component="h3" style={{ marginBottom: 0 }}>
+            {connectorDisplayName}
+          </Content>
+          {connectorVersion && (
+            <Content component="small" style={{ color: 'var(--pf-t--global--color--nonstatus--gray--default)' }}>
+              v{connectorVersion}
+            </Content>
+          )}
+        </div>
+      )}
       <Tabs
         activeKey={activeTab}
         onSelect={(_event, key) => setActiveTab(key as number)}
@@ -188,26 +242,36 @@ export function DynamicConnectorForm({
           );
         })}
       </Tabs>
+    </>
+  );
 
-      {!isEmbedded && (
-        <ActionGroup>
-          <Button
-            variant="primary"
-            type="submit"
-            isLoading={isSubmitting}
-            isDisabled={!isDirty || isSubmitting}
-          >
-            Save Configuration
-          </Button>
-          <Button
-            variant="link"
-            onClick={handleReset}
-            isDisabled={!isDirty || isSubmitting}
-          >
-            Reset
-          </Button>
-        </ActionGroup>
-      )}
+  if (isEmbedded) {
+    return <div style={{ minWidth: 0, overflow: 'hidden' }}>{formContent}</div>;
+  }
+
+  return (
+    <Form onSubmit={handleFormSubmit}>
+      {formContent}
+
+      <ActionGroup>
+        <Button
+          variant="primary"
+          type="submit"
+          isLoading={isSubmitting}
+          isDisabled={!isDirty || isSubmitting}
+        >
+          Save Configuration
+        </Button>
+        <Button
+          variant="link"
+          onClick={handleReset}
+          isDisabled={!isDirty || isSubmitting}
+        >
+          Reset
+        </Button>
+      </ActionGroup>
+
+      <NavigationBlocker isDirty={isDirty} />
     </Form>
   );
 }

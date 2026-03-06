@@ -6,9 +6,10 @@ interface NumberFieldProps {
   field: NormalizedField;
   rhfField: ControllerRenderProps;
   hasError: boolean;
+  errorId?: string;
 }
 
-export function NumberField({ field, rhfField, hasError }: NumberFieldProps) {
+export function NumberField({ field, rhfField, hasError, errorId }: NumberFieldProps) {
   const { ref, onBlur, ...rest } = rhfField;
   return (
     <TextInput
@@ -19,6 +20,8 @@ export function NumberField({ field, rhfField, hasError }: NumberFieldProps) {
       value={rhfField.value != null ? String(rhfField.value) : ''}
       validated={hasError ? 'error' : 'default'}
       aria-label={field.label}
+      aria-invalid={hasError}
+      aria-describedby={errorId}
       onBlur={onBlur}
       onChange={(_event, value) =>
         rhfField.onChange(value === '' ? undefined : Number(value))

@@ -1,6 +1,15 @@
+import { useRef } from 'react';
 import { Controller, type Control, type FieldValues } from 'react-hook-form';
 import type { ControllerRenderProps } from 'react-hook-form';
-import { GridItem, FormGroup, HelperText, HelperTextItem } from '@patternfly/react-core';
+import {
+  GridItem,
+  FormGroup,
+  FormGroupLabelHelp,
+  HelperText,
+  HelperTextItem,
+  Popover,
+  Tooltip,
+} from '@patternfly/react-core';
 import type { NormalizedField } from '../types';
 import { TextField } from '../fields/TextField';
 import { NumberField } from '../fields/NumberField';
@@ -18,23 +27,24 @@ interface FieldInputProps {
   field: NormalizedField;
   rhfField: ControllerRenderProps;
   hasError: boolean;
+  errorId?: string;
 }
 
-function FieldInput({ field, rhfField, hasError }: FieldInputProps) {
+function FieldInput({ field, rhfField, hasError, errorId }: FieldInputProps) {
   switch (field.fieldType) {
     case 'text':
       return (
-        <TextField field={field} rhfField={rhfField} hasError={hasError} />
+        <TextField field={field} rhfField={rhfField} hasError={hasError} errorId={errorId} />
       );
     case 'number':
       return (
-        <NumberField field={field} rhfField={rhfField} hasError={hasError} />
+        <NumberField field={field} rhfField={rhfField} hasError={hasError} errorId={errorId} />
       );
     case 'boolean':
       return <BooleanField field={field} rhfField={rhfField} />;
     case 'select':
       return (
-        <SelectField field={field} rhfField={rhfField} hasError={hasError} />
+        <SelectField field={field} rhfField={rhfField} hasError={hasError} errorId={errorId} />
       );
     case 'multiInput':
       return (
@@ -42,6 +52,7 @@ function FieldInput({ field, rhfField, hasError }: FieldInputProps) {
           field={field}
           rhfField={rhfField}
           hasError={hasError}
+          errorId={errorId}
         />
       );
     default:
@@ -55,36 +66,68 @@ interface FieldRendererProps {
 }
 
 export function FieldRenderer({ field, control }: FieldRendererProps) {
+  const labelHelpRef = useRef<HTMLButtonElement>(null);
+
+  const labelHelp = field.description ? (
+    <Popover
+      triggerRef={labelHelpRef}
+      headerContent={field.label}
+      bodyContent={field.description}
+    >
+      <FormGroupLabelHelp
+        ref={labelHelpRef}
+        aria-label={`More info for ${field.label}`}
+      />
+    </Popover>
+  ) : undefined;
+
+  const labelContent = (
+    <Tooltip content={field.label} position="top">
+      <span
+        style={{
+          display: 'inline-block',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          maxWidth: 'calc(100% - 1.5rem)',
+          verticalAlign: 'middle',
+        }}
+      >
+        {field.label}
+      </span>
+    </Tooltip>
+  );
+
   return (
     <GridItem span={WIDTH_SPAN[field.width] as 4 | 6 | 12}>
       <Controller
         name={field.name}
         control={control}
-        render={({ field: rhfField, fieldState }) => (
-          <FormGroup
-            label={field.label}
-            isRequired={field.required}
-            fieldId={field.name}
-          >
-            <FieldInput
-              field={field}
-              rhfField={rhfField}
-              hasError={!!fieldState.error}
-            />
-            {field.description && (
-              <HelperText>
-                <HelperTextItem>{field.description}</HelperTextItem>
-              </HelperText>
-            )}
-            {fieldState.error && (
-              <HelperText>
-                <HelperTextItem variant="error">
-                  {fieldState.error.message}
-                </HelperTextItem>
-              </HelperText>
-            )}
-          </FormGroup>
-        )}
+        render={({ field: rhfField, fieldState }) => {
+          const errorId = fieldState.error ? `${field.name}-error` : undefined;
+          return (
+            <FormGroup
+              label={labelContent}
+              labelHelp={labelHelp}
+              isRequired={field.required}
+              fieldId={field.name}
+            >
+              <FieldInput
+                field={field}
+                rhfField={rhfField}
+                hasError={!!fieldState.error}
+                errorId={errorId}
+              />
+              {fieldState.error && (
+                <HelperText id={errorId}>
+                  <HelperTextItem variant="error" aria-live="polite">
+                    {fieldState.error.message}
+                  </HelperTextItem>
+                </HelperText>
+              )}
+            </FormGroup>
+          );
+        }}
       />
     </GridItem>
   );
