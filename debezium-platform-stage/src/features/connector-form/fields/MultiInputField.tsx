@@ -14,12 +14,14 @@ interface MultiInputFieldProps {
   field: NormalizedField;
   rhfField: ControllerRenderProps;
   hasError: boolean;
+  errorId?: string;
 }
 
 export function MultiInputField({
   field,
   rhfField,
   hasError,
+  errorId,
 }: MultiInputFieldProps) {
   const [inputValue, setInputValue] = useState('');
 
@@ -58,6 +60,7 @@ export function MultiInputField({
           placeholder="Type and press Enter"
           aria-invalid={hasError}
           aria-label={field.label}
+          aria-describedby={errorId}
         />
         <TextInputGroupUtilities>
           {inputValue && (

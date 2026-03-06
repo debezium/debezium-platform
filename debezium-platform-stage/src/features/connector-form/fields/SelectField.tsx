@@ -6,9 +6,10 @@ interface SelectFieldProps {
   field: NormalizedField;
   rhfField: ControllerRenderProps;
   hasError: boolean;
+  errorId?: string;
 }
 
-export function SelectField({ field, rhfField, hasError }: SelectFieldProps) {
+export function SelectField({ field, rhfField, hasError, errorId }: SelectFieldProps) {
   const { ref, onBlur, ...rest } = rhfField;
   return (
     <FormSelect
@@ -20,6 +21,8 @@ export function SelectField({ field, rhfField, hasError }: SelectFieldProps) {
       onBlur={onBlur}
       onChange={(_event, value) => rhfField.onChange(value)}
       aria-label={field.label}
+      aria-invalid={hasError}
+      aria-describedby={errorId}
     >
       <FormSelectOption value="" label={`Select ${field.label}`} isPlaceholder />
       {field.options?.map((opt) => (

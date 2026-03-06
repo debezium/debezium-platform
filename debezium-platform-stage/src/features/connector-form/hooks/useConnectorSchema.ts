@@ -10,10 +10,11 @@ export function useConnectorSchema(connectorType: string): {
   normalizedSchema: NormalizedSchema | null;
   isLoading: boolean;
   error: unknown;
+  refetch: () => void;
 } {
   const setRawSchema = useSetAtom(rawConnectorSchemaAtom);
 
-  const { data: rawSchema, isLoading, error } = useQuery(
+  const { data: rawSchema, isLoading, error, refetch } = useQuery(
     ['connector-schema', connectorType],
     () => fetchConnectorSchema(connectorType),
     {
@@ -32,5 +33,5 @@ export function useConnectorSchema(connectorType: string): {
     [rawSchema]
   );
 
-  return { normalizedSchema, isLoading, error };
+  return { normalizedSchema, isLoading, error, refetch };
 }

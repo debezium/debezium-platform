@@ -6,9 +6,10 @@ interface TextFieldProps {
   field: NormalizedField;
   rhfField: ControllerRenderProps;
   hasError: boolean;
+  errorId?: string;
 }
 
-export function TextField({ field, rhfField, hasError }: TextFieldProps) {
+export function TextField({ field, rhfField, hasError, errorId }: TextFieldProps) {
   const isPassword = field.name.toLowerCase().includes('password');
   const { ref, onBlur, value, onChange, ...rest } = rhfField;
 
@@ -24,6 +25,8 @@ export function TextField({ field, rhfField, hasError }: TextFieldProps) {
       validated={hasError ? 'error' : 'default'}
       placeholder={field.label}
       aria-label={field.label}
+      aria-invalid={hasError}
+      aria-describedby={errorId}
     />
   );
 }

@@ -29,6 +29,20 @@ function normalizeField(prop: RawProperty): NormalizedField {
         .values.map((v) => ({ value: v, label: v }))
     : undefined;
 
+  let width: NormalizedField['width'];
+  switch (fieldType) {
+    case 'boolean':
+    case 'number':
+    case 'select':
+      width = 'short';
+      break;
+    case 'multiInput':
+      width = 'long';
+      break;
+    default:
+      width = prop.display.width ?? 'medium';
+  }
+
   return {
     name: prop.name,
     fieldType,
@@ -36,7 +50,7 @@ function normalizeField(prop: RawProperty): NormalizedField {
     description: prop.display.description,
     group: prop.display.group,
     groupOrder: prop.display.groupOrder,
-    width: prop.display.width ?? 'medium',
+    width,
     importance: prop.display.importance ?? 'low',
     required: prop.required ?? false,
     options,
