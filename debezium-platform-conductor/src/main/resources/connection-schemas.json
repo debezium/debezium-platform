@@ -228,8 +228,8 @@
       "required": [
         "host",
         "port",
-        "clusterId",
-        "clientId"
+        "cluster.id",
+        "client.id"
       ],
       "additionalProperties": {
         "type":"string"
@@ -243,11 +243,11 @@
           "type": "integer",
           "title": "NATS Streaming server port"
         },
-        "clusterId": {
+        "cluster.id": {
           "type": "string",
           "title": "NATS Streaming cluster ID"
         },
-        "clientId": {
+        "client.id": {
           "type":"string",
           "title": "NATS Streaming client ID"
         },

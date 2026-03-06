@@ -15,9 +15,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-io.debezium.platform.data.model.ConnectionEntity;
-io.debezium.platform.domain.views.Connection;
-io.debezium.platform.environment.connection.destination.NatsStreamingConnectionValidator;
+import io.debezium.platform.data.model.ConnectionEntity;
+import io.debezium.platform.domain.views.Connection;
+import io.debezium.platform.environment.connection.destination.NatsStreamingConnectionValidator;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;

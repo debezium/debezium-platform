@@ -36,8 +36,8 @@ public class NatsStreamingConnectionValidator implements ConnectionValidator {
     private static final String PORT = "port";
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
-    private static final String CLUSTER_ID = "clusterId";
-    private static final String CLIENT_ID = "clientId";
+    private static final String CLUSTER_ID = "cluster.id";
+    private static final String CLIENT_ID = "client.id";
 
     private final int defaultConnectionTimeoutSeconds;
 
@@ -75,7 +75,8 @@ public class NatsStreamingConnectionValidator implements ConnectionValidator {
         try (io.nats.client.Connection natsConnection = NATS.connect(builder.build())) {
             // If connection is successful, return success
             return ConnectionValidationResult.successful();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             LOGGER.warn("Unable to connect to NATS Streaming at {}:{}", host, port, e);
             return ConnectionValidationResult.failed("Failed to connect to NATS Streaming: " + e.getMessage());
         }
