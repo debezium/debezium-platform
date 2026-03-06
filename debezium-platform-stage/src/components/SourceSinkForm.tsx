@@ -51,6 +51,8 @@ import ApiComponentError from "./ApiComponentError";
 import _ from "lodash";
 import { SelectedDataListItem } from "@sourcePage/CreateSource";
 import { datatype as DatabaseItemsList } from "@utils/Datatype";
+import { convertMapToObject, convertObjectToMap, getConnectorSchemaType } from "@utils/helpers";
+import { DynamicConnectorForm } from "../features/connector-form/components/DynamicConnectorForm";
 
 
 const getInitialSelectOptions = (connections: connectionsList[], connectorId: string): SelectOptionProps[] => {
@@ -91,6 +93,8 @@ interface SourceSinkFormProps {
   handleConnectionModalToggle: () => void;
   setSelectedDataListItems: (dataListItems: SelectedDataListItem | undefined) => void;
   selectedDataListItems?: SelectedDataListItem | undefined;
+  /** Updates connector config when using schema-driven form (sources) */
+  setProperties?: (properties: Map<string, { key: string; value: string }>) => void;
 
 }
 const SourceSinkForm = ({
@@ -114,7 +118,8 @@ const SourceSinkForm = ({
   signalCollectionName,
   handleConnectionModalToggle,
   setSelectedDataListItems,
-  selectedDataListItems
+  selectedDataListItems,
+  setProperties,
 }: SourceSinkFormProps) => {
   const { t } = useTranslation();
   const { addNotification } = useNotification();
@@ -604,86 +609,112 @@ const SourceSinkForm = ({
                 </FormFieldGroupExpandable>
                 : null}
 
-            <FormFieldGroup
-              header={
-                <FormFieldGroupHeader
-                  titleText={{
-                    text: <span style={{ fontWeight: 500 }}>{t("form.subHeading.title")}</span>,
-                    id: `field-group-${connectorType}-id`,
+            {connectorType === "source" && setProperties ? (
+              <FormFieldGroup
+                header={
+                  <FormFieldGroupHeader
+                    titleText={{
+                      text: <span style={{ fontWeight: 500 }}>{t("form.subHeading.title")}</span>,
+                      id: `field-group-${connectorType}-id`,
+                    }}
+                    titleDescription={!viewMode ? t("form.subHeading.description") : undefined}
+                  />
+                }
+              >
+                <DynamicConnectorForm
+                  connectorType={getConnectorSchemaType(ConnectorId, dataType)}
+                  mode="embedded"
+                  initialValues={convertMapToObject(properties) as Record<string, unknown>}
+                  onConfigChange={(config) => {
+                    const map = convertObjectToMap(
+                      config as Record<string, string | number | boolean | undefined>
+                    );
+                    setProperties(map);
                   }}
-                  titleDescription={!viewMode ? t("form.subHeading.description") : undefined}
-                  actions={
-                    viewMode ? null :
-                      <>
-                        <Button
-                          variant="secondary"
-                          icon={<PlusIcon />}
-                          onClick={handleAddProperty}
-                        >
-                          {t("form.addFieldButton")}
-                        </Button>
-                      </>
-                  }
                 />
-              }
-            >
-              {Array.from(properties.keys()).map((key) => (
-                <Split hasGutter key={key}>
-                  <SplitItem isFilled>
-                    <Grid hasGutter md={6}>
-                      <FormGroup
-                        label=""
-                        isRequired
-                        fieldId={`${connectorType}-config-props-key-field-${key}`}
-                      >
-                        <TextInput
-                          readOnlyVariant={viewMode ? "default" : undefined}
+              </FormFieldGroup>
+            ) : (
+              <FormFieldGroup
+                header={
+                  <FormFieldGroupHeader
+                    titleText={{
+                      text: <span style={{ fontWeight: 500 }}>{t("form.subHeading.title")}</span>,
+                      id: `field-group-${connectorType}-id`,
+                    }}
+                    titleDescription={!viewMode ? t("form.subHeading.description") : undefined}
+                    actions={
+                      viewMode ? null :
+                        <>
+                          <Button
+                            variant="secondary"
+                            icon={<PlusIcon />}
+                            onClick={handleAddProperty}
+                          >
+                            {t("form.addFieldButton")}
+                          </Button>
+                        </>
+                    }
+                  />
+                }
+              >
+                {Array.from(properties.keys()).map((key) => (
+                  <Split hasGutter key={key}>
+                    <SplitItem isFilled>
+                      <Grid hasGutter md={6}>
+                        <FormGroup
+                          label=""
                           isRequired
-                          type="text"
-                          placeholder="Key"
-                          validated={errorWarning.includes(key) ? "error" : "default"}
-                          id={`${connectorType}-config-props-key-${key}`}
-                          name={`${connectorType}-config-props-key-${key}`}
-                          value={properties.get(key)?.key || ""}
-                          onChange={(_e, value) =>
-                            handlePropertyChange(key, "key", value)
-                          }
-                        />
-                      </FormGroup>
-                      <FormGroup
-                        label=""
-                        isRequired
-                        fieldId={`${connectorType}-config-props-value-field-${key}`}
-                      >
-                        <TextInput
-                          readOnlyVariant={viewMode ? "default" : undefined}
+                          fieldId={`${connectorType}-config-props-key-field-${key}`}
+                        >
+                          <TextInput
+                            readOnlyVariant={viewMode ? "default" : undefined}
+                            isRequired
+                            type="text"
+                            placeholder="Key"
+                            validated={errorWarning.includes(key) ? "error" : "default"}
+                            id={`${connectorType}-config-props-key-${key}`}
+                            name={`${connectorType}-config-props-key-${key}`}
+                            value={properties.get(key)?.key || ""}
+                            onChange={(_e, value) =>
+                              handlePropertyChange(key, "key", value)
+                            }
+                          />
+                        </FormGroup>
+                        <FormGroup
+                          label=""
                           isRequired
-                          type="text"
-                          id={`${connectorType}-config-props-value-${key}`}
-                          placeholder="Value"
-                          validated={errorWarning.includes(key) ? "error" : "default"}
-                          name={`${connectorType}-config-props-value-${key}`}
-                          value={properties.get(key)?.value || ""}
-                          onChange={(_e, value) =>
-                            handlePropertyChange(key, "value", value)
-                          }
-                        />
-                      </FormGroup>
-                    </Grid>
-                  </SplitItem>
-                  <SplitItem>
-                    <Button
-                      variant="plain"
-                      isDisabled={viewMode}
-                      aria-label="Remove"
-                      onClick={() => handleDeleteProperty(key)}
-                    >
-                      <TrashIcon />
-                    </Button>
-                  </SplitItem>
-                </Split>
-              ))}
-            </FormFieldGroup>
+                          fieldId={`${connectorType}-config-props-value-field-${key}`}
+                        >
+                          <TextInput
+                            readOnlyVariant={viewMode ? "default" : undefined}
+                            isRequired
+                            type="text"
+                            id={`${connectorType}-config-props-value-${key}`}
+                            placeholder="Value"
+                            validated={errorWarning.includes(key) ? "error" : "default"}
+                            name={`${connectorType}-config-props-value-${key}`}
+                            value={properties.get(key)?.value || ""}
+                            onChange={(_e, value) =>
+                              handlePropertyChange(key, "value", value)
+                            }
+                          />
+                        </FormGroup>
+                      </Grid>
+                    </SplitItem>
+                    <SplitItem>
+                      <Button
+                        variant="plain"
+                        isDisabled={viewMode}
+                        aria-label="Remove"
+                        onClick={() => handleDeleteProperty(key)}
+                      >
+                        <TrashIcon />
+                      </Button>
+                    </SplitItem>
+                  </Split>
+                ))}
+              </FormFieldGroup>
+            )}
             {
               connectorType === "source" &&
               <FormFieldGroup

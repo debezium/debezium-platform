@@ -1,0 +1,1 @@
+export { normalizeSchema } from './normalizeSchema';
