@@ -66,15 +66,12 @@ public class RedisConnectionValidator implements ConnectionValidator {
 
             Map<String, Object> redisConfig = connectionConfig.getConfig();
 
-            // Validate configuration and parse port early to avoid re-parsing later
-            String portStr = getStringConfig(redisConfig, PORT_KEY);
-            ConnectionValidationResult configValidation = validateConfiguration(redisConfig, portStr);
+            ConfigurationValidationResult configValidation = validateConfiguration(redisConfig);
             if (!configValidation.valid()) {
-                return configValidation;
+                return ConnectionValidationResult.failed(configValidation.failureMessage());
             }
 
-            int port = Integer.parseInt(portStr);
-            return performConnectionValidation(redisConfig, port);
+            return performConnectionValidation(configValidation);
         }
         catch (Exception e) {
             LOGGER.error("Unexpected error during Redis connection validation", e);
@@ -82,17 +79,18 @@ public class RedisConnectionValidator implements ConnectionValidator {
         }
     }
 
-    private ConnectionValidationResult validateConfiguration(Map<String, Object> config, String portStr) {
+    private ConfigurationValidationResult validateConfiguration(Map<String, Object> config) {
         String host = getStringConfig(config, HOST_KEY);
         if (Strings.isNullOrBlank(host)) {
-            return ConnectionValidationResult.failed("Host must be specified");
+            return ConfigurationValidationResult.failed("Host must be specified");
         }
         if (hasLeadingOrTrailingWhitespace(host)) {
-            return ConnectionValidationResult.failed("Host cannot contain leading or trailing whitespace");
+            return ConfigurationValidationResult.failed("Host cannot contain leading or trailing whitespace");
         }
 
+        String portStr = getStringConfig(config, PORT_KEY);
         if (portStr == null) {
-            return ConnectionValidationResult.failed("Port must be specified");
+            return ConfigurationValidationResult.failed("Port must be specified");
         }
 
         // Validate port is a number and within valid range
@@ -101,29 +99,33 @@ public class RedisConnectionValidator implements ConnectionValidator {
             port = Integer.parseInt(portStr);
         }
         catch (NumberFormatException e) {
-            return ConnectionValidationResult.failed("Port must be a valid integer");
+            return ConfigurationValidationResult.failed("Port must be a valid integer");
         }
 
         if (port <= 0 || port > 65535) {
-            return ConnectionValidationResult.failed("Port must be between 1 and 65535");
+            return ConfigurationValidationResult.failed("Port must be between 1 and 65535");
         }
 
         String username = getStringConfig(config, USERNAME_KEY);
         if (username != null && hasLeadingOrTrailingWhitespace(username)) {
-            return ConnectionValidationResult.failed("Username cannot contain leading or trailing whitespace");
+            return ConfigurationValidationResult.failed("Username cannot contain leading or trailing whitespace");
         }
 
+        String password = getStringConfig(config, PASSWORD_KEY);
+
+        boolean useSsl = false;
         String useSslValue = getStringConfig(config, USE_SSL_KEY);
         if (useSslValue != null) {
             if (hasLeadingOrTrailingWhitespace(useSslValue)) {
-                return ConnectionValidationResult.failed("ssl.enabled cannot contain leading or trailing whitespace");
+                return ConfigurationValidationResult.failed("ssl.enabled cannot contain leading or trailing whitespace");
             }
             if (!useSslValue.equalsIgnoreCase("true") && !useSslValue.equalsIgnoreCase("false")) {
-                return ConnectionValidationResult.failed("ssl.enabled must be 'true' or 'false' if specified");
+                return ConfigurationValidationResult.failed("ssl.enabled must be 'true' or 'false' if specified");
             }
+            useSsl = Boolean.parseBoolean(useSslValue);
         }
 
-        return ConnectionValidationResult.successful();
+        return ConfigurationValidationResult.successful(host, port, username, password, useSsl);
     }
 
     private boolean hasLeadingOrTrailingWhitespace(String value) {
@@ -135,17 +137,12 @@ public class RedisConnectionValidator implements ConnectionValidator {
         return value != null ? value.toString() : null;
     }
 
-    private ConnectionValidationResult performConnectionValidation(Map<String, Object> config, int port) {
-        String host = getStringConfig(config, HOST_KEY);
-
-        String username = getStringConfig(config, USERNAME_KEY);
-        String password = getStringConfig(config, PASSWORD_KEY);
-
-        boolean useSsl = false;
-        String useSslValue = getStringConfig(config, USE_SSL_KEY);
-        if (useSslValue != null) {
-            useSsl = Boolean.parseBoolean(useSslValue);
-        }
+    private ConnectionValidationResult performConnectionValidation(ConfigurationValidationResult configValidation) {
+        String host = configValidation.host();
+        int port = configValidation.port();
+        String username = configValidation.username();
+        String password = configValidation.password();
+        boolean useSsl = configValidation.useSsl();
 
         Jedis jedis = null;
         try {
@@ -203,6 +200,27 @@ public class RedisConnectionValidator implements ConnectionValidator {
                     LOGGER.warn("Error closing Redis client", ex);
                 }
             }
+        }
+    }
+
+    /**
+     * Record to hold validated configuration values to avoid re-parsing
+     */
+    private record ConfigurationValidationResult(
+            boolean valid,
+            String failureMessage,
+            String host,
+            int port,
+            String username,
+            String password,
+            boolean useSsl) {
+
+        public static ConfigurationValidationResult failed(String message) {
+            return new ConfigurationValidationResult(false, message, null, 0, null, null, false);
+        }
+
+        public static ConfigurationValidationResult successful(String host, int port, String username, String password, boolean useSsl) {
+            return new ConfigurationValidationResult(true, null, host, port, username, password, useSsl);
         }
     }
 }
