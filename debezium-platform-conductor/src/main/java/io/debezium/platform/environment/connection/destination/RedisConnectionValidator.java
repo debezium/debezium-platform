@@ -102,9 +102,6 @@ public class RedisConnectionValidator implements ConnectionValidator {
             return ConfigurationValidationResult.failed("Port must be a valid integer");
         }
 
-        if (port <= 0 || port > 65535) {
-            return ConfigurationValidationResult.failed("Port must be between 1 and 65535");
-        }
 
         String username = getStringConfig(config, USERNAME_KEY);
         if (username != null && hasLeadingOrTrailingWhitespace(username)) {
