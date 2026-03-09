@@ -159,7 +159,7 @@ describe('FieldRenderer', () => {
       required: false,
     };
     const { container } = render(<TestForm field={field} />);
-    const gridItem = container.querySelector('.pf-m-4-col');
+    const gridItem = container.querySelector('.pf-m-6-col');
     expect(gridItem).toBeInTheDocument();
   });
 

@@ -451,128 +451,131 @@ const SourceSinkForm = ({
   }, [selectedConnection?.id]);
 
 
-  return (
+  const metaFields = (
     <>
-      <Card className="custom-card-body">
-        <CardBody isFilled>
-          <Form isWidthLimited>
-            <FormGroup
-              label={t("form.field.type", { val: connectorLabel })}
-              isRequired
-              fieldId={`${connectorType}-type-field`}
+      <FormGroup
+        label={t("form.field.type", { val: connectorLabel })}
+        isRequired
+        fieldId={`${connectorType}-type-field`}
+      >
+        <>
+          <ConnectorImage connectorType={connectorType === "destination" ? "oracle" : (dataType || ConnectorId || "")} size={35} />
+          <Content component="p">
+            {connectorType === "destination" ? <> Oracle <Content component="p" style={{ fontSize: "smaller", color: "gray" }}>
+              {"3.5.0-SNAPSHOT"}
+            </Content></> : getConnectorTypeName(dataType || ConnectorId || "")}
+          </Content>
+        </>
+      </FormGroup>
+      <FormGroup
+        label={t("form.field.name", { val: connectorLabel })}
+        isRequired
+        fieldId={`${connectorType}-name-field`}
+      >
+        <TextInput
+          readOnlyVariant={viewMode ? "plain" : undefined}
+          id={`${connectorType}-name`}
+          aria-label={`${connectorLabel} name`}
+          onChange={(_event, value) => {
+            setValue(`${connectorType}-name`, value);
+            setError(`${connectorType}-name`, undefined);
+          }}
+          value={getValue(`${connectorType}-name`)}
+          validated={errors[`${connectorType}-name`] ? "error" : "default"}
+        />
+        {errors[`${connectorType}-name`] && (
+          <FormHelperText>
+            <HelperText>
+              <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
+                {errors[`${connectorType}-name`]}
+              </HelperTextItem>
+            </HelperText>
+          </FormHelperText>)}
+      </FormGroup>
+      <FormGroup
+        label={t("form.field.description.label")}
+        fieldId={`${connectorType}-description-field`}
+      >
+        <TextInput
+          readOnlyVariant={viewMode ? "plain" : undefined}
+          id={`${connectorType}-description`}
+          aria-label={`${connectorLabel} description`}
+          onChange={(_event, value) => setValue("description", value)}
+          value={getValue(`description`)}
+        />
+        {!viewMode && (<FormHelperText>
+          <HelperText>
+            <HelperTextItem>
+              {t("form.field.description.helper", { val: connectorType })}
+            </HelperTextItem>
+          </HelperText>
+        </FormHelperText>)}
+      </FormGroup>
+      <FormGroup
+        label={t("connection:link.connectionFieldLabel", { val: connectorLabel })}
+        isRequired
+        fieldId={`${connectorType}-connection-field`}
+      >
+        {viewMode ? (<>{selectedConnection?.name}</>) : (<InputGroup>
+          <InputGroupItem isFill >
+            <Select
+              id="typeahead-select"
+              isOpen={isOpen}
+              selected={selectedConnection}
+              onSelect={onSelect}
+              onOpenChange={(isOpen) => {
+                !isOpen && closeMenu();
+              }}
+              toggle={toggle}
+              variant="typeahead"
             >
-              <>
-                <ConnectorImage connectorType={dataType || ConnectorId || ""} size={35} />
-                <Content component="p" style={{ paddingLeft: "10px" }}>
-                  {getConnectorTypeName(dataType || ConnectorId || "")}
-                </Content>
-              </>
-            </FormGroup>
-            <FormGroup
-              label={t("form.field.name", { val: connectorLabel })}
-              isRequired
-              fieldId={`${connectorType}-name-field`}
-            >
-              <TextInput
-                readOnlyVariant={viewMode ? "plain" : undefined}
-                id={`${connectorType}-name`}
-                aria-label={`${connectorLabel} name`}
-                onChange={(_event, value) => {
-                  setValue(`${connectorType}-name`, value);
-                  setError(`${connectorType}-name`, undefined);
-                }}
-                value={getValue(`${connectorType}-name`)}
-                validated={errors[`${connectorType}-name`] ? "error" : "default"}
-              />
-              {errors[`${connectorType}-name`] && (
-                <FormHelperText>
-                  <HelperText>
-                    <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
-                     {errors[`${connectorType}-name`]}
-                    </HelperTextItem>
-                  </HelperText>
-                </FormHelperText>)}
+              <SelectList id="select-typeahead-listbox">
+                {isConnectionsLoading ? <><SelectOption isDisabled><Skeleton /></SelectOption><SelectOption isDisabled><Skeleton /></SelectOption><SelectOption isDisabled><Skeleton /></SelectOption></> : selectOptions?.map((option, index) => (
+                  <SelectOption
+                    key={option.value || option.children}
+                    isFocused={focusedItemIndex === index}
+                    icon={option.icon}
+                    className={option.className}
+                    id={createItemId(option.value)}
+                    {...option}
+                    ref={null}
+                  />
+                ))}
+              </SelectList>
+            </Select>
+          </InputGroupItem>
+          <InputGroupItem>
+            <Button id="inputDropdownButton1" variant="control" icon={<PlusIcon />} onClick={handleConnectionModalToggle}>
+              {t("connection:link.createConnection")}
+            </Button>
+          </InputGroupItem>
+        </InputGroup>)}
 
-            </FormGroup>
-            <FormGroup
-              label={t("form.field.description.label")}
-              fieldId={`${connectorType}-description-field`}
-            >
-              <TextInput
-                readOnlyVariant={viewMode ? "plain" : undefined}
-                id={`${connectorType}-description`}
-                aria-label={`${connectorLabel} description`}
-                onChange={(_event, value) => setValue("description", value)}
-                value={getValue(`description`)}
-              />
-              {!viewMode && (<FormHelperText>
-                <HelperText>
-                  <HelperTextItem>
-                    {t("form.field.description.helper", { val: connectorType })}
-                  </HelperTextItem>
-                </HelperText>
-              </FormHelperText>)}
-            </FormGroup>
-            <FormGroup
-              label={t("connection:link.connectionFieldLabel", { val: connectorLabel })}
-              isRequired
-              fieldId={`${connectorType}-connection-field`}
-            >
-              {viewMode ? (<>{selectedConnection?.name}</>) : (<InputGroup>
-                <InputGroupItem isFill >
-                  <Select
-                    id="typeahead-select"
-                    isOpen={isOpen}
-                    selected={selectedConnection}
-                    onSelect={onSelect}
-                    onOpenChange={(isOpen) => {
-                      !isOpen && closeMenu();
-                    }}
-                    toggle={toggle}
-                    variant="typeahead"
-                  >
-                    <SelectList id="select-typeahead-listbox">
+        {!viewMode && !errors[`connection`] && (<FormHelperText>
+          <HelperText>
+            <HelperTextItem>
+              {t("connection:link.helperText")}
+            </HelperTextItem>
+          </HelperText>
+        </FormHelperText>)}
 
-                      {isConnectionsLoading ? <><SelectOption isDisabled><Skeleton /></SelectOption><SelectOption isDisabled><Skeleton /></SelectOption><SelectOption isDisabled><Skeleton /></SelectOption></> : selectOptions?.map((option, index) => (
-                        <SelectOption
-                          key={option.value || option.children}
-                          isFocused={focusedItemIndex === index}
-                          icon={option.icon}
-                          className={option.className}
-                          id={createItemId(option.value)}
-                          {...option}
-                          ref={null}
-                        />
-                      ))}
-                    </SelectList>
-                  </Select>
-                </InputGroupItem>
-                <InputGroupItem>
-                  <Button id="inputDropdownButton1" variant="control" icon={<PlusIcon />} onClick={handleConnectionModalToggle}>
-                    {t("connection:link.createConnection")}
-                  </Button>
-                </InputGroupItem>
-              </InputGroup>)}
+        {errors[`connection`] ? (
+          <FormHelperText>
+            <HelperText>
+              <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
+                {errors[`connection`]}
+              </HelperTextItem>
+            </HelperText>
+          </FormHelperText>) : null}
+      </FormGroup>
+    </>
+  );
 
+  const isDestination = connectorType === "destination";
 
-              {!viewMode && !errors[`connection`] && (<FormHelperText>
-                <HelperText>
-                  <HelperTextItem>
-                    {t("connection:link.helperText")}
-                  </HelperTextItem>
-                </HelperText>
-              </FormHelperText>)}
-
-              {errors[`connection`] ? (
-                <FormHelperText>
-                  <HelperText>
-                    <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
-                      {errors[`connection`]}
-                    </HelperTextItem>
-                  </HelperText>
-                </FormHelperText>) : null}
-            </FormGroup>
-
+  const formInner = (
+          <Form isWidthLimited={!isDestination}>
+            {!isDestination && metaFields}
 
             {
               (!!selectedConnection?.id && connectorType === "source") ? isCollectionsLoading ?
@@ -609,21 +612,13 @@ const SourceSinkForm = ({
                 </FormFieldGroupExpandable>
                 : null}
 
-            {connectorType === "source" && setProperties ? (
-              <FormFieldGroup
-                header={
-                  <FormFieldGroupHeader
-                    titleText={{
-                      text: <span style={{ fontWeight: 500 }}>{t("form.subHeading.title")}</span>,
-                      id: `field-group-${connectorType}-id`,
-                    }}
-                    titleDescription={!viewMode ? t("form.subHeading.description") : undefined}
-                  />
-                }
-              >
+            {setProperties ? (
                 <DynamicConnectorForm
                   connectorType={getConnectorSchemaType(ConnectorId, dataType)}
                   mode="embedded"
+                  layout={isDestination ? "jumplinks" : "tabs"}
+                  showHeader={!isDestination}
+                  essentialsContent={isDestination ? metaFields : undefined}
                   initialValues={convertMapToObject(properties) as Record<string, unknown>}
                   onConfigChange={(config) => {
                     const map = convertObjectToMap(
@@ -632,7 +627,6 @@ const SourceSinkForm = ({
                     setProperties(map);
                   }}
                 />
-              </FormFieldGroup>
             ) : (
               <FormFieldGroup
                 header={
@@ -738,8 +732,19 @@ const SourceSinkForm = ({
 
 
           </Form>
-        </CardBody>
-      </Card>
+  );
+
+  return (
+    <>
+      {connectorType === "source" ? (
+        <Card className="custom-card-body">
+          <CardBody isFilled>
+            {formInner}
+          </CardBody>
+        </Card>
+      ) : (
+        formInner
+      )}
       <Modal
         variant={ModalVariant.medium}
         isOpen={isModalOpen}

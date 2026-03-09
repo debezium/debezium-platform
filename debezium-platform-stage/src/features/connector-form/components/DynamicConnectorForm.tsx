@@ -1,7 +1,7 @@
 import { useForm, type Resolver, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAtom, useAtomValue } from 'jotai';
-import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import {
   Form,
   Tabs,
@@ -19,6 +19,7 @@ import { useConnectorSchema } from '../hooks/useConnectorSchema';
 import { useFieldVisibility } from '../hooks/useFieldVisibility';
 import { buildYupSchema } from '../validation/buildYupSchema';
 import { ConnectorFormGroup } from './ConnectorFormGroup';
+import { JumpLinksFormLayout } from './JumpLinksFormLayout';
 import { savedConnectorConfigAtom, rawConnectorSchemaAtom } from '../store/connectorAtoms';
 import { NavigationBlocker } from './NavigationBlocker';
 
@@ -28,10 +29,16 @@ interface DynamicConnectorFormProps {
   initialValues?: Record<string, unknown>;
   /** When embedded, hides Save/Reset and syncs config via onConfigChange */
   mode?: 'standalone' | 'embedded';
+  /** 'tabs' renders horizontal PatternFly Tabs (default); 'jumplinks' renders all groups on one scrollable page with a vertical JumpLinks sidebar. */
+  layout?: 'tabs' | 'jumplinks';
+  /** Content rendered as the first "Connector essentials" section inside the JumpLinks layout. */
+  essentialsContent?: React.ReactNode;
   /** Called when form values change (embedded mode). Receives only visible field values. */
   onConfigChange?: (config: Record<string, unknown>) => void;
   /** Exposes isDirty to parent for embedded mode navigation guards */
   onDirtyChange?: (dirty: boolean) => void;
+  /** Whether to show the connector name/version header. Defaults to true. */
+  showHeader?: boolean;
 }
 
 function getDefaultValuesFromSchema(
@@ -60,13 +67,17 @@ export function DynamicConnectorForm({
   onSubmit,
   initialValues = {},
   mode = 'standalone',
+  layout = 'tabs',
+  essentialsContent,
   onConfigChange,
   onDirtyChange,
+  showHeader = true,
 }: DynamicConnectorFormProps) {
   const { normalizedSchema, isLoading, error, refetch } = useConnectorSchema(connectorType);
   const rawSchema = useAtomValue(rawConnectorSchemaAtom);
   const [savedConfig, setSavedConfig] = useAtom(savedConnectorConfigAtom);
   const [activeTab, setActiveTab] = useState<string | number>(0);
+  const [expandAllAdvanced, setExpandAllAdvanced] = useState(false);
 
   // Stabilize initialValues so a new object reference with identical content
   // doesn't trigger cascading re-renders in embedded mode.
@@ -203,50 +214,66 @@ export function DynamicConnectorForm({
   const connectorDisplayName = rawSchema?.name ?? normalizedSchema.connectorName;
   const connectorVersion = rawSchema?.version;
 
+  const header = showHeader && connectorDisplayName ? (
+    <div style={{ marginBottom: '1rem' }}>
+      <Content component="h3" style={{ marginBottom: 0 }}>
+        {connectorDisplayName + " configuration properties"}
+      </Content>
+      {connectorVersion && (
+        <Content component="small" style={{ color: 'var(--pf-t--global--color--nonstatus--gray--default)' }}>
+          v{connectorVersion}
+        </Content>
+      )}
+    </div>
+  ) : null;
+
   const formContent = (
     <>
-      {connectorDisplayName && (
-        <div style={{ marginBottom: '1rem' }}>
-          <Content component="h3" style={{ marginBottom: 0 }}>
-            {connectorDisplayName}
-          </Content>
-          {connectorVersion && (
-            <Content component="small" style={{ color: 'var(--pf-t--global--color--nonstatus--gray--default)' }}>
-              v{connectorVersion}
-            </Content>
-          )}
-        </div>
-      )}
-      <Tabs
-        activeKey={activeTab}
-        onSelect={(_event, key) => setActiveTab(key as number)}
-      >
-        {normalizedSchema.groups.map((group, index) => {
-          const hasVisibleFields = group.fields.some((f) =>
-            visibleFields.has(f.name)
-          );
-          if (!hasVisibleFields) return null;
+      {header}
+      {layout === 'jumplinks' ? (
+        <JumpLinksFormLayout
+          schema={normalizedSchema}
+          visibleFields={visibleFields}
+          control={control as never}
+          essentialsContent={essentialsContent}
+          expandAllAdvanced={expandAllAdvanced}
+          onExpandAllAdvancedChange={setExpandAllAdvanced}
+        />
+      ) : (
+        <Tabs
+          activeKey={activeTab}
+          onSelect={(_event, key) => setActiveTab(key as number)}
+        >
+          {normalizedSchema.groups.map((group, index) => {
+            const hasVisibleFields = group.fields.some((f) =>
+              visibleFields.has(f.name)
+            );
+            if (!hasVisibleFields) return null;
 
-          return (
-            <Tab
-              key={group.name}
-              eventKey={index}
-              title={<TabTitleText>{group.name}</TabTitleText>}
-            >
-              <ConnectorFormGroup
-                group={group}
-                control={control as never}
-                visibleFields={visibleFields}
-              />
-            </Tab>
-          );
-        })}
-      </Tabs>
+            return (
+              <Tab
+                key={group.name}
+                eventKey={index}
+                title={<TabTitleText>{group.name}</TabTitleText>}
+              >
+                <ConnectorFormGroup
+                  group={group}
+                  control={control as never}
+                  visibleFields={visibleFields}
+                />
+              </Tab>
+            );
+          })}
+        </Tabs>
+      )}
     </>
   );
 
   if (isEmbedded) {
-    return <div style={{ minWidth: 0, overflow: 'hidden' }}>{formContent}</div>;
+    const wrapperStyle = layout === 'jumplinks'
+      ? { minWidth: 0 }
+      : { minWidth: 0, overflow: 'hidden' as const };
+    return <div style={wrapperStyle}>{formContent}</div>;
   }
 
   return (

@@ -18,7 +18,7 @@ import { SelectField } from '../fields/SelectField';
 import { MultiInputField } from '../fields/MultiInputField';
 
 const WIDTH_SPAN: Record<NormalizedField['width'], number> = {
-  short: 4,
+  short: 6,
   medium: 6,
   long: 12,
 };
