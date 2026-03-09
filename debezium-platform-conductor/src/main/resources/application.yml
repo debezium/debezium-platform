@@ -60,6 +60,9 @@ destinations:
   kafka:
     connection:
       timeout: 60
+  infinispan:
+    connection:
+      timeout: 60
   pravega:
     connection:
       timeout: 60

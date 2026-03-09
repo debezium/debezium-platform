@@ -44,6 +44,7 @@
         <version.blaze-persistence>1.6.18</version.blaze-persistence>
         <version.test-containers>2.0.3</version.test-containers>
         <version.mockwebserver>5.3.2</version.mockwebserver>
+        <version.infinispan>15.2.1.Final</version.infinispan>
         <version.pravega>0.13.0</version.pravega>
         <version.impsort>1.13.0</version.impsort>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
@@ -255,6 +256,12 @@
                 <version>${version.pravega}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-client-hotrod</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -436,6 +443,11 @@
             <groupId>com.rabbitmq</groupId>
             <artifactId>amqp-client</artifactId>
             <version>${version.rabbitmq}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-client-hotrod</artifactId>
         </dependency>
 
         <!-- Exclude to avoid BouncyCastle version conflict with bcprov-jdk18on -->

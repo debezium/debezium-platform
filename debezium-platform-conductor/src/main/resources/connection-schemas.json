@@ -220,6 +220,43 @@
     }
   },
   {
+    "type": "INFINISPAN",
+    "schema": {
+      "title": "Infinispan connection properties",
+      "description": "Infinispan connection properties",
+      "type": "object",
+      "required": [
+        "server.host",
+        "cache"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "server.host": {
+          "type": "string",
+          "title": "The hostname of the Infinispan server"
+        },
+        "server.port": {
+          "type": "integer",
+          "title": "The port of the Infinispan server"
+        },
+        "cache": {
+          "type": "string",
+          "title": "The name of the Infinispan cache"
+        },
+        "user": {
+          "type": "string",
+          "title": "Username to connect to the Infinispan server"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password to connect to the Infinispan server"
+        }
+      }
+    }
+  },
+  {
     "type": "PRAVEGA",
     "schema": {
       "title": "Pravega connection properties",
