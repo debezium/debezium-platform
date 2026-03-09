@@ -5,23 +5,22 @@
  */
 package io.debezium.platform.environment.connection.destination;
 
-import io.debezium.platform.data.dto.ConnectionValidationResult;
-import io.debezium.platform.domain.views.Connection;
-import io.debezium.platform.environment.connection.ConnectionValidator;
+import java.util.Map;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
+
+import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
-import java.util.Map;
+import io.debezium.platform.data.dto.ConnectionValidationResult;
+import io.debezium.platform.domain.views.Connection;
+import io.debezium.platform.environment.connection.ConnectionValidator;
 
-@Named("PULSAR")
+@Named("APACHE_PULSAR")
 @ApplicationScoped
 public class PulsarConnectionValidator implements ConnectionValidator {
 
@@ -56,39 +55,58 @@ public class PulsarConnectionValidator implements ConnectionValidator {
             pulsarConfig.put("connectionTimeoutMs", defaultConnectionTimeout);
 
             return performConnectionValidation(pulsarConfig);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             LOGGER.error("Unexpected error during Pulsar connection validation", e);
             return ConnectionValidationResult.failed("Validation failed due to unexpected error: " + e.getMessage());
         }
     }
 
     private ConnectionValidationResult performConnectionValidation(Map<String, Object> pulsarConfig) {
-        LOGGER.debug("Starting Pulsar HTTP connection validation");
-        try {
-            String serviceHttpUrl = pulsarConfig.get(SERVICE_HTTP_URL_KEY).toString();
+        LOGGER.debug("Starting Pulsar connection validation");
+        String serviceHttpUrl = pulsarConfig.get(SERVICE_HTTP_URL_KEY).toString();
 
-            HttpClient client = HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofMillis(defaultConnectionTimeout))
-                    .build();
+        try (PulsarAdmin admin = PulsarAdmin.builder()
+                .serviceHttpUrl(serviceHttpUrl)
+                .build()) {
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(serviceHttpUrl))
-                    .timeout(Duration.ofMillis(defaultConnectionTimeout))
-                    .GET()
-                    .build();
-
-            HttpResponse<Void> response = client.send(request, HttpResponse.BodyHandlers.discarding());
-
-            if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                return ConnectionValidationResult.successful();
-            }
-            else {
-                return ConnectionValidationResult.failed("Pulsar service HTTP endpoint returned status code: " + response.statusCode());
-            }
+            admin.clusters().getClusters();
+            return ConnectionValidationResult.successful();
+        }
+        catch (PulsarAdminException.TimeoutException e) {
+            LOGGER.warn("Timeout during Pulsar connection validation", e);
+            return ConnectionValidationResult.failed(
+                    "Connection timeout - please check the Pulsar admin URL and network connectivity");
+        }
+        catch (PulsarAdminException.NotAuthorizedException e) {
+            LOGGER.warn("Authorization failed during Pulsar connection validation", e);
+            return ConnectionValidationResult.failed(
+                    "Authorization failed - please check Pulsar credentials and permissions");
+        }
+        catch (PulsarAdminException.NotFoundException e) {
+            LOGGER.warn("Pulsar admin endpoint or resource not found", e);
+            return ConnectionValidationResult.failed(
+                    "Pulsar admin endpoint not found - please check the service HTTP URL");
+        }
+        catch (PulsarAdminException.ConnectException e) {
+            LOGGER.warn("Unable to connect to Pulsar admin endpoint", e);
+            return ConnectionValidationResult.failed(
+                    "Unable to connect - please check the Pulsar admin URL and network connectivity");
+        }
+        catch (PulsarAdminException e) {
+            LOGGER.warn("Pulsar-specific error during validation", e);
+            return ConnectionValidationResult.failed(
+                    "Pulsar connection error: " + e.getMessage());
+        }
+        catch (IllegalArgumentException e) {
+            LOGGER.warn("Invalid Pulsar service HTTP URL: {}", serviceHttpUrl, e);
+            return ConnectionValidationResult.failed(
+                    "Invalid Pulsar service HTTP URL");
         }
         catch (Exception e) {
-            LOGGER.error("Pulsar HTTP connection validation failed", e);
-            return ConnectionValidationResult.failed("Pulsar HTTP connection validation failed: " + e.getMessage());
+            LOGGER.error("Unexpected error during Pulsar connection validation", e);
+            return ConnectionValidationResult.failed(
+                    "Generic error while connecting to Pulsar");
         }
     }
 }
