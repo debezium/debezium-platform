@@ -17,7 +17,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
-import io.debezium.platform.environment.connection.ConnectionConfigUtils;
 import io.debezium.platform.environment.connection.ConnectionValidator;
 
 /**
@@ -46,22 +45,22 @@ public class QdrantConnectionValidator implements ConnectionValidator {
         }
 
         Map<String, Object> config = connectionConfig.getConfig();
-        String host = ConnectionConfigUtils.getString(config, HOST);
-        if (ConnectionConfigUtils.isBlank(host)) {
+        String host = getString(config, HOST);
+        if (isBlank(host)) {
             return ConnectionValidationResult.failed("Host must be specified for Qdrant connection");
         }
 
-        Integer port = ConnectionConfigUtils.getInteger(config, PORT);
+        Integer port = getInteger(config, PORT);
         if (port == null || port <= 0) {
             port = 6333;
         }
 
-        String protocol = ConnectionConfigUtils.getString(config, PROTOCOL);
-        if (ConnectionConfigUtils.isBlank(protocol)) {
+        String protocol = getString(config, PROTOCOL);
+        if (isBlank(protocol)) {
             protocol = "http";
         }
 
-        String apiKey = ConnectionConfigUtils.getString(config, API_KEY);
+        String apiKey = getString(config, API_KEY);
         String healthEndpoint = protocol + "://" + host + ":" + port + "/healthz";
 
         try {
@@ -70,7 +69,7 @@ public class QdrantConnectionValidator implements ConnectionValidator {
             conn.setRequestMethod("GET");
             conn.setConnectTimeout((int) Duration.ofSeconds(defaultConnectionTimeout).toMillis());
             conn.setReadTimeout((int) Duration.ofSeconds(defaultConnectionTimeout).toMillis());
-            if (!ConnectionConfigUtils.isBlank(apiKey)) {
+            if (!isBlank(apiKey)) {
                 conn.setRequestProperty("api-key", apiKey);
             }
             int responseCode = conn.getResponseCode();
@@ -82,5 +81,30 @@ public class QdrantConnectionValidator implements ConnectionValidator {
         catch (Exception e) {
             return ConnectionValidationResult.failed("Qdrant connection error: " + e.getMessage());
         }
+    }
+
+    private static String getString(Map<String, Object> config, String key) {
+        Object value = config.get(key);
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private static Integer getInteger(Map<String, Object> config, String key) {
+        Object value = config.get(key);
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String strValue) {
+            try {
+                return Integer.parseInt(strValue);
+            }
+            catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 }

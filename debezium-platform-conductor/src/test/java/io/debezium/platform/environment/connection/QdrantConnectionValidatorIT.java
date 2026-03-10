@@ -22,7 +22,7 @@ public class QdrantConnectionValidatorIT {
 
     @Test
     public void testValidate_withValidConfig_shouldReturnSuccessOrFailure() {
-        QdrantConnectionValidator validator = new QdrantConnectionValidator();
+        QdrantConnectionValidator validator = new QdrantConnectionValidator(60);
         Map<String, Object> config = new HashMap<>();
         config.put("host", "localhost");
         config.put("port", 6333);
@@ -35,7 +35,7 @@ public class QdrantConnectionValidatorIT {
 
     @Test
     public void testValidate_withInvalidConfig_shouldReturnFailure() {
-        QdrantConnectionValidator validator = new QdrantConnectionValidator();
+        QdrantConnectionValidator validator = new QdrantConnectionValidator(60);
         Map<String, Object> config = new HashMap<>();
         config.put("host", "invalid-host");
         config.put("port", 9999);
