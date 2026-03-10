@@ -5037,10 +5037,10 @@ joi@^18.0.1:
     "@hapi/topo" "^6.0.2"
     "@standard-schema/spec" "^1.0.0"
 
-jotai@^2.18.0:
-  version "2.18.0"
-  resolved "https://registry.yarnpkg.com/jotai/-/jotai-2.18.0.tgz#b62c682d8e7c20eb94a8a68eead4188359e66f31"
-  integrity sha512-XI38kGWAvtxAZ+cwHcTgJsd+kJOJGf3OfL4XYaXWZMZ7IIY8e53abpIHvtVn1eAgJ5dlgwlGFnP4psrZ/vZbtA==
+jotai@^2.18.1:
+  version "2.18.1"
+  resolved "https://registry.yarnpkg.com/jotai/-/jotai-2.18.1.tgz#3176142b123d559f55a2b87e2cf1dd75e4db7271"
+  integrity sha512-e0NOzK+yRFwHo7DOp0DS0Ycq74KMEAObDWFGmfEL28PD9nLqBTt3/Ug7jf9ca72x0gC9LQZG9zH+0ISICmy3iA==
 
 js-sha3@0.8.0:
   version "0.8.0"
