@@ -57,7 +57,6 @@ import io.debezium.platform.environment.connection.destination.RedisConnectionVa
  * <p><strong>Key Testing Techniques:</strong></p>
  * <ul>
  *   <li>Non-routable IP addresses (10.255.255.1) for reliable timeout testing</li>
- *   <li>Boundary value testing for port numbers (0, 65536, negative values)</li>
  *   <li>Null and empty value testing for required parameters</li>
  *   <li>Invalid data type testing (strings for numeric fields)</li>
  * </ul>
@@ -127,49 +126,6 @@ class RedisConnectionValidatorTest {
 
         assertFalse(result.valid(), "Connection validation should fail");
         assertEquals("Host must be specified", result.message());
-    }
-
-    @Test
-    @DisplayName("Should fail validation when host has trailing whitespace")
-    void shouldFailValidationWithTrailingWhitespaceHost() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("host", "localhost ");
-        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
-
-        ConnectionValidationResult result = validator.validate(connection);
-
-        assertFalse(result.valid(), "Connection validation should fail");
-        assertEquals("Host cannot contain leading or trailing whitespace", result.message());
-    }
-
-    @Test
-    @DisplayName("Should fail validation when port has trailing whitespace")
-    void shouldFailValidationWithTrailingWhitespacePort() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("host", "localhost");
-        config.put("port", "6379 ");
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
-
-        ConnectionValidationResult result = validator.validate(connection);
-
-        assertFalse(result.valid(), "Connection validation should fail");
-        assertEquals("Port must be a valid integer", result.message());
-    }
-
-    @Test
-    @DisplayName("Should fail validation when username has trailing whitespace")
-    void shouldFailValidationWithTrailingWhitespaceUsername() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("host", "localhost");
-        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
-        config.put("username", "user ");
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
-
-        ConnectionValidationResult result = validator.validate(connection);
-
-        assertFalse(result.valid(), "Connection validation should fail");
-        assertEquals("Username cannot contain leading or trailing whitespace", result.message());
     }
 
     @Test

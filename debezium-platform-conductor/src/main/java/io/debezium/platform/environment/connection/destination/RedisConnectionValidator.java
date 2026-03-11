@@ -23,7 +23,6 @@ import io.debezium.util.Strings;
 
 import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisClientConfig;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 /**
@@ -63,10 +62,13 @@ public class RedisConnectionValidator implements ConnectionValidator {
             LOGGER.debug("Starting Redis connection validation for: {}", connectionConfig.getName());
 
             Map<String, Object> redisConfig = connectionConfig.getConfig();
+            if (redisConfig == null) {
+                return ConnectionValidationResult.failed("Connection configuration map cannot be null");
+            }
 
             ConfigurationValidationResult configValidation = validateConfiguration(redisConfig);
             if (!configValidation.valid()) {
-                return ConnectionValidationResult.failed(configValidation.failureMessage());
+                return ConnectionValidationResult.failed(configValidation.message());
             }
 
             return performConnectionValidation(configValidation);
@@ -82,16 +84,12 @@ public class RedisConnectionValidator implements ConnectionValidator {
         if (Strings.isNullOrBlank(host)) {
             return ConfigurationValidationResult.failed("Host must be specified");
         }
-        if (hasLeadingOrTrailingWhitespace(host)) {
-            return ConfigurationValidationResult.failed("Host cannot contain leading or trailing whitespace");
-        }
 
         String portStr = getStringConfig(config, PORT_KEY);
         if (portStr == null) {
             return ConfigurationValidationResult.failed("Port must be specified");
         }
 
-        // Validate port is a number and within valid range
         int port;
         try {
             port = Integer.parseInt(portStr);
@@ -101,18 +99,12 @@ public class RedisConnectionValidator implements ConnectionValidator {
         }
 
         String username = getStringConfig(config, USERNAME_KEY);
-        if (username != null && hasLeadingOrTrailingWhitespace(username)) {
-            return ConfigurationValidationResult.failed("Username cannot contain leading or trailing whitespace");
-        }
 
         String password = getStringConfig(config, PASSWORD_KEY);
 
         return ConfigurationValidationResult.successful(host, port, username, password);
     }
 
-    private boolean hasLeadingOrTrailingWhitespace(String value) {
-        return !value.equals(value.trim());
-    }
 
     private String getStringConfig(Map<String, Object> config, String key) {
         Object value = config.get(key);
@@ -125,34 +117,29 @@ public class RedisConnectionValidator implements ConnectionValidator {
         String username = configValidation.username();
         String password = configValidation.password();
 
-        Jedis jedis = null;
-        try {
-            LOGGER.debug("Connecting to Redis at {}:{}", host, port);
+        // Build Jedis client config with authentication
+        // Note: SSL is not supported for now as it requires handling keys and certificates globally
+        DefaultJedisClientConfig.Builder configBuilder = DefaultJedisClientConfig.builder()
+                .connectionTimeoutMillis((int) defaultTimeout.toMillis())
+                .socketTimeoutMillis((int) defaultTimeout.toMillis());
 
-            // Build Jedis client config with authentication
-            // Note: SSL is not supported for now as it requires handling keys and certificates globally
-            DefaultJedisClientConfig.Builder configBuilder = DefaultJedisClientConfig.builder()
-                    .connectionTimeoutMillis((int) defaultTimeout.toMillis())
-                    .socketTimeoutMillis((int) defaultTimeout.toMillis());
+        // Add authentication credentials to the config
+        if (!Strings.isNullOrEmpty(username) && password != null) {
+            // Redis 6+ ACL auth with username and password
+            LOGGER.debug("Configuring authentication with username and password");
+            configBuilder.user(username).password(password);
+        }
+        else if (!Strings.isNullOrEmpty(password)) {
+            // Classic password-only auth
+            LOGGER.debug("Configuring authentication with password only");
+            configBuilder.password(password);
+        }
+        else {
+            LOGGER.debug("No authentication credentials provided");
+        }
 
-            // Add authentication credentials to the config
-            if (!Strings.isNullOrEmpty(username) && password != null) {
-                // Redis 6+ ACL auth with username and password
-                LOGGER.debug("Configuring authentication with username and password");
-                configBuilder.user(username).password(password);
-            }
-            else if (!Strings.isNullOrEmpty(password)) {
-                // Classic password-only auth
-                LOGGER.debug("Configuring authentication with password only");
-                configBuilder.password(password);
-            }
-            else {
-                LOGGER.debug("No authentication credentials provided");
-            }
-
-            JedisClientConfig clientConfig = configBuilder.build();
-            jedis = new Jedis(host, port, clientConfig);
-
+        LOGGER.debug("Connecting to Redis at {}:{}", host, port);
+        try (Jedis jedis = new Jedis(host, port, configBuilder.build())) {
             // Send a simple PING command to test the connection
             String response = jedis.ping();
             LOGGER.debug("Redis PING response: {}", response);
@@ -172,16 +159,6 @@ public class RedisConnectionValidator implements ConnectionValidator {
             LOGGER.error("Unexpected error during Redis validation", e);
             return ConnectionValidationResult.failed("Unexpected error: " + e.getMessage());
         }
-        finally {
-            if (jedis != null) {
-                try {
-                    jedis.close();
-                }
-                catch (Exception ex) {
-                    LOGGER.warn("Error closing Redis client", ex);
-                }
-            }
-        }
     }
 
     /**
@@ -189,7 +166,7 @@ public class RedisConnectionValidator implements ConnectionValidator {
      */
     private record ConfigurationValidationResult(
             boolean valid,
-            String failureMessage,
+            String message,
             String host,
             int port,
             String username,
