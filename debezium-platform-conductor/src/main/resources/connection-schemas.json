@@ -195,6 +195,16 @@
         "database": {
           "type": "string",
           "title": "The name of the database"
+        },
+        "ssl.mode": {
+          "type": "string",
+          "title": "SSL mode",
+          "description": "Specifies the TLS/SSL mode for the connection. 'disabled' disables encryption. 'required' enables encryption but trusts any certificate. 'verify-ca' enables encryption and validates the server certificate against the CA.",
+          "enum": [
+            "disabled",
+            "required",
+            "verify-ca"
+          ]
         }
       }
     }

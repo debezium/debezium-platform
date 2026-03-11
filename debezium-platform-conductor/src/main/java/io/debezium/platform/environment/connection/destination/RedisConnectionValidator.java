@@ -31,7 +31,6 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
  * - Host/port config
  * - Optional username/password (Redis ACL support)
  * - Optional password only (classic Redis auth)
- * - Optional TLS/SSL connection
  */
 @ApplicationScoped
 @Named("REDIS")
@@ -46,7 +45,6 @@ public class RedisConnectionValidator implements ConnectionValidator {
     private static final String PORT_KEY = "port";
     private static final String PASSWORD_KEY = "password";
     private static final String USERNAME_KEY = "username";
-    private static final String USE_SSL_KEY = "ssl.enabled"; // "true" or "false"
 
     private final Duration defaultTimeout;
 
@@ -102,7 +100,6 @@ public class RedisConnectionValidator implements ConnectionValidator {
             return ConfigurationValidationResult.failed("Port must be a valid integer");
         }
 
-
         String username = getStringConfig(config, USERNAME_KEY);
         if (username != null && hasLeadingOrTrailingWhitespace(username)) {
             return ConfigurationValidationResult.failed("Username cannot contain leading or trailing whitespace");
@@ -110,19 +107,7 @@ public class RedisConnectionValidator implements ConnectionValidator {
 
         String password = getStringConfig(config, PASSWORD_KEY);
 
-        boolean useSsl = false;
-        String useSslValue = getStringConfig(config, USE_SSL_KEY);
-        if (useSslValue != null) {
-            if (hasLeadingOrTrailingWhitespace(useSslValue)) {
-                return ConfigurationValidationResult.failed("ssl.enabled cannot contain leading or trailing whitespace");
-            }
-            if (!useSslValue.equalsIgnoreCase("true") && !useSslValue.equalsIgnoreCase("false")) {
-                return ConfigurationValidationResult.failed("ssl.enabled must be 'true' or 'false' if specified");
-            }
-            useSsl = Boolean.parseBoolean(useSslValue);
-        }
-
-        return ConfigurationValidationResult.successful(host, port, username, password, useSsl);
+        return ConfigurationValidationResult.successful(host, port, username, password);
     }
 
     private boolean hasLeadingOrTrailingWhitespace(String value) {
@@ -139,15 +124,14 @@ public class RedisConnectionValidator implements ConnectionValidator {
         int port = configValidation.port();
         String username = configValidation.username();
         String password = configValidation.password();
-        boolean useSsl = configValidation.useSsl();
 
         Jedis jedis = null;
         try {
-            LOGGER.debug("Connecting to Redis at {}:{} SSL={}", host, port, useSsl);
+            LOGGER.debug("Connecting to Redis at {}:{}", host, port);
 
-            // Build Jedis client config with authentication and SSL
+            // Build Jedis client config with authentication
+            // Note: SSL is not supported for now as it requires handling keys and certificates globally
             DefaultJedisClientConfig.Builder configBuilder = DefaultJedisClientConfig.builder()
-                    .ssl(useSsl)
                     .connectionTimeoutMillis((int) defaultTimeout.toMillis())
                     .socketTimeoutMillis((int) defaultTimeout.toMillis());
 
@@ -209,15 +193,14 @@ public class RedisConnectionValidator implements ConnectionValidator {
             String host,
             int port,
             String username,
-            String password,
-            boolean useSsl) {
+            String password) {
 
         public static ConfigurationValidationResult failed(String message) {
-            return new ConfigurationValidationResult(false, message, null, 0, null, null, false);
+            return new ConfigurationValidationResult(false, message, null, 0, null, null);
         }
 
-        public static ConfigurationValidationResult successful(String host, int port, String username, String password, boolean useSsl) {
-            return new ConfigurationValidationResult(true, null, host, port, username, password, useSsl);
+        public static ConfigurationValidationResult successful(String host, int port, String username, String password) {
+            return new ConfigurationValidationResult(true, null, host, port, username, password);
         }
     }
 }

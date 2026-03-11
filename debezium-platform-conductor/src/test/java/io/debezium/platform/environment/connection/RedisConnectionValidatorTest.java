@@ -157,7 +157,6 @@ class RedisConnectionValidatorTest {
         assertEquals("Port must be a valid integer", result.message());
     }
 
-
     @Test
     @DisplayName("Should fail validation when username has trailing whitespace")
     void shouldFailValidationWithTrailingWhitespaceUsername() {
@@ -171,21 +170,6 @@ class RedisConnectionValidatorTest {
 
         assertFalse(result.valid(), "Connection validation should fail");
         assertEquals("Username cannot contain leading or trailing whitespace", result.message());
-    }
-
-    @Test
-    @DisplayName("Should fail validation when ssl.enabled has trailing whitespace")
-    void shouldFailValidationWithTrailingWhitespaceSsl() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("host", "localhost");
-        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
-        config.put("ssl.enabled", "true ");
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
-
-        ConnectionValidationResult result = validator.validate(connection);
-
-        assertFalse(result.valid(), "Connection validation should fail");
-        assertEquals("ssl.enabled cannot contain leading or trailing whitespace", result.message());
     }
 
     @Test
@@ -317,7 +301,7 @@ class RedisConnectionValidatorTest {
         Map<String, Object> config = new HashMap<>();
         config.put("host", "10.255.255.1"); // Will fail connection but pass validation
         config.put("port", RedisConnectionValidator.DEFAULT_PORT);
-        // password, username, and ssl.enabled are optional, so not providing them should be fine
+        // password and username are optional, so not providing them should be fine
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 
         ConnectionValidationResult result = validator.validate(connection);
@@ -360,19 +344,4 @@ class RedisConnectionValidatorTest {
         Assertions.assertThat(result.message()).doesNotContain("must be specified");
     }
 
-    @Test
-    @DisplayName("Should handle SSL parameter")
-    void shouldHandleSslParameter() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("host", "10.255.255.1"); // Will fail connection but pass validation
-        config.put("port", RedisConnectionValidator.DEFAULT_PORT);
-        config.put("ssl.enabled", "true");
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
-
-        ConnectionValidationResult result = validator.validate(connection);
-
-        // Should fail due to connection, not parameter validation
-        assertFalse(result.valid());
-        Assertions.assertThat(result.message()).doesNotContain("must be specified");
-    }
 }

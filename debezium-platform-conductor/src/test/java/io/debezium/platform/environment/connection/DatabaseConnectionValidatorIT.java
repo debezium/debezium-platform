@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 import jakarta.inject.Inject;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -106,6 +107,26 @@ class DatabaseConnectionValidatorIT {
             case SQLSERVER -> SqlserverTestResource.getContainer();
             default -> throw new UnsupportedOperationException();
         };
+    }
+
+    @Test
+    void sqlServerSslModeDisabledIsValidConnection() {
+
+        JdbcDatabaseContainer<?> container = SqlserverTestResource.getContainer();
+
+        Awaitility.await()
+                .atMost(300, TimeUnit.SECONDS)
+                .until(container::isRunning);
+
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.SQLSERVER, Map.of(
+                "hostname", container.getHost(),
+                "port", container.getFirstMappedPort(),
+                "username", container.getUsername(),
+                "password", container.getPassword(),
+                "ssl.mode", "disabled",
+                "database", "master"));
+
+        assertThat(connectionValidator.validate(connectionConfig).valid()).isTrue();
     }
 
 }

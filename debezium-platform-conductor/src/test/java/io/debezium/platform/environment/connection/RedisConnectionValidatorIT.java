@@ -156,29 +156,6 @@ class RedisConnectionValidatorIT {
         assertThat(result.message()).contains("AUTH");
     }
 
-    @Test
-    @DisplayName("Should handle SSL configuration")
-    void shouldHandleSslConfiguration() {
-        GenericContainer<?> container = RedisTestResource.getContainer();
-
-        Awaitility.await()
-                .atMost(TestHelper.waitTimeForContainer())
-                .until(container::isRunning);
-
-        // Test with SSL enabled (should fail since container doesn't use SSL)
-        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
-                "host", container.getHost(),
-                "port", container.getMappedPort(RedisConnectionValidator.DEFAULT_PORT).toString(),
-                "ssl.enabled", "true"));
-
-        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
-
-        // This might fail because the container is not configured with SSL
-        // The important thing is that the validator handles the SSL parameter
-        assertThat(result).isNotNull();
-        assertThat(result.message()).isNotNull();
-    }
-
     // ========== PARAMETER VALIDATION TESTS ==========
 
     @Test

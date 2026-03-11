@@ -185,34 +185,6 @@ class RedisConnectionValidatorAuthIT {
         assertThat(result.message()).containsAnyOf("timeout", "Failed to connect", "Connection refused");
     }
 
-    @Test
-    @DisplayName("Should handle SSL with authentication")
-    void shouldHandleSslWithAuth() {
-        GenericContainer<?> container = RedisTestResourceAuthenticated.getContainer();
-
-        Awaitility.await()
-                .atMost(TestHelper.waitTimeForContainer())
-                .until(container::isRunning);
-
-        // Test with SSL enabled and correct password
-        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.REDIS, Map.of(
-                "host", container.getHost(),
-                "port", container.getMappedPort(RedisConnectionValidator.DEFAULT_PORT).toString(),
-                "ssl.enabled", "true",
-                "password", RedisTestResourceAuthenticated.getPassword()));
-
-        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
-
-        // This might fail due to SSL configuration, but should handle password correctly
-        assertThat(result).isNotNull();
-        assertThat(result.message()).isNotNull();
-        // If it fails, it should be due to SSL, not authentication
-        if (!result.valid()) {
-            assertThat(result.message()).doesNotContainIgnoringCase("password");
-            assertThat(result.message()).doesNotContainIgnoringCase("authentication");
-        }
-    }
-
     // Note: Username+password (ACL) testing would require a more complex container setup
     // with ACL configuration. For now, we focus on password-only authentication which is
     // the most common Redis authentication method.
