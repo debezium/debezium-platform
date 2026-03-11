@@ -220,6 +220,92 @@
     }
   },
   {
+    "type": "APACHE_PULSAR",
+    "schema": {
+      "title": "Apache Pulsar connection properties",
+      "description": "Apache Pulsar connection properties",
+      "type": "object",
+      "required": [
+        "serviceHttpUrl"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "serviceHttpUrl": {
+          "type": "string",
+          "title": "HTTP service URL for the Pulsar admin API (e.g., 'http://pulsar-broker:8080')",
+          "examples": ["http://localhost:8080", "https://pulsar-proxy:8443"]
+        },
+        "authScheme": {
+          "type": "string",
+          "enum": ["none", "basic", "JWT", "OAuth2", "OpenID", "Kerberos"],
+          "title": "Authentication scheme to use when connecting to Pulsar (optional)"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username for HTTP Basic Authentication",
+          "description": "Required if HTTP Basic Auth is enabled on the broker."
+        },
+        "password": {
+          "type": "string",
+          "title": "Password for HTTP Basic Authentication",
+          "description": "Required if HTTP Basic Auth is enabled on the broker."
+        },
+        "jwtToken": {
+          "type": "string",
+          "title": "JWT token for JWT authentication",
+          "description": "Required if authScheme is 'JWT'."
+        },
+        "jwtIssuerUrl": {
+          "type": "string",
+          "title": "URL of the JWT issuer",
+          "description": "Optional for JWT auth (if token needs to be fetched/validated)."
+        },
+        "oAuth2IssuerUrl": {
+          "type": "string",
+          "title": "OAuth2 issuer URL",
+          "description": "Required if authScheme is 'OAuth2'."
+        },
+        "oAuth2Audience": {
+          "type": "string",
+          "title": "OAuth2 audience",
+          "description": "Optional for OAuth2 auth."
+        },
+        "oAuth2CredentialsUrl": {
+          "type": "string",
+          "title": "OAuth2 credentials URL",
+          "description": "Required if authScheme is OAuth2 and client credentials flow is used."
+        },
+        "oAuth2ClientId": {
+          "type": "string",
+          "title": "OAuth2 client ID"
+        },
+        "oAuth2ClientSecret": {
+          "type": "string",
+          "title": "OAuth2 client secret",
+          "description": "Required if authScheme is 'OAuth2'.",
+          "format": "password"
+        },
+        "kerberosKeytabFile": {
+          "type": "string",
+          "title": "Path to the Kerberos keytab file",
+          "description": "Required if authScheme is 'Kerberos'."
+        },
+        "kerberosPrincipal": {
+          "type": "string",
+          "title": "Kerberos principal name",
+          "description": "Required if authScheme is 'Kerberos'."
+        },
+        "kerberosServiceName": {
+          "type": "string",
+          "title": "Kerberos service name",
+          "description": "Optional for Kerberos auth."
+        }
+      }
+    }
+  },
+  {
     "type": "INFINISPAN",
     "schema": {
       "title": "Infinispan connection properties",

@@ -11,6 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -19,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.ConnectionValidator;
+import io.debezium.platform.environment.connection.destination.pulsar.PulsarAuthHandler;
+import io.debezium.platform.environment.connection.destination.pulsar.PulsarAuthHandlerFactory;
 
 @Named("APACHE_PULSAR")
 @ApplicationScoped
@@ -26,12 +29,18 @@ public class PulsarConnectionValidator implements ConnectionValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PulsarConnectionValidator.class);
 
+    private final PulsarAuthHandlerFactory authHandlerFactory;
+
     private final int defaultConnectionTimeout;
 
     private static final String SERVICE_HTTP_URL_KEY = "serviceHttpUrl";
+    private static final String AUTH_SCHEME_KEY = "authScheme";
+    public static final String NO_AUTH_SCHEME = "none";
 
-    public PulsarConnectionValidator(@ConfigProperty(name = "destinations.pulsar.connection.timeout") int defaultConnectionTimeout) {
+    public PulsarConnectionValidator(@ConfigProperty(name = "destinations.pulsar.connection.timeout") int defaultConnectionTimeout,
+                                     PulsarAuthHandlerFactory authHandlerFactory) {
         this.defaultConnectionTimeout = defaultConnectionTimeout;
+        this.authHandlerFactory = authHandlerFactory;
     }
 
     @Override
@@ -54,24 +63,22 @@ public class PulsarConnectionValidator implements ConnectionValidator {
             // Set a reasonable timeout for validation
             pulsarConfig.put("connectionTimeoutMs", defaultConnectionTimeout);
 
-            return performConnectionValidation(pulsarConfig);
+            String authScheme = pulsarConfig.getOrDefault(AUTH_SCHEME_KEY, NO_AUTH_SCHEME).toString();
+            PulsarAuthHandler authHandler = authHandlerFactory.getAuthHandler(authScheme);
+            authHandler.validate(pulsarConfig);
+
+            PulsarAdminBuilder builder = PulsarAdmin.builder().serviceHttpUrl(pulsarConfig.get(SERVICE_HTTP_URL_KEY).toString());
+
+            authHandler.configure(builder, pulsarConfig);
+
+            try (PulsarAdmin admin = builder.build()) {
+                admin.clusters().getClusters();
+                return ConnectionValidationResult.successful();
+            }
         }
-        catch (Exception e) {
-            LOGGER.error("Unexpected error during Pulsar connection validation", e);
-            return ConnectionValidationResult.failed("Validation failed due to unexpected error: " + e.getMessage());
-        }
-    }
-
-    private ConnectionValidationResult performConnectionValidation(Map<String, Object> pulsarConfig) {
-        LOGGER.debug("Starting Pulsar connection validation");
-        String serviceHttpUrl = pulsarConfig.get(SERVICE_HTTP_URL_KEY).toString();
-
-        try (PulsarAdmin admin = PulsarAdmin.builder()
-                .serviceHttpUrl(serviceHttpUrl)
-                .build()) {
-
-            admin.clusters().getClusters();
-            return ConnectionValidationResult.successful();
+        catch (IllegalArgumentException e) {
+            LOGGER.warn("Invalid Pulsar configuration", e);
+            return ConnectionValidationResult.failed("Configuration error: " + e.getMessage());
         }
         catch (PulsarAdminException.TimeoutException e) {
             LOGGER.warn("Timeout during Pulsar connection validation", e);
@@ -97,11 +104,6 @@ public class PulsarConnectionValidator implements ConnectionValidator {
             LOGGER.warn("Pulsar-specific error during validation", e);
             return ConnectionValidationResult.failed(
                     "Pulsar connection error: " + e.getMessage());
-        }
-        catch (IllegalArgumentException e) {
-            LOGGER.warn("Invalid Pulsar service HTTP URL: {}", serviceHttpUrl, e);
-            return ConnectionValidationResult.failed(
-                    "Invalid Pulsar service HTTP URL");
         }
         catch (Exception e) {
             LOGGER.error("Unexpected error during Pulsar connection validation", e);
