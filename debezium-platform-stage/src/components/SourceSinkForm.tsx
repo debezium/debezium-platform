@@ -459,11 +459,9 @@ const SourceSinkForm = ({
         fieldId={`${connectorType}-type-field`}
       >
         <>
-          <ConnectorImage connectorType={connectorType === "destination" ? "oracle" : (dataType || ConnectorId || "")} size={35} />
-          <Content component="p">
-            {connectorType === "destination" ? <> Oracle <Content component="p" style={{ fontSize: "smaller", color: "gray" }}>
-              {"3.5.0-SNAPSHOT"}
-            </Content></> : getConnectorTypeName(dataType || ConnectorId || "")}
+          <ConnectorImage connectorType={dataType || ConnectorId || ""} size={35} />
+          <Content component="p" style={{ paddingLeft: "10px" }}>
+            {getConnectorTypeName(dataType || ConnectorId || "")}
           </Content>
         </>
       </FormGroup>
@@ -571,180 +569,209 @@ const SourceSinkForm = ({
     </>
   );
 
-  const isDestination = connectorType === "destination";
+  const isOracleSource = connectorType === "source" &&
+    (dataType || ConnectorId || "").toLowerCase() === "oracle";
 
-  const formInner = (
-          <Form isWidthLimited={!isDestination}>
-            {!isDestination && metaFields}
+  const useSchemaForm = !!setProperties && connectorType === "source";
 
-            {
-              (!!selectedConnection?.id && connectorType === "source") ? isCollectionsLoading ?
-                <FormFieldGroup>
-                  <Skeleton fontSize="2xl" width="50%" />
-                  <Skeleton fontSize="md" width="33%" />
-                  <Skeleton fontSize="md" width="33%" />
-                </FormFieldGroup> : !_.isEmpty(collectionsError) ? (
-                  <FormFieldGroup>
-                    <ApiComponentError
-                      error={
-                        collectionsError
-                      }
-                      retry={() => {
-                        fetchCollections();
-                      }}
-                    />
-                  </FormFieldGroup>
-                ) : <FormFieldGroupExpandable
-                  className="table-explorer-section"
-                  hasAnimations
-                  isExpanded
-                  header={
-                    <FormFieldGroupHeader
-                      titleText={{
-                        text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: getConnectorTypeName(dataType || ConnectorId || "") })}</span>,
-                        id: `field-group-data-table-id`,
-                      }}
-                      titleDescription={t("source:create.dataTableDescription", editFlow ? { val: DatabaseItemsList[dataType?.split(".")[3] as keyof typeof DatabaseItemsList].join(" and ") } : { val: DatabaseItemsList[ConnectorId as keyof typeof DatabaseItemsList].join(" and ") })}
-                    />
-                  }
-                >
-                  <TableViewComponent collections={collections} setSelectedDataListItems={setSelectedDataListItems} selectedDataListItems={selectedDataListItems} />
-                </FormFieldGroupExpandable>
-                : null}
-
-            {setProperties ? (
-                <DynamicConnectorForm
-                  connectorType={getConnectorSchemaType(ConnectorId, dataType)}
-                  mode="embedded"
-                  layout={isDestination ? "jumplinks" : "tabs"}
-                  showHeader={!isDestination}
-                  essentialsContent={isDestination ? metaFields : undefined}
-                  initialValues={convertMapToObject(properties) as Record<string, unknown>}
-                  onConfigChange={(config) => {
-                    const map = convertObjectToMap(
-                      config as Record<string, string | number | boolean | undefined>
-                    );
-                    setProperties(map);
-                  }}
-                />
-            ) : (
-              <FormFieldGroup
-                header={
-                  <FormFieldGroupHeader
-                    titleText={{
-                      text: <span style={{ fontWeight: 500 }}>{t("form.subHeading.title")}</span>,
-                      id: `field-group-${connectorType}-id`,
-                    }}
-                    titleDescription={!viewMode ? t("form.subHeading.description") : undefined}
-                    actions={
-                      viewMode ? null :
-                        <>
-                          <Button
-                            variant="secondary"
-                            icon={<PlusIcon />}
-                            onClick={handleAddProperty}
-                          >
-                            {t("form.addFieldButton")}
-                          </Button>
-                        </>
-                    }
-                  />
-                }
-              >
-                {Array.from(properties.keys()).map((key) => (
-                  <Split hasGutter key={key}>
-                    <SplitItem isFilled>
-                      <Grid hasGutter md={6}>
-                        <FormGroup
-                          label=""
-                          isRequired
-                          fieldId={`${connectorType}-config-props-key-field-${key}`}
-                        >
-                          <TextInput
-                            readOnlyVariant={viewMode ? "default" : undefined}
-                            isRequired
-                            type="text"
-                            placeholder="Key"
-                            validated={errorWarning.includes(key) ? "error" : "default"}
-                            id={`${connectorType}-config-props-key-${key}`}
-                            name={`${connectorType}-config-props-key-${key}`}
-                            value={properties.get(key)?.key || ""}
-                            onChange={(_e, value) =>
-                              handlePropertyChange(key, "key", value)
-                            }
-                          />
-                        </FormGroup>
-                        <FormGroup
-                          label=""
-                          isRequired
-                          fieldId={`${connectorType}-config-props-value-field-${key}`}
-                        >
-                          <TextInput
-                            readOnlyVariant={viewMode ? "default" : undefined}
-                            isRequired
-                            type="text"
-                            id={`${connectorType}-config-props-value-${key}`}
-                            placeholder="Value"
-                            validated={errorWarning.includes(key) ? "error" : "default"}
-                            name={`${connectorType}-config-props-value-${key}`}
-                            value={properties.get(key)?.value || ""}
-                            onChange={(_e, value) =>
-                              handlePropertyChange(key, "value", value)
-                            }
-                          />
-                        </FormGroup>
-                      </Grid>
-                    </SplitItem>
-                    <SplitItem>
-                      <Button
-                        variant="plain"
-                        isDisabled={viewMode}
-                        aria-label="Remove"
-                        onClick={() => handleDeleteProperty(key)}
-                      >
-                        <TrashIcon />
-                      </Button>
-                    </SplitItem>
-                  </Split>
-                ))}
-              </FormFieldGroup>
-            )}
-            {
-              connectorType === "source" &&
-              <FormFieldGroup
-                header={
-                  <FormFieldGroupHeader
-                    titleText={{
-                      text: <span style={{ fontWeight: 500 }}>{t("source:signal.title")}</span>,
-                      id: `field-group-signal-id`,
-                    }}
-                    titleDescription={t("source:signal.description")}
-                  />
-                }
-              >
-                <Button variant="link" size="lg" icon={signalCollectionNameVerify ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />} iconPosition="left" onClick={handleModalToggle}>
-                  {t("source:signal.setupSignaling")}
-                </Button>
-
-              </FormFieldGroup>
-            }
-
-
-
-          </Form>
+  const collectionsSection = (
+    <>
+      {(!!selectedConnection?.id && connectorType === "source") ? isCollectionsLoading ?
+        <FormFieldGroup>
+          <Skeleton fontSize="2xl" width="50%" />
+          <Skeleton fontSize="md" width="33%" />
+          <Skeleton fontSize="md" width="33%" />
+        </FormFieldGroup> : !_.isEmpty(collectionsError) ? (
+          <FormFieldGroup>
+            <ApiComponentError
+              error={collectionsError}
+              retry={() => { fetchCollections(); }}
+            />
+          </FormFieldGroup>
+        ) : <FormFieldGroupExpandable
+          className="table-explorer-section"
+          hasAnimations
+          isExpanded
+          header={
+            <FormFieldGroupHeader
+              titleText={{
+                text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: getConnectorTypeName(dataType || ConnectorId || "") })}</span>,
+                id: `field-group-data-table-id`,
+              }}
+              titleDescription={t("source:create.dataTableDescription", editFlow ? { val: DatabaseItemsList[dataType?.split(".")[3] as keyof typeof DatabaseItemsList].join(" and ") } : { val: DatabaseItemsList[ConnectorId as keyof typeof DatabaseItemsList].join(" and ") })}
+            />
+          }
+        >
+          <TableViewComponent collections={collections} setSelectedDataListItems={setSelectedDataListItems} selectedDataListItems={selectedDataListItems} />
+        </FormFieldGroupExpandable>
+        : null}
+    </>
   );
+
+  const signalCollectionContent = (
+    <FormFieldGroup
+      header={
+        <FormFieldGroupHeader
+          titleText={{
+            text: <span style={{ fontWeight: 500 }}>{t("source:signal.title")}</span>,
+            id: `field-group-signal-id`,
+          }}
+          titleDescription={t("source:signal.description")}
+        />
+      }
+    >
+      <Button variant="link" size="lg" icon={signalCollectionNameVerify ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />} iconPosition="left" onClick={handleModalToggle}>
+        {t("source:signal.setupSignaling")}
+      </Button>
+    </FormFieldGroup>
+  );
+
+  const keyValueForm = (
+    <FormFieldGroup
+      header={
+        <FormFieldGroupHeader
+          titleText={{
+            text: <span style={{ fontWeight: 500 }}>{t("form.subHeading.title")}</span>,
+            id: `field-group-${connectorType}-id`,
+          }}
+          titleDescription={!viewMode ? t("form.subHeading.description") : undefined}
+          actions={
+            viewMode ? null :
+              <>
+                <Button
+                  variant="secondary"
+                  icon={<PlusIcon />}
+                  onClick={handleAddProperty}
+                >
+                  {t("form.addFieldButton")}
+                </Button>
+              </>
+          }
+        />
+      }
+    >
+      {Array.from(properties.keys()).map((key) => (
+        <Split hasGutter key={key}>
+          <SplitItem isFilled>
+            <Grid hasGutter md={6}>
+              <FormGroup
+                label=""
+                isRequired
+                fieldId={`${connectorType}-config-props-key-field-${key}`}
+              >
+                <TextInput
+                  readOnlyVariant={viewMode ? "default" : undefined}
+                  isRequired
+                  type="text"
+                  placeholder="Key"
+                  validated={errorWarning.includes(key) ? "error" : "default"}
+                  id={`${connectorType}-config-props-key-${key}`}
+                  name={`${connectorType}-config-props-key-${key}`}
+                  value={properties.get(key)?.key || ""}
+                  onChange={(_e, value) =>
+                    handlePropertyChange(key, "key", value)
+                  }
+                />
+              </FormGroup>
+              <FormGroup
+                label=""
+                isRequired
+                fieldId={`${connectorType}-config-props-value-field-${key}`}
+              >
+                <TextInput
+                  readOnlyVariant={viewMode ? "default" : undefined}
+                  isRequired
+                  type="text"
+                  id={`${connectorType}-config-props-value-${key}`}
+                  placeholder="Value"
+                  validated={errorWarning.includes(key) ? "error" : "default"}
+                  name={`${connectorType}-config-props-value-${key}`}
+                  value={properties.get(key)?.value || ""}
+                  onChange={(_e, value) =>
+                    handlePropertyChange(key, "value", value)
+                  }
+                />
+              </FormGroup>
+            </Grid>
+          </SplitItem>
+          <SplitItem>
+            <Button
+              variant="plain"
+              isDisabled={viewMode}
+              aria-label="Remove"
+              onClick={() => handleDeleteProperty(key)}
+            >
+              <TrashIcon />
+            </Button>
+          </SplitItem>
+        </Split>
+      ))}
+    </FormFieldGroup>
+  );
+
+  const onConfigChange = setProperties
+    ? (config: Record<string, unknown>) => {
+        const map = convertObjectToMap(
+          config as Record<string, string | number | boolean | undefined>
+        );
+        setProperties(map);
+      }
+    : undefined;
+
+  const renderFormContent = () => {
+    if (useSchemaForm && !isOracleSource) {
+      // Non-Oracle source: jumplinks layout (destination-style UX, no Card wrapper)
+      return (
+        <Form isWidthLimited={false}>
+          <DynamicConnectorForm
+            connectorType={getConnectorSchemaType(ConnectorId, dataType)}
+            mode="embedded"
+            layout="jumplinks"
+            showHeader
+            essentialsContent={<>{metaFields}{collectionsSection}</>}
+            additionalSections={[{
+              id: 'signal-collection',
+              name: 'Signal collection',
+              content: signalCollectionContent,
+            }]}
+            initialValues={convertMapToObject(properties) as Record<string, unknown>}
+            onConfigChange={onConfigChange}
+          />
+        </Form>
+      );
+    }
+
+    // Oracle source (tabs in Card) or destination/fallback (old key/value form in Card)
+    return (
+      <Card className="custom-card-body">
+        <CardBody isFilled>
+          <Form isWidthLimited>
+            {metaFields}
+            {collectionsSection}
+
+            {useSchemaForm && isOracleSource ? (
+              <DynamicConnectorForm
+                connectorType={getConnectorSchemaType(ConnectorId, dataType)}
+                mode="embedded"
+                layout="tabs"
+                showHeader
+                initialValues={convertMapToObject(properties) as Record<string, unknown>}
+                onConfigChange={onConfigChange}
+              />
+            ) : (
+              keyValueForm
+            )}
+
+            {connectorType === "source" && isOracleSource && signalCollectionContent}
+          </Form>
+        </CardBody>
+      </Card>
+    );
+  };
 
   return (
     <>
-      {connectorType === "source" ? (
-        <Card className="custom-card-body">
-          <CardBody isFilled>
-            {formInner}
-          </CardBody>
-        </Card>
-      ) : (
-        formInner
-      )}
+      {renderFormContent()}
       <Modal
         variant={ModalVariant.medium}
         isOpen={isModalOpen}

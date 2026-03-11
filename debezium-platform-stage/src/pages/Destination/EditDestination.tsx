@@ -461,7 +461,7 @@ const EditDestination: React.FunctionComponent = () => {
               isWidthLimited
               isCenterAligned
               isFilled
-              className={style.createConnector_pageSection}
+              className={`customPageSection ${style.createConnector_pageSection}`}
             >
               {editorSelected === "form-editor" ? (
                 <SourceSinkForm
@@ -469,7 +469,6 @@ const EditDestination: React.FunctionComponent = () => {
                   dataType={destination?.type || ""}
                   connectorType="destination"
                   properties={properties}
-                  setProperties={setProperties}
                   setValue={setValue}
                   getValue={getValue}
                   setError={setError}

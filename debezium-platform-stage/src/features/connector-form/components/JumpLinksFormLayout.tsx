@@ -9,6 +9,12 @@ import type { Control, FieldValues } from 'react-hook-form';
 import type { NormalizedSchema } from '../types';
 import { ConnectorFormGroup } from './ConnectorFormGroup';
 
+export interface AdditionalSection {
+  id: string;
+  name: string;
+  content: React.ReactNode;
+}
+
 interface JumpLinksFormLayoutProps {
   schema: NormalizedSchema;
   visibleFields: Set<string>;
@@ -16,6 +22,7 @@ interface JumpLinksFormLayoutProps {
   essentialsContent?: React.ReactNode;
   expandAllAdvanced?: boolean;
   onExpandAllAdvancedChange?: (expanded: boolean) => void;
+  additionalSections?: AdditionalSection[];
 }
 
 const PAGE_SCROLLABLE_SELECTOR = '#primary-app-container';
@@ -91,6 +98,7 @@ export function JumpLinksFormLayout({
   essentialsContent,
   expandAllAdvanced,
   onExpandAllAdvancedChange,
+  additionalSections = [],
 }: JumpLinksFormLayoutProps) {
   const visibleGroups = useMemo(
     () =>
@@ -104,8 +112,9 @@ export function JumpLinksFormLayout({
     const ids: string[] = [];
     if (essentialsContent) ids.push(ESSENTIALS_ID);
     for (const group of visibleGroups) ids.push(toAnchorId(group.name));
+    for (const section of additionalSections) ids.push(section.id);
     return ids;
-  }, [essentialsContent, visibleGroups]);
+  }, [essentialsContent, visibleGroups, additionalSections]);
 
   const { activeIndex, scrollToSection } = useScrollSpy(
     sectionIds,
@@ -118,7 +127,7 @@ export function JumpLinksFormLayout({
   let itemIndex = 0;
 
   return (
-    <div style={{ display: 'flex', gap: '2rem' }}>
+    <div style={{ display: 'flex', gap: '4rem' }}>
       <nav
         style={{
           position: 'sticky',
@@ -161,6 +170,19 @@ export function JumpLinksFormLayout({
               </JumpLinksItem>
             );
           })}
+          {additionalSections.map((section) => {
+            const idx = itemIndex++;
+            return (
+              <JumpLinksItem
+                key={section.id}
+                href={`#${section.id}`}
+                isActive={activeIndex === idx}
+                onClick={(e) => { e.preventDefault(); scrollToSection(idx); }}
+              >
+                {section.name}
+              </JumpLinksItem>
+            );
+          })}
         </JumpLinks>
       </nav>
 
@@ -191,12 +213,25 @@ export function JumpLinksFormLayout({
             />
           </section>
         ))}
+
+        {additionalSections.map((section) => (
+          <section
+            key={section.id}
+            id={section.id}
+            style={{ marginBottom: '2rem' }}
+          >
+            <Content component="h3" style={{ marginBottom: '0.5rem' }}>
+              {section.name}
+            </Content>
+            {section.content}
+          </section>
+        ))}
       </div>
 
       {onExpandAllAdvancedChange && (
         <div
           style={{
-            position: 'sticky',
+            // position: 'sticky',
             top: 20,
             alignSelf: 'flex-start',
             flexShrink: 0,
@@ -205,7 +240,7 @@ export function JumpLinksFormLayout({
         >
           <Switch
             id="expand-advanced-toggle"
-            label="Expand advanced properties"
+            label="Expand advanced options"
             isChecked={expandAllAdvanced}
             onChange={(_event, checked) => onExpandAllAdvancedChange(checked)}
           />

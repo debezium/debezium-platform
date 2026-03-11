@@ -473,17 +473,16 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
               setFormatType={setFormatType}
             />
             <PageSection
-            //  isWidthLimited={true}
+             isWidthLimited={true}
               isCenterAligned
               isFilled
-              className={style.createConnector_pageSection}
+              className={`customPageSection ${style.createConnector_pageSection}`}
             >
               {editorSelected === "form-editor" && !rawConfiguration ? (
                 <SourceSinkForm
                   ConnectorId={destinationId || ""}
                   connectorType="destination"
                   properties={properties}
-                  setProperties={setProperties}
                   setValue={setValue}
                   getValue={getValue}
                   setError={setError}

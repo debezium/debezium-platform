@@ -19,7 +19,7 @@ import { useConnectorSchema } from '../hooks/useConnectorSchema';
 import { useFieldVisibility } from '../hooks/useFieldVisibility';
 import { buildYupSchema } from '../validation/buildYupSchema';
 import { ConnectorFormGroup } from './ConnectorFormGroup';
-import { JumpLinksFormLayout } from './JumpLinksFormLayout';
+import { JumpLinksFormLayout, type AdditionalSection } from './JumpLinksFormLayout';
 import { savedConnectorConfigAtom, rawConnectorSchemaAtom } from '../store/connectorAtoms';
 import { NavigationBlocker } from './NavigationBlocker';
 
@@ -39,6 +39,8 @@ interface DynamicConnectorFormProps {
   onDirtyChange?: (dirty: boolean) => void;
   /** Whether to show the connector name/version header. Defaults to true. */
   showHeader?: boolean;
+  /** Extra sections appended after schema groups in jumplinks layout (e.g. signal collection). */
+  additionalSections?: AdditionalSection[];
 }
 
 function getDefaultValuesFromSchema(
@@ -72,6 +74,7 @@ export function DynamicConnectorForm({
   onConfigChange,
   onDirtyChange,
   showHeader = true,
+  additionalSections,
 }: DynamicConnectorFormProps) {
   const { normalizedSchema, isLoading, error, refetch } = useConnectorSchema(connectorType);
   const rawSchema = useAtomValue(rawConnectorSchemaAtom);
@@ -229,7 +232,7 @@ export function DynamicConnectorForm({
 
   const formContent = (
     <>
-      {header}
+      {/* {header} */}
       {layout === 'jumplinks' ? (
         <JumpLinksFormLayout
           schema={normalizedSchema}
@@ -238,6 +241,7 @@ export function DynamicConnectorForm({
           essentialsContent={essentialsContent}
           expandAllAdvanced={expandAllAdvanced}
           onExpandAllAdvancedChange={setExpandAllAdvanced}
+          additionalSections={additionalSections}
         />
       ) : (
         <Tabs

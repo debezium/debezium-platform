@@ -505,10 +505,10 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
             />
 
             <PageSection
-              isWidthLimited={true}
+              isWidthLimited={sourceId?.toLowerCase() === "oracle"}
               isCenterAligned
               isFilled
-              className={`customPageSection ${style.createConnector_pageSection}`}
+              className={sourceId?.toLowerCase() === "oracle" ? `customPageSection ${style.createConnector_pageSection}` : style.createConnector_pageSection}
             >
               {editorSelected === "form-editor" && !rawConfiguration ? (
                 <SourceSinkForm

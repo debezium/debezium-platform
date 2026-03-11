@@ -49,7 +49,7 @@ export function ConnectorFormGroup({
 
       {visibleAdvanced.length > 0 && (
         <ExpandableSection
-          toggleText={`Advanced properties (${visibleAdvanced.length})`}
+          toggleText={`Advanced options (${visibleAdvanced.length})`}
           isIndented
           style={{ marginTop: '1.5rem' }}
           isExpanded={isAdvancedExpanded}
