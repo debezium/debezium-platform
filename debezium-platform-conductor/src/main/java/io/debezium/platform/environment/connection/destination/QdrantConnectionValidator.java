@@ -29,8 +29,8 @@ public class QdrantConnectionValidator implements ConnectionValidator {
 
     private static final String HOST = "host";
     private static final String PORT = "port";
-    private static final String PROTOCOL = "protocol";
     private static final String API_KEY = "api.key";
+    private static final String HEALTH_ENDPOINT_FORMAT = "http://%s:%d/healthz";
 
     private final int defaultConnectionTimeout;
 
@@ -55,13 +55,8 @@ public class QdrantConnectionValidator implements ConnectionValidator {
             port = 6333;
         }
 
-        String protocol = getString(config, PROTOCOL);
-        if (isBlank(protocol)) {
-            protocol = "http";
-        }
-
         String apiKey = getString(config, API_KEY);
-        String healthEndpoint = protocol + "://" + host + ":" + port + "/healthz";
+        String healthEndpoint = HEALTH_ENDPOINT_FORMAT.formatted(host, port);
 
         try {
             URL url = new URL(healthEndpoint);
