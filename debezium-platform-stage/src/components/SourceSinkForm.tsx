@@ -460,9 +460,17 @@ const SourceSinkForm = ({
       >
         <>
           <ConnectorImage connectorType={dataType || ConnectorId || ""} size={35} />
-          <Content component="p" style={{ paddingLeft: "10px" }}>
-            {getConnectorTypeName(dataType || ConnectorId || "")}
-          </Content>
+          <div>
+            <Content component="p">
+             <>
+             {getConnectorTypeName(dataType || ConnectorId || "")} {connectorType === "source" && (
+              <Content component="small" style={{ color: "var(--pf-t--global--color--nonstatus--gray--default)" }}>
+                3.5.0-SNAPSHOT
+              </Content>
+            )}
+             </> 
+            </Content>
+          </div>
         </>
       </FormGroup>
       <FormGroup
