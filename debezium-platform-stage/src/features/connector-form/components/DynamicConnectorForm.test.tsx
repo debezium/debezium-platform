@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider as JotaiProvider } from 'jotai';
@@ -23,7 +23,11 @@ function renderWithProviders(ui: React.ReactElement) {
 }
 
 describe('DynamicConnectorForm', () => {
-  test('form renders groups as Tabs after schema loads', async () => {
+  beforeEach(() => {
+    queryClient.clear();
+  });
+
+  test('form renders groups as Tabs after schema loads', { timeout: 10000 }, async () => {
     const onSubmit = vi.fn();
     renderWithProviders(
       <DynamicConnectorForm

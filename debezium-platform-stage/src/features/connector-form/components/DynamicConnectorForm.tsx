@@ -29,17 +29,13 @@ interface DynamicConnectorFormProps {
   initialValues?: Record<string, unknown>;
   /** When embedded, hides Save/Reset and syncs config via onConfigChange */
   mode?: 'standalone' | 'embedded';
-  /** 'tabs' renders horizontal PatternFly Tabs (default); 'jumplinks' renders all groups on one scrollable page with a vertical JumpLinks sidebar. */
   layout?: 'tabs' | 'jumplinks';
-  /** Content rendered as the first "Connector essentials" section inside the JumpLinks layout. */
   essentialsContent?: React.ReactNode;
   /** Called when form values change (embedded mode). Receives only visible field values. */
   onConfigChange?: (config: Record<string, unknown>) => void;
   /** Exposes isDirty to parent for embedded mode navigation guards */
   onDirtyChange?: (dirty: boolean) => void;
-  /** Whether to show the connector name/version header. Defaults to true. */
   showHeader?: boolean;
-  /** Extra sections appended after schema groups in jumplinks layout (e.g. signal collection). */
   additionalSections?: AdditionalSection[];
 }
 
@@ -82,8 +78,6 @@ export function DynamicConnectorForm({
   const [activeTab, setActiveTab] = useState<string | number>(0);
   const [expandAllAdvanced, setExpandAllAdvanced] = useState(false);
 
-  // Stabilize initialValues so a new object reference with identical content
-  // doesn't trigger cascading re-renders in embedded mode.
   const initialValuesKey = JSON.stringify(initialValues);
   const stableInitialValues = useMemo(
     () => initialValues,
@@ -229,9 +223,11 @@ export function DynamicConnectorForm({
       )}
     </div>
   ) : null;
+  console.log(header);
 
   const formContent = (
     <>
+      {/* TODO: Will decide later if to keep or remove the header */}
       {/* {header} */}
       {layout === 'jumplinks' ? (
         <JumpLinksFormLayout
@@ -244,6 +240,10 @@ export function DynamicConnectorForm({
           additionalSections={additionalSections}
         />
       ) : (
+        <>
+        <Content component="h3">
+          Configuration properties
+        </Content>
         <Tabs
           activeKey={activeTab}
           onSelect={(_event, key) => setActiveTab(key as number)}
@@ -269,6 +269,7 @@ export function DynamicConnectorForm({
             );
           })}
         </Tabs>
+        </>
       )}
     </>
   );

@@ -93,7 +93,6 @@ interface SourceSinkFormProps {
   handleConnectionModalToggle: () => void;
   setSelectedDataListItems: (dataListItems: SelectedDataListItem | undefined) => void;
   selectedDataListItems?: SelectedDataListItem | undefined;
-  /** Updates connector config when using schema-driven form (sources) */
   setProperties?: (properties: Map<string, { key: string; value: string }>) => void;
 
 }
@@ -728,7 +727,7 @@ const SourceSinkForm = ({
 
   const renderFormContent = () => {
     if (useSchemaForm && !isOracleSource) {
-      // Non-Oracle source: jumplinks layout (destination-style UX, no Card wrapper)
+      // Non-Oracle source: jumplinks layout 
       return (
         <Form isWidthLimited={false}>
           <DynamicConnectorForm
@@ -749,7 +748,7 @@ const SourceSinkForm = ({
       );
     }
 
-    // Oracle source (tabs in Card) or destination/fallback (old key/value form in Card)
+    // Oracle source (tabs in Card) 
     return (
       <Card className="custom-card-body">
         <CardBody isFilled>

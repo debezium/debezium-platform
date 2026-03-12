@@ -231,7 +231,9 @@ export function JumpLinksFormLayout({
             <Content component="h3" style={{ paddingBottom: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid var(--pf-t--global--border--color--default)' }}>
               Connector essentials
             </Content>
-            {essentialsContent}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {essentialsContent}
+            </div>
           </section>
         )}
 

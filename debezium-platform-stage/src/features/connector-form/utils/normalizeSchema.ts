@@ -62,7 +62,7 @@ function normalizeField(prop: RawProperty): NormalizedField {
  * Run once when API response arrives. Memoize at call site.
  */
 export function normalizeSchema(raw: RawConnectorSchema): NormalizedSchema {
-  // Step 1: Build visibility map
+  // Build visibility map
   const visibilityMap: Record<string, VisibilityRule[]> = {};
   for (const prop of raw.properties) {
     if (!prop.valueDependants) continue;
@@ -77,7 +77,7 @@ export function normalizeSchema(raw: RawConnectorSchema): NormalizedSchema {
     }
   }
 
-  // Step 2: Collect trigger fields
+  // Collect trigger fields
   const triggerFields = [
     ...new Set(
       Object.values(visibilityMap).flatMap((rules) =>
@@ -86,10 +86,10 @@ export function normalizeSchema(raw: RawConnectorSchema): NormalizedSchema {
     ),
   ];
 
-  // Step 3: Normalize all fields
+  // Normalize all fields
   const allNormalizedFields = raw.properties.map(normalizeField);
 
-  // Step 4: Group and sort
+  // Group and sort
   const sortedGroups = [...raw.groups].sort((a, b) => a.order - b.order);
   const declaredGroupNames = new Set(raw.groups.map((g) => g.name));
 
@@ -102,7 +102,7 @@ export function normalizeSchema(raw: RawConnectorSchema): NormalizedSchema {
       .sort((a, b) => a.groupOrder - b.groupOrder),
   }));
 
-  // Step 5: Handle orphan fields (group not in groups[])
+  // Handle orphan fields (group not in groups[])
   const orphanFields = allNormalizedFields.filter(
     (f) => !declaredGroupNames.has(f.group)
   );

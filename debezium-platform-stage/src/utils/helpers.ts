@@ -23,7 +23,6 @@ export const convertMapToObject = (
 
 /**
  * Returns connector type id for schema lookup (oracle, postgresql, etc).
- * POC: Oracle schema is used for all; when backend has per-connector schemas, this selects the right one.
  */
 export const getConnectorSchemaType = (
   connectorId: string,

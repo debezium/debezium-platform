@@ -10,7 +10,7 @@ interface UseFieldVisibilityOptions {
 /**
  * Returns a Set of currently visible field names based on trigger field values.
  * Only watches schema.triggerFields — not all form fields (performance).
- * Comparison is case-insensitive (API 'LogMiner' vs form 'logminer').
+ * Comparison is case-insensitive 
  */
 export function useFieldVisibility({
   schema,
