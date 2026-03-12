@@ -298,13 +298,9 @@
           "type": "string",
           "title": "GCP Project ID (e.g. my-gcp-project)"
         },
-        "credentials.file.path": {
-          "type": "string",
-          "title": "Absolute path to a GCP service account JSON key file (optional, mutually exclusive with credentials.json)"
-        },
         "credentials.json": {
           "type": "string",
-          "title": "Inline GCP service account JSON key content (optional, mutually exclusive with credentials.file.path)"
+          "title": "Inline GCP service account JSON key content (optional)"
         },
         "endpoint": {
           "type": "string",

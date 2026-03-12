@@ -88,21 +88,6 @@ class PubSubConnectionValidatorIT {
     }
 
     @Test
-    @DisplayName("Should fail validation when both credential modes are provided")
-    void shouldFailValidationWithBothCredentialModes() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("project.id", "test-project");
-        config.put("credentials.file.path", "/path/to/key.json");
-        config.put("credentials.json", "{\"type\": \"service_account\"}");
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.GOOGLE_PUB_SUB, config);
-
-        ConnectionValidationResult result = validator.validate(connection);
-
-        assertFalse(result.valid(), "Connection validation should fail");
-        assertEquals("Specify either credentials.file.path or credentials.json, not both", result.message());
-    }
-
-    @Test
     @DisplayName("Should fail connection to unreachable endpoint")
     void shouldFailConnectionToUnreachableEndpoint() {
         Map<String, Object> config = new HashMap<>();

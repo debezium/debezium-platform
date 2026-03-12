@@ -6,7 +6,6 @@
 package io.debezium.platform.environment.connection.destination;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -44,7 +43,6 @@ public class PubSubConnectionValidator implements ConnectionValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(PubSubConnectionValidator.class);
 
     public static final String PROJECT_ID_KEY = "project.id";
-    public static final String CREDENTIALS_FILE_KEY = "credentials.file.path";
     public static final String CREDENTIALS_JSON_KEY = "credentials.json";
     public static final String ENDPOINT_KEY = "endpoint";
 
@@ -91,18 +89,6 @@ public class PubSubConnectionValidator implements ConnectionValidator {
         Object projectId = config.get(PROJECT_ID_KEY);
         if (projectId == null || Strings.isNullOrBlank(projectId.toString())) {
             return ConnectionValidationResult.failed("GCP project.id must be specified");
-        }
-
-        boolean hasFilePath = config.containsKey(CREDENTIALS_FILE_KEY)
-                && config.get(CREDENTIALS_FILE_KEY) != null
-                && !Strings.isNullOrBlank(config.get(CREDENTIALS_FILE_KEY).toString());
-        boolean hasJsonKey = config.containsKey(CREDENTIALS_JSON_KEY)
-                && config.get(CREDENTIALS_JSON_KEY) != null
-                && !Strings.isNullOrBlank(config.get(CREDENTIALS_JSON_KEY).toString());
-
-        if (hasFilePath && hasJsonKey) {
-            return ConnectionValidationResult.failed(
-                    "Specify either credentials.file.path or credentials.json, not both");
         }
 
         return ConnectionValidationResult.successful();
@@ -177,18 +163,9 @@ public class PubSubConnectionValidator implements ConnectionValidator {
             builder.setCredentialsProvider(NoCredentialsProvider.create());
         }
         else {
-            Object credentialsFilePath = config.get(CREDENTIALS_FILE_KEY);
             Object credentialsJson = config.get(CREDENTIALS_JSON_KEY);
 
-            if (credentialsFilePath != null && !Strings.isNullOrBlank(credentialsFilePath.toString())) {
-                LOGGER.debug("Loading Pub/Sub credentials from file: {}", credentialsFilePath);
-                try (InputStream stream = new FileInputStream(credentialsFilePath.toString().trim())) {
-                    GoogleCredentials credentials = GoogleCredentials.fromStream(stream)
-                            .createScoped(pubsubScope);
-                    builder.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
-                }
-            }
-            else if (credentialsJson != null && !Strings.isNullOrBlank(credentialsJson.toString())) {
+            if (credentialsJson != null && !Strings.isNullOrBlank(credentialsJson.toString())) {
                 LOGGER.debug("Loading Pub/Sub credentials from inline JSON key");
                 byte[] credentialBytes = credentialsJson.toString().getBytes(StandardCharsets.UTF_8);
                 try (InputStream stream = new ByteArrayInputStream(credentialBytes)) {

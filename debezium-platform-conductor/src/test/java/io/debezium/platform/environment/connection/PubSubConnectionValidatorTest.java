@@ -96,44 +96,8 @@ class PubSubConnectionValidatorTest {
         assertEquals("GCP project.id must be specified", result.message());
     }
 
-    // Mutually-exclusive credential modes
-
-    @Test
-    @DisplayName("Should fail validation when both credentials.file.path and credentials.json are provided")
-    void shouldFailValidationWhenBothCredentialModesAreProvided() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("project.id", "my-project");
-        config.put("credentials.file.path", "/path/to/key.json");
-        config.put("credentials.json", "{\"type\": \"service_account\"}");
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.GOOGLE_PUB_SUB, config);
-
-        ConnectionValidationResult result = validator.validate(connection);
-
-        assertFalse(result.valid());
-        assertEquals("Specify either credentials.file.path or credentials.json, not both", result.message());
-    }
-
     // Config-valid scenarios that fail at the connection stage
     // (fast failures — no network TTL wait required)
-
-    @Test
-    @DisplayName("Should pass config validation but fail when credentials file path does not exist")
-    void shouldFailWithNonExistentCredentialsFilePath() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("project.id", "my-project");
-        config.put("credentials.file.path", "/non/existent/path/key.json");
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.GOOGLE_PUB_SUB, config);
-
-        ConnectionValidationResult result = validator.validate(connection);
-
-        assertFalse(result.valid());
-        // Config validation passed; the failure must be an IO/credential load error
-        Assertions.assertThat(result.message())
-                .containsAnyOf("Failed to load credentials", "Unexpected error");
-        Assertions.assertThat(result.message())
-                .doesNotContain("project.id must be specified")
-                .doesNotContain("Specify either");
-    }
 
     @Test
     @DisplayName("Should pass config validation but fail when inline credentials.json is malformed")
@@ -175,23 +139,7 @@ class PubSubConnectionValidatorTest {
     }
 
     @Test
-    @DisplayName("Should accept credentials.file.path alone (no credentials.json)")
-    void shouldAcceptCredentialsFilePathAlone() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("project.id", "my-project");
-        config.put("credentials.file.path", "/path/to/key.json"); // Does not exist — fails at IO level
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.GOOGLE_PUB_SUB, config);
-
-        ConnectionValidationResult result = validator.validate(connection);
-
-        // Must NOT fail with a config-validation error
-        Assertions.assertThat(result.message())
-                .doesNotContain("project.id must be specified")
-                .doesNotContain("Specify either");
-    }
-
-    @Test
-    @DisplayName("Should accept credentials.json alone (no credentials.file.path)")
+    @DisplayName("Should accept credentials.json alone")
     void shouldAcceptCredentialsJsonAlone() {
         Map<String, Object> config = new HashMap<>();
         config.put("project.id", "my-project");
@@ -223,50 +171,12 @@ class PubSubConnectionValidatorTest {
                 .doesNotContain("Specify either");
     }
 
-    // Empty optional credential values are treated as absent
-
-    @Test
-    @DisplayName("Should treat empty credentials.file.path as not provided (no mutual-exclusion error)")
-    void shouldTreatEmptyCredentialsFilePathAsAbsent() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("project.id", "my-project");
-        config.put("credentials.file.path", "");
-        config.put("credentials.json", "{\"type\": \"service_account\"}"); // Should not trigger mutual-exclusion
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.GOOGLE_PUB_SUB, config);
-
-        ConnectionValidationResult result = validator.validate(connection);
-
-        Assertions.assertThat(result.message())
-                .doesNotContain("Specify either");
-    }
-
-    @Test
-    @DisplayName("Should treat empty credentials.json as not provided (no mutual-exclusion error)")
-    void shouldTreatEmptyCredentialsJsonAsAbsent() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("project.id", "my-project");
-        config.put("credentials.file.path", "/path/to/key.json");
-        config.put("credentials.json", ""); // Should not trigger mutual-exclusion
-        Connection connection = new TestConnectionView(ConnectionEntity.Type.GOOGLE_PUB_SUB, config);
-
-        ConnectionValidationResult result = validator.validate(connection);
-
-        Assertions.assertThat(result.message())
-                .doesNotContain("Specify either");
-    }
-
     // Named constant alignment check
 
     @Test
     @DisplayName("Constant PROJECT_ID_KEY must equal 'project.id'")
     void constantProjectIdKeyValue() {
         assertEquals("project.id", PubSubConnectionValidator.PROJECT_ID_KEY);
-    }
-
-    @Test
-    @DisplayName("Constant CREDENTIALS_FILE_KEY must equal 'credentials.file.path'")
-    void constantCredentialsFileKeyValue() {
-        assertEquals("credentials.file.path", PubSubConnectionValidator.CREDENTIALS_FILE_KEY);
     }
 
     @Test
