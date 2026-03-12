@@ -105,7 +105,6 @@ public class RedisConnectionValidator implements ConnectionValidator {
         return ConfigurationValidationResult.successful(host, port, username, password);
     }
 
-
     private String getStringConfig(Map<String, Object> config, String key) {
         Object value = config.get(key);
         return value != null ? value.toString() : null;

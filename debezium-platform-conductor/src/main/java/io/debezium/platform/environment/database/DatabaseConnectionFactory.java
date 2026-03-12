@@ -31,7 +31,6 @@ public class DatabaseConnectionFactory {
 
     public static final String DATABASE_CONNECTION_CONFIGURATION_PREFIX = "database.";
     public static final String DRIVER_CONNECTION_CONFIGURATION_PREFIX = "driver.";
-    public static final String SSL_MODE = "ssl.mode";
 
     public DatabaseConnectionFactory() {
     }
@@ -39,58 +38,23 @@ public class DatabaseConnectionFactory {
     public JdbcConnection create(DatabaseConnectionConfiguration databaseConnectionConfiguration) {
 
         JdbcConfiguration.Builder jdbcConfigurationBuilder = JdbcConfiguration.create()
-                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_NAME_CONFIG,
-                        databaseConnectionConfiguration.database())
-                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.HOSTNAME,
-                        databaseConnectionConfiguration.hostname())
-                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.PORT,
-                        databaseConnectionConfiguration.port())
-                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_USERNAME_CONFIG,
-                        databaseConnectionConfiguration.username())
-                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.PASSWORD,
-                        databaseConnectionConfiguration.password());
+                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_NAME_CONFIG, databaseConnectionConfiguration.database())
+                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.HOSTNAME, databaseConnectionConfiguration.hostname())
+                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.PORT, databaseConnectionConfiguration.port())
+                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_USERNAME_CONFIG, databaseConnectionConfiguration.username())
+                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.PASSWORD, databaseConnectionConfiguration.password());
 
-        if (databaseConnectionConfiguration.databaseType() == DatabaseType.SQLSERVER) {
-            String sslMode = (String) databaseConnectionConfiguration.additionalConfigs().remove(SSL_MODE);
-            if (sslMode != null) {
-                switch (sslMode) {
-                    case "disabled" -> {
-                        jdbcConfigurationBuilder.with(DRIVER_CONNECTION_CONFIGURATION_PREFIX + "encrypt", "false");
-                        jdbcConfigurationBuilder.with(DRIVER_CONNECTION_CONFIGURATION_PREFIX + "trustServerCertificate",
-                                "false");
-                    }
-                    case "required" -> {
-                        jdbcConfigurationBuilder.with(DRIVER_CONNECTION_CONFIGURATION_PREFIX + "encrypt", "true");
-                        jdbcConfigurationBuilder.with(DRIVER_CONNECTION_CONFIGURATION_PREFIX + "trustServerCertificate",
-                                "true");
-                    }
-                    case "verify-ca" -> {
-                        jdbcConfigurationBuilder.with(DRIVER_CONNECTION_CONFIGURATION_PREFIX + "encrypt", "true");
-                        jdbcConfigurationBuilder.with(DRIVER_CONNECTION_CONFIGURATION_PREFIX + "trustServerCertificate",
-                                "false");
-                    }
-                    default -> throw new IllegalArgumentException("Unknown ssl.mode value for SQL Server: " + sslMode);
-                }
-            }
-        }
-
-        databaseConnectionConfiguration.additionalConfigs()
-                .forEach((k, v) -> jdbcConfigurationBuilder.with(DRIVER_CONNECTION_CONFIGURATION_PREFIX + k, v));
+        databaseConnectionConfiguration.additionalConfigs().forEach((k, v) -> jdbcConfigurationBuilder.with(DRIVER_CONNECTION_CONFIGURATION_PREFIX + k, v));
 
         return switch (databaseConnectionConfiguration.databaseType()) {
-            // Re-using connection from Debezium since there is some performances
-            // improvements
+            // Re-using connection from Debezium since there is some performances improvements
             // in how the tables are retrieved by different databases
-            case ORACLE ->
-                new OracleConnection(new OracleConnectorConfig(jdbcConfigurationBuilder.build()).getJdbcConfig(), true);
+            case ORACLE -> new OracleConnection(new OracleConnectorConfig(jdbcConfigurationBuilder.build()).getJdbcConfig(), true);
             case MYSQL -> new MySqlConnection(new MySqlConnectionConfiguration(jdbcConfigurationBuilder.build()), null);
-            case MARIADB ->
-                new MariaDbConnection(new MariaDbConnectionConfiguration(jdbcConfigurationBuilder.build()), null);
+            case MARIADB -> new MariaDbConnection(new MariaDbConnectionConfiguration(jdbcConfigurationBuilder.build()), null);
             case SQLSERVER ->
-                new SqlServerConnection(new SqlServerConnectorConfig(jdbcConfigurationBuilder.build()), null,
-                        EnumSet.noneOf(Envelope.Operation.class), true);
-            case POSTGRESQL -> new PostgresConnection(new PostgresConnectorConfig(jdbcConfigurationBuilder.build()),
-                    null, "Debezium-Platform");
+                new SqlServerConnection(new SqlServerConnectorConfig(jdbcConfigurationBuilder.build()), null, EnumSet.noneOf(Envelope.Operation.class), true);
+            case POSTGRESQL -> new PostgresConnection(new PostgresConnectorConfig(jdbcConfigurationBuilder.build()), null, "Debezium-Platform");
 
         };
     }
