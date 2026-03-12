@@ -48,13 +48,16 @@ public class PubSubConnectionValidator implements ConnectionValidator {
     public static final String CREDENTIALS_JSON_KEY = "credentials.json";
     public static final String ENDPOINT_KEY = "endpoint";
 
-    private static final String PUBSUB_SCOPE = "https://www.googleapis.com/auth/pubsub";
+    public static final String DEFAULT_PUBSUB_SCOPE = "https://www.googleapis.com/auth/pubsub";
 
     private final int defaultTimeout;
+    private final String pubsubScope;
 
     public PubSubConnectionValidator(
-                                     @ConfigProperty(name = "destinations.pubsub.connection.timeout") int defaultTimeout) {
+                                     @ConfigProperty(name = "destinations.pubsub.connection.timeout") int defaultTimeout,
+                                     @ConfigProperty(name = "destinations.pubsub.connection.scope", defaultValue = DEFAULT_PUBSUB_SCOPE) String pubsubScope) {
         this.defaultTimeout = defaultTimeout;
+        this.pubsubScope = pubsubScope;
     }
 
     @Override
@@ -181,7 +184,7 @@ public class PubSubConnectionValidator implements ConnectionValidator {
                 LOGGER.debug("Loading Pub/Sub credentials from file: {}", credentialsFilePath);
                 try (InputStream stream = new FileInputStream(credentialsFilePath.toString().trim())) {
                     GoogleCredentials credentials = GoogleCredentials.fromStream(stream)
-                            .createScoped(PUBSUB_SCOPE);
+                            .createScoped(pubsubScope);
                     builder.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
                 }
             }
@@ -190,7 +193,7 @@ public class PubSubConnectionValidator implements ConnectionValidator {
                 byte[] credentialBytes = credentialsJson.toString().getBytes(StandardCharsets.UTF_8);
                 try (InputStream stream = new ByteArrayInputStream(credentialBytes)) {
                     GoogleCredentials credentials = GoogleCredentials.fromStream(stream)
-                            .createScoped(PUBSUB_SCOPE);
+                            .createScoped(pubsubScope);
                     builder.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
                 }
             }

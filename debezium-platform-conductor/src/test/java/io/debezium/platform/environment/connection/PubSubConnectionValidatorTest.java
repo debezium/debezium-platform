@@ -29,7 +29,7 @@ class PubSubConnectionValidatorTest {
 
     @BeforeEach
     void setUp() {
-        validator = new PubSubConnectionValidator(DEFAULT_TIMEOUT_SECONDS);
+        validator = new PubSubConnectionValidator(DEFAULT_TIMEOUT_SECONDS, PubSubConnectionValidator.DEFAULT_PUBSUB_SCOPE);
     }
 
     // Null / missing connection

@@ -72,9 +72,10 @@ destinations:
   pubsub:
     connection:
       timeout: 60
+      scope: https://www.googleapis.com/auth/pubsub
   qdrant:
     connection:
-      timeout: 60
+timeout: 60
 quarkus:
   hibernate-orm:
     mapping:
