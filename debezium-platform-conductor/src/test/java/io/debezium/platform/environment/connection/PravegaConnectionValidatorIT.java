@@ -34,8 +34,6 @@ public class PravegaConnectionValidatorIT {
 
     @BeforeEach
     void setUp() {
-        GenericContainer<?> container = PravegaTestResource.getContainer();
-        String controllerUri = "tcp://" + container.getHost() + ":" + container.getMappedPort(9090);
         validator = new PravegaConnectionValidator(DEFAULT_TIMEOUT_SECONDS);
     }
 
