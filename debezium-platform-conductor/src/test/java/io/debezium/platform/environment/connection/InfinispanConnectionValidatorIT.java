@@ -146,6 +146,32 @@ public class InfinispanConnectionValidatorIT {
     }
 
     @Test
+    @DisplayName("Should fail validation when connection config map is null")
+    void shouldFailValidationWithNullConfigMap() {
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.INFINISPAN, null);
+
+        ConnectionValidationResult result = validator.validate(connection);
+
+        assertFalse(result.valid(), "Connection validation should fail");
+        assertEquals("Connection configuration map cannot be null", result.message());
+    }
+
+    @Test
+    @DisplayName("Should fail validation when server port is not a valid integer")
+    void shouldFailValidationWithInvalidPort() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("server.host", "localhost");
+        config.put("server.port", "abc");
+        config.put("cache", "testCache");
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.INFINISPAN, config);
+
+        ConnectionValidationResult result = validator.validate(connection);
+
+        assertFalse(result.valid(), "Connection validation should fail");
+        assertTrue(result.message().contains("Invalid server port value"));
+    }
+
+    @Test
     @DisplayName("Should fail validation with unreachable server")
     void shouldFailValidationWithUnreachableServer() {
         Map<String, Object> config = new HashMap<>();

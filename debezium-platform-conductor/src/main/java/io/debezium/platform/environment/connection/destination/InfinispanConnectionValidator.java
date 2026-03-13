@@ -51,6 +51,9 @@ public class InfinispanConnectionValidator implements ConnectionValidator {
     private static final String USER_KEY = "user";
     private static final String PASSWORD_KEY = "password";
 
+    private static final String HOTROD_URI_WITH_AUTH = "hotrod://%s:%s@%s:%d";
+    private static final String HOTROD_URI_NO_AUTH = "hotrod://%s:%d";
+
     private final int defaultConnectionTimeoutSeconds;
 
     public InfinispanConnectionValidator(
@@ -69,6 +72,10 @@ public class InfinispanConnectionValidator implements ConnectionValidator {
 
             Map<String, Object> infinispanConfig = connectionConfig.getConfig();
 
+            if (infinispanConfig == null) {
+                return ConnectionValidationResult.failed("Connection configuration map cannot be null");
+            }
+
             if (!infinispanConfig.containsKey(SERVER_HOST_KEY) ||
                     infinispanConfig.get(SERVER_HOST_KEY) == null ||
                     infinispanConfig.get(SERVER_HOST_KEY).toString().isEmpty()) {
@@ -85,19 +92,20 @@ public class InfinispanConnectionValidator implements ConnectionValidator {
 
             String cacheName = infinispanConfig.get(CACHE_KEY).toString();
 
-            int serverPort = infinispanConfig.containsKey(SERVER_PORT_KEY) && infinispanConfig.get(SERVER_PORT_KEY) != null
-                    ? Integer.parseInt(infinispanConfig.get(SERVER_PORT_KEY).toString())
-                    : ConfigurationProperties.DEFAULT_HOTROD_PORT;
+            int serverPort = parsePort(infinispanConfig.get(SERVER_PORT_KEY));
 
-            String user = infinispanConfig.containsKey(USER_KEY) && infinispanConfig.get(USER_KEY) != null
+            String user = infinispanConfig.get(USER_KEY) != null
                     ? infinispanConfig.get(USER_KEY).toString()
                     : null;
 
-            String password = infinispanConfig.containsKey(PASSWORD_KEY) && infinispanConfig.get(PASSWORD_KEY) != null
+            String password = infinispanConfig.get(PASSWORD_KEY) != null
                     ? infinispanConfig.get(PASSWORD_KEY).toString()
                     : null;
 
             return performConnectionValidation(serverHost, serverPort, cacheName, user, password);
+        }
+        catch (IllegalArgumentException e) {
+            return ConnectionValidationResult.failed(e.getMessage());
         }
         catch (Exception e) {
             LOGGER.error("Unexpected error during Infinispan connection validation", e);
@@ -117,27 +125,24 @@ public class InfinispanConnectionValidator implements ConnectionValidator {
      * @return ConnectionValidationResult indicating success or failure
      */
     private ConnectionValidationResult performConnectionValidation(String serverHost, int serverPort, String cacheName, String user, String password) {
-        RemoteCacheManager remoteCacheManager = null;
 
-        try {
-            LOGGER.debug("Creating Infinispan RemoteCacheManager for validation");
+        LOGGER.debug("Creating Infinispan RemoteCacheManager for validation");
 
-            String serverUri;
-            if (user != null && password != null) {
-                serverUri = String.format("hotrod://%s:%s@%s:%d", user, password, serverHost, serverPort);
-            }
-            else {
-                serverUri = String.format("hotrod://%s:%d", serverHost, serverPort);
-            }
+        String serverUri;
+        if (user != null && password != null) {
+            serverUri = HOTROD_URI_WITH_AUTH.formatted(user, password, serverHost, serverPort);
+        }
+        else {
+            serverUri = HOTROD_URI_NO_AUTH.formatted(serverHost, serverPort);
+        }
 
-            ConfigurationBuilder clientConfig = new ConfigurationBuilder();
-            clientConfig.uri(serverUri);
-            clientConfig.connectionTimeout(defaultConnectionTimeoutSeconds * 1000);
-            clientConfig.socketTimeout(defaultConnectionTimeoutSeconds * 1000);
+        ConfigurationBuilder clientConfig = new ConfigurationBuilder();
+        clientConfig.uri(serverUri);
+        clientConfig.connectionTimeout(defaultConnectionTimeoutSeconds * 1000);
+        clientConfig.socketTimeout(defaultConnectionTimeoutSeconds * 1000);
 
-            remoteCacheManager = new RemoteCacheManager(clientConfig.build());
+        try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientConfig.build())) {
             remoteCacheManager.getCache(cacheName);
-
             LOGGER.debug("Successfully connected to Infinispan server at {}:{}", serverHost, serverPort);
             return ConnectionValidationResult.successful();
         }
@@ -145,16 +150,25 @@ public class InfinispanConnectionValidator implements ConnectionValidator {
             LOGGER.warn("Failed to connect to Infinispan server at {}:{}", serverHost, serverPort, e);
             return ConnectionValidationResult.failed("Failed to connect to Infinispan server: " + e.getMessage());
         }
-        finally {
-            if (remoteCacheManager != null) {
-                try {
-                    LOGGER.debug("Closing Infinispan RemoteCacheManager");
-                    remoteCacheManager.close();
-                }
-                catch (Exception e) {
-                    LOGGER.warn("Error closing Infinispan RemoteCacheManager", e);
-                }
-            }
+    }
+
+    /**
+     * Parses the server port from the configuration value.
+     *
+     * @param portValue the port value from configuration, may be null
+     * @return the parsed port number, or the default HotRod port if not specified
+     * @throws IllegalArgumentException if the port value cannot be parsed as an integer
+     */
+    private int parsePort(Object portValue) {
+        if (portValue == null) {
+            return ConfigurationProperties.DEFAULT_HOTROD_PORT;
+        }
+        try {
+            return Integer.parseInt(portValue.toString());
+        }
+        catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "Invalid server port value: " + portValue + ". Port must be a valid integer.");
         }
     }
 }
