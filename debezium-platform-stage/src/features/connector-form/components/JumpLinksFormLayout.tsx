@@ -65,8 +65,11 @@ function useScrollSpy(sectionIds: string[], scrollableSelector: string, offset: 
     if (!(scrollable instanceof HTMLElement)) return;
 
     scrollable.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => scrollable.removeEventListener('scroll', handleScroll);
+    const rafId = requestAnimationFrame(handleScroll);
+    return () => {
+      cancelAnimationFrame(rafId);
+      scrollable.removeEventListener('scroll', handleScroll);
+    };
   }, [scrollableSelector, handleScroll]);
 
   const scrollToSection = useCallback((index: number) => {

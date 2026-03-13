@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Grid, ExpandableSection } from '@patternfly/react-core';
 import type { Control, FieldValues } from 'react-hook-form';
 import type { NormalizedGroup } from '../types';
@@ -17,13 +17,8 @@ export function ConnectorFormGroup({
   visibleFields,
   expandAllAdvanced,
 }: ConnectorFormGroupProps) {
-  const [isAdvancedExpanded, setIsAdvancedExpanded] = useState(false);
-
-  useEffect(() => {
-    if (expandAllAdvanced !== undefined) {
-      setIsAdvancedExpanded(expandAllAdvanced);
-    }
-  }, [expandAllAdvanced]);
+  const [localExpanded, setLocalExpanded] = useState(false);
+  const isAdvancedExpanded = expandAllAdvanced ?? localExpanded;
 
   const primaryFields = group.fields.filter(
     (f) => f.groupOrder < 9999 && f.importance !== 'low'
@@ -53,7 +48,7 @@ export function ConnectorFormGroup({
           isIndented
           style={{ marginTop: '1.5rem' }}
           isExpanded={isAdvancedExpanded}
-          onToggle={(_event, expanded) => setIsAdvancedExpanded(expanded)}
+          onToggle={(_event, expanded) => setLocalExpanded(expanded)}
         >
           <div style={{ minWidth: 0, overflow: 'hidden' }}>
             <Grid hasGutter>

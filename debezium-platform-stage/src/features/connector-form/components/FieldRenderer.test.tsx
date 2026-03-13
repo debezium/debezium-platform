@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { FieldRenderer } from './FieldRenderer';
@@ -232,16 +232,12 @@ describe('FieldRenderer', () => {
       importance: 'low',
       required: false,
     };
-    const submitData: { port?: number } = {};
+    const onSubmit = vi.fn();
     const TestFormWithSubmit = () => {
       const methods = useForm<{ port?: number }>({ defaultValues: { port: undefined } });
       return (
         <FormProvider {...methods}>
-          <form
-            onSubmit={methods.handleSubmit((data) => {
-              submitData.port = data.port;
-            })}
-          >
+          <form onSubmit={methods.handleSubmit(onSubmit)}>
             <FieldRenderer field={field} control={methods.control as never} />
             <button type="submit">Submit</button>
           </form>
@@ -256,7 +252,11 @@ describe('FieldRenderer', () => {
     await act(async () => {
       fireEvent.click(screen.getByText('Submit'));
     });
-    expect(submitData.port).toBe(8080);
-    expect(typeof submitData.port).toBe('number');
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalled();
+    });
+    const submitted = onSubmit.mock.calls[0][0];
+    expect(submitted.port).toBe(8080);
+    expect(typeof submitted.port).toBe('number');
   });
 });

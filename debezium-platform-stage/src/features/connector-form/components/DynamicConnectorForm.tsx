@@ -154,7 +154,10 @@ export function DynamicConnectorForm({
   const watchedValues = useWatch({ control });
   const prevConfigRef = useRef<string>('');
   const onConfigChangeRef = useRef(onConfigChange);
-  onConfigChangeRef.current = onConfigChange;
+
+  useEffect(() => {
+    onConfigChangeRef.current = onConfigChange;
+  }, [onConfigChange]);
 
   useEffect(() => {
     if (mode !== 'embedded' || !onConfigChangeRef.current || !watchedValues || typeof watchedValues !== 'object') return;
