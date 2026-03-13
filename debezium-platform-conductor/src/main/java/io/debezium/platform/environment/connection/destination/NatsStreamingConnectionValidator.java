@@ -5,6 +5,7 @@
  */
 package io.debezium.platform.environment.connection.destination;
 
+import java.time.Duration;
 import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -16,10 +17,9 @@ import org.slf4j.LoggerFactory;
 
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
-import io.debezium.platform.environment.connection.ConnectionConfigUtils;
 import io.debezium.platform.environment.connection.ConnectionValidator;
 import io.debezium.util.Strings;
-import io.nats.client.NATS;
+import io.nats.client.Nats;
 import io.nats.client.Options;
 
 /**
@@ -31,8 +31,7 @@ public class NatsStreamingConnectionValidator implements ConnectionValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NatsStreamingConnectionValidator.class);
 
-    private static final String HOST = "host";
-    private static final String PORT = "port";
+    private static final String URL = "url";
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
     private static final String CLUSTER_ID = "cluster.id";
@@ -40,7 +39,8 @@ public class NatsStreamingConnectionValidator implements ConnectionValidator {
 
     private final int defaultConnectionTimeoutSeconds;
 
-    public NatsStreamingConnectionValidator(@ConfigProperty(name = "destinations.nats.connection.timeout", defaultValue = "60") int defaultConnectionTimeoutSeconds) {
+    public NatsStreamingConnectionValidator(
+                                            @ConfigProperty(name = "destinations.nats.connection.timeout", defaultValue = "60") int defaultConnectionTimeoutSeconds) {
         this.defaultConnectionTimeoutSeconds = defaultConnectionTimeoutSeconds;
     }
 
@@ -51,30 +51,36 @@ public class NatsStreamingConnectionValidator implements ConnectionValidator {
         }
 
         Map<String, Object> config = connectionConfig.getConfig();
-        String host = ConnectionConfigUtils.getString(config, HOST);
-        Integer port = ConnectionConfigUtils.getInteger(config, PORT);
-        String username = ConnectionConfigUtils.getString(config, USERNAME);
-        String password = ConnectionConfigUtils.getString(config, PASSWORD);
-        String clusterId = ConnectionConfigUtils.getString(config, CLUSTER_ID);
-        String clientId = ConnectionConfigUtils.getString(config, CLIENT_ID);
+        String url = (String) config.get(URL);
+        String username = (String) config.get(USERNAME);
+        String password = (String) config.get(PASSWORD);
+        String clusterId = (String) config.get(CLUSTER_ID);
+        String clientId = (String) config.get(CLIENT_ID);
 
-        if (Strings.isNullOrBlank(host) || port == null || port <= 0) {
-            return ConnectionValidationResult.failed("Host and port must be specified");
+        if (Strings.isNullOrBlank(url)) {
+            return ConnectionValidationResult.failed("URL must be specified");
         }
-        if (Strings.isNullOrBlank(clusterId) || Strings.isNullOrBlank(clientId)) {
-            return ConnectionValidationResult.failed("Cluster ID and Client ID must be specified");
+        if (Strings.isNullOrBlank(clusterId)) {
+            return ConnectionValidationResult.failed("Cluster ID must be specified");
+        }
+        if (Strings.isNullOrBlank(clientId)) {
+            return ConnectionValidationResult.failed("Client ID must be specified");
         }
 
-        String url = String.format("nats://%s:%d", host, port);
-        Options.Builder builder = new Options.Builder().server(url).connectionTimeout(defaultConnectionTimeoutSeconds * 1000);
+        Options.Builder natsOptionsBuilder = new Options.Builder()
+                .server(url)
+                .connectionTimeout(Duration.ofSeconds(defaultConnectionTimeoutSeconds))
+                .noReconnect();
         if (!Strings.isNullOrBlank(username)) {
-            builder.userInfo(username, password != null ? password : "");
+            natsOptionsBuilder.userInfo(username, password != null ? password : "");
         }
 
-        try (io.nats.client.Connection natsConnection = NATS.connect(builder.build())) {
+        try (io.nats.client.Connection nc = Nats.connect(natsOptionsBuilder.build())) {
+            LOGGER.debug("Successfully validated NATS connection at {}", url);
             return ConnectionValidationResult.successful();
-        } catch (Exception e) {
-            LOGGER.warn("Unable to connect to NATS Streaming at {}:{}", host, port, e);
+        }
+        catch (Exception e) {
+            LOGGER.warn("Unable to connect to NATS Streaming at {}", url, e);
             return ConnectionValidationResult.failed("Failed to connect to NATS Streaming: " + e.getMessage());
         }
     }
