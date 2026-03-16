@@ -285,7 +285,7 @@
     "type": "GOOGLE_PUB_SUB",
     "schema": {
       "title": "Google Cloud Pub/Sub connection properties",
-      "description": "Properties required to connect to Google Cloud Pub/Sub. Credentials can be supplied via a service account JSON key file, inline JSON key content, or omitted entirely to rely on Application Default Credentials (ADC).",
+      "description": "Properties required to connect to Google Cloud Pub/Sub. Credentials can be supplied via inline JSON key content or omitted entirely to rely on Application Default Credentials (ADC).",
       "type": "object",
       "required": [
         "project.id"
