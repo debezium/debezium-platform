@@ -1,11 +1,11 @@
-import { Button, Toolbar, ToolbarContent, ToolbarItem, TreeView, TreeViewDataItem, TreeViewSearch } from "@patternfly/react-core";
-import { DatabaseIcon, ServerGroupIcon } from "@patternfly/react-icons";
-import { FC, useState, useEffect, useRef } from "react";
-import { Fragment } from "react/jsx-runtime";
+import { Button, Toolbar, ToolbarContent, ToolbarItem, TreeViewDataItem, TreeViewSearch } from "@patternfly/react-core";
+import { AngleRightIcon, DatabaseIcon, ServerGroupIcon } from "@patternfly/react-icons";
+import { FC, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { TableData } from "src/apis";
 import "./TableViewComponent.css";
 import { useTranslation } from "react-i18next";
 import { SelectedDataListItem } from "@sourcePage/CreateSource";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 type TableViewComponentProps = {
     collections: TableData | undefined;
@@ -23,6 +23,12 @@ type SelectedItem = {
 type SelectionResult = {
     schemas: string[];
     tables: string[];
+};
+
+type FlatItem = {
+    item: TreeViewDataItem;
+    depth: number;
+    hasChildren: boolean;
 };
 
 export function extractSelections(selectedItems: SelectedItem[]): SelectionResult {
@@ -65,18 +71,41 @@ export function extractSelections(selectedItems: SelectedItem[]): SelectionResul
     };
 }
 
+const TreeCheckbox: FC<{
+    checked: boolean | null | undefined;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    ariaLabel?: string;
+}> = ({ checked, onChange, ariaLabel }) => {
+    const ref = useRef<HTMLInputElement>(null);
 
+    useEffect(() => {
+        if (ref.current) {
+            ref.current.indeterminate = checked === null;
+        }
+    }, [checked]);
+
+    return (
+        <input
+            ref={ref}
+            type="checkbox"
+            checked={checked === true}
+            onChange={onChange}
+            aria-label={ariaLabel}
+            className="virtual-tree__checkbox"
+        />
+    );
+};
 
 const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelectedDataListItems, selectedDataListItems }) => {
     const { t } = useTranslation();
     const [allExpanded, setAllExpanded] = useState(false);
     const [filteredItems, setFilteredItems] = useState<TreeViewDataItem[]>([]);
     const [isFiltered, setIsFiltered] = useState(false);
-
     const [options, setOptions] = useState<TreeViewDataItem[]>([]);
-
     const [checkedItems, setCheckedItems] = useState<TreeViewDataItem[]>([]);
+    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const isInitializedRef = useRef(false);
     const prevSelectionRef = useRef<{ selectedDataListItems: SelectedDataListItem | undefined; options: TreeViewDataItem[] }>({
         selectedDataListItems: undefined,
@@ -156,7 +185,6 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         setSelectedDataListItems(selections);
     }, [checkedItems, setSelectedDataListItems]);
 
-
     useEffect(() => {
         if (prevCollectionsRef.current === collections) {
             return;
@@ -222,10 +250,6 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         }
     };
 
-    const onToggle = () => {
-        setAllExpanded((prevAllExpanded) => !prevAllExpanded);
-    };
-
     const isChecked = (dataItem: TreeViewDataItem): boolean => checkedItems.some((item) => item.id === dataItem.id);
     const areAllDescendantsChecked = (dataItem: TreeViewDataItem): boolean =>
         dataItem.children ? dataItem.children.every((child) => areAllDescendantsChecked(child)) : isChecked(dataItem);
@@ -245,7 +269,6 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
 
     const mapTree = (item: TreeViewDataItem): TreeViewDataItem => {
         const hasCheck = areAllDescendantsChecked(item);
-        // Reset checked properties to be updated
         if (item.checkProps) {
             item.checkProps.checked = false;
 
@@ -268,7 +291,6 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         return item;
     };
 
-    // Filter function for checkbox selection - filters tree to find matching item and its descendants
     const filterItemsForCheck = (item: TreeViewDataItem, checkedItem: TreeViewDataItem): boolean => {
         if (item.id === checkedItem.id) {
             return true;
@@ -301,6 +323,60 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
 
     const mappedFilteredItems = filteredItems.map((item) => mapTree(item));
 
+    // Expand/collapse handlers
+    const isNodeExpanded = useCallback(
+        (id: string) => allExpanded || isFiltered || expandedIds.has(id),
+        [allExpanded, isFiltered, expandedIds]
+    );
+
+    const onToggleNode = useCallback((id: string) => {
+        if (allExpanded || isFiltered) {
+            const allIds = new Set(options.map(item => item.id as string));
+            allIds.delete(id);
+            setExpandedIds(allIds);
+            setAllExpanded(false);
+        } else {
+            setExpandedIds(prev => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+            });
+        }
+    }, [allExpanded, isFiltered, options]);
+
+    const onToggleAll = () => {
+        if (allExpanded) {
+            setExpandedIds(new Set());
+            setAllExpanded(false);
+        } else {
+            setAllExpanded(true);
+        }
+    };
+
+    // Flatten tree into visible rows based on expand state
+    const visibleItems = useMemo((): FlatItem[] => {
+        const result: FlatItem[] = [];
+        for (const item of mappedFilteredItems) {
+            const id = item.id as string;
+            const expanded = allExpanded || isFiltered || expandedIds.has(id);
+            result.push({ item, depth: 0, hasChildren: !!item.children?.length });
+            if (expanded && item.children) {
+                for (const child of item.children) {
+                    result.push({ item: child, depth: 1, hasChildren: false });
+                }
+            }
+        }
+        return result;
+    }, [mappedFilteredItems, allExpanded, isFiltered, expandedIds]);
+
+    const virtualizer = useVirtualizer({
+        count: visibleItems.length,
+        getScrollElement: () => scrollContainerRef.current,
+        estimateSize: () => 36,
+        overscan: 20,
+    });
+
     const toolbar = (
         <Toolbar style={{ padding: 0 }}>
             <ToolbarContent style={{ padding: 0 }}>
@@ -308,7 +384,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                     <TreeViewSearch onSearch={onSearch} id="input-search" name="search-input" aria-label="Search input example" />
                 </ToolbarItem>
                 <ToolbarItem className="tree-view-component__toolbar-expand">
-                    <Button variant="link" onClick={onToggle} >
+                    <Button variant="link" onClick={onToggleAll}>
                         {allExpanded && t('collapseAll')}
                         {!allExpanded && t('expandAll')}
                     </Button>
@@ -317,20 +393,76 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         </Toolbar>
     );
 
-
     return (
-        <Fragment>
-            <TreeView
-                hasAnimations
-                aria-label="Tree View with search and checkboxes"
-                data={mappedFilteredItems}
-                onCheck={onCheck}
-                hasCheckboxes
-                allExpanded={allExpanded || isFiltered}
-                toolbar={toolbar}
-                useMemo={true}
-            />
-        </Fragment>
+        <div className="virtual-tree">
+            <div className="virtual-tree__toolbar">
+                {toolbar}
+            </div>
+            <div
+                ref={scrollContainerRef}
+                className="virtual-tree__scroll-area"
+            >
+                <div
+                    style={{
+                        height: `${virtualizer.getTotalSize()}px`,
+                        width: '100%',
+                        position: 'relative',
+                    }}
+                >
+                    {virtualizer.getVirtualItems().map((virtualRow) => {
+                        const { item, depth, hasChildren } = visibleItems[virtualRow.index];
+                        const expanded = hasChildren && isNodeExpanded(item.id as string);
+
+                        return (
+                            <div
+                                key={item.id}
+                                className={`virtual-tree__row ${depth > 0 ? 'virtual-tree__row--child' : ''}`}
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: `${virtualRow.size}px`,
+                                    transform: `translateY(${virtualRow.start}px)`,
+                                }}
+                            >
+                                <div
+                                    className="virtual-tree__row-content"
+                                    style={{ paddingLeft: `${depth * 24 + 8}px` }}
+                                >
+                                    {hasChildren ? (
+                                        <button
+                                            type="button"
+                                            className={`virtual-tree__toggle ${expanded ? 'virtual-tree__toggle--expanded' : ''}`}
+                                            onClick={() => onToggleNode(item.id as string)}
+                                            aria-label={expanded ? 'Collapse' : 'Expand'}
+                                        >
+                                            <AngleRightIcon />
+                                        </button>
+                                    ) : (
+                                        <span className="virtual-tree__toggle-spacer" />
+                                    )}
+                                    <TreeCheckbox
+                                        checked={item.checkProps?.checked}
+                                        onChange={(e) => onCheck(e as unknown as React.ChangeEvent, item)}
+                                        ariaLabel={`Select ${item.name}`}
+                                    />
+                                    <span className="virtual-tree__icon">
+                                        {depth === 0 ? <DatabaseIcon /> : <ServerGroupIcon />}
+                                    </span>
+                                    <span className="virtual-tree__name">{item.name}</span>
+                                    {hasChildren && item.children && (
+                                        <span className="virtual-tree__count">
+                                            ({item.children.length})
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
     );
 };
 

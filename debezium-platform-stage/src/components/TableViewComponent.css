@@ -1,3 +1,98 @@
-.tree-view-component__toolbar-expand{
+.tree-view-component__toolbar-expand {
     padding: .5rem !important;
+}
+
+.virtual-tree {
+    border: 1px solid var(--pf-t--global--border--color--default);
+    border-radius: var(--pf-t--global--border--radius--small);
+    overflow: hidden;
+}
+
+.virtual-tree__toolbar {
+    background-color: var(--pf-t--global--background--color--primary--default);
+    border-bottom: 1px solid var(--pf-t--global--border--color--default);
+    padding: 10px 10px 0px 10px;
+}
+
+.virtual-tree__scroll-area {
+    max-height: 450px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+.virtual-tree__row {
+    display: flex;
+    align-items: center;
+}
+
+.virtual-tree__row:hover {
+    background-color: var(--pf-t--global--background--color--primary--hover);
+}
+
+.virtual-tree__row-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+    padding-right: 8px;
+}
+
+.virtual-tree__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--pf-t--global--icon--color--regular);
+    transition: transform 150ms ease;
+    flex-shrink: 0;
+}
+
+.virtual-tree__toggle:hover {
+    color: var(--pf-t--global--icon--color--hover);
+}
+
+.virtual-tree__toggle--expanded {
+    transform: rotate(90deg);
+}
+
+.virtual-tree__toggle-spacer {
+    display: inline-block;
+    width: 24px;
+    flex-shrink: 0;
+}
+
+.virtual-tree__checkbox {
+    cursor: pointer;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--pf-t--global--color--brand--default);
+}
+
+.virtual-tree__icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--pf-t--global--icon--color--regular);
+    flex-shrink: 0;
+}
+
+.virtual-tree__name {
+    font-size: var(--pf-t--global--font--size--body--default);
+    color: var(--pf-t--global--text--color--regular);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.virtual-tree__count {
+    font-size: var(--pf-t--global--font--size--body--sm);
+    color: var(--pf-t--global--text--color--subtle);
+    flex-shrink: 0;
+    margin-left: 2px;
 }
