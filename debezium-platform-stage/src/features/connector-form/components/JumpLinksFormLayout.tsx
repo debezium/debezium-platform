@@ -116,19 +116,19 @@ export function JumpLinksFormLayout({
   const sectionIds = useMemo(() => {
     const ids: string[] = [];
     if (essentialsContent) ids.push(ESSENTIALS_ID);
-    if (visibleGroups.length > 0) {
+    if (visibleGroups.length > 0 || additionalSections.length > 0) {
       ids.push(CONFIG_PROPERTIES_ID);
       for (const group of visibleGroups) ids.push(toAnchorId(group.name));
+      for (const section of additionalSections) ids.push(section.id);
     }
-    for (const section of additionalSections) ids.push(section.id);
     return ids;
   }, [essentialsContent, visibleGroups, additionalSections]);
 
   const configPropertiesRange = useMemo(() => {
     const startIdx = sectionIds.indexOf(CONFIG_PROPERTIES_ID);
     if (startIdx === -1) return { start: -1, end: -1 };
-    return { start: startIdx, end: startIdx + visibleGroups.length };
-  }, [sectionIds, visibleGroups.length]);
+    return { start: startIdx, end: startIdx + visibleGroups.length + additionalSections.length };
+  }, [sectionIds, visibleGroups.length, additionalSections.length]);
 
   const { activeIndex, scrollToSection } = useScrollSpy(
     sectionIds,
@@ -170,7 +170,7 @@ export function JumpLinksFormLayout({
             );
           })()}
 
-          {visibleGroups.length > 0 && (() => {
+          {(visibleGroups.length > 0 || additionalSections.length > 0) && (() => {
             const parentIdx = sectionIds.indexOf(CONFIG_PROPERTIES_ID);
             const isParentActive =
               activeIndex >= configPropertiesRange.start &&
@@ -196,24 +196,23 @@ export function JumpLinksFormLayout({
                       </JumpLinksItem>
                     );
                   })}
+                  {additionalSections.map((section) => {
+                    const idx = sectionIds.indexOf(section.id);
+                    return (
+                      <JumpLinksItem
+                        key={section.id}
+                        href={`#${section.id}`}
+                        isActive={activeIndex === idx}
+                        onClick={(e) => { e.preventDefault(); scrollToSection(idx); }}
+                      >
+                        {section.name}
+                      </JumpLinksItem>
+                    );
+                  })}
                 </JumpLinksList>
               </JumpLinksItem>
             );
           })()}
-
-          {additionalSections.map((section) => {
-            const idx = sectionIds.indexOf(section.id);
-            return (
-              <JumpLinksItem
-                key={section.id}
-                href={`#${section.id}`}
-                isActive={activeIndex === idx}
-                onClick={(e) => { e.preventDefault(); scrollToSection(idx); }}
-              >
-                {section.name}
-              </JumpLinksItem>
-            );
-          })}
         </JumpLinks>
       </nav>
 
@@ -240,7 +239,7 @@ export function JumpLinksFormLayout({
           </section>
         )}
 
-        {visibleGroups.length > 0 && (
+        {(visibleGroups.length > 0 || additionalSections.length > 0) && (
           <section id={CONFIG_PROPERTIES_ID} style={{ marginBottom: '2rem' }}>
             <Content component="h3" style={{ paddingBottom: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid var(--pf-t--global--border--color--default)' }}>
               Configuration properties
@@ -263,21 +262,21 @@ export function JumpLinksFormLayout({
                 />
               </section>
             ))}
+
+            {additionalSections.map((section) => (
+              <section
+                key={section.id}
+                id={section.id}
+                style={{ marginBottom: '1.5rem' }}
+              >
+                <Content component="h4" style={{ paddingBottom: '0.25rem', marginBottom: '0.75rem' }}>
+                  {section.name}
+                </Content>
+                {section.content}
+              </section>
+            ))}
           </section>
         )}
-
-        {additionalSections.map((section) => (
-          <section
-            key={section.id}
-            id={section.id}
-            style={{ marginBottom: '2rem' }}
-          >
-            <Content component="h3" style={{ marginBottom: '0.5rem' }}>
-              {section.name}
-            </Content>
-            {section.content}
-          </section>
-        ))}
       </div>
     </div>
   );

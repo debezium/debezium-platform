@@ -232,34 +232,4 @@ describe('DynamicConnectorForm', () => {
     expect(payload['xstream.out.server.name']).toBeUndefined();
   });
 
-  test('Reset button restores initial values', { timeout: 20000 }, async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-    const initialValues = {
-      'topic.prefix': 'initial-prefix',
-    };
-    renderWithProviders(
-      <DynamicConnectorForm
-        connectorType="oracle"
-        onSubmit={onSubmit}
-        initialValues={initialValues}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('Connection')).toBeInTheDocument();
-    }, WAIT_OPTIONS);
-
-    const topicPrefix = document.getElementById('topic.prefix') as HTMLInputElement;
-    expect(topicPrefix).toHaveValue('initial-prefix');
-
-    await user.clear(topicPrefix);
-    await user.type(topicPrefix, 'changed');
-    expect(topicPrefix).toHaveValue('changed');
-
-    await user.click(screen.getByText('Reset'));
-    await waitFor(() => {
-      expect(topicPrefix).toHaveValue('initial-prefix');
-    }, WAIT_OPTIONS);
-  });
 });

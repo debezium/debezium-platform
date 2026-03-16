@@ -18,7 +18,7 @@ export function ConnectorFormGroup({
   expandAllAdvanced,
 }: ConnectorFormGroupProps) {
   const [localExpanded, setLocalExpanded] = useState(false);
-  const isAdvancedExpanded = expandAllAdvanced ?? localExpanded;
+  const isAdvancedExpanded = expandAllAdvanced || localExpanded;
 
   const primaryFields = group.fields.filter(
     (f) => f.groupOrder < 9999 && f.importance !== 'low'
