@@ -228,10 +228,12 @@ public class InfinispanConnectionValidatorIT {
         Map<String, Object> config = new HashMap<>();
         config.put("server.host", "localhost");
         config.put("cache", "testCache");
-        if (user != null)
+        if (user != null) {
             config.put("user", user);
-        if (password != null)
+        }
+        if (password != null) {
             config.put("password", password);
+        }
         Connection connection = new TestConnectionView(ConnectionEntity.Type.INFINISPAN, config);
 
         ConnectionValidationResult result = validator.validate(connection);
