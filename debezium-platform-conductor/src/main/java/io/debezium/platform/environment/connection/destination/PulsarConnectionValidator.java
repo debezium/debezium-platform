@@ -7,7 +7,6 @@ package io.debezium.platform.environment.connection.destination;
 
 import java.util.Map;
 
-import io.debezium.platform.environment.connection.destination.pulsar.PulsarAdminProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
@@ -21,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.ConnectionValidator;
+import io.debezium.platform.environment.connection.destination.pulsar.PulsarAdminProvider;
 import io.debezium.platform.environment.connection.destination.pulsar.PulsarAuthHandler;
 import io.debezium.platform.environment.connection.destination.pulsar.PulsarAuthHandlerFactory;
 

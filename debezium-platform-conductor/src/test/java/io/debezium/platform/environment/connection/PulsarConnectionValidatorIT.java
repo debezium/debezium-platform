@@ -1,24 +1,32 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.connection;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import io.debezium.platform.data.dto.ConnectionValidationResult;
-import io.debezium.platform.environment.connection.destination.PulsarConnectionValidator;
 import jakarta.inject.Inject;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.pulsar.PulsarContainer;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
+import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
+import io.debezium.platform.environment.connection.destination.PulsarConnectionValidator;
 import io.debezium.platform.environment.destination.ApachePulsarTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 @QuarkusTestResource(value = ApachePulsarTestResource.class, restrictToAnnotatedClass = true)
@@ -39,9 +47,9 @@ class PulsarConnectionValidatorIT {
         config.put("serviceHttpUrl", container.getHttpServiceUrl());
         Connection connection = new TestConnectionView(ConnectionEntity.Type.APACHE_PULSAR, config);
 
-         ConnectionValidationResult result = validator.validate(connection);
+        ConnectionValidationResult result = validator.validate(connection);
 
-         assertTrue(result.valid(), "Connection validation should succeed");
+        assertTrue(result.valid(), "Connection validation should succeed");
     }
 
     @Test
