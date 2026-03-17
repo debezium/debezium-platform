@@ -102,6 +102,13 @@ public class InfinispanConnectionValidator implements ConnectionValidator {
                     ? infinispanConfig.get(PASSWORD_KEY).toString()
                     : null;
 
+            // Infinispan treats both-empty credentials as no-auth, but one-empty causes TransportException.
+            boolean hasUser = user != null && !user.isEmpty();
+            boolean hasPassword = password != null && !password.isEmpty();
+            if (hasUser != hasPassword) {
+                return ConnectionValidationResult.failed("User and password must both be provided for authentication");
+            }
+
             return performConnectionValidation(serverHost, serverPort, cacheName, user, password);
         }
         catch (IllegalArgumentException e) {
@@ -129,7 +136,10 @@ public class InfinispanConnectionValidator implements ConnectionValidator {
         LOGGER.debug("Creating Infinispan RemoteCacheManager for validation");
 
         String serverUri;
-        if (user != null && password != null) {
+        boolean hasUser = user != null && !user.isEmpty();
+        boolean hasPassword = password != null && !password.isEmpty();
+
+        if (hasUser && hasPassword) {
             serverUri = HOTROD_URI_WITH_AUTH.formatted(user, password, serverHost, serverPort);
         }
         else {

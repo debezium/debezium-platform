@@ -11,10 +11,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.containers.GenericContainer;
 
 import io.debezium.platform.data.dto.ConnectionValidationResult;
@@ -215,5 +219,33 @@ public class InfinispanConnectionValidatorIT {
         ConnectionValidationResult result = validator.validate(connection);
 
         assertTrue(result.valid(), "Connection validation should succeed without optional fields");
+    }
+
+    @ParameterizedTest
+    @DisplayName("Should fail validation when only one of user/password is provided")
+    @MethodSource("partialCredentialsProvider")
+    void shouldFailValidationWithPartialCredentials(String user, String password) {
+        Map<String, Object> config = new HashMap<>();
+        config.put("server.host", "localhost");
+        config.put("cache", "testCache");
+        if (user != null)
+            config.put("user", user);
+        if (password != null)
+            config.put("password", password);
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.INFINISPAN, config);
+
+        ConnectionValidationResult result = validator.validate(connection);
+
+        assertFalse(result.valid());
+        assertEquals("User and password must both be provided for authentication", result.message());
+    }
+
+    static Stream<Arguments> partialCredentialsProvider() {
+        return Stream.of(
+                Arguments.of("admin", null), // user only
+                Arguments.of(null, "secret"), // password only
+                Arguments.of("", "secret"), // empty user
+                Arguments.of("admin", "") // empty password
+        );
     }
 }
