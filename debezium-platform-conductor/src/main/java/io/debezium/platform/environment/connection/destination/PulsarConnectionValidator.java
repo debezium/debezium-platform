@@ -7,6 +7,7 @@ package io.debezium.platform.environment.connection.destination;
 
 import java.util.Map;
 
+import io.debezium.platform.environment.connection.destination.pulsar.PulsarAdminProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
@@ -30,7 +31,7 @@ public class PulsarConnectionValidator implements ConnectionValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(PulsarConnectionValidator.class);
 
     private final PulsarAuthHandlerFactory authHandlerFactory;
-
+    private final PulsarAdminProvider pulsarAdminProvider;
     private final int defaultConnectionTimeout;
 
     private static final String SERVICE_HTTP_URL_KEY = "serviceHttpUrl";
@@ -38,9 +39,11 @@ public class PulsarConnectionValidator implements ConnectionValidator {
     public static final String NO_AUTH_SCHEME = "none";
 
     public PulsarConnectionValidator(@ConfigProperty(name = "destinations.pulsar.connection.timeout") int defaultConnectionTimeout,
-                                     PulsarAuthHandlerFactory authHandlerFactory) {
+                                     PulsarAuthHandlerFactory authHandlerFactory,
+                                     PulsarAdminProvider pulsarAdminProvider) {
         this.defaultConnectionTimeout = defaultConnectionTimeout;
         this.authHandlerFactory = authHandlerFactory;
+        this.pulsarAdminProvider = pulsarAdminProvider;
     }
 
     @Override
@@ -67,7 +70,9 @@ public class PulsarConnectionValidator implements ConnectionValidator {
             PulsarAuthHandler authHandler = authHandlerFactory.getAuthHandler(authScheme);
             authHandler.validate(pulsarConfig);
 
-            PulsarAdminBuilder builder = PulsarAdmin.builder().serviceHttpUrl(pulsarConfig.get(SERVICE_HTTP_URL_KEY).toString());
+            PulsarAdminBuilder builder = pulsarAdminProvider
+                    .builder()
+                    .serviceHttpUrl(pulsarConfig.get(SERVICE_HTTP_URL_KEY).toString());
 
             authHandler.configure(builder, pulsarConfig);
 
@@ -78,7 +83,7 @@ public class PulsarConnectionValidator implements ConnectionValidator {
         }
         catch (IllegalArgumentException e) {
             LOGGER.warn("Invalid Pulsar configuration", e);
-            return ConnectionValidationResult.failed("Configuration error: " + e.getMessage());
+            return ConnectionValidationResult.failed("Configuration error");
         }
         catch (PulsarAdminException.TimeoutException e) {
             LOGGER.warn("Timeout during Pulsar connection validation", e);
@@ -103,7 +108,7 @@ public class PulsarConnectionValidator implements ConnectionValidator {
         catch (PulsarAdminException e) {
             LOGGER.warn("Pulsar-specific error during validation", e);
             return ConnectionValidationResult.failed(
-                    "Pulsar connection error: " + e.getMessage());
+                    "Pulsar connection error");
         }
         catch (Exception e) {
             LOGGER.error("Unexpected error during Pulsar connection validation", e);

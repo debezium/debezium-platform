@@ -3,10 +3,9 @@ package io.debezium.platform.environment.connection.destination.pulsar;
 import java.util.Map;
 
 import org.apache.pulsar.client.admin.PulsarAdminBuilder;
-import org.apache.pulsar.client.api.PulsarClientException;
 
 public interface PulsarAuthHandler {
-    void configure(PulsarAdminBuilder builder, Map<String, Object> config) throws PulsarClientException;
+    void configure(PulsarAdminBuilder builder, Map<String, Object> config);
 
     void validate(Map<String, Object> config) throws IllegalArgumentException;
 

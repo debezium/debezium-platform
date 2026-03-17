@@ -257,11 +257,6 @@
           "title": "JWT token for JWT authentication",
           "description": "Required if authScheme is 'JWT'."
         },
-        "jwtIssuerUrl": {
-          "type": "string",
-          "title": "URL of the JWT issuer",
-          "description": "Optional for JWT auth (if token needs to be fetched/validated)."
-        },
         "oAuth2IssuerUrl": {
           "type": "string",
           "title": "OAuth2 issuer URL",
