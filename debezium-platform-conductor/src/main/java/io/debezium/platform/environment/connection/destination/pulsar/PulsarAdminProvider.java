@@ -20,7 +20,7 @@ import org.apache.pulsar.client.admin.PulsarAdminBuilder;
  * constructing a {@code PulsarAdmin} client.
  * </p>
  *
- * @author Mario Fiore Vitale
+ * @author Philippe Camus
  */
 public interface PulsarAdminProvider {
 
