@@ -18,6 +18,9 @@ public class PulsarAuthHandlerFactory {
     }
 
     public PulsarAuthHandler getAuthHandler(String authType) {
+        if (authType == null || authType.trim().isEmpty()) {
+            throw new IllegalArgumentException("Auth type cannot be null");
+        }
         String authHandlerName = mapToAuthHandlerName(authType);
         return authHandlers
                 .select(NamedLiteral.of(authHandlerName))

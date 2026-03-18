@@ -13,23 +13,19 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import io.debezium.platform.environment.connection.destination.pulsar.JwtAuthHandler;
 
 public class JwtAuthHandlerTest {
 
     private JwtAuthHandler handler;
-    private PulsarAdminBuilder builder;
 
     @BeforeEach
     void setUp() {
         handler = new JwtAuthHandler();
-        builder = Mockito.mock(PulsarAdminBuilder.class);
     }
 
     @Test
