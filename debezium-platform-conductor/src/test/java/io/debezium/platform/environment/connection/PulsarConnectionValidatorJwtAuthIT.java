@@ -6,6 +6,7 @@
 package io.debezium.platform.environment.connection;
 
 import static io.debezium.platform.environment.destination.ApachePulsarTestResourceJwtAuth.TEST_JWT_TOKEN;
+import static io.debezium.platform.environment.destination.ApachePulsarTestResourceJwtAuth.TEST_TOKEN_SECRET_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,9 +17,9 @@ import java.util.concurrent.TimeUnit;
 
 import jakarta.inject.Inject;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.Container;
 import org.testcontainers.pulsar.PulsarContainer;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
@@ -46,6 +47,7 @@ class PulsarConnectionValidatorJwtAuthIT {
                 .until(container::isRunning);
 
         Map<String, Object> config = new HashMap<>();
+        config.put("authScheme", "jwt");
         config.put("serviceHttpUrl", container.getHttpServiceUrl());
         config.put("jwtToken", TEST_JWT_TOKEN);
 
@@ -54,6 +56,44 @@ class PulsarConnectionValidatorJwtAuthIT {
         ConnectionValidationResult result = validator.validate(connection);
 
         assertTrue(result.valid(), "Connection validation should succeed");
+    }
+
+    @Test
+    @DisplayName("Should fail validation with expired JWT token")
+    void shouldFailValidationWithExpiredToken() throws Exception {
+        PulsarContainer container = ApachePulsarTestResourceJwtAuth.getContainer();
+
+        Awaitility.await()
+                .atMost(300, TimeUnit.SECONDS)
+                .until(container::isRunning);
+
+        // Generate an expired token using Pulsar CLI
+        Container.ExecResult expiredTokenResult = container.execInContainer(
+                "bin/pulsar",
+                "tokens",
+                "create",
+                "--secret-key",
+                TEST_TOKEN_SECRET_KEY,
+                "--subject",
+                "admin",
+                "--expiry-time",
+                "1s"
+        );
+
+        String expiredToken = expiredTokenResult.getStdout().trim();
+
+        // Wait for token to expire
+        Thread.sleep(2000);
+
+        Map<String, Object> config = new HashMap<>();
+        config.put("authScheme", "jwt");
+        config.put("serviceHttpUrl", container.getHttpServiceUrl());
+        config.put("jwtToken", expiredToken);
+
+        Connection connection = new TestConnectionView(ConnectionEntity.Type.APACHE_PULSAR, config);
+        ConnectionValidationResult result = validator.validate(connection);
+
+        assertFalse(result.valid(), "Connection validation should fail with expired JWT token");
     }
 
     @Test
@@ -66,6 +106,7 @@ class PulsarConnectionValidatorJwtAuthIT {
                 .until(container::isRunning);
 
         Map<String, Object> config = new HashMap<>();
+        config.put("authScheme", "jwt");
         config.put("serviceHttpUrl", container.getHttpServiceUrl());
         config.put("jwtToken", "invalid-token-12345");
 
@@ -85,6 +126,7 @@ class PulsarConnectionValidatorJwtAuthIT {
                 .until(container::isRunning);
 
         Map<String, Object> config = new HashMap<>();
+        config.put("authScheme", "jwt");
         config.put("serviceHttpUrl", container.getHttpServiceUrl());
         // No JWT token provided
 
@@ -98,19 +140,22 @@ class PulsarConnectionValidatorJwtAuthIT {
     @DisplayName("Should fail validation with invalid host for ServiceHttpUrl")
     void shouldFailValidationWithInvalidHostForServiceHttpUrl() {
         Map<String, Object> config = new HashMap<>();
+        config.put("authScheme", "jwt");
         config.put("serviceHttpUrl", "http://invalid-host:8080");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.APACHE_PULSAR, config);
 
         ConnectionValidationResult result = validator.validate(connection);
         assertFalse(result.valid(), "Connection validation should fail with invalid ServiceHttpUrl");
-        assertEquals("Pulsar connection error", result.message());
+        assertEquals("Configuration error", result.message());
     }
 
     @Test
     @DisplayName("Should handle timeout scenarios gracefully")
     void shouldHandleTimeoutScenarios() {
         Map<String, Object> config = new HashMap<>();
+        config.put("authScheme", "jwt");
         config.put("serviceHttpUrl", "http://10.255.255.1:8080");
+        config.put("jwtToken", TEST_JWT_TOKEN);
         Connection connection = new TestConnectionView(ConnectionEntity.Type.APACHE_PULSAR, config);
 
         ConnectionValidationResult result = validator.validate(connection);
