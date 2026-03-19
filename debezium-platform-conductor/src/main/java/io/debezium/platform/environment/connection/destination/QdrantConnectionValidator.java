@@ -58,12 +58,18 @@ public class QdrantConnectionValidator implements ConnectionValidator {
         String apiKey = getString(config, API_KEY);
         String healthEndpoint = HEALTH_ENDPOINT_FORMAT.formatted(host, port);
 
+        return validateHealthEndpoint(healthEndpoint, apiKey);
+    }
+
+    private ConnectionValidationResult validateHealthEndpoint(String healthEndpoint, String apiKey) {
+        int timeoutInMillis = (int) Duration.ofSeconds(defaultConnectionTimeout).toMillis();
+
         try {
             URL url = new URL(healthEndpoint);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
-            conn.setConnectTimeout((int) Duration.ofSeconds(defaultConnectionTimeout).toMillis());
-            conn.setReadTimeout((int) Duration.ofSeconds(defaultConnectionTimeout).toMillis());
+            conn.setConnectTimeout(timeoutInMillis);
+            conn.setReadTimeout(timeoutInMillis);
             if (!isBlank(apiKey)) {
                 conn.setRequestProperty("api-key", apiKey);
             }
