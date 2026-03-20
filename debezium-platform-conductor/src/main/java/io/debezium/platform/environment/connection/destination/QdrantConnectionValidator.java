@@ -17,7 +17,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
+import io.debezium.platform.environment.connection.ConnectionConfigUtils;
 import io.debezium.platform.environment.connection.ConnectionValidator;
+import io.debezium.util.Strings;
 
 /**
  * Implementation of {@link ConnectionValidator} for Qdrant Sink connections.
@@ -45,17 +47,17 @@ public class QdrantConnectionValidator implements ConnectionValidator {
         }
 
         Map<String, Object> config = connectionConfig.getConfig();
-        String host = getString(config, HOST);
-        if (isBlank(host)) {
+        String host = ConnectionConfigUtils.getString(config, HOST);
+        if (Strings.isNullOrBlank(host)) {
             return ConnectionValidationResult.failed("Host must be specified for Qdrant connection");
         }
 
-        Integer port = getInteger(config, PORT);
+        Integer port = ConnectionConfigUtils.getInteger(config, PORT);
         if (port == null || port <= 0) {
             port = 6333;
         }
 
-        String apiKey = getString(config, API_KEY);
+        String apiKey = ConnectionConfigUtils.getString(config, API_KEY);
         String healthEndpoint = HEALTH_ENDPOINT_FORMAT.formatted(host, port);
 
         return validateHealthEndpoint(healthEndpoint, apiKey);
@@ -70,7 +72,7 @@ public class QdrantConnectionValidator implements ConnectionValidator {
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(timeoutInMillis);
             conn.setReadTimeout(timeoutInMillis);
-            if (!isBlank(apiKey)) {
+            if (!Strings.isNullOrBlank(apiKey)) {
                 conn.setRequestProperty("api-key", apiKey);
             }
             int responseCode = conn.getResponseCode();
@@ -82,30 +84,5 @@ public class QdrantConnectionValidator implements ConnectionValidator {
         catch (Exception e) {
             return ConnectionValidationResult.failed("Qdrant connection error: " + e.getMessage());
         }
-    }
-
-    private static String getString(Map<String, Object> config, String key) {
-        Object value = config.get(key);
-        return value == null ? null : String.valueOf(value);
-    }
-
-    private static Integer getInteger(Map<String, Object> config, String key) {
-        Object value = config.get(key);
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-        if (value instanceof String strValue) {
-            try {
-                return Integer.parseInt(strValue);
-            }
-            catch (NumberFormatException ignored) {
-                return null;
-            }
-        }
-        return null;
-    }
-
-    private static boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
     }
 }
