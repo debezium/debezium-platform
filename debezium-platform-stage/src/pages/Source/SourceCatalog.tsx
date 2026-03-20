@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
+  Bullseye,
   Button,
   Content,
   ContentVariants,
   PageSection,
   SearchInput,
+  Spinner,
   ToggleGroup,
   ToggleGroupItem,
   Toolbar,
@@ -18,10 +20,15 @@ import { CogIcon, ListIcon, ThIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import { CatalogGrid } from "@components/CatalogGrid";
 import { useState } from "react";
+import { useQuery } from "react-query";
 import { debounce } from "lodash";
 import _ from "lodash";
-import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
+import { Catalog, CatalogResponse } from "../../apis";
+import catalogFixture from "../../__fixtures__/catalog.json";
+// import { fetchData } from "../../apis";
+// import { API_URL } from "../../utils/constants";
 import { useTranslation } from "react-i18next";
+import ApiError from "../../components/ApiError";
 import PageTour from "../../components/PageTour";
 import { Step } from "react-joyride";
 
@@ -55,7 +62,21 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
   const [isSelected, setIsSelected] = React.useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Compute filtered results based on search query
+  const { data: sourceCatalog = [], isLoading, error } = useQuery<Catalog[], Error>(
+    "source-catalog",
+    async () => {
+      // TODO: Replace fixture with: fetchData<CatalogResponse>(`${API_URL}/api/catalog`)
+      const response = catalogFixture as CatalogResponse;
+      return (response.components["source-connector"] ?? []).map((c) => ({
+        id: c.class,
+        type: c.class,
+        name: c.name.replace(/\s*Connector\s*/g, " ").trim(),
+        description: c.description,
+        role: "source",
+      }));
+    }
+  );
+
   const searchResult = React.useMemo(() => {
     if (searchQuery.length === 0) {
       return sourceCatalog;
@@ -63,7 +84,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
     return _.filter(sourceCatalog, (o) =>
       o.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [searchQuery, sourceCatalog]);
 
   const onClear = () => {
     onSearch?.("");
@@ -170,13 +191,25 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
         </Toolbar>
       </PageSection>
 
-      <CatalogGrid
-        onCardSelect={onSourceSelection}
-        catalogType="source"
-        displayType={isSelected}
-        isAddButtonVisible={searchQuery.length === 0}
-        searchResult={searchResult}
-      />
+      {error ? (
+        <PageSection>
+          <ApiError errorType="large" errorMsg={error.message} />
+        </PageSection>
+      ) : isLoading ? (
+        <PageSection>
+          <Bullseye>
+            <Spinner size="xl" />
+          </Bullseye>
+        </PageSection>
+      ) : (
+        <CatalogGrid
+          onCardSelect={onSourceSelection}
+          catalogType="source"
+          displayType={isSelected}
+          isAddButtonVisible={searchQuery.length === 0}
+          searchResult={searchResult}
+        />
+      )}
       <PageTour pageKey="source-catalog" steps={catalogTourSteps} />
     </>
   );

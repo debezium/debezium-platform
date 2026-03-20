@@ -1,0 +1,167 @@
+{
+    "schemaVersion": "1.0",
+    "build": {
+      "timestamp": "2026-02-05T13:08:59Z",
+      "sourceRepository": "debezium/debezium",
+      "sourceCommit": "758efa135",
+      "sourceBranch": "dbz#1544"
+    },
+    "components": {
+      "sink-connector": [
+        {
+          "class": "io.debezium.connector.jdbc.JdbcSinkConnector",
+          "name": "io.debezium.connector.jdbc.JdbcSinkConnector",
+          "description": "Captures changes from a io.debezium.connector.jdbc.JdbcSinkConnector",
+          "descriptor": "sink-connector/io.debezium.connector.jdbc.JdbcSinkConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.mongodb.MongoDbSinkConnector",
+          "name": "io.debezium.connector.mongodb.MongoDbSinkConnector",
+          "description": "Captures changes from a io.debezium.connector.mongodb.MongoDbSinkConnector",
+          "descriptor": "sink-connector/io.debezium.connector.mongodb.MongoDbSinkConnector.json"
+        }
+      ],
+      "source-connector": [
+        {
+          "class": "io.debezium.connector.mariadb.MariaDbConnector",
+          "name": "Debezium MariaDB Connector",
+          "description": "Captures changes from a Debezium MariaDB Connector",
+          "descriptor": "source-connector/io.debezium.connector.mariadb.MariaDbConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.mongodb.MongoDbConnector",
+          "name": "Debezium MongoDB Connector",
+          "description": "Captures changes from a Debezium MongoDB Connector",
+          "descriptor": "source-connector/io.debezium.connector.mongodb.MongoDbConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.mysql.MySqlConnector",
+          "name": "Debezium MySQL Connector",
+          "description": "Captures changes from a Debezium MySQL Connector",
+          "descriptor": "source-connector/io.debezium.connector.mysql.MySqlConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.oracle.OracleConnector",
+          "name": "Debezium Oracle Connector",
+          "description": "Captures changes from a Debezium Oracle Connector",
+          "descriptor": "source-connector/io.debezium.connector.oracle.OracleConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.postgresql.PostgresConnector",
+          "name": "Debezium PostgreSQL Connector",
+          "description": "Captures changes from a Debezium PostgreSQL Connector",
+          "descriptor": "source-connector/io.debezium.connector.postgresql.PostgresConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.sqlserver.SqlServerConnector",
+          "name": "Debezium SQLServer Connector",
+          "description": "Captures changes from a Debezium SQLServer Connector",
+          "descriptor": "source-connector/io.debezium.connector.sqlserver.SqlServerConnector.json"
+        }
+      ],
+      "transformation": [
+        {
+          "class": "io.debezium.connector.jdbc.transforms.CollectionNameTransformation",
+          "name": "io.debezium.connector.jdbc.transforms.CollectionNameTransformation",
+          "description": "Captures changes from a io.debezium.connector.jdbc.transforms.CollectionNameTransformation",
+          "descriptor": "transformation/io.debezium.connector.jdbc.transforms.CollectionNameTransformation.json"
+        },
+        {
+          "class": "io.debezium.connector.jdbc.transforms.FieldNameTransformation",
+          "name": "io.debezium.connector.jdbc.transforms.FieldNameTransformation",
+          "description": "Captures changes from a io.debezium.connector.jdbc.transforms.FieldNameTransformation",
+          "descriptor": "transformation/io.debezium.connector.jdbc.transforms.FieldNameTransformation.json"
+        },
+        {
+          "class": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+          "name": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+          "description": "Captures changes from a io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+          "descriptor": "transformation/io.debezium.connector.mongodb.transforms.ExtractNewDocumentState.json"
+        },
+        {
+          "class": "io.debezium.connector.mongodb.transforms.outbox.MongoEventRouter",
+          "name": "io.debezium.connector.mongodb.transforms.outbox.MongoEventRouter",
+          "description": "Captures changes from a io.debezium.connector.mongodb.transforms.outbox.MongoEventRouter",
+          "descriptor": "transformation/io.debezium.connector.mongodb.transforms.outbox.MongoEventRouter.json"
+        },
+        {
+          "class": "io.debezium.connector.mysql.transforms.ReadToInsertEvent",
+          "name": "io.debezium.connector.mysql.transforms.ReadToInsertEvent",
+          "description": "Captures changes from a io.debezium.connector.mysql.transforms.ReadToInsertEvent",
+          "descriptor": "transformation/io.debezium.connector.mysql.transforms.ReadToInsertEvent.json"
+        },
+        {
+          "class": "io.debezium.connector.postgresql.transforms.DecodeLogicalDecodingMessageContent",
+          "name": "io.debezium.connector.postgresql.transforms.DecodeLogicalDecodingMessageContent",
+          "description": "Captures changes from a io.debezium.connector.postgresql.transforms.DecodeLogicalDecodingMessageContent",
+          "descriptor": "transformation/io.debezium.connector.postgresql.transforms.DecodeLogicalDecodingMessageContent.json"
+        },
+        {
+          "class": "io.debezium.connector.postgresql.transforms.timescaledb.TimescaleDb",
+          "name": "io.debezium.connector.postgresql.transforms.timescaledb.TimescaleDb",
+          "description": "Captures changes from a io.debezium.connector.postgresql.transforms.timescaledb.TimescaleDb",
+          "descriptor": "transformation/io.debezium.connector.postgresql.transforms.timescaledb.TimescaleDb.json"
+        },
+        {
+          "class": "io.debezium.transforms.ByLogicalTableRouter",
+          "name": "io.debezium.transforms.ByLogicalTableRouter",
+          "description": "Captures changes from a io.debezium.transforms.ByLogicalTableRouter",
+          "descriptor": "transformation/io.debezium.transforms.ByLogicalTableRouter.json"
+        },
+        {
+          "class": "io.debezium.transforms.ExtractChangedRecordState",
+          "name": "io.debezium.transforms.ExtractChangedRecordState",
+          "description": "Captures changes from a io.debezium.transforms.ExtractChangedRecordState",
+          "descriptor": "transformation/io.debezium.transforms.ExtractChangedRecordState.json"
+        },
+        {
+          "class": "io.debezium.transforms.ExtractNewRecordState",
+          "name": "io.debezium.transforms.ExtractNewRecordState",
+          "description": "Captures changes from a io.debezium.transforms.ExtractNewRecordState",
+          "descriptor": "transformation/io.debezium.transforms.ExtractNewRecordState.json"
+        },
+        {
+          "class": "io.debezium.transforms.ExtractSchemaToNewRecord",
+          "name": "io.debezium.transforms.ExtractSchemaToNewRecord",
+          "description": "Captures changes from a io.debezium.transforms.ExtractSchemaToNewRecord",
+          "descriptor": "transformation/io.debezium.transforms.ExtractSchemaToNewRecord.json"
+        },
+        {
+          "class": "io.debezium.transforms.GeometryFormatTransformer",
+          "name": "io.debezium.transforms.GeometryFormatTransformer",
+          "description": "Captures changes from a io.debezium.transforms.GeometryFormatTransformer",
+          "descriptor": "transformation/io.debezium.transforms.GeometryFormatTransformer.json"
+        },
+        {
+          "class": "io.debezium.transforms.HeaderToValue",
+          "name": "io.debezium.transforms.HeaderToValue",
+          "description": "Captures changes from a io.debezium.transforms.HeaderToValue",
+          "descriptor": "transformation/io.debezium.transforms.HeaderToValue.json"
+        },
+        {
+          "class": "io.debezium.transforms.SchemaChangeEventFilter",
+          "name": "io.debezium.transforms.SchemaChangeEventFilter",
+          "description": "Captures changes from a io.debezium.transforms.SchemaChangeEventFilter",
+          "descriptor": "transformation/io.debezium.transforms.SchemaChangeEventFilter.json"
+        },
+        {
+          "class": "io.debezium.transforms.SwapGeometryCoordinates",
+          "name": "io.debezium.transforms.SwapGeometryCoordinates",
+          "description": "Captures changes from a io.debezium.transforms.SwapGeometryCoordinates",
+          "descriptor": "transformation/io.debezium.transforms.SwapGeometryCoordinates.json"
+        },
+        {
+          "class": "io.debezium.transforms.TimezoneConverter",
+          "name": "io.debezium.transforms.TimezoneConverter",
+          "description": "Captures changes from a io.debezium.transforms.TimezoneConverter",
+          "descriptor": "transformation/io.debezium.transforms.TimezoneConverter.json"
+        },
+        {
+          "class": "io.debezium.transforms.VectorToJsonConverter",
+          "name": "io.debezium.transforms.VectorToJsonConverter",
+          "description": "Captures changes from a io.debezium.transforms.VectorToJsonConverter",
+          "descriptor": "transformation/io.debezium.transforms.VectorToJsonConverter.json"
+        }
+      ]
+    }
+  }

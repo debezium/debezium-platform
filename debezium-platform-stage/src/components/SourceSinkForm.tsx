@@ -55,6 +55,17 @@ import { convertMapToObject, convertObjectToMap, getConnectorSchemaType } from "
 import { DynamicConnectorForm } from "../features/connector-form/components/DynamicConnectorForm";
 
 
+/** Resolves `postgresql` / `mysql` / … from a short catalog id or a Debezium connector class FQCN. */
+const databaseItemsCatalogKey = (connectorIdOrClass: string): keyof typeof DatabaseItemsList | undefined => {
+  if (!connectorIdOrClass) {
+    return undefined;
+  }
+  if (connectorIdOrClass.includes(".")) {
+    return connectorIdOrClass.split(".")[3] as keyof typeof DatabaseItemsList;
+  }
+  return connectorIdOrClass as keyof typeof DatabaseItemsList;
+};
+
 const getInitialSelectOptions = (connections: connectionsList[], connectorId: string): SelectOptionProps[] => {
   return connections.filter((connection) => connection.type.toLowerCase() === connectorId.toLowerCase()).map((connection) => ({
     value: connection.id,
@@ -429,6 +440,16 @@ const SourceSinkForm = ({
     if (!selectedConnection?.id) return;
 
     setIsCollectionsLoading(true);
+
+    if (import.meta.env.DEV) {
+      const { default: mockData } = await import(
+        "src/__fixtures__/large-postgres-data.json"
+      );
+      setCollectionsError(undefined);
+      setCollections(mockData as TableData);
+      setIsCollectionsLoading(false);
+      return;
+    }
     const response = await fetchDataCall<TableData>(
       `${API_URL}/api/connections/${selectedConnection.id}/collections`
     );
@@ -576,8 +597,9 @@ const SourceSinkForm = ({
     </>
   );
 
-  const isOracleSource = connectorType === "source" &&
-    (dataType || ConnectorId || "").toLowerCase() === "oracle";
+  const isOracleSource =
+    connectorType === "source" &&
+    (dataType || ConnectorId || "").toLowerCase().includes("oracle");
 
   const useSchemaForm = !!setProperties && connectorType === "source";
 
@@ -605,7 +627,15 @@ const SourceSinkForm = ({
                 text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: getConnectorTypeName(dataType || ConnectorId || "") })}</span>,
                 id: `field-group-data-table-id`,
               }}
-              titleDescription={t("source:create.dataTableDescription", editFlow ? { val: DatabaseItemsList[dataType?.split(".")[3] as keyof typeof DatabaseItemsList].join(" and ") } : { val: DatabaseItemsList[ConnectorId as keyof typeof DatabaseItemsList].join(" and ") })}
+              titleDescription={t("source:create.dataTableDescription", {
+                val: (() => {
+                  const key = databaseItemsCatalogKey(
+                    editFlow ? dataType || "" : ConnectorId || ""
+                  );
+                  const list = key ? DatabaseItemsList[key] : undefined;
+                  return list ? list.join(" and ") : "";
+                })(),
+              })}
             />
           }
         >
