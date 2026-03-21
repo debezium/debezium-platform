@@ -34,7 +34,39 @@ If you don't have already a Kubernetes cluster up, you can use one of the common
 * [minikube](https://minikube.sigs.k8s.io/docs/) 
 * [kind](https://kind.sigs.k8s.io/)
 
-The prerequisite is to install an ingress controller. 
+If you are using `kind` locally, expose ports `80` and `443` on the control-plane node so the ingress can be reached from your host:
+
+```yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  extraPortMappings:
+    - containerPort: 80
+      hostPort: 80
+      listenAddress: "127.0.0.1"
+      protocol: TCP
+    - containerPort: 443
+      hostPort: 443
+      listenAddress: "127.0.0.1"
+      protocol: TCP
+```
+
+```shell
+kind create cluster --config kind-ingress.yaml
+```
+
+The prerequisite is to install an ingress controller.
+
+For example, on `kind` you can install `ingress-nginx` with:
+
+```shell
+helm upgrade --install ingress-nginx ingress-nginx \
+  --repo https://kubernetes.github.io/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace \
+  --set controller.hostPort.enabled=true
+```
 
 For this example, considering a local setup, we will use the `/etc/hosts` to resolve the domain.
 
@@ -48,6 +80,9 @@ sudo ./examples/update_hosts.sh
 > **_NOTE:_**
 If you are using minikube on Mac, you need also to run the `minikube tunnel` command. For more details see [this](https://minikube.sigs.k8s.io/docs/drivers/docker/#known-issues) and [this](https://stackoverflow.com/questions/70961901/ingress-with-minikube-working-differently-on-mac-vs-ubuntu-when-to-set-etc-host).
 
+> **_NOTE:_**
+If you are using Windows, add `127.0.0.1 platform.debezium.io` to `C:\Windows\System32\drivers\etc\hosts`.
+
 Create a dedicated namespace
 
 ```shell
@@ -59,7 +94,7 @@ and then install *debezium-platform* through `helm`
 ```shell
 cd helm && 
 helm dependency build &&
-helm install debezium-platform . -f ../examples/example.yaml &&
+helm install debezium-platform . -n debezium-platform -f ../examples/example.yaml --set ingress.className=nginx &&
 cd ..
 ```
 
@@ -71,7 +106,7 @@ and a kafka cluster, used as destination in our example pipeline.
 ```shell
 # Deploy the source database
 
-kubectl create -f examples/k8s/database/001_postgresql.yml
+kubectl create -n debezium-platform -f examples/k8s/database/001_postgresql.yml
 ```
 
 Install the Strimzi operator 
@@ -79,17 +114,19 @@ Install the Strimzi operator
 ```shell
 helm repo add strimzi https://strimzi.io/charts/ &&
 helm repo update strimzi &&
-helm install strimzi-operator strimzi/strimzi-kafka-operator --version 0.45.0 --namespace debezium-platform
+helm install strimzi-operator strimzi/strimzi-kafka-operator --version 0.45.1 --namespace debezium-platform
 ```
 
 ```shell
 # Deploy the kafka cluster
 
-kubectl create -f examples/k8s/kafka/001_kafka.yml
+kubectl create -n debezium-platform -f examples/k8s/kafka/001_kafka.yml
 ```
 
 ```shell
 # Create a test pipeline
+#
+# The script uses the `http` command from HTTPie.
 
 ./examples/seed.sh platform.debezium.io 80 examples/payloads/
 ```
