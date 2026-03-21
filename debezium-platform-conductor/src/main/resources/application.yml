@@ -102,6 +102,10 @@ destinations:
   qdrant:
     connection:
       timeout: 60
+  milvus:
+    connection:
+      timeout: 60
+      
 quarkus:
   smallrye-openapi:
     store-schema-directory: ../openapi
