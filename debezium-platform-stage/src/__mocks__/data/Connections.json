@@ -9,6 +9,7 @@
             "username": "debezium",
             "additional-key": "additional-val"
         },
+        "description": "MariaDB connection for testing",
         "name": "mariaconnection",
         "type": "MARIADB"
     },
@@ -17,6 +18,7 @@
         "config": {
             "test-value": "test-key"
         },
+        "description": "Kinesis connection for streaming",
         "name": "kinesis-connection",
         "type": "AMAZON_KINESIS"
     }
