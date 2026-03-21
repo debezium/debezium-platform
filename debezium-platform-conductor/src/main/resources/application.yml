@@ -72,6 +72,10 @@ destinations:
   qdrant:
     connection:
       timeout: 60
+  milvus:
+    connection:
+      timeout: 60
+      
 quarkus:
   hibernate-orm:
     mapping:
