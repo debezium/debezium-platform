@@ -23,6 +23,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OrderColumn;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+import io.debezium.platform.validation.ValidationPatterns;
 
 @Entity(name = "pipeline")
 public class PipelineEntity {
@@ -30,6 +34,8 @@ public class PipelineEntity {
     @GeneratedValue
     private Long id;
     @NotEmpty
+    @Size(max = 253, message = "Pipeline name must be 253 characters or fewer")
+    @Pattern(regexp = ValidationPatterns.RFC_1123_SUBDOMAIN, message = "Pipeline name must be a lowercase RFC 1123 subdomain")
     @Column(unique = true, nullable = false)
     private String name;
     private String description;

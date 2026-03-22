@@ -79,6 +79,7 @@ import TrademarkMessage from "@components/TrademarkMessage";
 import { useTranslation } from "react-i18next";
 import { Properties } from "src/hooks/useConnectorForm";
 import { selectedTransformAtom } from "./PipelineDesigner";
+import { getPipelineNameValidationError } from "@utils/pipelineNameValidation";
 
 const getItems = (
   selectedTransform: Transform[],
@@ -776,11 +777,9 @@ const PipelineDesignerEdit: React.FunctionComponent<
                             onClick={(e) => {
                               e.preventDefault();
 
-                              if (!values["pipeline-name"]) {
-                                setError(
-                                  "pipeline-name",
-                                  "Pipeline name is required."
-                                );
+                              const pipelineNameError = getPipelineNameValidationError(values["pipeline-name"]);
+                              if (pipelineNameError) {
+                                setError("pipeline-name", pipelineNameError);
                               } else {
                                 handleEditPipeline(values);
                               }

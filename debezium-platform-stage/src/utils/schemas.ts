@@ -1,3 +1,8 @@
+import {
+    PIPELINE_NAME_MAX_LENGTH,
+    RFC_1123_SUBDOMAIN_PATTERN_SOURCE,
+} from "./pipelineNameValidation";
+
 // Connector schema
 export const connectorSchema = {
     type: "object",
@@ -60,7 +65,11 @@ export const transformSchema = {
 export const pipelineSchema = {
     type: "object",
     properties: {
-        name: { type: "string" },
+        name: {
+            type: "string",
+            maxLength: PIPELINE_NAME_MAX_LENGTH,
+            pattern: RFC_1123_SUBDOMAIN_PATTERN_SOURCE,
+        },
         description: { type: "string" },
         source: {
             type: "object",

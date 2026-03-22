@@ -7,6 +7,8 @@ package io.debezium.platform.api;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -47,17 +49,23 @@ class PipelineResourceIT {
     String datasourceUrl;
 
     ArgumentCaptor<DebeziumServer> debeziumServerArgumentCaptor;
+    Long sourceId;
+    Long destinationId;
+    Long transformId;
+    String resourceSuffix;
 
     @BeforeEach
     void setUp() {
 
         debeziumServerArgumentCaptor = ArgumentCaptor.forClass(DebeziumServer.class);
+        Mockito.reset(k8sAdapter);
+        resourceSuffix = String.valueOf(System.nanoTime());
 
         TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
 
-        createResource("api/connections", """
+        Long sourceConnectionId = createResource("api/connections", """
                 {
-                       "name": "postgres-connection",
+                       "name": "postgres-connection-%s",
                        "type": "POSTGRESQL",
                        "config": {
                          "hostname": "postgresql",
@@ -67,52 +75,52 @@ class PipelineResourceIT {
                          "database": "debezium"
                        }
                      }
-                  }""".formatted(dbHelper.getPort()));
+                  }""".formatted(resourceSuffix, dbHelper.getPort()));
 
-        createResource("api/connections", """
+        Long destinationConnectionId = createResource("api/connections", """
                 {
-                     "name": "kafka-connection",
+                     "name": "kafka-connection-%s",
                      "type": "KAFKA",
                      "config": {
                        "bootstrap.servers": "dbz-kafka-kafka-bootstrap.debezium-platform:9092"
                      }
-                   }""");
+                   }""".formatted(resourceSuffix));
 
-        createResource("api/sources", """
+        sourceId = createResource("api/sources", """
                 {
-                    "name": "test-source",
+                    "name": "test-source-%s",
                     "description": "Yummy data source",
                     "type": "io.debezium.connector.postgresql.PostgresConnector",
                     "schema": "dummy",
                     "vaults": [],
                     "connection": {
-                        "id": 1
+                        "id": %s
                     },
                     "config": {
                       "topic.prefix": "inventory",
                       "schema.include.list": "inventory"
                     }
-                  }""");
+                  }""".formatted(resourceSuffix, sourceConnectionId));
 
-        createResource("api/destinations", """
+        destinationId = createResource("api/destinations", """
                  {
-                  "name": "test-destination",
+                  "name": "test-destination-%s",
                   "type": "kafka",
                   "description": "Some funny destination",
                   "schema": "dummy",
                   "vaults": [],
                    "connection": {
-                        "id":2
+                        "id": %s
                     },
                   "config": {
                     "producer.key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
                     "producer.value.serializer": "org.apache.kafka.common.serialization.StringSerializer"
                   }
-                }""");
+                }""".formatted(resourceSuffix, destinationConnectionId));
 
-        createResource("api/transforms", """
+        transformId = createResource("api/transforms", """
                 {
-                   "name": "Debezium marker",
+                   "name": "Debezium marker %s",
                    "description": "Extract Debezium payload",
                    "type": "io.debezium.transforms.ExtractNewRecordState",
                    "schema": "string",
@@ -129,16 +137,20 @@ class PipelineResourceIT {
                      },
                      "negate": false
                    }
-                 }""");
+                 }""".formatted(resourceSuffix));
     }
 
-    private static void createResource(String path, String body) {
+    private static Long createResource(String path, String body) {
 
-        given()
+        Number id = given()
                 .header("Content-Type", "application/json")
                 .body(body).when().post(path)
                 .then()
-                .statusCode(201);
+                .statusCode(201)
+                .extract()
+                .path("id");
+
+        return id.longValue();
     }
 
     @Test
@@ -150,24 +162,24 @@ class PipelineResourceIT {
                    "name": "test-pipeline",
                    "description": "It goes from here to there!",
                    "source": {
-                     "id": 1,
-                     "name": "test-source"
+                     "id": %s,
+                     "name": "test-source-%s"
                    },
                    "destination": {
-                     "id": 1,
-                     "name": "test-destination"
+                     "id": %s,
+                     "name": "test-destination-%s"
                    },
                    "transforms": [
                      {
-                       "name": "ExtractRecords",
-                       "id": 1
+                        "name": "ExtractRecords",
+                        "id": %s
                      }
                    ],
                    "logLevel": "INFO",
                    "logLevels": {
                      "io.debezium.pipeline.EventDispatcher": "TRACE"
                    }
-                 }""";
+                 }""".formatted(sourceId, resourceSuffix, destinationId, resourceSuffix, transformId);
 
         given()
                 .header("Content-Type", "application/json")
@@ -187,15 +199,16 @@ class PipelineResourceIT {
 
         TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
         String expectedJdbcUrl = dbHelper.toJdbcUrl("loggerLevel=OFF");
+        String predicateId = debeziumServer.asConfiguration().getAsMapSimple().get("debezium.predicates");
 
         assertThat(debeziumServer.asConfiguration().getAsMapSimple())
                 .containsEntry("debezium.api.enabled", "true")
                 .containsEntry("debezium.format.header", "json")
                 .containsEntry("debezium.format.key", "json")
                 .containsEntry("debezium.format.value", "json")
-                .containsEntry("debezium.predicates", "p1")
-                .containsEntry("debezium.predicates.p1.pattern", "inventory.inventory.products")
-                .containsEntry("debezium.predicates.p1.type", "org.apache.kafka.connect.transforms.predicates.TopicNameMatches")
+                .containsEntry("debezium.predicates", predicateId)
+                .containsEntry("debezium.predicates." + predicateId + ".pattern", "inventory.inventory.products")
+                .containsEntry("debezium.predicates." + predicateId + ".type", "org.apache.kafka.connect.transforms.predicates.TopicNameMatches")
                 .containsEntry("debezium.sink.kafka.producer.bootstrap.servers", "dbz-kafka-kafka-bootstrap.debezium-platform:9092")
                 .containsEntry("debezium.sink.kafka.producer.key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
                 .containsEntry("debezium.sink.kafka.producer.value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
@@ -225,12 +238,53 @@ class PipelineResourceIT {
                 .containsEntry("debezium.transforms.t0.add.fields", "op")
                 .containsEntry("debezium.transforms.t0.add.headers", "db,table")
                 .containsEntry("debezium.transforms.t0.negate", "false")
-                .containsEntry("debezium.transforms.t0.predicate", "p1")
+                .containsEntry("debezium.transforms.t0.predicate", predicateId)
                 .containsEntry("debezium.transforms.t0.type", "io.debezium.transforms.ExtractNewRecordState")
                 .containsEntry("quarkus.log.category.\"io.debezium.pipeline.EventDispatcher\".level", "TRACE")
                 .containsEntry("quarkus.log.console.json", "false")
                 .containsEntry("quarkus.log.level", "INFO")
                 .containsEntry("quarkus.log.min-level", "TRACE");
+    }
+
+    @Test
+    @DisplayName("When a pipeline name is not RFC 1123 compliant then pipeline creation must be rejected")
+    void rejectInvalidPipelineName() {
+
+        String jsonBody = """
+                {
+                   "name": "Demo",
+                   "description": "It goes from here to there!",
+                   "source": {
+                     "id": %s,
+                     "name": "test-source-%s"
+                   },
+                   "destination": {
+                     "id": %s,
+                     "name": "test-destination-%s"
+                   },
+                   "transforms": [
+                     {
+                        "name": "ExtractRecords",
+                        "id": %s
+                     }
+                   ],
+                   "logLevel": "INFO",
+                   "logLevels": {
+                     "io.debezium.pipeline.EventDispatcher": "TRACE"
+                   }
+                 }""".formatted(sourceId, resourceSuffix, destinationId, resourceSuffix, transformId);
+
+        given()
+                .header("Content-Type", "application/json")
+                .body(jsonBody).when().post("api/pipelines")
+                .then()
+                .statusCode(400)
+                .body("title", is("Constraint Violation"))
+                .body("status", is(400))
+                .body("violations.field", hasItem("name"))
+                .body("violations.message", hasItem("Pipeline name must be a lowercase RFC 1123 subdomain"));
+
+        Mockito.verify(k8sAdapter, Mockito.never()).deployPipeline(Mockito.any());
     }
 
 }

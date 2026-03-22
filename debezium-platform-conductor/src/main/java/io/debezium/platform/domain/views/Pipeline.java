@@ -10,6 +10,8 @@ import java.util.Map;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import com.blazebit.persistence.view.CreatableEntityView;
 import com.blazebit.persistence.view.EntityView;
@@ -21,11 +23,18 @@ import io.debezium.platform.domain.views.base.NamedView;
 import io.debezium.platform.domain.views.refs.DestinationReference;
 import io.debezium.platform.domain.views.refs.SourceReference;
 import io.debezium.platform.domain.views.refs.TransformReference;
+import io.debezium.platform.validation.ValidationPatterns;
 
 @EntityView(PipelineEntity.class)
 @CreatableEntityView
 @UpdatableEntityView
 public interface Pipeline extends NamedView {
+    @Override
+    @NotEmpty
+    @Size(max = 253, message = "Pipeline name must be 253 characters or fewer")
+    @Pattern(regexp = ValidationPatterns.RFC_1123_SUBDOMAIN, message = "Pipeline name must be a lowercase RFC 1123 subdomain")
+    String getName();
+
     String getDescription();
 
     @NotNull

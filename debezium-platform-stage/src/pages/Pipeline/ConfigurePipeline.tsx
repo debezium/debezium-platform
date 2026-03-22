@@ -68,6 +68,7 @@ import { pipelineSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css"
 import { Properties } from "src/hooks/useConnectorForm";
 import { useData } from "@appContext/AppContext";
+import { getPipelineNameValidationError } from "@utils/pipelineNameValidation";
 
 const ajv = new Ajv();
 
@@ -327,8 +328,10 @@ const ConfigurePipeline: React.FunctionComponent = () => {
     setError: (fieldId: string, error: string | undefined) => void
   ) => {
     if (editorSelected === "form-editor") {
-      if (!values["pipeline-name"]) {
-        setError("pipeline-name", "Pipeline name is required.");
+      const pipelineNameError = getPipelineNameValidationError(values["pipeline-name"]);
+      if (pipelineNameError) {
+        setError("pipeline-name", pipelineNameError);
+        return;
       } else if (!values["log-level"]) {
         setError("log-level", "Root log level is required.");
         return;
