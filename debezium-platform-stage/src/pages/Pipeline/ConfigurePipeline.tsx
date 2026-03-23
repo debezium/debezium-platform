@@ -68,7 +68,10 @@ import { pipelineSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css"
 import { Properties } from "src/hooks/useConnectorForm";
 import { useData } from "@appContext/AppContext";
-import { getPipelineNameValidationError } from "@utils/pipelineNameValidation";
+import {
+  getPipelineSchemaValidationError,
+  getPipelineNameValidationError,
+} from "@utils/pipelineNameValidation";
 
 const ajv = new Ajv();
 
@@ -143,7 +146,10 @@ const FormSyncManager: React.FC<{
       }
       setCodeAlert("");
     } else {
-      setCodeAlert(ajv.errorsText(validate.errors));
+      setCodeAlert(
+        getPipelineSchemaValidationError(validate.errors) ??
+          ajv.errorsText(validate.errors)
+      );
     }
   }, [code]);
 
@@ -374,7 +380,10 @@ const ConfigurePipeline: React.FunctionComponent = () => {
       const payload = code;
       const isValid = validate(payload);
       if (!isValid) {
-        setCodeAlert(ajv.errorsText(validate.errors));
+        setCodeAlert(
+          getPipelineSchemaValidationError(validate.errors) ??
+            ajv.errorsText(validate.errors)
+        );
         return;
       } else {
         setIsLoading(true);
