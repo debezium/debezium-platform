@@ -94,7 +94,7 @@ and then install *debezium-platform* through `helm`
 ```shell
 cd helm && 
 helm dependency build &&
-helm install debezium-platform . -n debezium-platform -f ../examples/example.yaml --set ingress.className=nginx &&
+helm install debezium-platform . -n debezium-platform -f ../examples/example.yaml &&
 cd ..
 ```
 
