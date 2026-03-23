@@ -6,6 +6,7 @@ export const datatype = {
     sqlserver: ["schema", "table"],
     oracle: ["schema", "table"],
     mongodb: ["database", "collection"],
+    db2: ["schema", "table"],
 }
 
 const DATABASE_FIELD_MAPPINGS: Record<string, { schema: string; table: string }> = {

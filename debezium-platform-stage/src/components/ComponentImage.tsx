@@ -14,6 +14,7 @@ import natsStreaming from "../assets/NATS_stream.png";
 import kafka from "../assets/kafka.png";
 import infinispan from "../assets/infinispan.png";
 import pubsubLite from "../assets/pub-sub-lite.png";
+import ibmDb2 from "../assets/ibm-db2.png";
 import pravega from "../assets/pravega.webp";
 import mariadb from "../assets/mariadb.png";
 import oracle from "../assets/oracle.png";
@@ -50,6 +51,10 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
       altText = "Postgres";
       src = postgreSql;
       break;
+    case connectorType.includes("db2"):
+      altText = "IBM Db2";
+      src = ibmDb2;
+      break;  
     case connectorType.includes("cassandra"):
       altText = "Cassandra";
       src = cassandra;

@@ -23,10 +23,8 @@ import { useState } from "react";
 import { useQuery } from "react-query";
 import { debounce } from "lodash";
 import _ from "lodash";
-import { Catalog, CatalogResponse } from "../../apis";
-import catalogFixture from "../../__fixtures__/catalog.json";
-// import { fetchData } from "../../apis";
-// import { API_URL } from "../../utils/constants";
+import { fetchData, Catalog, CatalogResponse } from "../../apis";
+import { API_URL } from "../../utils/constants";
 import { useTranslation } from "react-i18next";
 import ApiError from "../../components/ApiError";
 import PageTour from "../../components/PageTour";
@@ -65,8 +63,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
   const { data: sourceCatalog = [], isLoading, error } = useQuery<Catalog[], Error>(
     "source-catalog",
     async () => {
-      // TODO: Replace fixture with: fetchData<CatalogResponse>(`${API_URL}/api/catalog`)
-      const response = catalogFixture as CatalogResponse;
+      const response = await fetchData<CatalogResponse>(`${API_URL}/api/catalog`);
       return (response.components["source-connector"] ?? []).map((c) => ({
         id: c.class,
         type: c.class,

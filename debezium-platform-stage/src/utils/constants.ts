@@ -36,6 +36,7 @@ export enum DatabaseType {
   MARIADB = "MARIADB",
   SQLSERVER = "SQLSERVER",
   POSTGRESQL = "POSTGRESQL",
+  DB2 = "DB2",
 }
 
 export const NOTIFICATION_SERVICE_LOG_PREFIX = "[Notification Service]";

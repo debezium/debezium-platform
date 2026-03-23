@@ -91,6 +91,7 @@ export const DebeziumConnectorClassEnum = [
     "io.debezium.connector.mysql.MySqlConnector",
     "io.debezium.connector.mongodb.MongoDbConnector",
     "io.debezium.connector.postgresql.PostgresConnector",
+    "io.debezium.connector.db2.Db2Connector",
     "io.debezium.connector.sqlserver.SqlServerConnector",
     "io.debezium.connector.oracle.OracleConnector",
     "io.debezium.connector.mariadb.MariaDbConnector"

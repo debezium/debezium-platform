@@ -28,12 +28,12 @@ export const getConnectorSchemaType = (
   connectorId: string,
   dataType?: string
 ): string => {
-  const catalogIds = ['oracle', 'postgresql', 'mysql', 'mariadb', 'mongodb', 'sqlserver'];
+  const catalogIds = ['oracle', 'postgresql', 'mysql', 'mariadb', 'mongodb', 'sqlserver', 'db2'];
   if (connectorId && catalogIds.includes(connectorId.toLowerCase())) {
     return connectorId.toLowerCase();
   }
   if (dataType) {
-    const m = dataType.toLowerCase().match(/oracle|postgresql|mysql|mariadb|mongodb|sqlserver/);
+    const m = dataType.toLowerCase().match(/oracle|postgresql|mysql|mariadb|mongodb|sqlserver|db2/);
     if (m) return m[0];
   }
   return 'oracle';
@@ -83,6 +83,9 @@ export const getDatabaseType = (connectorType: string)  => {
     case connectorType.includes("oracle"):
       type = DatabaseType.ORACLE;
       break;
+    case connectorType.includes("db2"):
+      type = DatabaseType.DB2;
+      break;
   }
   return type;
 }
@@ -110,6 +113,9 @@ export const getConnectorTypeName = (connectorType: string) => {
       break;
     case connectorType.includes("mariadb"):
       name = "MariaDB";
+      break;
+    case connectorType.includes("db2"):
+      name = "IBM Db2";
       break;
     case connectorType.includes("sqlserver"):
       name = "SQL Server";
