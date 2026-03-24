@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.ConnectionValidator;
+import io.debezium.util.Strings;
 
 /**
  * Implementation of {@link ConnectionValidator} for Infinispan connections.
@@ -103,13 +104,19 @@ public class InfinispanConnectionValidator implements ConnectionValidator {
                     : null;
 
             // Infinispan treats both-empty credentials as no-auth, but one-empty causes TransportException.
-            boolean hasUser = user != null && !user.isEmpty();
-            boolean hasPassword = password != null && !password.isEmpty();
-            if (hasUser != hasPassword) {
+            if (Strings.isNullOrEmpty(user) != Strings.isNullOrEmpty(password)) {
                 return ConnectionValidationResult.failed("User and password must both be provided for authentication");
             }
 
-            return performConnectionValidation(serverHost, serverPort, cacheName, user, password);
+            String serverUri;
+            if (!Strings.isNullOrEmpty(user) && !Strings.isNullOrEmpty(password)) {
+                serverUri = HOTROD_URI_WITH_AUTH.formatted(user, password, serverHost, serverPort);
+            }
+            else {
+                serverUri = HOTROD_URI_NO_AUTH.formatted(serverHost, serverPort);
+            }
+
+            return performConnectionValidation(serverHost, serverPort, cacheName, serverUri);
         }
         catch (IllegalArgumentException e) {
             return ConnectionValidationResult.failed(e.getMessage());
@@ -127,24 +134,12 @@ public class InfinispanConnectionValidator implements ConnectionValidator {
      * @param serverHost the Infinispan server hostname
      * @param serverPort the Infinispan server port
      * @param cacheName the Infinispan cache name to verify
-     * @param user optional username for authentication
-     * @param password optional password for authentication
+     * @param serverUri the HotRod URI including authentication if applicable
      * @return ConnectionValidationResult indicating success or failure
      */
-    private ConnectionValidationResult performConnectionValidation(String serverHost, int serverPort, String cacheName, String user, String password) {
+    private ConnectionValidationResult performConnectionValidation(String serverHost, int serverPort, String cacheName, String serverUri) {
 
         LOGGER.debug("Creating Infinispan RemoteCacheManager for validation");
-
-        String serverUri;
-        boolean hasUser = user != null && !user.isEmpty();
-        boolean hasPassword = password != null && !password.isEmpty();
-
-        if (hasUser && hasPassword) {
-            serverUri = HOTROD_URI_WITH_AUTH.formatted(user, password, serverHost, serverPort);
-        }
-        else {
-            serverUri = HOTROD_URI_NO_AUTH.formatted(serverHost, serverPort);
-        }
 
         ConfigurationBuilder clientConfig = new ConfigurationBuilder();
         clientConfig.uri(serverUri);
