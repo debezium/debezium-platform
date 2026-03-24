@@ -199,16 +199,16 @@ class PipelineResourceIT {
 
         TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
         String expectedJdbcUrl = dbHelper.toJdbcUrl("loggerLevel=OFF");
-        String predicateId = debeziumServer.asConfiguration().getAsMapSimple().get("debezium.predicates");
+        String expectedPredicateId = "p" + transformId;
 
         assertThat(debeziumServer.asConfiguration().getAsMapSimple())
                 .containsEntry("debezium.api.enabled", "true")
                 .containsEntry("debezium.format.header", "json")
                 .containsEntry("debezium.format.key", "json")
                 .containsEntry("debezium.format.value", "json")
-                .containsEntry("debezium.predicates", predicateId)
-                .containsEntry("debezium.predicates." + predicateId + ".pattern", "inventory.inventory.products")
-                .containsEntry("debezium.predicates." + predicateId + ".type", "org.apache.kafka.connect.transforms.predicates.TopicNameMatches")
+                .containsEntry("debezium.predicates", expectedPredicateId)
+                .containsEntry("debezium.predicates." + expectedPredicateId + ".pattern", "inventory.inventory.products")
+                .containsEntry("debezium.predicates." + expectedPredicateId + ".type", "org.apache.kafka.connect.transforms.predicates.TopicNameMatches")
                 .containsEntry("debezium.sink.kafka.producer.bootstrap.servers", "dbz-kafka-kafka-bootstrap.debezium-platform:9092")
                 .containsEntry("debezium.sink.kafka.producer.key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
                 .containsEntry("debezium.sink.kafka.producer.value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
@@ -238,7 +238,7 @@ class PipelineResourceIT {
                 .containsEntry("debezium.transforms.t0.add.fields", "op")
                 .containsEntry("debezium.transforms.t0.add.headers", "db,table")
                 .containsEntry("debezium.transforms.t0.negate", "false")
-                .containsEntry("debezium.transforms.t0.predicate", predicateId)
+                .containsEntry("debezium.transforms.t0.predicate", expectedPredicateId)
                 .containsEntry("debezium.transforms.t0.type", "io.debezium.transforms.ExtractNewRecordState")
                 .containsEntry("quarkus.log.category.\"io.debezium.pipeline.EventDispatcher\".level", "TRACE")
                 .containsEntry("quarkus.log.console.json", "false")
