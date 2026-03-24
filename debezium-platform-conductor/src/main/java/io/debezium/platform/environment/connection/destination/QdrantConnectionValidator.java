@@ -54,7 +54,7 @@ public class QdrantConnectionValidator implements ConnectionValidator {
 
         Integer port = ConnectionConfigUtils.getInteger(config, PORT);
         if (port == null || port <= 0) {
-            port = 6333;
+            return ConnectionValidationResult.failed("Port must be specified and must be a positive number for Qdrant connection");
         }
 
         String apiKey = ConnectionConfigUtils.getString(config, API_KEY);
