@@ -54,6 +54,7 @@
         <version.nats>2.17.6</version.nats>
         <version.oras>0.3.1</version.oras>
         <version.rabbitmq>5.20.0</version.rabbitmq>
+        <version.milvus>2.6.4</version.milvus>
 
         <format.formatter.goal>format</format.formatter.goal>
         <format.imports.goal>sort</format.imports.goal>
@@ -443,7 +444,7 @@
         <dependency>
             <groupId>io.milvus</groupId>
             <artifactId>milvus-sdk-java</artifactId>
-            <version>2.6.4</version>
+            <version>${version.milvus}</version>
         </dependency>
 
         <dependency>

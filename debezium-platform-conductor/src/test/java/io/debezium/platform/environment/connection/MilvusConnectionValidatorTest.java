@@ -28,7 +28,6 @@ import io.debezium.platform.environment.connection.destination.MilvusConnectionV
  * and edge cases in the validator implementation.
  * </p>
  *
- * @author Pranav Tiwari
  */
 class MilvusConnectionValidatorTest {
 
@@ -85,7 +84,7 @@ class MilvusConnectionValidatorTest {
     @Test
     @DisplayName("Should fail validation when URI doesn't start with http:// or https://")
     void shouldFailWhenUriHasInvalidProtocol() {
-        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, 
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS,
                 Map.of("uri", "localhost:19530"));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
