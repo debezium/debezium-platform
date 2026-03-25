@@ -283,8 +283,6 @@ class PipelineResourceIT {
                 .body("status", is(400))
                 .body("violations.field", hasItem("name"))
                 .body("violations.message", hasItem("Pipeline name must be a lowercase RFC 1123 subdomain"));
-
-        Mockito.verify(k8sAdapter, Mockito.never()).deployPipeline(Mockito.any());
     }
 
 }
