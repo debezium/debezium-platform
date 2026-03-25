@@ -23,7 +23,6 @@ import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.destination.MilvusConnectionValidator;
-import io.debezium.platform.environment.database.MilvusTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 
@@ -34,7 +33,6 @@ import io.quarkus.test.junit.QuarkusTest;
  * connection validation against an actual Milvus instance without authentication.
  * </p>
  *
- * @author Pranav Tiwari
  */
 @QuarkusTest
 @QuarkusTestResource(MilvusTestResource.class)
@@ -62,6 +60,7 @@ class MilvusConnectionValidatorIT {
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
         assertTrue(result.valid(), "Connection validation should succeed");
+        assertThat(result.message()).doesNotContainIgnoringCase("error", "fail", "invalid");
     }
 
     @Test
@@ -84,6 +83,7 @@ class MilvusConnectionValidatorIT {
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
         assertTrue(result.valid(), "Connection validation with database should succeed");
+        assertThat(result.message()).doesNotContainIgnoringCase("error", "fail", "invalid");
     }
 
     @Test
@@ -131,5 +131,124 @@ class MilvusConnectionValidatorIT {
 
         assertFalse(result.valid(), "Connection validation should fail");
         assertThat(result.message()).containsAnyOf("timeout", "connect", "Connection timeout");
+    }
+
+    @Test
+    @DisplayName("Should successfully connect with username and password authentication")
+    void shouldConnectWithUsernamePassword() {
+        GenericContainer<?> container = MilvusTestResource.getContainer();
+
+        Awaitility.await()
+                .atMost(300, TimeUnit.SECONDS)
+                .until(container::isRunning);
+
+        String uri = String.format("http://%s:%d",
+                container.getHost(),
+                container.getMappedPort(19530));
+
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
+                "uri", uri,
+                "username", "root",
+                "password", "milvus"));
+
+        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
+
+        assertTrue(result.valid(), "Connection validation with username and password should succeed");
+        assertThat(result.message()).doesNotContainIgnoringCase("error", "fail", "invalid", "authentication");
+    }
+
+    @Test
+    @DisplayName("Should successfully connect with token authentication")
+    void shouldConnectWithTokenAuth() {
+        GenericContainer<?> container = MilvusTestResource.getContainer();
+
+        Awaitility.await()
+                .atMost(300, TimeUnit.SECONDS)
+                .until(container::isRunning);
+
+        String uri = String.format("http://%s:%d",
+                container.getHost(),
+                container.getMappedPort(19530));
+
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
+                "uri", uri,
+                "token", "root:milvus"));
+
+        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
+
+        assertTrue(result.valid(), "Connection validation with token authentication should succeed");
+        assertThat(result.message()).doesNotContainIgnoringCase("error", "fail", "invalid", "authentication");
+    }
+
+    @Test
+    @DisplayName("Should fail with invalid username and password")
+    void shouldFailWithInvalidCredentials() {
+        GenericContainer<?> container = MilvusTestResource.getContainer();
+
+        Awaitility.await()
+                .atMost(300, TimeUnit.SECONDS)
+                .until(container::isRunning);
+
+        String uri = String.format("http://%s:%d",
+                container.getHost(),
+                container.getMappedPort(19530));
+
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
+                "uri", uri,
+                "username", "root",
+                "password", "wrongpassword"));
+
+        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
+
+        assertFalse(result.valid(), "Connection validation with invalid credentials should fail");
+        assertThat(result.message()).containsAnyOf("authentication", "auth", "permission", "credentials");
+    }
+
+    @Test
+    @DisplayName("Should fail with invalid token")
+    void shouldFailWithInvalidToken() {
+        GenericContainer<?> container = MilvusTestResource.getContainer();
+
+        Awaitility.await()
+                .atMost(300, TimeUnit.SECONDS)
+                .until(container::isRunning);
+
+        String uri = String.format("http://%s:%d",
+                container.getHost(),
+                container.getMappedPort(19530));
+
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
+                "uri", uri,
+                "token", "root:invalidtoken"));
+
+        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
+
+        assertFalse(result.valid(), "Connection validation with invalid token should fail");
+        assertThat(result.message()).containsAnyOf("authentication", "auth", "permission", "credentials");
+    }
+
+    @Test
+    @DisplayName("Should successfully connect with all parameters including authentication")
+    void shouldConnectWithAllParams() {
+        GenericContainer<?> container = MilvusTestResource.getContainer();
+
+        Awaitility.await()
+                .atMost(300, TimeUnit.SECONDS)
+                .until(container::isRunning);
+
+        String uri = String.format("http://%s:%d",
+                container.getHost(),
+                container.getMappedPort(19530));
+
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
+                "uri", uri,
+                "database", "default",
+                "username", "root",
+                "password", "milvus"));
+
+        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
+
+        assertTrue(result.valid(), "Connection validation with all parameters should succeed");
+        assertThat(result.message()).doesNotContainIgnoringCase("error", "fail", "invalid", "authentication");
     }
 }

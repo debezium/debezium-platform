@@ -28,7 +28,6 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
  * </ul>
  * </p>
  *
- * @author Pranav Tiwari
  */
 public class MilvusTestResource implements QuarkusTestResourceLifecycleManager {
 

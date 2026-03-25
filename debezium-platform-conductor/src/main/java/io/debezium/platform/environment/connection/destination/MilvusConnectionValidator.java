@@ -38,7 +38,6 @@ import io.milvus.v2.client.MilvusClientV2;
  * </ul>
  * </p>
  *
- * @author Pranav Tiwari
  */
 @ApplicationScoped
 @Named("MILVUS")
