@@ -251,14 +251,14 @@
       "description": "Properties required to connect to a Redis server, including optional authentication and SSL",
       "type": "object",
       "required": [
-        "hostname",
+        "host",
         "port"
       ],
       "additionalProperties": {
         "type": "string"
       },
       "properties": {
-        "hostname": {
+        "host": {
           "type": "string",
           "title": "Redis server hostname or IP address"
         },
