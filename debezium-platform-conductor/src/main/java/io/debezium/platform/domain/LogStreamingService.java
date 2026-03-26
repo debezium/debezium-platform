@@ -85,6 +85,7 @@ public class LogStreamingService {
                 var line = reader.readLine();
                 if (line == null) {
                     Thread.sleep(NO_DATA_SLEEP_MS);
+                    continue;
                 }
                 consumer.accept(line);
             }
