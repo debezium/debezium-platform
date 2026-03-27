@@ -63,7 +63,7 @@ public class GlobalExceptionMapper {
         LOGGER.error("Error while processing request", ex);
 
         return Response.status(Response.Status.BAD_REQUEST)
-                .entity(new ErrorResponse("resource not found", List.of(ex.getMessage())))
+                .entity(new ErrorResponse("operation not supported", List.of(ex.getMessage())))
                 .build();
     }
 
@@ -73,7 +73,7 @@ public class GlobalExceptionMapper {
         LOGGER.error("Error while processing request", ex);
 
         return Response.status(Response.Status.BAD_REQUEST)
-                .entity(new ErrorResponse("resource not found", List.of(ex.getMessage())))
+                .entity(new ErrorResponse("invalid argument", List.of(ex.getMessage())))
                 .build();
     }
 
