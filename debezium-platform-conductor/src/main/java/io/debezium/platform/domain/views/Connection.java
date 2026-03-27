@@ -22,6 +22,10 @@ public interface Connection extends NamedView {
 
     void setName(String name);
 
+    String getDescription();
+
+    void setDescription(String description);
+
     ConnectionEntity.Type getType();
 
     void setType(ConnectionEntity.Type type);

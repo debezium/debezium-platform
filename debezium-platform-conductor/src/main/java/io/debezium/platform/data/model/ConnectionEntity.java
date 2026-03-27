@@ -31,6 +31,8 @@ public class ConnectionEntity {
     @Column(unique = true, nullable = false)
     private String name;
 
+    private String description;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Type type;
@@ -88,6 +90,14 @@ public class ConnectionEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Type getType() {

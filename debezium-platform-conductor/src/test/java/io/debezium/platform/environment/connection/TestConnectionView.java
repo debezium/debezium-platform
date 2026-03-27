@@ -36,6 +36,16 @@ public class TestConnectionView implements Connection {
     }
 
     @Override
+    public String getDescription() {
+        return null;
+    }
+
+    @Override
+    public void setDescription(String description) {
+
+    }
+
+    @Override
     public void setType(ConnectionEntity.Type type) {
 
     }
