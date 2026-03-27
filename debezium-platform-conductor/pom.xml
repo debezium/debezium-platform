@@ -51,7 +51,7 @@
         <version.code.formatter>2.29.0</version.code.formatter>
         <version.nats>2.17.6</version.nats>
         <version.oras>0.3.1</version.oras>
-        <version.rabbitmq>5.20.0</version.rabbitmq>
+        <version.rabbitmq>5.29.0</version.rabbitmq>
 
         <format.formatter.goal>format</format.formatter.goal>
         <format.imports.goal>sort</format.imports.goal>
