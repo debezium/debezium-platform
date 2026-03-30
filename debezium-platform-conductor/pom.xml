@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>debezium-platform-conductor</artifactId>
-    <version>3.4.3-SNAPSHOT</version>
+    <version>3.4.3.Final</version>
     <name>Debezium Platform Conductor</name>
 
     <properties>
