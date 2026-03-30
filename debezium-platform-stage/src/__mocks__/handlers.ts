@@ -5,6 +5,7 @@ import sourcesData from "./data/Sources.json";
 import destinationsData from "./data/Destinations.json";
 import sourceDetails_2 from "./data/SourceDetails_2.json";
 import destinationDetails_2 from "./data/DestinationDetails_2.json";
+import connectionsData from "./data/Connections.json";
 
 // Intercept API requests - using wildcard to match both relative and absolute URLs
 export const handlers = [
@@ -49,7 +50,7 @@ export const handlers = [
   }),
   //Connection
   http.get("*/api/connections", () => {
-    return HttpResponse.json(destinationsData);
+    return HttpResponse.json(connectionsData);
   }),
   http.get("*/api/connections/:connectionId/collections", () => {
     // Return empty collections data
