@@ -5,6 +5,7 @@
  */
 package io.debezium.platform.environment.connection.destination.pulsar;
 
+import io.debezium.util.Strings;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.literal.NamedLiteral;
@@ -18,7 +19,7 @@ public class PulsarAuthHandlerFactory {
     }
 
     public PulsarAuthHandler getAuthHandler(String authType) {
-        if (authType == null || authType.trim().isEmpty()) {
+        if (Strings.isNullOrEmpty(authType)) {
             throw new IllegalArgumentException("Auth type cannot be null");
         }
         String authHandlerName = mapToAuthHandlerName(authType);

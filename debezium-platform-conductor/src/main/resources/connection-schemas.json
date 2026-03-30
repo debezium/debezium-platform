@@ -257,45 +257,15 @@
           "title": "JWT token for JWT authentication",
           "description": "Required if authScheme is 'JWT'."
         },
-        "oAuth2IssuerUrl": {
+        "oauth2IssuerUrl": {
           "type": "string",
           "title": "OAuth2 issuer URL",
-          "description": "Required if authScheme is 'OAuth2'."
+          "description": "Required if authScheme is OAuth2."
         },
-        "oAuth2Audience": {
+        "oauth2PrivateKey": {
           "type": "string",
-          "title": "OAuth2 audience",
-          "description": "Optional for OAuth2 auth."
-        },
-        "oAuth2CredentialsUrl": {
-          "type": "string",
-          "title": "OAuth2 credentials URL",
-          "description": "Required if authScheme is OAuth2 and client credentials flow is used."
-        },
-        "oAuth2ClientId": {
-          "type": "string",
-          "title": "OAuth2 client ID"
-        },
-        "oAuth2ClientSecret": {
-          "type": "string",
-          "title": "OAuth2 client secret",
-          "description": "Required if authScheme is 'OAuth2'.",
-          "format": "password"
-        },
-        "kerberosKeytabFile": {
-          "type": "string",
-          "title": "Path to the Kerberos keytab file",
-          "description": "Required if authScheme is 'Kerberos'."
-        },
-        "kerberosPrincipal": {
-          "type": "string",
-          "title": "Kerberos principal name",
-          "description": "Required if authScheme is 'Kerberos'."
-        },
-        "kerberosServiceName": {
-          "type": "string",
-          "title": "Kerberos service name",
-          "description": "Optional for Kerberos auth."
+          "title": "OAuth2 private key",
+          "description": "Required if authScheme is OAuth2."
         }
       }
     }

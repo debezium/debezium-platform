@@ -1,7 +1,7 @@
 /*
  * Copyright Debezium Authors.
  *
- * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.debezium.platform.environment.connection.destination.pulsar;
 
@@ -16,10 +16,14 @@ import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.impl.auth.AuthenticationToken;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Named("JWT")
 @ApplicationScoped
 public class JwtAuthHandler implements PulsarAuthHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthHandler.class);
+
     @Override
     public void configure(PulsarAdminBuilder builder, Map<String, Object> config) {
         String jwtToken = (String) config.get("jwtToken");
@@ -32,7 +36,7 @@ public class JwtAuthHandler implements PulsarAuthHandler {
     @Override
     public void validate(Map<String, Object> config) throws IllegalArgumentException {
         if (isConfigValueMissing(config, "jwtToken")) {
-            throw new IllegalArgumentException("invalid or missing jwtToken");
+            throw new IllegalArgumentException("JWT token is missing or blank");
         }
 
         String jwtToken = config.get("jwtToken").toString();
@@ -40,13 +44,13 @@ public class JwtAuthHandler implements PulsarAuthHandler {
         // Basic JWT validation: 3 parts separated by '.'
         String[] parts = jwtToken.split("\\.");
         if (parts.length != 3) {
-            throw new IllegalArgumentException("invalid jwtToken format");
+            throw new IllegalArgumentException("JWT token must consist of exactly 3 Base64URL-encoded parts separated by '.'");
         }
 
         // Check parts are not empty
         for (String part : parts) {
             if (part.isEmpty()) {
-                throw new IllegalArgumentException("Invalid JWT format: token parts cannot be empty");
+                throw new IllegalArgumentException("JWT token parts must not be empty");
             }
         }
 
@@ -70,7 +74,8 @@ public class JwtAuthHandler implements PulsarAuthHandler {
             return Base64.getUrlDecoder().decode(part);
         }
         catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid JWT: " + partName + " is not valid Base64URL");
+            LOGGER.warn("JWT token {} part is not valid Base64URL: {}", partName, e.getMessage());
+            throw new IllegalArgumentException("JWT token " + partName + " must be a valid Base64URL-encoded value", e);
         }
     }
 
@@ -79,13 +84,15 @@ public class JwtAuthHandler implements PulsarAuthHandler {
             return new JSONObject(new String(bytes, StandardCharsets.UTF_8));
         }
         catch (JSONException e) {
-            throw new IllegalArgumentException("Invalid JWT: " + partName + " is not valid JSON");
+            LOGGER.warn("JWT token {} part decoded successfully but is not valid JSON: {}", partName, e.getMessage());
+            throw new IllegalArgumentException("JWT token " + partName + " must decode to a valid JSON object", e);
         }
     }
 
     private void validateHeader(JSONObject header) throws IllegalArgumentException {
         if (!header.has("alg")) {
-            throw new IllegalArgumentException("Invalid JWT: header missing 'alg' field");
+            LOGGER.warn("JWT token header is missing the required 'alg' field");
+            throw new IllegalArgumentException("JWT token header must contain the 'alg' field");
         }
     }
 
@@ -94,11 +101,13 @@ public class JwtAuthHandler implements PulsarAuthHandler {
             try {
                 long expTimestamp = claims.getLong("exp");
                 if (expTimestamp * 1000 <= System.currentTimeMillis()) {
-                    throw new IllegalArgumentException("Invalid JWT: token has expired");
+                    LOGGER.warn("JWT token has expired (exp={})", expTimestamp);
+                    throw new IllegalArgumentException("JWT token has expired");
                 }
             }
             catch (JSONException e) {
-                throw new IllegalArgumentException("Invalid JWT: 'exp' claim is not a valid number");
+                LOGGER.warn("JWT token 'exp' claim is not a valid number: {}", e.getMessage());
+                throw new IllegalArgumentException("JWT token 'exp' claim must be a valid numeric timestamp", e);
             }
         }
     }

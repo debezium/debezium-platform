@@ -67,6 +67,7 @@ public class PulsarConnectionValidator implements ConnectionValidator {
             pulsarConfig.put("connectionTimeoutMs", defaultConnectionTimeout);
 
             String authScheme = pulsarConfig.getOrDefault(AUTH_SCHEME_KEY, NO_AUTH_SCHEME).toString();
+            LOGGER.debug("Configuring Pulsar authentication with scheme: {}", authScheme);
             PulsarAuthHandler authHandler = authHandlerFactory.getAuthHandler(authScheme);
             authHandler.validate(pulsarConfig);
 
@@ -78,12 +79,13 @@ public class PulsarConnectionValidator implements ConnectionValidator {
 
             try (PulsarAdmin admin = builder.build()) {
                 admin.clusters().getClusters();
+                LOGGER.debug("Pulsar connection validation successful for: {}", connectionConfig.getName());
                 return ConnectionValidationResult.successful();
             }
         }
         catch (IllegalArgumentException e) {
-            LOGGER.warn("Invalid Pulsar configuration", e);
-            return ConnectionValidationResult.failed("Configuration error");
+            LOGGER.warn("Invalid Pulsar configuration: {}", e.getMessage());
+            return ConnectionValidationResult.failed(e.getMessage());
         }
         catch (PulsarAdminException.TimeoutException e) {
             LOGGER.warn("Timeout during Pulsar connection validation", e);
@@ -107,13 +109,11 @@ public class PulsarConnectionValidator implements ConnectionValidator {
         }
         catch (PulsarAdminException e) {
             LOGGER.warn("Pulsar-specific error during validation", e);
-            return ConnectionValidationResult.failed(
-                    "Pulsar connection error");
+            return ConnectionValidationResult.failed("Pulsar connection error: " + e.getMessage());
         }
         catch (Exception e) {
             LOGGER.error("Unexpected error during Pulsar connection validation", e);
-            return ConnectionValidationResult.failed(
-                    "Generic error while connecting to Pulsar");
+            return ConnectionValidationResult.failed("Unexpected error: " + e.getMessage());
         }
     }
 }
