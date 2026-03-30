@@ -1,4 +1,26 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.connection;
+
+import static io.debezium.platform.environment.destination.ApachePulsarTestResourceOAuth2Auth.TEST_TOKEN_SECRET_KEY;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import jakarta.inject.Inject;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.testcontainers.pulsar.PulsarContainer;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
@@ -7,21 +29,6 @@ import io.debezium.platform.environment.connection.destination.PulsarConnectionV
 import io.debezium.platform.environment.destination.ApachePulsarTestResourceOAuth2Auth;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.testcontainers.pulsar.PulsarContainer;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import static io.debezium.platform.environment.destination.ApachePulsarTestResourceOAuth2Auth.TEST_TOKEN_SECRET_KEY;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 @QuarkusTestResource(value = ApachePulsarTestResourceOAuth2Auth.class, restrictToAnnotatedClass = true)
@@ -64,7 +71,8 @@ public class PulsarConnectionValidatorOAuth2IT {
         Map<String, Object> config = new HashMap<>();
         config.put("authScheme", "oauth2");
         config.put("serviceHttpUrl", container.getHttpServiceUrl());
-        config.put("oauth2PrivateKey", "data:;base64,ewogICJjbGllbnRfaWQiOiAiYWRtaW4iLAogICJjbGllbnRfc2VjcmV0IjogImNsaWVudHNlY3JldCIsCiAgImdyYW50X3R5cGUiOiAiY2xpZW50X2NyZWRlbnRpYWxzIgp9Cg==");
+        config.put("oauth2PrivateKey",
+                "data:;base64,ewogICJjbGllbnRfaWQiOiAiYWRtaW4iLAogICJjbGllbnRfc2VjcmV0IjogImNsaWVudHNlY3JldCIsCiAgImdyYW50X3R5cGUiOiAiY2xpZW50X2NyZWRlbnRpYWxzIgp9Cg==");
         config.put("oauth2IssuerUrl", ApachePulsarTestResourceOAuth2Auth.getIssuerUrl());
 
         Connection connection = new TestConnectionView(ConnectionEntity.Type.APACHE_PULSAR, config);

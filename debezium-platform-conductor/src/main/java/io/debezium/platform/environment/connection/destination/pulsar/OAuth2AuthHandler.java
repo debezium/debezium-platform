@@ -1,20 +1,23 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.connection.destination.pulsar;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
+
 import org.apache.pulsar.client.admin.PulsarAdminBuilder;
-import org.apache.pulsar.client.api.Authentication;
-import org.apache.pulsar.client.api.AuthenticationFactory;
-import org.apache.pulsar.client.impl.auth.oauth2.AuthenticationFactoryOAuth2;
 import org.apache.pulsar.client.impl.auth.oauth2.AuthenticationOAuth2;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Map;
 
 @Named("OAUTH2")
 @ApplicationScoped
@@ -40,9 +43,9 @@ public class OAuth2AuthHandler implements PulsarAuthHandler {
         String issuerUrl = (String) config.get("oauth2IssuerUrl");
 
         String authParams = String.format(
-            "{\"privateKey\":\"%s\",\"issuerUrl\":\"%s\"}",
-            privateKey,
-            issuerUrl);
+                "{\"privateKey\":\"%s\",\"issuerUrl\":\"%s\"}",
+                privateKey,
+                issuerUrl);
 
         AuthenticationOAuth2 auth = new AuthenticationOAuth2();
         auth.configure(authParams);
@@ -77,7 +80,8 @@ public class OAuth2AuthHandler implements PulsarAuthHandler {
             String prefix = "data:application/json;base64,";
             String extracted = privateKey.substring(privateKey.indexOf(prefix) + prefix.length());
             privateKeyBytes = Base64.getDecoder().decode(extracted);
-        } catch (IllegalArgumentException e) {
+        }
+        catch (IllegalArgumentException e) {
             LOGGER.warn("Failed to Base64-decode the OAuth2 private key: {}", e.getMessage());
             throw new IllegalArgumentException("OAuth2 Private Key must be a valid Base64-encoded value");
         }
@@ -85,7 +89,8 @@ public class OAuth2AuthHandler implements PulsarAuthHandler {
         JSONObject privateKeyJson = null;
         try {
             privateKeyJson = new JSONObject(new String(privateKeyBytes, StandardCharsets.UTF_8));
-        } catch (JSONException e) {
+        }
+        catch (JSONException e) {
             LOGGER.warn("OAuth2 private key decoded successfully but is not valid JSON: {}", e.getMessage());
             throw new IllegalArgumentException("OAuth2 Private Key must decode to a valid JSON object");
         }
@@ -94,7 +99,6 @@ public class OAuth2AuthHandler implements PulsarAuthHandler {
             LOGGER.warn("OAuth2 private key JSON is missing required fields: 'client_id' and/or 'client_secret'");
             throw new IllegalArgumentException("OAuth2 Private Key JSON must contain both 'client_id' and 'client_secret' fields");
         }
-
 
         String issuerUrl = config.get("oauth2IssuerUrl").toString();
     }

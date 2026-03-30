@@ -5,10 +5,11 @@
  */
 package io.debezium.platform.environment.connection.destination.pulsar;
 
-import io.debezium.util.Strings;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.literal.NamedLiteral;
+
+import io.debezium.util.Strings;
 
 @ApplicationScoped
 public class PulsarAuthHandlerFactory {

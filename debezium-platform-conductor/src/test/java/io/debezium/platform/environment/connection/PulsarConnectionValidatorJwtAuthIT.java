@@ -77,8 +77,7 @@ class PulsarConnectionValidatorJwtAuthIT {
                 "--subject",
                 "admin",
                 "--expiry-time",
-                "1s"
-        );
+                "1s");
 
         String expiredToken = expiredTokenResult.getStdout().trim();
 

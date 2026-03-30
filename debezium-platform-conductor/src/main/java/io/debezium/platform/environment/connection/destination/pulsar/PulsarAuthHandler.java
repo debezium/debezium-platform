@@ -5,7 +5,6 @@
  */
 package io.debezium.platform.environment.connection.destination.pulsar;
 
-import java.util.Base64;
 import java.util.Map;
 
 import org.apache.pulsar.client.admin.PulsarAdminBuilder;
