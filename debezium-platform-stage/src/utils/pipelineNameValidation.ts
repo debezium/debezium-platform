@@ -7,27 +7,33 @@ export const RFC_1123_SUBDOMAIN_PATTERN = new RegExp(
   RFC_1123_SUBDOMAIN_PATTERN_SOURCE
 );
 
-export const PIPELINE_NAME_REQUIRED_ERROR = "Pipeline name is required.";
-export const PIPELINE_NAME_LENGTH_ERROR =
-  "Pipeline name must be 253 characters or fewer.";
-export const PIPELINE_NAME_RFC_1123_ERROR =
-  "Pipeline name must be lowercase and use only letters, numbers, '-' or '.'.";
+export const PIPELINE_NAME_REQUIRED_ERROR_I18N_KEY =
+  "pipeline:validation.nameRequired";
+export const PIPELINE_NAME_LENGTH_ERROR_I18N_KEY =
+  "pipeline:validation.nameMaxLength";
+export const PIPELINE_NAME_RFC_1123_ERROR_I18N_KEY =
+  "pipeline:validation.nameRfc1123";
+
+export type PipelineNameValidationErrorI18nKey =
+  | typeof PIPELINE_NAME_REQUIRED_ERROR_I18N_KEY
+  | typeof PIPELINE_NAME_LENGTH_ERROR_I18N_KEY
+  | typeof PIPELINE_NAME_RFC_1123_ERROR_I18N_KEY;
 
 const PIPELINE_NAME_INSTANCE_PATH = "/name";
 
 export const getPipelineNameValidationError = (
   value: string | undefined
-): string | undefined => {
+): PipelineNameValidationErrorI18nKey | undefined => {
   if (!value) {
-    return PIPELINE_NAME_REQUIRED_ERROR;
+    return PIPELINE_NAME_REQUIRED_ERROR_I18N_KEY;
   }
 
   if (value.length > PIPELINE_NAME_MAX_LENGTH) {
-    return PIPELINE_NAME_LENGTH_ERROR;
+    return PIPELINE_NAME_LENGTH_ERROR_I18N_KEY;
   }
 
   if (!RFC_1123_SUBDOMAIN_PATTERN.test(value)) {
-    return PIPELINE_NAME_RFC_1123_ERROR;
+    return PIPELINE_NAME_RFC_1123_ERROR_I18N_KEY;
   }
 
   return undefined;
@@ -35,7 +41,7 @@ export const getPipelineNameValidationError = (
 
 export const getPipelineSchemaValidationError = (
   errors: ErrorObject[] | null | undefined
-): string | undefined => {
+): PipelineNameValidationErrorI18nKey | undefined => {
   if (!errors) {
     return undefined;
   }
@@ -45,7 +51,7 @@ export const getPipelineSchemaValidationError = (
       error.keyword === "required" &&
       (error.params as { missingProperty?: string }).missingProperty === "name"
     ) {
-      return PIPELINE_NAME_REQUIRED_ERROR;
+      return PIPELINE_NAME_REQUIRED_ERROR_I18N_KEY;
     }
 
     if (error.instancePath !== PIPELINE_NAME_INSTANCE_PATH) {
@@ -53,11 +59,11 @@ export const getPipelineSchemaValidationError = (
     }
 
     if (error.keyword === "maxLength") {
-      return PIPELINE_NAME_LENGTH_ERROR;
+      return PIPELINE_NAME_LENGTH_ERROR_I18N_KEY;
     }
 
     if (error.keyword === "pattern") {
-      return PIPELINE_NAME_RFC_1123_ERROR;
+      return PIPELINE_NAME_RFC_1123_ERROR_I18N_KEY;
     }
   }
 

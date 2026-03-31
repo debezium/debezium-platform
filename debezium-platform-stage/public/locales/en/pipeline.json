@@ -60,6 +60,13 @@
         "addPackage": "Add package",
         "logLevelSectionHeading": "Package specific overrides"
     },
+    "validation": {
+        "nameRequired": "Pipeline name is required.",
+        "nameMaxLength": "Pipeline name must be 253 characters or fewer.",
+        "nameRfc1123": "Pipeline name must be lowercase and use only letters, numbers, '-' or '.'.",
+        "logLevelRequired": "Root log level is required.",
+        "keyValueRequired": "Key and value are required."
+    },
     "tabs": {
         "overview": "Overview",
         "log": "Pipeline logs",

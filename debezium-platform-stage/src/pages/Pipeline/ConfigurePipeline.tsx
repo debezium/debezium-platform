@@ -82,6 +82,7 @@ const FormSyncManager: React.FC<{
   setCode: (code: any) => void;
   setCodeAlert: (alert: string) => void;
 }> = ({ getFormValue, setFormValue, code, setCode, setCodeAlert }) => {
+  const { t } = useTranslation();
   const validate = ajv.compile(pipelineSchema);
   // Ref to track the source of the update
   const updateSource = useRef<"form" | "code" | null>(null);
@@ -146,9 +147,9 @@ const FormSyncManager: React.FC<{
       }
       setCodeAlert("");
     } else {
+      const pipelineSchemaError = getPipelineSchemaValidationError(validate.errors);
       setCodeAlert(
-        getPipelineSchemaValidationError(validate.errors) ??
-          ajv.errorsText(validate.errors)
+        pipelineSchemaError ? t(pipelineSchemaError) : ajv.errorsText(validate.errors)
       );
     }
   }, [code]);
@@ -334,12 +335,14 @@ const ConfigurePipeline: React.FunctionComponent = () => {
     setError: (fieldId: string, error: string | undefined) => void
   ) => {
     if (editorSelected === "form-editor") {
-      const pipelineNameError = getPipelineNameValidationError(values["pipeline-name"]);
+      const pipelineNameError = getPipelineNameValidationError(
+        values["pipeline-name"]
+      );
       if (pipelineNameError) {
-        setError("pipeline-name", pipelineNameError);
+        setError("pipeline-name", t(pipelineNameError));
         return;
       } else if (!values["log-level"]) {
-        setError("log-level", "Root log level is required.");
+        setError("log-level", t("pipeline:validation.logLevelRequired"));
         return;
       } else {
         setIsLoading(true);
@@ -347,8 +350,15 @@ const ConfigurePipeline: React.FunctionComponent = () => {
           .filter(([, entry]) => !entry.key || !entry.value)
           .map(([key]) => key);
         if (invalidLogEntries.length > 0) {
-          setError(`pkg-level-log-config-props-key-field-${invalidLogEntries[0]}`, "Key and value are required.");
-          setError(`pkg-level-log-config-props-value-field-${invalidLogEntries[0]}`, "Key and value are required.");
+          const keyValueError = t("pipeline:validation.keyValueRequired");
+          setError(
+            `pkg-level-log-config-props-key-field-${invalidLogEntries[0]}`,
+            keyValueError
+          );
+          setError(
+            `pkg-level-log-config-props-value-field-${invalidLogEntries[0]}`,
+            keyValueError
+          );
           setIsLoading(false);
           return;
         }
@@ -380,9 +390,13 @@ const ConfigurePipeline: React.FunctionComponent = () => {
       const payload = code;
       const isValid = validate(payload);
       if (!isValid) {
+        const pipelineSchemaError = getPipelineSchemaValidationError(
+          validate.errors
+        );
         setCodeAlert(
-          getPipelineSchemaValidationError(validate.errors) ??
-            ajv.errorsText(validate.errors)
+          pipelineSchemaError
+            ? t(pipelineSchemaError)
+            : ajv.errorsText(validate.errors)
         );
         return;
       } else {

@@ -60,6 +60,13 @@
     "addPackage": "Aggiungi pacchetto",
     "logLevelSectionHeading": "Sostituzioni specifiche per pacchetto"
   },
+  "validation": {
+    "nameRequired": "Il nome della pipeline e obbligatorio.",
+    "nameMaxLength": "Il nome della pipeline deve contenere al massimo 253 caratteri.",
+    "nameRfc1123": "Il nome della pipeline deve essere in minuscolo e usare solo lettere, numeri, '-' o '.'.",
+    "logLevelRequired": "Il livello di log root e obbligatorio.",
+    "keyValueRequired": "Chiave e valore sono obbligatori."
+  },
   "tabs": {
     "overview": "Panoramica",
     "log": "Log della pipeline",
