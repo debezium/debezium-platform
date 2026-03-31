@@ -71,6 +71,6 @@ public class PulsarConnectionValidatorTest {
 
         ConnectionValidationResult result = validator.validate(connection);
         assertFalse(result.valid(), "Connection validation should fail with invalid ServiceHttpUrl");
-        assertEquals("Configuration error", result.message());
+        assertEquals("authority component is missing in service uri : invalid-host:8080", result.message());
     }
 }
