@@ -5,9 +5,11 @@
  */
 package io.debezium.platform.environment.database.db;
 
+import java.time.Duration;
 import java.util.Map;
 
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
@@ -31,24 +33,28 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
  */
 public class MilvusTestResource implements QuarkusTestResourceLifecycleManager {
 
-    private static final String MILVUS_IMAGE = "milvusdb/milvus:latest";
-    private static final int MILVUS_PORT = 19530;
+    private static final String MILVUS_IMAGE = "milvusdb/milvus:v2.6.4";
+    private static final int MILVUS_GRPC_PORT = 19530;
+    private static final int MILVUS_HTTP_PORT = 9091;
+    private static final Duration MILVUS_STARTUP_TIMEOUT = Duration.ofMinutes(10);
 
     private static GenericContainer<?> milvusContainer;
 
     @Override
     public Map<String, String> start() {
         milvusContainer = new GenericContainer<>(DockerImageName.parse(MILVUS_IMAGE))
-                .withExposedPorts(MILVUS_PORT)
+                .withExposedPorts(MILVUS_GRPC_PORT, MILVUS_HTTP_PORT)
                 .withCommand("milvus", "run", "standalone")
                 .withEnv("ETCD_USE_EMBED", "true")
-                .withEnv("COMMON_STORAGETYPE", "local");
+                .withEnv("COMMON_STORAGETYPE", "local")
+                .waitingFor(Wait.forListeningPort().withStartupTimeout(MILVUS_STARTUP_TIMEOUT));
 
         milvusContainer.start();
 
         return Map.of(
                 "milvus.host", milvusContainer.getHost(),
-                "milvus.port", milvusContainer.getMappedPort(MILVUS_PORT).toString());
+                "milvus.grpc.port", milvusContainer.getMappedPort(MILVUS_GRPC_PORT).toString(),
+                "milvus.http.port", milvusContainer.getMappedPort(MILVUS_HTTP_PORT).toString());
     }
 
     @Override

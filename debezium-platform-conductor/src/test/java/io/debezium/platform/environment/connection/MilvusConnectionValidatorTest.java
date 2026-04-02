@@ -90,7 +90,10 @@ class MilvusConnectionValidatorTest {
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
         assertFalse(result.valid(), "Validation should fail for URI without http:// or https://");
-        Assertions.assertThat(result.message()).contains("URI must start with http:// or https://");
+        Assertions.assertThat(result.message())
+                .contains("URI must start with")
+                .contains("http://")
+                .contains("https://");
     }
 
     @Test
