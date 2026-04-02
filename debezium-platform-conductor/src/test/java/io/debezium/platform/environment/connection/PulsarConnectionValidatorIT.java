@@ -61,7 +61,9 @@ class PulsarConnectionValidatorIT {
 
         ConnectionValidationResult result = validator.validate(connection);
         assertFalse(result.valid(), "Connection validation should fail with invalid ServiceHttpUrl");
-        assertEquals("Pulsar connection error", result.message());
+        assertEquals(
+                "Pulsar connection error: org.apache.pulsar.client.admin.internal.http.AsyncHttpConnector$RetryException: Could not complete the operation. Number of retries has been exhausted. Failed reason: invalid-host",
+                result.message());
     }
 
     @Test

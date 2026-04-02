@@ -145,7 +145,7 @@ class PulsarConnectionValidatorJwtAuthIT {
 
         ConnectionValidationResult result = validator.validate(connection);
         assertFalse(result.valid(), "Connection validation should fail with invalid ServiceHttpUrl");
-        assertEquals("Configuration error", result.message());
+        assertEquals("JWT token is missing or blank", result.message());
     }
 
     @Test
