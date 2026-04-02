@@ -9,13 +9,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.inject.Inject;
 
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
@@ -39,19 +44,39 @@ import io.quarkus.test.junit.QuarkusTest;
 @QuarkusTestResource(MilvusTestResource.class)
 class MilvusConnectionValidatorIT {
 
+    @BeforeAll
+    static void checkDockerAvailable() {
+        Assumptions.assumeTrue(
+            DockerClientFactory.instance().isDockerAvailable(),
+            "Docker is not available; skipping Milvus integration tests"
+        );
+    }
+
     @Inject
     MilvusConnectionValidator connectionValidator;
+
+    private static void awaitPortOpen(GenericContainer<?> container, int internalPort) {
+        String host = container.getHost();
+        int port = container.getMappedPort(internalPort);
+
+        Awaitility.await()
+                .atMost(600, TimeUnit.SECONDS)
+                .pollInterval(2, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    try (Socket s = new Socket()) {
+                        s.connect(new InetSocketAddress(host, port), 1000);
+                    }
+                });
+    }
 
     @Test
     @DisplayName("Should successfully connect to Milvus without authentication")
     void shouldConnectWithoutAuth() {
         GenericContainer<?> container = MilvusTestResource.getContainer();
 
-        Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
-                .until(container::isRunning);
+        awaitPortOpen(container, 19530);
 
-        String uri = String.format("http://%s:%d",
+        String uri = String.format("grpc://%s:%d",
                 container.getHost(),
                 container.getMappedPort(19530));
 
@@ -69,11 +94,9 @@ class MilvusConnectionValidatorIT {
     void shouldConnectWithDatabase() {
         GenericContainer<?> container = MilvusTestResource.getContainer();
 
-        Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
-                .until(container::isRunning);
+        awaitPortOpen(container, 19530);
 
-        String uri = String.format("http://%s:%d",
+        String uri = String.format("grpc://%s:%d",
                 container.getHost(),
                 container.getMappedPort(19530));
 
@@ -91,7 +114,7 @@ class MilvusConnectionValidatorIT {
     @DisplayName("Should fail with invalid host")
     void shouldFailWithInvalidHost() {
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
-                "uri", "http://invalid-host-12345:19530"));
+                "uri", "grpc://invalid-host-12345:19530"));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
@@ -104,11 +127,9 @@ class MilvusConnectionValidatorIT {
     void shouldFailWithInvalidPort() {
         GenericContainer<?> container = MilvusTestResource.getContainer();
 
-        Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
-                .until(container::isRunning);
+        awaitPortOpen(container, 19530);
 
-        String uri = String.format("http://%s:%d",
+        String uri = String.format("grpc://%s:%d",
                 container.getHost(),
                 99999); // Invalid port
 
@@ -126,7 +147,7 @@ class MilvusConnectionValidatorIT {
     void shouldHandleTimeout() {
         // Use a non-routable IP address to simulate timeout
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
-                "uri", "http://10.255.255.1:19530"));
+                "uri", "grpc://10.255.255.1:19530"));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
@@ -139,11 +160,9 @@ class MilvusConnectionValidatorIT {
     void shouldConnectWithUsernamePassword() {
         GenericContainer<?> container = MilvusTestResource.getContainer();
 
-        Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
-                .until(container::isRunning);
+        awaitPortOpen(container, 19530);
 
-        String uri = String.format("http://%s:%d",
+        String uri = String.format("grpc://%s:%d",
                 container.getHost(),
                 container.getMappedPort(19530));
 
@@ -163,11 +182,9 @@ class MilvusConnectionValidatorIT {
     void shouldConnectWithTokenAuth() {
         GenericContainer<?> container = MilvusTestResource.getContainer();
 
-        Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
-                .until(container::isRunning);
+        awaitPortOpen(container, 19530);
 
-        String uri = String.format("http://%s:%d",
+        String uri = String.format("grpc://%s:%d",
                 container.getHost(),
                 container.getMappedPort(19530));
 
@@ -186,11 +203,9 @@ class MilvusConnectionValidatorIT {
     void shouldFailWithInvalidCredentials() {
         GenericContainer<?> container = MilvusTestResource.getContainer();
 
-        Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
-                .until(container::isRunning);
+        awaitPortOpen(container, 19530);
 
-        String uri = String.format("http://%s:%d",
+        String uri = String.format("grpc://%s:%d",
                 container.getHost(),
                 container.getMappedPort(19530));
 
@@ -210,11 +225,9 @@ class MilvusConnectionValidatorIT {
     void shouldFailWithInvalidToken() {
         GenericContainer<?> container = MilvusTestResource.getContainer();
 
-        Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
-                .until(container::isRunning);
+        awaitPortOpen(container, 19530);
 
-        String uri = String.format("http://%s:%d",
+        String uri = String.format("grpc://%s:%d",
                 container.getHost(),
                 container.getMappedPort(19530));
 
@@ -233,11 +246,9 @@ class MilvusConnectionValidatorIT {
     void shouldConnectWithAllParams() {
         GenericContainer<?> container = MilvusTestResource.getContainer();
 
-        Awaitility.await()
-                .atMost(300, TimeUnit.SECONDS)
-                .until(container::isRunning);
+        awaitPortOpen(container, 19530);
 
-        String uri = String.format("http://%s:%d",
+        String uri = String.format("grpc://%s:%d",
                 container.getHost(),
                 container.getMappedPort(19530));
 

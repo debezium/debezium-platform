@@ -37,7 +37,6 @@ import io.milvus.v2.client.MilvusClientV2;
  *   <li>Timeout handling for network issues</li>
  * </ul>
  * </p>
- *
  */
 @ApplicationScoped
 @Named("MILVUS")
@@ -98,8 +97,8 @@ public class MilvusConnectionValidator implements ConnectionValidator {
 
         // Validate URI format
         String uri = milvusConfig.get(URI_KEY).toString().trim();
-        if (!uri.startsWith("http://") && !uri.startsWith("https://")) {
-            return ConnectionValidationResult.failed("URI must start with http:// or https://");
+        if (!uri.startsWith("http://") && !uri.startsWith("https://") && !uri.startsWith("grpc://")) {
+            return ConnectionValidationResult.failed("URI must start with http://, https://, or grpc://");
         }
 
         return ConnectionValidationResult.successful();
@@ -170,30 +169,28 @@ public class MilvusConnectionValidator implements ConnectionValidator {
                 errorMessage = e.getClass().getSimpleName();
             }
 
-            // Handle specific error types with user-friendly messages
             if (errorMessage.contains("timeout") || errorMessage.contains("TimeoutException") ||
                     errorMessage.contains("deadline")) {
                 return ConnectionValidationResult.failed(
                         "Connection timeout - please check host, port and network connectivity");
             }
-            else if (errorMessage.contains("authentication") || errorMessage.contains("auth") ||
+            if (errorMessage.contains("authentication") || errorMessage.contains("auth") ||
                     errorMessage.contains("permission") || errorMessage.contains("credentials") ||
                     errorMessage.contains("Unauthenticated")) {
                 return ConnectionValidationResult.failed(
                         "Authentication failed - please check username, password, or token");
             }
-            else if (errorMessage.contains("connect") || errorMessage.contains("refused") ||
+            if (errorMessage.contains("connect") || errorMessage.contains("refused") ||
                     errorMessage.contains("unreachable") || errorMessage.contains("UNAVAILABLE")) {
                 return ConnectionValidationResult.failed(
                         "Cannot connect to Milvus server - please check host and port configuration");
             }
-            else if (errorMessage.contains("database") && errorMessage.contains("not found")) {
+            if (errorMessage.contains("database") && errorMessage.contains("not found")) {
                 return ConnectionValidationResult.failed(
                         "Specified database does not exist - please check database name");
             }
-            else {
-                return ConnectionValidationResult.failed("Failed to connect to Milvus: " + errorMessage);
-            }
+
+            return ConnectionValidationResult.failed("Failed to connect to Milvus: " + errorMessage);
 
         }
         finally {
