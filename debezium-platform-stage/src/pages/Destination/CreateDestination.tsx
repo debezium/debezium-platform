@@ -17,10 +17,9 @@ import {
   ToolbarItem,
 } from "@patternfly/react-core";
 import { PencilAltIcon, CodeIcon, PlayIcon } from "@patternfly/react-icons";
-import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 import { useNavigate, useParams } from "react-router-dom";
 import { CodeEditor, CodeEditorControl, Language } from "@patternfly/react-code-editor";
-import { find } from "lodash";
+
 import { ConnectionConfig, createPost, Destination, Payload } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
@@ -113,7 +112,7 @@ const FormSyncManager: React.FC<{
       }
 
       updateSource.current = "form";
-      const type = find(destinationCatalog, { id: destinationId })?.type || "";
+      const type = destinationId || "";
       const configuration = convertMapToObject(properties);
 
       setCode((prevCode: any) => {
@@ -330,7 +329,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
         }
         const payload = {
           description: values["description"],
-          type: find(destinationCatalog, { id: destinationId })?.type || "",
+          type: destinationId || (code as Payload).type || "",
           schema: "schema321",
           vaults: [],
           ...(selectedConnection ? { connection: selectedConnection } : {}),

@@ -1,114 +1,114 @@
 [
     {
+        "class": "kinesis",
         "name": "Amazon Kinesis",
-        "id": "kinesis",
-        "type": "kinesis",
-        "role": "destination",
-        "description": "Streams change events to Amazon Kinesis, a fully managed, distributed streaming platform."
+        "description": "Streams change events to Amazon Kinesis, a fully managed, distributed streaming platform.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "pulsar",
         "name": "Apache Pulsar",
-        "id": "pulsar",
-        "type": "pulsar",
-        "role": "destination",
-        "description": "Streams CDC events into Apache Pulsar, a distributed messaging and event-streaming platform offering low-latency and high-throughput."
+        "description": "Streams CDC events into Apache Pulsar, a distributed messaging and event-streaming platform offering low-latency and high-throughput.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "eventhubs",
         "name": "Azure Event Hub",
-        "id": "eventhubs",
-        "type": "eventhubs",
-        "role": "destination",
-        "description": "Sends change events to Azure Event Hub, a real-time data ingestion service optimized for streaming millions of events per second."
+        "description": "Sends change events to Azure Event Hub, a real-time data ingestion service optimized for streaming millions of events per second.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "http",
         "name": "HTTPClint",
-        "id": "http",
-        "type": "http",
-        "role": "destination",
-        "description": "Streams change events to any HTTP Server for additional processing with the original design goal to have Debezium act as a Knative Event Source."
+        "description": "Streams change events to any HTTP Server for additional processing with the original design goal to have Debezium act as a Knative Event Source.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "infinispan",
         "name": "Infinispan",
-        "id": "infinispan",
-        "type": "infinispan",
-        "role": "destination",
-        "description": "Propagates events to Infinispan, a distributed in-memory data grid providing high availability and scalability for data replication."
+        "description": "Propagates events to Infinispan, a distributed in-memory data grid providing high availability and scalability for data replication.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "kafka",
         "name": "Kafka",
-        "id": "kafka",
-        "type": "kafka",
-        "role": "destination",
-        "description": "Streams real-time change events into Apache Kafka, a distributed platform for building streaming data pipelines and real-time applications."
+        "description": "Streams real-time change events into Apache Kafka, a distributed platform for building streaming data pipelines and real-time applications.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "milvus",
         "name": "Milvus",
-        "id": "milvus",
-        "type": "milvus",
-        "role": "destination",
-        "description": "Streams change events to Milvus, a vector database for scalable similarity search and vector embedding."
+        "description": "Streams change events to Milvus, a vector database for scalable similarity search and vector embedding.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "nats-streaming",
         "name": "NATS Streaming",
-        "id": "nats-streaming",
-        "type": "nats-streaming",
-        "role": "destination",
-        "description": "Sends change events to NATS Streaming, a messaging system designed for distributed systems and microservices architectures."
+        "description": "Sends change events to NATS Streaming, a messaging system designed for distributed systems and microservices architectures.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "nats-jetstream",
         "name": "NATS JetStream",
-        "id": "nats-jetstream",
-        "type": "nats-jetstream",
-        "role": "destination",
-        "description": "Sends change events to NATS JetStream, a messaging system designed for distributed systems and microservices architectures."
+        "description": "Sends change events to NATS JetStream, a messaging system designed for distributed systems and microservices architectures.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "pravega",
         "name": "Pravega",
-        "id": "pravega",
-        "type": "pravega",
-        "role": "destination",
-        "description": "Streams change events to Pravega, a scalable storage system for distributed data streams, offering a tiered storage model."
+        "description": "Streams change events to Pravega, a scalable storage system for distributed data streams, offering a tiered storage model.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "pubsub",
         "name": "Pub/Sub",
-        "id": "pubsub",
-        "type": "pubsub",
-        "role": "destination",
-        "description": "Sends real-time change events to Google Pub/Sub, a fully managed messaging service for building event-driven systems and real-time analytics."
+        "description": "Sends real-time change events to Google Pub/Sub, a fully managed messaging service for building event-driven systems and real-time analytics.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "pubsublite",
         "name": "Pub/Sub Lite",
-        "id": "pubsublite",
-        "type": "pubsublite",
-        "role": "destination",
-        "description": "Streams events to Google Pub/Sub Lite, a cost-effective, low-latency message delivery service for simpler use cases."
+        "description": "Streams events to Google Pub/Sub Lite, a cost-effective, low-latency message delivery service for simpler use cases.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "qdrant",
         "name": "Qdrant",
-        "id": "qdrant",
-        "type": "qdrant",
-        "role": "destination",
-        "description": "Streams change events to Qdrant, a vector database for scalable similarity search and vector embedding."
+        "description": "Streams change events to Qdrant, a vector database for scalable similarity search and vector embedding.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "rabbitmq",
         "name": "RabbitMQ",
-        "id": "rabbitmq",
-        "type": "rabbitmq",
-        "role": "destination",
-        "description": "Publishes change events to RabbitMQ, an open-source message broker supporting various messaging protocols for inter-service communication."
+        "description": "Publishes change events to RabbitMQ, an open-source message broker supporting various messaging protocols for inter-service communication.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "redis",
         "name": "Redis(Stream)",
-        "id": "redis",
-        "type": "redis",
-        "role": "destination",
-        "description": "Streams change events to Redis Streams, a high-performance, open-source, in-memory data structure store."
+        "description": "Streams change events to Redis Streams, a high-performance, open-source, in-memory data structure store.",
+        "descriptor": "",
+        "role": "destination"
     },
     {
+        "class": "rocketmq",
         "name": "RocketMQ",
-        "id": "rocketmq",
-        "type": "rocketmq",
-        "role": "destination",
-        "description": "Streams change events to Apache RocketMQ, a high-throughput, low-latency messaging platform."
+        "description": "Streams change events to Apache RocketMQ, a high-throughput, low-latency messaging platform.",
+        "descriptor": "",
+        "role": "destination"
     }
 ]

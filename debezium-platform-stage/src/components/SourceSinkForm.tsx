@@ -37,6 +37,8 @@ import {
 } from "@patternfly/react-core";
 import { AddCircleOIcon, CheckCircleIcon, ExclamationCircleIcon, PlusIcon, TimesIcon, TrashIcon } from "@patternfly/react-icons";
 import { getConnectionRole, getConnectorTypeName, getDatabaseType } from "@utils/helpers";
+import { Catalog, CatalogApiResponse } from "../apis/types";
+import destinationCatalog from "../__mocks__/data/DestinationCatalog.json";
 import ConnectorImage from "./ComponentImage";
 import { useTranslation } from "react-i18next";
 import * as React from "react";
@@ -54,7 +56,11 @@ import { datatype as DatabaseItemsList } from "@utils/Datatype";
 
 
 const getInitialSelectOptions = (connections: connectionsList[], connectorId: string): SelectOptionProps[] => {
-  return connections.filter((connection) => connection.type.toLowerCase() === connectorId.toLowerCase()).map((connection) => ({
+  const connectorLower = connectorId.toLowerCase();
+  return connections.filter((connection) => {
+    const typeLower = connection.type.toLowerCase();
+    return typeLower === connectorLower || connectorLower.includes(typeLower) || typeLower.includes(connectorLower);
+  }).map((connection) => ({
     value: connection.id,
     children: connection.name,
     icon: <ConnectorImage connectorType={connection.type.toLowerCase() || ""} size={25} />,
@@ -153,6 +159,21 @@ const SourceSinkForm = ({
     }
   }, [signalCollectionName]);
 
+  const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>(
+    "sourceConnectorCatalog",
+    async () => {
+      const response = await fetchData<CatalogApiResponse>(
+        `${API_URL}/api/catalog`
+      );
+      return (response.components["source-connector"] ?? []).map((e) => ({
+        ...e,
+        role: "source",
+      }));
+    }
+  );
+
+  const catalog: Catalog[] = [...sourceCatalog, ...destinationCatalog];
+
   const {
     isLoading: isConnectionsLoading,
   } = useQuery<Connection[], Error>(
@@ -161,13 +182,11 @@ const SourceSinkForm = ({
     {
       refetchInterval: 70000,
       onSuccess: (data) => {
-        // Persist filters across polling refreshes by deriving from latest data
         const withRole = data.map((conn) => ({
           ...conn,
-          role: getConnectionRole(conn.type.toLowerCase()) || "",
+          role: getConnectionRole(conn.type.toLowerCase(), catalog) || "",
         }));
-        const result = withRole;
-        setConnections(result);
+        setConnections(withRole);
       },
     }
   );
@@ -596,7 +615,7 @@ const SourceSinkForm = ({
                         text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: getConnectorTypeName(dataType || ConnectorId || "") })}</span>,
                         id: `field-group-data-table-id`,
                       }}
-                      titleDescription={t("source:create.dataTableDescription", editFlow ? { val: DatabaseItemsList[dataType?.split(".")[3] as keyof typeof DatabaseItemsList].join(" and ") } : { val: DatabaseItemsList[ConnectorId as keyof typeof DatabaseItemsList].join(" and ") })}
+                      titleDescription={t("source:create.dataTableDescription", editFlow ? { val: DatabaseItemsList[dataType?.split(".")[3] as keyof typeof DatabaseItemsList]?.join(" and ") } : { val: DatabaseItemsList[ConnectorId?.split(".")?.[3] as keyof typeof DatabaseItemsList]?.join(" and ") })}
                     />
                   }
                 >

@@ -1,4 +1,6 @@
 import {
+  Alert,
+  Button,
   Card,
   CardHeader,
   CardTitle,
@@ -6,7 +8,11 @@ import {
   Divider,
   Flex,
   FlexItem,
+  Gallery,
+  GalleryItem,
   Content,
+  PageSection,
+  Skeleton,
 } from "@patternfly/react-core";
 import React, { useCallback, useState } from "react";
 import { fetchData, Source } from "../../apis/apis";
@@ -15,11 +21,33 @@ import { useQuery } from "react-query";
 import SourceDestinationSelectionList from "../SourceDestinationSelectionList";
 import { CatalogGrid } from "@components/CatalogGrid";
 import { CreateSource } from "@sourcePage/CreateSource";
-import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
+import { Catalog, CatalogApiResponse } from "../../apis/types";
 
 type PipelineSourceModelProps = {
   onSourceSelection: (source: Source) => void;
 };
+
+const CatalogSkeleton: React.FC = () => (
+  <Gallery hasGutter className="custom-gallery">
+    {Array.from({ length: 6 }).map((_, i) => (
+      <GalleryItem key={i}>
+        <Card>
+          <CardHeader>
+            <Skeleton shape="square" width="60px" height="60px" />
+            <CardBody>
+              <Skeleton width="70%" height="20px" />
+            </CardBody>
+          </CardHeader>
+          <CardBody>
+            <Skeleton width="100%" height="14px" />
+            <br />
+            <Skeleton width="80%" height="14px" />
+          </CardBody>
+        </Card>
+      </GalleryItem>
+    ))}
+  </Gallery>
+);
 
 const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
   onSourceSelection,
@@ -36,6 +64,21 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
   } = useQuery<Source[], Error>("sources", () =>
     fetchData<Source[]>(`${API_URL}/api/sources`)
   );
+
+  const {
+    data: sourceCatalog = [],
+    error: catalogError,
+    isLoading: isCatalogLoading,
+    refetch: refetchCatalog,
+  } = useQuery<Catalog[], Error>("sourceConnectorCatalog", async () => {
+    const response = await fetchData<CatalogApiResponse>(
+      `${API_URL}/api/catalog`
+    );
+    return (response.components["source-connector"] ?? []).map((entry) => ({
+      ...entry,
+      role: "source",
+    }));
+  });
 
   const [userSelection, setUserSelection] = useState<string | null>(null);
 
@@ -130,13 +173,31 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
           onSelection={onSourceSelection}
         />
       ) : selectedSource === "" ? (
-        <CatalogGrid
-          onCardSelect={selectSource}
-          catalogType="source"
-          isAddButtonVisible={false}
-          displayType={"grid"}
-          searchResult={sourceCatalog}
-        />
+        catalogError ? (
+          <PageSection>
+            <Alert
+              variant="danger"
+              title="Failed to load source catalog"
+              actionLinks={
+                <Button variant="link" onClick={() => refetchCatalog()}>
+                  Retry
+                </Button>
+              }
+            >
+              {catalogError.message}
+            </Alert>
+          </PageSection>
+        ) : isCatalogLoading ? (
+          <CatalogSkeleton />
+        ) : (
+          <CatalogGrid
+            onCardSelect={selectSource}
+            catalogType="source"
+            isAddButtonVisible={false}
+            displayType={"grid"}
+            searchResult={sourceCatalog}
+          />
+        )
       ) : (
         <CreateSource
           modelLoaded={true}

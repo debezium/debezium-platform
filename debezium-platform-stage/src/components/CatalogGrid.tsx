@@ -89,15 +89,15 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
           </GalleryItem> */}
 
           {searchResult.map((item) => (
-            <GalleryItem key={item.id} data-tour={`catalog-card-${item.id}`}>
+            <GalleryItem key={item.class} data-tour={`catalog-card-${item.class}`}>
               <Card isClickable variant={"default"} className={`catalog-grid-card-${catalogType}`}>
                 <CardHeader
                   selectableActions={{
-                    onClickAction: () => onCardClick(item.id),
+                    onClickAction: () => onCardClick(item.class),
                     selectableActionAriaLabelledby: `catalog-card-id-${item.name}`,
                   }}
                 >
-                  <ConnectorImage connectorType={item.id} />
+                  <ConnectorImage connectorType={item.class} />
                   <CardTitle id={`catalog-card-id-${item.name}`}>
                     {item.name}
                   </CardTitle>
@@ -179,8 +179,8 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
           {searchResult.map((item) => (
             <DataListItem
               aria-labelledby="simple-item1"
-              id={item.id}
-              key={item.id}
+              id={item.class}
+              key={item.class}
             >
               <DataListItemRow>
                 <DataListItemCells
@@ -190,9 +190,10 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                       isFilled={false}
                       style={{
                         minWidth: "80px",
+                        maxWidth: "80px",
                       }}
                     >
-                      <ConnectorImage connectorType={item.id} />
+                      <ConnectorImage connectorType={item.class} />
                     </DataListCell>,
                     <DataListCell key="secondary content">
                       <Flex direction={{ default: "column" }}>
@@ -219,6 +220,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                       isFilled={false}
                       style={{
                         minWidth: "80px",
+                        maxWidth: "80px",
                         // display: "flex",
                         // justifyContent: "center",
                       }}

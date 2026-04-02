@@ -14,6 +14,8 @@ import PageHeader from "@components/PageHeader";
 import { useState } from "react";
 import { getConnectionRole } from "@utils/helpers";
 import ConnectionTable from "@components/ConnectionTable";
+import { Catalog, CatalogApiResponse } from "src/apis/types";
+import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 
 
 export interface IConnectionsProps {
@@ -81,11 +83,25 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     }
   );
 
-  // Compute filtered and sorted results
+  const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>(
+    "sourceConnectorCatalog",
+    async () => {
+      const response = await fetchData<CatalogApiResponse>(
+        `${API_URL}/api/catalog`
+      );
+      return (response.components["source-connector"] ?? []).map((e) => ({
+        ...e,
+        role: "source",
+      }));
+    }
+  );
+
+  const catalog: Catalog[] = [...sourceCatalog, ...destinationCatalog];
+
   const searchResult = React.useMemo(() => {
     const withRole = connectionsList.map((conn) => ({
       ...conn,
-      role: getConnectionRole(conn.type.toLowerCase()) || "",
+      role: getConnectionRole(conn.type.toLowerCase(), catalog) || "",
     }));
 
     let result = withRole;
@@ -252,6 +268,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                         data={searchResult}
                         sourceList={sourceList}
                         destinationList={destinationList}
+                        catalog={catalog}
                         onClear={onClear}
                       />
                     </Card>

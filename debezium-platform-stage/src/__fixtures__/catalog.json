@@ -1,0 +1,250 @@
+{
+    "schemaVersion": "1.0",
+    "build": {
+      "version": "3.5.0-SNAPSHOT",
+      "timestamp": "2026-03-31T04:21:50Z",
+      "sourceRepository": "debezium/debezium",
+      "sourceCommit": "3b7009d972",
+      "sourceBranch": "main"
+    },
+    "components": {
+      "converter": [
+        {
+          "class": "io.debezium.converters.BinaryDataConverter",
+          "name": "io.debezium.converters.BinaryDataConverter",
+          "description": "io.debezium.converters.BinaryDataConverter",
+          "descriptor": "converter/io.debezium.converters.BinaryDataConverter.json"
+        },
+        {
+          "class": "io.debezium.converters.ByteArrayConverter",
+          "name": "io.debezium.converters.ByteArrayConverter",
+          "description": "io.debezium.converters.ByteArrayConverter",
+          "descriptor": "converter/io.debezium.converters.ByteArrayConverter.json"
+        },
+        {
+          "class": "io.debezium.converters.CloudEventsConverter",
+          "name": "io.debezium.converters.CloudEventsConverter",
+          "description": "io.debezium.converters.CloudEventsConverter",
+          "descriptor": "converter/io.debezium.converters.CloudEventsConverter.json"
+        }
+      ],
+      "custom-converter": [
+        {
+          "class": "io.debezium.connector.binlog.converters.JdbcSinkDataTypesConverter",
+          "name": "io.debezium.connector.binlog.converters.JdbcSinkDataTypesConverter",
+          "description": "io.debezium.connector.binlog.converters.JdbcSinkDataTypesConverter",
+          "descriptor": "custom-converter/io.debezium.connector.binlog.converters.JdbcSinkDataTypesConverter.json"
+        },
+        {
+          "class": "io.debezium.connector.binlog.converters.TinyIntOneToBooleanConverter",
+          "name": "io.debezium.connector.binlog.converters.TinyIntOneToBooleanConverter",
+          "description": "io.debezium.connector.binlog.converters.TinyIntOneToBooleanConverter",
+          "descriptor": "custom-converter/io.debezium.connector.binlog.converters.TinyIntOneToBooleanConverter.json"
+        },
+        {
+          "class": "io.debezium.connector.oracle.converters.NumberOneToBooleanConverter",
+          "name": "io.debezium.connector.oracle.converters.NumberOneToBooleanConverter",
+          "description": "io.debezium.connector.oracle.converters.NumberOneToBooleanConverter",
+          "descriptor": "custom-converter/io.debezium.connector.oracle.converters.NumberOneToBooleanConverter.json"
+        },
+        {
+          "class": "io.debezium.connector.oracle.converters.NumberToZeroScaleConverter",
+          "name": "io.debezium.connector.oracle.converters.NumberToZeroScaleConverter",
+          "description": "io.debezium.connector.oracle.converters.NumberToZeroScaleConverter",
+          "descriptor": "custom-converter/io.debezium.connector.oracle.converters.NumberToZeroScaleConverter.json"
+        },
+        {
+          "class": "io.debezium.connector.oracle.converters.RawToStringConverter",
+          "name": "io.debezium.connector.oracle.converters.RawToStringConverter",
+          "description": "io.debezium.connector.oracle.converters.RawToStringConverter",
+          "descriptor": "custom-converter/io.debezium.connector.oracle.converters.RawToStringConverter.json"
+        }
+      ],
+      "sink-connector": [
+        {
+          "class": "io.debezium.connector.jdbc.JdbcSinkConnector",
+          "name": "io.debezium.connector.jdbc.JdbcSinkConnector",
+          "description": "io.debezium.connector.jdbc.JdbcSinkConnector",
+          "descriptor": "sink-connector/io.debezium.connector.jdbc.JdbcSinkConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.mongodb.MongoDbSinkConnector",
+          "name": "io.debezium.connector.mongodb.MongoDbSinkConnector",
+          "description": "io.debezium.connector.mongodb.MongoDbSinkConnector",
+          "descriptor": "sink-connector/io.debezium.connector.mongodb.MongoDbSinkConnector.json"
+        }
+      ],
+      "source-connector": [
+        {
+          "class": "io.debezium.connector.db2.Db2Connector",
+          "name": "io.debezium.connector.db2.Db2Connector",
+          "description": "io.debezium.connector.db2.Db2Connector",
+          "descriptor": "source-connector/io.debezium.connector.db2.Db2Connector.json"
+        },
+        {
+          "class": "io.debezium.connector.mariadb.MariaDbConnector",
+          "name": "Debezium MariaDB Connector",
+          "description": "Debezium MariaDB Connector",
+          "descriptor": "source-connector/io.debezium.connector.mariadb.MariaDbConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.mongodb.MongoDbConnector",
+          "name": "Debezium MongoDB Connector",
+          "description": "Debezium MongoDB Connector",
+          "descriptor": "source-connector/io.debezium.connector.mongodb.MongoDbConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.mysql.MySqlConnector",
+          "name": "Debezium MySQL Connector",
+          "description": "Debezium MySQL Connector",
+          "descriptor": "source-connector/io.debezium.connector.mysql.MySqlConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.oracle.OracleConnector",
+          "name": "Debezium Oracle Connector",
+          "description": "Debezium Oracle Connector",
+          "descriptor": "source-connector/io.debezium.connector.oracle.OracleConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.postgresql.PostgresConnector",
+          "name": "Debezium PostgreSQL Connector",
+          "description": "Debezium PostgreSQL Connector",
+          "descriptor": "source-connector/io.debezium.connector.postgresql.PostgresConnector.json"
+        },
+        {
+          "class": "io.debezium.connector.sqlserver.SqlServerConnector",
+          "name": "Debezium SQLServer Connector",
+          "description": "Debezium SQLServer Connector",
+          "descriptor": "source-connector/io.debezium.connector.sqlserver.SqlServerConnector.json"
+        }
+      ],
+      "transformation": [
+        {
+          "class": "io.debezium.connector.jdbc.transforms.CollectionNameTransformation",
+          "name": "io.debezium.connector.jdbc.transforms.CollectionNameTransformation",
+          "description": "io.debezium.connector.jdbc.transforms.CollectionNameTransformation",
+          "descriptor": "transformation/io.debezium.connector.jdbc.transforms.CollectionNameTransformation.json"
+        },
+        {
+          "class": "io.debezium.connector.jdbc.transforms.FieldNameTransformation",
+          "name": "io.debezium.connector.jdbc.transforms.FieldNameTransformation",
+          "description": "io.debezium.connector.jdbc.transforms.FieldNameTransformation",
+          "descriptor": "transformation/io.debezium.connector.jdbc.transforms.FieldNameTransformation.json"
+        },
+        {
+          "class": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+          "name": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+          "description": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+          "descriptor": "transformation/io.debezium.connector.mongodb.transforms.ExtractNewDocumentState.json"
+        },
+        {
+          "class": "io.debezium.connector.mongodb.transforms.outbox.MongoEventRouter",
+          "name": "io.debezium.connector.mongodb.transforms.outbox.MongoEventRouter",
+          "description": "io.debezium.connector.mongodb.transforms.outbox.MongoEventRouter",
+          "descriptor": "transformation/io.debezium.connector.mongodb.transforms.outbox.MongoEventRouter.json"
+        },
+        {
+          "class": "io.debezium.connector.mysql.transforms.ReadToInsertEvent",
+          "name": "io.debezium.connector.mysql.transforms.ReadToInsertEvent",
+          "description": "io.debezium.connector.mysql.transforms.ReadToInsertEvent",
+          "descriptor": "transformation/io.debezium.connector.mysql.transforms.ReadToInsertEvent.json"
+        },
+        {
+          "class": "io.debezium.connector.postgresql.transforms.DecodeLogicalDecodingMessageContent",
+          "name": "io.debezium.connector.postgresql.transforms.DecodeLogicalDecodingMessageContent",
+          "description": "io.debezium.connector.postgresql.transforms.DecodeLogicalDecodingMessageContent",
+          "descriptor": "transformation/io.debezium.connector.postgresql.transforms.DecodeLogicalDecodingMessageContent.json"
+        },
+        {
+          "class": "io.debezium.connector.postgresql.transforms.timescaledb.TimescaleDb",
+          "name": "io.debezium.connector.postgresql.transforms.timescaledb.TimescaleDb",
+          "description": "io.debezium.connector.postgresql.transforms.timescaledb.TimescaleDb",
+          "descriptor": "transformation/io.debezium.connector.postgresql.transforms.timescaledb.TimescaleDb.json"
+        },
+        {
+          "class": "io.debezium.transforms.ByLogicalTableRouter",
+          "name": "io.debezium.transforms.ByLogicalTableRouter",
+          "description": "io.debezium.transforms.ByLogicalTableRouter",
+          "descriptor": "transformation/io.debezium.transforms.ByLogicalTableRouter.json"
+        },
+        {
+          "class": "io.debezium.transforms.ExtractChangedRecordState",
+          "name": "io.debezium.transforms.ExtractChangedRecordState",
+          "description": "io.debezium.transforms.ExtractChangedRecordState",
+          "descriptor": "transformation/io.debezium.transforms.ExtractChangedRecordState.json"
+        },
+        {
+          "class": "io.debezium.transforms.ExtractNewRecordState",
+          "name": "io.debezium.transforms.ExtractNewRecordState",
+          "description": "io.debezium.transforms.ExtractNewRecordState",
+          "descriptor": "transformation/io.debezium.transforms.ExtractNewRecordState.json"
+        },
+        {
+          "class": "io.debezium.transforms.ExtractSchemaToNewRecord",
+          "name": "io.debezium.transforms.ExtractSchemaToNewRecord",
+          "description": "io.debezium.transforms.ExtractSchemaToNewRecord",
+          "descriptor": "transformation/io.debezium.transforms.ExtractSchemaToNewRecord.json"
+        },
+        {
+          "class": "io.debezium.transforms.GeometryFormatTransformer",
+          "name": "io.debezium.transforms.GeometryFormatTransformer",
+          "description": "io.debezium.transforms.GeometryFormatTransformer",
+          "descriptor": "transformation/io.debezium.transforms.GeometryFormatTransformer.json"
+        },
+        {
+          "class": "io.debezium.transforms.HeaderToValue",
+          "name": "io.debezium.transforms.HeaderToValue",
+          "description": "io.debezium.transforms.HeaderToValue",
+          "descriptor": "transformation/io.debezium.transforms.HeaderToValue.json"
+        },
+        {
+          "class": "io.debezium.transforms.SchemaChangeEventFilter",
+          "name": "io.debezium.transforms.SchemaChangeEventFilter",
+          "description": "io.debezium.transforms.SchemaChangeEventFilter",
+          "descriptor": "transformation/io.debezium.transforms.SchemaChangeEventFilter.json"
+        },
+        {
+          "class": "io.debezium.transforms.SwapGeometryCoordinates",
+          "name": "io.debezium.transforms.SwapGeometryCoordinates",
+          "description": "io.debezium.transforms.SwapGeometryCoordinates",
+          "descriptor": "transformation/io.debezium.transforms.SwapGeometryCoordinates.json"
+        },
+        {
+          "class": "io.debezium.transforms.TimezoneConverter",
+          "name": "io.debezium.transforms.TimezoneConverter",
+          "description": "io.debezium.transforms.TimezoneConverter",
+          "descriptor": "transformation/io.debezium.transforms.TimezoneConverter.json"
+        },
+        {
+          "class": "io.debezium.transforms.VectorToJsonConverter",
+          "name": "io.debezium.transforms.VectorToJsonConverter",
+          "description": "io.debezium.transforms.VectorToJsonConverter",
+          "descriptor": "transformation/io.debezium.transforms.VectorToJsonConverter.json"
+        },
+        {
+          "class": "io.debezium.transforms.openlineage.OpenLineage",
+          "name": "io.debezium.transforms.openlineage.OpenLineage",
+          "description": "io.debezium.transforms.openlineage.OpenLineage",
+          "descriptor": "transformation/io.debezium.transforms.openlineage.OpenLineage.json"
+        },
+        {
+          "class": "io.debezium.transforms.outbox.EventRouter",
+          "name": "io.debezium.transforms.outbox.EventRouter",
+          "description": "io.debezium.transforms.outbox.EventRouter",
+          "descriptor": "transformation/io.debezium.transforms.outbox.EventRouter.json"
+        },
+        {
+          "class": "io.debezium.transforms.partitions.PartitionRouting",
+          "name": "io.debezium.transforms.partitions.PartitionRouting",
+          "description": "io.debezium.transforms.partitions.PartitionRouting",
+          "descriptor": "transformation/io.debezium.transforms.partitions.PartitionRouting.json"
+        },
+        {
+          "class": "io.debezium.transforms.tracing.ActivateTracingSpan",
+          "name": "io.debezium.transforms.tracing.ActivateTracingSpan",
+          "description": "io.debezium.transforms.tracing.ActivateTracingSpan",
+          "descriptor": "transformation/io.debezium.transforms.tracing.ActivateTracingSpan.json"
+        }
+      ]
+    }
+  }

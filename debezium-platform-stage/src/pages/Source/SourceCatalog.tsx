@@ -1,11 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
+  Alert,
   Button,
   Content,
   ContentVariants,
+  Card,
+  CardBody,
+  CardHeader,
+  Gallery,
+  GalleryItem,
   PageSection,
   SearchInput,
+  Skeleton,
   ToggleGroup,
   ToggleGroupItem,
   Toolbar,
@@ -20,10 +27,13 @@ import { CatalogGrid } from "@components/CatalogGrid";
 import { useState } from "react";
 import { debounce } from "lodash";
 import _ from "lodash";
-import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
 import { useTranslation } from "react-i18next";
 import PageTour from "../../components/PageTour";
 import { Step } from "react-joyride";
+import { useQuery } from "react-query";
+import { fetchData } from "../../apis/apis";
+import { API_URL } from "../../utils/constants";
+import { Catalog, CatalogApiResponse } from "../../apis/types";
 
 const useSourceCatalogTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
@@ -49,13 +59,51 @@ export interface ISinkProps {
   sampleProp?: string;
 }
 
+const CatalogSkeleton: React.FC = () => (
+  <PageSection>
+    <Gallery hasGutter className="custom-gallery">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <GalleryItem key={i}>
+          <Card>
+            <CardHeader>
+              <Skeleton shape="square" width="60px" height="60px" />
+              <CardBody>
+                <Skeleton width="70%" height="20px" />
+              </CardBody>
+            </CardHeader>
+            <CardBody>
+              <Skeleton width="100%" height="14px" />
+              <br />
+              <Skeleton width="80%" height="14px" />
+            </CardBody>
+          </Card>
+        </GalleryItem>
+      ))}
+    </Gallery>
+  </PageSection>
+);
+
 const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [isSelected, setIsSelected] = React.useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Compute filtered results based on search query
+  const {
+    data: sourceCatalog = [],
+    error: catalogError,
+    isLoading: isCatalogLoading,
+    refetch,
+  } = useQuery<Catalog[], Error>("sourceConnectorCatalog", async () => {
+    const response = await fetchData<CatalogApiResponse>(
+      `${API_URL}/api/catalog`
+    );
+    return (response.components["source-connector"] ?? []).map((entry) => ({
+      ...entry,
+      role: "source",
+    }));
+  });
+
   const searchResult = React.useMemo(() => {
     if (searchQuery.length === 0) {
       return sourceCatalog;
@@ -63,7 +111,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
     return _.filter(sourceCatalog, (o) =>
       o.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [searchQuery, sourceCatalog]);
 
   const onClear = () => {
     onSearch?.("");
@@ -170,13 +218,31 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
         </Toolbar>
       </PageSection>
 
-      <CatalogGrid
-        onCardSelect={onSourceSelection}
-        catalogType="source"
-        displayType={isSelected}
-        isAddButtonVisible={searchQuery.length === 0}
-        searchResult={searchResult}
-      />
+      {catalogError ? (
+        <PageSection>
+          <Alert
+            variant="danger"
+            title={t("source:catalog.fetchError", "Failed to load source catalog")}
+            actionLinks={
+              <Button variant="link" onClick={() => refetch()}>
+                {t("retry", "Retry")}
+              </Button>
+            }
+          >
+            {catalogError.message}
+          </Alert>
+        </PageSection>
+      ) : isCatalogLoading ? (
+        <CatalogSkeleton />
+      ) : (
+        <CatalogGrid
+          onCardSelect={onSourceSelection}
+          catalogType="source"
+          displayType={isSelected}
+          isAddButtonVisible={searchQuery.length === 0}
+          searchResult={searchResult}
+        />
+      )}
       <PageTour pageKey="source-catalog" steps={catalogTourSteps} />
     </>
   );

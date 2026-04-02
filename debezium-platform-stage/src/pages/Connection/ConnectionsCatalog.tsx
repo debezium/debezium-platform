@@ -4,12 +4,14 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { ThIcon, ListIcon, SearchIcon, FilterIcon } from "@patternfly/react-icons";
 import { useState } from "react";
-import { Catalog } from "src/apis";
-import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
+import { Catalog, CatalogApiResponse } from "src/apis/types";
 import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 import _, { debounce } from "lodash";
 import { useNavigate } from "react-router-dom";
 import { ConnectionCatalogGrid } from "@components/ConnectionCatalogGrid";
+import { useQuery } from "react-query";
+import { fetchData } from "../../apis/apis";
+import { API_URL } from "../../utils/constants";
 
 export interface IConnectionsCatalogProps {
   sampleProp?: string;
@@ -26,6 +28,17 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
   const [isSelected, setIsSelected] = React.useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  const {
+    data: sourceCatalog = [],
+  } = useQuery<Catalog[], Error>("sourceConnectorCatalog", async () => {
+    const response = await fetchData<CatalogApiResponse>(
+      `${API_URL}/api/catalog`
+    );
+    return (response.components["source-connector"] ?? []).map((entry) => ({
+      ...entry,
+      role: "source",
+    }));
+  });
 
   const onConnectionsTypeToggle = () => {
     setConnectionsTypeIsExpanded(!connectionsTypeIsExpanded);
@@ -39,7 +52,6 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     setConnectionsTypeIsExpanded(false);
   };
 
-  // Compute filtered and sorted results
   const searchResult = React.useMemo(() => {
     let catalogData: Catalog[] = [];
     
@@ -51,7 +63,6 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
       catalogData = [...sourceCatalog, ...destinationCatalog];
     }
 
-    // Apply search filter
     let filtered = catalogData;
     if (searchQuery.length > 0) {
       filtered = _.filter(catalogData, (o) => 
@@ -59,9 +70,8 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
       );
     }
 
-    // Sort by name
     return _.sortBy(filtered, (o) => o.name.toLowerCase());
-  }, [connectionsTypeSelected, searchQuery]);
+  }, [connectionsTypeSelected, searchQuery, sourceCatalog]);
 
   const onClear = () => {
     onSearch?.("");
@@ -76,7 +86,6 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     setIsSelected(id.split("-")[2] as "grid" | "list");
   };
 
-  // Debounce the search query state update
   const debouncedSetSearchQuery = React.useMemo(
     () => debounce((value: string) => {
       setSearchQuery(value);
@@ -84,7 +93,6 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     []
   );
 
-  // Cleanup debounced function on unmount
   React.useEffect(() => {
     return () => {
       debouncedSetSearchQuery.cancel();

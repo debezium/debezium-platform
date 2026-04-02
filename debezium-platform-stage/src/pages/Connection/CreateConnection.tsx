@@ -54,7 +54,11 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     );
 
     const selectedSchema = React.useMemo(() => {
-        return connectionsSchema.find((schema) => schema.type.toLowerCase() === (connectionId || "").toLowerCase());
+        const normalizedId = (connectionId || "").toLowerCase().replace(/-/g, "_");
+        return connectionsSchema.find((schema) => {
+            const normalizedType = schema.type.toLowerCase().replace(/-/g, "_");
+            return normalizedId === normalizedType || normalizedId.includes(normalizedType);
+        });
     }, [connectionsSchema, connectionId]);
 
     const selectedSchemaProperties = selectedSchema?.schema;

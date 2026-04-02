@@ -25,8 +25,6 @@ import {
   API_URL,
 } from "../../utils/constants";
 import { convertMapToObject } from "../../utils/helpers";
-import sourceCatalog from "../../__mocks__/data/SourceCatalog.json";
-import { find } from "lodash";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
@@ -122,7 +120,7 @@ const FormSyncManager: React.FC<{
         return;
       }
       updateSource.current = "form";
-      const type = find(sourceCatalog, { id: sourceId })?.type || "";
+      const type = sourceId || "";
       const configuration = convertMapToObject(properties);
 
       setCode((prevCode: any) => {
@@ -356,7 +354,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
 
         const payload = {
           description: values["description"],
-          type: find(sourceCatalog, { id: sourceId })?.type || (code as Payload).type || "",
+          type: sourceId || (code as Payload).type || "",
           schema: "schema321",
           vaults: [],
           ...(selectedConnection ? { connection: selectedConnection } : {}),

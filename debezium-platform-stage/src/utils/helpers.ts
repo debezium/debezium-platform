@@ -1,6 +1,5 @@
 import { DatabaseType } from "./constants";
-import DestinationCatalog from "../__mocks__/data/DestinationCatalog.json";
-import SourceCatalog from "../__mocks__/data/SourceCatalog.json";
+import { Catalog } from "../apis/types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const convertMapToObject = (
@@ -53,10 +52,9 @@ export const getDatabaseType = (connectorType: string)  => {
   }
   return type;
 }
-export const getConnectionRole = (connectorType: string) => {
-  const connectionsCatalog = [...SourceCatalog, ...DestinationCatalog];
-  const connection = connectionsCatalog.find((connection) => connection.id === connectorType);
-  return connection?.role;
+export const getConnectionRole = (connectorType: string, catalog: Catalog[]): string | undefined => {
+  const lower = connectorType.toLowerCase();
+  return catalog.find((entry) => entry.class.toLowerCase() === lower || lower.includes(entry.class.toLowerCase()) || entry.class.toLowerCase().includes(lower))?.role;
 }
 
 export const getConnectorTypeName = (connectorType: string) => {

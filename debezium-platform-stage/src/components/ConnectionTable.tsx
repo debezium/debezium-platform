@@ -37,6 +37,7 @@ import {
 import { getConnectionRole, getConnectorTypeName } from "../utils/helpers";
 import ConnectorImage from "./ComponentImage";
 import { API_URL } from "../utils/constants";
+import { Catalog } from "../apis/types";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../appLayout/AppNotificationContext";
 import { useDeleteData } from "src/apis";
@@ -48,6 +49,7 @@ interface IConnectionTableProps {
   data: ConnectionsApiResponse;
   sourceList: Source[];
   destinationList: Destination[];
+  catalog: Catalog[];
   onClear: () => void;
 }
 
@@ -65,6 +67,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
   data,
   sourceList,
   destinationList,
+  catalog,
   onClear,
 }) => {
   const { t } = useTranslation();
@@ -181,11 +184,11 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
                     <FlexItem>
                       <ConnectorImage connectorType={instance.type.toLowerCase()} size={35} />
                     </FlexItem>
-                    <FlexItem>{getConnectorTypeName(instance.type.toLowerCase())} {getConnectionRole(instance.type.toLowerCase())}</FlexItem>
+                    <FlexItem>{getConnectorTypeName(instance.type.toLowerCase())} {getConnectionRole(instance.type.toLowerCase(), catalog)}</FlexItem>
                   </Flex>
                 </Td>
                 <Td dataLabel={t("usedIn")}>
-                  <UsedIn resourceList={getConnectionRole(instance.type.toLowerCase()) === "source" ? sourceList : destinationList} resourceType={getConnectionRole(instance.type.toLowerCase()) || ""} requestedPageType={"connection"} instance={instance} />
+                  <UsedIn resourceList={getConnectionRole(instance.type.toLowerCase(), catalog) === "source" ? sourceList : destinationList} resourceType={getConnectionRole(instance.type.toLowerCase(), catalog) || ""} requestedPageType={"connection"} instance={instance} />
                 </Td>
                 <Td dataLabel={t("actions")} isActionCell>
                   <ActionsColumn

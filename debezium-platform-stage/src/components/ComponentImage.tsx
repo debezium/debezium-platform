@@ -26,6 +26,7 @@ import milvus from "../assets/milvus.png";
 import qdrant from "../assets/qdrant.png";
 import redis from "../assets/redis.png";
 import http from "../assets/http2.png";
+import db2 from "../assets/ibm-db2.png";
 
 interface ConnectorImageProps {
   connectorType: string;
@@ -134,6 +135,10 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
     case connectorType.includes("http"):
       altText = "HTTP";
       src = http;
+      break;
+    case connectorType.includes("db2"):
+      altText = "IBM Db2";
+      src = db2;
       break;
     default:
       altText = "Debezium";

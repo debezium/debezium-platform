@@ -1,0 +1,435 @@
+[
+    {
+      "type": "POSTGRESQL",
+      "schema": {
+        "title": "PostgreSQL connection properties",
+        "description": "PostgreSQL connection properties",
+        "type": "object",
+        "required": [
+          "hostname",
+          "port",
+          "username",
+          "password",
+          "database"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "The hostname of the database"
+          },
+          "port": {
+            "type": "integer",
+            "title": "The port of the database"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username to connect to the database"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password to connect to the database"
+          },
+          "database": {
+            "type": "string",
+            "title": "The name of the database"
+          }
+        }
+      }
+    },
+    {
+      "type": "ORACLE",
+      "schema": {
+        "title": "Oracle connection properties",
+        "description": "Oracle connection properties",
+        "type": "object",
+        "required": [
+          "hostname",
+          "port",
+          "username",
+          "password",
+          "database"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "The hostname of the database"
+          },
+          "port": {
+            "type": "integer",
+            "title": "The port of the database"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username to connect to the database"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password to connect to the database"
+          },
+          "database": {
+            "type": "string",
+            "title": "The name of the database"
+          }
+        }
+      }
+    },
+    {
+      "type": "MYSQL",
+      "schema": {
+        "title": "MySQL connection properties",
+        "description": "MySQL connection properties",
+        "type": "object",
+        "required": [
+          "hostname",
+          "port",
+          "username",
+          "password",
+          "server.id"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "The hostname of the database"
+          },
+          "port": {
+            "type": "integer",
+            "title": "The port of the database"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username to connect to the database"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password to connect to the database"
+          },
+          "server.id": {
+            "type": "string",
+            "title": "The name of the database"
+          }
+        }
+      }
+    },
+    {
+      "type": "MARIADB",
+      "schema": {
+        "title": "MariaDB connection properties",
+        "description": "MariaDB connection properties",
+        "type": "object",
+        "required": [
+          "hostname",
+          "port",
+          "username",
+          "password",
+          "database"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "The hostname of the database"
+          },
+          "port": {
+            "type": "integer",
+            "title": "The port of the database"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username to connect to the database"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password to connect to the database"
+          },
+          "database": {
+            "type": "string",
+            "title": "The name of the database"
+          }
+        }
+      }
+    },
+    {
+      "type": "SQLSERVER",
+      "schema": {
+        "title": "Microsoft SQL Server connection properties",
+        "description": "Microsoft SQL Server connection properties",
+        "type": "object",
+        "required": [
+          "hostname",
+          "port",
+          "username",
+          "password",
+          "database"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "The hostname of the database"
+          },
+          "port": {
+            "type": "integer",
+            "title": "The port of the database"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username to connect to the database"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password to connect to the database"
+          },
+          "database": {
+            "type": "string",
+            "title": "The name of the database"
+          }
+        }
+      }
+    },
+    {
+      "type": "KAFKA",
+      "schema": {
+        "title": "Kafka connection properties",
+        "description": "Kafka connection properties",
+        "type": "object",
+        "required": [
+          "bootstrap.servers"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "bootstrap.servers": {
+            "type": "list",
+            "title": "List of \"hostname:port\" pairs that address one or more (even all) of the brokers."
+          }
+        }
+      }
+    },
+    {
+      "type": "INFINISPAN",
+      "schema": {
+        "title": "Infinispan connection properties",
+        "description": "Infinispan connection properties",
+        "type": "object",
+        "required": [
+          "server.host",
+          "cache"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "server.host": {
+            "type": "string",
+            "title": "The hostname of the Infinispan server"
+          },
+          "server.port": {
+            "type": "integer",
+            "title": "The port of the Infinispan server"
+          },
+          "cache": {
+            "type": "string",
+            "title": "The name of the Infinispan cache"
+          },
+          "user": {
+            "type": "string",
+            "title": "Username to connect to the Infinispan server"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password to connect to the Infinispan server"
+          }
+        }
+      }
+    },
+    {
+      "type": "PRAVEGA",
+      "schema": {
+        "title": "Pravega connection properties",
+        "description": "Pravega connection properties",
+        "type": "object",
+        "required": [
+          "controller.uri",
+          "scope"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "controller.uri": {
+            "type": "string",
+            "title": "The URI of the Pravega controller"
+          },
+          "scope": {
+            "type": "string",
+            "title": "The Pravega scope that contains the target streams"
+          }
+        }
+      }
+    },
+    {
+      "type": "REDIS",
+      "schema": {
+        "title": "Redis connection properties",
+        "description": "Properties required to connect to a Redis server, including optional authentication and SSL",
+        "type": "object",
+        "required": [
+          "host",
+          "port"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "host": {
+            "type": "string",
+            "title": "Redis server hostname or IP address"
+          },
+          "port": {
+            "type": "integer",
+            "title": "Redis server port"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username for Redis ACL authentication (optional)"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password for authentication (optional)"
+          },
+          "use.ssl": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false"
+            ],
+            "title": "Use SSL/TLS to connect to Redis (optional)"
+          }
+        }
+      }
+    },
+    {
+      "type": "NATS_STREAMING",
+      "schema": {
+        "title": "NATS Streaming connection properties",
+        "description": "NATS Streaming connection properties",
+        "type": "object",
+        "required": [
+          "url",
+          "cluster.id",
+          "client.id"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "NATS Streaming server URL (e.g. nats://localhost:4222)"
+          },
+          "cluster.id": {
+            "type": "string",
+            "title": "NATS Streaming cluster ID"
+          },
+          "client.id": {
+            "type": "string",
+            "title": "NATS Streaming client ID"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username for NATS Streaming authentication"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password for NATS Streaming authentication"
+          }
+        }
+      }
+    },
+    {
+      "type": "QDRANT",
+      "schema": {
+        "title": "Qdrant connection properties",
+        "description": "Qdrant connection properties",
+        "type": "object",
+        "required": [
+          "host",
+          "port"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "host": {
+            "type": "string",
+            "title": "The hostname or IP address of the Qdrant instance"
+          },
+          "port": {
+            "type": "integer",
+            "title": "The port of the Qdrant instance (default: 6333)"
+          },
+          "api.key": {
+            "type": "string",
+            "title": "Optional API key for authentication"
+          }
+        }
+      }
+    },
+    {
+      "type": "RABBITMQ",
+      "schema": {
+        "title": "RabbitMQ connection properties",
+        "description": "RabbitMQ connection properties",
+        "type": "object",
+        "required": [
+          "host",
+          "port",
+          "username",
+          "password"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "host": {
+            "type": "string",
+            "title": "RabbitMQ broker host"
+          },
+          "port": {
+            "type": "integer",
+            "title": "RabbitMQ broker port"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username for RabbitMQ authentication"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password for RabbitMQ authentication"
+          },
+          "virtualHost": {
+            "type": "string",
+            "title": "Optional virtual host to connect to"
+          },
+          "ssl.enabled": {
+            "type": "boolean",
+            "title": "Enable TLS for the connection"
+          }
+        }
+      }
+    }
+  ]

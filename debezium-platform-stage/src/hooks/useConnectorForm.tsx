@@ -2,7 +2,6 @@
 // useConnectorForm.ts
 import { useState } from 'react';
 import { createPost, Source } from '../apis/apis';
-import { find } from 'lodash';
 import { convertMapToObject } from '../utils/helpers';
 import { useNotification } from '../appLayout/AppNotificationContext';
 
@@ -125,7 +124,7 @@ export const useConnectorForm = ({
         }
         const payload = {
           description: values["details"],
-          type: find(catalog, { id: connectorId })?.type || "",
+          type: connectorId || "",
           schema: "schema321",
           vaults: [],
           config: convertMapToObject(properties),

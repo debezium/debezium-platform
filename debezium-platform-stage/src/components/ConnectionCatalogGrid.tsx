@@ -44,11 +44,11 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
           {
             (
               searchResult.map((item) => (
-                <GalleryItem key={item.id}>
+                <GalleryItem key={item.class}>
                   <Card
                     variant={"default"}
                     className="custom-connection-card"
-                    onClick={() => onCardClick(item.id, item.role)}
+                    onClick={() => onCardClick(item.class, item.role)}
 
                   >
                     <CardHeader
@@ -70,7 +70,7 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
                     //     </Tooltip></>
                     // }}
                     >
-                      <ConnectorImage connectorType={item.id} />
+                      <ConnectorImage connectorType={item.class} />
                       <CardTitle id={`catalog-card-id-${item.name}`}>
                         {item.name}
                       </CardTitle>
@@ -94,9 +94,9 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
           {searchResult.map((item) => (
             <DataListItem
               aria-labelledby="simple-item1"
-              id={item.id}
-              key={item.id}
-              onClick={() => onCardClick(item.id, item.role)}
+              id={item.class}
+              key={item.class}
+              onClick={() => onCardClick(item.class, item.role)}
               style={{ cursor: "pointer" }}
             >
               <DataListItemRow>
@@ -109,7 +109,7 @@ const ConnectionCatalogGrid: React.FunctionComponent<IConnectionCatalogGridProps
                         minWidth: "80px",
                       }}
                     >
-                      <ConnectorImage connectorType={item.id} />
+                      <ConnectorImage connectorType={item.class} />
                     </DataListCell>,
                     <DataListCell key="secondary content">
                       <Flex direction={{ default: "column" }}>
