@@ -8,11 +8,8 @@ import {
   Divider,
   Flex,
   FlexItem,
-  Gallery,
-  GalleryItem,
   Content,
   PageSection,
-  Skeleton,
 } from "@patternfly/react-core";
 import React, { useCallback, useState } from "react";
 import { fetchData, Source } from "../../apis/apis";
@@ -22,32 +19,11 @@ import SourceDestinationSelectionList from "../SourceDestinationSelectionList";
 import { CatalogGrid } from "@components/CatalogGrid";
 import { CreateSource } from "@sourcePage/CreateSource";
 import { Catalog, CatalogApiResponse } from "../../apis/types";
+import CatalogSkeleton from "@components/CatalogSkeleton";
 
 type PipelineSourceModelProps = {
   onSourceSelection: (source: Source) => void;
 };
-
-const CatalogSkeleton: React.FC = () => (
-  <Gallery hasGutter className="custom-gallery">
-    {Array.from({ length: 6 }).map((_, i) => (
-      <GalleryItem key={i}>
-        <Card>
-          <CardHeader>
-            <Skeleton shape="square" width="60px" height="60px" />
-            <CardBody>
-              <Skeleton width="70%" height="20px" />
-            </CardBody>
-          </CardHeader>
-          <CardBody>
-            <Skeleton width="100%" height="14px" />
-            <br />
-            <Skeleton width="80%" height="14px" />
-          </CardBody>
-        </Card>
-      </GalleryItem>
-    ))}
-  </Gallery>
-);
 
 const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
   onSourceSelection,

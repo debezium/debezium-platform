@@ -5,14 +5,8 @@ import {
   Button,
   Content,
   ContentVariants,
-  Card,
-  CardBody,
-  CardHeader,
-  Gallery,
-  GalleryItem,
   PageSection,
   SearchInput,
-  Skeleton,
   ToggleGroup,
   ToggleGroupItem,
   Toolbar,
@@ -34,6 +28,7 @@ import { useQuery } from "react-query";
 import { fetchData } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { Catalog, CatalogApiResponse } from "../../apis/types";
+import CatalogSkeleton from "@components/CatalogSkeleton";
 
 const useSourceCatalogTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
@@ -58,30 +53,6 @@ const useSourceCatalogTourSteps = (): Step[] => {
 export interface ISinkProps {
   sampleProp?: string;
 }
-
-const CatalogSkeleton: React.FC = () => (
-  <PageSection>
-    <Gallery hasGutter className="custom-gallery">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <GalleryItem key={i}>
-          <Card>
-            <CardHeader>
-              <Skeleton shape="square" width="60px" height="60px" />
-              <CardBody>
-                <Skeleton width="70%" height="20px" />
-              </CardBody>
-            </CardHeader>
-            <CardBody>
-              <Skeleton width="100%" height="14px" />
-              <br />
-              <Skeleton width="80%" height="14px" />
-            </CardBody>
-          </Card>
-        </GalleryItem>
-      ))}
-    </Gallery>
-  </PageSection>
-);
 
 const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
   const navigate = useNavigate();
@@ -233,7 +204,9 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
           </Alert>
         </PageSection>
       ) : isCatalogLoading ? (
-        <CatalogSkeleton />
+        <PageSection>
+          <CatalogSkeleton />
+        </PageSection>
       ) : (
         <CatalogGrid
           onCardSelect={onSourceSelection}

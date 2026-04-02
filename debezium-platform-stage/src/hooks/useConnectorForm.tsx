@@ -13,7 +13,6 @@ interface UseConnectorFormProps {
   onSelection?: (selection: Source) => void;
   navigateTo: (path: string) => void;
   createEndpoint: string;
-  catalog: any[];
 }
 
 export const useConnectorForm = ({
@@ -22,7 +21,6 @@ export const useConnectorForm = ({
   onSelection,
   navigateTo,
   createEndpoint,
-  catalog
 }: UseConnectorFormProps) => {
   const { addNotification } = useNotification();
   const [code, setCode] = useState({

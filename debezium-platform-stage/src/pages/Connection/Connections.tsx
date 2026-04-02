@@ -96,7 +96,10 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     }
   );
 
-  const catalog: Catalog[] = [...sourceCatalog, ...destinationCatalog];
+  const catalog: Catalog[] = React.useMemo(
+    () => [...sourceCatalog, ...destinationCatalog],
+    [sourceCatalog]
+  );
 
   const searchResult = React.useMemo(() => {
     const withRole = connectionsList.map((conn) => ({
@@ -119,7 +122,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     }
 
     return result;
-  }, [connectionsTypeSelected, connectionsList, searchQuery]);
+  }, [connectionsTypeSelected, connectionsList, searchQuery, catalog]);
 
   const onClear = () => {
     onSearch?.("");
