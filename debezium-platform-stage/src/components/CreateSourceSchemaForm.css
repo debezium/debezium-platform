@@ -37,6 +37,12 @@
   color: var(--pf-t--global--text--color--subtle);
 }
 
+.jumplinks-section-bordered {
+  border-block-start: 1px solid #c7c7c7;
+  padding-block-start: 10px;
+
+}
+
 .tabs-layout .pf-v6-c-tabs {
   margin-bottom: 1rem;
 }

@@ -72,7 +72,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
 
   const createNewSource = async (payload: Record<string, unknown>) => {
     console.log("payload", payload);
-    return;
+    // return;
     setIsLoading(true);
     const response = await createPost(
       `${API_URL}/api/sources`,

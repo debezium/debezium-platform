@@ -10,6 +10,7 @@ interface SchemaGroupSectionProps {
   errors: Record<string, string | undefined>;
   allValues: Record<string, string>;
   dependencyMap: Map<string, Map<string, string[]>>;
+  allDependantNames: Set<string>;
 }
 
 const isFieldVisible = (
@@ -18,19 +19,19 @@ const isFieldVisible = (
   dependencyMap: Map<string, Map<string, string[]>>
 ): boolean => {
   for (const [parentName, valueMap] of dependencyMap) {
-    for (const [, dependants] of valueMap) {
-      if (dependants.includes(property.name)) {
-        const parentValue = allValues[parentName] || "";
-        const parentValueMap = dependencyMap.get(parentName);
-        if (!parentValueMap) return false;
+    let isDepOfThisParent = false;
+    let matchesCurrentValue = false;
 
-        for (const [triggerValue, deps] of parentValueMap) {
-          if (deps.includes(property.name)) {
-            if (parentValue !== triggerValue) return false;
-          }
+    for (const [triggerValue, deps] of valueMap) {
+      if (deps.includes(property.name)) {
+        isDepOfThisParent = true;
+        if ((allValues[parentName] || "") === triggerValue) {
+          matchesCurrentValue = true;
         }
       }
     }
+
+    if (isDepOfThisParent && !matchesCurrentValue) return false;
   }
   return true;
 };
@@ -42,6 +43,7 @@ const SchemaGroupSection: React.FC<SchemaGroupSectionProps> = ({
   errors,
   allValues,
   dependencyMap,
+  allDependantNames,
 }) => {
   const sorted = React.useMemo(
     () => [...properties].sort((a, b) => a.display.groupOrder - b.display.groupOrder),
@@ -64,6 +66,7 @@ const SchemaGroupSection: React.FC<SchemaGroupSectionProps> = ({
           value={values[property.name] || ""}
           onChange={onChange}
           error={errors[property.name]}
+          isDependant={allDependantNames.has(property.name)}
         />
       ))}
     </Form>

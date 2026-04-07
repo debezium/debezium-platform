@@ -1,0 +1,28 @@
+@keyframes schemaFieldFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.schema-field--dependant {
+  background-color: color-mix(
+    in srgb,
+    var(--pf-t--global--border--color--nonstatus--teal--default, #009596) 8%,
+    transparent
+  );
+  border-radius: var(--pf-t--global--border--radius--small, 4px);
+  padding: 0.75rem 1rem;
+  animation: schemaFieldFadeIn 0.3s ease-out;
+}
+
+.schema-field__conditional-badge {
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  font-style: italic;
+  font-weight: 400;
+}

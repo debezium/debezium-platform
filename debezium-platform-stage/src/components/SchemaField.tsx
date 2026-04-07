@@ -3,6 +3,7 @@ import {
   FormHelperText,
   HelperText,
   HelperTextItem,
+  Label,
   TextInput,
   Switch,
   FormSelect,
@@ -10,12 +11,14 @@ import {
 } from "@patternfly/react-core";
 import { ExclamationCircleIcon } from "@patternfly/react-icons";
 import { SchemaProperty } from "../apis/types";
+import "./SchemaField.css";
 
 interface SchemaFieldProps {
   property: SchemaProperty;
   value: string;
   onChange: (name: string, value: string) => void;
   error?: string;
+  isDependant?: boolean;
 }
 
 const getEnumValues = (property: SchemaProperty): string[] | undefined => {
@@ -28,6 +31,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
   value,
   onChange,
   error,
+  isDependant,
 }) => {
   const enumValues = getEnumValues(property);
   const fieldId = `schema-field-${property.name}`;
@@ -89,29 +93,42 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
     );
   };
 
+  const fieldLabel = isDependant ? (
+    <>
+      {property.display.label}
+      <Label isCompact color="teal" className="schema-field__conditional-badge">
+        Conditional
+      </Label>
+    </>
+  ) : (
+    property.display.label
+  );
+
   return (
-    <FormGroup
-      label={property.display.label}
-      isRequired={property.required}
-      fieldId={fieldId}
-    >
-      {renderField()}
-      {error ? (
-        <FormHelperText>
-          <HelperText>
-            <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
-              {error}
-            </HelperTextItem>
-          </HelperText>
-        </FormHelperText>
-      ) : (
-        <FormHelperText>
-          <HelperText>
-            <HelperTextItem>{property.display.description}</HelperTextItem>
-          </HelperText>
-        </FormHelperText>
-      )}
-    </FormGroup>
+    <div className={isDependant ? "schema-field--dependant" : undefined}>
+      <FormGroup
+        label={fieldLabel}
+        isRequired={property.required}
+        fieldId={fieldId}
+      >
+        {renderField()}
+        {error ? (
+          <FormHelperText>
+            <HelperText>
+              <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
+                {error}
+              </HelperTextItem>
+            </HelperText>
+          </FormHelperText>
+        ) : (
+          <FormHelperText>
+            <HelperText>
+              <HelperTextItem>{property.display.description}</HelperTextItem>
+            </HelperText>
+          </FormHelperText>
+        )}
+      </FormGroup>
+    </div>
   );
 };
 

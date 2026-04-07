@@ -190,9 +190,6 @@ const CreateSourceSchemaForm = React.forwardRef<
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
 
   // Table explorer
-  const [collections, setCollections] = useState<TableData | undefined>();
-  const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
-  const [collectionsError, setCollectionsError] = useState<object | undefined>();
   const [selectedDataListItems, setSelectedDataListItems] = useState<SelectedDataListItem | undefined>();
 
   // Signal
@@ -209,8 +206,13 @@ const CreateSourceSchemaForm = React.forwardRef<
   // Tabs
   const [activeTabKey, setActiveTabKey] = useState(0);
 
-  // Scrollable ref for JumpLinks
-  const scrollableRef = useRef<HTMLDivElement>(null);
+  // JumpLinks active tracking
+  const [activeSection, setActiveSection] = useState("connector-essentials");
+  const activeSectionRef = useRef(activeSection);
+
+  useEffect(() => {
+    activeSectionRef.current = activeSection;
+  }, [activeSection]);
 
   // --- Computed ---
 
@@ -263,6 +265,40 @@ const CreateSourceSchemaForm = React.forwardRef<
     return sections;
   }, [orderedGroups, groupedProperties]);
 
+  // Scroll-spy: update active JumpLink based on which section is in view
+  useEffect(() => {
+    if (layoutMode !== "jumplinks") return;
+
+    const sectionIds = allSections.map((s) => s.id);
+    const elements = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter(Boolean) as HTMLElement[];
+
+    if (elements.length === 0) return;
+
+    const intersecting = new Set<string>();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            intersecting.add(entry.target.id);
+          } else {
+            intersecting.delete(entry.target.id);
+          }
+        }
+        const topmost = sectionIds.find((id) => intersecting.has(id));
+        if (topmost && topmost !== activeSectionRef.current) {
+          setActiveSection(topmost);
+        }
+      },
+      { rootMargin: "0px 0px -60% 0px", threshold: 0 }
+    );
+
+    for (const el of elements) observer.observe(el);
+    return () => observer.disconnect();
+  }, [layoutMode, allSections]);
+
   // --- Connection data ---
 
   const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>(
@@ -294,6 +330,36 @@ const CreateSourceSchemaForm = React.forwardRef<
     }
   );
 
+  const selectedConnectionId = selectedConnection?.id;
+
+  const {
+    data: collections,
+    isLoading: isCollectionsLoading,
+    error: collectionsQueryError,
+    refetch: refetchCollections,
+  } = useQuery<TableData, object>(
+    ["connection-collections", selectedConnectionId],
+    async () => {
+      const response = await fetchDataCall<TableData>(
+        `${API_URL}/api/connections/${selectedConnectionId}/collections`
+      );
+      if (response.error) {
+        throw (response.error.body || {}) as object;
+      }
+      return response.data as TableData;
+    },
+    {
+      enabled: selectedConnectionId != null,
+    }
+  );
+
+  const collectionsError =
+    collectionsQueryError != null
+      ? typeof collectionsQueryError === "object"
+        ? (collectionsQueryError as object)
+        : { message: String(collectionsQueryError) }
+      : undefined;
+
   const baseSelectOptions = useMemo(
     () => getInitialSelectOptions(connections, dataType || sourceId),
     [connections, dataType, sourceId]
@@ -314,9 +380,10 @@ const CreateSourceSchemaForm = React.forwardRef<
 
   // --- Connection handlers ---
 
-  useEffect(() => {
-    setConnectionInputValue(selectedConnection?.name || "");
-  }, [selectedConnection]);
+  const handleNewConnectionFromModal = useCallback((connection: ConnectionConfig) => {
+    setSelectedConnection(connection);
+    setConnectionInputValue(connection.name || "");
+  }, []);
 
   const createItemId = (value: unknown) =>
     `conn-typeahead-${String(value ?? "").replace(/\s+/g, "-")}`;
@@ -419,27 +486,6 @@ const CreateSourceSchemaForm = React.forwardRef<
     </MenuToggle>
   );
 
-  // --- Table explorer ---
-
-  const fetchCollections = useCallback(async () => {
-    if (!selectedConnection?.id) return;
-    setIsCollectionsLoading(true);
-    const response = await fetchDataCall<TableData>(
-      `${API_URL}/api/connections/${selectedConnection.id}/collections`
-    );
-    if (response.error) {
-      setCollectionsError(response.error.body || {});
-    } else {
-      setCollectionsError(undefined);
-      setCollections(response.data as TableData);
-    }
-    setIsCollectionsLoading(false);
-  }, [selectedConnection]);
-
-  useEffect(() => {
-    if (selectedConnection?.id) fetchCollections();
-  }, [selectedConnection?.id, fetchCollections]);
-
   // --- Signal ---
 
   const handleSignalModalToggle = () => {
@@ -538,9 +584,7 @@ const CreateSourceSchemaForm = React.forwardRef<
     return !hasSchemaErrors && errKeys.length === 0;
   }, [sourceName, selectedConnection, schemaValues, connectorSchema.properties, additionalProps, allDependants, t]);
 
-  React.useImperativeHandle(ref, () => ({ validate, submit: handleSubmit }));
-
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (!validate()) {
       addNotification("danger", "Validation failed", "Please fill all required fields.");
       return;
@@ -573,7 +617,21 @@ const CreateSourceSchemaForm = React.forwardRef<
       ...(selectedConnection ? { connection: selectedConnection } : {}),
       config,
     });
-  };
+  }, [
+    validate,
+    addNotification,
+    schemaValues,
+    additionalProps,
+    signalCollectionName,
+    selectedDataListItems,
+    sourceName,
+    description,
+    sourceId,
+    selectedConnection,
+    onSubmit,
+  ]);
+
+  React.useImperativeHandle(ref, () => ({ validate, submit: handleSubmit }), [validate, handleSubmit]);
 
   // --- Render helpers ---
 
@@ -693,7 +751,12 @@ const CreateSourceSchemaForm = React.forwardRef<
           </FormFieldGroup>
         ) : !_.isEmpty(collectionsError) ? (
           <FormFieldGroup>
-            <ApiComponentError error={collectionsError} retry={fetchCollections} />
+            <ApiComponentError
+              error={collectionsError}
+              retry={() => {
+                void refetchCollections();
+              }}
+            />
           </FormFieldGroup>
         ) : (
           <FormFieldGroupExpandable
@@ -743,6 +806,7 @@ const CreateSourceSchemaForm = React.forwardRef<
         errors={errors}
         allValues={schemaValues}
         dependencyMap={dependencyMap}
+        allDependantNames={allDependants}
       />
     );
   };
@@ -792,18 +856,27 @@ const CreateSourceSchemaForm = React.forwardRef<
         <JumpLinks
           isVertical
           label="Form sections"
-          scrollableSelector="#schema-form-scrollable"
-          offset={16}
           expandable={{ default: "expandable", md: "nonExpandable" }}
         >
           {allSections.map((section) => (
-            <JumpLinksItem key={section.id} href={`#${section.id}`}>
+            <JumpLinksItem
+              key={section.id}
+              href={`#${section.id}`}
+              isActive={activeSection === section.id}
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveSection(section.id);
+                document
+                  .getElementById(section.id)
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
               {section.label}
             </JumpLinksItem>
           ))}
         </JumpLinks>
       </div>
-      <div className="jumplinks-content" id="schema-form-scrollable" ref={scrollableRef}>
+      <div className="jumplinks-content">
         {/* Connector Essentials */}
         <section id="connector-essentials">
           <Content component="h2" className="jumplinks-section-title">
@@ -818,7 +891,7 @@ const CreateSourceSchemaForm = React.forwardRef<
           if (!props || props.length === 0) return null;
           const sectionId = `group-${group.name.replace(/\s+/g, "-").toLowerCase()}`;
           return (
-            <section key={group.name} id={sectionId}>
+            <section key={group.name} id={sectionId} className="jumplinks-section-bordered">
               <Content component="h2" className="jumplinks-section-title">
                 {group.name}
               </Content>
@@ -831,7 +904,7 @@ const CreateSourceSchemaForm = React.forwardRef<
         })}
 
         {/* Additional Properties */}
-        <section id="additional-properties">
+        <section id="additional-properties" className="jumplinks-section-bordered">
           <Content component="h2" className="jumplinks-section-title">
             Additional Properties
           </Content>
@@ -842,7 +915,7 @@ const CreateSourceSchemaForm = React.forwardRef<
         </section>
 
         {/* Signal Collections */}
-        <section id="signal-collections">
+        <section id="signal-collections" className="jumplinks-section-bordered">
           {renderSignalCollections()}
         </section>
       </div>
@@ -890,7 +963,6 @@ const CreateSourceSchemaForm = React.forwardRef<
               <Tabs
                 activeKey={activeTabKey}
                 onSelect={(_e, key) => setActiveTabKey(key as number)}
-                isBox
                 aria-label="Schema configuration tabs"
               >
                 {tabSections.map((tab, idx) => (
@@ -952,7 +1024,7 @@ const CreateSourceSchemaForm = React.forwardRef<
         handleConnectionModalToggle={() => setIsConnectionModalOpen(false)}
         selectedConnectionType="source"
         resourceId={sourceId}
-        setSelectedConnection={setSelectedConnection}
+        setSelectedConnection={handleNewConnectionFromModal}
       />
 
       {/* Signal modal */}
