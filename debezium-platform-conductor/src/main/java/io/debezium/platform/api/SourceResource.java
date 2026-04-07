@@ -32,12 +32,13 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
 
-import com.blazebit.persistence.integration.jaxrs.EntityViewId;
-
+import io.debezium.platform.api.dto.SourceRequest;
+import io.debezium.platform.api.dto.SourceResponse;
+import io.debezium.platform.api.mapper.SourceMapper;
 import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
 import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import io.debezium.platform.domain.SourceService;
-import io.debezium.platform.domain.views.Source;
+import io.debezium.platform.error.NotFoundException;
 
 @Tag(name = "sources")
 @OpenAPIDefinition(info = @Info(title = "Source API", description = "CRUD operations over Source resource", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
@@ -46,48 +47,55 @@ public class SourceResource {
 
     Logger logger;
     SourceService sourceService;
+    SourceMapper mapper;
 
-    public SourceResource(Logger logger, SourceService sourceService) {
+    public SourceResource(Logger logger, SourceService sourceService, SourceMapper mapper) {
         this.logger = logger;
         this.sourceService = sourceService;
+        this.mapper = mapper;
     }
 
     @Operation(summary = "Returns all available sources")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Source.class, required = true, type = SchemaType.ARRAY)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SourceResponse.class, required = true, type = SchemaType.ARRAY)))
     @GET
     public Response get() {
         var sources = sourceService.list();
-        return Response.ok(sources).build();
+        return Response.ok(mapper.toResponseList(sources)).build();
     }
 
     @Operation(summary = "Returns a source with given id")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Source.class, required = true)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SourceResponse.class, required = true)))
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
         return sourceService.findById(id)
-                .map(source -> Response.ok(source).build())
+                .map(mapper::toResponse)
+                .map(dto -> Response.ok(dto).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @Operation(summary = "Creates new source")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
     @POST
-    public Response post(@NotNull @Valid Source source, @Context UriInfo uriInfo) {
-        var created = sourceService.create(source);
+    public Response post(@NotNull @Valid SourceRequest request, @Context UriInfo uriInfo) {
+        var view = sourceService.createEmpty();
+        mapper.applyToView(request, view);
+        var created = sourceService.create(view);
         URI uri = uriInfo.getAbsolutePathBuilder()
                 .path(Long.toString(created.getId()))
                 .build();
-        return Response.created(uri).entity(created).build();
+        return Response.created(uri).entity(mapper.toResponse(created)).build();
     }
 
     @Operation(summary = "Updates an existing source")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Source.class, required = true)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SourceResponse.class, required = true)))
     @PUT
     @Path("/{id}")
-    public Response put(@EntityViewId("id") @NotNull @Valid Source source) {
-        var updated = sourceService.update(source);
-        return Response.ok(updated).build();
+    public Response put(@PathParam("id") Long id, @NotNull @Valid SourceRequest request) {
+        var view = sourceService.findById(id).orElseThrow(() -> new NotFoundException(id));
+        mapper.applyToView(request, view);
+        var updated = sourceService.update(view);
+        return Response.ok(mapper.toResponse(updated)).build();
     }
 
     @Operation(summary = "Deletes an existing source")

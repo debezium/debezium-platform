@@ -34,13 +34,14 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
 
-import com.blazebit.persistence.integration.jaxrs.EntityViewId;
-
+import io.debezium.platform.api.dto.ConnectionRequest;
+import io.debezium.platform.api.dto.ConnectionResponse;
+import io.debezium.platform.api.mapper.ConnectionMapper;
 import io.debezium.platform.data.dto.CollectionTree;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.ConnectionSchemaService;
 import io.debezium.platform.domain.ConnectionService;
-import io.debezium.platform.domain.views.Connection;
+import io.debezium.platform.error.NotFoundException;
 
 @Tag(name = "connections")
 @OpenAPIDefinition(info = @Info(title = "Connection API", description = "CRUD operations over connection resource", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
@@ -50,49 +51,60 @@ public class ConnectionResource {
     Logger logger;
     ConnectionService connectionService;
     ConnectionSchemaService schemaService;
+    ConnectionMapper mapper;
 
-    public ConnectionResource(Logger logger, ConnectionService connectionService, ConnectionSchemaService schemaService) {
+    public ConnectionResource(
+                              Logger logger,
+                              ConnectionService connectionService,
+                              ConnectionSchemaService schemaService,
+                              ConnectionMapper mapper) {
         this.logger = logger;
         this.connectionService = connectionService;
         this.schemaService = schemaService;
+        this.mapper = mapper;
     }
 
     @Operation(summary = "Returns all available connections")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Connection.class, required = true, type = SchemaType.ARRAY)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = ConnectionResponse.class, required = true, type = SchemaType.ARRAY)))
     @GET
     public Response get() {
         var connections = connectionService.list();
-        return Response.ok(connections).build();
+        return Response.ok(mapper.toResponseList(connections)).build();
     }
 
     @Operation(summary = "Returns a connection with given id")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Connection.class, required = true)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = ConnectionResponse.class, required = true)))
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
         return connectionService.findById(id)
-                .map(connection -> Response.ok(connection).build())
+                .map(mapper::toResponse)
+                .map(dto -> Response.ok(dto).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @Operation(summary = "Creates new connection")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
     @POST
-    public Response post(@NotNull @Valid Connection connection, @Context UriInfo uriInfo) {
-        var created = connectionService.create(connection);
+    public Response post(@NotNull @Valid ConnectionRequest request, @Context UriInfo uriInfo) {
+        var view = connectionService.createEmpty();
+        mapper.applyToView(request, view);
+        var created = connectionService.create(view);
         URI uri = uriInfo.getAbsolutePathBuilder()
                 .path(Long.toString(created.getId()))
                 .build();
-        return Response.created(uri).entity(created).build();
+        return Response.created(uri).entity(mapper.toResponse(created)).build();
     }
 
     @Operation(summary = "Updates an existing connection")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Connection.class, required = true)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = ConnectionResponse.class, required = true)))
     @PUT
     @Path("/{id}")
-    public Response put(@EntityViewId("id") @NotNull @Valid Connection connection) {
-        var updated = connectionService.update(connection);
-        return Response.ok(updated).build();
+    public Response put(@PathParam("id") Long id, @NotNull @Valid ConnectionRequest request) {
+        var view = connectionService.findById(id).orElseThrow(() -> new NotFoundException(id));
+        mapper.applyToView(request, view);
+        var updated = connectionService.update(view);
+        return Response.ok(mapper.toResponse(updated)).build();
     }
 
     @Operation(summary = "Deletes an existing connection")
@@ -108,9 +120,11 @@ public class ConnectionResource {
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = ConnectionValidationResult.class, type = SchemaType.OBJECT)))
     @POST
     @Path("/validate")
-    public Response validateConnection(@NotNull @Valid Connection connection) {
+    public Response validateConnection(@NotNull @Valid ConnectionRequest request) {
+        var view = connectionService.createEmpty();
+        mapper.applyToView(request, view);
 
-        var connectionValidationResponse = connectionService.validateConnection(connection);
+        var connectionValidationResponse = connectionService.validateConnection(view);
 
         return Response.ok()
                 .type(MediaType.APPLICATION_JSON)

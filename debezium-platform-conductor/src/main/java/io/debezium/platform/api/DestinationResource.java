@@ -32,10 +32,11 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
 
-import com.blazebit.persistence.integration.jaxrs.EntityViewId;
-
+import io.debezium.platform.api.dto.DestinationRequest;
+import io.debezium.platform.api.dto.DestinationResponse;
+import io.debezium.platform.api.mapper.DestinationMapper;
 import io.debezium.platform.domain.DestinationService;
-import io.debezium.platform.domain.views.Destination;
+import io.debezium.platform.error.NotFoundException;
 
 @Tag(name = "destinations")
 @OpenAPIDefinition(info = @Info(title = "Destination API", description = "CRUD operations over Destination resource", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
@@ -44,48 +45,55 @@ public class DestinationResource {
 
     Logger logger;
     DestinationService destinationService;
+    DestinationMapper mapper;
 
-    public DestinationResource(Logger logger, DestinationService destinationService) {
+    public DestinationResource(Logger logger, DestinationService destinationService, DestinationMapper mapper) {
         this.logger = logger;
         this.destinationService = destinationService;
+        this.mapper = mapper;
     }
 
     @Operation(summary = "Returns all available destinations")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Destination.class, required = true, type = SchemaType.ARRAY)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = DestinationResponse.class, required = true, type = SchemaType.ARRAY)))
     @GET
     public Response get() {
         var destinations = destinationService.list();
-        return Response.ok(destinations).build();
+        return Response.ok(mapper.toResponseList(destinations)).build();
     }
 
     @Operation(summary = "Returns a destination with given id")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Destination.class, required = true)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = DestinationResponse.class, required = true)))
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
         return destinationService.findById(id)
-                .map(destination -> Response.ok(destination).build())
+                .map(mapper::toResponse)
+                .map(dto -> Response.ok(dto).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @Operation(summary = "Creates new destination")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
     @POST
-    public Response post(@NotNull @Valid Destination destination, @Context UriInfo uriInfo) {
-        var created = destinationService.create(destination);
+    public Response post(@NotNull @Valid DestinationRequest request, @Context UriInfo uriInfo) {
+        var view = destinationService.createEmpty();
+        mapper.applyToView(request, view);
+        var created = destinationService.create(view);
         URI uri = uriInfo.getAbsolutePathBuilder()
                 .path(Long.toString(created.getId()))
                 .build();
-        return Response.created(uri).entity(created).build();
+        return Response.created(uri).entity(mapper.toResponse(created)).build();
     }
 
     @Operation(summary = "Updates an existing destination")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Destination.class, required = true)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = DestinationResponse.class, required = true)))
     @PUT
     @Path("/{id}")
-    public Response put(@EntityViewId("id") @NotNull @Valid Destination destination) {
-        var updated = destinationService.update(destination);
-        return Response.ok(updated).build();
+    public Response put(@PathParam("id") Long id, @NotNull @Valid DestinationRequest request) {
+        var view = destinationService.findById(id).orElseThrow(() -> new NotFoundException(id));
+        mapper.applyToView(request, view);
+        var updated = destinationService.update(view);
+        return Response.ok(mapper.toResponse(updated)).build();
     }
 
     @Operation(summary = "Deletes an existing destination")

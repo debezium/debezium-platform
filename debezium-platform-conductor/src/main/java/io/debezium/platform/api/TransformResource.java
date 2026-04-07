@@ -32,10 +32,11 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
 
-import com.blazebit.persistence.integration.jaxrs.EntityViewId;
-
+import io.debezium.platform.api.dto.TransformRequest;
+import io.debezium.platform.api.dto.TransformResponse;
+import io.debezium.platform.api.mapper.TransformMapper;
 import io.debezium.platform.domain.TransformService;
-import io.debezium.platform.domain.views.Transform;
+import io.debezium.platform.error.NotFoundException;
 
 @Tag(name = "transforms")
 @OpenAPIDefinition(info = @Info(title = "Transform API", description = "CRUD operations over Source revault", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
@@ -44,48 +45,55 @@ public class TransformResource {
 
     Logger logger;
     TransformService transformService;
+    TransformMapper mapper;
 
-    public TransformResource(Logger logger, TransformService transformService) {
+    public TransformResource(Logger logger, TransformService transformService, TransformMapper mapper) {
         this.logger = logger;
         this.transformService = transformService;
+        this.mapper = mapper;
     }
 
     @Operation(summary = "Returns all available transformations")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Transform.class, required = true, type = SchemaType.ARRAY)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = TransformResponse.class, required = true, type = SchemaType.ARRAY)))
     @GET
     public Response get() {
-        var vaults = transformService.list();
-        return Response.ok(vaults).build();
+        var transforms = transformService.list();
+        return Response.ok(mapper.toResponseList(transforms)).build();
     }
 
     @Operation(summary = "Returns a transform with given id")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Transform.class, required = true)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = TransformResponse.class, required = true)))
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
         return transformService.findById(id)
-                .map(transform -> Response.ok(transform).build())
+                .map(mapper::toResponse)
+                .map(dto -> Response.ok(dto).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @Operation(summary = "Creates new transform")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
     @POST
-    public Response post(@NotNull @Valid Transform transform, @Context UriInfo uriInfo) {
-        var created = transformService.create(transform);
+    public Response post(@NotNull @Valid TransformRequest request, @Context UriInfo uriInfo) {
+        var view = transformService.createEmpty();
+        mapper.applyToView(request, view);
+        var created = transformService.create(view);
         URI uri = uriInfo.getAbsolutePathBuilder()
                 .path(Long.toString(created.getId()))
                 .build();
-        return Response.created(uri).entity(created).build();
+        return Response.created(uri).entity(mapper.toResponse(created)).build();
     }
 
     @Operation(summary = "Updates an existing transform")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Transform.class, required = true)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = TransformResponse.class, required = true)))
     @PUT
     @Path("/{id}")
-    public Response put(@EntityViewId("id") @NotNull @Valid Transform transform) {
-        var updated = transformService.update(transform);
-        return Response.ok(updated).build();
+    public Response put(@PathParam("id") Long id, @NotNull @Valid TransformRequest request) {
+        var view = transformService.findById(id).orElseThrow(() -> new NotFoundException(id));
+        mapper.applyToView(request, view);
+        var updated = transformService.update(view);
+        return Response.ok(mapper.toResponse(updated)).build();
     }
 
     @Operation(summary = "Deletes an existing transform")

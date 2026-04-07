@@ -91,6 +91,10 @@ public class AbstractService<E, T extends IdView, R extends IdView> {
         return view;
     }
 
+    public T createEmpty() {
+        return evm.create(viewType);
+    }
+
     public T update(@Valid T view) {
         findByIdAs(viewType, view.getId()).orElseThrow(() -> new NotFoundException(view.getId()));
         evm.save(em, view);
