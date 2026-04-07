@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
   ActionList,
@@ -7,60 +6,22 @@ import {
   Alert,
   Button,
   ButtonType,
-  FormContextProvider,
   PageSection,
-  Spinner,
-  ToggleGroup,
-  ToggleGroupItem,
-  Toolbar,
-  ToolbarContent,
-  ToolbarItem,
+  Skeleton,
 } from "@patternfly/react-core";
-import { PencilAltIcon, CodeIcon, PlayIcon } from "@patternfly/react-icons";
-import { useNavigate, useParams } from "react-router-dom";
-import { CodeEditor, CodeEditorControl, Language } from "@patternfly/react-code-editor";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ConnectionConfig, createPost, Payload, Source } from "../../apis/apis";
-import {
-  API_URL,
-} from "../../utils/constants";
-import { convertMapToObject } from "../../utils/helpers";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useRef, useState } from "react";
+import { createPost, Payload, Source } from "../../apis/apis";
+import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
-import SourceSinkForm from "@components/SourceSinkForm";
 import PageHeader from "@components/PageHeader";
-import Ajv from "ajv";
-import { Trans, useTranslation } from "react-i18next";
-import PageTour from "../../components/PageTour";
-import { Step } from "react-joyride";
-import { connectorSchema } from "@utils/schemas";
-import { isValidJson, useFormatDetector } from "src/hooks/useFormatDetector";
-import { formatCode } from "@utils/formatCodeUtils";
-import style from "../../styles/createConnector.module.css";
-import CreateConnectionModal from "../components/CreateConnectionModal";
-import { useData } from "@appContext/AppContext";
-import { getIncludeList } from "@utils/Datatype";
-
-const ajv = new Ajv();
-
-const useCreateSourceTourSteps = (): Step[] => {
-  const { t } = useTranslation("tour");
-  return [
-    {
-      target: "#form-editor",
-      placement: "bottom",
-      title: t("createSource.formEditor.title"),
-      content: t("createSource.formEditor.content"),
-      disableBeacon: true,
-    },
-    {
-      target: "#smart-editor",
-      placement: "bottom",
-      title: t("createSource.smartEditor.title"),
-      content: t("createSource.smartEditor.content"),
-      disableBeacon: true,
-    },
-  ];
-};
+import { useTranslation } from "react-i18next";
+import { useQuery } from "react-query";
+import { fetchData } from "../../apis/apis";
+import { ConnectorSchema } from "../../apis/types";
+import CreateSourceSchemaForm, {
+  CreateSourceSchemaFormHandle,
+} from "@components/CreateSourceSchemaForm";
 
 interface CreateSourceProps {
   modelLoaded?: boolean;
@@ -69,155 +30,10 @@ interface CreateSourceProps {
   onSelection?: (selection: Source) => void;
 }
 
-const initialCodeValue = {
-  name: "",
-  description: "",
-  type: "",
-  schema: "schema123",
-  connection: {},
-  vaults: [],
-  config: {},
-};
-
-type Properties = { key: string; value: string };
-
 export type SelectedDataListItem = {
   schemas: string[];
   tables: string[];
 };
-
-const FormSyncManager: React.FC<{
-  getFormValue: (key: string) => string;
-  setFormValue: (key: string, value: string) => void;
-  code: any;
-  setCode: (code: any) => void;
-  sourceId: string | undefined;
-  properties: Map<string, Properties>;
-  setProperties: (properties: Map<string, Properties>) => void;
-  setCodeAlert: (alert: string | React.ReactElement) => void;
-  setFormatType: (type: string) => void;
-  signalCollectionName: string;
-}> = ({
-  getFormValue,
-  setFormValue,
-  code,
-  setCode,
-  sourceId,
-  properties,
-  setProperties,
-  setCodeAlert,
-  setFormatType,
-  signalCollectionName,
-}) => {
-    const { t } = useTranslation();
-    // Ref to track the source of the update
-    const updateSource = useRef<"form" | "code" | null>(null);
-
-    // Update code state when form values change
-    useEffect(() => {
-      if (updateSource.current === "code") {
-        updateSource.current = null;
-        return;
-      }
-      updateSource.current = "form";
-      const type = sourceId || "";
-      const configuration = convertMapToObject(properties);
-
-      setCode((prevCode: any) => {
-        if (
-          prevCode.name === getFormValue("source-name") &&
-          prevCode.description === getFormValue("description") && 
-          prevCode.config["signal.data.collection"] === signalCollectionName &&
-          JSON.stringify(prevCode.config) === JSON.stringify(configuration)
-        ) {
-          return prevCode;
-        }
-        return {
-          ...prevCode,
-          type,
-          config: signalCollectionName
-            ? { ...configuration, "signal.data.collection": signalCollectionName }
-            : configuration,
-          name: getFormValue("source-name") || "",
-          description: getFormValue("description") || "",
-        };
-      });
-    }, [
-      getFormValue("source-name"),
-      getFormValue("description"),
-      properties,
-      sourceId,
-      signalCollectionName,
-    ]);
-
-    // Use the useFormatDetector hook
-    const { formatType, isValidFormat, errorMsg } = useFormatDetector(code, "source");
-
-    // Update form values when code changes
-    useEffect(() => {
-      if (formatType === "kafka-connect") {
-        setFormatType("kafka-connect");
-        setCodeAlert(
-          <Trans
-            i18nKey="statusMessage:smartEditor.kafkaConnectFormatMsg"
-            components={[<i key="italic" />]}
-          />
-        );
-        return;
-      } else if (formatType === "properties-file") {
-        setFormatType("properties-file");
-        setCodeAlert(t('statusMessage:smartEditor.debeziumServerFormatMsg'));
-        return;
-      }
-      else {
-        setFormatType("dbz-platform");
-      }
-      if (isValidFormat) {
-        if (updateSource.current === "form") {
-          updateSource.current = null;
-          return;
-        }
-        updateSource.current = "code";
-        if (code.name !== getFormValue("source-name")) {
-          setFormValue(
-            "source-name",
-            typeof code.name === "string" ? code.name : ""
-          );
-        }
-        if (code.description !== getFormValue("description")) {
-          setFormValue(
-            "description",
-            typeof code.description === "string" ? code.description : ""
-          );
-        }
-        const currentConfig = convertMapToObject(properties);
-        if (JSON.stringify(currentConfig) !== JSON.stringify(code.config)) {
-          const configMap = new Map();
-          Object.entries(code.config || {}).forEach(([key, value], index) => {
-            configMap.set(`key${index}`, { key, value: value as string });
-          });
-          setProperties(configMap);
-        }
-        if (updateSource.current === "code") {
-          if (!code.name || code.name.trim() === "") {
-            setCodeAlert(t('statusMessage:smartEditor.connectorNameRequired'));
-            return;
-          }
-          if (!code.type || code.type.trim() === "") {
-            setCodeAlert(t('statusMessage:smartEditor.connectorTypeRequired'));
-            return;
-          }
-        }
-
-        setCodeAlert("");
-      } else {
-        setCodeAlert(errorMsg);
-      }
-    }, [code, formatType, isValidFormat, errorMsg]);
-
-    return null;
-  };
-
 
 const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   modelLoaded,
@@ -226,403 +42,153 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   onSelection,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
-  const createSourceTourSteps = useCreateSourceTourSteps();
-  const navigateTo = (url: string) => {
-    navigate(url);
-  };
-  const { darkMode } = useData();
   const { addNotification } = useNotification();
 
-  const [code, setCode] = useState<string | Payload>(initialCodeValue);
-  const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig | undefined>();
-
   const sourceIdParam = useParams<{ sourceId: string }>();
-  const [codeAlert, setCodeAlert] = useState<string | React.ReactElement>("");
-  const [formatType, setFormatType] = useState("dbz-platform");
-  const sourceIdModel = selectedId;
-  const sourceId = modelLoaded ? sourceIdModel : sourceIdParam.sourceId;
-  const rawConfiguration = location.pathname.includes("create_source") ? !sourceIdParam.sourceId : false;
+  const sourceId = modelLoaded ? selectedId : sourceIdParam.sourceId;
 
-  const [errorWarning, setErrorWarning] = useState<string[]>([]);
-  const [editorSelected, setEditorSelected] = React.useState("form-editor");
+  const descriptor = (location.state as { descriptor?: string } | null)?.descriptor;
+
   const [isLoading, setIsLoading] = useState(false);
-  const [properties, setProperties] = useState<Map<string, Properties>>(
-    new Map([["key0", { key: "", value: "" }]])
+  const formRef = useRef<CreateSourceSchemaFormHandle>(null);
+
+  const descriptorPath = React.useMemo(() => {
+    if (descriptor) return descriptor.replace(/\.json$/, "");
+    if (sourceId) return `source-connector/${sourceId}`;
+    return null;
+  }, [descriptor, sourceId]);
+
+  const {
+    data: connectorSchema,
+    isLoading: isSchemaLoading,
+    error: schemaError,
+  } = useQuery<ConnectorSchema, Error>(
+    ["connectorSchema", descriptorPath],
+    () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
+    { enabled: !!descriptorPath }
   );
-  const [keyCount, setKeyCount] = useState<number>(1);
 
-  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
-
-
-  const handleConnectionModalToggle = useCallback(() => {
-    setIsConnectionModalOpen(!isConnectionModalOpen);
-  }, [isConnectionModalOpen]);
-
-  const [signalCollectionName, setSignalCollectionName] = useState<string>("");
-  const [selectedDataListItems, setSelectedDataListItems] = useState<SelectedDataListItem | undefined>();
-
-  const validate = ajv.compile(connectorSchema);
-
-  const updateSignalCollectionName = useCallback(
-    (name: string) => {
-      setSignalCollectionName(name);
-    }
-    , []);
-
-  const handleAddProperty = () => {
-    const newKey = `key${keyCount}`;
-    setProperties(
-      (prevProperties) =>
-        new Map(prevProperties.set(newKey, { key: "", value: "" }))
+  const createNewSource = async (payload: Record<string, unknown>) => {
+    console.log("payload", payload);
+    return;
+    setIsLoading(true);
+    const response = await createPost(
+      `${API_URL}/api/sources`,
+      payload as unknown as Payload
     );
-    setKeyCount((prevCount) => prevCount + 1);
-  };
-
-  const handleDeleteProperty = (key: string) => {
-    setProperties((prevProperties) => {
-      const newProperties = new Map(prevProperties);
-      newProperties.delete(key);
-      return newProperties;
-    });
-  };
-
-  const handlePropertyChange = (
-    key: string,
-    type: "key" | "value",
-    newValue: string
-  ) => {
-    setProperties((prevProperties) => {
-      const newProperties = new Map(prevProperties);
-      const property = newProperties.get(key);
-      if (property) {
-        if (type === "key") property.key = newValue;
-        else if (type === "value") property.value = newValue;
-        newProperties.set(key, property);
-      }
-      return newProperties;
-    });
-  };
-
-  const createNewSource = async (payload: Payload) => {
-    const response = await createPost(`${API_URL}/api/sources`, payload);
-
     if (response.error) {
       addNotification(
         "danger",
-        `Source creation failed`,
+        "Source creation failed",
         `Failed to create ${(response.data as Source)?.name}: ${response.error}`
       );
     } else {
-      modelLoaded && onSelection && onSelection(response.data as Source);
+      if (modelLoaded) onSelection?.(response.data as Source);
       addNotification(
         "success",
-        `Create successful`,
+        "Create successful",
         `Source "${(response.data as Source).name}" created successfully.`
       );
-      !modelLoaded && navigateTo("/source");
+      if (!modelLoaded) navigate("/source");
     }
+    setIsLoading(false);
   };
 
-  const handleCreate = async (
-    values: Record<string, string>,
-    setError: (fieldId: string, error: string | undefined) => void
-  ) => {
-    if (editorSelected === "form-editor") {
-      if (!values["source-name"]) {
-        setError("source-name", t("statusMessage:smartEditor.sourceNameRequired"));
-      }else if(selectedConnection === undefined){
-        setError("connection", t("statusMessage:smartEditor.connectionRequired"));
-      } else {
-        setIsLoading(true);
-        const errorWarning = [] as string[];
-        properties.forEach((value: Properties, key: string) => {
-          if (value.key === "" || value.value === "") {
-            errorWarning.push(key);
-          }
-        });
-        setErrorWarning(errorWarning);
-        if (errorWarning.length > 0) {
-          addNotification(
-            "danger",
-            `Source creation failed`,
-            `Please fill both Key and Value fields for all the properties.`
-          );
-          setIsLoading(false);
-          return;
-        }
-
-        const payload = {
-          description: values["description"],
-          type: sourceId || (code as Payload).type || "",
-          schema: "schema321",
-          vaults: [],
-          ...(selectedConnection ? { connection: selectedConnection } : {}),
-          config: {
-            ...(signalCollectionName ? { "signal.data.collection": signalCollectionName } : {}),
-            ...getIncludeList(selectedDataListItems, sourceId || ""),
-            ...convertMapToObject(properties)
-          },
-          name: values["source-name"],
-        } as unknown as Payload;
-        await createNewSource(payload);
-        setIsLoading(false);
-      }
-    } else {
-      const payload = code;
-      const isValid = validate(payload);
-      if (!isValid) {
-        setCodeAlert(ajv.errorsText(validate.errors));
-        return;
-      } else {
-        setIsLoading(true);
-        await createNewSource(payload);
-        setIsLoading(false);
-      }
+  const renderContent = () => {
+    if (!sourceId) {
+      return (
+        <Alert variant="warning" isInline title="No connector selected">
+          Please select a connector from the catalog first.
+        </Alert>
+      );
     }
-  };
 
-  const handleItemClick = (
-    event:
-      | MouseEvent
-      | React.MouseEvent<any, MouseEvent>
-      | React.KeyboardEvent<Element>
-  ) => {
-    const id = event.currentTarget.id;
-    setEditorSelected(id);
-  };
-
-  const [isFormatting, setIsFormatting] = useState(false);
-
-  const customControl = (
-    <CodeEditorControl
-      id="format-button"
-      icon={isFormatting ? <Spinner size="md" aria-label="Formatting in progress" /> : <PlayIcon />}
-      aria-label="Execute code"
-      tooltipProps={{ content: t('statusMessage:smartEditor.autoConvertTooltip') }}
-      onClick={async () => {
-        setIsFormatting(true);
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        // formatCode(formatType);
-        setCode(formatCode("source", formatType, code));
-        setIsFormatting(false);
-      }}
-      isVisible={formatType === "kafka-connect" || formatType === "properties-file"}
-    >
-      {t('statusMessage:smartEditor.autoConvertButton')}
-    </CodeEditorControl>
-  );
-
-  const onEditorDidMount = (
-    editor: { layout: () => void; focus: () => void },
-    monaco: {
-      editor: {
-        getModels: () => {
-          updateOptions: (arg0: { tabSize: number }) => void;
-        }[];
-      };
+    if (isSchemaLoading) {
+      return (
+        <div>
+          <Skeleton fontSize="2xl" width="40%" />
+          <br />
+          <Skeleton fontSize="md" width="60%" />
+          <br />
+          <Skeleton fontSize="md" width="80%" />
+          <br />
+          <Skeleton fontSize="md" width="50%" />
+        </div>
+      );
     }
-  ) => {
-    editor.layout();
-    editor.focus();
-    monaco.editor.getModels()[0].updateOptions({ tabSize: 5 });
-  };
 
-  const getDisplayCode = () => {
-    if (!isValidJson(code)) return code as string;
-    let displayCode = code;   
-    if (typeof code === 'object') {
-      displayCode = { ...(code as Payload) };
-      if (selectedConnection) {
-        displayCode = {
-          ...displayCode,
-          connection: {
-            id: selectedConnection.id,
-            name: selectedConnection.name
-          }
-        };
-      }      
+    if (schemaError) {
+      return (
+        <Alert variant="danger" isInline title="Failed to load connector schema">
+          {schemaError.message}
+        </Alert>
+      );
     }
-    return JSON.stringify(displayCode, null, 2);
+
+    if (!connectorSchema) return null;
+
+    return (
+      <CreateSourceSchemaForm
+        ref={formRef}
+        connectorSchema={connectorSchema}
+        sourceId={sourceId}
+        onSubmit={createNewSource}
+      />
+    );
   };
 
   return (
     <>
       {!modelLoaded && (
         <PageHeader
-          title={t('source:create.title')}
-          description={rawConfiguration ?
-            t('source:create.editorPageDescription') : t('source:create.description')}
+          title={t("source:create.title")}
+          description={t("source:create.description")}
         />
       )}
-      {!rawConfiguration && (
-        <PageSection className={style.createConnector_toolbar}>
-          <Toolbar id="source-editor-toggle">
-            <ToolbarContent>
-              <ToolbarItem>
-                <ToggleGroup aria-label="Toggle between form editor and smart editor">
-                  <ToggleGroupItem
-                    icon={<PencilAltIcon />}
-                    text={t('formEditor')}
-                    aria-label={t('formEditor')}
-                    buttonId="form-editor"
-                    isSelected={editorSelected === "form-editor"}
-                    onChange={handleItemClick}
-                  />
 
-                  <ToggleGroupItem
-                    icon={<CodeIcon />}
-                    text={t('smartEditor')}
-                    aria-label={t('smartEditor')}
-                    buttonId="smart-editor"
-                    isSelected={editorSelected === "smart-editor"}
-                    onChange={handleItemClick}
-                  />
-                </ToggleGroup>
-              </ToolbarItem>
-            </ToolbarContent>
-          </Toolbar>
-        </PageSection>
-      )}
+      <PageSection isFilled>
+        {renderContent()}
+      </PageSection>
 
-
-      <FormContextProvider initialValues={{}}>
-        {({ setValue, getValue, setError, values, errors }) => (
-          <>
-            <FormSyncManager
-              getFormValue={getValue}
-              setFormValue={setValue}
-              code={code}
-              setCode={setCode}
-              sourceId={sourceId}
-              properties={properties}
-              setProperties={setProperties}
-              setCodeAlert={setCodeAlert}
-              setFormatType={setFormatType}
-              signalCollectionName={signalCollectionName}
-            />
-
-            <PageSection
-              isWidthLimited={true}
-              isCenterAligned
-              isFilled
-              className={`customPageSection ${style.createConnector_pageSection}`}
-            >
-              {editorSelected === "form-editor" && !rawConfiguration ? (
-                <SourceSinkForm
-                  ConnectorId={sourceId || ""}
-                  connectorType="source"
-                  properties={properties}
-                  setValue={setValue}
-                  getValue={getValue}
-                  setError={setError}
-                  errors={errors}
-                  errorWarning={errorWarning}
-                  handleAddProperty={handleAddProperty}
-                  handleDeleteProperty={handleDeleteProperty}
-                  handlePropertyChange={handlePropertyChange}
-                  updateSignalCollectionName={updateSignalCollectionName}
-                  signalCollectionName={signalCollectionName}
-                  setSelectedConnection={setSelectedConnection}
-                  selectedConnection={selectedConnection}
-                  handleConnectionModalToggle={handleConnectionModalToggle}
-                  setSelectedDataListItems={setSelectedDataListItems}
-                />
+      <PageSection className="pf-m-sticky-bottom" isFilled={false}>
+        <ActionList>
+          <ActionListGroup>
+            <ActionListItem>
+              <Button
+                variant="primary"
+                isLoading={isLoading}
+                isDisabled={isLoading || isSchemaLoading || !!schemaError}
+                type={ButtonType.submit}
+                onClick={(e) => {
+                  e.preventDefault();
+                  formRef.current?.submit();
+                }}
+              >
+                {t("source:create.title")}
+              </Button>
+            </ActionListItem>
+            <ActionListItem>
+              {modelLoaded ? (
+                <Button
+                  variant="link"
+                  onClick={() => selectSource && selectSource("")}
+                >
+                  {t("back")}
+                </Button>
               ) : (
-                <>
-                  {codeAlert && (
-                    <Alert
-                      variant={formatType === "dbz-platform" ? "danger" : "warning"}
-                      isInline
-                      title={formatType === "dbz-platform" ? "Invalid JSON: " + codeAlert : formatType === "kafka-connect" ? "Invalid json format" : "Invalid JSON"}
-                      className={style.createConnector_alert}
-                    >
-                      {formatType !== "dbz-platform" && codeAlert}
-                    </Alert>
-
-                  )}
-                  <div className={`${style.smartEditor} smartEditor`}>
-                    <CodeEditor
-                      isUploadEnabled
-                      isDownloadEnabled
-                      isCopyEnabled
-                      isLanguageLabelVisible
-                      isMinimapVisible
-                      isDarkTheme={darkMode}
-                      language={Language.json || Language.plaintext}
-                      downloadFileName="source-connector.json"
-                      isFullHeight
-                      code={getDisplayCode()}
-                      customControls={customControl}
-                      onCodeChange={(value) => {
-                        try {
-                          if (isValidJson(value)) {
-                            const parsedCode = JSON.parse(value);
-                            setCode(parsedCode);
-                          } else {
-                            setCode(value)
-                          }
-                        } catch (error) {
-                          console.error("Invalid JSON:", error);
-                        }
-                      }}
-                      onEditorDidMount={onEditorDidMount}
-                    />
-                  </div>
-                </>
+                <Button
+                  variant="link"
+                  onClick={() => navigate("/source/catalog")}
+                >
+                  {t("source:catalog.backToCatalog")}
+                </Button>
               )}
-            </PageSection>
-            <PageSection className="pf-m-sticky-bottom" isFilled={false}>
-              <ActionList>
-                <ActionListGroup>
-                  <ActionListItem>
-                    <Button
-                      variant="primary"
-                      isLoading={isLoading}
-                      isDisabled={isLoading || (editorSelected !== "form-editor" && codeAlert !== "")}
-                      type={ButtonType.submit}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleCreate(values, setError);
-                      }}
-                    >
-                      {t('source:create.title')}
-                    </Button>
-                  </ActionListItem>
-                  <ActionListItem>
-                    {modelLoaded ? (
-                      <Button
-                        variant="link"
-                        onClick={() => selectSource && selectSource("")}
-                      >
-                        {t('back')}
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="link"
-                        onClick={() => navigateTo("/source/catalog")}
-                      >
-                        {t('source:catalog.backToCatalog')}
-                      </Button>
-                    )}
-                  </ActionListItem>
-                </ActionListGroup>
-              </ActionList>
-
-            </PageSection>
-          </>
-        )}
-      </FormContextProvider>
-      <CreateConnectionModal
-        isConnectionModalOpen={isConnectionModalOpen}
-        handleConnectionModalToggle={handleConnectionModalToggle}
-        selectedConnectionType={"source"}
-        resourceId={sourceId}
-        setSelectedConnection={setSelectedConnection}
-      />
-      {!modelLoaded && !rawConfiguration && (
-        <PageTour pageKey="create-source" steps={createSourceTourSteps} />
-      )}
+            </ActionListItem>
+          </ActionListGroup>
+        </ActionList>
+      </PageSection>
     </>
   );
 };

@@ -119,7 +119,10 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
   );
 
   const onSourceSelection = (sourceId: string) => {
-    navigate(`/source/create_source/${sourceId}`);
+    const entry = sourceCatalog.find((c) => c.class === sourceId);
+    navigate(`/source/create_source/${sourceId}`, {
+      state: { descriptor: entry?.descriptor },
+    });
   };
 
   const catalogTourSteps = useSourceCatalogTourSteps();

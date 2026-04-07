@@ -1,0 +1,50 @@
+.schema-form-layout-toggle {
+  padding-bottom: 1rem;
+}
+
+.jumplinks-layout {
+  display: flex;
+  gap: clamp(2rem, 5vw, 6rem);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.jumplinks-sidebar {
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+  width: 240px;
+  align-self: flex-start;
+}
+
+.jumplinks-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.jumplinks-content section {
+  scroll-margin-top: 1rem;
+  padding-bottom: 2rem;
+}
+
+.jumplinks-section-title {
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.jumplinks-section-description {
+  margin-bottom: 1rem;
+  color: var(--pf-t--global--text--color--subtle);
+}
+
+.tabs-layout .pf-v6-c-tabs {
+  margin-bottom: 1rem;
+}
+
+.schema-form-section-card {
+  margin-bottom: 1.5rem;
+}
+
+.table-explorer-section .pf-v6-c-form__field-group-body {
+  padding-block-start: 0 !important;
+}
