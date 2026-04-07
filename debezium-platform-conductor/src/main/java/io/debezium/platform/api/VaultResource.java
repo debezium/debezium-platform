@@ -32,10 +32,11 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
 
-import com.blazebit.persistence.integration.jaxrs.EntityViewId;
-
+import io.debezium.platform.api.dto.VaultRequest;
+import io.debezium.platform.api.dto.VaultResponse;
+import io.debezium.platform.api.mapper.VaultMapper;
 import io.debezium.platform.domain.VaultService;
-import io.debezium.platform.domain.views.Vault;
+import io.debezium.platform.error.NotFoundException;
 
 @Tag(name = "vaults")
 @OpenAPIDefinition(info = @Info(title = "Vault API", description = "CRUD operations over Source revault", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
@@ -44,48 +45,55 @@ public class VaultResource {
 
     Logger logger;
     VaultService vaultService;
+    VaultMapper mapper;
 
-    public VaultResource(Logger logger, VaultService vaultService) {
+    public VaultResource(Logger logger, VaultService vaultService, VaultMapper mapper) {
         this.logger = logger;
         this.vaultService = vaultService;
+        this.mapper = mapper;
     }
 
     @Operation(summary = "Returns all available vaults")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Vault.class, required = true, type = SchemaType.ARRAY)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = VaultResponse.class, required = true, type = SchemaType.ARRAY)))
     @GET
     public Response get() {
         var vaults = vaultService.list();
-        return Response.ok(vaults).build();
+        return Response.ok(mapper.toResponseList(vaults)).build();
     }
 
     @Operation(summary = "Returns a vault with given id")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Vault.class, required = true)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = VaultResponse.class, required = true)))
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
         return vaultService.findById(id)
-                .map(vault -> Response.ok(vault).build())
+                .map(mapper::toResponse)
+                .map(dto -> Response.ok(dto).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @Operation(summary = "Creates new vault")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
     @POST
-    public Response post(@NotNull @Valid Vault vault, @Context UriInfo uriInfo) {
-        var created = vaultService.create(vault);
+    public Response post(@NotNull @Valid VaultRequest request, @Context UriInfo uriInfo) {
+        var view = vaultService.createEmpty();
+        mapper.applyToView(request, view);
+        var created = vaultService.create(view);
         URI uri = uriInfo.getAbsolutePathBuilder()
                 .path(Long.toString(created.getId()))
                 .build();
-        return Response.created(uri).entity(created).build();
+        return Response.created(uri).entity(mapper.toResponse(created)).build();
     }
 
     @Operation(summary = "Updates an existing vault")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = Vault.class, required = true)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = VaultResponse.class, required = true)))
     @PUT
     @Path("/{id}")
-    public Response put(@EntityViewId("id") @NotNull @Valid Vault vault) {
-        var updated = vaultService.update(vault);
-        return Response.ok(updated).build();
+    public Response put(@PathParam("id") Long id, @NotNull @Valid VaultRequest request) {
+        var view = vaultService.findById(id).orElseThrow(() -> new NotFoundException(id));
+        mapper.applyToView(request, view);
+        var updated = vaultService.update(view);
+        return Response.ok(mapper.toResponse(updated)).build();
     }
 
     @Operation(summary = "Deletes an existing vault")
