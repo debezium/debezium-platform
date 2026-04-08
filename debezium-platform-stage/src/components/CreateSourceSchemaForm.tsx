@@ -81,8 +81,6 @@ import { datatype as DatabaseItemsList } from "@utils/Datatype";
 import _ from "lodash";
 import "./CreateSourceSchemaForm.css";
 
-// --- Types ---
-
 interface connectionsList extends Connection {
   role: string;
 }
@@ -100,8 +98,6 @@ export interface CreateSourceSchemaFormHandle {
   validate: () => boolean;
   submit: () => void;
 }
-
-// --- Helpers ---
 
 const getInitialSelectOptions = (
   connections: connectionsList[],
@@ -152,8 +148,6 @@ const collectAllDependants = (
   return set;
 };
 
-// --- Component ---
-
 const CreateSourceSchemaForm = React.forwardRef<
   CreateSourceSchemaFormHandle,
   CreateSourceSchemaFormProps
@@ -164,11 +158,9 @@ const CreateSourceSchemaForm = React.forwardRef<
   // Layout toggle
   const [layoutMode, setLayoutMode] = useState<"jumplinks" | "tabs">("jumplinks");
 
-  // Form values: name, description
   const [sourceName, setSourceName] = useState("");
   const [description, setDescription] = useState("");
 
-  // Schema field values
   const [schemaValues, setSchemaValues] = useState<Record<string, string>>({});
 
   // Additional properties
@@ -200,21 +192,16 @@ const CreateSourceSchemaForm = React.forwardRef<
   const [signalMissingConnection, setSignalMissingConnection] = useState(false);
   const [isSignalLoading, setIsSignalLoading] = useState(false);
 
-  // Errors
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
 
-  // Tabs
   const [activeTabKey, setActiveTabKey] = useState(0);
 
-  // JumpLinks active tracking
   const [activeSection, setActiveSection] = useState("connector-essentials");
   const activeSectionRef = useRef(activeSection);
 
   useEffect(() => {
     activeSectionRef.current = activeSection;
   }, [activeSection]);
-
-  // --- Computed ---
 
   const orderedGroups = useMemo(
     () => [...connectorSchema.groups].sort((a, b) => a.order - b.order),
@@ -265,7 +252,6 @@ const CreateSourceSchemaForm = React.forwardRef<
     return sections;
   }, [orderedGroups, groupedProperties]);
 
-  // Scroll-spy: update active JumpLink based on which section is in view
   useEffect(() => {
     if (layoutMode !== "jumplinks") return;
 
@@ -298,8 +284,6 @@ const CreateSourceSchemaForm = React.forwardRef<
     for (const el of elements) observer.observe(el);
     return () => observer.disconnect();
   }, [layoutMode, allSections]);
-
-  // --- Connection data ---
 
   const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>(
     "sourceConnectorCatalog",
@@ -377,8 +361,6 @@ const CreateSourceSchemaForm = React.forwardRef<
     }
     return baseSelectOptions;
   }, [baseSelectOptions, connectionFilterValue]);
-
-  // --- Connection handlers ---
 
   const handleNewConnectionFromModal = useCallback((connection: ConnectionConfig) => {
     setSelectedConnection(connection);
@@ -486,8 +468,6 @@ const CreateSourceSchemaForm = React.forwardRef<
     </MenuToggle>
   );
 
-  // --- Signal ---
-
   const handleSignalModalToggle = () => {
     setSignalCollectionNameVerify(signalCollectionName || "");
     setIsSignalModalOpen(!isSignalModalOpen);
@@ -522,14 +502,10 @@ const CreateSourceSchemaForm = React.forwardRef<
     setIsSignalModalOpen(false);
   };
 
-  // --- Schema field change ---
-
   const handleSchemaFieldChange = useCallback((name: string, value: string) => {
     setSchemaValues((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   }, []);
-
-  // --- Additional properties ---
 
   const handleAdditionalAdd = () => {
     const key = `addprop-${additionalKeyCount}`;
@@ -557,8 +533,6 @@ const CreateSourceSchemaForm = React.forwardRef<
       return next;
     });
   };
-
-  // --- Validate & Submit ---
 
   const validate = useCallback((): boolean => {
     const newErrors: Record<string, string | undefined> = {};
@@ -632,8 +606,6 @@ const CreateSourceSchemaForm = React.forwardRef<
   ]);
 
   React.useImperativeHandle(ref, () => ({ validate, submit: handleSubmit }), [validate, handleSubmit]);
-
-  // --- Render helpers ---
 
   const renderConnectorEssentials = () => (
     <Form isWidthLimited>
@@ -848,8 +820,6 @@ const CreateSourceSchemaForm = React.forwardRef<
     </Form>
   );
 
-  // --- Layout A: JumpLinks ---
-
   const renderJumpLinksLayout = () => (
     <div className="jumplinks-layout">
       <div className="jumplinks-sidebar">
@@ -922,8 +892,6 @@ const CreateSourceSchemaForm = React.forwardRef<
     </div>
   );
 
-  // --- Layout B: Tabs ---
-
   const tabSections = useMemo(() => {
     const tabs: { id: string; label: string; groupName?: string }[] = [];
     for (const group of orderedGroups) {
@@ -944,10 +912,7 @@ const CreateSourceSchemaForm = React.forwardRef<
     <div className="tabs-layout" style={{ maxWidth: "900px", margin: "0 auto" }}>
       <Card className="custom-card-body">
         <CardBody isFilled>
-          {/* Connector Essentials — fixed top */}
           {renderConnectorEssentials()}
-
-          {/* Tabs for schema groups */}
           <div style={{ marginTop: "1.5rem" }}>
             <FormFieldGroup
               header={
@@ -982,7 +947,6 @@ const CreateSourceSchemaForm = React.forwardRef<
             </FormFieldGroup>
           </div>
 
-          {/* Signal Collections — fixed bottom */}
           <div style={{ marginTop: "1rem" }}>
             {renderSignalCollections()}
           </div>
@@ -993,7 +957,6 @@ const CreateSourceSchemaForm = React.forwardRef<
 
   return (
     <>
-      {/* Layout toggle */}
       <div className="schema-form-layout-toggle">
         <ToggleGroup aria-label="Switch between jump links and tabs layout">
           <ToggleGroupItem
@@ -1015,10 +978,8 @@ const CreateSourceSchemaForm = React.forwardRef<
         </ToggleGroup>
       </div>
 
-      {/* Form content */}
       {layoutMode === "jumplinks" ? renderJumpLinksLayout() : renderTabsLayout()}
 
-      {/* Connection modal */}
       <CreateConnectionModal
         isConnectionModalOpen={isConnectionModalOpen}
         handleConnectionModalToggle={() => setIsConnectionModalOpen(false)}
@@ -1027,7 +988,6 @@ const CreateSourceSchemaForm = React.forwardRef<
         setSelectedConnection={handleNewConnectionFromModal}
       />
 
-      {/* Signal modal */}
       <Modal
         variant={ModalVariant.medium}
         isOpen={isSignalModalOpen}

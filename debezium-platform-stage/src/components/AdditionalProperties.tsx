@@ -19,6 +19,8 @@ import {
 import { PlusIcon, TimesIcon, TrashIcon } from "@patternfly/react-icons";
 import { useTranslation } from "react-i18next";
 
+import "./AdditionalProperties.css";
+
 interface AdditionalPropertiesProps {
   properties: Map<string, { key: string; value: string }>;
   schemaPropertyNames: string[];
@@ -122,6 +124,8 @@ const TypeaheadKeyInput: React.FC<TypeaheadKeyInputProps> = ({
       onOpenChange={(open) => !open && setIsOpen(false)}
       toggle={toggle}
       variant="typeahead"
+      isScrollable
+      maxMenuHeight="min(50vh, 320px)"
     >
       <SelectList>
         {filteredOptions.length === 0 ? (
@@ -154,7 +158,7 @@ const AdditionalProperties: React.FC<AdditionalPropertiesProps> = ({
     <Form isWidthLimited>
       <FormGroup fieldId="additional-properties-group">
         {Array.from(properties.entries()).map(([id, prop]) => (
-          <Split hasGutter key={id} style={{ marginBottom: "0.5rem" }}>
+          <Split hasGutter key={id} className="additional-properties-row">
             <SplitItem isFilled>
               <Grid hasGutter md={6}>
                 <FormGroup label="" fieldId={`addprop-key-${id}`}>
