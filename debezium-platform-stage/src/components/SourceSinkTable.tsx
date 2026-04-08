@@ -127,7 +127,7 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
   };
 
   const onEditHandler = (id: number, _name: string) => {
-    navigate(`/${tableType}/${id}?state=edit`);
+    navigate(`/${tableType}/${id}?state=edit`, { state: { mode: "edit" as const } });
   };
 
   const modalToggle = (toggleValue: boolean) => {
@@ -136,7 +136,7 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
   };
 
   const onNameClick = (id: number, tableType: TableType) => () => {
-    navigate(`/${tableType}/${id}?state=view`);
+    navigate(`/${tableType}/${id}?state=view`, { state: { mode: "view" as const } });
   };
 
   const rowActions = (actionData: ActionData): IAction[] => [

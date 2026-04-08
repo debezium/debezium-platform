@@ -11,6 +11,7 @@ type TableViewComponentProps = {
     collections: TableData | undefined;
     setSelectedDataListItems: (dataListItems: SelectedDataListItem | undefined) => void;
     selectedDataListItems: SelectedDataListItem | undefined;
+    readOnly?: boolean;
 };
 
 type SelectedItem = {
@@ -75,7 +76,8 @@ const TreeCheckbox: FC<{
     checked: boolean | null | undefined;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     ariaLabel?: string;
-}> = ({ checked, onChange, ariaLabel }) => {
+    disabled?: boolean;
+}> = ({ checked, onChange, ariaLabel, disabled }) => {
     const ref = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -92,11 +94,12 @@ const TreeCheckbox: FC<{
             onChange={onChange}
             aria-label={ariaLabel}
             className="virtual-tree__checkbox"
+            disabled={disabled}
         />
     );
 };
 
-const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelectedDataListItems, selectedDataListItems }) => {
+const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelectedDataListItems, selectedDataListItems, readOnly }) => {
     const { t } = useTranslation();
     const [allExpanded, setAllExpanded] = useState(false);
     const [filteredItems, setFilteredItems] = useState<TreeViewDataItem[]>([]);
@@ -179,11 +182,11 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     }, [selectedDataListItems, options]);
 
     useEffect(() => {
-        if (!isInitializedRef.current) return;
+        if (!isInitializedRef.current || readOnly) return;
 
         const selections = extractSelections(checkedItems as SelectedItem[]);
         setSelectedDataListItems(selections);
-    }, [checkedItems, setSelectedDataListItems]);
+    }, [checkedItems, setSelectedDataListItems, readOnly]);
 
     useEffect(() => {
         if (prevCollectionsRef.current === collections) {
@@ -225,6 +228,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     }, [collections]);
 
     const onCheck = (event: React.ChangeEvent, treeViewItem: TreeViewDataItem) => {
+        if (readOnly) return;
         const checked = (event.target as HTMLInputElement).checked;
         const checkedItemTree = options
             .map((opt) => Object.assign({}, opt))
@@ -381,7 +385,12 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         <Toolbar style={{ padding: 0 }}>
             <ToolbarContent style={{ padding: 0 }}>
                 <ToolbarItem>
-                    <TreeViewSearch onSearch={onSearch} id="input-search" name="search-input" aria-label="Search input example" />
+                    <TreeViewSearch
+                        onSearch={readOnly ? () => {} : onSearch}
+                        id="input-search"
+                        name="search-input"
+                        aria-label="Search input example"
+                    />
                 </ToolbarItem>
                 <ToolbarItem className="tree-view-component__toolbar-expand">
                     <Button variant="link" onClick={onToggleAll}>
@@ -446,6 +455,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                                         checked={item.checkProps?.checked}
                                         onChange={(e) => onCheck(e as unknown as React.ChangeEvent, item)}
                                         ariaLabel={`Select ${item.name}`}
+                                        disabled={readOnly}
                                     />
                                     <span className="virtual-tree__icon">
                                         {depth === 0 ? <DatabaseIcon /> : <ServerGroupIcon />}

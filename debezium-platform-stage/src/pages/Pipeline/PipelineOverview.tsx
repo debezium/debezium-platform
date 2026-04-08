@@ -45,6 +45,7 @@ import { ReactFlowProvider } from "reactflow";
 import { PencilAltIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { sourcePageNavState } from "@sourcePage/sourcePageNavigation";
 
 type PipelineOverviewProp = {
   pipelineId: string;
@@ -269,7 +270,9 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   variant="link"
                   icon={<PencilAltIcon />}
                   onClick={() =>
-                    navigateTo(`/source/${source?.id}`)
+                    navigate(`/source/${source?.id}?state=edit`, {
+                      state: sourcePageNavState.edit,
+                    })
                   }
                 >
                   {t("edit")}

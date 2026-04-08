@@ -28,6 +28,7 @@ interface AdditionalPropertiesProps {
   onDelete: (id: string) => void;
   onChange: (id: string, type: "key" | "value", value: string) => void;
   errorKeys: string[];
+  readOnly?: boolean;
 }
 
 interface TypeaheadKeyInputProps {
@@ -35,6 +36,7 @@ interface TypeaheadKeyInputProps {
   suggestions: string[];
   onChange: (value: string) => void;
   fieldId: string;
+  readOnly?: boolean;
 }
 
 const TypeaheadKeyInput: React.FC<TypeaheadKeyInputProps> = ({
@@ -42,6 +44,7 @@ const TypeaheadKeyInput: React.FC<TypeaheadKeyInputProps> = ({
   suggestions,
   onChange,
   fieldId,
+  readOnly,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [filterValue, setFilterValue] = useState("");
@@ -115,6 +118,18 @@ const TypeaheadKeyInput: React.FC<TypeaheadKeyInputProps> = ({
     </MenuToggle>
   );
 
+  if (readOnly) {
+    return (
+      <TextInput
+        id={fieldId}
+        value={value}
+        readOnly
+        readOnlyVariant="plain"
+        aria-label="Property key"
+      />
+    );
+  }
+
   return (
     <Select
       id={`${fieldId}-select`}
@@ -151,6 +166,7 @@ const AdditionalProperties: React.FC<AdditionalPropertiesProps> = ({
   onDelete,
   onChange,
   errorKeys,
+  readOnly,
 }) => {
   const { t } = useTranslation();
 
@@ -167,6 +183,7 @@ const AdditionalProperties: React.FC<AdditionalPropertiesProps> = ({
                     suggestions={schemaPropertyNames}
                     onChange={(val) => onChange(id, "key", val)}
                     fieldId={`addprop-key-input-${id}`}
+                    readOnly={readOnly}
                   />
                 </FormGroup>
                 <FormGroup label="" fieldId={`addprop-value-${id}`}>
@@ -177,10 +194,13 @@ const AdditionalProperties: React.FC<AdditionalPropertiesProps> = ({
                     value={prop.value}
                     validated={errorKeys.includes(id) ? "error" : "default"}
                     onChange={(_e, val) => onChange(id, "value", val)}
+                    readOnly={!!readOnly}
+                    readOnlyVariant={readOnly ? "plain" : undefined}
                   />
                 </FormGroup>
               </Grid>
             </SplitItem>
+            {!readOnly && (
             <SplitItem>
               <Button
                 variant="plain"
@@ -190,12 +210,15 @@ const AdditionalProperties: React.FC<AdditionalPropertiesProps> = ({
                 <TrashIcon />
               </Button>
             </SplitItem>
+            )}
           </Split>
         ))}
       </FormGroup>
-      <Button variant="secondary" icon={<PlusIcon />} onClick={onAdd}>
-        {t("form.addFieldButton", "Add property")}
-      </Button>
+      {!readOnly && (
+        <Button variant="secondary" icon={<PlusIcon />} onClick={onAdd}>
+          {t("form.addFieldButton", "Add property")}
+        </Button>
+      )}
     </Form>
   );
 };

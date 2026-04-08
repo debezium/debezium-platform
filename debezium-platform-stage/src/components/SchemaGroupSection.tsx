@@ -11,6 +11,7 @@ interface SchemaGroupSectionProps {
   allValues: Record<string, string>;
   dependencyMap: Map<string, Map<string, string[]>>;
   allDependantNames: Set<string>;
+  readOnly?: boolean;
 }
 
 const isFieldVisible = (
@@ -44,6 +45,7 @@ const SchemaGroupSection: React.FC<SchemaGroupSectionProps> = ({
   allValues,
   dependencyMap,
   allDependantNames,
+  readOnly,
 }) => {
   const sorted = React.useMemo(
     () => [...properties].sort((a, b) => a.display.groupOrder - b.display.groupOrder),
@@ -67,6 +69,7 @@ const SchemaGroupSection: React.FC<SchemaGroupSectionProps> = ({
           onChange={onChange}
           error={errors[property.name]}
           isDependant={allDependantNames.has(property.name)}
+          readOnly={readOnly}
         />
       ))}
     </Form>

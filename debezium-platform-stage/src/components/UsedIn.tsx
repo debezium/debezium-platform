@@ -4,6 +4,7 @@ import { MigrationIcon as PipelineIcon } from "@patternfly/react-icons";
 import { t } from "i18next"
 import { FC } from "react"
 import { useNavigate } from "react-router-dom"
+import { sourcePageNavState } from "@sourcePage/sourcePageNavigation"
 import { Connection, Destination, Pipeline, ResourceType, Source, TransformData } from "src/apis"
 
 interface IUsedInProps {
@@ -47,7 +48,13 @@ const UsedIn: FC<IUsedInProps> = ({ resourceList, resourceType, instance, reques
     );
     const onNameClick = (id: number) => {
         if (requestedPageType === "connection") {
-            navigate(`/${resourceType}/${id}?state=view`);
+            if (resourceType === "source") {
+                navigate(`/${resourceType}/${id}?state=view`, {
+                    state: sourcePageNavState.view,
+                });
+            } else {
+                navigate(`/${resourceType}/${id}?state=view`);
+            }
         } else {
             navigate(`/${resourceType}/${id}/overview`);
         }

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   Card,
@@ -58,6 +58,7 @@ import {
   ConnectionConfig,
   fetchData,
   fetchDataCall,
+  Source,
   TableData,
   verifySignals,
 } from "src/apis";
@@ -92,6 +93,10 @@ interface CreateSourceSchemaFormProps {
   sourceId: string;
   dataType?: string;
   onSubmit: (payload: Record<string, unknown>) => void;
+  /** When set, form fields are populated once from the saved source (edit flow). */
+  initialSource?: Source;
+  /** Read-only presentation (source view mode). */
+  readOnly?: boolean;
 }
 
 export interface CreateSourceSchemaFormHandle {
@@ -148,12 +153,92 @@ const collectAllDependants = (
   return set;
 };
 
+type HydrationSplit = {
+  schemaValues: Record<string, string>;
+  additionalProps: Map<string, AdditionalProp>;
+  signalCollectionName: string;
+  selectedDataListItems: SelectedDataListItem | undefined;
+  additionalKeyCount: number;
+};
+
+function stringifyConfigValue(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  if (typeof v === "boolean" || typeof v === "number") return String(v);
+  if (typeof v === "string") return v;
+  if (typeof v === "object") {
+    try {
+      return JSON.stringify(v);
+    } catch {
+      return String(v);
+    }
+  }
+  return String(v);
+}
+
+function splitConfigForHydration(
+  rawConfig: Record<string, unknown> | undefined,
+  schemaPropertyNames: string[]
+): HydrationSplit {
+  const cfg: Record<string, unknown> = rawConfig ? { ...rawConfig } : {};
+
+  let signalCollectionName = "";
+  if ("signal.data.collection" in cfg) {
+    signalCollectionName = stringifyConfigValue(cfg["signal.data.collection"]);
+    delete cfg["signal.data.collection"];
+  }
+
+  const schemas: string[] = [];
+  const tables: string[] = [];
+  for (const key of Object.keys(cfg)) {
+    if (!/\.include\.list$/.test(key)) continue;
+    const raw = cfg[key];
+    delete cfg[key];
+    const str = stringifyConfigValue(raw);
+    if (!str) continue;
+    const parts = str.split(",").map((s) => s.trim()).filter(Boolean);
+    if (key.includes("database.") || key.includes("schema.")) {
+      schemas.push(...parts);
+    } else if (key.includes("table.") || key.includes("collection.")) {
+      tables.push(...parts);
+    }
+  }
+
+  const schemaNameSet = new Set(schemaPropertyNames);
+  const schemaValues: Record<string, string> = {};
+  const additionalProps = new Map<string, AdditionalProp>();
+  let additionalIndex = 0;
+
+  for (const [key, value] of Object.entries(cfg)) {
+    const str = stringifyConfigValue(value);
+    if (schemaNameSet.has(key)) {
+      schemaValues[key] = str;
+    } else {
+      additionalProps.set(`addprop-${additionalIndex}`, { key, value: str });
+      additionalIndex += 1;
+    }
+  }
+
+  let selectedDataListItems: SelectedDataListItem | undefined;
+  if (schemas.length > 0 || tables.length > 0) {
+    selectedDataListItems = { schemas, tables };
+  }
+
+  return {
+    schemaValues,
+    additionalProps,
+    signalCollectionName,
+    selectedDataListItems,
+    additionalKeyCount: additionalIndex,
+  };
+}
+
 const CreateSourceSchemaForm = React.forwardRef<
   CreateSourceSchemaFormHandle,
   CreateSourceSchemaFormProps
->(({ connectorSchema, sourceId, dataType, onSubmit }, ref) => {
+>(({ connectorSchema, sourceId, dataType, onSubmit, initialSource, readOnly = false }, ref) => {
   const { t } = useTranslation();
   const { addNotification } = useNotification();
+  const hydratedSourceIdRef = useRef<number | null>(null);
 
   // Layout toggle
   const [layoutMode, setLayoutMode] = useState<"jumplinks" | "tabs">("jumplinks");
@@ -232,6 +317,32 @@ const CreateSourceSchemaForm = React.forwardRef<
     () => connectorSchema.properties.map((p) => p.name),
     [connectorSchema.properties]
   );
+
+  useLayoutEffect(() => {
+    if (!initialSource || !connectorSchema) {
+      hydratedSourceIdRef.current = null;
+      return;
+    }
+    if (hydratedSourceIdRef.current === initialSource.id) {
+      return;
+    }
+    hydratedSourceIdRef.current = initialSource.id;
+
+    const split = splitConfigForHydration(
+      initialSource.config as Record<string, unknown>,
+      schemaPropertyNames
+    );
+    setSourceName(initialSource.name);
+    setDescription(initialSource.description ?? "");
+    setSelectedConnection(initialSource.connection);
+    setConnectionInputValue(initialSource.connection?.name ?? "");
+    setSchemaValues(split.schemaValues);
+    setAdditionalProps(split.additionalProps);
+    setAdditionalKeyCount(split.additionalKeyCount);
+    setSignalCollectionName(split.signalCollectionName);
+    setSelectedDataListItems(split.selectedDataListItems);
+    setSignalVerified(!!split.signalCollectionName);
+  }, [initialSource, connectorSchema, schemaPropertyNames]);
 
   const allSections = useMemo(() => {
     const sections: { id: string; label: string; type: "custom" | "schema" }[] = [
@@ -395,6 +506,7 @@ const CreateSourceSchemaForm = React.forwardRef<
   };
 
   const onConnectionInputChange = (_e: React.FormEvent<HTMLInputElement>, value: string) => {
+    if (readOnly) return;
     setConnectionInputValue(value);
     setConnectionFilterValue(value);
     setFocusedItemIndex(null);
@@ -404,6 +516,7 @@ const CreateSourceSchemaForm = React.forwardRef<
   };
 
   const onConnectionInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (readOnly) return;
     const focusedItem = focusedItemIndex !== null ? selectOptions?.[focusedItemIndex] : null;
     if (event.key === "Enter" && isConnectionOpen && focusedItem && focusedItem.value !== "no-results") {
       selectConnectionOption(focusedItem.value, focusedItem.children as string);
@@ -428,17 +541,19 @@ const CreateSourceSchemaForm = React.forwardRef<
       ref={toggleRef}
       variant="typeahead"
       onClick={() => {
+        if (readOnly) return;
         setIsConnectionOpen(!isConnectionOpen);
         connectionInputRef.current?.focus();
       }}
       isExpanded={isConnectionOpen}
       isFullWidth
+      isDisabled={readOnly}
       status={errors.connection ? "danger" : undefined}
     >
       <TextInputGroup isPlain>
         <TextInputGroupMain
           value={connectionInputValue}
-          onClick={() => !isConnectionOpen && setIsConnectionOpen(true)}
+          onClick={() => !readOnly && !isConnectionOpen && setIsConnectionOpen(true)}
           onChange={onConnectionInputChange}
           onKeyDown={onConnectionInputKeyDown}
           id="conn-typeahead-input"
@@ -448,8 +563,10 @@ const CreateSourceSchemaForm = React.forwardRef<
           {...(activeItemId && { "aria-activedescendant": activeItemId })}
           role="combobox"
           isExpanded={isConnectionOpen}
+          readOnly={readOnly}
+          {...(readOnly ? { readOnlyVariant: "plain" as const } : {})}
         />
-        <TextInputGroupUtilities {...(!connectionInputValue ? { style: { display: "none" } } : {})}>
+        <TextInputGroupUtilities {...(!connectionInputValue || readOnly ? { style: { display: "none" } } : {})}>
           <Button
             variant="plain"
             onClick={() => {
@@ -535,6 +652,7 @@ const CreateSourceSchemaForm = React.forwardRef<
   };
 
   const validate = useCallback((): boolean => {
+    if (readOnly) return true;
     const newErrors: Record<string, string | undefined> = {};
     if (!sourceName.trim()) newErrors["source-name"] = t("statusMessage:smartEditor.sourceNameRequired", "Source name is required");
     if (!selectedConnection) newErrors.connection = t("statusMessage:smartEditor.connectionRequired", "Connection is required");
@@ -556,9 +674,10 @@ const CreateSourceSchemaForm = React.forwardRef<
     setErrors(newErrors);
     const hasSchemaErrors = Object.values(newErrors).some(Boolean);
     return !hasSchemaErrors && errKeys.length === 0;
-  }, [sourceName, selectedConnection, schemaValues, connectorSchema.properties, additionalProps, allDependants, t]);
+  }, [readOnly, sourceName, selectedConnection, schemaValues, connectorSchema.properties, additionalProps, allDependants, t]);
 
   const handleSubmit = useCallback(() => {
+    if (readOnly) return;
     if (!validate()) {
       addNotification("danger", "Validation failed", "Please fill all required fields.");
       return;
@@ -582,16 +701,21 @@ const CreateSourceSchemaForm = React.forwardRef<
       if (tables.length > 0) config["table.include.list"] = tables.join(",");
     }
 
-    onSubmit({
+    const payload: Record<string, unknown> = {
       name: sourceName,
       description,
-      type: sourceId,
-      schema: "schema321",
-      vaults: [],
+      type: initialSource?.type ?? sourceId,
+      schema: initialSource?.schema ?? "schema321",
+      vaults: initialSource?.vaults ?? [],
       ...(selectedConnection ? { connection: selectedConnection } : {}),
       config,
-    });
+    };
+    if (initialSource) {
+      payload.id = initialSource.id;
+    }
+    onSubmit(payload);
   }, [
+    readOnly,
     validate,
     addNotification,
     schemaValues,
@@ -603,6 +727,7 @@ const CreateSourceSchemaForm = React.forwardRef<
     sourceId,
     selectedConnection,
     onSubmit,
+    initialSource,
   ]);
 
   React.useImperativeHandle(ref, () => ({ validate, submit: handleSubmit }), [validate, handleSubmit]);
@@ -629,6 +754,8 @@ const CreateSourceSchemaForm = React.forwardRef<
             setErrors((e) => ({ ...e, "source-name": undefined }));
           }}
           validated={errors["source-name"] ? "error" : "default"}
+          readOnly={readOnly}
+          {...(readOnly ? { readOnlyVariant: "plain" as const } : {})}
         />
         {errors["source-name"] && (
           <FormHelperText>
@@ -646,6 +773,8 @@ const CreateSourceSchemaForm = React.forwardRef<
           id="source-description"
           value={description}
           onChange={(_e, val) => setDescription(val)}
+          readOnly={readOnly}
+          {...(readOnly ? { readOnlyVariant: "plain" as const } : {})}
         />
         <FormHelperText>
           <HelperText>
@@ -688,6 +817,7 @@ const CreateSourceSchemaForm = React.forwardRef<
               </SelectList>
             </Select>
           </InputGroupItem>
+          {!readOnly && (
           <InputGroupItem>
             <Button
               variant="control"
@@ -697,6 +827,7 @@ const CreateSourceSchemaForm = React.forwardRef<
               {t("connection:link.createConnection")}
             </Button>
           </InputGroupItem>
+          )}
         </InputGroup>
         {errors.connection ? (
           <FormHelperText>
@@ -760,6 +891,7 @@ const CreateSourceSchemaForm = React.forwardRef<
               collections={collections}
               setSelectedDataListItems={setSelectedDataListItems}
               selectedDataListItems={selectedDataListItems}
+              readOnly={readOnly}
             />
           </FormFieldGroupExpandable>
         )
@@ -779,6 +911,7 @@ const CreateSourceSchemaForm = React.forwardRef<
         allValues={schemaValues}
         dependencyMap={dependencyMap}
         allDependantNames={allDependants}
+        readOnly={readOnly}
       />
     );
   };
@@ -791,6 +924,7 @@ const CreateSourceSchemaForm = React.forwardRef<
       onDelete={handleAdditionalDelete}
       onChange={handleAdditionalChange}
       errorKeys={additionalErrorKeys}
+      readOnly={readOnly}
     />
   );
 
@@ -807,15 +941,25 @@ const CreateSourceSchemaForm = React.forwardRef<
           />
         }
       >
-        <Button
-          variant="link"
-          size="lg"
-          icon={signalCollectionName ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />}
-          iconPosition="left"
-          onClick={handleSignalModalToggle}
-        >
-          {t("source:signal.setupSignaling")}
-        </Button>
+        {readOnly ? (
+          <Content component="p">
+            {signalCollectionName
+              ? `${t("source:signal.signalingCollectionField.label", { defaultValue: "Signaling collection" })}: ${signalCollectionName}`
+              : t("source:signal.notConfigured", {
+                  defaultValue: "Signaling is not configured for this source.",
+                })}
+          </Content>
+        ) : (
+          <Button
+            variant="link"
+            size="lg"
+            icon={signalCollectionName ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />}
+            iconPosition="left"
+            onClick={handleSignalModalToggle}
+          >
+            {t("source:signal.setupSignaling")}
+          </Button>
+        )}
       </FormFieldGroup>
     </Form>
   );
@@ -957,26 +1101,28 @@ const CreateSourceSchemaForm = React.forwardRef<
 
   return (
     <>
-      <div className="schema-form-layout-toggle">
-        <ToggleGroup aria-label="Switch between jump links and tabs layout">
-          <ToggleGroupItem
-            icon={<ThLargeIcon />}
-            text="Jump Links"
-            aria-label="Jump links layout"
-            buttonId="jumplinks-layout"
-            isSelected={layoutMode === "jumplinks"}
-            onChange={() => setLayoutMode("jumplinks")}
-          />
-          <ToggleGroupItem
-            icon={<ListIcon />}
-            text="Tabs"
-            aria-label="Tabs layout"
-            buttonId="tabs-layout"
-            isSelected={layoutMode === "tabs"}
-            onChange={() => setLayoutMode("tabs")}
-          />
-        </ToggleGroup>
-      </div>
+      {!readOnly && (
+        <div className="schema-form-layout-toggle">
+          <ToggleGroup aria-label="Switch between jump links and tabs layout">
+            <ToggleGroupItem
+              icon={<ThLargeIcon />}
+              text="Jump Links"
+              aria-label="Jump links layout"
+              buttonId="jumplinks-layout"
+              isSelected={layoutMode === "jumplinks"}
+              onChange={() => setLayoutMode("jumplinks")}
+            />
+            <ToggleGroupItem
+              icon={<ListIcon />}
+              text="Tabs"
+              aria-label="Tabs layout"
+              buttonId="tabs-layout"
+              isSelected={layoutMode === "tabs"}
+              onChange={() => setLayoutMode("tabs")}
+            />
+          </ToggleGroup>
+        </div>
+      )}
 
       {layoutMode === "jumplinks" ? renderJumpLinksLayout() : renderTabsLayout()}
 

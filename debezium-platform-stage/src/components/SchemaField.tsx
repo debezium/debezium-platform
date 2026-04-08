@@ -19,6 +19,7 @@ interface SchemaFieldProps {
   onChange: (name: string, value: string) => void;
   error?: string;
   isDependant?: boolean;
+  readOnly?: boolean;
 }
 
 const getEnumValues = (property: SchemaProperty): string[] | undefined => {
@@ -32,6 +33,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
   onChange,
   error,
   isDependant,
+  readOnly,
 }) => {
   const enumValues = getEnumValues(property);
   const fieldId = `schema-field-${property.name}`;
@@ -45,6 +47,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
           onChange={(_e, val) => onChange(property.name, val)}
           aria-label={property.display.label}
           validated={error ? "error" : "default"}
+          isDisabled={readOnly}
         >
           <FormSelectOption key="" value="" label="Select an option" />
           {enumValues.map((opt) => (
@@ -64,6 +67,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
             onChange(property.name, String(checked))
           }
           aria-label={property.display.label}
+          isDisabled={readOnly}
         />
       );
     }
@@ -77,6 +81,8 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
           onChange={(_e, val) => onChange(property.name, val)}
           aria-label={property.display.label}
           validated={error ? "error" : "default"}
+          readOnly={!!readOnly}
+          readOnlyVariant={readOnly ? "plain" : undefined}
         />
       );
     }
@@ -89,6 +95,8 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
         onChange={(_e, val) => onChange(property.name, val)}
         aria-label={property.display.label}
         validated={error ? "error" : "default"}
+        readOnly={!!readOnly}
+        readOnlyVariant={readOnly ? "plain" : undefined}
       />
     );
   };
