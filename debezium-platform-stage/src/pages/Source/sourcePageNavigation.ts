@@ -1,7 +1,4 @@
-/**
- * How the source detail page should open — pass via react-router location.state and/or ?state= query.
- * Query params survive refresh; location.state expresses intent for in-app navigation.
- */
+
 export type SourcePageLocationState = {
   mode: "view" | "edit";
 };
@@ -12,11 +9,6 @@ export const sourcePageNavState = {
   edit: { mode: "edit" } satisfies SourcePageLocationState,
 };
 
-/**
- * view = read-only summary + form; edit = full schema form with save.
- * Precedence: `location.state.mode` (in-app navigation), then `?state=view|edit` (bookmark/refresh),
- * else default edit mode.
- */
 export function resolveSourcePageViewMode(
   locationState: unknown,
   queryState: string | null

@@ -30,7 +30,6 @@ export function collectAllDependants(properties: SchemaProperty[]): Set<string> 
   return set;
 }
 
-/** Same visibility rules as the schema-driven form (conditional fields). */
 export function isSchemaFieldVisible(
   property: SchemaProperty,
   allValues: Record<string, string>,

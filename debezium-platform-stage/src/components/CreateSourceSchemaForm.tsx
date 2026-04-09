@@ -226,7 +226,7 @@ const CreateSourceSchemaForm = React.forwardRef<
       initialSource.config as Record<string, unknown>,
       schemaPropertyNames
     );
-    /* Batch hydrate from saved source when `initialSource.id` changes; not meaningfully expressible without an effect. */
+  
     /* eslint-disable react-hooks/set-state-in-effect */
     setSourceName(initialSource.name);
     setDescription(initialSource.description ?? "");

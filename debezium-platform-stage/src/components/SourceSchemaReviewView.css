@@ -1,11 +1,10 @@
-/* Review-specific tweaks; layout + jump links come from CreateSourceSchemaForm.css */
+
 
 .source-schema-review__value--empty {
   color: var(--pf-v5-global--Color--200, #6a6e73);
   font-weight: var(--pf-v5-global--FontWeight--normal);
 }
 
-/* Set values: larger type + PatternFly default link color (lighter accent than body text). */
 .source-schema-review__value--set {
   font-size: var(--pf-v5-global--FontSize--2xl, 1.1rem);
   font-weight: var(--pf-v5-global--FontWeight--semibold);
@@ -22,7 +21,6 @@
   -webkit-box-decoration-break: clone;
 }
 
-/* Schema field help below the value — normal body style, not italic. */
 .source-schema-review__hint--after-value {
   margin-top: var(--pf-v5-global--spacer--sm);
   color: var(--pf-v5-global--Color--200, #6a6e73);

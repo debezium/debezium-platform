@@ -105,7 +105,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
     <>
       {property.display.label}
       <Label isCompact color="teal" className="schema-field__conditional-badge">
-        Conditional
+      Connector adapter: logminner
       </Label>
     </>
   ) : (

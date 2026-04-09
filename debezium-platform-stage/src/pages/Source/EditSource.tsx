@@ -58,7 +58,7 @@ const EditSource: React.FunctionComponent = () => {
     setViewMode(
       resolveSourcePageViewMode(location.state, searchParams.get("state"))
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only reset when id/history key changes; omit unstable `location.state` / `searchParams` references
+    // eslint-disable-next-line react-hooks/exhaustive-deps 
   }, [routeSourceId, location.key]);
 
   const {
