@@ -270,7 +270,7 @@
         <repository>
             <id>central-snapshots</id>
             <name>Maven Central Snapshots</name>
-            <url>>${publish.snapshot.url}</url>
+            <url>${publish.snapshot.url}</url>
             <releases>
                 <enabled>true</enabled>
                 <updatePolicy>never</updatePolicy>
