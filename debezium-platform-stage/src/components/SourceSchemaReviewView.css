@@ -1,0 +1,62 @@
+/* Review-specific tweaks; layout + jump links come from CreateSourceSchemaForm.css */
+
+.source-schema-review__value--empty {
+  color: var(--pf-v5-global--Color--200, #6a6e73);
+  font-weight: var(--pf-v5-global--FontWeight--normal);
+}
+
+/* Set values: larger type + PatternFly default link color (lighter accent than body text). */
+.source-schema-review__value--set {
+  font-size: var(--pf-v5-global--FontSize--2xl, 1.1rem);
+  font-weight: var(--pf-v5-global--FontWeight--semibold);
+  font-style: italic;
+  color: var(
+    --pf-v5-global--link--Color,
+    var(--pf-v5-global--primary-color--100, #5E406E)
+  );
+  display: inline-block;
+  max-width: 100%;
+  padding: var(--pf-v5-global--spacer--xs) var(--pf-v5-global--spacer--sm);
+  word-break: break-word;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Schema field help below the value — normal body style, not italic. */
+.source-schema-review__hint--after-value {
+  margin-top: var(--pf-v5-global--spacer--sm);
+  color: var(--pf-v5-global--Color--200, #6a6e73);
+}
+
+.source-schema-review__subtitle {
+  font-size: var(--pf-v5-global--FontSize--md);
+  font-weight: var(--pf-v5-global--FontWeight--semi-bold);
+}
+
+.source-schema-review__desc {
+  margin-bottom: 0;
+  color: var(--pf-v5-global--Color--200);
+}
+
+.source-schema-review__dl {
+  margin-top: var(--pf-v5-global--spacer--sm);
+}
+
+.source-schema-review__type-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pf-v5-global--spacer--sm);
+}
+
+.source-schema-review__conditional {
+  margin-left: var(--pf-v5-global--spacer--sm);
+  vertical-align: middle;
+}
+
+.source-schema-review__hint {
+  display: block;
+}
+
+.source-schema-review__code-key {
+  font-size: var(--pf-v5-global--FontSize--sm);
+}

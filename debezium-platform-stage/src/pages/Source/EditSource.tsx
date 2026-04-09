@@ -6,10 +6,6 @@ import {
   Alert,
   Button,
   ButtonType,
-  DescriptionList,
-  DescriptionListDescription,
-  DescriptionListGroup,
-  DescriptionListTerm,
   PageSection,
   Skeleton,
 } from "@patternfly/react-core";
@@ -33,6 +29,7 @@ import { getConnectorTypeName } from "../../utils/helpers";
 import CreateSourceSchemaForm, {
   CreateSourceSchemaFormHandle,
 } from "@components/CreateSourceSchemaForm";
+import SourceSchemaReviewView from "@components/SourceSchemaReviewView";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import { resolveSourcePageViewMode } from "./sourcePageNavigation";
 
@@ -61,6 +58,7 @@ const EditSource: React.FunctionComponent = () => {
     setViewMode(
       resolveSourcePageViewMode(location.state, searchParams.get("state"))
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only reset when id/history key changes; omit unstable `location.state` / `searchParams` references
   }, [routeSourceId, location.key]);
 
   const {
@@ -130,9 +128,11 @@ const EditSource: React.FunctionComponent = () => {
   };
 
   const handleEditConfirm = (
-    _values: Record<string, string>,
-    _setError: (fieldId: string, error: string | undefined) => void
+    values: Record<string, string>,
+    setError: (fieldId: string, error: string | undefined) => void
   ) => {
+    void values;
+    void setError;
     formRef.current?.submit();
   };
 
@@ -209,48 +209,14 @@ const EditSource: React.FunctionComponent = () => {
     }
 
     return (
-      <>
-        {viewMode && (
-          <PageSection>
-            <DescriptionList
-              aria-label="Source summary"
-              columnModifier={{
-                default: "1Col",
-                md: "2Col",
-              }}
-            >
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t("form.field.type", { val: "Source" })}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  {getConnectorTypeName(source.type)}
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-              <DescriptionListGroup>
-                <DescriptionListTerm>
-                  {t("connection:link.connectionFieldLabel", { val: "Source" })}
-                </DescriptionListTerm>
-                <DescriptionListDescription>
-                  {source.connection?.name ?? "—"}
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-              <DescriptionListGroup>
-                <DescriptionListTerm>
-                  {t("source:signal.signalingCollectionField.label", {
-                    defaultValue: "Signaling collection",
-                  })}
-                </DescriptionListTerm>
-                <DescriptionListDescription>
-                  {(() => {
-                    const v = source.config?.["signal.data.collection"];
-                    return v != null && String(v).trim() !== "" ? String(v) : "—";
-                  })()}
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-            </DescriptionList>
-          </PageSection>
-        )}
-
-        <PageSection isFilled>
+      <PageSection isFilled>
+        {viewMode ? (
+          <SourceSchemaReviewView
+            source={source}
+            connectorSchema={connectorSchema}
+            dataType={source.type}
+          />
+        ) : (
           <CreateSourceSchemaForm
             key={source.id}
             ref={formRef}
@@ -258,11 +224,10 @@ const EditSource: React.FunctionComponent = () => {
             sourceId={source.type}
             dataType={source.type}
             initialSource={source}
-            readOnly={viewMode}
             onSubmit={handleSchemaSubmit}
           />
-        </PageSection>
-      </>
+        )}
+      </PageSection>
     );
   };
 

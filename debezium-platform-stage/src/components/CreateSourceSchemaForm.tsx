@@ -79,6 +79,11 @@ import ApiComponentError from "./ApiComponentError";
 import CreateConnectionModal from "../pages/components/CreateConnectionModal";
 import { SelectedDataListItem } from "@sourcePage/CreateSource";
 import { datatype as DatabaseItemsList } from "@utils/Datatype";
+import {
+  buildDependencyMap,
+  collectAllDependants,
+} from "@utils/connectorSchemaLayout";
+import { splitSourceConfigForHydration } from "@utils/sourceConfigSplit";
 import _ from "lodash";
 import "./CreateSourceSchemaForm.css";
 
@@ -120,117 +125,6 @@ const getInitialSelectOptions = (
       icon: <ConnectorImage connectorType={c.type.toLowerCase()} size={25} />,
     }));
 };
-
-const buildDependencyMap = (
-  properties: SchemaProperty[]
-): Map<string, Map<string, string[]>> => {
-  const map = new Map<string, Map<string, string[]>>();
-  for (const prop of properties) {
-    if (prop.valueDependants.length > 0) {
-      const valueMap = new Map<string, string[]>();
-      for (const dep of prop.valueDependants) {
-        for (const val of dep.values) {
-          valueMap.set(val, dep.dependants);
-        }
-      }
-      map.set(prop.name, valueMap);
-    }
-  }
-  return map;
-};
-
-const collectAllDependants = (
-  properties: SchemaProperty[]
-): Set<string> => {
-  const set = new Set<string>();
-  for (const prop of properties) {
-    for (const dep of prop.valueDependants) {
-      for (const d of dep.dependants) {
-        set.add(d);
-      }
-    }
-  }
-  return set;
-};
-
-type HydrationSplit = {
-  schemaValues: Record<string, string>;
-  additionalProps: Map<string, AdditionalProp>;
-  signalCollectionName: string;
-  selectedDataListItems: SelectedDataListItem | undefined;
-  additionalKeyCount: number;
-};
-
-function stringifyConfigValue(v: unknown): string {
-  if (v === null || v === undefined) return "";
-  if (typeof v === "boolean" || typeof v === "number") return String(v);
-  if (typeof v === "string") return v;
-  if (typeof v === "object") {
-    try {
-      return JSON.stringify(v);
-    } catch {
-      return String(v);
-    }
-  }
-  return String(v);
-}
-
-function splitConfigForHydration(
-  rawConfig: Record<string, unknown> | undefined,
-  schemaPropertyNames: string[]
-): HydrationSplit {
-  const cfg: Record<string, unknown> = rawConfig ? { ...rawConfig } : {};
-
-  let signalCollectionName = "";
-  if ("signal.data.collection" in cfg) {
-    signalCollectionName = stringifyConfigValue(cfg["signal.data.collection"]);
-    delete cfg["signal.data.collection"];
-  }
-
-  const schemas: string[] = [];
-  const tables: string[] = [];
-  for (const key of Object.keys(cfg)) {
-    if (!/\.include\.list$/.test(key)) continue;
-    const raw = cfg[key];
-    delete cfg[key];
-    const str = stringifyConfigValue(raw);
-    if (!str) continue;
-    const parts = str.split(",").map((s) => s.trim()).filter(Boolean);
-    if (key.includes("database.") || key.includes("schema.")) {
-      schemas.push(...parts);
-    } else if (key.includes("table.") || key.includes("collection.")) {
-      tables.push(...parts);
-    }
-  }
-
-  const schemaNameSet = new Set(schemaPropertyNames);
-  const schemaValues: Record<string, string> = {};
-  const additionalProps = new Map<string, AdditionalProp>();
-  let additionalIndex = 0;
-
-  for (const [key, value] of Object.entries(cfg)) {
-    const str = stringifyConfigValue(value);
-    if (schemaNameSet.has(key)) {
-      schemaValues[key] = str;
-    } else {
-      additionalProps.set(`addprop-${additionalIndex}`, { key, value: str });
-      additionalIndex += 1;
-    }
-  }
-
-  let selectedDataListItems: SelectedDataListItem | undefined;
-  if (schemas.length > 0 || tables.length > 0) {
-    selectedDataListItems = { schemas, tables };
-  }
-
-  return {
-    schemaValues,
-    additionalProps,
-    signalCollectionName,
-    selectedDataListItems,
-    additionalKeyCount: additionalIndex,
-  };
-}
 
 const CreateSourceSchemaForm = React.forwardRef<
   CreateSourceSchemaFormHandle,
@@ -328,10 +222,12 @@ const CreateSourceSchemaForm = React.forwardRef<
     }
     hydratedSourceIdRef.current = initialSource.id;
 
-    const split = splitConfigForHydration(
+    const split = splitSourceConfigForHydration(
       initialSource.config as Record<string, unknown>,
       schemaPropertyNames
     );
+    /* Batch hydrate from saved source when `initialSource.id` changes; not meaningfully expressible without an effect. */
+    /* eslint-disable react-hooks/set-state-in-effect */
     setSourceName(initialSource.name);
     setDescription(initialSource.description ?? "");
     setSelectedConnection(initialSource.connection);
@@ -340,8 +236,9 @@ const CreateSourceSchemaForm = React.forwardRef<
     setAdditionalProps(split.additionalProps);
     setAdditionalKeyCount(split.additionalKeyCount);
     setSignalCollectionName(split.signalCollectionName);
-    setSelectedDataListItems(split.selectedDataListItems);
+    setSelectedDataListItems(split.selectedDataListItems as SelectedDataListItem | undefined);
     setSignalVerified(!!split.signalCollectionName);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [initialSource, connectorSchema, schemaPropertyNames]);
 
   const allSections = useMemo(() => {
