@@ -8,6 +8,7 @@ package io.debezium.platform.api;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.hasItem;
 
 import org.junit.jupiter.api.Test;
 
@@ -206,6 +207,26 @@ public class ConnectionResourceIT {
                 .post("api/connections")
                 .then()
                 .statusCode(400);
+    }
+
+    @Test
+    public void testCreateConnection_NullType() {
+        String json = """
+                {
+                  "name": "test-connection",
+                  "config": {}
+                }
+                """;
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(json)
+                .when()
+                .post("api/connections")
+                .then()
+                .statusCode(400)
+                .body("title", is("Constraint Violation"))
+                .body("violations.field", hasItem("post.request.type"));
     }
 
     @Test
