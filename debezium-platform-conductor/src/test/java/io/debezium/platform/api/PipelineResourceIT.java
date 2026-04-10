@@ -7,11 +7,12 @@ package io.debezium.platform.api;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.is;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.stream.Stream;
 
 import jakarta.inject.Inject;
 
@@ -19,6 +20,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
@@ -283,6 +287,60 @@ class PipelineResourceIT {
                 .body("status", is(400))
                 .body("violations.field", hasItem("name"))
                 .body("violations.message", hasItem("Pipeline name must be a lowercase RFC 1123 subdomain"));
+    }
+
+    @ParameterizedTest(name = "Creating a pipeline without required {0} should return 400")
+    @MethodSource("invalidPipelineRequests")
+    void rejectPipelineWithMissingRequiredField(String fieldName, String jsonBody) {
+
+        given()
+                .header("Content-Type", "application/json")
+                .body(jsonBody).when().post("api/pipelines")
+                .then()
+                .statusCode(400)
+                .body("title", is("Constraint Violation"))
+                .body("violations.field", hasItem("post.request." + fieldName));
+    }
+
+    static Stream<Arguments> invalidPipelineRequests() {
+        return Stream.of(
+                Arguments.of("name", """
+                        {
+                        "name": "",
+                        "source": {"id": 1},
+                        "destination": {"id": 1},
+                        "logLevel": "INFO"
+                        }"""),
+                Arguments.of("source", """
+                        {
+                        "name": "test-pipeline",
+                        "destination": {"id": 1},
+                        "logLevel": "INFO"
+                        }"""),
+                Arguments.of("destination", """
+                        {
+                        "name": "test-pipeline",
+                        "source": {"id": 1},
+                        "logLevel": "INFO"
+                        }"""),
+                Arguments.of("logLevel", """
+                        {
+                        "name": "test-pipeline",
+                        "source": {"id": 1},
+                        "destination": {"id": 1},
+                        "logLevel": ""
+                        }"""));
+    }
+
+    @Test
+    @DisplayName("Sending a null body to POST pipelines should return 400")
+    void createPipelineWithNullBody() {
+
+        given()
+                .header("Content-Type", "application/json")
+                .when().post("api/pipelines")
+                .then()
+                .statusCode(400);
     }
 
 }

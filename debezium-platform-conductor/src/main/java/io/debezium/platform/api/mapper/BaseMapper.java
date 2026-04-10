@@ -1,3 +1,8 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.api.mapper;
 
 import java.util.List;
@@ -19,14 +24,16 @@ public abstract class BaseMapper {
     }
 
     protected <T> Set<T> toViewRefSet(Class<T> refType, Set<NamedRef> refs) {
-        if (refs == null)
+        if (refs == null) {
             return null;
+        }
         return refs.stream().map(r -> toViewRef(refType, r)).collect(Collectors.toSet());
     }
 
     protected <T> List<T> toViewRefList(Class<T> refType, List<NamedRef> refs) {
-        if (refs == null)
+        if (refs == null) {
             return null;
+        }
         return refs.stream().map(r -> toViewRef(refType, r)).toList();
     }
 }
