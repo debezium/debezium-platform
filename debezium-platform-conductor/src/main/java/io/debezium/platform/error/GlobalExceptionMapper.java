@@ -9,6 +9,7 @@ import java.util.List;
 
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.NotSupportedException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
@@ -18,6 +19,17 @@ import org.slf4j.LoggerFactory;
 public class GlobalExceptionMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionMapper.class);
+
+    @ServerExceptionMapper(WebApplicationException.class)
+    public Response mapWebApplicationException(WebApplicationException ex) {
+
+        LOGGER.error("Error while processing request", ex);
+
+        int status = ex.getResponse().getStatus();
+        return Response.status(status)
+                .entity(new ErrorResponse(ex.getMessage(), List.of()))
+                .build();
+    }
 
     @ServerExceptionMapper(RuntimeException.class)
     public Response mapRuntimeException(RuntimeException ex) {
