@@ -950,12 +950,13 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         onClose={handleSourceModalToggle}
         aria-labelledby="modal-source-body-with-description"
         aria-describedby="modal-source-body-with-description"
+        className="pipeline_flow-source_modal"
       >
         <ModalHeader
           title="Pipeline source"
           className="pipeline_flow-modal_header"
           labelId="modal-with-source-description-title"
-          description="Select a source to be used in pipeline from the list of already configured source listed below or configure a new source by selecting create a new source radio card."
+          description="Pick an existing source from the list, or create a new one. New sources use the same catalog and schema-based form as the Sources page."
         />
         <ModalBody tabIndex={0} id="modal-source-body-with-description">
           <PipelineSourceModel onSourceSelection={onSourceSelection} />

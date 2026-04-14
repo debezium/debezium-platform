@@ -102,6 +102,8 @@ interface CreateSourceSchemaFormProps {
   initialSource?: Source;
   /** Read-only presentation (source view mode). */
   readOnly?: boolean;
+  /** Initial layout; user can still switch via the toggle. Pipeline designer modal uses "tabs". */
+  defaultLayoutMode?: "jumplinks" | "tabs";
 }
 
 export interface CreateSourceSchemaFormHandle {
@@ -129,13 +131,13 @@ const getInitialSelectOptions = (
 const CreateSourceSchemaForm = React.forwardRef<
   CreateSourceSchemaFormHandle,
   CreateSourceSchemaFormProps
->(({ connectorSchema, sourceId, dataType, onSubmit, initialSource, readOnly = false }, ref) => {
+>(({ connectorSchema, sourceId, dataType, onSubmit, initialSource, readOnly = false, defaultLayoutMode = "jumplinks" }, ref) => {
   const { t } = useTranslation();
   const { addNotification } = useNotification();
   const hydratedSourceIdRef = useRef<number | null>(null);
 
   // Layout toggle
-  const [layoutMode, setLayoutMode] = useState<"jumplinks" | "tabs">("jumplinks");
+  const [layoutMode, setLayoutMode] = useState<"jumplinks" | "tabs">(defaultLayoutMode);
 
   const [sourceName, setSourceName] = useState("");
   const [description, setDescription] = useState("");

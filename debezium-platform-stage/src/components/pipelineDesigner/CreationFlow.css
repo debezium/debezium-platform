@@ -14,3 +14,13 @@
   .pipeline_flow-modal_header{
     gap: 2px;
   }
+
+  .pipeline_flow-source_modal {
+    width: 90%;
+  }
+
+  @media (min-width: 1600px) {
+    .pipeline_flow-source_modal {
+      width: 75%;
+    }
+  }

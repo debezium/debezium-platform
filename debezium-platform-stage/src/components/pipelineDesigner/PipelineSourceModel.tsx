@@ -125,19 +125,16 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
         (selectedSource === "" ? (
           <Content component="p">
             <b>
-              {" "}
-              Select the type of source you want to connect from the list below,
-              once you select a connector you can configure it using form or
-              smart editor option.
+              Choose a connector type below. You will configure it using the
+              schema-driven form (same as the Sources page), including
+              connection and connector settings.
             </b>
           </Content>
         ) : (
           <Content component="p">
             <b>
-              Fill out the below form or use the smart editor to setup a new
-              source connector. If you already have a configuration file, you
-              can setup a new source connector by uploading it in the smart
-              editor.
+              Complete the form to create this source. It is saved when you
+              submit and is then selected for your pipeline.
             </b>
           </Content>
         ))}

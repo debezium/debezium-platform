@@ -71,8 +71,6 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   );
 
   const createNewSource = async (payload: Record<string, unknown>) => {
-    console.log("payload", payload);
-    // return;
     setIsLoading(true);
     const response = await createPost(
       `${API_URL}/api/sources`,
@@ -135,6 +133,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         connectorSchema={connectorSchema}
         sourceId={sourceId}
         onSubmit={createNewSource}
+        {...(modelLoaded ? { defaultLayoutMode: "tabs" as const } : {})}
       />
     );
   };
@@ -148,11 +147,18 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         />
       )}
 
-      <PageSection isFilled>
+      <PageSection
+        isFilled
+        padding={modelLoaded ? { default: "noPadding" } : undefined}
+      >
         {renderContent()}
       </PageSection>
 
-      <PageSection className="pf-m-sticky-bottom" isFilled={false}>
+      <PageSection
+        className="pf-m-sticky-bottom"
+        isFilled={false}
+        padding={modelLoaded ? { default: "noPadding" } : undefined}
+      >
         <ActionList>
           <ActionListGroup>
             <ActionListItem>
