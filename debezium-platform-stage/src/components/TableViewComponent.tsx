@@ -4,7 +4,7 @@ import { FC, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { TableData } from "src/apis";
 import "./TableViewComponent.css";
 import { useTranslation } from "react-i18next";
-import { SelectedDataListItem } from "@sourcePage/CreateSource";
+import { SelectedDataListItem } from "../apis/types";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 type TableViewComponentProps = {

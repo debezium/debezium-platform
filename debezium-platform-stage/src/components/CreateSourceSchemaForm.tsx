@@ -77,7 +77,7 @@ import SchemaGroupSection from "./SchemaGroupSection";
 import AdditionalProperties from "./AdditionalProperties";
 import ApiComponentError from "./ApiComponentError";
 import CreateConnectionModal from "../pages/components/CreateConnectionModal";
-import { SelectedDataListItem } from "@sourcePage/CreateSource";
+import { SelectedDataListItem } from "../apis/types";
 import { datatype as DatabaseItemsList } from "@utils/Datatype";
 import {
   buildDependencyMap,

@@ -30,11 +30,6 @@ interface CreateSourceProps {
   onSelection?: (selection: Source) => void;
 }
 
-export type SelectedDataListItem = {
-  schemas: string[];
-  tables: string[];
-};
-
 const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   modelLoaded,
   selectedId,

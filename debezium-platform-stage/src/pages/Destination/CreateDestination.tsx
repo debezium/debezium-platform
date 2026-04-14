@@ -37,6 +37,7 @@ import { formatCode } from "@utils/formatCodeUtils";
 import style from "../../styles/createConnector.module.css"
 import CreateConnectionModal from "../components/CreateConnectionModal";
 import { useData } from "@appContext/AppContext";
+import { Properties } from "src/apis/types";
 
 const ajv = new Ajv();
 
@@ -66,8 +67,6 @@ interface CreateDestinationProps {
   selectDestination?: (destinationId: string) => void;
   onSelection?: (selection: Destination) => void;
 }
-
-type Properties = { key: string; value: string };
 
 const initialCodeValue = {
   name: "",

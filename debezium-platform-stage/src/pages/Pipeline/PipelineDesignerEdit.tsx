@@ -77,7 +77,7 @@ import { useNotification } from "@appContext/AppNotificationContext";
 import ApiError from "@components/ApiError";
 import TrademarkMessage from "@components/TrademarkMessage";
 import { useTranslation } from "react-i18next";
-import { Properties } from "src/hooks/useConnectorForm";
+import { Properties } from "src/apis/types";
 import { selectedTransformAtom } from "./PipelineDesigner";
 import { getPipelineNameValidationError } from "@utils/pipelineNameValidation";
 

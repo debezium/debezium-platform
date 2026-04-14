@@ -66,7 +66,7 @@ import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
 import { pipelineSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css"
-import { Properties } from "src/hooks/useConnectorForm";
+import { Properties } from "src/apis/types";
 import { useData } from "@appContext/AppContext";
 import {
   getPipelineSchemaValidationError,

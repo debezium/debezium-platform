@@ -50,6 +50,13 @@ export interface ConnectorSchema {
   groups: SchemaGroup[];
 }
 
+export type Properties = { key: string; value: string };
+
+export type SelectedDataListItem = {
+  schemas: string[];
+  tables: string[];
+};
+
 export interface CatalogApiResponse {
   schemaVersion: string;
   build: {

@@ -1,4 +1,4 @@
-import { SelectedDataListItem } from "@sourcePage/CreateSource";
+import { SelectedDataListItem } from "../apis/types";
 export const datatype = {
     postgresql: ["schema", "table"],
     mysql: ["database", "table"],

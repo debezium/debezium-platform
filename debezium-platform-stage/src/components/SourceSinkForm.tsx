@@ -51,7 +51,7 @@ import TableViewComponent from "./TableViewComponent";
 import "./SourceSinkForm.css";
 import ApiComponentError from "./ApiComponentError";
 import _ from "lodash";
-import { SelectedDataListItem } from "@sourcePage/CreateSource";
+import { SelectedDataListItem } from "../apis/types";
 import { datatype as DatabaseItemsList } from "@utils/Datatype";
 
 
