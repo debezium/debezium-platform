@@ -84,6 +84,7 @@ import {
   buildDependencyMap,
   collectAllDependants,
 } from "@utils/connectorSchemaLayout";
+import { buildSourceConnectorDisplayGroupedProperties } from "@utils/sourceConnectorDisplayGroups";
 import { splitSourceConfigForHydration } from "@utils/sourceConfigSplit";
 import _ from "lodash";
 import "./CreateSourceSchemaForm.css";
@@ -275,28 +276,10 @@ const CreateSourceSchemaForm = React.forwardRef<
     [connectorSchema.groups]
   );
 
-  const groupedProperties = useMemo(() => {
-    const map = new Map<string, SchemaProperty[]>();
-    const topicPrefixDisplayGroup = connectorSchema.groups.some((g) => g.name === "Connector")
-      ? "Connector"
-      : connectorSchema.groups
-          .slice()
-          .sort((a, b) => a.order - b.order)
-          .find((g) => g.name !== "Connection")?.name ?? "Advanced";
-
-    for (const prop of connectorSchema.properties) {
-      const { group } = prop.display;
-      // To-do: Temporary fix moving topic.prefix to Connector group
-      if (group === "Connection" && prop.name !== "topic.prefix") {
-        continue;
-      }
-      const effectiveGroup =
-        group === "Connection" && prop.name === "topic.prefix" ? topicPrefixDisplayGroup : group;
-      if (!map.has(effectiveGroup)) map.set(effectiveGroup, []);
-      map.get(effectiveGroup)!.push(prop);
-    }
-    return map;
-  }, [connectorSchema.properties, connectorSchema.groups]);
+  const groupedProperties = useMemo(
+    () => buildSourceConnectorDisplayGroupedProperties(connectorSchema),
+    [connectorSchema]
+  );
 
   const dependencyMap = useMemo(
     () => buildDependencyMap(connectorSchema.properties),
@@ -656,6 +639,9 @@ const CreateSourceSchemaForm = React.forwardRef<
     if (!selectedConnection) newErrors.connection = t("statusMessage:smartEditor.connectionRequired", "Connection is required");
 
     for (const prop of connectorSchema.properties) {
+     if (prop.display.group === "Connection" && prop.name !== "topic.prefix") {
+        continue;
+      }
       if (prop.required && !schemaValues[prop.name]?.trim()) {
         if (!allDependants.has(prop.name)) {
           newErrors[prop.name] = `${prop.display.label} is required`;
