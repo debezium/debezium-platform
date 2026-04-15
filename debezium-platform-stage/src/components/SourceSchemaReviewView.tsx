@@ -19,6 +19,7 @@ import {
   collectAllDependants,
   isSchemaFieldVisible,
 } from "@utils/connectorSchemaLayout";
+import { buildSourceConnectorDisplayGroupedProperties } from "@utils/sourceConnectorDisplayGroups";
 import { splitSourceConfigForHydration } from "@utils/sourceConfigSplit";
 import { datatype as DatabaseItemsList } from "@utils/Datatype";
 import "./CreateSourceSchemaForm.css";
@@ -101,15 +102,10 @@ const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
     [connectorSchema.groups]
   );
 
-  const groupedProperties = useMemo(() => {
-    const map = new Map<string, SchemaProperty[]>();
-    for (const prop of connectorSchema.properties) {
-      const group = prop.display.group;
-      if (!map.has(group)) map.set(group, []);
-      map.get(group)!.push(prop);
-    }
-    return map;
-  }, [connectorSchema.properties]);
+  const groupedProperties = useMemo(
+    () => buildSourceConnectorDisplayGroupedProperties(connectorSchema),
+    [connectorSchema]
+  );
 
   const dependencyMap = useMemo(
     () => buildDependencyMap(connectorSchema.properties),
