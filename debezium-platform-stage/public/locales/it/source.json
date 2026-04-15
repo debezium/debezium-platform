@@ -32,5 +32,14 @@
         },
         "ddlQuery": "Query DDL",
         "errorMsg": "Si prega di compilare i campi {{val}} nelle proprietà di configurazione del connettore."
+    },
+    "jumplinks": {
+        "connectorEssentials": "Elementi essenziali del connettore",
+        "additionalProperties": "Proprietà aggiuntive"
+    },
+    "form": {
+        "validationFailedGeneric": "Compila tutti i campi obbligatori.",
+        "validationFailedInOneSection": "Compila tutti i campi obbligatori nella sezione {{section}}.",
+        "validationFailedInMultipleSections": "Compila tutti i campi obbligatori nelle sezioni {{list}}."
     }
 }

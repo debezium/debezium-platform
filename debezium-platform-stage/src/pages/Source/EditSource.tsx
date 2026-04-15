@@ -137,13 +137,13 @@ const EditSource: React.FunctionComponent = () => {
   };
 
   const onSaveClick = () => {
-    if (!formRef.current?.validate()) {
+    const form = formRef.current;
+    if (!form?.validate()) {
       addNotification(
         "danger",
         t("statusMessage:edit.failedTitle", { defaultValue: "Update failed" }),
-        t("statusMessage:validationFailed", {
-          defaultValue: "Please fix validation errors before saving.",
-        })
+        form?.getLastValidationFailureBody() ??
+          t("source:form.validationFailedGeneric", { defaultValue: "Please fill all required fields." })
       );
       return;
     }
