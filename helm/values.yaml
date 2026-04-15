@@ -3,8 +3,10 @@ domain:
   name: ""
 stage:
   image: quay.io/debezium/platform-stage:nightly
+  imagePullPolicy: IfNotPresent
 conductor:
   image: quay.io/debezium/platform-conductor:nightly
+  imagePullPolicy: IfNotPresent
   offset:
     existingConfigMap: ""
   descriptors:

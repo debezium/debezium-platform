@@ -39,6 +39,9 @@ tests:
           value: TCP
       - isNotEmpty:
           path: spec.template.spec.containers[0].image
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
       - isNotEmpty:
           path: spec.template.spec.containers[0].env
       - equal:

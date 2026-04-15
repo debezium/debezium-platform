@@ -6,6 +6,10 @@
                 "image": {
                     "type": "string"
                 },
+                "imagePullPolicy": {
+                    "type": "string",
+                    "enum": ["IfNotPresent", "Always", "Never"]
+                },
                 "offset": {
                     "properties": {
                         "existingConfigMap": {
@@ -166,6 +170,10 @@
             "properties": {
                 "image": {
                     "type": "string"
+                },
+                "imagePullPolicy": {
+                    "type": "string",
+                    "enum": ["IfNotPresent", "Always", "Never"]
                 }
             },
             "type": "object"

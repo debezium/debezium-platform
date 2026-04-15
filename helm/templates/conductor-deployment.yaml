@@ -25,6 +25,7 @@ spec:
       containers:
         - name: conductor
           image: {{ .Values.conductor.image }}
+          imagePullPolicy: {{ .Values.conductor.imagePullPolicy }}
           ports:
             - containerPort: 8080
               protocol: TCP
