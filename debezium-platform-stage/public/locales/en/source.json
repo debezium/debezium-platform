@@ -32,5 +32,14 @@
         },
         "ddlQuery": "DDL query",
         "errorMsg": "Please select a {{val}} connection in the connector configuration form."
+    },
+    "jumplinks": {
+        "connectorEssentials": "Connector Essentials",
+        "additionalProperties": "Additional Properties"
+    },
+    "form": {
+        "validationFailedGeneric": "Please fill all required fields.",
+        "validationFailedInOneSection": "Please fill all required fields in {{section}} section.",
+        "validationFailedInMultipleSections": "Please fill all required fields in {{list}} sections."
     }
 }

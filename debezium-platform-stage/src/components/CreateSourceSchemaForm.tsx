@@ -51,6 +51,7 @@ import {
   ThLargeIcon,
   TimesIcon,
 } from "@patternfly/react-icons";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
 import {
@@ -69,7 +70,7 @@ import {
   getDatabaseType,
 } from "@utils/helpers";
 import { useNotification } from "@appContext/index";
-import { Catalog, CatalogApiResponse, ConnectorSchema, SchemaProperty } from "../apis/types";
+import { Catalog, CatalogApiResponse, ConnectorSchema, SchemaGroup, SchemaProperty } from "../apis/types";
 import destinationCatalog from "../__mocks__/data/DestinationCatalog.json";
 import ConnectorImage from "./ComponentImage";
 import TableViewComponent from "./TableViewComponent";
@@ -98,9 +99,7 @@ interface CreateSourceSchemaFormProps {
   sourceId: string;
   dataType?: string;
   onSubmit: (payload: Record<string, unknown>) => void;
-  /** When set, form fields are populated once from the saved source (edit flow). */
   initialSource?: Source;
-  /** Read-only presentation (source view mode). */
   readOnly?: boolean;
   /** Initial layout; user can still switch via the toggle. Pipeline designer modal uses "tabs". */
   defaultLayoutMode?: "jumplinks" | "tabs";
@@ -109,6 +108,8 @@ interface CreateSourceSchemaFormProps {
 export interface CreateSourceSchemaFormHandle {
   validate: () => boolean;
   submit: () => void;
+  /** Populated after the most recent failed `validate()` */
+  getLastValidationFailureBody: () => string;
 }
 
 const getInitialSelectOptions = (
@@ -128,6 +129,90 @@ const getInitialSelectOptions = (
     }));
 };
 
+/** Visual order for jumplinks layout: essentials → schema groups → additional properties. */
+function getFirstJumplinkValidationErrorElementId(
+  newErrors: Record<string, string | undefined>,
+  additionalErrorRowIds: string[],
+  orderedGroups: SchemaGroup[],
+  groupedProperties: Map<string, SchemaProperty[]>
+): string | null {
+  if (newErrors["source-name"]) return "source-name";
+  if (newErrors.connection) return "conn-typeahead-select";
+
+  for (const group of orderedGroups) {
+    const props = groupedProperties.get(group.name);
+    if (!props?.length) continue;
+    const sorted = [...props].sort((a, b) => a.display.groupOrder - b.display.groupOrder);
+    for (const prop of sorted) {
+      if (newErrors[prop.name]) return `schema-field-${prop.name}`;
+    }
+  }
+
+  if (additionalErrorRowIds.length > 0) {
+    return `addprop-key-input-${additionalErrorRowIds[0]}`;
+  }
+  return null;
+}
+
+function scrollJumplinkValidationTargetIntoView(elementId: string) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (el instanceof HTMLElement && typeof el.focus === "function") {
+    try {
+      el.focus({ preventScroll: true });
+    } catch {
+      /* non-focusable or focus not allowed */
+    }
+  }
+}
+
+function collectValidationErrorSectionLabels(
+  newErrors: Record<string, string | undefined>,
+  additionalErrorRowIds: string[],
+  orderedGroups: SchemaGroup[],
+  groupedProperties: Map<string, SchemaProperty[]>,
+  t: TFunction
+): string[] {
+  const names: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (label: string) => {
+    if (!seen.has(label)) {
+      seen.add(label);
+      names.push(label);
+    }
+  };
+
+  if (newErrors["source-name"] || newErrors.connection) {
+    push(t("source:jumplinks.connectorEssentials"));
+  }
+
+  for (const group of orderedGroups) {
+    const props = groupedProperties.get(group.name);
+    if (!props?.length) continue;
+    if (props.some((p) => !!newErrors[p.name])) {
+      push(group.name);
+    }
+  }
+
+  if (additionalErrorRowIds.length > 0) {
+    push(t("source:jumplinks.additionalProperties"));
+  }
+
+  return names;
+}
+
+function formatValidationFailureNotificationBody(sections: string[], t: TFunction): string {
+  if (sections.length === 0) {
+    return t("source:form.validationFailedGeneric");
+  }
+  if (sections.length === 1) {
+    return t("source:form.validationFailedInOneSection", { section: sections[0] });
+  }
+  return t("source:form.validationFailedInMultipleSections", { list: sections.join(", ") });
+}
+
 const CreateSourceSchemaForm = React.forwardRef<
   CreateSourceSchemaFormHandle,
   CreateSourceSchemaFormProps
@@ -135,6 +220,7 @@ const CreateSourceSchemaForm = React.forwardRef<
   const { t } = useTranslation();
   const { addNotification } = useNotification();
   const hydratedSourceIdRef = useRef<number | null>(null);
+  const lastValidationFailureBodyRef = useRef<string>("");
 
   // Layout toggle
   const [layoutMode, setLayoutMode] = useState<"jumplinks" | "tabs">(defaultLayoutMode);
@@ -191,13 +277,26 @@ const CreateSourceSchemaForm = React.forwardRef<
 
   const groupedProperties = useMemo(() => {
     const map = new Map<string, SchemaProperty[]>();
+    const topicPrefixDisplayGroup = connectorSchema.groups.some((g) => g.name === "Connector")
+      ? "Connector"
+      : connectorSchema.groups
+          .slice()
+          .sort((a, b) => a.order - b.order)
+          .find((g) => g.name !== "Connection")?.name ?? "Advanced";
+
     for (const prop of connectorSchema.properties) {
-      const group = prop.display.group;
-      if (!map.has(group)) map.set(group, []);
-      map.get(group)!.push(prop);
+      const { group } = prop.display;
+      // To-do: Temporary fix moving topic.prefix to Connector group
+      if (group === "Connection" && prop.name !== "topic.prefix") {
+        continue;
+      }
+      const effectiveGroup =
+        group === "Connection" && prop.name === "topic.prefix" ? topicPrefixDisplayGroup : group;
+      if (!map.has(effectiveGroup)) map.set(effectiveGroup, []);
+      map.get(effectiveGroup)!.push(prop);
     }
     return map;
-  }, [connectorSchema.properties]);
+  }, [connectorSchema.properties, connectorSchema.groups]);
 
   const dependencyMap = useMemo(
     () => buildDependencyMap(connectorSchema.properties),
@@ -572,13 +671,61 @@ const CreateSourceSchemaForm = React.forwardRef<
 
     setErrors(newErrors);
     const hasSchemaErrors = Object.values(newErrors).some(Boolean);
-    return !hasSchemaErrors && errKeys.length === 0;
-  }, [readOnly, sourceName, selectedConnection, schemaValues, connectorSchema.properties, additionalProps, allDependants, t]);
+    const valid = !hasSchemaErrors && errKeys.length === 0;
+
+    if (!valid) {
+      const sections = collectValidationErrorSectionLabels(
+        newErrors,
+        errKeys,
+        orderedGroups,
+        groupedProperties,
+        t
+      );
+      lastValidationFailureBodyRef.current = formatValidationFailureNotificationBody(sections, t);
+    } else {
+      lastValidationFailureBodyRef.current = "";
+    }
+
+    if (!valid && layoutMode === "jumplinks") {
+      const targetId = getFirstJumplinkValidationErrorElementId(
+        newErrors,
+        errKeys,
+        orderedGroups,
+        groupedProperties
+      );
+      if (targetId) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            scrollJumplinkValidationTargetIntoView(targetId);
+          });
+        });
+      }
+    }
+
+    return valid;
+  }, [
+    readOnly,
+    layoutMode,
+    sourceName,
+    selectedConnection,
+    schemaValues,
+    connectorSchema.properties,
+    additionalProps,
+    allDependants,
+    orderedGroups,
+    groupedProperties,
+    t,
+  ]);
+
+  const getLastValidationFailureBody = useCallback(
+    () => lastValidationFailureBodyRef.current || t("source:form.validationFailedGeneric"),
+    [t]
+  );
 
   const handleSubmit = useCallback(() => {
     if (readOnly) return;
     if (!validate()) {
-      addNotification("danger", "Validation failed", "Please fill all required fields.");
+      addNotification("danger", "Validation failed", getLastValidationFailureBody());
       return;
     }
 
@@ -616,6 +763,7 @@ const CreateSourceSchemaForm = React.forwardRef<
   }, [
     readOnly,
     validate,
+    getLastValidationFailureBody,
     addNotification,
     schemaValues,
     additionalProps,
@@ -629,7 +777,11 @@ const CreateSourceSchemaForm = React.forwardRef<
     initialSource,
   ]);
 
-  React.useImperativeHandle(ref, () => ({ validate, submit: handleSubmit }), [validate, handleSubmit]);
+  React.useImperativeHandle(
+    ref,
+    () => ({ validate, submit: handleSubmit, getLastValidationFailureBody }),
+    [validate, handleSubmit, getLastValidationFailureBody]
+  );
 
   const renderConnectorEssentials = () => (
     <Form isWidthLimited>
