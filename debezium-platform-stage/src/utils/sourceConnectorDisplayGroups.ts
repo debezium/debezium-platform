@@ -2,7 +2,7 @@ import type { ConnectorSchema, SchemaProperty } from "../apis/types";
 
 /**
  * Groups schema properties for source-connector create/edit/review UIs.
- * Hides the catalog "Connection" group in the UI 
+ * Hides the catalog "Connection" and "Connection Advanced Ssl" groups in the UI
  * except `topic.prefix`, which is shown under the Connector group.
  */
 export function buildSourceConnectorDisplayGroupedProperties(
@@ -20,6 +20,9 @@ export function buildSourceConnectorDisplayGroupedProperties(
 
   for (const prop of properties) {
     const { group } = prop.display;
+    if (group === "Connection Advanced Ssl") {
+      continue;
+    }
     if (group === "Connection" && prop.name !== "topic.prefix") {
       continue;
     }
