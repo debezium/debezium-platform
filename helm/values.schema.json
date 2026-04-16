@@ -186,6 +186,16 @@
             },
             "type": "object"
         },
+        "server": {
+            "properties": {
+                "image": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Image for Debezium Server instances created by pipelines. If empty, the operator's ServerImageProvider determines the image"
+                }
+            },
+            "type": "object"
+        },
         "ingress": {
           "type": "object",
           "properties": {

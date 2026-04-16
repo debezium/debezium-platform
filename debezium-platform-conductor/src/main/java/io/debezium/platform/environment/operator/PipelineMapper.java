@@ -111,19 +111,23 @@ public class PipelineMapper {
                         this::getPredicateName,
                         this::buildPredicate));
 
+        var specBuilder = new DebeziumServerSpecBuilder()
+                .withQuarkus(dsQuarkus)
+                .withRuntime(dsRuntime)
+                .withSource(dsSource)
+                .withSink(dsSink)
+                .withTransforms(transformations)
+                .withPredicates(predicates);
+
+        // Only set image if configured, otherwise let operator's ServerImageProvider determine it
+        pipelineConfigGroup.server().image().ifPresent(specBuilder::withImage);
+
         return new DebeziumServerBuilder()
                 .withMetadata(new ObjectMetaBuilder()
                         .withName(pipeline.getName())
                         .withLabels(Map.of(OperatorPipelineController.LABEL_DBZ_CONDUCTOR_ID, pipeline.getId().toString()))
                         .build())
-                .withSpec(new DebeziumServerSpecBuilder()
-                        .withQuarkus(dsQuarkus)
-                        .withRuntime(dsRuntime)
-                        .withSource(dsSource)
-                        .withSink(dsSink)
-                        .withTransforms(transformations)
-                        .withPredicates(predicates)
-                        .build())
+                .withSpec(specBuilder.build())
                 .build();
     }
 

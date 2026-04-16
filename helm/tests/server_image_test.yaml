@@ -1,0 +1,66 @@
+suite: test server image configuration
+templates:
+  - conductor-deployment.yaml
+values:
+  - ../../examples/example.yaml
+tests:
+  - it: should inject PIPELINE_SERVER_IMAGE env var when server.image is configured
+    template: conductor-deployment.yaml
+    set:
+      server.image: quay.io/debezium/server:3.0.0.Final
+    asserts:
+      - isKind:
+          of: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_SERVER_IMAGE
+            value: quay.io/debezium/server:3.0.0.Final
+
+  - it: should not inject PIPELINE_SERVER_IMAGE env var when server.image is empty
+    template: conductor-deployment.yaml
+    set:
+      server.image: ""
+    asserts:
+      - isKind:
+          of: Deployment
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_SERVER_IMAGE
+
+  - it: should not inject PIPELINE_SERVER_IMAGE env var when server.image is not set (default)
+    template: conductor-deployment.yaml
+    asserts:
+      - isKind:
+          of: Deployment
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_SERVER_IMAGE
+
+  - it: should inject PIPELINE_SERVER_IMAGE env var with custom registry
+    template: conductor-deployment.yaml
+    set:
+      server.image: myregistry.io/custom-debezium-server:latest
+    asserts:
+      - isKind:
+          of: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_SERVER_IMAGE
+            value: myregistry.io/custom-debezium-server:latest
+
+  - it: should inject PIPELINE_SERVER_IMAGE env var with nightly tag
+    template: conductor-deployment.yaml
+    set:
+      server.image: quay.io/debezium/server:nightly
+    asserts:
+      - isKind:
+          of: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_SERVER_IMAGE
+            value: quay.io/debezium/server:nightly

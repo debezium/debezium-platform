@@ -16,6 +16,8 @@ conductor:
       image: debezium/debezium-descriptors
       tag: nightly
       mountPath: /opt/descriptors
+server:
+  image: ""
 ingress:
   enabled: true
   className: ""

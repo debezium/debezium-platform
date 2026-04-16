@@ -251,6 +251,50 @@ class PipelineResourceIT {
     }
 
     @Test
+    @DisplayName("When a pipeline is created then the DebeziumServer spec should not have an image by default")
+    void createPipelineWithoutServerImage() {
+
+        String jsonBody = """
+                {
+                   "name": "test-pipeline-no-image",
+                   "description": "Pipeline without custom server image",
+                   "source": {
+                     "id": %s,
+                     "name": "test-source-%s"
+                   },
+                   "destination": {
+                     "id": %s,
+                     "name": "test-destination-%s"
+                   },
+                   "transforms": [],
+                   "logLevel": "INFO",
+                   "logLevels": {}
+                 }""".formatted(sourceId, resourceSuffix, destinationId, resourceSuffix);
+
+        given()
+                .header("Content-Type", "application/json")
+                .body(jsonBody).when().post("api/pipelines")
+                .then()
+                .statusCode(201);
+
+        Awaitility.await()
+                .atMost(Duration.of(120, ChronoUnit.SECONDS))
+                .pollDelay(Duration.of(100, ChronoUnit.MILLIS))
+                .pollInterval(Duration.of(500, ChronoUnit.MILLIS))
+                .untilAsserted(() -> {
+                    Mockito.verify(k8sAdapter, Mockito.atLeastOnce()).deployPipeline(debeziumServerArgumentCaptor.capture());
+                });
+
+        DebeziumServer debeziumServer = debeziumServerArgumentCaptor.getAllValues().stream()
+                .filter(ds -> ds.getMetadata().getName().equals("test-pipeline-no-image"))
+                .findFirst()
+                .orElseThrow();
+
+        // Verify that image is not set (null) when server.image is not configured
+        assertThat(debeziumServer.getSpec().getImage()).isNull();
+    }
+
+    @Test
     @DisplayName("When a pipeline name is not RFC 1123 compliant then pipeline creation must be rejected")
     void rejectInvalidPipelineName() {
 

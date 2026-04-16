@@ -63,6 +63,10 @@ spec:
             - name: CONDUCTOR_DESCRIPTORS_IMAGE_TAG
               value: {{ .Values.conductor.descriptors.official.tag }}
 {{- end }}
+{{- if .Values.server.image }}
+            - name: PIPELINE_SERVER_IMAGE
+              value: {{ .Values.server.image }}
+{{- end }}
 {{ include "debezium-platform.offsetConfig" . | indent 12 }}
 {{ include "debezium-platform.schemaHistoryConfig" . | indent 12 }}
 {{- range .Values.env }}

@@ -37,6 +37,7 @@ you `values.yaml` with your domain.
 | conductor.descriptors.official.image       | Image name for the descriptor OCI artifact                                                                                                                                             | debezium/debezium-descriptors              |
 | conductor.descriptors.official.tag         | Image tag for the descriptor OCI artifact                                                                                                                                              | nightly                                    |
 | conductor.descriptors.official.mountPath   | Path where descriptors will be downloaded inside the container                                                                                                                         | /opt/descriptors                           |
+| server.image                               | Image for Debezium Server instances created by pipelines. If empty, the operator's ServerImageProvider determines the image                                                            | ""                                         |
 | database.enabled                           | Enable the installation of PostgreSQL by the chart                                                                                                                                     | false                                      |
 | database.name                              | Database name                                                                                                                                                                          | postgres                                   |
 | database.host                              | Database host                                                                                                                                                                          | postgres                                   |
@@ -124,6 +125,37 @@ debezium-descriptors:nightly
 ```
 
 The artifact contents are extracted to the configured `mountPath`.
+
+## Debezium Server Image Configuration
+
+By default, when pipelines are created, the Debezium Operator's `ServerImageProvider` automatically determines which Debezium Server image to use based on the configured version and connector type.
+
+However, you can override this behavior and specify a custom Debezium Server image that will be used for all pipelines:
+
+```yaml
+server:
+  image: quay.io/debezium/server:3.0.0.Final
+```
+
+### Use Cases
+
+- **Pinning to a specific version**: Ensure all pipelines use a specific Debezium Server version
+  ```yaml
+  server:
+    image: quay.io/debezium/server:3.0.0.Final
+  ```
+
+- **Using custom server image**: Deploy pipelines with a customized Debezium Server image
+  ```yaml
+  server:
+    image: myregistry.io/custom-debezium-server:latest
+  ```
+
+- **Default behavior**: Leave empty to let the operator decide
+  ```yaml
+  server:
+    image: ""  # Operator's ServerImageProvider determines the image
+  ```
 
 # Install
 

@@ -19,4 +19,6 @@ public interface PipelineConfigGroup {
     @WithName("schema.history")
     SchemaHistoryConfigGroup schema();
 
+    ServerConfigGroup server();
+
 }
