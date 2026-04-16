@@ -639,7 +639,10 @@ const CreateSourceSchemaForm = React.forwardRef<
     if (!selectedConnection) newErrors.connection = t("statusMessage:smartEditor.connectionRequired", "Connection is required");
 
     for (const prop of connectorSchema.properties) {
-     if (prop.display.group === "Connection" && prop.name !== "topic.prefix") {
+      if (prop.display.group === "Connection Advanced Ssl") {
+        continue;
+      }
+      if (prop.display.group === "Connection" && prop.name !== "topic.prefix") {
         continue;
       }
       if (prop.required && !schemaValues[prop.name]?.trim()) {
