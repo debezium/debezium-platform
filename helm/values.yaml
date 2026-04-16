@@ -49,4 +49,6 @@ database:
   host: postgres
   auth:
     existingSecret: ""
+debezium-operator:
+  enabled: false
 env: []
