@@ -26,6 +26,20 @@ type SelectionResult = {
     tables: string[];
 };
 
+function selectionsEqual(
+    a: SelectedDataListItem | undefined,
+    b: SelectionResult
+): boolean {
+    const aSchemas = a?.schemas ?? [];
+    const aTables = a?.tables ?? [];
+    return (
+        aSchemas.length === b.schemas.length &&
+        aTables.length === b.tables.length &&
+        aSchemas.every((s, i) => s === b.schemas[i]) &&
+        aTables.every((t, i) => t === b.tables[i])
+    );
+}
+
 type FlatItem = {
     item: TreeViewDataItem;
     depth: number;
@@ -140,7 +154,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
 
         queueMicrotask(() => {
             if (!selectedDataListItems) {
-                setCheckedItems([]);
+                setCheckedItems((prev) => (prev.length === 0 ? prev : []));
                 isInitializedRef.current = true;
                 return;
             }
@@ -148,7 +162,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
             const { schemas, tables } = selectedDataListItems;
 
             if (schemas.length === 0 && tables.length === 0) {
-                setCheckedItems([]);
+                setCheckedItems((prev) => (prev.length === 0 ? prev : []));
                 isInitializedRef.current = true;
                 return;
             }
@@ -185,8 +199,11 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         if (!isInitializedRef.current || readOnly) return;
 
         const selections = extractSelections(checkedItems as SelectedItem[]);
+        if (selectionsEqual(selectedDataListItems, selections)) {
+            return;
+        }
         setSelectedDataListItems(selections);
-    }, [checkedItems, setSelectedDataListItems, readOnly]);
+    }, [checkedItems, setSelectedDataListItems, readOnly, selectedDataListItems]);
 
     useEffect(() => {
         if (prevCollectionsRef.current === collections) {

@@ -9,7 +9,7 @@
         "editorPageDescription": "Per configurare e creare un nuovo connettore sorgente, utilizzare l'editor sottostante per aggiungere o caricare una configurazione JSON esistente.",
         "dataTableDescription": "Seleziona il {{val}} da sincronizzare",
         "dataTableDescriptionAction": "Seleziona il {{val}} da targetizzare per l'azione della pipeline",
-         "dataTableTitle": "{{val}} database"
+        "dataTableTitle": "{{val}} database"
     },
     "catalog": {
         "title": "Catalogo fonti",

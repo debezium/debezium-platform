@@ -6,7 +6,6 @@ import {
   Content,
   Form,
   FormFieldGroup,
-  FormFieldGroupExpandable,
   FormFieldGroupHeader,
   FormGroup,
   FormHelperText,
@@ -79,7 +78,12 @@ import AdditionalProperties from "./AdditionalProperties";
 import ApiComponentError from "./ApiComponentError";
 import CreateConnectionModal from "../pages/components/CreateConnectionModal";
 import { SelectedDataListItem } from "../apis/types";
-import { datatype as DatabaseItemsList } from "@utils/Datatype";
+import {
+  getDataExplorerScopePhrase,
+  getIncludeList,
+  getTableManagedFilterPropertyNames,
+  getTableManagedIncludeListPropertyNames,
+} from "@utils/Datatype";
 import {
   buildDependencyMap,
   collectAllDependants,
@@ -296,6 +300,18 @@ const CreateSourceSchemaForm = React.forwardRef<
     [connectorSchema.properties]
   );
 
+  const connectorTypeString = dataType || sourceId;
+
+  const tableManagedFilterNames = useMemo(
+    () => new Set(getTableManagedFilterPropertyNames(connectorTypeString)),
+    [connectorTypeString]
+  );
+
+  const tableManagedIncludeListNames = useMemo(
+    () => new Set(getTableManagedIncludeListPropertyNames(connectorTypeString)),
+    [connectorTypeString]
+  );
+
   useLayoutEffect(() => {
     if (!initialSource || !connectorSchema) {
       hydratedSourceIdRef.current = null;
@@ -435,6 +451,64 @@ const CreateSourceSchemaForm = React.forwardRef<
         ? (collectionsQueryError as object)
         : { message: String(collectionsQueryError) }
       : undefined;
+
+  const renderDataTableExplorer = useCallback(() => {
+    if (!selectedConnection?.id) return null;
+    if (isCollectionsLoading) {
+      return (
+        <FormFieldGroup>
+          <Skeleton fontSize="2xl" width="50%" />
+          <Skeleton fontSize="md" width="33%" />
+        </FormFieldGroup>
+      );
+    }
+    if (!_.isEmpty(collectionsError)) {
+      return (
+        <FormFieldGroup>
+          <ApiComponentError
+            error={collectionsError}
+            retry={() => {
+              void refetchCollections();
+            }}
+          />
+        </FormFieldGroup>
+      );
+    }
+    return (
+      <div className="table-explorer-section">
+        <Content
+          component="h3"
+          id="field-group-data-table-id"
+          className="table-explorer-section__title"
+        >
+          {t("source:create.dataTableTitle", {
+            val: getConnectorTypeName(connectorTypeString),
+          })}
+        </Content>
+        <Content component="p" className="table-explorer-section__description">
+          {t("source:create.dataTableDescription", {
+            val: getDataExplorerScopePhrase(connectorTypeString),
+          })}
+        </Content>
+        <TableViewComponent
+          collections={collections}
+          setSelectedDataListItems={setSelectedDataListItems}
+          selectedDataListItems={selectedDataListItems}
+          readOnly={readOnly}
+        />
+      </div>
+    );
+  }, [
+    selectedConnection?.id,
+    isCollectionsLoading,
+    collectionsError,
+    collections,
+    selectedDataListItems,
+    readOnly,
+    t,
+    connectorTypeString,
+    refetchCollections,
+  ]);
 
   const baseSelectOptions = useMemo(
     () => getInitialSelectOptions(connections, dataType || sourceId),
@@ -645,6 +719,9 @@ const CreateSourceSchemaForm = React.forwardRef<
       if (prop.display.group === "Connection" && prop.name !== "topic.prefix") {
         continue;
       }
+      if (tableManagedFilterNames.has(prop.name)) {
+        continue;
+      }
       if (prop.required && !schemaValues[prop.name]?.trim()) {
         if (!allDependants.has(prop.name)) {
           newErrors[prop.name] = `${prop.display.label} is required`;
@@ -703,6 +780,7 @@ const CreateSourceSchemaForm = React.forwardRef<
     allDependants,
     orderedGroups,
     groupedProperties,
+    tableManagedFilterNames,
     t,
   ]);
 
@@ -721,7 +799,9 @@ const CreateSourceSchemaForm = React.forwardRef<
     const config: Record<string, string> = {};
 
     for (const [key, value] of Object.entries(schemaValues)) {
-      if (value !== "") config[key] = value;
+      if (value === "") continue;
+      if (tableManagedIncludeListNames.has(key)) continue;
+      config[key] = value;
     }
 
     additionalProps.forEach((prop) => {
@@ -730,11 +810,7 @@ const CreateSourceSchemaForm = React.forwardRef<
 
     if (signalCollectionName) config["signal.data.collection"] = signalCollectionName;
 
-    if (selectedDataListItems) {
-      const { schemas, tables } = selectedDataListItems;
-      if (schemas.length > 0) config["schema.include.list"] = schemas.join(",");
-      if (tables.length > 0) config["table.include.list"] = tables.join(",");
-    }
+    Object.assign(config, getIncludeList(selectedDataListItems, connectorTypeString));
 
     const payload: Record<string, unknown> = {
       name: sourceName,
@@ -764,6 +840,8 @@ const CreateSourceSchemaForm = React.forwardRef<
     selectedConnection,
     onSubmit,
     initialSource,
+    connectorTypeString,
+    tableManagedIncludeListNames,
   ]);
 
   React.useImperativeHandle(
@@ -885,63 +963,14 @@ const CreateSourceSchemaForm = React.forwardRef<
           </FormHelperText>
         )}
       </FormGroup>
-
-      {selectedConnection?.id && (
-        isCollectionsLoading ? (
-          <FormFieldGroup>
-            <Skeleton fontSize="2xl" width="50%" />
-            <Skeleton fontSize="md" width="33%" />
-          </FormFieldGroup>
-        ) : !_.isEmpty(collectionsError) ? (
-          <FormFieldGroup>
-            <ApiComponentError
-              error={collectionsError}
-              retry={() => {
-                void refetchCollections();
-              }}
-            />
-          </FormFieldGroup>
-        ) : (
-          <FormFieldGroupExpandable
-            className="table-explorer-section"
-            hasAnimations
-            isExpanded
-            header={
-              <FormFieldGroupHeader
-                titleText={{
-                  text: (
-                    <span style={{ fontWeight: 500 }}>
-                      {t("source:create.dataTableTitle", {
-                        val: getConnectorTypeName(dataType || sourceId),
-                      })}
-                    </span>
-                  ),
-                  id: "field-group-data-table-id",
-                }}
-                titleDescription={t("source:create.dataTableDescription", {
-                  val:
-                    DatabaseItemsList[
-                      (dataType || sourceId)?.split(".")?.[3] as keyof typeof DatabaseItemsList
-                    ]?.join(" and "),
-                })}
-              />
-            }
-          >
-            <TableViewComponent
-              collections={collections}
-              setSelectedDataListItems={setSelectedDataListItems}
-              selectedDataListItems={selectedDataListItems}
-              readOnly={readOnly}
-            />
-          </FormFieldGroupExpandable>
-        )
-      )}
     </Form>
   );
 
   const renderSchemaGroup = (groupName: string) => {
     const props = groupedProperties.get(groupName);
     if (!props || props.length === 0) return null;
+    const omittedPropertyNames =
+      groupName === "Filters" && tableManagedFilterNames.size > 0 ? tableManagedFilterNames : undefined;
     return (
       <SchemaGroupSection
         properties={props}
@@ -952,6 +981,7 @@ const CreateSourceSchemaForm = React.forwardRef<
         dependencyMap={dependencyMap}
         allDependantNames={allDependants}
         readOnly={readOnly}
+        omittedPropertyNames={omittedPropertyNames}
       />
     );
   };
@@ -1052,6 +1082,7 @@ const CreateSourceSchemaForm = React.forwardRef<
               <Content component="p" className="jumplinks-section-description">
                 {group.description}
               </Content>
+              {group.name === "Filters" ? renderDataTableExplorer() : null}
               {renderSchemaGroup(group.name)}
             </section>
           );
@@ -1121,6 +1152,7 @@ const CreateSourceSchemaForm = React.forwardRef<
                     title={<TabTitleText>{tab.label}</TabTitleText>}
                   >
                     <div style={{ paddingTop: "1rem" }}>
+                      {tab.groupName === "Filters" ? renderDataTableExplorer() : null}
                       {tab.groupName
                         ? renderSchemaGroup(tab.groupName)
                         : renderAdditionalProperties()}
