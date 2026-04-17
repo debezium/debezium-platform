@@ -50,5 +50,5 @@ database:
   auth:
     existingSecret: ""
 debezium-operator:
-  enabled: false
+  enabled: true
 env: []
