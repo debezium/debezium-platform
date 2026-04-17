@@ -1,3 +1,8 @@
+    .table-explorer-section {
+        max-width: var(--pf-v6-c-form--m-limit-width--MaxWidth);
+        padding-bottom: 10px;
+    }
+
     .pipeline-action-grid-container {
         height: "calc(100vh - 200px)";
         align-items: "stretch";

@@ -51,6 +51,19 @@
   margin-bottom: 1.5rem;
 }
 
-.table-explorer-section .pf-v6-c-form__field-group-body {
-  padding-block-start: 0 !important;
+.table-explorer-section {
+  max-width: var(--pf-v6-c-form--m-limit-width--MaxWidth);
+  padding-bottom: 10px;
+}
+
+.table-explorer-section__title {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  font-size: var(--pf-t--global--font--size--heading--h3);
+}
+
+.table-explorer-section__description {
+  margin: 0 0 1rem;
+  color: var(--pf-t--global--text--color--subtle);
+  font-size: var(--pf-t--global--font--size--body--default);
 }

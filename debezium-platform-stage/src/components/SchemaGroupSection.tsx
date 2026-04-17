@@ -13,6 +13,8 @@ interface SchemaGroupSectionProps {
   dependencyMap: Map<string, Map<string, string[]>>;
   allDependantNames: Set<string>;
   readOnly?: boolean;
+  /** Property names to omit (e.g. driven elsewhere, such as the table explorer). */
+  omittedPropertyNames?: ReadonlySet<string>;
 }
 
 const SchemaGroupSection: React.FC<SchemaGroupSectionProps> = ({
@@ -24,6 +26,7 @@ const SchemaGroupSection: React.FC<SchemaGroupSectionProps> = ({
   dependencyMap,
   allDependantNames,
   readOnly,
+  omittedPropertyNames,
 }) => {
   const sorted = React.useMemo(
     () => [...properties].sort((a, b) => a.display.groupOrder - b.display.groupOrder),
@@ -35,11 +38,16 @@ const SchemaGroupSection: React.FC<SchemaGroupSectionProps> = ({
     [sorted, allValues, dependencyMap]
   );
 
-  if (visibleProperties.length === 0) return null;
+  const shownProperties = React.useMemo(() => {
+    if (!omittedPropertyNames?.size) return visibleProperties;
+    return visibleProperties.filter((p) => !omittedPropertyNames.has(p.name));
+  }, [visibleProperties, omittedPropertyNames]);
+
+  if (shownProperties.length === 0) return null;
 
   return (
     <Form isWidthLimited>
-      {visibleProperties.map((property) => (
+      {shownProperties.map((property) => (
         <SchemaField
           key={property.name}
           property={property}

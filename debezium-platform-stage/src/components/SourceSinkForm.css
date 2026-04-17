@@ -1,3 +1,7 @@
+.table-explorer-section {
+  max-width: var(--pf-v6-c-form--m-limit-width--MaxWidth);
+  padding-bottom: 10px;
+}
 
 .table-explorer-section .pf-v6-c-form__field-group-body{
     padding-block-start: 0 !important;
