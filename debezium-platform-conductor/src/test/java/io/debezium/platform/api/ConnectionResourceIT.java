@@ -8,6 +8,7 @@ package io.debezium.platform.api;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,7 @@ public class ConnectionResourceIT {
         return """
                 {
                   "name": "test-connection-%s",
+                  "description": "Test connection description",
                   "type": "POSTGRESQL",
                   "config": {
                     "host": "localhost",
@@ -37,6 +39,7 @@ public class ConnectionResourceIT {
                 {
                   "id": %d,
                   "name": "updated-connection-%s",
+                  "description": "Updated connection description",
                   "type": "POSTGRESQL",
                   "config": {
                     "host": "updated-host",
@@ -74,10 +77,45 @@ public class ConnectionResourceIT {
                 .header("Location", notNullValue())
                 .body("id", notNullValue())
                 .body("name", is("test-connection-" + nameSuffix))
+                .body("description", is("Test connection description"))
                 .body("type", is("POSTGRESQL"))
                 .body("config.host", is("localhost"))
                 .body("config.port", is(5432))
                 .body("config.username", is("testuser"));
+    }
+
+    @Test
+    public void testCreateConnection_WithoutDescription() {
+        String nameSuffix = String.valueOf(System.currentTimeMillis());
+        String json = """
+                {
+                  "name": "test-connection-no-desc-%s",
+                  "type": "POSTGRESQL",
+                  "config": {
+                    "host": "localhost",
+                    "port": 5432,
+                    "username": "testuser",
+                    "password": "testpass"
+                  }
+                }
+                """.formatted(nameSuffix);
+
+        Integer connectionId = given()
+                .contentType(ContentType.JSON)
+                .body(json)
+                .when()
+                .post("api/connections")
+                .then()
+                .statusCode(201)
+                .contentType(ContentType.JSON)
+                .body("id", notNullValue())
+                .body("name", is("test-connection-no-desc-" + nameSuffix))
+                .body("description", nullValue())
+                .body("type", is("POSTGRESQL"))
+                .extract()
+                .path("id");
+
+        cleanUp(connectionId);
     }
 
     @Test
@@ -103,6 +141,7 @@ public class ConnectionResourceIT {
                 .statusCode(200)
                 .body("id", is(connectionId.intValue()))
                 .body("name", is("test-connection-" + nameSuffix))
+                .body("description", is("Test connection description"))
                 .body("type", is("POSTGRESQL"))
                 .body("config.host", is("localhost"))
                 .body("config.port", is(5432))
@@ -149,6 +188,7 @@ public class ConnectionResourceIT {
                 .statusCode(200)
                 .body("id", is(connectionId.intValue()))
                 .body("name", is("updated-connection-" + updatedNameSuffix))
+                .body("description", is("Updated connection description"))
                 .body("config.host", is("updated-host"))
                 .body("config.port", is(5433))
                 .body("config.username", is("updateduser"));
