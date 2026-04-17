@@ -244,6 +244,11 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         });
     }, [collections]);
 
+    useEffect(() => {
+        if (!readOnly || options.length === 0) return;
+        setAllExpanded(true);
+    }, [readOnly, options]);
+
     const onCheck = (event: React.ChangeEvent, treeViewItem: TreeViewDataItem) => {
         if (readOnly) return;
         const checked = (event.target as HTMLInputElement).checked;
@@ -351,6 +356,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     );
 
     const onToggleNode = useCallback((id: string) => {
+        if (readOnly) return;
         if (allExpanded || isFiltered) {
             const allIds = new Set(options.map(item => item.id as string));
             allIds.delete(id);
@@ -364,9 +370,10 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                 return next;
             });
         }
-    }, [allExpanded, isFiltered, options]);
+    }, [allExpanded, isFiltered, options, readOnly]);
 
     const onToggleAll = () => {
+        if (readOnly) return;
         if (allExpanded) {
             setExpandedIds(new Set());
             setAllExpanded(false);
@@ -398,12 +405,12 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         overscan: 20,
     });
 
-    const toolbar = (
+    const toolbar = readOnly ? null : (
         <Toolbar style={{ padding: 0 }}>
             <ToolbarContent style={{ padding: 0 }}>
                 <ToolbarItem>
                     <TreeViewSearch
-                        onSearch={readOnly ? () => {} : onSearch}
+                        onSearch={onSearch}
                         id="input-search"
                         name="search-input"
                         aria-label="Search input example"
@@ -421,9 +428,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
 
     return (
         <div className="virtual-tree">
-            <div className="virtual-tree__toolbar">
-                {toolbar}
-            </div>
+            {toolbar ? <div className="virtual-tree__toolbar">{toolbar}</div> : null}
             <div
                 ref={scrollContainerRef}
                 className="virtual-tree__scroll-area"
@@ -462,6 +467,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                                             className={`virtual-tree__toggle ${expanded ? 'virtual-tree__toggle--expanded' : ''}`}
                                             onClick={() => onToggleNode(item.id as string)}
                                             aria-label={expanded ? 'Collapse' : 'Expand'}
+                                            disabled={readOnly}
                                         >
                                             <AngleRightIcon />
                                         </button>

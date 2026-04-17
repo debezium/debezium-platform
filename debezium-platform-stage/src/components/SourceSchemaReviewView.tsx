@@ -1,17 +1,22 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Content,
   DescriptionList,
   DescriptionListDescription,
   DescriptionListGroup,
   DescriptionListTerm,
+  FormFieldGroup,
   JumpLinks,
   JumpLinksItem,
   Label,
+  Skeleton,
 } from "@patternfly/react-core";
 import { useTranslation } from "react-i18next";
-import type { Source } from "src/apis";
-import type { ConnectorSchema, SchemaProperty } from "../apis/types";
+import { useQuery } from "react-query";
+import type { Source, TableData } from "src/apis";
+import { fetchDataCall } from "src/apis";
+import { API_URL } from "@utils/constants";
+import type { ConnectorSchema, SchemaProperty, SelectedDataListItem } from "../apis/types";
 import ConnectorImage from "./ComponentImage";
 import { getConnectorTypeName } from "@utils/helpers";
 import {
@@ -21,7 +26,13 @@ import {
 } from "@utils/connectorSchemaLayout";
 import { buildSourceConnectorDisplayGroupedProperties } from "@utils/sourceConnectorDisplayGroups";
 import { splitSourceConfigForHydration } from "@utils/sourceConfigSplit";
-import { datatype as DatabaseItemsList } from "@utils/Datatype";
+import {
+  getDataExplorerScopePhrase,
+  getTableManagedFilterPropertyNames,
+} from "@utils/Datatype";
+import ApiComponentError from "./ApiComponentError";
+import TableViewComponent from "./TableViewComponent";
+import _ from "lodash";
 import "./CreateSourceSchemaForm.css";
 import "./SourceSchemaReviewView.css";
 
@@ -117,6 +128,43 @@ const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
     [connectorSchema.properties]
   );
 
+  const connectorTypeString = typeKey;
+
+  const tableManagedFilterNames = useMemo(
+    () => new Set(getTableManagedFilterPropertyNames(connectorTypeString)),
+    [connectorTypeString]
+  );
+
+  const selectedConnectionId = source.connection?.id;
+
+  const {
+    data: collections,
+    isLoading: isCollectionsLoading,
+    error: collectionsQueryError,
+    refetch: refetchCollections,
+  } = useQuery<TableData, object>(
+    ["connection-collections", selectedConnectionId],
+    async () => {
+      const response = await fetchDataCall<TableData>(
+        `${API_URL}/api/connections/${selectedConnectionId}/collections`
+      );
+      if (response.error) {
+        throw (response.error.body || {}) as object;
+      }
+      return response.data as TableData;
+    },
+    {
+      enabled: selectedConnectionId != null,
+    }
+  );
+
+  const collectionsError =
+    collectionsQueryError != null
+      ? typeof collectionsQueryError === "object"
+        ? (collectionsQueryError as object)
+        : { message: String(collectionsQueryError) }
+      : undefined;
+
   const allSections = useMemo(() => {
     const sections: { id: string; label: string }[] = [
       {
@@ -177,6 +225,66 @@ const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
 
   const { schemaValues, additionalProps, signalCollectionName, selectedDataListItems } = split;
 
+  const noopSetSelectedDataListItems = useCallback((_items: SelectedDataListItem | undefined) => {}, []);
+
+  const renderFiltersTableExplorer = useCallback(() => {
+    if (!source.connection?.id) return null;
+    if (isCollectionsLoading) {
+      return (
+        <FormFieldGroup>
+          <Skeleton fontSize="2xl" width="50%" />
+          <Skeleton fontSize="md" width="33%" />
+        </FormFieldGroup>
+      );
+    }
+    if (!_.isEmpty(collectionsError)) {
+      return (
+        <FormFieldGroup>
+          <ApiComponentError
+            error={collectionsError}
+            retry={() => {
+              void refetchCollections();
+            }}
+          />
+        </FormFieldGroup>
+      );
+    }
+    return (
+      <div className="table-explorer-section">
+        <Content
+          component="h3"
+          id="field-group-data-table-id"
+          className="table-explorer-section__title"
+        >
+          {t("source:create.dataTableTitle", {
+            val: getConnectorTypeName(connectorTypeString),
+          })}
+        </Content>
+        <Content component="p" className="table-explorer-section__description">
+          {t("source:create.dataTableDescription", {
+            val: getDataExplorerScopePhrase(connectorTypeString),
+          })}
+        </Content>
+        <TableViewComponent
+          collections={collections}
+          setSelectedDataListItems={noopSetSelectedDataListItems}
+          selectedDataListItems={selectedDataListItems}
+          readOnly
+        />
+      </div>
+    );
+  }, [
+    source.connection?.id,
+    isCollectionsLoading,
+    collectionsError,
+    collections,
+    selectedDataListItems,
+    noopSetSelectedDataListItems,
+    t,
+    connectorTypeString,
+    refetchCollections,
+  ]);
+
   const schemaRow = (property: SchemaProperty) => {
     const visible = isSchemaFieldVisible(property, schemaValues, dependencyMap);
     if (!visible) return null;
@@ -216,13 +324,14 @@ const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
     return rows;
   }, [additionalProps]);
 
-  const dataScopeDescription =
-    DatabaseItemsList[typeKey?.split(".")?.[3] as keyof typeof DatabaseItemsList]?.join(" and ");
-
-  const renderSchemaGroupContent = (groupName: string) => {
+  const renderSchemaGroupContent = (groupName: string, omittedPropertyNames?: Set<string>) => {
     const props = groupedProperties.get(groupName);
     if (!props || props.length === 0) return null;
-    const rows = [...props]
+    const filtered =
+      omittedPropertyNames && omittedPropertyNames.size > 0
+        ? props.filter((p) => !omittedPropertyNames.has(p.name))
+        : props;
+    const rows = [...filtered]
       .sort((a, b) => a.display.groupOrder - b.display.groupOrder)
       .map(schemaRow)
       .filter(Boolean);
@@ -301,45 +410,6 @@ const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
               </DescriptionListDescription>
             </DescriptionListGroup>
           </ReviewDescriptionList>
-
-          <Content component="h3" className="source-schema-review__subtitle pf-u-mt-lg pf-u-mb-sm">
-            {t("source:create.dataTableTitle", { val: getConnectorTypeName(typeKey) })}
-          </Content>
-          {dataScopeDescription ? (
-            <Content component="p" className="source-schema-review__desc pf-u-mb-md">
-              {t("source:create.dataTableDescription", { val: dataScopeDescription })}
-            </Content>
-          ) : null}
-          <ReviewDescriptionList ariaLabel={t("source:review.dataScopeAria", { defaultValue: "Data scope" })}>
-            <DescriptionListGroup>
-              <DescriptionListTerm>
-                {t("source:review.includeSchemas", { defaultValue: "Included schemas / databases" })}
-              </DescriptionListTerm>
-              <DescriptionListDescription>
-                <ReviewValueSpan
-                  raw={
-                    selectedDataListItems?.schemas?.length
-                      ? selectedDataListItems.schemas.join(", ")
-                      : undefined
-                  }
-                />
-              </DescriptionListDescription>
-            </DescriptionListGroup>
-            <DescriptionListGroup>
-              <DescriptionListTerm>
-                {t("source:review.includeTables", { defaultValue: "Included tables / collections" })}
-              </DescriptionListTerm>
-              <DescriptionListDescription>
-                <ReviewValueSpan
-                  raw={
-                    selectedDataListItems?.tables?.length
-                      ? selectedDataListItems.tables.join(", ")
-                      : undefined
-                  }
-                />
-              </DescriptionListDescription>
-            </DescriptionListGroup>
-          </ReviewDescriptionList>
         </section>
 
         {orderedGroups.map((group) => {
@@ -354,7 +424,11 @@ const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
               <Content component="p" className="jumplinks-section-description">
                 {group.description}
               </Content>
-              {renderSchemaGroupContent(group.name)}
+              {group.name === "Filters" && tableManagedFilterNames.size > 0 ? renderFiltersTableExplorer() : null}
+              {renderSchemaGroupContent(
+                group.name,
+                group.name === "Filters" && tableManagedFilterNames.size > 0 ? tableManagedFilterNames : undefined
+              )}
             </section>
           );
         })}
