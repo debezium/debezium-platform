@@ -2,5 +2,3 @@ domain:
   name: platform.debezium.io
 database:
   enabled: true
-debezium-operator:
-  enabled: true
