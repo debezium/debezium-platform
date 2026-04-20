@@ -180,7 +180,8 @@ public class PipelineMapper {
         if (source.getConnection() != null) { // backward compatibility
             ConnectionEntity.Type connectionType = source.getConnection().getType();
             String configPrefix = prefixResolver(connectionType);
-            source.getConnection().getConfig().forEach((configName, configValue) -> sourceConfig.setProps(getName(connectionType, configName, configPrefix), configValue));
+            source.getConnection().getConfig()
+                    .forEach((configName, configValue) -> sourceConfig.setProps(getName(connectionType, configName, configPrefix), configValue));
         }
 
         sourceConfig.setAllProps(source.getConfig());
