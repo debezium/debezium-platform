@@ -7,6 +7,7 @@ package io.debezium.platform.environment.operator;
 
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DATABASE;
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_DATABASE_NAME_CONFIG;
+import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_SQLSERVER_DATABASE_NAME_CONFIG;
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_DATABASE_USERNAME_CONFIG;
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.USERNAME;
 import static io.debezium.platform.environment.database.DatabaseConnectionFactory.DATABASE_CONNECTION_CONFIGURATION_PREFIX;
@@ -177,8 +178,9 @@ public class PipelineMapper {
         var sourceConfig = new ConfigProperties();
 
         if (source.getConnection() != null) { // backward compatibility
-            String configPrefix = prefixResolver(source.getConnection().getType());
-            source.getConnection().getConfig().forEach((configName, configValue) -> sourceConfig.setProps(getName(configName, configPrefix), configValue));
+            ConnectionEntity.Type connectionType = source.getConnection().getType();
+            String configPrefix = prefixResolver(connectionType);
+            source.getConnection().getConfig().forEach((configName, configValue) -> sourceConfig.setProps(getName(connectionType, configName, configPrefix), configValue));
         }
 
         sourceConfig.setAllProps(source.getConfig());
@@ -193,12 +195,19 @@ public class PipelineMapper {
                 .build();
     }
 
-    private static String getName(String configName, String configPrefix) {
+    private static String getName(ConnectionEntity.Type connectionType, String configName, String configPrefix) {
         return switch (configName) {
             case USERNAME -> configPrefix + DEBEZIUM_DATABASE_USERNAME_CONFIG;
-            case DATABASE -> configPrefix + DEBEZIUM_DATABASE_NAME_CONFIG;
+            case DATABASE -> configPrefix + databaseNameConfig(connectionType);
             default -> configPrefix + configName;
         };
+    }
+
+    private static String databaseNameConfig(ConnectionEntity.Type connectionType) {
+        if (connectionType == ConnectionEntity.Type.SQLSERVER) {
+            return DEBEZIUM_SQLSERVER_DATABASE_NAME_CONFIG;
+        }
+        return DEBEZIUM_DATABASE_NAME_CONFIG;
     }
 
     private String prefixResolver(ConnectionEntity.Type connectionType) {
