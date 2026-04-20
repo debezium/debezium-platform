@@ -7,8 +7,8 @@ package io.debezium.platform.environment.operator;
 
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DATABASE;
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_DATABASE_NAME_CONFIG;
-import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_SQLSERVER_DATABASE_NAME_CONFIG;
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_DATABASE_USERNAME_CONFIG;
+import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_SQLSERVER_DATABASE_NAME_CONFIG;
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.USERNAME;
 import static io.debezium.platform.environment.database.DatabaseConnectionFactory.DATABASE_CONNECTION_CONFIGURATION_PREFIX;
 
