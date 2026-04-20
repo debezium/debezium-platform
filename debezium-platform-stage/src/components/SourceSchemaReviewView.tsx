@@ -16,7 +16,7 @@ import { useQuery } from "react-query";
 import type { Source, TableData } from "src/apis";
 import { fetchDataCall } from "src/apis";
 import { API_URL } from "@utils/constants";
-import type { ConnectorSchema, SchemaProperty, SelectedDataListItem } from "../apis/types";
+import type { ConnectorSchema, SchemaProperty } from "../apis/types";
 import ConnectorImage from "./ComponentImage";
 import { getConnectorTypeName } from "@utils/helpers";
 import {
@@ -225,7 +225,7 @@ const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
 
   const { schemaValues, additionalProps, signalCollectionName, selectedDataListItems } = split;
 
-  const noopSetSelectedDataListItems = useCallback((_items: SelectedDataListItem | undefined) => {}, []);
+  const noopSetSelectedDataListItems = useCallback(() => {}, []);
 
   const renderFiltersTableExplorer = useCallback(() => {
     if (!source.connection?.id) return null;
