@@ -2,3 +2,5 @@ domain:
   name: platform.debezium.io
 database:
   enabled: true
+ingress:
+  className: nginx
