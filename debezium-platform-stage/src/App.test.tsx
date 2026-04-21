@@ -1,15 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import App from "./App";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { render } from "./__test__/unit/test-utils";
 
 test("renders the App", () => {
-  const queryClient = new QueryClient();
-  render(
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  );
+  render(<App />, { withMemoryRouter: false, withSuspense: true });
 
   const dbzLogo = screen.getByAltText("Debezium Logo");
   expect(dbzLogo).toBeInTheDocument();
