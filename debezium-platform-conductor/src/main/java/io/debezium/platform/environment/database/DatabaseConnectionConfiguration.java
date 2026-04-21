@@ -26,7 +26,7 @@ public class DatabaseConnectionConfiguration {
 
     public static final String DEBEZIUM_DATABASE_USERNAME_CONFIG = "user";
     public static final String DEBEZIUM_DATABASE_NAME_CONFIG = "dbname";
-    public static final String DEBEZIUM_SQLSERVER_DATABASE_NAME_CONFIG = "dbnames";
+    public static final String DEBEZIUM_SQLSERVER_DATABASE_NAME_CONFIG = "names";
     private final DatabaseType databaseType;
     private final String hostname;
     private final int port;
