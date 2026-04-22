@@ -7,6 +7,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Connection, ConnectionConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost, fetchData } from "src/apis";
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
+import { buildFlatConfigFromFormData, buildNestedConnectionYupFields } from "@utils/connectionForm";
 import { convertMapToObject, getConnectorTypeName } from "@utils/helpers";
 import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon, PlusIcon, TrashIcon } from "@patternfly/react-icons";
 import { useState } from "react";
@@ -71,62 +72,10 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
 
 
 
-    const buildNestedSchema = () => {
-        if (!selectedSchemaProperties?.properties) return {};
-        
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const schemaObj: any = {};
-        
-        Object.entries(selectedSchemaProperties.properties).forEach(([field, propSchema]) => {
-            const isRequired = selectedSchemaProperties['required']?.includes(field);
-            const isNumeric = propSchema.type === "integer";
-            const validator = isNumeric
-                ? yup
-                    .number()
-                    .transform((currentValue, originalValue) => (originalValue === '' ? undefined : currentValue))
-                    .typeError("Must be a integer")
-                : yup.string();
-            
-            const finalValidator = isRequired ? validator.required() : validator.notRequired();
-            
-            if (field.includes('.')) {
-                const parts = field.split('.');
-                let current = schemaObj;
-                
-                for (let i = 0; i < parts.length - 1; i++) {
-                    const part = parts[i];
-                    if (!current[part]) {
-                        current[part] = {};
-                    }
-                    current = current[part];
-                }
-                
-                current[parts[parts.length - 1]] = finalValidator;
-            } else {
-                schemaObj[field] = finalValidator;
-            }
-        });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const convertToYupObjects = (obj: any): any => {
-             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const result: any = {};
-            for (const key in obj) {
-                if (obj[key] && typeof obj[key] === 'object' && !obj[key]._type) {
-                    result[key] = yup.object(convertToYupObjects(obj[key]));
-                } else {
-                    result[key] = obj[key];
-                }
-            }
-            return result;
-        };
-        
-        return convertToYupObjects(schemaObj);
-    };
-
     const schema = yup.object({
         name: yup.string().required(),
-        ...buildNestedSchema()
-    }).required();
+        ...buildNestedConnectionYupFields(selectedSchemaProperties)
+    }).required() as yup.ObjectSchema<ConnectionFormValues>;
 
     const handleAddProperty = () => {
         const newKey = `key${keyCount}`;
@@ -228,20 +177,14 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
         }
     };
 
-    const validateSubmit = (data: ConnectionFormValues) => {
+    const buildConnectionPayload = (data: ConnectionFormValues): ConnectionPayload => {
         const { name } = data;
         const schemaPropertyKeys = selectedSchemaProperties?.properties
             ? Object.keys(selectedSchemaProperties.properties)
             : [];
-        const configFromForm = schemaPropertyKeys.reduce((acc: Record<string, string | number>, key) => {
-            const value = _.get(data, key) as string | number | undefined;
-            if (value !== undefined) {
-                acc[key] = value;
-            }
-            return acc;
-        }, {} as Record<string, string | number>);
+        const configFromForm = buildFlatConfigFromFormData(data as Record<string, unknown>, schemaPropertyKeys);
 
-        const payload = selectedSchema ? ({
+        return selectedSchema ? ({
             type: selectedSchema?.type.toUpperCase() || connectionId?.toUpperCase() || "",
             config: { ...configFromForm, ...convertMapToObject(properties, errorWarning, setErrorWarning) },
             name: name as string
@@ -250,13 +193,24 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
             config: convertMapToObject(properties, errorWarning, setErrorWarning),
             name: name as string
         };
-        if (connectionValidated || !selectedSchemaProperties) {
-            createConnection(payload);
-        } else {
-            validateConnection(payload);
-        }
+    };
 
-    }
+    const handleValidateFromForm = (data: ConnectionFormValues) => {
+        const payload = buildConnectionPayload(data);
+        if (selectedSchemaProperties) {
+            void validateConnection(payload);
+        } else {
+            void createConnection(payload);
+        }
+    };
+
+    const handleSaveFromForm = (data: ConnectionFormValues) => {
+        const payload = buildConnectionPayload(data);
+        if (selectedSchemaProperties && !connectionValidated) {
+            return;
+        }
+        void createConnection(payload);
+    };
     return (
         <>
             {!selectedConnectionId && (
@@ -275,7 +229,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
 
                 <Card className="custom-card-body">
                     <CardBody isFilled>
-                        <Form id="create-connection-form" onSubmit={handleSubmit(validateSubmit)} isWidthLimited>
+                        <Form id="create-connection-form" onSubmit={handleSubmit(handleSaveFromForm)} isWidthLimited>
                             {!_.isEmpty(errors) && (
                                 <FormAlert>
                                     <Alert variant="danger" title={t("common:form.error.title")} aria-live="polite" isInline />
@@ -521,7 +475,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                 <ActionList>
                     <ActionListGroup>
                         {selectedSchema && <ActionListItem>
-                            <Button variant="secondary" type="submit" form="create-connection-form">{t("connection:create.validate")}</Button>
+                            <Button variant="secondary" type="button" onClick={handleSubmit(handleValidateFromForm)}>{t("connection:create.validate")}</Button>
                         </ActionListItem>}
                         <ActionListItem>
                             {selectedSchema ?
