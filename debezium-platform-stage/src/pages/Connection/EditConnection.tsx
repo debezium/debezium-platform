@@ -7,6 +7,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { Connection, ConnectionAdditionalConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost, editPut, fetchDataTypeTwo } from "src/apis";
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
+import { buildFlatConfigFromFormData, buildNestedConnectionYupFields, flatConnectionConfigToRhfShape } from "@utils/connectionForm";
 import { convertMapToObject, getConnectorTypeName } from "@utils/helpers";
 import { ExclamationCircleIcon, PencilAltIcon, PlusIcon, TrashIcon } from "@patternfly/react-icons";
 import { useEffect, useState } from "react";
@@ -63,18 +64,16 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
     const schema = yup.object({
         name: yup.string().required(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(selectedSchema?.schema?.required?.reduce((acc: any, field: string) => {
-            acc[field] = yup.string().required();
-            return acc;
-        }, {}) || {})
-    }).required();
+        ...buildNestedConnectionYupFields(selectedSchema?.schema)
+    }).required() as yup.ObjectSchema<ConnectionFormValues>;
 
     const { formState: { errors }, control, handleSubmit, reset } = useForm<ConnectionFormValues>(
         {
             defaultValues: {
                 name: connection?.name || "",
-                ...connection?.config
+                ...(connection?.config
+                    ? flatConnectionConfigToRhfShape(connection.config as Record<string, unknown>)
+                    : {}),
             } as ConnectionFormValues,
             resolver: yupResolver(schema)
         }
@@ -109,7 +108,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                     });
                     reset({
                         name: response.data?.name || "",
-                        ...formFields,
+                        ...flatConnectionConfigToRhfShape(formFields),
                     });
                     // Assign the remaining properties to setConfigProperties
                     if (Object.keys(otherConfig).length > 0) {
@@ -258,24 +257,39 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
         setIsLoading(false);
     };
 
-    const validateSubmit = (data: ConnectionFormValues) => {
-        const { name, ...dataWithoutName } = data;
-        const payload = selectedSchema ? {
+    const buildConnectionPayload = (data: ConnectionFormValues): ConnectionPayload => {
+        const { name } = data;
+        const schemaPropertyKeys = selectedSchema?.schema?.properties
+            ? Object.keys(selectedSchema.schema.properties)
+            : [];
+        const configFromForm = buildFlatConfigFromFormData(data as Record<string, unknown>, schemaPropertyKeys);
+        return selectedSchema ? {
             type: selectedSchema?.type.toUpperCase() || connection?.type.toUpperCase() || "",
-            config: { ...dataWithoutName, ...convertMapToObject(properties, errorWarning, setErrorWarning) },
+            config: { ...configFromForm, ...convertMapToObject(properties, errorWarning, setErrorWarning) },
             name: name as string
         } as ConnectionPayload : {
             type: connection?.type.toUpperCase() || "",
             config: convertMapToObject(properties, errorWarning, setErrorWarning),
             name: name as string
         };
-        if (connectionValidated || !selectedSchema?.schema) {
-            handleEditConnection(payload)
-        } else {
-            validateConnection(payload);
-        }
+    };
 
-    }
+    const handleValidateFromForm = (data: ConnectionFormValues) => {
+        const payload = buildConnectionPayload(data);
+        if (selectedSchema?.schema) {
+            void validateConnection(payload);
+        } else {
+            void handleEditConnection(payload);
+        }
+    };
+
+    const handleSaveFromForm = (data: ConnectionFormValues) => {
+        const payload = buildConnectionPayload(data);
+        if (selectedSchema?.schema && !connectionValidated) {
+            return;
+        }
+        void handleEditConnection(payload);
+    };
     return (
         <>
             {viewMode ? (
@@ -307,7 +321,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
                 <Card className="custom-card-body">
                     <CardBody isFilled>
-                        <Form id="create-connection-form" onSubmit={handleSubmit(validateSubmit)} isWidthLimited>
+                        <Form id="create-connection-form" onSubmit={handleSubmit(handleSaveFromForm)} isWidthLimited>
                             {!_.isEmpty(errors) && (
                                 <FormAlert>
                                     <Alert variant="danger" title={t("common:form.error.title")} aria-live="polite" isInline />
@@ -526,7 +540,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                     <ActionList>
                         <ActionListGroup>
                             {selectedSchema && <ActionListItem>
-                                <Button variant="secondary" type="submit" form="create-connection-form">{t("connection:create.validate")}</Button>
+                                <Button variant="secondary" type="button" onClick={handleSubmit(handleValidateFromForm)}>{t("connection:create.validate")}</Button>
                             </ActionListItem>}
                             <ActionListItem>
                                 {selectedSchema ?
