@@ -3,11 +3,6 @@ import set from "lodash/set";
 import * as yup from "yup";
 import type { ConnectionSchema } from "../apis/apis";
 
-/**
- * API config uses flat keys (e.g. `bootstrap.servers`). RHF Controllers with `name="bootstrap.servers"` read/write
- * nested state (`bootstrap.servers` as a path). Passing flat keys into `reset()` can leave nested state stale so
- * submits still see the old value — convert dotted keys to nested objects before `reset`/`defaultValues`.
- */
 export const flatConnectionConfigToRhfShape = (fields: Record<string, unknown>): Record<string, unknown> => {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(fields)) {
@@ -20,11 +15,6 @@ export const flatConnectionConfigToRhfShape = (fields: Record<string, unknown>):
   return out;
 };
 
-/**
- * React Hook Form treats dots in field names as nested paths (e.g. bootstrap.servers → data.bootstrap.servers).
- * Connection APIs expect flat string keys. This maps form values back to flat config using the same path semantics as lodash get.
- * For dotted keys, falls back to a literal `data[key]` when the nested path is missing (mixed flat/nested state).
- */
 export const buildFlatConfigFromFormData = (
   data: Record<string, unknown>,
   propertyKeys: string[]
