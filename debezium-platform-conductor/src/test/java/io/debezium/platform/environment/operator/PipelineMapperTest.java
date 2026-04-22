@@ -6,11 +6,7 @@
 package io.debezium.platform.environment.operator;
 
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DATABASE;
-import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_DATABASE_NAME_CONFIG;
-import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_DATABASE_USERNAME_CONFIG;
-import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DEBEZIUM_SQLSERVER_DATABASE_NAME_CONFIG;
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.USERNAME;
-import static io.debezium.platform.environment.database.DatabaseConnectionFactory.DATABASE_CONNECTION_CONFIGURATION_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -74,8 +70,8 @@ public class PipelineMapperTest {
         var result = pipelineMapper.map(pipeline);
 
         assertThat(result.getSpec().getSource().getConfig().getProps())
-                .containsEntry(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_SQLSERVER_DATABASE_NAME_CONFIG, "customers")
-                .containsEntry(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_USERNAME_CONFIG, "sa");
+                .containsEntry("database.names", "customers")
+                .containsEntry("database.user", "sa");
     }
 
     @Test
@@ -87,8 +83,8 @@ public class PipelineMapperTest {
         var result = pipelineMapper.map(pipeline);
 
         assertThat(result.getSpec().getSource().getConfig().getProps())
-                .containsEntry(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_NAME_CONFIG, "customers")
-                .containsEntry(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_USERNAME_CONFIG, "sa");
+                .containsEntry("database.dbname", "customers")
+                .containsEntry("database.user", "sa");
     }
 
     private PipelineFlat mockPipelineWithSource(ConnectionEntity.Type type, Map<String, Object> connectionConfig) {
