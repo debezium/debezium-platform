@@ -458,11 +458,13 @@ const SourceSinkForm = ({
   }, [selectedConnection]);
 
   useEffect(() => {
-    if (selectedConnection?.id) {
-      fetchCollections();
+    if (connectorType !== "source") {
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedConnection?.id]);
+    if (selectedConnection?.id) {
+      void fetchCollections();
+    }
+  }, [connectorType, selectedConnection?.id, fetchCollections]);
 
 
   return (
