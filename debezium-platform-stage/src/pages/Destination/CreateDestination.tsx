@@ -479,7 +479,6 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
               {editorSelected === "form-editor" && !rawConfiguration ? (
                 <SourceSinkForm
                   ConnectorId={destinationId || ""}
-                  connectorType="destination"
                   properties={properties}
                   setValue={setValue}
                   getValue={getValue}
@@ -492,7 +491,6 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
                   handleConnectionModalToggle={handleConnectionModalToggle}
-                  setSelectedDataListItems={() => {}}
                 />
               ) : (
                 <>

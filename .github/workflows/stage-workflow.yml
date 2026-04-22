@@ -30,7 +30,7 @@ jobs:
         working-directory: debezium-platform-stage
     strategy:
       matrix:
-        node-version: [25.x]
+        node-version: [24.x]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -67,7 +67,7 @@ jobs:
         working-directory: debezium-platform-stage
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.x]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6

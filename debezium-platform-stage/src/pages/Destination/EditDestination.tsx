@@ -469,7 +469,6 @@ const EditDestination: React.FunctionComponent = () => {
                 <SourceSinkForm
                   ConnectorId={destinationId || ""}
                   dataType={destination?.type || ""}
-                  connectorType="destination"
                   properties={properties}
                   setValue={setValue}
                   getValue={getValue}
@@ -483,7 +482,6 @@ const EditDestination: React.FunctionComponent = () => {
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
                   handleConnectionModalToggle={handleConnectionModalToggle}
-                  setSelectedDataListItems={() => {}}
                 />
               ) : (
                 <>
