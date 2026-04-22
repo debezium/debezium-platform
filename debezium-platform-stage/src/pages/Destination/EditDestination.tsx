@@ -214,8 +214,7 @@ const EditDestination: React.FunctionComponent = () => {
         setSelectedConnection(response.data?.connection as ConnectionConfig);
         setCode((prevCode: any) => {
           return {
-            ...prevCode,
-            type: response.data?.type,
+            ...prevCode
           };
         });
       }
@@ -311,13 +310,16 @@ const EditDestination: React.FunctionComponent = () => {
           setIsLoading(false);
           return;
         }
-        const payload = {
-          description: values["description"],
-          config: convertMapToObject(properties),
+        const payload: Payload = {
           name: values["destination-name"],
+          description: values["description"],
+          type: destination?.type ?? "",
+          schema: destination?.schema ?? "",
+          vaults: destination?.vaults ?? [],
+          config: convertMapToObject(properties) as DestinationConfig,
           ...(selectedConnection ? { connection: selectedConnection } : {}),
         };
-        await editDestination(payload as Payload);
+        await editDestination(payload);
         setIsLoading(false);
       }
     } else {
