@@ -24,7 +24,7 @@ This project is under active development, any contributions are very welcome.
 
 
 ## Requirements
-node (version 22.x.x or higher) and yarn (version 1.22.x or higher).
+Node.js 24.x (Active LTS) and yarn (version 1.22.x or higher). Use `.nvmrc` if you manage Node with nvm.
 
 ## Quick-start
 

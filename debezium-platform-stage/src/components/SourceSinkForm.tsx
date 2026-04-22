@@ -14,13 +14,6 @@ import {
   SplitItem,
   Grid,
   Form,
-  ClipboardCopy,
-  Modal,
-  ModalBody,
-  ModalFooter,
-  ModalHeader,
-  ModalVariant,
-  Alert,
   InputGroup,
   InputGroupItem,
   Select,
@@ -33,26 +26,19 @@ import {
   TextInputGroupMain,
   TextInputGroupUtilities,
   Skeleton,
-  FormFieldGroupExpandable,
 } from "@patternfly/react-core";
-import { AddCircleOIcon, CheckCircleIcon, ExclamationCircleIcon, PlusIcon, TimesIcon, TrashIcon } from "@patternfly/react-icons";
-import { getConnectionRole, getConnectorTypeName, getDatabaseType } from "@utils/helpers";
-import { Catalog, CatalogApiResponse } from "../apis/types";
+import { ExclamationCircleIcon, PlusIcon, TimesIcon, TrashIcon } from "@patternfly/react-icons";
+import { getConnectionRole, getConnectorTypeName } from "@utils/helpers";
+import { Catalog } from "../apis/types";
 import destinationCatalog from "../__mocks__/data/DestinationCatalog.json";
 import ConnectorImage from "./ComponentImage";
 import { useTranslation } from "react-i18next";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
-import { Connection, ConnectionConfig, fetchData, fetchDataCall, TableData, verifySignals } from "src/apis";
+import { Connection, ConnectionConfig, fetchData } from "src/apis";
 import { API_URL } from "@utils/constants";
-import { useNotification } from "@appContext/index";
 import { useQuery } from "react-query";
-import TableViewComponent from "./TableViewComponent";
 import "./SourceSinkForm.css";
-import ApiComponentError from "./ApiComponentError";
-import _ from "lodash";
-import { SelectedDataListItem } from "../apis/types";
-import { datatype as DatabaseItemsList } from "@utils/Datatype";
 
 
 const getInitialSelectOptions = (connections: connectionsList[], connectorId: string): SelectOptionProps[] => {
@@ -75,7 +61,6 @@ interface SourceSinkFormProps {
   ConnectorId: string;
   dataType?: string;
   errorWarning: string[];
-  connectorType: "source" | "destination";
   properties: Map<string, { key: string; value: string }>;
   setValue: (key: string, value: string) => void;
   getValue: (key: string) => string;
@@ -88,21 +73,14 @@ interface SourceSinkFormProps {
     type: "key" | "value",
     value: string
   ) => void;
-  editFlow?: boolean;
   viewMode?: boolean;
   setSelectedConnection: (connection: ConnectionConfig | undefined) => void;
   selectedConnection: ConnectionConfig | undefined;
-  updateSignalCollectionName?: (name: string) => void;
-  signalCollectionName?: string;
   handleConnectionModalToggle: () => void;
-  setSelectedDataListItems: (dataListItems: SelectedDataListItem | undefined) => void;
-  selectedDataListItems?: SelectedDataListItem | undefined;
-
 }
 const SourceSinkForm = ({
   ConnectorId,
   dataType,
-  connectorType,
   properties,
   setValue,
   getValue,
@@ -112,35 +90,18 @@ const SourceSinkForm = ({
   handleAddProperty,
   handleDeleteProperty,
   handlePropertyChange,
-  editFlow,
   viewMode,
   setSelectedConnection,
   selectedConnection,
-  updateSignalCollectionName,
-  signalCollectionName,
   handleConnectionModalToggle,
-  setSelectedDataListItems,
-  selectedDataListItems
 }: SourceSinkFormProps) => {
   const { t } = useTranslation();
-  const { addNotification } = useNotification();
 
-  const connectorLabel = connectorType === "source" ? "Source" : "Destination";
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [signalCollectionNameVerify, setSignalCollectionNameVerify] = useState<string>(() => signalCollectionName || "");
-  const [signalVerified, setSignalVerified] = useState(false);
-  const [signalMissingConnection, setSignalMissingConnection] = useState<boolean>(false);
-
-  const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
-  const [collectionsError, setCollectionsError] = useState<object | undefined>(undefined);
-  const [collections, setCollections] = useState<TableData | undefined>(undefined);
+  const connectorType = "destination" as const;
+  const connectorLabel = "Destination";
 
   const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState<string>('');
+  const [inputValue, setInputValue] = useState<string>(() => selectedConnection?.name || "");
   const [filterValue, setFilterValue] = useState<string>('');
   const [focusedItemIndex, setFocusedItemIndex] = useState<number | null>(null);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
@@ -150,29 +111,13 @@ const SourceSinkForm = ({
 
   const NO_RESULTS = 'no results';
 
-  const prevSignalCollectionNameRef = useRef(signalCollectionName);
-  
   useEffect(() => {
-    if (prevSignalCollectionNameRef.current !== signalCollectionName) {
-      prevSignalCollectionNameRef.current = signalCollectionName;
-      setSignalCollectionNameVerify(signalCollectionName || "");
-    }
-  }, [signalCollectionName]);
+    /* eslint-disable react-hooks/set-state-in-effect -- keep typeahead text in sync when persisted connection id/name change */
+    setInputValue(selectedConnection?.name ?? "");
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [selectedConnection?.id, selectedConnection?.name]);
 
-  const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>(
-    "sourceConnectorCatalog",
-    async () => {
-      const response = await fetchData<CatalogApiResponse>(
-        `${API_URL}/api/catalog`
-      );
-      return (response.components["source-connector"] ?? []).map((e) => ({
-        ...e,
-        role: "source",
-      }));
-    }
-  );
-
-  const catalog: Catalog[] = [...sourceCatalog, ...destinationCatalog];
+  const catalog: Catalog[] = destinationCatalog as Catalog[];
 
   const {
     isLoading: isConnectionsLoading,
@@ -190,10 +135,6 @@ const SourceSinkForm = ({
       },
     }
   );
-
-  React.useEffect(() => {
-    setInputValue(selectedConnection?.name || '');
-  }, [selectedConnection]);
 
   const baseSelectOptions = React.useMemo(() => {
     return getInitialSelectOptions(connections, dataType || ConnectorId);
@@ -383,90 +324,6 @@ const SourceSinkForm = ({
     </MenuToggle>
   );
 
-  const handleModalToggle = () => {
-    setSignalCollectionNameVerify(signalCollectionName || "");
-    setIsModalOpen(!isModalOpen);
-    setSignalMissingConnection(false);
-  };
-
-  const verifySignalsHandler = async () => {
-    setIsLoading(true);
-    const fromValues = properties.values();
-    const formValuesCopy = new Map();
-    Array.from(fromValues).map((property) => {
-      const { key, value } = property;
-      formValuesCopy.set(key, value);
-    });
-
-
-    const payload = {
-      databaseType: getDatabaseType(ConnectorId),
-      connectionConfig: selectedConnection,
-      fullyQualifiedTableName: signalCollectionNameVerify
-    }
-    if (selectedConnection?.id === undefined) {
-      setSignalMissingConnection(true);
-      setIsLoading(false);
-      return;
-
-    }
-    const response = await verifySignals(`${API_URL}/api/sources/signals/verify`, payload);
-
-    if (response.error) {
-
-      addNotification(
-        "danger",
-        `Signal verification failed`,
-        `Coudn't verify the signal data collection: ${response.error}`
-      );
-      setIsLoading(false);
-    } else {
-      setSignalVerified(true);
-      addNotification(
-        "success",
-        `Signal verification succesfully`,
-        `Signal data collection verified succesfully: ${signalCollectionNameVerify}`
-      );
-      setIsLoading(false);
-    }
-  }
-
-  const configureSignalCollection = async () => {
-    setIsLoading(true);
-    if (updateSignalCollectionName) {
-      updateSignalCollectionName(signalCollectionNameVerify);
-    }
-    setIsLoading(false);
-    setIsModalOpen(false);
-  }
-
-  const fetchCollections = React.useCallback(async () => {
-    if (!selectedConnection?.id) return;
-
-    setIsCollectionsLoading(true);
-    const response = await fetchDataCall<TableData>(
-      `${API_URL}/api/connections/${selectedConnection.id}/collections`
-    );
-    if (response.error) {
-      setCollectionsError(response.error.body || {});
-    } else {
-      setCollectionsError(undefined);
-      setCollections(response.data as TableData);
-    }
-
-    setIsCollectionsLoading(false);
-  }, [selectedConnection]);
-
-  useEffect(() => {
-    if (connectorType !== "source") {
-      return;
-    }
-    if (selectedConnection?.id) {
-      void fetchCollections();
-    }
-  }, [connectorType, selectedConnection?.id, fetchCollections]);
-
-
   return (
     <>
       <Card className="custom-card-body">
@@ -589,42 +446,6 @@ const SourceSinkForm = ({
                 </FormHelperText>) : null}
             </FormGroup>
 
-
-            {
-              (!!selectedConnection?.id && connectorType === "source") ? isCollectionsLoading ?
-                <FormFieldGroup>
-                  <Skeleton fontSize="2xl" width="50%" />
-                  <Skeleton fontSize="md" width="33%" />
-                  <Skeleton fontSize="md" width="33%" />
-                </FormFieldGroup> : !_.isEmpty(collectionsError) ? (
-                  <FormFieldGroup>
-                    <ApiComponentError
-                      error={
-                        collectionsError
-                      }
-                      retry={() => {
-                        fetchCollections();
-                      }}
-                    />
-                  </FormFieldGroup>
-                ) : <FormFieldGroupExpandable
-                  className="table-explorer-section"
-                  hasAnimations
-                  isExpanded
-                  header={
-                    <FormFieldGroupHeader
-                      titleText={{
-                        text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: getConnectorTypeName(dataType || ConnectorId || "") })}</span>,
-                        id: `field-group-data-table-id`,
-                      }}
-                      titleDescription={t("source:create.dataTableDescription", editFlow ? { val: DatabaseItemsList[dataType?.split(".")[3] as keyof typeof DatabaseItemsList]?.join(" and ") } : { val: DatabaseItemsList[ConnectorId?.split(".")?.[3] as keyof typeof DatabaseItemsList]?.join(" and ") })}
-                    />
-                  }
-                >
-                  <TableViewComponent collections={collections} setSelectedDataListItems={setSelectedDataListItems} selectedDataListItems={selectedDataListItems} />
-                </FormFieldGroupExpandable>
-                : null}
-
             <FormFieldGroup
               header={
                 <FormFieldGroupHeader
@@ -705,95 +526,10 @@ const SourceSinkForm = ({
                 </Split>
               ))}
             </FormFieldGroup>
-            {
-              connectorType === "source" &&
-              <FormFieldGroup
-                header={
-                  <FormFieldGroupHeader
-                    titleText={{
-                      text: <span style={{ fontWeight: 500 }}>{t("source:signal.title")}</span>,
-                      id: `field-group-signal-id`,
-                    }}
-                    titleDescription={t("source:signal.description")}
-                  />
-                }
-              >
-                <Button variant="link" size="lg" icon={signalCollectionNameVerify ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />} iconPosition="left" onClick={handleModalToggle}>
-                  {t("source:signal.setupSignaling")}
-                </Button>
-
-              </FormFieldGroup>
-            }
-
-
 
           </Form>
         </CardBody>
       </Card>
-      <Modal
-        variant={ModalVariant.medium}
-        isOpen={isModalOpen}
-        onClose={handleModalToggle}
-        aria-labelledby="modal-with-description-title"
-        aria-describedby="modal-box-body-with-description"
-      >
-        <ModalHeader
-          title={t("source:signal.title")}
-          labelId="modal-with-description-title"
-          description={t("source:signal.modelDescription")}
-        />
-        <ModalBody tabIndex={0} id="modal-box-body-with-description">
-          {signalMissingConnection && (<Alert variant="danger" isInline isPlain title={t('source:signal.errorMsg', { val: { connectorType } })} style={{ paddingBottom: "15px" }} />)}
-
-          <Form isWidthLimited>
-            <FormGroup
-              label={t("source:signal.signalingCollectionField.label")}
-              isRequired
-              fieldId={`signaling-collection-name`}
-            >
-              <TextInput
-                id={`signaling-collection-name`}
-                aria-label={t("source:signal.signalingCollectionField.label")}
-                type="text"
-                onChange={(_event, value) => {
-                  setSignalCollectionNameVerify(value);
-                }}
-                value={signalCollectionNameVerify}
-              />
-            </FormGroup>
-            <FormGroup
-              label={t("source:signal.ddlQuery")}
-              fieldId={`ddl-query-name`}
-            >
-              <ClipboardCopy isReadOnly hoverTip={t('copy')} clickTip={t('copied')}>
-                {`CREATE TABLE ${signalCollectionNameVerify} (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);`}
-              </ClipboardCopy>
-            </FormGroup>
-
-            {/* <Checkbox
-              isLabelWrapped
-              label="DDL has been executed by the DBA"
-              id="checkbox-label-wraps-input"
-              name="checkbox-label-wraps-input"
-            /> */}
-          </Form>
-          {/* <Alert variant="danger" title="Danger alert title" ouiaId="DangerAlert" /> */}
-        </ModalBody>
-
-        <ModalFooter>
-          {signalVerified ?
-            <Button key="done" variant="primary" isLoading={isLoading} onClick={configureSignalCollection} >
-              {t("done")}
-            </Button>
-            :
-            <Button key="confirm" variant="primary" isLoading={isLoading} onClick={verifySignalsHandler} >
-              {t('verify')}
-            </Button>}
-          <Button key="cancel" variant="link" onClick={handleModalToggle}>
-            {t("cancel")}
-          </Button>
-        </ModalFooter>
-      </Modal>
 
     </>
   );
