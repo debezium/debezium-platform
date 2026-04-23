@@ -17,13 +17,11 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import io.debezium.platform.config.OffsetConfigGroup;
-import io.debezium.platform.config.OffsetStorageConfigGroup;
 import io.debezium.platform.config.PipelineConfigGroup;
-import io.debezium.platform.config.SchemaHistoryConfigGroup;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.domain.views.flat.DestinationFlat;
@@ -34,28 +32,17 @@ import io.debezium.platform.environment.operator.configuration.TableNameResolver
 @ExtendWith(MockitoExtension.class)
 public class PipelineMapperTest {
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     PipelineConfigGroup pipelineConfigGroup;
 
     @Mock
     TableNameResolver tableNameResolver;
 
-    @Mock
-    private OffsetConfigGroup offsetConfigGroup;
-
-    @Mock
-    private OffsetStorageConfigGroup offsetStorageConfigGroup;
-
-    @Mock
-    private SchemaHistoryConfigGroup schemaHistoryConfigGroup;
-
     private PipelineMapper pipelineMapper;
 
     @BeforeEach
     void setUp() {
-        when(pipelineConfigGroup.offset()).thenReturn(offsetConfigGroup);
-        when(offsetConfigGroup.storage()).thenReturn(offsetStorageConfigGroup);
-        when(pipelineConfigGroup.schema()).thenReturn(schemaHistoryConfigGroup);
+
         when(tableNameResolver.resolve(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
 
         pipelineMapper = new PipelineMapper(pipelineConfigGroup, tableNameResolver);
