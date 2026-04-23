@@ -54,7 +54,7 @@
     "react-query": "^3.39.3",
     "react-router-dom": "^7.14.1",
     "reactflow": "^11.11.4",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "victory": "^37.3.2",
     "yup": "^1.7.1"
   },
