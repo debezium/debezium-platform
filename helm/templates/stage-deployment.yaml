@@ -19,6 +19,13 @@ spec:
       labels:
         app.kubernetes.io/name: stage
     spec:
+{{- $stageSecrets := .Values.stage.imagePullSecrets | default list }}
+{{- $globalSecrets := .Values.imagePullSecrets | default list }}
+{{- $pullSecrets := ternary $stageSecrets $globalSecrets (gt (len $stageSecrets) 0) }}
+{{- if gt (len $pullSecrets) 0 }}
+      imagePullSecrets:
+        {{- toYaml $pullSecrets | nindent 8 }}
+{{- end }}
       containers:
         - image: {{ .Values.stage.image }}
           imagePullPolicy: {{ .Values.stage.imagePullPolicy }}

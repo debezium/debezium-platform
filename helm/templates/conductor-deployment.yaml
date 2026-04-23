@@ -22,6 +22,13 @@ spec:
         app.kubernetes.io/name: conductor
     spec:
       serviceAccountName: conductor-service-account
+{{- $conductorSecrets := .Values.conductor.imagePullSecrets | default list }}
+{{- $globalSecrets := .Values.imagePullSecrets | default list }}
+{{- $pullSecrets := ternary $conductorSecrets $globalSecrets (gt (len $conductorSecrets) 0) }}
+{{- if gt (len $pullSecrets) 0 }}
+      imagePullSecrets:
+        {{- toYaml $pullSecrets | nindent 8 }}
+{{- end }}
       containers:
         - name: conductor
           image: {{ .Values.conductor.image }}
