@@ -51,6 +51,7 @@ pipeline:
                 name: "@{pipeline_name}_schema_history"
   server:
     image: ${PIPELINE_SERVER_IMAGE:}
+    labels: {}
 sources:
   database:
     connection:

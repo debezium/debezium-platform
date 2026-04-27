@@ -7,6 +7,7 @@ package io.debezium.platform.environment.operator;
 
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DATABASE;
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.USERNAME;
+import static io.debezium.platform.environment.operator.OperatorPipelineController.LABEL_DBZ_CONDUCTOR_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -44,6 +45,7 @@ public class PipelineMapperTest {
     void setUp() {
 
         when(tableNameResolver.resolve(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
+        when(pipelineConfigGroup.server().labels()).thenReturn(Map.of());
 
         pipelineMapper = new PipelineMapper(pipelineConfigGroup, tableNameResolver);
     }
@@ -72,6 +74,22 @@ public class PipelineMapperTest {
         assertThat(result.getSpec().getSource().getConfig().getProps())
                 .containsEntry("database.dbname", "customers")
                 .containsEntry("database.user", "sa");
+    }
+
+    @Test
+    public void testMapper_ShouldMergeConfiguredLabelsWithConductorLabel() {
+        when(pipelineConfigGroup.server().labels()).thenReturn(Map.of("argocd.argoproj.io/instance", "debezium-platform"));
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+        when(pipeline.getName()).thenReturn("pipeline-a");
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getMetadata().getLabels())
+                .containsEntry("argocd.argoproj.io/instance", "debezium-platform")
+                .containsEntry(LABEL_DBZ_CONDUCTOR_ID, "1");
     }
 
     private PipelineFlat mockPipelineWithSource(ConnectionEntity.Type type, Map<String, Object> connectionConfig) {

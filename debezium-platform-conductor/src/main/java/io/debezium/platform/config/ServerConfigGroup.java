@@ -5,8 +5,11 @@
  */
 package io.debezium.platform.config;
 
+import java.util.Map;
 import java.util.Optional;
 
 public interface ServerConfigGroup {
     Optional<String> image();
+
+    Map<String, String> labels();
 }
