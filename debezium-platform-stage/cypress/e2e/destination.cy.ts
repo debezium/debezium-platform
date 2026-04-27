@@ -134,3 +134,72 @@ describe('Destination Management', () => {
   });
 });
 
+/**
+ * Regression: form save must send type, schema, and vaults from the GET response.
+ * Backend DestinationRequest requires type and schema (@NotEmpty); omitting them broke edit.
+ * Isolated from the main suite so we do not pre-visit the destination list.
+ */
+describe('Destination edit PUT payload (regression)', () => {
+  beforeEach(() => {
+    cy.waitForBackend();
+  });
+
+  it('should send type, schema, and vaults on destination edit (form editor)', () => {
+    const destinationId = 424242;
+    const mockDestination = {
+      id: destinationId,
+      name: 'e2e-mock-destination',
+      description: 'e2e description',
+      type: 'kafka',
+      schema: 'e2e.test.schema.required',
+      vaults: [{ id: 7, name: 'e2e-vault' }],
+      connection: { id: 99, name: 'e2e-mock-connection' },
+      config: {
+        'bootstrap.servers': 'localhost:9092',
+      },
+    };
+
+    cy.intercept('GET', `**/api/destinations/${destinationId}`, {
+      statusCode: 200,
+      body: mockDestination,
+    }).as('getDestinationForEdit');
+
+    cy.intercept('PUT', `**/api/destinations/${destinationId}`, (req) => {
+      const body =
+        typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      expect(body, 'PUT must include backend-required immutable fields').to.include.keys(
+        'type',
+        'schema',
+        'vaults',
+        'name',
+        'config'
+      );
+      expect(body.type).to.eq(mockDestination.type);
+      expect(body.schema).to.eq(mockDestination.schema);
+      expect(body.vaults).to.deep.eq(mockDestination.vaults);
+      req.reply({
+        statusCode: 200,
+        body: {
+          ...mockDestination,
+          name: body.name,
+          description: body.description,
+          config: body.config,
+          connection: body.connection,
+        },
+      });
+    }).as('putDestinationEdit');
+
+    cy.visit(`/destination/${destinationId}`);
+    cy.wait('@getDestinationForEdit');
+
+    cy.get('#destination-name').should('have.value', mockDestination.name);
+    cy.get('#destination-description').clear().type(' updated');
+
+    cy.contains('button', 'Save changes').click();
+    cy.contains('button', 'Confirm').click();
+
+    cy.wait('@putDestinationEdit');
+    cy.contains('edited successfully', { matchCase: false }).should('be.visible');
+  });
+});
+

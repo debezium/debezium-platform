@@ -32,6 +32,30 @@
         "connectionFieldLabel": "Connessione a {{val}}",
         "createConnection": "Crea connessione",
         "helperText": "Seleziona una connessione dall'elenco di quelle già create oppure creane una nuova."
+    },
+    "additionalProperties": {
+        "keyPlaceholder": "Chiave",
+        "valuePlaceholder": "Valore",
+        "integerPlaceholder": "Intero",
+        "keyAria": "Chiave proprietà aggiuntiva",
+        "valueTypeAria": "Tipo di valore",
+        "valueAria": "Valore proprietà aggiuntiva",
+        "integerAria": "Valore intero",
+        "removeRowAria": "Rimuovi riga",
+        "typeString": "Stringa",
+        "typeBoolean": "Booleano",
+        "typeInteger": "Intero",
+        "booleanTrue": "Vero",
+        "booleanFalse": "Falso",
+        "validationFailedTitle": "Configurazione aggiuntiva non valida",
+        "validationFailedDescription": "Correggi le righe evidenziate nelle proprietà aggiuntive prima di continuare.",
+        "errors": {
+            "duplicate_key": "Questa chiave è usata più volte tra le righe valide.",
+            "schema_collision": "Questa chiave è già impostata nel modulo di connessione sopra.",
+            "invalid_integer": "Inserisci un numero intero.",
+            "empty_key": "Inserisci una chiave oppure cancella il valore.",
+            "empty_value": "Inserisci un valore per questa chiave."
+        }
     }
 
 }
