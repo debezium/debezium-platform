@@ -18,7 +18,7 @@ import {
     type AdditionalPropertyValueKind,
 } from "@utils/additionalConfigProperties";
 import { getConnectorTypeName } from "@utils/helpers";
-import { AdditionalPropertiesRows } from "@components/connection/AdditionalPropertiesRows";
+import { AdditionalPropertiesRows } from "@components/AdditionalPropertiesRows";
 import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon, PlusIcon } from "@patternfly/react-icons";
 import { useState } from "react";
 import { API_URL } from "@utils/constants";
