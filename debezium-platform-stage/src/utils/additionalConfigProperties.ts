@@ -1,8 +1,3 @@
-/**
- * Shared logic for typed "additional configuration" rows (string, boolean, integer).
- * Intended for Connection now; Source/Destination can reuse the same helpers later.
- */
-
 export type AdditionalPropertyValueKind = "string" | "boolean" | "integer";
 
 export type AdditionalPropertyRow = {
@@ -10,7 +5,6 @@ export type AdditionalPropertyRow = {
   valueKind: AdditionalPropertyValueKind;
   stringValue: string;
   booleanValue: boolean;
-  /** Raw input for integer kind; parsed on validate/submit */
   integerInput: string;
 };
 
@@ -24,7 +18,6 @@ export function createEmptyAdditionalPropertyRow(): AdditionalPropertyRow {
   };
 }
 
-/** Build row state from an API config entry (flat key → value). */
 export function additionalPropertyRowFromApiValue(key: string, value: unknown): AdditionalPropertyRow {
   if (typeof value === "boolean") {
     return {
@@ -73,7 +66,7 @@ export function mapApiConfigToAdditionalRows(config: Record<string, unknown>): M
 }
 
 /**
- * When the user changes value kind, reset fields so we do not carry misleading state.
+ * When the user changes value kind, reset fields 
  */
 export function additionalRowWithNewValueKind(
   row: AdditionalPropertyRow,
@@ -115,7 +108,6 @@ type ParsedContributing =
   | { ok: false; rowId: string; reason: "empty_key" | "empty_value" | "invalid_integer" }
   | { ok: true; rowId: string; key: string; value: string | number | boolean };
 
-/** Blank placeholder row (no validation error). */
 function parseRow(rowId: string, row: AdditionalPropertyRow): ParsedContributing | null {
   if (row.key === "") {
     const hasValueWithoutKey =
@@ -178,10 +170,6 @@ function addRowError(
   rowErrorCodes.set(rowId, prev);
 }
 
-/**
- * Rule (B): error only when two sources would both contribute the same key in the merged config,
- * or duplicate contributing keys among additional rows. Keys compared as-is (case-sensitive, no trim).
- */
 export function validateAdditionalPropertyRows(
   rows: Map<string, AdditionalPropertyRow>,
   configFromForm: Record<string, string | number | boolean>
@@ -244,7 +232,6 @@ export function validateAdditionalPropertyRows(
   return { additionalFlat, rowIdsWithErrors, rowErrorCodes, hasErrors };
 }
 
-/** Merge schema form config with validated additional rows (additional overwrites on collision only when valid — callers should block on hasErrors first). */
 export function mergeConnectionConfig(
   configFromForm: Record<string, string | number | boolean>,
   additionalFlat: Record<string, string | number | boolean>
