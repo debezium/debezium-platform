@@ -125,10 +125,16 @@ public class PipelineMapper {
         return new DebeziumServerBuilder()
                 .withMetadata(new ObjectMetaBuilder()
                         .withName(pipeline.getName())
-                        .withLabels(Map.of(OperatorPipelineController.LABEL_DBZ_CONDUCTOR_ID, pipeline.getId().toString()))
+                        .withLabels(createLabels(pipeline))
                         .build())
                 .withSpec(specBuilder.build())
                 .build();
+    }
+
+    private Map<String, String> createLabels(PipelineFlat pipeline) {
+        Map<String, String> labels = new HashMap<>(pipelineConfigGroup.server().labels());
+        labels.put(OperatorPipelineController.LABEL_DBZ_CONDUCTOR_ID, pipeline.getId().toString());
+        return labels;
     }
 
     private Quarkus createQuarkus(PipelineFlat pipeline) {
