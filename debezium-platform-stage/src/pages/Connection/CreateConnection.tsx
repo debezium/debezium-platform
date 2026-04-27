@@ -1,5 +1,5 @@
 import PageHeader from "@components/PageHeader";
-import { ActionList, ActionListGroup, ActionListItem, Alert, Button, Card, CardBody, Content, Form, FormAlert, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, FormHelperText, Grid, HelperText, HelperTextItem, InputGroup, InputGroupItem, PageSection, Popover, Split, SplitItem, TextInput } from "@patternfly/react-core";
+import { ActionList, ActionListGroup, ActionListItem, Alert, Button, Card, CardBody, Content, Form, FormAlert, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, FormHelperText, HelperText, HelperTextItem, InputGroup, InputGroupItem, PageSection, Popover, TextInput } from "@patternfly/react-core";
 import * as React from "react";
 import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
@@ -8,8 +8,18 @@ import { Connection, ConnectionConfig, ConnectionPayload, ConnectionsSchema, Con
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
 import { buildFlatConfigFromFormData, buildNestedConnectionYupFields } from "@utils/connectionForm";
-import { convertMapToObject, getConnectorTypeName } from "@utils/helpers";
-import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon, PlusIcon, TrashIcon } from "@patternfly/react-icons";
+import {
+    additionalRowWithNewValueKind,
+    createEmptyAdditionalPropertyRow,
+    mergeConnectionConfig,
+    validateAdditionalPropertyRows,
+    type AdditionalPropertyRow,
+    type AdditionalPropertyRowErrorCode,
+    type AdditionalPropertyValueKind,
+} from "@utils/additionalConfigProperties";
+import { getConnectorTypeName } from "@utils/helpers";
+import { AdditionalPropertiesRows } from "@components/connection/AdditionalPropertiesRows";
+import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon, PlusIcon } from "@patternfly/react-icons";
 import { useState } from "react";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
@@ -24,8 +34,6 @@ export interface ICreateConnectionProps {
     handleConnectionModalToggle?: () => void;
     setSelectedConnection?: (connection: ConnectionConfig) => void;
 }
-
-type Properties = { key: string; value: string };
 
 type ConnectionFormValues = {
     [key: string]: string | number;
@@ -46,8 +54,11 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     const state = location.state as { connectionType?: string } | null;
     const connectionType = state ? state.connectionType : selectedConnectionType;
 
-    const [errorWarning, setErrorWarning] = useState<string[]>([]);
-    const [properties, setProperties] = useState<Map<string, Properties>>(new Map());
+    const [additionalPropertyErrors, setAdditionalPropertyErrors] = useState<{
+        rowIdsWithErrors: Set<string>;
+        rowErrorCodes: Map<string, AdditionalPropertyRowErrorCode[]>;
+    } | null>(null);
+    const [properties, setProperties] = useState<Map<string, AdditionalPropertyRow>>(() => new Map([["key0", createEmptyAdditionalPropertyRow()]]));
     const [keyCount, setKeyCount] = React.useState<number>(1);
 
     const { data: connectionsSchema = [] } = useQuery<ConnectionsSchema[], Error>("connectionsSchema", () =>
@@ -66,7 +77,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
 
     React.useEffect(() => {
         if (!selectedSchema) {
-            setProperties(new Map([["key0", { key: "", value: "" }]]));
+            setProperties(new Map([["key0", createEmptyAdditionalPropertyRow()]]));
         }
     }, [selectedSchema]);
 
@@ -79,34 +90,45 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
 
     const handleAddProperty = () => {
         const newKey = `key${keyCount}`;
+        setAdditionalPropertyErrors(null);
         setProperties(
             (prevProperties) =>
-                new Map(prevProperties.set(newKey, { key: "", value: "" }))
+                new Map(prevProperties.set(newKey, createEmptyAdditionalPropertyRow()))
         );
         setKeyCount((prevCount) => prevCount + 1);
     };
 
-    const handleDeleteProperty = (key: string) => {
+    const handleDeleteProperty = (rowId: string) => {
+        setAdditionalPropertyErrors(null);
         setProperties((prevProperties) => {
             const newProperties = new Map(prevProperties);
-            newProperties.delete(key);
+            newProperties.delete(rowId);
             return newProperties;
         });
     };
 
-    const handlePropertyChange = (
-        key: string,
-        type: "key" | "value",
-        newValue: string
-    ) => {
+    const handlePatchProperty = (rowId: string, patch: Partial<AdditionalPropertyRow>) => {
+        setAdditionalPropertyErrors(null);
         setProperties((prevProperties) => {
             const newProperties = new Map(prevProperties);
-            const property = newProperties.get(key);
-            if (property) {
-                if (type === "key") property.key = newValue;
-                else if (type === "value") property.value = newValue;
-                newProperties.set(key, property);
+            const cur = newProperties.get(rowId);
+            if (!cur) {
+                return prevProperties;
             }
+            newProperties.set(rowId, { ...cur, ...patch });
+            return newProperties;
+        });
+    };
+
+    const handleValueKindChange = (rowId: string, kind: AdditionalPropertyValueKind) => {
+        setAdditionalPropertyErrors(null);
+        setProperties((prevProperties) => {
+            const cur = prevProperties.get(rowId);
+            if (!cur) {
+                return prevProperties;
+            }
+            const newProperties = new Map(prevProperties);
+            newProperties.set(rowId, additionalRowWithNewValueKind(cur, kind));
             return newProperties;
         });
     };
@@ -177,26 +199,49 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
         }
     };
 
-    const buildConnectionPayload = (data: ConnectionFormValues): ConnectionPayload => {
+    const buildConnectionPayloadOrNull = (data: ConnectionFormValues): ConnectionPayload | null => {
         const { name } = data;
         const schemaPropertyKeys = selectedSchemaProperties?.properties
             ? Object.keys(selectedSchemaProperties.properties)
             : [];
-        const configFromForm = buildFlatConfigFromFormData(data as Record<string, unknown>, schemaPropertyKeys);
+        const configFromForm = buildFlatConfigFromFormData(data as Record<string, unknown>, schemaPropertyKeys) as Record<
+            string,
+            string | number | boolean
+        >;
+        const validation = validateAdditionalPropertyRows(properties, configFromForm);
+        if (validation.hasErrors) {
+            setAdditionalPropertyErrors({
+                rowIdsWithErrors: new Set(validation.rowIdsWithErrors),
+                rowErrorCodes: new Map(validation.rowErrorCodes),
+            });
+            return null;
+        }
+        setAdditionalPropertyErrors(null);
+        const mergedConfig = mergeConnectionConfig(configFromForm, validation.additionalFlat);
 
-        return selectedSchema ? ({
-            type: selectedSchema?.type.toUpperCase() || connectionId?.toUpperCase() || "",
-            config: { ...configFromForm, ...convertMapToObject(properties, errorWarning, setErrorWarning) },
-            name: name as string
-        } as ConnectionPayload) : {
-            type: connectionId?.toUpperCase() || "",
-            config: convertMapToObject(properties, errorWarning, setErrorWarning),
-            name: name as string
-        };
+        return selectedSchema
+            ? ({
+                  type: selectedSchema?.type.toUpperCase() || connectionId?.toUpperCase() || "",
+                  config: mergedConfig,
+                  name: name as string,
+              } as ConnectionPayload)
+            : {
+                  type: connectionId?.toUpperCase() || "",
+                  config: validation.additionalFlat,
+                  name: name as string,
+              };
     };
 
     const handleValidateFromForm = (data: ConnectionFormValues) => {
-        const payload = buildConnectionPayload(data);
+        const payload = buildConnectionPayloadOrNull(data);
+        if (!payload) {
+            addNotification(
+                "danger",
+                t("connection:additionalProperties.validationFailedTitle"),
+                t("connection:additionalProperties.validationFailedDescription")
+            );
+            return;
+        }
         if (selectedSchemaProperties) {
             void validateConnection(payload);
         } else {
@@ -205,7 +250,15 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     };
 
     const handleSaveFromForm = (data: ConnectionFormValues) => {
-        const payload = buildConnectionPayload(data);
+        const payload = buildConnectionPayloadOrNull(data);
+        if (!payload) {
+            addNotification(
+                "danger",
+                t("connection:additionalProperties.validationFailedTitle"),
+                t("connection:additionalProperties.validationFailedDescription")
+            );
+            return;
+        }
         if (selectedSchemaProperties && !connectionValidated) {
             return;
         }
@@ -407,62 +460,15 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                 }
                             >
                                 <>
-                                    {Array.from(properties.keys()).map((key) => (
-                                        <Split hasGutter key={key}>
-                                            <SplitItem isFilled>
-                                                <Grid hasGutter md={6}>
-                                                    <FormGroup
-                                                        label=""
-                                                        isRequired
-                                                        fieldId={`${connectionType}-config-props-key-field-${key}`}
-                                                    >
-                                                        <TextInput
-                                                            //   readOnlyVariant={viewMode ? "default" : undefined}
-                                                            isRequired
-                                                            type="text"
-                                                            placeholder="Key"
-                                                            validated={errorWarning.includes(key) ? "error" : "default"}
-                                                            id={`${connectionType}-config-props-key-${key}`}
-                                                            name={`${connectionType}-config-props-key-${key}`}
-                                                            value={properties.get(key)?.key || ""}
-                                                            onChange={(_e, value) =>
-                                                                handlePropertyChange(key, "key", value)
-                                                            }
-                                                        />
-                                                    </FormGroup>
-                                                    <FormGroup
-                                                        label=""
-                                                        isRequired
-                                                        fieldId={`${connectionId}-config-props-value-field-${key}`}
-                                                    >
-                                                        <TextInput
-                                                            // readOnlyVariant={viewMode ? "default" : undefined}
-                                                            isRequired
-                                                            type="text"
-                                                            id={`${connectionId}-config-props-value-${key}`}
-                                                            placeholder="Value"
-                                                            validated={errorWarning.includes(key) ? "error" : "default"}
-                                                            name={`${connectionId}-config-props-value-${key}`}
-                                                            value={properties.get(key)?.value || ""}
-                                                            onChange={(_e, value) =>
-                                                                handlePropertyChange(key, "value", value)
-                                                            }
-                                                        />
-                                                    </FormGroup>
-                                                </Grid>
-                                            </SplitItem>
-                                            <SplitItem>
-                                                <Button
-                                                    variant="plain"
-                                                    // isDisabled={viewMode}
-                                                    aria-label="Remove"
-                                                    onClick={() => handleDeleteProperty(key)}
-                                                >
-                                                    <TrashIcon />
-                                                </Button>
-                                            </SplitItem>
-                                        </Split>
-                                    ))}
+                                    <AdditionalPropertiesRows
+                                        fieldIdPrefix={`${connectionType ?? connectionId ?? "connection"}-config-props`}
+                                        properties={properties}
+                                        rowIdsWithErrors={additionalPropertyErrors?.rowIdsWithErrors ?? new Set()}
+                                        rowErrorCodes={additionalPropertyErrors?.rowErrorCodes ?? new Map()}
+                                        onDeleteRow={handleDeleteProperty}
+                                        onPatchRow={handlePatchProperty}
+                                        onValueKindChange={handleValueKindChange}
+                                    />
                                 </>
                             </FormFieldGroup>
                         </Form>
