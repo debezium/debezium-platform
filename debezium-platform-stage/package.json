@@ -92,7 +92,7 @@
     "eslint-plugin-storybook": "^9.0.7",
     "jsdom": "^29.0.2",
     "msw": "^2.13.1",
-    "start-server-and-test": "^3.0.0",
+    "start-server-and-test": "^3.0.2",
     "storybook": "^8.6.17",
     "typescript": "^5.2.2",
     "vite": "^6.4.2",
