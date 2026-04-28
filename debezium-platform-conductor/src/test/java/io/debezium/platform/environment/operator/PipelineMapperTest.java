@@ -45,7 +45,7 @@ public class PipelineMapperTest {
     void setUp() {
 
         when(tableNameResolver.resolve(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
-        when(pipelineConfigGroup.server().labels()).thenReturn(Map.of());
+        when(pipelineConfigGroup.labels()).thenReturn(Map.of());
 
         pipelineMapper = new PipelineMapper(pipelineConfigGroup, tableNameResolver);
     }
@@ -78,7 +78,7 @@ public class PipelineMapperTest {
 
     @Test
     public void testMapper_ShouldMergeConfiguredLabelsWithConductorLabel() {
-        when(pipelineConfigGroup.server().labels()).thenReturn(Map.of("argocd.argoproj.io/instance", "debezium-platform"));
+        when(pipelineConfigGroup.labels()).thenReturn(Map.of("argocd.argoproj.io/instance", "debezium-platform"));
 
         var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
                 DATABASE, "customers",

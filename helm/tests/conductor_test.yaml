@@ -258,3 +258,18 @@ tests:
       - equal:
           path: spec.rules[0].host
           value: legacy.example.com
+
+  - it: should configure pipeline labels via env variables
+    template: conductor-deployment.yaml
+    set:
+      env:
+        - name: PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE
+          value: debezium-platform
+    asserts:
+      - isKind:
+          of: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE
+            value: debezium-platform

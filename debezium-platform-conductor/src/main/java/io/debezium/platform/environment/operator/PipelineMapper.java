@@ -132,7 +132,7 @@ public class PipelineMapper {
     }
 
     private Map<String, String> createLabels(PipelineFlat pipeline) {
-        Map<String, String> labels = new HashMap<>(pipelineConfigGroup.server().labels());
+        Map<String, String> labels = new HashMap<>(pipelineConfigGroup.labels());
         labels.put(OperatorPipelineController.LABEL_DBZ_CONDUCTOR_ID, pipeline.getId().toString());
         return labels;
     }
