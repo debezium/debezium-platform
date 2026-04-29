@@ -1,6 +1,6 @@
 import { screen, fireEvent } from "@testing-library/react";
 import { render as rtlRender } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from "vitest";
 import {
   GuidedTourProvider,
   useGuidedTour,
