@@ -262,9 +262,8 @@ tests:
   - it: should configure pipeline labels via env variables
     template: conductor-deployment.yaml
     set:
-      env:
-        - name: PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE
-          value: debezium-platform
+      pipeline.labels:
+        argocd.argoproj.io/instance: debezium-platform
     asserts:
       - isKind:
           of: Deployment
@@ -272,4 +271,4 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE
-            value: debezium-platform
+            value: "debezium-platform"

@@ -73,4 +73,8 @@ spec:
             - name: {{ .name }}
               value: {{ .value }}
 {{- end }}
+{{- range $key, $value := .Values.pipeline.labels }}
+            - name: PIPELINE_LABELS_{{ $key | upper | replace "." "_" | replace "/" "_" | replace "-" "_" }}
+              value: {{ $value | quote }}
+{{- end }}
       restartPolicy: Always
