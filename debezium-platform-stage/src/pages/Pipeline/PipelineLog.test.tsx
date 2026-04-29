@@ -88,6 +88,9 @@ class MockWebSocket {
   send = vi.fn();
   url: string;
 
+  addEventListener(): void {}
+  removeEventListener(): void {}
+
   constructor(url: string) {
     this.url = url;
   }

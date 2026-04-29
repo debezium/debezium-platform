@@ -22,11 +22,9 @@ const UserAvatar: React.FC = () => {
   };
 
   const userDropdownItems = [
-    <>
-      <DropdownItem key="group 2 profile">My profile</DropdownItem>
-      <DropdownItem key="group 2 user">User management</DropdownItem>
-      <DropdownItem key="group 2 logout">Logout</DropdownItem>
-    </>,
+    <DropdownItem key="profile">My profile</DropdownItem>,
+    <DropdownItem key="user">User management</DropdownItem>,
+    <DropdownItem key="logout">Logout</DropdownItem>,
   ];
 
   return (

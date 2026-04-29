@@ -65,7 +65,6 @@ const PipelineLog: FC<PipelineLogProps> = ({
   useEffect(() => {
     const isActive = activeTabKey === "logs";
     if (!isActive && wsRef.current) {
-      console.log("Closing WebSocket connection as log tab is not active");
       wsRef.current.close();
       wsRef.current = null;
     }
@@ -106,6 +105,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
         }
 
         setLogs(uniqueInitialLogs);
+        setIsWebSocketLoading(false);
 
         // open WebSocket for real-time updates only if tab is active
         const webSocketURL = API_URL.replace(/^https?/, "ws");
@@ -147,7 +147,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
         };
 
         wsRef.current.onclose = () => {
-          console.log("WebSocket connection closed");
+          console.log("WebSocket connection closed");  
           setIsWebSocketLoading(false);
         };
       })
