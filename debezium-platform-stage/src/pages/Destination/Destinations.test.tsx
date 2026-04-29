@@ -72,7 +72,7 @@ describe("Destinations", () => {
       isLoading: true,
     } as any);
     render(<Destinations />);
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
   });
 
   it("displays error message when API fails", async () => {
