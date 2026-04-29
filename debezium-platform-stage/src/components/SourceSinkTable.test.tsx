@@ -58,22 +58,24 @@ const sourceInstance = {
 
 describe("SourceSinkTable", () => {
   const addNotification = vi.fn();
-  let mutate: ReturnType<typeof vi.fn>;
+  let deletedUrls: string[];
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mutate = vi.fn();
+    deletedUrls = [];
     vi.mocked(useQuery).mockReturnValue({
       data: pipelinesMock,
       error: null,
       isLoading: false,
     } as any);
-    vi.mocked(useDeleteData).mockImplementation((opts: any) => ({
-      mutate: vi.fn((url: string) => {
-        mutate(url);
-        opts?.onSuccess?.();
+    vi.mocked(useDeleteData).mockImplementation(
+      (opts: any): any => ({
+        mutate: vi.fn((url: string) => {
+          deletedUrls.push(url);
+          opts?.onSuccess?.();
+        }),
       }),
-    }));
+    );
     vi.mocked(useNotification).mockReturnValue({
       addNotification,
     } as any);
@@ -128,8 +130,8 @@ describe("SourceSinkTable", () => {
     await user.click(within(dialog).getByRole("button", { name: /^delete$/i }));
 
     await waitFor(() => {
-      expect(mutate).toHaveBeenCalledWith(
-        expect.stringContaining("/api/destinations/9"),
+      expect(deletedUrls.some((u) => u.includes("/api/destinations/9"))).toBe(
+        true,
       );
     });
     expect(addNotification).toHaveBeenCalledWith(
@@ -140,11 +142,13 @@ describe("SourceSinkTable", () => {
   });
 
   it("notifies on delete error", async () => {
-    vi.mocked(useDeleteData).mockImplementation((opts: any) => ({
-      mutate: vi.fn(() => {
-        opts?.onError?.(new Error("boom"));
+    vi.mocked(useDeleteData).mockImplementation(
+      (opts: any): any => ({
+        mutate: vi.fn(() => {
+          opts?.onError?.(new Error("boom"));
+        }),
       }),
-    }));
+    );
 
     const user = userEvent.setup();
     render(

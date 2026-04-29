@@ -58,17 +58,19 @@ const connectionRow: Connection = {
 
 describe("ConnectionTable", () => {
   const addNotification = vi.fn();
-  let mutate: ReturnType<typeof vi.fn>;
+  let deletedUrls: string[];
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mutate = vi.fn();
-    vi.mocked(useDeleteData).mockImplementation((opts: any) => ({
-      mutate: vi.fn((url: string) => {
-        mutate(url);
-        opts?.onSuccess?.();
+    deletedUrls = [];
+    vi.mocked(useDeleteData).mockImplementation(
+      (opts: any): any => ({
+        mutate: vi.fn((url: string) => {
+          deletedUrls.push(url);
+          opts?.onSuccess?.();
+        }),
       }),
-    }));
+    );
     vi.mocked(useNotification).mockReturnValue({
       addNotification,
     } as any);
@@ -132,8 +134,8 @@ describe("ConnectionTable", () => {
     await user.click(within(dialog).getByRole("button", { name: /^delete$/i }));
 
     await waitFor(() => {
-      expect(mutate).toHaveBeenCalledWith(
-        expect.stringContaining("/api/connections/42"),
+      expect(deletedUrls.some((u) => u.includes("/api/connections/42"))).toBe(
+        true,
       );
     });
     expect(addNotification).toHaveBeenCalledWith(
@@ -166,15 +168,17 @@ describe("ConnectionTable", () => {
   });
 
   it("posts a structured delete error notification", async () => {
-    vi.mocked(useDeleteData).mockImplementation((opts: any) => ({
-      mutate: vi.fn(() => {
-        opts?.onError?.(
-          new Error(
-            "prefix: [ERROR:summary text Detail: detail text] trailing",
-          ),
-        );
+    vi.mocked(useDeleteData).mockImplementation(
+      (opts: any): any => ({
+        mutate: vi.fn(() => {
+          opts?.onError?.(
+            new Error(
+              "prefix: [ERROR:summary text Detail: detail text] trailing",
+            ),
+          );
+        }),
       }),
-    }));
+    );
 
     const user = userEvent.setup();
     render(

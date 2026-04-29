@@ -102,7 +102,7 @@ describe("getConnectionRole", () => {
 describe("openDBZIssues", () => {
   it("focuses the window when popup succeeds", () => {
     const focus = vi.fn();
-    vi.spyOn(window, "open").mockReturnValue({ focus } as Window);
+    vi.spyOn(window, "open").mockReturnValue({ focus } as unknown as Window);
     openDBZIssues();
     expect(focus).toHaveBeenCalled();
   });
