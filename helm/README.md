@@ -60,6 +60,7 @@ you `values.yaml` with your domain.
 | schemaHistory.database.auth.username       | Database username                                                                                                                                                                      | user                                       |
 | schemaHistory.database.auth.password       | Database password                                                                                                                                                                      | password                                   |                                                                                                                                                                       |                                                                                                                                                                                 |                                             |
 | env                                        | List of env variable to pass to the conductor                                                                                                                                          | []                                         |
+| pipeline.labels                            | Map of labels to apply to DebeziumServer custom resources created by pipelines. These labels are merged with the internal `debezium.io/conductor-id` label.                            | {}                                         |
 
 ## Descriptor OCI Artifacts
 
@@ -156,6 +157,23 @@ server:
   server:
     image: ""  # Operator's ServerImageProvider determines the image
   ```
+
+## Pipeline Labels
+
+You can configure labels that will be applied to all DebeziumServer custom resources created by pipelines. These labels are merged with the internal `debezium.io/conductor-id` label that is always set automatically.
+
+This is useful for integrating with tools like ArgoCD that rely on labels to track and group resources.
+
+### Configuration
+
+```yaml
+pipeline:
+  labels:
+    argocd.argoproj.io/instance: debezium-platform
+    team: data-engineering
+```
+
+The labels are automatically converted to environment variables for the Conductor pod (e.g., `PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE`).
 
 # Install
 

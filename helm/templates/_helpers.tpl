@@ -106,3 +106,12 @@ Get the domain URL, with backward compatibility to deprecated .Values.domain.url
 {{- define "debezium-platform.domainName" -}}
 {{ default .Values.domain.name .Values.domain.url }}
 {{- end -}}
+
+{{/*
+Converts a key to an environment variable name with a given prefix.
+Usage: include "debezium-platform.toEnv" (dict "prefix" "PIPELINE_LABELS" "key" "argocd.argoproj.io/instance")
+Result: PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE
+*/}}
+{{- define "debezium-platform.toEnv" -}}
+{{ .prefix }}_{{ .key | upper | replace "." "_" | replace "/" "_" | replace "-" "_" }}
+{{- end -}}
