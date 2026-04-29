@@ -74,7 +74,7 @@ spec:
               value: {{ .value }}
 {{- end }}
 {{- range $key, $value := .Values.pipeline.labels }}
-            - name: PIPELINE_LABELS_{{ $key | upper | replace "." "_" | replace "/" "_" | replace "-" "_" }}
+            - name: {{ include "debezium-platform.toEnv" (dict "prefix" "PIPELINE_LABELS" "key" $key) | trim }}
               value: {{ $value | quote }}
 {{- end }}
       restartPolicy: Always
