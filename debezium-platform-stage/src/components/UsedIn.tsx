@@ -2,7 +2,7 @@ import { Button, Label, Popover } from "@patternfly/react-core"
 import { DataSinkIcon, DataSourceIcon } from "@patternfly/react-icons"
 import { MigrationIcon as PipelineIcon } from "@patternfly/react-icons";
 import { t } from "i18next"
-import { FC } from "react"
+import { FC, Fragment } from "react"
 import { useNavigate } from "react-router-dom"
 import { sourcePageNavState } from "@sourcePage/sourcePageNavigation"
 import { Connection, Destination, Pipeline, ResourceType, Source, TransformData } from "src/apis"
@@ -98,16 +98,15 @@ const UsedIn: FC<IUsedInProps> = ({ resourceList, resourceType, instance, reques
                     })}
                     {
                         getActiveResourceDetails(resourceList as Source[] | Destination[] | Pipeline[], instance.id).map(({ name, id }, idx, arr) => (
-                            <>
+                            <Fragment key={id}>
                                 <Button
                                     variant="link"
                                     isInline
-                                    key={id}
                                     onClick={() => onNameClick(id)}
                                 >
                                     {name}
                                 </Button>{idx === arr.length - 1 ? "." : ", "}
-                            </>
+                            </Fragment>
                         ))
                     }
                 </div>

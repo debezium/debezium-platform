@@ -23,13 +23,11 @@ const UserAvatarCompact: React.FC = () => {
   };
 
   const userDropdownItems = [
-    <>
-      <DropdownItem key="group 2 ">Username</DropdownItem>
-      <Divider component="li" key="separator" />
-      <DropdownItem key="group 2 profile">My profile</DropdownItem>
-      <DropdownItem key="group 2 user">User management</DropdownItem>
-      <DropdownItem key="group 2 logout">Logout</DropdownItem>
-    </>,
+    <DropdownItem key="username">Username</DropdownItem>,
+    <Divider component="li" key="separator" />,
+    <DropdownItem key="profile">My profile</DropdownItem>,
+    <DropdownItem key="user">User management</DropdownItem>,
+    <DropdownItem key="logout">Logout</DropdownItem>,
   ];
 
   return (
