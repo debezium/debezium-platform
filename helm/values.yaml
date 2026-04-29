@@ -29,17 +29,17 @@ conductor:
       image: debezium/debezium-descriptors
       tag: nightly
       mountPath: /opt/descriptors
-      # Image pull policy for the descriptors OCI image.
-      imagePullPolicy: IfNotPresent
-      # Overrides global imagePullSecrets for the descriptors image.
-      imagePullSecrets: []
+      # imagePullPolicy removed - not applicable for ORAS-based pulls
+      # imagePullSecrets replaced by auth.existingSecret for ORAS credentials
+      auth:
+        existingSecret: ""  # Secret must contain keys: username, password
 
 server:
   image: ""
-  # Image pull policy for Debezium Server instances.
-  imagePullPolicy: IfNotPresent
-  # Overrides global imagePullSecrets for the Debezium Server image.
+  # imagePullPolicy is not yet supported by DebeziumOperator.
+  # Tracked in: https://github.com/debezium/debezium/issues/1851
   imagePullSecrets: []
+
 ingress:
   enabled: true
   className: ""
