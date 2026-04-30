@@ -71,7 +71,6 @@ destinations:
   pulsar:
     connection:
       timeout: 60
-
   rabbitmq:
     connection:
       timeout: 60
@@ -123,6 +122,8 @@ quarkus:
       "registry":
         host: ${conductor.descriptors.image.registry}
         enabled: true
+        username: ${CONDUCTOR_DESCRIPTORS_REGISTRY_USERNAME:}
+        password: ${CONDUCTOR_DESCRIPTORS_REGISTRY_PASSWORD:}
 
 "%dev":
   conductor:

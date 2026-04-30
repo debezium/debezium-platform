@@ -1,12 +1,25 @@
 domain:
   url: ""
   name: ""
+
+# Global imagePullSecrets applied to all container images by default.
+# Per-component imagePullSecrets override this value (not merged).
+# Example:
+#   imagePullSecrets:
+#     - name: my-registry-secret
+imagePullSecrets: []
+
 stage:
   image: quay.io/debezium/platform-stage:nightly
   imagePullPolicy: IfNotPresent
+  # Overrides global imagePullSecrets for the stage image.
+  imagePullSecrets: []
+
 conductor:
   image: quay.io/debezium/platform-conductor:nightly
   imagePullPolicy: IfNotPresent
+  # Overrides global imagePullSecrets for the conductor image.
+  imagePullSecrets: []
   offset:
     existingConfigMap: ""
   descriptors:
@@ -16,8 +29,17 @@ conductor:
       image: debezium/debezium-descriptors
       tag: nightly
       mountPath: /opt/descriptors
+      # imagePullPolicy removed - not applicable for ORAS-based pulls
+      # imagePullSecrets replaced by auth.existingSecret for ORAS credentials
+      auth:
+        existingSecret: ""  # Secret must contain keys: username, password
+
 server:
   image: ""
+  # imagePullPolicy is not yet supported by DebeziumOperator.
+  # Tracked in: https://github.com/debezium/debezium/issues/1851
+  imagePullSecrets: []
+
 ingress:
   enabled: true
   className: ""

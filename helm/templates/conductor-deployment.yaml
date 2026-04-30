@@ -22,6 +22,11 @@ spec:
         app.kubernetes.io/name: conductor
     spec:
       serviceAccountName: conductor-service-account
+{{- $pullSecrets := coalesce .Values.conductor.imagePullSecrets .Values.imagePullSecrets | default list }}
+{{- if gt (len $pullSecrets) 0 }}
+      imagePullSecrets:
+        {{- toYaml $pullSecrets | nindent 8 }}
+{{- end }}
       containers:
         - name: conductor
           image: {{ .Values.conductor.image }}
@@ -62,6 +67,18 @@ spec:
               value: {{ .Values.conductor.descriptors.official.image }}
             - name: CONDUCTOR_DESCRIPTORS_IMAGE_TAG
               value: {{ .Values.conductor.descriptors.official.tag }}
+{{- if and .Values.conductor.descriptors.official.auth .Values.conductor.descriptors.official.auth.existingSecret }}
+            - name: CONDUCTOR_DESCRIPTORS_REGISTRY_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.conductor.descriptors.official.auth.existingSecret }}
+                  key: username
+            - name: CONDUCTOR_DESCRIPTORS_REGISTRY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.conductor.descriptors.official.auth.existingSecret }}
+                  key: password
+{{- end }}
 {{- end }}
 {{- if .Values.server.image }}
             - name: PIPELINE_SERVER_IMAGE
