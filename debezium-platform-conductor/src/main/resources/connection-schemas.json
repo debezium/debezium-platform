@@ -200,6 +200,46 @@
     }
   },
   {
+    "type": "MONGODB",
+    "schema": {
+      "title": " MongoDb connection properties",
+      "description": " MongoDb connection properties",
+      "type": "object",
+      "required": [
+        "mongodb.connection.string"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "mongodb.connection.string": {
+          "type": "string",
+          "title": "Database connection string"
+        },
+        "hostname": {
+          "type": "string",
+          "title": "The hostname of the database"
+        },
+        "port": {
+          "type": "integer",
+          "title": "The port of the database"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username to connect to the database"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password to connect to the database"
+        },
+        "database": {
+          "type": "string",
+          "title": "The name of the database"
+        }
+      }
+    }
+  },
+  {
     "type": "KAFKA",
     "schema": {
       "title": "Kafka connection properties",
