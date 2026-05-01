@@ -12,6 +12,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.notNullValue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -98,6 +99,22 @@ class ConnectionSchemasResourceIT {
                 .body("[0].schema.title", equalTo("PostgreSQL connection properties"))
                 .body("[0].schema.description", equalTo("PostgreSQL connection properties"))
                 .body("[0].schema.type", equalTo("object"));
+    }
+
+    @Test
+    void shouldContainMilvusSchema() {
+
+        given()
+                .when()
+                .get("/api/connections/schemas")
+                .then()
+                .statusCode(200)
+                .contentType(ContentType.JSON)
+                .body("find { it.type == 'MILVUS' }", notNullValue())
+                .body("find { it.type == 'MILVUS' }.schema.required", hasItems("uri"))
+                .body("find { it.type == 'MILVUS' }.schema.properties", hasKey("uri"))
+                .body("find { it.type == 'MILVUS' }.schema.properties", hasKey("database"))
+                .body("find { it.type == 'MILVUS' }.schema.properties.uri.type", equalTo("string"));
     }
 
     /*
