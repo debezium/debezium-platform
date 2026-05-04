@@ -7,6 +7,7 @@ package io.debezium.platform.data.dto;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
+import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.environment.database.DatabaseConnectionConfiguration;
 
 public class SignalCollectionVerifyRequest {
@@ -15,9 +16,18 @@ public class SignalCollectionVerifyRequest {
     // that is not a record since @JsonUnwrapped is not supported
     @JsonUnwrapped
     private DatabaseConnectionConfiguration connectionConfig;
+    private ConnectionEntity.Type connectionType;
     private String fullyQualifiedTableName;
 
     public SignalCollectionVerifyRequest() {
+    }
+
+    public SignalCollectionVerifyRequest(DatabaseConnectionConfiguration connectionConfig,
+                                         ConnectionEntity.Type connectionType,
+                                         String fullyQualifiedTableName) {
+        this.connectionConfig = connectionConfig;
+        this.connectionType = connectionType;
+        this.fullyQualifiedTableName = fullyQualifiedTableName;
     }
 
     public SignalCollectionVerifyRequest(DatabaseConnectionConfiguration connectionConfig,
@@ -32,6 +42,14 @@ public class SignalCollectionVerifyRequest {
 
     public void setConnectionConfig(DatabaseConnectionConfiguration connectionConfig) {
         this.connectionConfig = connectionConfig;
+    }
+
+    public ConnectionEntity.Type getConnectionType() {
+        return connectionType;
+    }
+
+    public void setConnectionType(ConnectionEntity.Type connectionType) {
+        this.connectionType = connectionType;
     }
 
     public String fullyQualifiedTableName() {
