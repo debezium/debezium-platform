@@ -9,8 +9,6 @@ import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
 import java.util.Optional;
 
-import io.debezium.platform.environment.connection.source.SourceInspector;
-import io.debezium.platform.environment.connection.source.SourceInspectorFactory;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -26,6 +24,8 @@ import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import io.debezium.platform.data.model.SourceEntity;
 import io.debezium.platform.domain.views.Source;
 import io.debezium.platform.domain.views.refs.SourceReference;
+import io.debezium.platform.environment.connection.source.SourceInspector;
+import io.debezium.platform.environment.connection.source.SourceInspectorFactory;
 
 @ApplicationScoped
 public class SourceService extends AbstractService<SourceEntity, Source, SourceReference> {
@@ -49,15 +49,14 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
     public SignalDataCollectionVerifyResponse verifySignalDataCollection(SignalCollectionVerifyRequest signalCollectionVerifyRequest) {
 
         try {
-            SourceInspector sourceInspector =
-                    sourceInspectorFactory.getSourceInspector(signalCollectionVerifyRequest.getConnectionType());
+            SourceInspector sourceInspector = sourceInspectorFactory.getSourceInspector(signalCollectionVerifyRequest.getConnectionType());
 
             return sourceInspector.verifyDataCollectionStructure(signalCollectionVerifyRequest);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             LOGGER.error("Failed to verify signal data collection structure: {}", e.getMessage(), e);
             return new SignalDataCollectionVerifyResponse(false, e.getMessage());
         }
-
 
     }
 }

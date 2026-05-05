@@ -1,9 +1,15 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.debezium.platform.environment.connection.source;
 
-import io.debezium.platform.data.model.ConnectionEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.literal.NamedLiteral;
+
+import io.debezium.platform.data.model.ConnectionEntity;
 
 @ApplicationScoped
 public class SourceInspectorFactory {

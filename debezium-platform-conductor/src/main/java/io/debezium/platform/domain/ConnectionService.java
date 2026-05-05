@@ -28,8 +28,8 @@ import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.domain.views.refs.ConnectionReference;
 import io.debezium.platform.environment.connection.ConnectionValidator;
 import io.debezium.platform.environment.connection.ConnectionValidatorFactory;
-import io.debezium.platform.environment.connection.source.CollectionListingProvider;
-import io.debezium.platform.environment.connection.source.CollectionListingProviderFactory;
+import io.debezium.platform.environment.connection.source.SourceInspector;
+import io.debezium.platform.environment.connection.source.SourceInspectorFactory;
 import io.debezium.platform.error.NotFoundException;
 
 @ApplicationScoped
@@ -38,14 +38,14 @@ public class ConnectionService extends AbstractService<ConnectionEntity, Connect
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionService.class);
 
     private final ConnectionValidatorFactory connectionValidatorFactory;
-    private final CollectionListingProviderFactory collectionListingProviderFactory;
+    private final SourceInspectorFactory sourceInspectorFactory;
 
     public ConnectionService(EntityManager em, CriteriaBuilderFactory cbf, EntityViewManager evm,
-                             ConnectionValidatorFactory connectionValidatorFactory, CollectionListingProviderFactory collectionListingProviderFactory) {
+                             ConnectionValidatorFactory connectionValidatorFactory, SourceInspectorFactory sourceInspectorFactory) {
         super(ConnectionEntity.class, Connection.class, ConnectionReference.class, em, cbf, evm);
 
         this.connectionValidatorFactory = connectionValidatorFactory;
-        this.collectionListingProviderFactory = collectionListingProviderFactory;
+        this.sourceInspectorFactory = sourceInspectorFactory;
     }
 
     @Transactional(SUPPORTS)
@@ -65,9 +65,9 @@ public class ConnectionService extends AbstractService<ConnectionEntity, Connect
 
         Connection connectionConfig = findById(id).orElseThrow(() -> new NotFoundException(id));
 
-        CollectionListingProvider collectionListingProvider = collectionListingProviderFactory.getCollectionListingProvider(connectionConfig.getType().name());
+        SourceInspector sourceInspector = sourceInspectorFactory.getSourceInspector(connectionConfig.getType());
 
-        return collectionListingProvider.listAvailableCollections(connectionConfig);
+        return sourceInspector.listAvailableCollections(connectionConfig);
     }
 
 }
