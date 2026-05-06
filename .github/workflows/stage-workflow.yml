@@ -95,3 +95,37 @@ jobs:
       
       - name: Run tests
         run: yarn test
+
+  e2e-tests:
+    name: "Run E2E tests"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: debezium-platform-stage
+    strategy:
+      matrix:
+        node-version: [24.x]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Cache Yarn dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.yarn/cache
+            debezium-platform-stage/node_modules
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-yarn-${{ hashFiles('debezium-platform-stage/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ matrix.node-version }}-yarn-
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run E2E tests
+        run: yarn e2e:ci
