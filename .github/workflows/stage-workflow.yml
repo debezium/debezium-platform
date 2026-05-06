@@ -123,11 +123,11 @@ jobs:
       - name: Wait for Conductor to be ready
         run: |
           set -e
-          if ! timeout 300 bash -c 'until curl -sf http://localhost:8080/api/pipelines > /dev/null; do
+          if ! timeout 600 bash -c 'until curl -sf http://localhost:8080/api/pipelines > /dev/null; do
             echo "Waiting for Conductor... ($(date +%T))"
             sleep 3
           done'; then
-            echo "::error::Conductor did not respond on http://localhost:8080/api/pipelines within 300s"
+            echo "::error::Conductor did not respond on http://localhost:8080/api/pipelines within 600s"
             docker compose ps -a
             docker compose logs --no-color --tail=200 postgres conductor || true
             exit 1
