@@ -97,91 +97,58 @@ jobs:
         run: yarn test
       
   e2e-tests:
-      name: "Run E2E tests"
-      runs-on: ubuntu-latest
-      defaults:
-        run:
-          working-directory: debezium-platform-stage
-      strategy:
-        matrix:
-          node-version: [24.x]
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v6
+    name: "Run E2E tests"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: debezium-platform-stage
+    strategy:
+      matrix:
+        node-version: [24.x]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-        - name: Setup Node.js ${{ matrix.node-version }}
-          uses: actions/setup-node@v6
-          with:
-            node-version: ${{ matrix.node-version }}
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
 
-        # Build Conductor image (similar to conductor workflow)
-        - name: Set up Java for Conductor build
-          uses: actions/setup-java@v5
-          with:
-            distribution: 'temurin'
-            java-version: '21'
+      # Stack matches debezium-platform-stage/compose.yml (Postgres + nightly Conductor).
+      - name: Start Postgres and Conductor (pull nightly)
+        run: |
+          docker compose pull postgres conductor
+          docker compose up -d postgres conductor
 
-        - name: Build Conductor container image
-          working-directory: debezium-platform-conductor
-          run: |
-            ./mvnw clean package -DskipTests \
-              -Dquarkus.container-image.build=true \
-              -Dquarkus.container-image.tag=ci-test
+      - name: Wait for Conductor to be ready
+        run: |
+          timeout 180 bash -c 'until curl -sf http://localhost:8080/api/pipelines > /dev/null; do
+            echo "Waiting for Conductor... ($(date +%T))"
+            sleep 3
+          done'
+          echo "Conductor is ready."
 
-        # Start services using the built image
-        - name: Start Postgres database
-          run: |
-            docker run -d --name postgres \
-              -e POSTGRES_USER=conductor \
-              -e POSTGRES_PASSWORD=conductor \
-              -e POSTGRES_DB=conductor \
-              -p 5432:5432 \
-              quay.io/debezium/postgres:14-alpine
+      - name: Cache Yarn dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.yarn/cache
+            debezium-platform-stage/node_modules
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-yarn-${{ hashFiles('debezium-platform-stage/yarn.lock') }}
 
-        - name: Start Conductor backend
-          run: |
-            docker run -d --name conductor \
-              -e QUARKUS_PROFILE=dev \
-              -e QUARKUS_DATASOURCE_USERNAME=conductor \
-              -e QUARKUS_DATASOURCE_PASSWORD=conductor \
-              -e QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://host.docker.internal:5432/conductor \
-              -e QUARKUS_HTTP_CORS_ORIGINS=http://localhost:3000 \
-              -p 8080:8080 \
-              --add-host=host.docker.internal:host-gateway \
-              quay.io/debezium/platform-conductor:ci-test
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
-        - name: Wait for Conductor to be ready
-          run: |
-            timeout 120 bash -c 'until curl -sf http://localhost:8080/api/pipelines > /dev/null; do 
-              echo "Waiting for Conductor... ($(date +%T))"
-              sleep 3
-            done'
-            echo "✅ Conductor is ready!"
+      - name: Install Cypress binary
+        run: yarn cypress install
 
-        # Continue with existing steps
-        - name: Cache Yarn dependencies
-          uses: actions/cache@v5
-          with:
-            path: |
-              ~/.yarn/cache
-              debezium-platform-stage/node_modules
-            key: ${{ runner.os }}-node-${{ matrix.node-version }}-yarn-${{ hashFiles('debezium-platform-stage/yarn.lock') }}
+      - name: Run E2E tests
+        run: yarn e2e:ci
 
-        - name: Install dependencies
-          run: yarn install --frozen-lockfile
+      - name: Show Compose service logs on failure
+        if: failure()
+        run: docker compose logs --no-color postgres conductor 2>&1 || true
 
-        - name: Install Cypress binary
-          run: yarn cypress install
-
-        - name: Run E2E tests
-          run: yarn e2e:ci
-
-        - name: Show Conductor logs on failure
-          if: failure()
-          run: docker logs conductor
-
-        - name: Cleanup
-          if: always()
-          run: |
-            docker stop conductor postgres || true
-            docker rm conductor postgres || true
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
