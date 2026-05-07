@@ -95,3 +95,65 @@ jobs:
       
       - name: Run tests
         run: yarn test
+      
+  e2e-tests:
+    name: "Run E2E tests"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: debezium-platform-stage
+    strategy:
+      matrix:
+        node-version: [24.x]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Start Postgres and Conductor (pull nightly)
+        run: |
+          docker compose pull postgres conductor
+          docker compose up -d postgres conductor
+
+      - name: Wait for Conductor to be ready
+        run: |
+          set -e
+          if ! timeout 600 bash -c 'until curl -sf http://localhost:8080/api/pipelines > /dev/null; do
+            echo "Waiting for Conductor... ($(date +%T))"
+            sleep 3
+          done'; then
+            echo "::error::Conductor did not respond on http://localhost:8080/api/pipelines within 600s"
+            exit 1
+          fi
+          echo "Conductor is ready."
+
+      - name: Cache Yarn dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.yarn/cache
+            debezium-platform-stage/node_modules
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-yarn-${{ hashFiles('debezium-platform-stage/yarn.lock') }}
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Cypress binary
+        run: yarn cypress install
+
+      - name: Run E2E tests
+        run: yarn e2e:ci
+
+      - name: Show Compose service logs on failure
+        if: failure()
+        run: |
+          docker compose ps -a || true
+          docker compose logs --no-color --tail=200 postgres conductor 2>&1 || true
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v

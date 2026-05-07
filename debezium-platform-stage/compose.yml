@@ -1,25 +1,24 @@
-version: '0.1'
 services:
   conductor:
-    container_name: conductor
-    image: quay.io/debezium/platform-conductor:latest
+    image: quay.io/debezium/platform-conductor:nightly
     pull_policy: always
+    user: "0"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     ports:
-      - "8080:8080"
+      # %dev profile binds Quarkus to 8081 inside the container (see application.yml); map host 8080 there.
+      - "8080:8081"
     environment:
-      # Activate dev profile for ORAS download mode
       QUARKUS_PROFILE: dev
+      # Pre-built image fixes some keys at build time; use JVM flags for watcher + same defaults as the image.
+      JAVA_OPTS_APPEND: "-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dconductor.watcher.enabled=false"
       QUARKUS_DATASOURCE_USERNAME: conductor
       QUARKUS_DATASOURCE_PASSWORD: conductor
-      QUARKUS_DATASOURCE_JDBC_URL:  jdbc:postgresql://postgres:5432/conductor
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/conductor
+      QUARKUS_HTTP_CORS_ENABLED: "true"
       QUARKUS_HTTP_CORS_ORIGINS: http://localhost:3000
-    volumes:
-      # Optional: persist downloaded descriptors across restarts
-      - conductor-descriptors:/deployments/descriptors
   postgres:
-    container_name: postgres
     image: quay.io/debezium/postgres:14-alpine
     ports:
       - "5432:5432"
@@ -27,16 +26,9 @@ services:
       POSTGRES_USER: conductor
       POSTGRES_PASSWORD: conductor
       POSTGRES_DB: conductor
-  stage:
-    depends_on:
-      - conductor
-    container_name: stage
-    image: quay.io/debezium/platform-stage:latest
-    pull_policy: always
-    ports:
-      - "3000:3000"
-    environment:
-      CONDUCTOR_URL: http://localhost:8080
-
-volumes:
-  conductor-descriptors:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U conductor -d conductor"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
