@@ -19,32 +19,29 @@ import org.slf4j.LoggerFactory;
 import com.blazebit.persistence.CriteriaBuilderFactory;
 import com.blazebit.persistence.view.EntityViewManager;
 
-import io.debezium.jdbc.JdbcConnection;
 import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
 import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import io.debezium.platform.data.model.SourceEntity;
+import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.domain.views.Source;
 import io.debezium.platform.domain.views.refs.SourceReference;
-import io.debezium.platform.environment.actions.SignalDataCollectionChecker;
-import io.debezium.platform.environment.database.DatabaseConnectionFactory;
-import io.debezium.relational.TableId;
+import io.debezium.platform.environment.connection.source.SourceInspector;
+import io.debezium.platform.environment.connection.source.SourceInspectorFactory;
+import io.debezium.platform.error.NotFoundException;
 
 @ApplicationScoped
 public class SourceService extends AbstractService<SourceEntity, Source, SourceReference> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SourceService.class);
 
-    private static final String SIGNAL_DATA_COLLECTION_CONFIGURED_MESSAGE = "Signal data collection correctly configured";
-    private static final String SIGNAL_DATA_COLLECTION_MISS_CONFIGURED_MESSAGE = "Signal data collection not present or misconfigured";
+    private final SourceInspectorFactory sourceInspectorFactory;
+    private final ConnectionService connectionService;
 
-    private final SignalDataCollectionChecker signalDataCollectionChecker;
-    private final DatabaseConnectionFactory databaseConnectionFactory;
-
-    public SourceService(EntityManager em, CriteriaBuilderFactory cbf, EntityViewManager evm, SignalDataCollectionChecker signalDataCollectionChecker,
-                         DatabaseConnectionFactory databaseConnectionFactory) {
+    public SourceService(EntityManager em, CriteriaBuilderFactory cbf, EntityViewManager evm,
+                         SourceInspectorFactory sourceInspectorFactory, ConnectionService connectionService) {
         super(SourceEntity.class, Source.class, SourceReference.class, em, cbf, evm);
-        this.signalDataCollectionChecker = signalDataCollectionChecker;
-        this.databaseConnectionFactory = databaseConnectionFactory;
+        this.sourceInspectorFactory = sourceInspectorFactory;
+        this.connectionService = connectionService;
     }
 
     @Transactional(SUPPORTS)
@@ -55,22 +52,17 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
 
     public SignalDataCollectionVerifyResponse verifySignalDataCollection(SignalCollectionVerifyRequest signalCollectionVerifyRequest) {
 
-        try (JdbcConnection jdbcConnection = databaseConnectionFactory.create(signalCollectionVerifyRequest.connectionConfig())) {
+        try {
+            Connection connection = connectionService.findById(signalCollectionVerifyRequest.connectionId())
+                    .orElseThrow(() -> new NotFoundException(signalCollectionVerifyRequest.connectionId()));
 
-            var table = TableId.parse(signalCollectionVerifyRequest.fullyQualifiedTableName(), false);
+            SourceInspector sourceInspector = sourceInspectorFactory.getSourceInspector(connection.getType());
 
-            boolean isConform = signalDataCollectionChecker.verifyTableStructure(jdbcConnection.connection(), signalCollectionVerifyRequest.connectionConfig().database(),
-                    table.schema(),
-                    table.table());
-
-            String message = isConform ? SIGNAL_DATA_COLLECTION_CONFIGURED_MESSAGE : SIGNAL_DATA_COLLECTION_MISS_CONFIGURED_MESSAGE;
-
-            return new SignalDataCollectionVerifyResponse(isConform, message);
+            return sourceInspector.verifyDataCollectionStructure(connection, signalCollectionVerifyRequest.fullyQualifiedTableName());
         }
         catch (Exception e) {
-            LOGGER.error("Unable to verify signal data collection", e);
+            LOGGER.error("Failed to verify signal data collection structure: {}", e.getMessage(), e);
             return new SignalDataCollectionVerifyResponse(false, e.getMessage());
         }
-
     }
 }
