@@ -40,6 +40,7 @@ import {
   ToggleGroupItem,
   Alert,
   ClipboardCopy,
+  Tooltip,
 } from "@patternfly/react-core";
 import {
   AddCircleOIcon,
@@ -998,41 +999,60 @@ const CreateSourceSchemaForm = React.forwardRef<
     />
   );
 
-  const renderSignalCollections = () => (
-    <Form isWidthLimited>
-      <FormFieldGroup
-        header={
-          <FormFieldGroupHeader
-            titleText={{
-              text: <span style={{ fontWeight: 500 }}>{t("source:signal.title")}</span>,
-              id: "field-group-signal-id",
-            }}
-            titleDescription={t("source:signal.description")}
-          />
-        }
-      >
-        {readOnly ? (
-          <Content component="p">
-            {signalCollectionName
-              ? `${t("source:signal.signalingCollectionField.label", { defaultValue: "Signaling collection" })}: ${signalCollectionName}`
-              : t("source:signal.notConfigured", {
-                  defaultValue: "Signaling is not configured for this source.",
-                })}
-          </Content>
-        ) : (
-          <Button
-            variant="link"
-            size="lg"
-            icon={signalCollectionName ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />}
-            iconPosition="left"
-            onClick={handleSignalModalToggle}
-          >
-            {t("source:signal.setupSignaling")}
-          </Button>
-        )}
-      </FormFieldGroup>
-    </Form>
-  );
+  const renderSignalCollections = () => {
+    const isConnectionSelected = !!selectedConnection;
+    const disabledTooltip = t("source:signal.connectionRequiredTooltip", {
+      defaultValue: "Please select a connection before setting up signaling",
+    });
+
+    return (
+      <Form isWidthLimited>
+        <FormFieldGroup
+          header={
+            <FormFieldGroupHeader
+              titleText={{
+                text: <span style={{ fontWeight: 500 }}>{t("source:signal.title")}</span>,
+                id: "field-group-signal-id",
+              }}
+              titleDescription={t("source:signal.description")}
+            />
+          }
+        >
+          {readOnly ? (
+            <Content component="p">
+              {signalCollectionName
+                ? `${t("source:signal.signalingCollectionField.label", { defaultValue: "Signaling collection" })}: ${signalCollectionName}`
+                : t("source:signal.notConfigured", {
+                    defaultValue: "Signaling is not configured for this source.",
+                  })}
+            </Content>
+          ) : (
+            <Tooltip
+              content={disabledTooltip}
+              isVisible={!isConnectionSelected ? undefined : false}
+            >
+              <span
+                style={{ display: "block", width: "100%" }}
+                tabIndex={!isConnectionSelected ? 0 : -1}
+              >
+                <Button
+                  variant="link"
+                  size="lg"
+                  icon={signalCollectionName ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />}
+                  iconPosition="left"
+                  onClick={handleSignalModalToggle}
+                  isDisabled={!isConnectionSelected}
+                  isBlock
+                >
+                  {t("source:signal.setupSignaling")}
+                </Button>
+              </span>
+            </Tooltip>
+          )}
+        </FormFieldGroup>
+      </Form>
+    );
+  };
 
   const renderJumpLinksLayout = () => (
     <div className="jumplinks-layout">
