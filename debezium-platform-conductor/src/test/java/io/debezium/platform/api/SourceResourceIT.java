@@ -50,17 +50,41 @@ class SourceResourceIT {
     void noSignalSetup() {
         TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
 
-        String jsonBody = """
-                {
-                    "databaseType": "POSTGRESQL",
+        String connectionJsonBody = """
+            {
+                "name": "test-postgres-connection-%s",
+                "type": "POSTGRESQL",
+                "config": {
                     "hostname": "%s",
                     "port": %s,
                     "username": "%s",
                     "password": "%s",
-                    "dbName": "%s",
-                    "test": "test",
+                    "database": "%s"
+                }
+            }""".formatted(
+                System.currentTimeMillis(),
+                dbHelper.getHostname(),
+                dbHelper.getPort(),
+                datasourceUsername,
+                datasourcePassword,
+                dbHelper.getDatabase());
+
+        Long connectionId = given()
+                .contentType(ContentType.JSON)
+                .body(connectionJsonBody)
+                .when()
+                .post("api/connections")
+                .then()
+                .statusCode(201)
+                .extract()
+                .jsonPath()
+                .getLong("id");
+
+        String jsonBody = """
+                {
+                    "connectionId": "%s",
                     "fullyQualifiedTableName": "public.debezium_signal"
-                }""".formatted(dbHelper.getHostname(), dbHelper.getPort(), datasourceUsername, datasourcePassword, dbHelper.getDatabase());
+                }""".formatted(connectionId);
 
         given()
                 .header("Content-Type", "application/json")
@@ -80,16 +104,41 @@ class SourceResourceIT {
 
         TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
 
-        String jsonBody = """
-                {
-                    "databaseType": "POSTGRESQL",
+        String connectionJsonBody = """
+            {
+                "name": "test-postgres-connection-%s",
+                "type": "POSTGRESQL",
+                "config": {
                     "hostname": "%s",
                     "port": %s,
                     "username": "%s",
                     "password": "%s",
-                    "dbName": "%s",
+                    "database": "%s"
+                }
+            }""".formatted(
+                System.currentTimeMillis(),
+                dbHelper.getHostname(),
+                dbHelper.getPort(),
+                datasourceUsername,
+                datasourcePassword,
+                dbHelper.getDatabase());
+
+        Long connectionId = given()
+                .contentType(ContentType.JSON)
+                .body(connectionJsonBody)
+                .when()
+                .post("api/connections")
+                .then()
+                .statusCode(201)
+                .extract()
+                .jsonPath()
+                .getLong("id");
+
+        String jsonBody = """
+                {
+                    "connectionId": "%s",
                     "fullyQualifiedTableName": "public.debezium_signal"
-                }""".formatted(dbHelper.getHostname(), dbHelper.getPort(), datasourceUsername, datasourcePassword, dbHelper.getDatabase());
+                }""".formatted(connectionId);
 
         given()
                 .header("Content-Type", "application/json")
@@ -99,6 +148,25 @@ class SourceResourceIT {
                 .statusCode(200)
                 .body("exists", equalTo(true))
                 .body("message", equalTo("Signal data collection correctly configured"));
+    }
+
+    @Test
+    @DisplayName("When the connection id does not exist it returns an error")
+    void connectionNotFound() {
+        String jsonBody = """
+                {
+                    "connectionId": "123456",
+                    "fullyQualifiedTableName": "public.debezium_signal"
+                }""";
+
+        given()
+                .header("Content-Type", "application/json")
+                .body(jsonBody).when().post("api/sources/signals/verify")
+                .then()
+                .assertThat().body(matchesJsonSchemaInClasspath("schemas/signal-verify-response-schema.json"))
+                .statusCode(200)
+                .body("exists", equalTo(false))
+                .body("message", equalTo("Invalid resource with id: 123456"));
     }
 
     @ParameterizedTest(name = "Creating a source with empty {0} should return 400")
