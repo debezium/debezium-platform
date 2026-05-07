@@ -114,7 +114,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      # Stack matches debezium-platform-stage/compose.yml (Postgres + nightly Conductor).
       - name: Start Postgres and Conductor (pull nightly)
         run: |
           docker compose pull postgres conductor
@@ -128,8 +127,6 @@ jobs:
             sleep 3
           done'; then
             echo "::error::Conductor did not respond on http://localhost:8080/api/pipelines within 600s"
-            docker compose ps -a
-            docker compose logs --no-color --tail=200 postgres conductor || true
             exit 1
           fi
           echo "Conductor is ready."
@@ -153,7 +150,9 @@ jobs:
 
       - name: Show Compose service logs on failure
         if: failure()
-        run: docker compose logs --no-color postgres conductor 2>&1 || true
+        run: |
+          docker compose ps -a || true
+          docker compose logs --no-color --tail=200 postgres conductor 2>&1 || true
 
       - name: Cleanup
         if: always()
