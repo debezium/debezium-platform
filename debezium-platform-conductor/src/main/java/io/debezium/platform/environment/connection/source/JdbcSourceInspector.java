@@ -28,7 +28,6 @@ import io.debezium.platform.data.dto.CatalogNode;
 import io.debezium.platform.data.dto.CollectionNode;
 import io.debezium.platform.data.dto.CollectionTree;
 import io.debezium.platform.data.dto.SchemaNode;
-import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
 import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.database.DatabaseConnectionConfiguration;
@@ -97,15 +96,17 @@ public class JdbcSourceInspector implements SourceInspector {
     }
 
     @Override
-    public SignalDataCollectionVerifyResponse verifyDataCollectionStructure(SignalCollectionVerifyRequest signalCollectionVerifyRequest) {
+    public SignalDataCollectionVerifyResponse verifyDataCollectionStructure(Connection connection, String fullyQualifiedTableName) {
 
-        try (JdbcConnection jdbcConnection = databaseConnectionFactory.create(signalCollectionVerifyRequest.connectionConfig())) {
+        DatabaseConnectionConfiguration databaseConnectionConfiguration = DatabaseConnectionConfiguration.from(connection);
 
-            var table = TableId.parse(signalCollectionVerifyRequest.fullyQualifiedTableName(), false);
+        try (JdbcConnection jdbcConnection = databaseConnectionFactory.create(databaseConnectionConfiguration)) {
+
+            var table = TableId.parse(fullyQualifiedTableName, false);
 
             boolean isConform = verifyTableStructure(
                     jdbcConnection.connection(),
-                    signalCollectionVerifyRequest.connectionConfig().database(),
+                    databaseConnectionConfiguration.database(),
                     table.schema(),
                     table.table());
 

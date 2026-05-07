@@ -22,7 +22,6 @@ import io.debezium.platform.data.dto.CatalogNode;
 import io.debezium.platform.data.dto.CollectionNode;
 import io.debezium.platform.data.dto.CollectionTree;
 import io.debezium.platform.data.dto.SchemaNode;
-import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
 import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import io.debezium.platform.domain.views.Connection;
 
@@ -80,7 +79,8 @@ public class MongoDbSourceInspector implements SourceInspector {
     }
 
     @Override
-    public SignalDataCollectionVerifyResponse verifyDataCollectionStructure(SignalCollectionVerifyRequest request) {
-        return new SignalDataCollectionVerifyResponse(false, "MongoDB signal data collection verification is not implemented yet");
+    public SignalDataCollectionVerifyResponse verifyDataCollectionStructure(Connection connection,
+                                                                            String fullyQualifiedTableName) {
+        return new SignalDataCollectionVerifyResponse(true, "MongoDB signal data collection verification is not implemented yet");
     }
 }
