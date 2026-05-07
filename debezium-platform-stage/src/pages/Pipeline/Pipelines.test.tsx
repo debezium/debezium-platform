@@ -69,7 +69,7 @@ describe("Pipelines", () => {
 
     render(<Pipelines />);
 
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
   });
 
   it("filters pipelines based on search input", async () => {

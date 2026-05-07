@@ -75,6 +75,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     data: connectionsList = [],
     error,
     isLoading: isConnectionsLoading,
+    failureCount: connectionsFailureCount,
   } = useQuery<Connection[], Error>(
     "connections",
     () => fetchData<Connection[]>(`${API_URL}/api/connections`),
@@ -155,10 +156,10 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
   return (
     <div data-tour="connection-page" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
 
-      {error ? (
+      {(!!error || connectionsFailureCount >= 3) ? (
         <ApiError
           errorType="large"
-          errorMsg={error.message}
+          errorMsg={error?.message ?? "Network error"}
           secondaryActions={
             <>
               <Button variant="link" onClick={() => navigateTo("/pipeline")}>
@@ -177,7 +178,6 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
         <>
           {isConnectionsLoading ? (
             <EmptyState
-              titleText={t("Loading...")}
               headingLevel="h4"
               icon={Spinner}
             />

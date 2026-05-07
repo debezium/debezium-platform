@@ -63,6 +63,7 @@ const Destinations: React.FunctionComponent = () => {
     data: destinationsList = [],
     error,
     isLoading: isDestinationLoading,
+    failureCount: destinationsFailureCount,
   } = useQuery<Destination[], Error>(
     "destinations",
     () => fetchData<Destination[]>(`${API_URL}/api/destinations`),
@@ -109,10 +110,10 @@ const Destinations: React.FunctionComponent = () => {
 
   return (
     <div data-tour="destination-page" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-      {error ? (
+      {(!!error || destinationsFailureCount >= 3) ? (
         <ApiError
           errorType="large"
-          errorMsg={error.message}
+          errorMsg={error?.message ?? "Network error"}
           secondaryActions={
             <>
               <Button variant="link" onClick={() => navigateTo("/source")}>
@@ -128,7 +129,6 @@ const Destinations: React.FunctionComponent = () => {
         <>
           {isDestinationLoading ? (
             <EmptyState
-              titleText={t("loading")}
               headingLevel="h4"
               icon={Spinner}
             />
@@ -184,8 +184,8 @@ const Destinations: React.FunctionComponent = () => {
                         </ToolbarContent>
                       </Toolbar>
                       <div data-tour="destination-table">
-                      <SourceSinkTable
-                        data={searchResult}
+                        <SourceSinkTable
+                          data={searchResult}
                           tableType="destination"
                           onClear={onClear}
                         />
