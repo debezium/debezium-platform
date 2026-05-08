@@ -24,7 +24,7 @@ const Vaults: React.FunctionComponent<IVaultsProps> = () => {
 
   return (
     <>
-      <PageSection style={{ position: "relative", minHeight: "100%", overflow: "hidden" }} isFilled>
+      <PageSection style={{ position: "relative", minHeight: "calc(100vh - 200px)", overflow: "hidden" }} isFilled>
         {!featureFlags.Vault && (
           <div
             className="transformation_overlay"

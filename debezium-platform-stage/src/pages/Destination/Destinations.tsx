@@ -108,7 +108,7 @@ const Destinations: React.FunctionComponent = () => {
   );
 
   return (
-    <div data-tour="destination-page" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+    <div data-tour="destination-page" style={{ flex: 1, display: "flex", flexDirection: "column", maxHeight: "100%" }}>
       {error ? (
         <ApiError
           errorType="large"
