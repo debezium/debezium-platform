@@ -70,7 +70,7 @@ describe("Sources", () => {
       isLoading: true,
     } as any);
     render(<Sources />);
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
   });
 
   it("displays error message when API fails", async () => {

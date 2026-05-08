@@ -97,6 +97,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
     data: transformsList = [],
     error,
     isLoading: isTransformsLoading,
+    failureCount: transformsFailureCount,
   } = useQuery<TransformData[], Error>(
     "transforms",
     () => fetchData<TransformData[]>(`${API_URL}/api/transforms`),
@@ -192,11 +193,11 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
   return (
     <div data-tour="transform-page" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
       <>
-        {error ? (
+        {(!!error || transformsFailureCount >= 3) ? (
           <PageSection isWidthLimited>
             <ApiError
               errorType="large"
-              errorMsg={error.message}
+              errorMsg={error?.message ?? "Network error"}
               secondaryActions={
                 <>
                   <Button variant="link" onClick={() => navigateTo("/source")}>
@@ -216,7 +217,6 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
           <>
             {isTransformsLoading ? (
               <EmptyState
-                titleText={t("loading")}
                 headingLevel="h4"
                 icon={Spinner}
               />

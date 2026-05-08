@@ -81,7 +81,7 @@ describe("Connections", () => {
       return { data: undefined, error: null, isLoading: false } as any;
     });
     render(<Connections />);
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
   });
 
   it("shows API error when connections query fails", () => {

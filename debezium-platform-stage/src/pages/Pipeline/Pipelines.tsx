@@ -91,6 +91,7 @@ const Pipelines: React.FunctionComponent = () => {
     data: pipelinesList = [],
     error: pipelinesError,
     isLoading: pipelinesLoading,
+    failureCount: pipelinesFailureCount,
   } = useQuery<Pipeline[], Error>(
     "pipelines",
     () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`),
@@ -263,11 +264,11 @@ const Pipelines: React.FunctionComponent = () => {
 
   return (
     <>
-      {pipelinesError ? (
+      {(!!pipelinesError || pipelinesFailureCount >= 3) ? (
         <PageSection isWidthLimited>
           <ApiError
             errorType="large"
-            errorMsg={pipelinesError.message}
+            errorMsg={pipelinesError?.message ?? "Network error"}
             secondaryActions={
               <>
                 <Button variant="link" onClick={() => navigateTo("/source")}>
@@ -287,7 +288,6 @@ const Pipelines: React.FunctionComponent = () => {
         <>
           {pipelinesLoading ? (
             <EmptyState
-              titleText={t("loading")}
               headingLevel="h4"
               icon={Spinner}
             />

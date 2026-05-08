@@ -68,6 +68,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
     data: sourcesList = [],
     error,
     isLoading: isSourceLoading,
+    failureCount: sourcesFailureCount,
   } = useQuery<Source[], Error>(
     "sources",
     () => fetchData<Source[]>(`${API_URL}/api/sources`),
@@ -111,10 +112,10 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
   );
   return (
     <div data-tour="source-page" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-      {error ? (
+      {(!!error || sourcesFailureCount >= 3) ? (
         <ApiError
           errorType="large"
-          errorMsg={error.message}
+          errorMsg={error?.message ?? "Network error"}
           secondaryActions={
             <>
               <Button variant="link" onClick={() => navigateTo("/destination")}>
@@ -130,7 +131,6 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
         <>
           {isSourceLoading ? (
             <EmptyState
-              titleText="Loading..."
               headingLevel="h4"
               icon={Spinner}
             />
