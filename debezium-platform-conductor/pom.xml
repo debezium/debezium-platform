@@ -54,6 +54,7 @@
         <version.nats>2.17.6</version.nats>
         <version.oras>0.3.1</version.oras>
         <version.rabbitmq>5.20.0</version.rabbitmq>
+        <version.milvus>2.6.4</version.milvus>
 
         <format.formatter.goal>format</format.formatter.goal>
         <format.imports.goal>sort</format.imports.goal>
@@ -413,6 +414,12 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-jdbc-mssql</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.milvus</groupId>
+            <artifactId>milvus-sdk-java</artifactId>
+            <version>${version.milvus}</version>
         </dependency>
 
         <dependency>

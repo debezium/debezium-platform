@@ -510,5 +510,41 @@
         }
       }
     }
+  },
+  {
+    "type": "MILVUS",
+    "schema": {
+      "title": "Milvus connection properties",
+      "description": "Milvus connection properties",
+      "type": "object",
+      "required": [
+        "uri"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "uri": {
+          "type": "string",
+          "title": "Milvus endpoint URI (for example http://localhost:19530)"
+        },
+        "database": {
+          "type": "string",
+          "title": "Milvus database name (optional)"
+        },
+        "token": {
+          "type": "string",
+          "title": "Authentication token (optional, alternative to username/password)"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username for authentication (optional, use with password)"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password for authentication (optional, use with username)"
+        }
+      }
+    }
   }
 ]
