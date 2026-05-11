@@ -109,6 +109,8 @@ interface CreateSourceSchemaFormProps {
   readOnly?: boolean;
   /** Initial layout; user can still switch via the toggle. Pipeline designer modal uses "tabs". */
   defaultLayoutMode?: "jumplinks" | "tabs";
+  /** Hide signal collections section (used for destination connectors) */
+  hideSignalCollections?: boolean;
 }
 
 export interface CreateSourceSchemaFormHandle {
@@ -222,7 +224,7 @@ function formatValidationFailureNotificationBody(sections: string[], t: TFunctio
 const CreateSourceSchemaForm = React.forwardRef<
   CreateSourceSchemaFormHandle,
   CreateSourceSchemaFormProps
->(({ connectorSchema, sourceId, dataType, onSubmit, initialSource, readOnly = false, defaultLayoutMode = "jumplinks" }, ref) => {
+>(({ connectorSchema, sourceId, dataType, onSubmit, initialSource, readOnly = false, defaultLayoutMode = "jumplinks", hideSignalCollections = false }, ref) => {
   const { t } = useTranslation();
   const { addNotification } = useNotification();
   const hydratedSourceIdRef = useRef<number | null>(null);
@@ -357,7 +359,9 @@ const CreateSourceSchemaForm = React.forwardRef<
       }
     }
     sections.push({ id: "additional-properties", label: "Additional Properties", type: "custom" });
-    sections.push({ id: "signal-collections", label: "Signal Collections", type: "custom" });
+    if (!hideSignalCollections) {
+      sections.push({ id: "signal-collections", label: "Signal Collections", type: "custom" });
+    }
     return sections;
   }, [orderedGroups, groupedProperties]);
 
@@ -1120,9 +1124,11 @@ const CreateSourceSchemaForm = React.forwardRef<
         </section>
 
         {/* Signal Collections */}
-        <section id="signal-collections" className="jumplinks-section-bordered">
-          {renderSignalCollections()}
-        </section>
+        {!hideSignalCollections && (
+          <section id="signal-collections" className="jumplinks-section-bordered">
+            {renderSignalCollections()}
+          </section>
+        )}
       </div>
     </div>
   );
@@ -1183,9 +1189,11 @@ const CreateSourceSchemaForm = React.forwardRef<
             </FormFieldGroup>
           </div>
 
-          <div style={{ marginTop: "1rem" }}>
-            {renderSignalCollections()}
-          </div>
+          {!hideSignalCollections && (
+            <div style={{ marginTop: "1rem" }}>
+              {renderSignalCollections()}
+            </div>
+          )}
         </CardBody>
       </Card>
     </div>
