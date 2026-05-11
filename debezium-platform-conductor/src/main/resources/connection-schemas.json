@@ -206,13 +206,13 @@
       "description": " MongoDb connection properties",
       "type": "object",
       "required": [
-        "mongodb.connection.string"
+        "connection.string"
       ],
       "additionalProperties": {
         "type": "string"
       },
       "properties": {
-        "mongodb.connection.string": {
+        "connection.string": {
           "type": "string",
           "title": "Database connection string"
         },

@@ -67,7 +67,7 @@ public class PipelineMapper {
     private static final List<String> RESOLVABLE_CONFIGS = List.of("jdbc.schema.history.table.name", "jdbc.offset.table.name");
 
     private static final String KAFKA_CONNECTION_CONFIGURATION_PREFIX = "producer.";
-    private static final String MONGODB_CONNECTION_CONFIGURATION_PREFIX = "mongodb";
+    private static final String MONGODB_CONNECTION_CONFIGURATION_PREFIX = "mongodb.";
     private static final String KINESIS_CONNECTION_CONFIGURATION_PREFIX = "kinesis";
     private static final String PUBSUB_CONNECTION_CONFIGURATION_PREFIX = "pubsub";
     private static final String HTTP_CONNECTION_CONFIGURATION_PREFIX = "http";

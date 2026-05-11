@@ -51,17 +51,17 @@ class SourceResourceIT {
         TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
 
         String connectionJsonBody = """
-            {
-                "name": "test-postgres-connection-%s",
-                "type": "POSTGRESQL",
-                "config": {
-                    "hostname": "%s",
-                    "port": %s,
-                    "username": "%s",
-                    "password": "%s",
-                    "database": "%s"
-                }
-            }""".formatted(
+                {
+                    "name": "test-postgres-connection-%s",
+                    "type": "POSTGRESQL",
+                    "config": {
+                        "hostname": "%s",
+                        "port": %s,
+                        "username": "%s",
+                        "password": "%s",
+                        "database": "%s"
+                    }
+                }""".formatted(
                 System.currentTimeMillis(),
                 dbHelper.getHostname(),
                 dbHelper.getPort(),
@@ -105,17 +105,17 @@ class SourceResourceIT {
         TestDatasourceHelper dbHelper = TestDatasourceHelper.parsePostgresJdbcUrl(datasourceUrl);
 
         String connectionJsonBody = """
-            {
-                "name": "test-postgres-connection-%s",
-                "type": "POSTGRESQL",
-                "config": {
-                    "hostname": "%s",
-                    "port": %s,
-                    "username": "%s",
-                    "password": "%s",
-                    "database": "%s"
-                }
-            }""".formatted(
+                {
+                    "name": "test-postgres-connection-%s",
+                    "type": "POSTGRESQL",
+                    "config": {
+                        "hostname": "%s",
+                        "port": %s,
+                        "username": "%s",
+                        "password": "%s",
+                        "database": "%s"
+                    }
+                }""".formatted(
                 System.currentTimeMillis(),
                 dbHelper.getHostname(),
                 dbHelper.getPort(),

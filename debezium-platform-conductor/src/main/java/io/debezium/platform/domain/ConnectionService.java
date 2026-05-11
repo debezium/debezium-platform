@@ -28,6 +28,7 @@ import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.domain.views.refs.ConnectionReference;
 import io.debezium.platform.environment.connection.ConnectionValidator;
 import io.debezium.platform.environment.connection.ConnectionValidatorFactory;
+import io.debezium.platform.environment.connection.source.SourceInspectionException;
 import io.debezium.platform.environment.connection.source.SourceInspector;
 import io.debezium.platform.environment.connection.source.SourceInspectorFactory;
 import io.debezium.platform.error.NotFoundException;
@@ -81,9 +82,18 @@ public class ConnectionService extends AbstractService<ConnectionEntity, Connect
 
         Connection connectionConfig = findById(id).orElseThrow(() -> new NotFoundException(id));
 
-        SourceInspector sourceInspector = sourceInspectorFactory.getSourceInspector(connectionConfig.getType());
+        try {
+            SourceInspector sourceInspector = sourceInspectorFactory.getSourceInspector(connectionConfig.getType());
 
-        return sourceInspector.listAvailableCollections(connectionConfig);
+            return sourceInspector.listAvailableCollections(connectionConfig);
+        }
+        catch (SourceInspectionException e) {
+            throw e;
+        }
+        catch (Exception e) {
+            LOGGER.error("Unable to get available collections from connection {}", id, e);
+            throw new SourceInspectionException("Unable to get available collections", e);
+        }
     }
 
 }

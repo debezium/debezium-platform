@@ -32,13 +32,15 @@ public class MongoDbSourceInspector implements SourceInspector {
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoDbSourceInspector.class);
 
     private static final String MONGODB_COLLECTIONS_SCHEMA = "collections";
+    public static final String MONGODB_CONNECTION_STRING = "connection.string";
 
     @Override
     public CollectionTree listAvailableCollections(Connection connectionConfig) {
 
+        Object connectionString = connectionConfig.getConfig().get(MONGODB_CONNECTION_STRING);
         Configuration mongoConfig = Configuration
                 .create()
-                .with("mongodb.connection.string", connectionConfig.getConfig().get("mongodb.connection.string"))
+                .with("mongodb.connection.string", connectionString)
                 .build();
 
         try (MongoDbConnection connection = MongoDbConnections.create(mongoConfig)) {
@@ -46,9 +48,20 @@ public class MongoDbSourceInspector implements SourceInspector {
             return toCollectionTree(collectionIds);
         }
         catch (Exception e) {
-            LOGGER.error("Unable to get available MongoDB collections", e);
-            throw new RuntimeException("Unable to get available MongoDB collections", e);
+            String sanitizedConnectionString = sanitizeConnectionString(connectionString);
+            LOGGER.error("Unable to get available MongoDB collections from {}", sanitizedConnectionString, e);
+            throw new SourceInspectionException(String.format("Unable to get available MongoDB collections from %s", sanitizedConnectionString), e);
         }
+    }
+
+    private String sanitizeConnectionString(Object connectionString) {
+        if (!(connectionString instanceof String value) || value.isBlank()) {
+            return "<missing MongoDB connection string>";
+        }
+
+        return value.replaceFirst(
+                "^(mongodb(?:\\+srv)?://)([^:/@]+):([^@]+)@",
+                "$1$2:****@");
     }
 
     private CollectionTree toCollectionTree(List<CollectionId> collectionIds) {
