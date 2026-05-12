@@ -4,8 +4,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useQuery } from "react-query";
 import { ConnectionsCatalog } from "./ConnectionsCatalog";
 import type { Catalog } from "../../apis/types";
-import destinationCatalogFixture from "../../__mocks__/data/DestinationCatalog.json";
 import { render } from "../../__test__/unit/test-utils";
+
+// Mock destination catalog data
+const destinationCatalogFixture = [
+  { id: "kafka", name: "Apache Kafka", description: "Kafka destination" },
+  { id: "pulsar", name: "Apache Pulsar", description: "Pulsar destination" },
+];
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
