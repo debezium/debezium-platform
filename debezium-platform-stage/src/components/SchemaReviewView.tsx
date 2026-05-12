@@ -34,11 +34,11 @@ import ApiComponentError from "./ApiComponentError";
 import TableViewComponent from "./TableViewComponent";
 import _ from "lodash";
 import "./CreateSchemaForm.css";
-import "./SourceSchemaReviewView.css";
+import "./SchemaReviewView.css";
 
 const EMPTY_DISPLAY = "—";
 
-export interface SourceSchemaReviewViewProps {
+export interface SchemaReviewViewProps {
   source: Source;
   connectorSchema: ConnectorSchema;
   dataType?: string;
@@ -82,7 +82,7 @@ const ReviewValueSpan: React.FC<{ raw: string | undefined }> = ({ raw }) => {
   );
 };
 
-const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
+const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
   source,
   connectorSchema,
   dataType,
@@ -496,4 +496,4 @@ const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
   );
 };
 
-export default SourceSchemaReviewView;
+export default SchemaReviewView;

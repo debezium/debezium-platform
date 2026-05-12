@@ -108,7 +108,6 @@ interface CreateSchemaFormProps {
   readOnly?: boolean;
   /** Initial layout; user can still switch via the toggle. Pipeline designer modal uses "tabs". */
   defaultLayoutMode?: "jumplinks" | "tabs";
-  /** Hide signal collections section (used for destination connectors) */
   hideSignalCollections?: boolean;
 }
 

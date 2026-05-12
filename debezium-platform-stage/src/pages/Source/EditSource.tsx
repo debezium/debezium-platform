@@ -29,7 +29,7 @@ import { getConnectorTypeName } from "../../utils/helpers";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
 } from "@components/CreateSchemaForm";
-import SourceSchemaReviewView from "@components/SourceSchemaReviewView";
+import SchemaReviewView from "@components/SchemaReviewView";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import { resolveSourcePageViewMode } from "./sourcePageNavigation";
 
@@ -211,7 +211,7 @@ const EditSource: React.FunctionComponent = () => {
     return (
       <PageSection isFilled>
         {viewMode ? (
-          <SourceSchemaReviewView
+          <SchemaReviewView
             source={source}
             connectorSchema={connectorSchema}
             dataType={source.type}

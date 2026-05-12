@@ -2,7 +2,7 @@
 import { screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import { useQuery } from "react-query";
-import SourceSchemaReviewView from "./SourceSchemaReviewView";
+import SchemaReviewView from "./SchemaReviewView";
 import type { Source } from "../apis/apis";
 import type { ConnectorSchema } from "../apis/types";
 import { render } from "../__test__/unit/test-utils";
@@ -55,7 +55,7 @@ beforeAll(() => {
   } as unknown as typeof IntersectionObserver;
 });
 
-describe("SourceSchemaReviewView", () => {
+describe("SchemaReviewView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -69,7 +69,7 @@ describe("SourceSchemaReviewView", () => {
     } as any);
 
     render(
-      <SourceSchemaReviewView source={baseSource} connectorSchema={minimalSchema} />,
+      <SchemaReviewView source={baseSource} connectorSchema={minimalSchema} />,
     );
 
     expect(await screen.findByText("Review Source")).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe("SourceSchemaReviewView", () => {
     } as any);
 
     render(
-      <SourceSchemaReviewView source={baseSource} connectorSchema={minimalSchema} />,
+      <SchemaReviewView source={baseSource} connectorSchema={minimalSchema} />,
     );
 
     const unsetValues = await screen.findAllByText("—");
@@ -143,7 +143,7 @@ describe("SourceSchemaReviewView", () => {
     };
 
     render(
-      <SourceSchemaReviewView source={withConnection} connectorSchema={filtersSchema} />,
+      <SchemaReviewView source={withConnection} connectorSchema={filtersSchema} />,
     );
 
     expect(
