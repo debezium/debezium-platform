@@ -24,13 +24,13 @@ import io.debezium.platform.error.ErrorCodes;
 public class MongoDbConnectionValidator implements ConnectionValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoDbConnectionValidator.class);
-    public static final String MONGODB_CONNECTION_STRING = "mongodb.connection.string";
+    public static final String MONGODB_CONNECTION_STRING = "connection.string";
 
     @Override
     public ConnectionValidationResult validate(Connection connectionConfig) {
         Configuration mongoConfig = toMongoDbConfiguration(connectionConfig);
 
-        String connString = mongoConfig.getString("connection.string");
+        String connString = mongoConfig.getString(MONGODB_CONNECTION_STRING);
 
         try (MongoDbConnection connection = MongoDbConnections.create(mongoConfig)) {
             connection.hello();
@@ -43,14 +43,14 @@ public class MongoDbConnectionValidator implements ConnectionValidator {
     }
 
     private Configuration toMongoDbConfiguration(Connection connectionConfig) {
-        Object connectionString = connectionConfig.getConfig().get("connection.string");
+        Object connectionString = connectionConfig.getConfig().get(MONGODB_CONNECTION_STRING);
 
         if (!(connectionString instanceof String value) || value.isBlank()) {
             throw new IllegalArgumentException("MongoDB connection string is required");
         }
 
         return Configuration.create()
-                .with(MONGODB_CONNECTION_STRING, value)
+                .with("mongodb.connection.string", value)
                 .build();
     }
 }
