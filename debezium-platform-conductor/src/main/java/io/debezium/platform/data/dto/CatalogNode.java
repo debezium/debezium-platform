@@ -7,9 +7,13 @@ package io.debezium.platform.data.dto;
 
 import java.util.List;
 
-public record CatalogNode(String name, List<SchemaNode> schemas, int totalCollections) {
+public record CatalogNode(String name, List<SchemaNode> schemas, List<CollectionNode> collections, int totalCollections) {
 
     public CatalogNode(String name) {
-        this(name, List.of(), 0);
+        this(name, List.of(), List.of(), 0);
+    }
+
+    public CatalogNode(String name, List<SchemaNode> schemas, int totalCollections) {
+        this(name, schemas, List.of(), totalCollections);
     }
 }
