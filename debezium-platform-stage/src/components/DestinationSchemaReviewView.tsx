@@ -43,6 +43,7 @@ const DestinationSchemaReviewView: React.FC<DestinationSchemaReviewViewProps> = 
       source={source as any}
       connectorSchema={connectorSchema}
       dataType={dataType}
+      hideSignalCollections={true}
     />
   );
 };

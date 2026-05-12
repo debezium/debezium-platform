@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { ThIcon, ListIcon, SearchIcon, FilterIcon } from "@patternfly/react-icons";
 import { useState } from "react";
 import { Catalog, CatalogApiResponse } from "src/apis/types";
-import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 import _, { debounce } from "lodash";
 import { useNavigate } from "react-router-dom";
 import { ConnectionCatalogGrid } from "@components/ConnectionCatalogGrid";
@@ -37,6 +36,18 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     return (response.components["source-connector"] ?? []).map((entry) => ({
       ...entry,
       role: "source",
+    }));
+  });
+
+  const {
+    data: destinationCatalog = [],
+  } = useQuery<Catalog[], Error>("destinationConnectorCatalog", async () => {
+    const response = await fetchData<CatalogApiResponse>(
+      `${API_URL}/api/catalog`
+    );
+    return (response.components["server-sink"] ?? []).map((entry) => ({
+      ...entry,
+      role: "destination",
     }));
   });
 

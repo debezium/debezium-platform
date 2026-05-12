@@ -71,7 +71,6 @@ import {
 } from "@utils/helpers";
 import { useNotification } from "@appContext/index";
 import { Catalog, CatalogApiResponse, ConnectorSchema, SchemaGroup, SchemaProperty } from "../apis/types";
-import destinationCatalog from "../__mocks__/data/DestinationCatalog.json";
 import ConnectorImage from "./ComponentImage";
 import TableViewComponent from "./TableViewComponent";
 import SchemaGroupSection from "./SchemaGroupSection";
@@ -92,7 +91,7 @@ import {
 import { buildSourceConnectorDisplayGroupedProperties } from "@utils/sourceConnectorDisplayGroups";
 import { splitSourceConfigForHydration } from "@utils/sourceConfigSplit";
 import _ from "lodash";
-import "./CreateSourceSchemaForm.css";
+import "./CreateSchemaForm.css";
 
 interface connectionsList extends Connection {
   role: string;
@@ -100,7 +99,7 @@ interface connectionsList extends Connection {
 
 type AdditionalProp = { key: string; value: string };
 
-interface CreateSourceSchemaFormProps {
+interface CreateSchemaFormProps {
   connectorSchema: ConnectorSchema;
   sourceId: string;
   dataType?: string;
@@ -113,7 +112,7 @@ interface CreateSourceSchemaFormProps {
   hideSignalCollections?: boolean;
 }
 
-export interface CreateSourceSchemaFormHandle {
+export interface CreateSchemaFormHandle {
   validate: () => boolean;
   submit: () => void;
   /** Populated after the most recent failed `validate()` */
@@ -221,9 +220,9 @@ function formatValidationFailureNotificationBody(sections: string[], t: TFunctio
   return t("source:form.validationFailedInMultipleSections", { list: sections.join(", ") });
 }
 
-const CreateSourceSchemaForm = React.forwardRef<
-  CreateSourceSchemaFormHandle,
-  CreateSourceSchemaFormProps
+const CreateSchemaForm = React.forwardRef<
+  CreateSchemaFormHandle,
+  CreateSchemaFormProps
 >(({ connectorSchema, sourceId, dataType, onSubmit, initialSource, readOnly = false, defaultLayoutMode = "jumplinks", hideSignalCollections = false }, ref) => {
   const { t } = useTranslation();
   const { addNotification } = useNotification();
@@ -405,6 +404,17 @@ const CreateSourceSchemaForm = React.forwardRef<
       return (response.components["source-connector"] ?? []).map((e) => ({
         ...e,
         role: "source",
+      }));
+    }
+  );
+
+  const { data: destinationCatalog = [] } = useQuery<Catalog[], Error>(
+    "destinationConnectorCatalog",
+    async () => {
+      const response = await fetchData<CatalogApiResponse>(`${API_URL}/api/catalog`);
+      return (response.components["server-sink"] ?? []).map((entry) => ({
+        ...entry,
+        role: "destination",
       }));
     }
   );
@@ -1289,5 +1299,5 @@ const CreateSourceSchemaForm = React.forwardRef<
   );
 });
 
-CreateSourceSchemaForm.displayName = "CreateSourceSchemaForm";
-export default CreateSourceSchemaForm;
+CreateSchemaForm.displayName = "CreateSchemaForm";
+export default CreateSchemaForm;

@@ -19,9 +19,9 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
 import { fetchData } from "../../apis/apis";
 import { ConnectorSchema } from "../../apis/types";
-import CreateSourceSchemaForm, {
-  CreateSourceSchemaFormHandle,
-} from "@components/CreateSourceSchemaForm";
+import CreateSchemaForm, {
+  CreateSchemaFormHandle,
+} from "@components/CreateSchemaForm";
 
 interface CreateSourceProps {
   modelLoaded?: boolean;
@@ -47,7 +47,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   const descriptor = (location.state as { descriptor?: string } | null)?.descriptor;
 
   const [isLoading, setIsLoading] = useState(false);
-  const formRef = useRef<CreateSourceSchemaFormHandle>(null);
+  const formRef = useRef<CreateSchemaFormHandle>(null);
 
   const descriptorPath = React.useMemo(() => {
     if (descriptor) return descriptor.replace(/\.json$/, "");
@@ -123,7 +123,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     if (!connectorSchema) return null;
 
     return (
-      <CreateSourceSchemaForm
+      <CreateSchemaForm
         ref={formRef}
         connectorSchema={connectorSchema}
         sourceId={sourceId}

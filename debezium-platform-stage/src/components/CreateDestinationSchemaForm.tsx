@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import { ConnectorSchema } from "../apis/types";
 import { Destination } from "../apis/apis";
-import CreateSourceSchemaForm, { CreateSourceSchemaFormHandle } from "./CreateSourceSchemaForm";
+import CreateSchemaForm, { CreateSchemaFormHandle } from "./CreateSchemaForm";
 
 export interface CreateDestinationSchemaFormHandle {
   submit: () => void;
@@ -20,19 +20,19 @@ interface CreateDestinationSchemaFormProps {
 
 /**
  * CreateDestinationSchemaForm - Adapter component for destination connectors
- * 
- * This component adapts the CreateSourceSchemaForm for use with destination connectors.
+ *
+ * This component adapts the CreateSchemaForm for use with destination connectors.
  * It maintains the same interface and behavior but is specifically designed for
  * destination connector schemas fetched from the catalog API.
- * 
- * The underlying CreateSourceSchemaForm is generic enough to handle both source and
+ *
+ * The underlying CreateSchemaForm is generic enough to handle both source and
  * destination connectors, as they share the same schema structure from the catalog API.
  */
 const CreateDestinationSchemaForm = forwardRef<
   CreateDestinationSchemaFormHandle,
   CreateDestinationSchemaFormProps
 >(({ connectorSchema, destinationId, dataType, initialDestination, onSubmit, defaultLayoutMode }, ref) => {
-  const sourceFormRef = useRef<CreateSourceSchemaFormHandle>(null);
+  const sourceFormRef = useRef<CreateSchemaFormHandle>(null);
 
   useImperativeHandle(ref, () => ({
     submit: () => {
@@ -61,7 +61,7 @@ const CreateDestinationSchemaForm = forwardRef<
   } : undefined;
 
   return (
-    <CreateSourceSchemaForm
+    <CreateSchemaForm
       ref={sourceFormRef}
       connectorSchema={connectorSchema}
       sourceId={destinationId}
