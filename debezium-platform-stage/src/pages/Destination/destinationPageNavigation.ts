@@ -22,5 +22,3 @@ export function resolveDestinationPageViewMode(
 
   return false;
 }
-
-// Made with Bob

@@ -42,7 +42,6 @@ export interface SchemaReviewViewProps {
   source: Source;
   connectorSchema: ConnectorSchema;
   dataType?: string;
-  /** Hide signal collections section (used for destination connectors) */
   hideSignalCollections?: boolean;
 }
 

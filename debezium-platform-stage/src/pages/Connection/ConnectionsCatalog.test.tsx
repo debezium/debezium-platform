@@ -1,15 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useQuery } from "react-query";
 import { ConnectionsCatalog } from "./ConnectionsCatalog";
 import type { Catalog } from "../../apis/types";
 import { render } from "../../__test__/unit/test-utils";
+import catalogFixture from "../../__fixtures__/catalog.json";
 
-// Mock destination catalog data
-const destinationCatalogFixture = [
-  { id: "kafka", name: "Apache Kafka", description: "Kafka destination" },
-  { id: "pulsar", name: "Apache Pulsar", description: "Pulsar destination" },
+// Mock data
+const sourceCatalogRows: Catalog[] = [
+  {
+    class: "mariadb",
+    name: "MariaDB",
+    description: "d",
+    descriptor: "desc",
+    role: "source",
+  },
 ];
 
 vi.mock("react-router-dom", () => ({
@@ -20,7 +25,26 @@ vi.mock("react-query", async (importOriginal) => {
   const mod = await importOriginal<typeof import("react-query")>();
   return {
     ...mod,
-    useQuery: vi.fn(),
+    useQuery: vi.fn((queryKey) => {
+      // Return different data based on query key
+      if (queryKey === "sourceConnectorCatalog") {
+        return {
+          data: sourceCatalogRows,
+          error: null,
+          isLoading: false,
+        };
+      } else if (queryKey === "destinationConnectorCatalog") {
+        return {
+          data: catalogFixture.components["server-sink"].map((entry: any) => ({
+            ...entry,
+            role: "destination",
+          })),
+          error: null,
+          isLoading: false,
+        };
+      }
+      return { data: [], error: null, isLoading: false };
+    }),
   };
 });
 
@@ -38,46 +62,28 @@ vi.mock("@components/ConnectionCatalogGrid", () => ({
   ),
 }));
 
-const catalogRows: Catalog[] = [
-  {
-    class: "mariadb",
-    name: "MariaDB",
-    description: "d",
-    descriptor: "desc",
-    role: "source",
-  },
-  {
-    class: "kinesis",
-    name: "Amazon Kinesis",
-    description: "d",
-    descriptor: "desc2",
-    role: "destination",
-  },
-];
-
 describe("ConnectionsCatalog", () => {
+  const destinationCatalogFixture = catalogFixture.components["server-sink"].map((entry: any) => ({
+    ...entry,
+    role: "destination",
+  }));
   const defaultMergedCount =
-    catalogRows.length + destinationCatalogFixture.length;
+    sourceCatalogRows.length + destinationCatalogFixture.length;
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("renders title and merged catalog entries", () => {
-    vi.mocked(useQuery).mockReturnValue({
-      data: catalogRows,
-      error: null,
-      isLoading: false,
-    } as any);
-
     render(<ConnectionsCatalog />);
 
     expect(screen.getByText("Connection catalog")).toBeInTheDocument();
     expect(screen.getByTestId("connection-catalog-grid")).toHaveTextContent(
       "MariaDB",
     );
+    // Check for one of the destinations from the fixture
     expect(screen.getByTestId("connection-catalog-grid")).toHaveTextContent(
-      "Amazon Kinesis",
+      "io.debezium.server.kafka.KafkaChangeConsumer",
     );
     expect(
       screen.getByText(new RegExp(`${defaultMergedCount}\\s+Items`)),
@@ -85,11 +91,6 @@ describe("ConnectionsCatalog", () => {
   });
 
   it("shows empty search state when no connectors match", async () => {
-    vi.mocked(useQuery).mockReturnValue({
-      data: catalogRows,
-      error: null,
-      isLoading: false,
-    } as any);
 
     render(<ConnectionsCatalog />);
 
