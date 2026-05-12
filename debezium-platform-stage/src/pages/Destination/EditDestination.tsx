@@ -304,5 +304,3 @@ const EditDestination: React.FunctionComponent = () => {
 };
 
 export { EditDestination };
-
-// Made with Bob

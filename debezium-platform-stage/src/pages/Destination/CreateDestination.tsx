@@ -196,5 +196,3 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
 };
 
 export { CreateDestination };
-
-// Made with Bob
