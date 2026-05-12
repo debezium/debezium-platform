@@ -887,15 +887,15 @@
     react-dropzone "^14.3.5"
     tslib "^2.8.1"
 
-"@patternfly/react-drag-drop@^6.4.1":
-  version "6.4.1"
-  resolved "https://registry.npmjs.org/@patternfly/react-drag-drop/-/react-drag-drop-6.4.1.tgz"
-  integrity sha512-+zkN+6JO/6qPKb1srsKyC4OpeF/dgQvZ0U4soXeh/n22n2YVcrH9QAUGn1QBB7FmLiAoATHB9vr1awafF5HIYw==
+"@patternfly/react-drag-drop@^6.4.3":
+  version "6.4.3"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-drag-drop/-/react-drag-drop-6.4.3.tgz#9d50d53957dce86c2ddf5e828901eb9f12e205e0"
+  integrity sha512-O8W4KPc3AGIATXpDPirkSr5D25ajDikFvalOlIBCDmWG7CE4E+LLe+x/t2UmQFY59JeoALFMIzrNJtHlozBuTQ==
   dependencies:
     "@dnd-kit/core" "^6.3.1"
     "@dnd-kit/modifiers" "^9.0.0"
     "@dnd-kit/sortable" "^10.0.0"
-    "@patternfly/react-core" "^6.4.1"
+    "@patternfly/react-core" "^6.4.3"
     "@patternfly/react-icons" "^6.4.0"
     "@patternfly/react-styles" "^6.4.0"
     resize-observer-polyfill "^1.5.1"
