@@ -26,10 +26,10 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "react-query";
 import { ConnectorSchema } from "../../apis/types";
 import { getConnectorTypeName } from "../../utils/helpers";
-import CreateDestinationSchemaForm, {
-  CreateDestinationSchemaFormHandle,
-} from "@components/CreateDestinationSchemaForm";
-import DestinationSchemaReviewView from "@components/DestinationSchemaReviewView";
+import CreateSchemaForm, {
+  CreateSchemaFormHandle,
+} from "@components/CreateSchemaForm";
+import SchemaReviewView from "@components/SchemaReviewView";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import { resolveDestinationPageViewMode } from "./destinationPageNavigation";
 
@@ -50,7 +50,7 @@ const EditDestination: React.FunctionComponent = () => {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const formRef = useRef<CreateDestinationSchemaFormHandle>(null);
+  const formRef = useRef<CreateSchemaFormHandle>(null);
   const { addNotification } = useNotification();
   const queryClient = useQueryClient();
 
@@ -211,20 +211,22 @@ const EditDestination: React.FunctionComponent = () => {
     return (
       <PageSection isFilled>
         {viewMode ? (
-          <DestinationSchemaReviewView
-            destination={destination}
+          <SchemaReviewView
+            source={destination}
             connectorSchema={connectorSchema}
             dataType={destination.type}
+            hideSignalCollections={true}
           />
         ) : (
-          <CreateDestinationSchemaForm
+          <CreateSchemaForm
             key={destination.id}
             ref={formRef}
             connectorSchema={connectorSchema}
-            destinationId={destination.type}
+            sourceId={destination.type}
             dataType={destination.type}
-            initialDestination={destination}
+            initialSource={destination}
             onSubmit={handleSchemaSubmit}
+            hideSignalCollections={true}
           />
         )}
       </PageSection>

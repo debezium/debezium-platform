@@ -19,9 +19,9 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
 import { fetchData } from "../../apis/apis";
 import { ConnectorSchema } from "../../apis/types";
-import CreateDestinationSchemaForm, {
-  CreateDestinationSchemaFormHandle,
-} from "@components/CreateDestinationSchemaForm";
+import CreateSchemaForm, {
+  CreateSchemaFormHandle,
+} from "@components/CreateSchemaForm";
 
 interface CreateDestinationProps {
   modelLoaded?: boolean;
@@ -47,7 +47,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   const descriptor = (location.state as { descriptor?: string } | null)?.descriptor;
 
   const [isLoading, setIsLoading] = useState(false);
-  const formRef = useRef<CreateDestinationSchemaFormHandle>(null);
+  const formRef = useRef<CreateSchemaFormHandle>(null);
 
   const descriptorPath = React.useMemo(() => {
     if (descriptor) return descriptor.replace(/\.json$/, "");
@@ -123,11 +123,12 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     if (!connectorSchema) return null;
 
     return (
-      <CreateDestinationSchemaForm
+      <CreateSchemaForm
         ref={formRef}
         connectorSchema={connectorSchema}
-        destinationId={destinationId}
+        sourceId={destinationId}
         onSubmit={createNewDestination}
+        hideSignalCollections={true}
         {...(modelLoaded ? { defaultLayoutMode: "tabs" as const } : {})}
       />
     );
