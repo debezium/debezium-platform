@@ -15,7 +15,6 @@ import { useState } from "react";
 import { getConnectionRole } from "@utils/helpers";
 import ConnectionTable from "@components/ConnectionTable";
 import { Catalog, CatalogApiResponse } from "src/apis/types";
-import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
 
 
 export interface IConnectionsProps {
@@ -96,9 +95,22 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     }
   );
 
+  const { data: destinationCatalog = [] } = useQuery<Catalog[], Error>(
+    "destinationConnectorCatalog",
+    async () => {
+      const response = await fetchData<CatalogApiResponse>(
+        `${API_URL}/api/catalog`
+      );
+      return (response.components["server-sink"] ?? []).map((entry) => ({
+        ...entry,
+        role: "destination",
+      }));
+    }
+  );
+
   const catalog: Catalog[] = React.useMemo(
     () => [...sourceCatalog, ...destinationCatalog],
-    [sourceCatalog]
+    [sourceCatalog, destinationCatalog]
   );
 
   const searchResult = React.useMemo(() => {

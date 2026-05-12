@@ -33,7 +33,7 @@ vi.mock("../../appLayout/AppNotificationContext", () => ({
   useNotification: vi.fn(),
 }));
 
-vi.mock("@components/CreateSourceSchemaForm", () => ({
+vi.mock("@components/CreateSchemaForm", () => ({
   __esModule: true,
   default: () => <div data-testid="schema-form-mock" />,
 }));
