@@ -362,7 +362,7 @@ const CreateSchemaForm = React.forwardRef<
       sections.push({ id: "signal-collections", label: "Signal Collections", type: "custom" });
     }
     return sections;
-  }, [orderedGroups, groupedProperties]);
+  }, [orderedGroups, groupedProperties, hideSignalCollections]);
 
   useEffect(() => {
     if (layoutMode !== "jumplinks") return;

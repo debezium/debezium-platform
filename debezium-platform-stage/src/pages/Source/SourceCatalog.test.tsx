@@ -3,8 +3,14 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useQuery } from "react-query";
 import { SourceCatalog } from "./SourceCatalog";
-import sourceCatalogFixture from "../../__mocks__/data/SourceCatalog.json";
 import { render } from "../../__test__/unit/test-utils";
+import catalogFixture from "../../__fixtures__/catalog.json";
+
+// Extract source catalog from fixture
+const sourceCatalogFixture = (catalogFixture.components["source-connector"] ?? []).map((entry) => ({
+  ...entry,
+  role: "source",
+}));
 
 const mockNavigate = vi.fn();
 

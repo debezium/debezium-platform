@@ -82,7 +82,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     }
 
     return _.sortBy(filtered, (o) => o.name.toLowerCase());
-  }, [connectionsTypeSelected, searchQuery, sourceCatalog]);
+  }, [connectionsTypeSelected, searchQuery, sourceCatalog, destinationCatalog]);
 
   const onClear = () => {
     onSearch?.("");

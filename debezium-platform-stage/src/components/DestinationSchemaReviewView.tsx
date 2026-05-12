@@ -40,7 +40,7 @@ const DestinationSchemaReviewView: React.FC<DestinationSchemaReviewViewProps> = 
 
   return (
     <SourceSchemaReviewView
-      source={source as any}
+      source={source}
       connectorSchema={connectorSchema}
       dataType={dataType}
       hideSignalCollections={true}
