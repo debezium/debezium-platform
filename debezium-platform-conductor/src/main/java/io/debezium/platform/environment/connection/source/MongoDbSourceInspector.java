@@ -80,7 +80,7 @@ public class MongoDbSourceInspector implements SourceInspector {
                 .toList();
 
         SchemaNode schema = new SchemaNode(
-                null    ,
+                null,
                 collections,
                 collections.size());
 
