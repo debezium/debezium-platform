@@ -21,6 +21,7 @@ import io.debezium.connector.mongodb.connection.MongoDbConnections;
 import io.debezium.platform.data.dto.CatalogNode;
 import io.debezium.platform.data.dto.CollectionNode;
 import io.debezium.platform.data.dto.CollectionTree;
+import io.debezium.platform.data.dto.SchemaNode;
 import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import io.debezium.platform.domain.views.Connection;
 
@@ -78,10 +79,14 @@ public class MongoDbSourceInspector implements SourceInspector {
                 .map(collectionId -> new CollectionNode(collectionId.name(), collectionId.toString()))
                 .toList();
 
+        SchemaNode schema = new SchemaNode(
+                null    ,
+                collections,
+                collections.size());
+
         return new CatalogNode(
                 databaseName,
-                List.of(),
-                collections,
+                List.of(schema),
                 collections.size());
     }
 

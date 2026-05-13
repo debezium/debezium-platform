@@ -56,10 +56,13 @@ public class MongoDbSourceInspectorIT {
                 .anySatisfy(catalog -> {
                     assertThat(catalog.name()).isEqualTo("inventory");
                     assertThat(catalog.totalCollections()).isGreaterThanOrEqualTo(2);
-                    assertThat(catalog.schemas()).isEmpty();
-                    assertThat(catalog.collections())
-                            .extracting("name")
-                            .contains("customers", "orders");
+                    assertThat(catalog.schemas())
+                            .anySatisfy(schema -> {
+                                assertThat(schema.name()).isNull();
+                                assertThat(schema.collections())
+                                        .extracting("name")
+                                        .contains("customers", "orders");
+                            });
                 });
     }
 
