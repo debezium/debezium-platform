@@ -71,6 +71,8 @@ const Destinations: React.FunctionComponent = () => {
     }
   );
 
+
+
   // Compute filtered results based on search query
   const searchResult = React.useMemo(() => {
     if (searchQuery.length === 0) {

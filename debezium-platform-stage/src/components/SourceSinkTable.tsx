@@ -93,6 +93,8 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
     }
   );
 
+
+
   const { mutate: deleteData } = useDeleteData({
     onSuccess: () => {
       modalToggle(false);

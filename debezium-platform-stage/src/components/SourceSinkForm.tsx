@@ -10,9 +10,6 @@ import {
   FormFieldGroup,
   FormFieldGroupHeader,
   Button,
-  Split,
-  SplitItem,
-  Grid,
   Form,
   InputGroup,
   InputGroupItem,
@@ -27,7 +24,7 @@ import {
   TextInputGroupUtilities,
   Skeleton,
 } from "@patternfly/react-core";
-import { ExclamationCircleIcon, PlusIcon, TimesIcon, TrashIcon } from "@patternfly/react-icons";
+import { ExclamationCircleIcon, PlusIcon, TimesIcon } from "@patternfly/react-icons";
 import { getConnectionRole, getConnectorTypeName } from "@utils/helpers";
 import { Catalog } from "../apis/types";
 import destinationCatalog from "../__mocks__/data/DestinationCatalog.json";
@@ -39,6 +36,12 @@ import { Connection, ConnectionConfig, fetchData } from "src/apis";
 import { API_URL } from "@utils/constants";
 import { useQuery } from "react-query";
 import "./SourceSinkForm.css";
+import {
+  AdditionalPropertyRow,
+  AdditionalPropertyRowErrorCode,
+  AdditionalPropertyValueKind,
+} from "@utils/additionalConfigProperties";
+import { AdditionalPropertiesRows } from "./AdditionalPropertiesRows";
 
 
 const getInitialSelectOptions = (connections: connectionsList[], connectorId: string): SelectOptionProps[] => {
@@ -60,24 +63,23 @@ export interface connectionsList extends Connection {
 interface SourceSinkFormProps {
   ConnectorId: string;
   dataType?: string;
-  errorWarning: string[];
-  properties: Map<string, { key: string; value: string }>;
+  properties: Map<string, AdditionalPropertyRow>;
   setValue: (key: string, value: string) => void;
   getValue: (key: string) => string;
   setError: (key: string, error: string | undefined) => void;
   errors: Record<string, string | undefined>;
   handleAddProperty: () => void;
   handleDeleteProperty: (key: string) => void;
-  handlePropertyChange: (
-    key: string,
-    type: "key" | "value",
-    value: string
-  ) => void;
+  handlePropertyPatch: (id: string, patch: Partial<AdditionalPropertyRow>) => void;
+  handleValueKindChange: (id: string, kind: AdditionalPropertyValueKind) => void;
+  additionalErrorRowIds: Set<string>;
+  additionalRowErrorCodes: Map<string, AdditionalPropertyRowErrorCode[]>;
   viewMode?: boolean;
   setSelectedConnection: (connection: ConnectionConfig | undefined) => void;
   selectedConnection: ConnectionConfig | undefined;
   handleConnectionModalToggle: () => void;
 }
+
 const SourceSinkForm = ({
   ConnectorId,
   dataType,
@@ -85,15 +87,18 @@ const SourceSinkForm = ({
   setValue,
   getValue,
   setError,
-  errorWarning,
   errors,
   handleAddProperty,
   handleDeleteProperty,
-  handlePropertyChange,
+  handlePropertyPatch,
+  handleValueKindChange,
+  additionalErrorRowIds,
+  additionalRowErrorCodes,
   viewMode,
   setSelectedConnection,
   selectedConnection,
   handleConnectionModalToggle,
+
 }: SourceSinkFormProps) => {
   const { t } = useTranslation();
 
@@ -135,6 +140,8 @@ const SourceSinkForm = ({
       },
     }
   );
+
+
 
   const baseSelectOptions = React.useMemo(() => {
     return getInitialSelectOptions(connections, dataType || ConnectorId);
@@ -469,63 +476,18 @@ const SourceSinkForm = ({
                 />
               }
             >
-              {Array.from(properties.keys()).map((key) => (
-                <Split hasGutter key={key}>
-                  <SplitItem isFilled>
-                    <Grid hasGutter md={6}>
-                      <FormGroup
-                        label=""
-                        isRequired
-                        fieldId={`${connectorType}-config-props-key-field-${key}`}
-                      >
-                        <TextInput
-                          readOnlyVariant={viewMode ? "default" : undefined}
-                          isRequired
-                          type="text"
-                          placeholder="Key"
-                          validated={errorWarning.includes(key) ? "error" : "default"}
-                          id={`${connectorType}-config-props-key-${key}`}
-                          name={`${connectorType}-config-props-key-${key}`}
-                          value={properties.get(key)?.key || ""}
-                          onChange={(_e, value) =>
-                            handlePropertyChange(key, "key", value)
-                          }
-                        />
-                      </FormGroup>
-                      <FormGroup
-                        label=""
-                        isRequired
-                        fieldId={`${connectorType}-config-props-value-field-${key}`}
-                      >
-                        <TextInput
-                          readOnlyVariant={viewMode ? "default" : undefined}
-                          isRequired
-                          type="text"
-                          id={`${connectorType}-config-props-value-${key}`}
-                          placeholder="Value"
-                          validated={errorWarning.includes(key) ? "error" : "default"}
-                          name={`${connectorType}-config-props-value-${key}`}
-                          value={properties.get(key)?.value || ""}
-                          onChange={(_e, value) =>
-                            handlePropertyChange(key, "value", value)
-                          }
-                        />
-                      </FormGroup>
-                    </Grid>
-                  </SplitItem>
-                  <SplitItem>
-                    <Button
-                      variant="plain"
-                      isDisabled={viewMode}
-                      aria-label="Remove"
-                      onClick={() => handleDeleteProperty(key)}
-                    >
-                      <TrashIcon />
-                    </Button>
-                  </SplitItem>
-                </Split>
-              ))}
+              <AdditionalPropertiesRows
+                fieldIdPrefix={`${connectorType}-addprop`}
+                viewMode={viewMode}
+                properties={properties}
+                rowIdsWithErrors={additionalErrorRowIds}
+                rowErrorCodes={additionalRowErrorCodes}
+                onDeleteRow={handleDeleteProperty}
+                onPatchRow={handlePropertyPatch}
+                onValueKindChange={handleValueKindChange}
+              />
             </FormFieldGroup>
+
 
           </Form>
         </CardBody>

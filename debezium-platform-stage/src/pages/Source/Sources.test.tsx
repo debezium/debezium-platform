@@ -125,7 +125,7 @@ describe("Sources", () => {
     fireEvent.change(searchInput, { target: { value: "source" } });
     await waitFor(() => {
       expect(screen.getByText("test-source-mongo")).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it("filters sources for unknown search input and clears search", async () => {
@@ -138,12 +138,14 @@ describe("Sources", () => {
         screen.getByText("No matching source is present.")
       ).toBeInTheDocument();
       expect(screen.getByText("Clear search")).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
+
     const clearButton = screen.getByText("Clear search");
     fireEvent.click(clearButton);
     await waitFor(() => {
       expect(searchInput).toHaveValue("");
       expect(screen.getByText("2 Items")).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
+
 });

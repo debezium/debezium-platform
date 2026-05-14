@@ -76,6 +76,8 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
     }
   );
 
+
+
   // Compute filtered results based on search query
   const searchResult = React.useMemo(() => {
     if (searchQuery.length === 0) {

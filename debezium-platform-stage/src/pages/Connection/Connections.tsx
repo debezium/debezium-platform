@@ -61,6 +61,8 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     }
   );
 
+
+
   const {
     data: destinationList = [],
   } = useQuery<Destination[], Error>(
@@ -70,6 +72,8 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
       refetchInterval: 7000,
     }
   );
+
+
 
   const {
     data: connectionsList = [],
@@ -83,6 +87,8 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     }
   );
 
+
+
   const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>(
     "sourceConnectorCatalog",
     async () => {
@@ -95,6 +101,8 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
       }));
     }
   );
+
+
 
   const catalog: Catalog[] = React.useMemo(
     () => [...sourceCatalog, ...destinationCatalog],

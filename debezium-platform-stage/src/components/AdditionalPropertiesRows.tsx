@@ -72,7 +72,7 @@ const AdditionalPropertiesRows: React.FunctionComponent<AdditionalPropertiesRows
                 <GridItem span={12} md={5}>
                   <FormGroup
                     label=""
-                    fieldId={`${fieldIdPrefix}-key-${rowId}`}
+                    fieldId={`${fieldIdPrefix}-key-input-${rowId}`}
                     isRequired={!viewMode}
                   >
                     <TextInput
@@ -81,8 +81,8 @@ const AdditionalPropertiesRows: React.FunctionComponent<AdditionalPropertiesRows
                       type="text"
                       placeholder={t("connection:additionalProperties.keyPlaceholder")}
                       validated={hasError ? "error" : "default"}
-                      id={`${fieldIdPrefix}-key-${rowId}`}
-                      name={`${fieldIdPrefix}-key-${rowId}`}
+                      id={`${fieldIdPrefix}-key-input-${rowId}`}
+                      name={`${fieldIdPrefix}-key-input-${rowId}`}
                       value={row.key}
                       onChange={(_e, value) => onPatchRow(rowId, { key: value })}
                       aria-label={t("connection:additionalProperties.keyAria")}
@@ -109,15 +109,15 @@ const AdditionalPropertiesRows: React.FunctionComponent<AdditionalPropertiesRows
                 </GridItem>
                 <GridItem span={12} md={5}>
                   {row.valueKind === "string" && (
-                    <FormGroup label="" fieldId={`${fieldIdPrefix}-value-${rowId}`} isRequired={!viewMode}>
+                    <FormGroup label="" fieldId={`${fieldIdPrefix}-value-input-${rowId}`} isRequired={!viewMode}>
                       <TextInput
                         readOnlyVariant={viewMode ? "default" : undefined}
                         isRequired={!viewMode}
                         type="text"
-                        id={`${fieldIdPrefix}-value-${rowId}`}
+                        id={`${fieldIdPrefix}-value-input-${rowId}`}
                         placeholder={t("connection:additionalProperties.valuePlaceholder")}
                         validated={hasError ? "error" : "default"}
-                        name={`${fieldIdPrefix}-value-${rowId}`}
+                        name={`${fieldIdPrefix}-value-input-${rowId}`}
                         value={row.stringValue}
                         onChange={(_e, value) => onPatchRow(rowId, { stringValue: value })}
                         aria-label={t("connection:additionalProperties.valueAria")}
@@ -125,7 +125,7 @@ const AdditionalPropertiesRows: React.FunctionComponent<AdditionalPropertiesRows
                     </FormGroup>
                   )}
                   {row.valueKind === "boolean" && (
-                    <FormGroup label="" fieldId={`${fieldIdPrefix}-value-${rowId}`}>
+                    <FormGroup label="" fieldId={`${fieldIdPrefix}-value-input-${rowId}`}>
                       <div
                         style={{
                           display: "flex",
@@ -134,7 +134,7 @@ const AdditionalPropertiesRows: React.FunctionComponent<AdditionalPropertiesRows
                         }}
                       >
                         <Switch
-                          id={`${fieldIdPrefix}-value-${rowId}`}
+                          id={`${fieldIdPrefix}-value-input-${rowId}`}
                           isChecked={row.booleanValue}
                           onChange={(_e, checked) => onPatchRow(rowId, { booleanValue: checked })}
                           isDisabled={viewMode}
@@ -148,16 +148,16 @@ const AdditionalPropertiesRows: React.FunctionComponent<AdditionalPropertiesRows
                     </FormGroup>
                   )}
                   {row.valueKind === "integer" && (
-                    <FormGroup label="" fieldId={`${fieldIdPrefix}-value-${rowId}`} isRequired={!viewMode}>
+                    <FormGroup label="" fieldId={`${fieldIdPrefix}-value-input-${rowId}`} isRequired={!viewMode}>
                       <TextInput
                         readOnlyVariant={viewMode ? "default" : undefined}
                         isRequired={!viewMode}
                         type="text"
                         inputMode="numeric"
-                        id={`${fieldIdPrefix}-value-${rowId}`}
+                        id={`${fieldIdPrefix}-value-input-${rowId}`}
                         placeholder={t("connection:additionalProperties.integerPlaceholder")}
                         validated={hasError ? "error" : "default"}
-                        name={`${fieldIdPrefix}-value-${rowId}`}
+                        name={`${fieldIdPrefix}-value-input-${rowId}`}
                         value={row.integerInput}
                         onChange={(_e, value) => onPatchRow(rowId, { integerInput: value })}
                         aria-label={t("connection:additionalProperties.integerAria")}
