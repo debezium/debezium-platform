@@ -74,7 +74,6 @@ import { Catalog, CatalogApiResponse, ConnectorSchema, SchemaGroup, SchemaProper
 import ConnectorImage from "./ComponentImage";
 import TableViewComponent from "./TableViewComponent";
 import SchemaGroupSection from "./SchemaGroupSection";
-import AdditionalProperties from "./AdditionalProperties";
 import ApiComponentError from "./ApiComponentError";
 import CreateConnectionModal from "../pages/components/CreateConnectionModal";
 import { SelectedDataListItem } from "../apis/types";
@@ -90,14 +89,22 @@ import {
 } from "@utils/connectorSchemaLayout";
 import { buildSourceConnectorDisplayGroupedProperties } from "@utils/sourceConnectorDisplayGroups";
 import { splitSourceConfigForHydration } from "@utils/sourceConfigSplit";
+import {
+  AdditionalPropertyRow,
+  additionalRowWithNewValueKind,
+  createEmptyAdditionalPropertyRow,
+  validateAdditionalPropertyRows,
+  AdditionalPropertyValueKind,
+  AdditionalPropertyRowErrorCode,
+} from "@utils/additionalConfigProperties";
 import _ from "lodash";
 import "./CreateSchemaForm.css";
+import { AdditionalPropertiesRows } from "./AdditionalPropertiesRows";
 
 interface connectionsList extends Connection {
   role: string;
 }
 
-type AdditionalProp = { key: string; value: string };
 
 interface CreateSchemaFormProps {
   connectorSchema: ConnectorSchema;
@@ -138,7 +145,7 @@ const getInitialSelectOptions = (
 /** Visual order for jumplinks layout: essentials → schema groups → additional properties. */
 function getFirstJumplinkValidationErrorElementId(
   newErrors: Record<string, string | undefined>,
-  additionalErrorRowIds: string[],
+  additionalErrorRowIds: Set<string>,
   orderedGroups: SchemaGroup[],
   groupedProperties: Map<string, SchemaProperty[]>
 ): string | null {
@@ -154,11 +161,12 @@ function getFirstJumplinkValidationErrorElementId(
     }
   }
 
-  if (additionalErrorRowIds.length > 0) {
-    return `addprop-key-input-${additionalErrorRowIds[0]}`;
+  if (additionalErrorRowIds.size > 0) {
+    return `addprop-key-input-${Array.from(additionalErrorRowIds)[0]}`;
   }
   return null;
 }
+
 
 function scrollJumplinkValidationTargetIntoView(elementId: string) {
   const el = document.getElementById(elementId);
@@ -175,7 +183,7 @@ function scrollJumplinkValidationTargetIntoView(elementId: string) {
 
 function collectValidationErrorSectionLabels(
   newErrors: Record<string, string | undefined>,
-  additionalErrorRowIds: string[],
+  additionalErrorRowIds: Set<string>,
   orderedGroups: SchemaGroup[],
   groupedProperties: Map<string, SchemaProperty[]>,
   t: TFunction
@@ -202,7 +210,7 @@ function collectValidationErrorSectionLabels(
     }
   }
 
-  if (additionalErrorRowIds.length > 0) {
+  if (additionalErrorRowIds.size > 0) {
     push(t("source:jumplinks.additionalProperties"));
   }
 
@@ -237,11 +245,12 @@ const CreateSchemaForm = React.forwardRef<
   const [schemaValues, setSchemaValues] = useState<Record<string, string>>({});
 
   // Additional properties
-  const [additionalProps, setAdditionalProps] = useState<Map<string, AdditionalProp>>(
+  const [additionalProps, setAdditionalProps] = useState<Map<string, AdditionalPropertyRow>>(
     new Map()
   );
   const [additionalKeyCount, setAdditionalKeyCount] = useState(0);
-  const [additionalErrorKeys, setAdditionalErrorKeys] = useState<string[]>([]);
+  const [additionalErrorRowIds, setAdditionalErrorRowIds] = useState<Set<string>>(new Set());
+  const [additionalRowErrorCodes, setAdditionalRowErrorCodes] = useState<Map<string, AdditionalPropertyRowErrorCode[]>>(new Map());
 
   // Connection
   const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig | undefined>();
@@ -695,7 +704,7 @@ const CreateSchemaForm = React.forwardRef<
 
   const handleAdditionalAdd = () => {
     const key = `addprop-${additionalKeyCount}`;
-    setAdditionalProps((prev) => new Map(prev).set(key, { key: "", value: "" }));
+    setAdditionalProps((prev) => new Map(prev).set(key, createEmptyAdditionalPropertyRow()));
     setAdditionalKeyCount((c) => c + 1);
   };
 
@@ -707,14 +716,23 @@ const CreateSchemaForm = React.forwardRef<
     });
   };
 
-  const handleAdditionalChange = (id: string, type: "key" | "value", value: string) => {
+  const handleAdditionalPatch = (id: string, patch: Partial<AdditionalPropertyRow>) => {
     setAdditionalProps((prev) => {
       const next = new Map(prev);
       const entry = next.get(id);
       if (entry) {
-        if (type === "key") entry.key = value;
-        else entry.value = value;
-        next.set(id, { ...entry });
+        next.set(id, { ...entry, ...patch });
+      }
+      return next;
+    });
+  };
+
+  const handleValueKindChange = (id: string, kind: AdditionalPropertyValueKind) => {
+    setAdditionalProps((prev) => {
+      const next = new Map(prev);
+      const entry = next.get(id);
+      if (entry) {
+        next.set(id, additionalRowWithNewValueKind(entry, kind));
       }
       return next;
     });
@@ -743,20 +761,18 @@ const CreateSchemaForm = React.forwardRef<
       }
     }
 
-    const errKeys: string[] = [];
-    additionalProps.forEach((val, key) => {
-      if (val.key === "" || val.value === "") errKeys.push(key);
-    });
-    setAdditionalErrorKeys(errKeys);
+    const additionalValidation = validateAdditionalPropertyRows(additionalProps, schemaValues);
+    setAdditionalErrorRowIds(additionalValidation.rowIdsWithErrors);
+    setAdditionalRowErrorCodes(additionalValidation.rowErrorCodes);
 
     setErrors(newErrors);
     const hasSchemaErrors = Object.values(newErrors).some(Boolean);
-    const valid = !hasSchemaErrors && errKeys.length === 0;
+    const valid = !hasSchemaErrors && !additionalValidation.hasErrors;
 
     if (!valid) {
       const sections = collectValidationErrorSectionLabels(
         newErrors,
-        errKeys,
+        additionalValidation.rowIdsWithErrors,
         orderedGroups,
         groupedProperties,
         t
@@ -769,10 +785,11 @@ const CreateSchemaForm = React.forwardRef<
     if (!valid && layoutMode === "jumplinks") {
       const targetId = getFirstJumplinkValidationErrorElementId(
         newErrors,
-        errKeys,
+        additionalValidation.rowIdsWithErrors,
         orderedGroups,
         groupedProperties
       );
+
       if (targetId) {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
@@ -810,7 +827,9 @@ const CreateSchemaForm = React.forwardRef<
       return;
     }
 
-    const config: Record<string, string> = {};
+    const additionalValidation = validateAdditionalPropertyRows(additionalProps, schemaValues);
+
+    const config: Record<string, string | number | boolean> = {};
 
     for (const [key, value] of Object.entries(schemaValues)) {
       if (value === "") continue;
@@ -818,9 +837,7 @@ const CreateSchemaForm = React.forwardRef<
       config[key] = value;
     }
 
-    additionalProps.forEach((prop) => {
-      if (prop.key && prop.value) config[prop.key] = prop.value;
-    });
+    Object.assign(config, additionalValidation.additionalFlat);
 
     if (signalCollectionName) config["signal.data.collection"] = signalCollectionName;
 
@@ -839,6 +856,7 @@ const CreateSchemaForm = React.forwardRef<
       payload.id = initialSource.id;
     }
     onSubmit(payload);
+
   }, [
     readOnly,
     validate,
@@ -1001,16 +1019,25 @@ const CreateSchemaForm = React.forwardRef<
   };
 
   const renderAdditionalProperties = () => (
-    <AdditionalProperties
-      properties={additionalProps}
-      schemaPropertyNames={schemaPropertyNames}
-      onAdd={handleAdditionalAdd}
-      onDelete={handleAdditionalDelete}
-      onChange={handleAdditionalChange}
-      errorKeys={additionalErrorKeys}
-      readOnly={readOnly}
-    />
+    <div style={{ paddingTop: "10px" }}>
+      <AdditionalPropertiesRows
+        fieldIdPrefix="addprop"
+        viewMode={readOnly}
+        properties={additionalProps}
+        rowIdsWithErrors={additionalErrorRowIds}
+        rowErrorCodes={additionalRowErrorCodes}
+        onDeleteRow={handleAdditionalDelete}
+        onPatchRow={handleAdditionalPatch}
+        onValueKindChange={handleValueKindChange}
+      />
+      {!readOnly && (
+        <Button variant="secondary" icon={<PlusIcon />} onClick={handleAdditionalAdd} style={{ marginTop: "15px" }}>
+          {t("form.addFieldButton", "Add property")}
+        </Button>
+      )}
+    </div>
   );
+
 
   const renderSignalCollections = () => {
     const isConnectionSelected = !!selectedConnection;
@@ -1138,6 +1165,7 @@ const CreateSchemaForm = React.forwardRef<
             {renderSignalCollections()}
           </section>
         )}
+        <div style={{ paddingBottom: "300px" }} />
       </div>
     </div>
   );

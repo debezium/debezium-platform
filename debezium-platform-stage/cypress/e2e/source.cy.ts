@@ -212,7 +212,7 @@ describe('Source Management', () => {
       cy.get('[id^="addprop-key-input-"]').should('have.length', 1);
       cy.contains('button', 'Add property').scrollIntoView().click({ force: true });
       cy.get('[id^="addprop-key-input-"]').should('have.length', 2);
-      cy.get('[aria-label="Remove"]').first().click();
+      cy.get('[aria-label="Remove row"]').first().click();
       cy.get('[id^="addprop-key-input-"]').should('have.length', 1);
     });
 

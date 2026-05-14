@@ -1,218 +1,57 @@
-import React, { useState, useRef } from "react";
+import React from "react";
 import {
   Button,
   FormGroup,
-  Grid,
-  Split,
-  SplitItem,
-  TextInput,
-  Select,
-  SelectOption,
-  SelectList,
-  MenuToggle,
-  MenuToggleElement,
-  TextInputGroup,
-  TextInputGroupMain,
-  TextInputGroupUtilities,
   Form,
 } from "@patternfly/react-core";
-import { PlusIcon, TimesIcon, TrashIcon } from "@patternfly/react-icons";
+import { PlusIcon } from "@patternfly/react-icons";
 import { useTranslation } from "react-i18next";
-
-import "./AdditionalProperties.css";
+import { AdditionalPropertiesRows } from "./AdditionalPropertiesRows";
+import type {
+  AdditionalPropertyRow,
+  AdditionalPropertyRowErrorCode,
+  AdditionalPropertyValueKind,
+} from "@utils/additionalConfigProperties";
 
 interface AdditionalPropertiesProps {
-  properties: Map<string, { key: string; value: string }>;
-  schemaPropertyNames: string[];
+  fieldIdPrefix?: string;
+  properties: Map<string, AdditionalPropertyRow>;
   onAdd: () => void;
   onDelete: (id: string) => void;
-  onChange: (id: string, type: "key" | "value", value: string) => void;
-  errorKeys: string[];
+  onPatch: (id: string, patch: Partial<AdditionalPropertyRow>) => void;
+  onValueKindChange: (id: string, kind: AdditionalPropertyValueKind) => void;
+  rowIdsWithErrors: Set<string>;
+  rowErrorCodes: Map<string, AdditionalPropertyRowErrorCode[]>;
   readOnly?: boolean;
 }
-
-interface TypeaheadKeyInputProps {
-  value: string;
-  suggestions: string[];
-  onChange: (value: string) => void;
-  fieldId: string;
-  readOnly?: boolean;
-}
-
-const TypeaheadKeyInput: React.FC<TypeaheadKeyInputProps> = ({
-  value,
-  suggestions,
-  onChange,
-  fieldId,
-  readOnly,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [filterValue, setFilterValue] = useState("");
-  const textInputRef = useRef<HTMLInputElement>(null);
-
-  const filteredOptions = React.useMemo(() => {
-    if (!filterValue) return suggestions;
-    return suggestions.filter((s) =>
-      s.toLowerCase().includes(filterValue.toLowerCase())
-    );
-  }, [suggestions, filterValue]);
-
-  const onSelect = (
-    _e: React.MouseEvent<Element, MouseEvent> | undefined,
-    val: string | number | undefined
-  ) => {
-    if (val) {
-      onChange(String(val));
-      setFilterValue("");
-      setIsOpen(false);
-    }
-  };
-
-  const onTextInputChange = (
-    _e: React.FormEvent<HTMLInputElement>,
-    val: string
-  ) => {
-    setFilterValue(val);
-    onChange(val);
-    if (!isOpen) setIsOpen(true);
-  };
-
-  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
-    <MenuToggle
-      ref={toggleRef}
-      variant="typeahead"
-      onClick={() => {
-        setIsOpen(!isOpen);
-        textInputRef.current?.focus();
-      }}
-      isExpanded={isOpen}
-      isFullWidth
-    >
-      <TextInputGroup isPlain>
-        <TextInputGroupMain
-          value={value}
-          onClick={() => !isOpen && setIsOpen(true)}
-          onChange={onTextInputChange}
-          id={fieldId}
-          autoComplete="off"
-          innerRef={textInputRef}
-          placeholder="Property key"
-          role="combobox"
-          isExpanded={isOpen}
-        />
-        <TextInputGroupUtilities
-          {...(!value ? { style: { display: "none" } } : {})}
-        >
-          <Button
-            variant="plain"
-            onClick={() => {
-              onChange("");
-              setFilterValue("");
-              textInputRef.current?.focus();
-            }}
-            aria-label="Clear"
-            icon={<TimesIcon />}
-          />
-        </TextInputGroupUtilities>
-      </TextInputGroup>
-    </MenuToggle>
-  );
-
-  if (readOnly) {
-    return (
-      <TextInput
-        id={fieldId}
-        value={value}
-        readOnly
-        readOnlyVariant="plain"
-        aria-label="Property key"
-      />
-    );
-  }
-
-  return (
-    <Select
-      id={`${fieldId}-select`}
-      isOpen={isOpen}
-      selected={value}
-      onSelect={onSelect}
-      onOpenChange={(open) => !open && setIsOpen(false)}
-      toggle={toggle}
-      variant="typeahead"
-      isScrollable
-      maxMenuHeight="min(50vh, 320px)"
-    >
-      <SelectList>
-        {filteredOptions.length === 0 ? (
-          <SelectOption isDisabled value="no-results">
-            No matching properties
-          </SelectOption>
-        ) : (
-          filteredOptions.slice(0, 50).map((opt) => (
-            <SelectOption key={opt} value={opt}>
-              {opt}
-            </SelectOption>
-          ))
-        )}
-      </SelectList>
-    </Select>
-  );
-};
 
 const AdditionalProperties: React.FC<AdditionalPropertiesProps> = ({
+  fieldIdPrefix = "addprop",
   properties,
-  schemaPropertyNames,
   onAdd,
   onDelete,
-  onChange,
-  errorKeys,
-  readOnly,
+  onPatch,
+  onValueKindChange,
+  rowIdsWithErrors,
+  rowErrorCodes,
+  readOnly = false,
 }) => {
   const { t } = useTranslation();
 
   return (
     <Form isWidthLimited>
-      <FormGroup fieldId="additional-properties-group">
-        {Array.from(properties.entries()).map(([id, prop]) => (
-          <Split hasGutter key={id} className="additional-properties-row">
-            <SplitItem isFilled>
-              <Grid hasGutter md={6}>
-                <FormGroup label="" fieldId={`addprop-key-${id}`}>
-                  <TypeaheadKeyInput
-                    value={prop.key}
-                    suggestions={schemaPropertyNames}
-                    onChange={(val) => onChange(id, "key", val)}
-                    fieldId={`addprop-key-input-${id}`}
-                    readOnly={readOnly}
-                  />
-                </FormGroup>
-                <FormGroup label="" fieldId={`addprop-value-${id}`}>
-                  <TextInput
-                    type="text"
-                    id={`addprop-value-input-${id}`}
-                    placeholder="Value"
-                    value={prop.value}
-                    validated={errorKeys.includes(id) ? "error" : "default"}
-                    onChange={(_e, val) => onChange(id, "value", val)}
-                    readOnly={!!readOnly}
-                    readOnlyVariant={readOnly ? "plain" : undefined}
-                  />
-                </FormGroup>
-              </Grid>
-            </SplitItem>
-            {!readOnly && (
-            <SplitItem>
-              <Button
-                variant="plain"
-                aria-label="Remove"
-                onClick={() => onDelete(id)}
-              >
-                <TrashIcon />
-              </Button>
-            </SplitItem>
-            )}
-          </Split>
-        ))}
+      <FormGroup fieldId={`${fieldIdPrefix}-group`}>
+        <AdditionalPropertiesRows
+          fieldIdPrefix={fieldIdPrefix}
+          properties={properties}
+          viewMode={readOnly}
+          rowIdsWithErrors={rowIdsWithErrors}
+          rowErrorCodes={rowErrorCodes}
+          onDeleteRow={onDelete}
+          onPatchRow={onPatch}
+          onValueKindChange={onValueKindChange}
+          showAddRemove={!readOnly}
+        />
       </FormGroup>
       {!readOnly && (
         <Button variant="secondary" icon={<PlusIcon />} onClick={onAdd}>

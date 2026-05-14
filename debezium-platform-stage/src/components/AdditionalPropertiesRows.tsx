@@ -66,129 +66,133 @@ const AdditionalPropertiesRows: React.FunctionComponent<AdditionalPropertiesRows
         const errMsg = hasError ? firstErrorMessage(t, rowErrorCodes.get(rowId)) : null;
 
         return (
-          <Split hasGutter key={rowId}>
-            <SplitItem isFilled>
-              <Grid hasGutter>
-                <GridItem span={12} md={5}>
-                  <FormGroup
-                    label=""
-                    fieldId={`${fieldIdPrefix}-key-${rowId}`}
-                    isRequired={!viewMode}
-                  >
-                    <TextInput
-                      readOnlyVariant={viewMode ? "default" : undefined}
+          <div className="additional-properties-row" key={rowId}>
+            <Split hasGutter>
+              <SplitItem isFilled>
+                <Grid hasGutter>
+                  <GridItem span={12} md={5}>
+                    {/* Render the property key input box */}
+                    <FormGroup
+                      fieldId={`${fieldIdPrefix}-key-input-${rowId}`}
                       isRequired={!viewMode}
-                      type="text"
-                      placeholder={t("connection:additionalProperties.keyPlaceholder")}
-                      validated={hasError ? "error" : "default"}
-                      id={`${fieldIdPrefix}-key-${rowId}`}
-                      name={`${fieldIdPrefix}-key-${rowId}`}
-                      value={row.key}
-                      onChange={(_e, value) => onPatchRow(rowId, { key: value })}
-                      aria-label={t("connection:additionalProperties.keyAria")}
-                    />
-                  </FormGroup>
-                </GridItem>
-                <GridItem span={12} md={2}>
-                  <FormGroup label="" fieldId={`${fieldIdPrefix}-type-${rowId}`}>
-                    <FormSelect
-                      id={`${fieldIdPrefix}-type-${rowId}`}
-                      value={row.valueKind}
-                      validated={hasError ? "error" : "default"}
-                      isDisabled={viewMode}
-                      onChange={(_e, value) =>
-                        onValueKindChange(rowId, value as AdditionalPropertyValueKind)
-                      }
-                      aria-label={t("connection:additionalProperties.valueTypeAria")}
                     >
-                      <FormSelectOption value="string" label={t("connection:additionalProperties.typeString")} />
-                      <FormSelectOption value="boolean" label={t("connection:additionalProperties.typeBoolean")} />
-                      <FormSelectOption value="integer" label={t("connection:additionalProperties.typeInteger")} />
-                    </FormSelect>
-                  </FormGroup>
-                </GridItem>
-                <GridItem span={12} md={5}>
-                  {row.valueKind === "string" && (
-                    <FormGroup label="" fieldId={`${fieldIdPrefix}-value-${rowId}`} isRequired={!viewMode}>
                       <TextInput
                         readOnlyVariant={viewMode ? "default" : undefined}
                         isRequired={!viewMode}
                         type="text"
-                        id={`${fieldIdPrefix}-value-${rowId}`}
-                        placeholder={t("connection:additionalProperties.valuePlaceholder")}
+                        placeholder={t("connection:additionalProperties.keyPlaceholder")}
                         validated={hasError ? "error" : "default"}
-                        name={`${fieldIdPrefix}-value-${rowId}`}
-                        value={row.stringValue}
-                        onChange={(_e, value) => onPatchRow(rowId, { stringValue: value })}
-                        aria-label={t("connection:additionalProperties.valueAria")}
+                        id={`${fieldIdPrefix}-key-input-${rowId}`}
+                        name={`${fieldIdPrefix}-key-input-${rowId}`}
+                        value={row.key}
+                        onChange={(_e, value) => onPatchRow(rowId, { key: value })}
+                        aria-label={t("connection:additionalProperties.keyAria")}
                       />
                     </FormGroup>
-                  )}
-                  {row.valueKind === "boolean" && (
-                    <FormGroup label="" fieldId={`${fieldIdPrefix}-value-${rowId}`}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "center",
-                          width: "100%",
-                        }}
+                  </GridItem>
+                  <GridItem span={12} md={2}>
+                    {/* Type selector dropdown for the property value */}
+                    <FormGroup fieldId={`${fieldIdPrefix}-type-${rowId}`}>
+                      <FormSelect
+                        id={`${fieldIdPrefix}-type-${rowId}`}
+                        value={row.valueKind}
+                        validated={hasError ? "error" : "default"}
+                        isDisabled={viewMode}
+                        onChange={(_e, value) =>
+                          onValueKindChange(rowId, value as AdditionalPropertyValueKind)
+                        }
+                        aria-label={t("connection:additionalProperties.valueTypeAria")}
                       >
-                        <Switch
-                          id={`${fieldIdPrefix}-value-${rowId}`}
-                          isChecked={row.booleanValue}
-                          onChange={(_e, checked) => onPatchRow(rowId, { booleanValue: checked })}
-                          isDisabled={viewMode}
-                          label={
-                            row.booleanValue
-                              ? t("connection:additionalProperties.booleanTrue")
-                              : t("connection:additionalProperties.booleanFalse")
-                          }
+                        <FormSelectOption value="string" label={t("connection:additionalProperties.typeString")} />
+                        <FormSelectOption value="boolean" label={t("connection:additionalProperties.typeBoolean")} />
+                        <FormSelectOption value="integer" label={t("connection:additionalProperties.typeInteger")} />
+                      </FormSelect>
+                    </FormGroup>
+                  </GridItem>
+                  <GridItem span={12} md={5}>
+                    {/* Render input based on the selected value type */}
+                    {row.valueKind === "string" && (
+                      <FormGroup fieldId={`${fieldIdPrefix}-value-input-${rowId}`} isRequired={!viewMode}>
+                        <TextInput
+                          readOnlyVariant={viewMode ? "default" : undefined}
+                          isRequired={!viewMode}
+                          type="text"
+                          id={`${fieldIdPrefix}-value-input-${rowId}`}
+                          placeholder={t("connection:additionalProperties.valuePlaceholder")}
+                          validated={hasError ? "error" : "default"}
+                          name={`${fieldIdPrefix}-value-input-${rowId}`}
+                          value={row.stringValue}
+                          onChange={(_e, value) => onPatchRow(rowId, { stringValue: value })}
+                          aria-label={t("connection:additionalProperties.valueAria")}
                         />
-                      </div>
-                    </FormGroup>
-                  )}
-                  {row.valueKind === "integer" && (
-                    <FormGroup label="" fieldId={`${fieldIdPrefix}-value-${rowId}`} isRequired={!viewMode}>
-                      <TextInput
-                        readOnlyVariant={viewMode ? "default" : undefined}
-                        isRequired={!viewMode}
-                        type="text"
-                        inputMode="numeric"
-                        id={`${fieldIdPrefix}-value-${rowId}`}
-                        placeholder={t("connection:additionalProperties.integerPlaceholder")}
-                        validated={hasError ? "error" : "default"}
-                        name={`${fieldIdPrefix}-value-${rowId}`}
-                        value={row.integerInput}
-                        onChange={(_e, value) => onPatchRow(rowId, { integerInput: value })}
-                        aria-label={t("connection:additionalProperties.integerAria")}
-                      />
-                    </FormGroup>
-                  )}
-                  {errMsg && (
-                    <FormHelperText>
-                      <HelperText>
-                        <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
-                          {errMsg}
-                        </HelperTextItem>
-                      </HelperText>
-                    </FormHelperText>
-                  )}
-                </GridItem>
-              </Grid>
-            </SplitItem>
-            {showAddRemove && (
-              <SplitItem>
-                <Button
-                  variant="plain"
-                  isDisabled={viewMode}
-                  aria-label={t("connection:additionalProperties.removeRowAria")}
-                  onClick={() => onDeleteRow(rowId)}
-                >
-                  <TrashIcon />
-                </Button>
+                      </FormGroup>
+                    )}
+                    {row.valueKind === "boolean" && (
+                      <FormGroup fieldId={`${fieldIdPrefix}-value-input-${rowId}`}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            width: "100%",
+                          }}
+                        >
+                          <Switch
+                            id={`${fieldIdPrefix}-value-input-${rowId}`}
+                            isChecked={row.booleanValue}
+                            onChange={(_e, checked) => onPatchRow(rowId, { booleanValue: checked })}
+                            isDisabled={viewMode}
+                            label={
+                              row.booleanValue
+                                ? t("connection:additionalProperties.booleanTrue")
+                                : t("connection:additionalProperties.booleanFalse")
+                            }
+                          />
+                        </div>
+                      </FormGroup>
+                    )}
+                    {row.valueKind === "integer" && (
+                      <FormGroup fieldId={`${fieldIdPrefix}-value-input-${rowId}`} isRequired={!viewMode}>
+                        <TextInput
+                          readOnlyVariant={viewMode ? "default" : undefined}
+                          isRequired={!viewMode}
+                          type="text"
+                          inputMode="numeric"
+                          id={`${fieldIdPrefix}-value-input-${rowId}`}
+                          placeholder={t("connection:additionalProperties.integerPlaceholder")}
+                          validated={hasError ? "error" : "default"}
+                          name={`${fieldIdPrefix}-value-input-${rowId}`}
+                          value={row.integerInput}
+                          onChange={(_e, value) => onPatchRow(rowId, { integerInput: value })}
+                          aria-label={t("connection:additionalProperties.integerAria")}
+                        />
+                      </FormGroup>
+                    )}
+                    {errMsg && (
+                      <FormHelperText>
+                        <HelperText>
+                          <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
+                            {errMsg}
+                          </HelperTextItem>
+                        </HelperText>
+                      </FormHelperText>
+                    )}
+                  </GridItem>
+                </Grid>
               </SplitItem>
-            )}
-          </Split>
+              {showAddRemove && (
+                <SplitItem>
+                  <Button
+                    variant="plain"
+                    isDisabled={viewMode}
+                    aria-label={t("connection:additionalProperties.removeRowAria")}
+                    onClick={() => onDeleteRow(rowId)}
+                  >
+                    <TrashIcon />
+                  </Button>
+                </SplitItem>
+              )}
+            </Split>
+          </div>
         );
       })}
     </>

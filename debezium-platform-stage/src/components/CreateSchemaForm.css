@@ -67,3 +67,11 @@
   color: var(--pf-t--global--text--color--subtle);
   font-size: var(--pf-t--global--font--size--body--default);
 }
+
+.additional-properties-row {
+  margin-bottom: 1rem;
+}
+
+.additional-properties-row .pf-v6-c-form__group {
+  margin-bottom: 0;
+}
