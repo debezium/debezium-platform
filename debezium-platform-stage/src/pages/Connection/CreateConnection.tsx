@@ -17,7 +17,7 @@ import {
     type AdditionalPropertyRowErrorCode,
     type AdditionalPropertyValueKind,
 } from "@utils/additionalConfigProperties";
-import { getConnectorTypeName } from "@utils/helpers";
+import { extractConnectorType, getConnectorTypeName } from "@utils/helpers";
 import { AdditionalPropertiesRows } from "@components/AdditionalPropertiesRows";
 import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon, PlusIcon } from "@patternfly/react-icons";
 import { useState } from "react";
@@ -221,12 +221,12 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
 
         return selectedSchema
             ? ({
-                  type: selectedSchema?.type.toUpperCase() || connectionId?.toUpperCase() || "",
+                  type: selectedSchema?.type.toUpperCase() || extractConnectorType(connectionId || "").toUpperCase(),
                   config: mergedConfig,
                   name: name as string,
               } as ConnectionPayload)
             : {
-                  type: connectionId?.toUpperCase() || "",
+                  type: extractConnectorType(connectionId || "").toUpperCase(),
                   config: validation.additionalFlat,
                   name: name as string,
               };

@@ -1,0 +1,40 @@
+{
+  "catalogs": [
+    {
+      "name": null,
+      "schemas": [
+        {
+          "name": "inventory",
+          "collections": [
+            {
+              "name": "spatial_ref_sys",
+              "fullyQualifiedName": "inventory.spatial_ref_sys"
+            },
+            {
+              "name": "geom",
+              "fullyQualifiedName": "inventory.geom"
+            },
+            {
+              "name": "products_on_hand",
+              "fullyQualifiedName": "inventory.products_on_hand"
+            },
+            {
+              "name": "customers",
+              "fullyQualifiedName": "inventory.customers"
+            },
+            {
+              "name": "orders",
+              "fullyQualifiedName": "inventory.orders"
+            },
+            {
+              "name": "products",
+              "fullyQualifiedName": "inventory.products"
+            }
+          ],
+          "collectionCount": 6
+        }
+      ],
+      "totalCollections": 6
+    }
+  ]
+}

@@ -657,7 +657,7 @@ const CreateSourceSchemaForm = React.forwardRef<
     }
     const payload = {
       databaseType: getDatabaseType(sourceId),
-      connectionConfig: selectedConnection,
+      connectionId: selectedConnection.id,
       fullyQualifiedTableName: signalCollectionNameVerify,
     };
     const response = await verifySignals(`${API_URL}/api/sources/signals/verify`, payload);

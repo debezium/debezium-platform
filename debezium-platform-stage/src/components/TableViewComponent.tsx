@@ -17,6 +17,7 @@ type TableViewComponentProps = {
 type SelectedItem = {
     name: string;
     id: string;
+    fullyQualifiedName?: string;
     checkProps: { checked?: boolean | null; "aria-label"?: string };
     children?: SelectedItem[];
 };
@@ -60,9 +61,13 @@ export function extractSelections(selectedItems: SelectedItem[]): SelectionResul
             }
 
         } else if (isTable) {
-            const schemaFromId = item.id.match(/^schema-\d+-(.*?)-collection-/)?.[1];
-            const schemaName = schemaFromId ?? "unknown_schema";
-            tableSet.add(`${schemaName}.${item.name}`);
+            // Use fullyQualifiedName if available, otherwise fall back to constructing it
+            const tableName = item.fullyQualifiedName || (() => {
+                const schemaFromId = item.id.match(/^schema-\d+-(.*?)-collection-/)?.[1];
+                const schemaName = schemaFromId ?? "unknown_schema";
+                return `${schemaName}.${item.name}`;
+            })();
+            tableSet.add(tableName);
         }
     }
 
@@ -182,8 +187,12 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                         newCheckedItems.push(...item.children);
                     }
                 } else if (isTableItem) {
-                    const schemaFromId = itemId.match(/^schema-\d+-(.*?)-collection-/)?.[1];
-                    const tableName = `${schemaFromId}.${itemName}`;
+                    // Use fullyQualifiedName if available, otherwise construct it
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const tableName = (item as any).fullyQualifiedName || (() => {
+                        const schemaFromId = itemId.match(/^schema-\d+-(.*?)-collection-/)?.[1];
+                        return `${schemaFromId}.${itemName}`;
+                    })();
                     if (tables.includes(tableName)) {
                         newCheckedItems.push(item);
                     }
@@ -223,8 +232,10 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                                         name: collection.name,
                                         id: `schema-${schemaIdx}-${schema.name}-collection-${collection.name}`,
                                         icon: <ServerGroupIcon />,
-                                        checkProps: { checked: false }
-                                    });
+                                        checkProps: { checked: false },
+                                        fullyQualifiedName: collection.fullyQualifiedName // Store fullyQualifiedName
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    } as any);
                                 });
                             }
                             newOptions.push({

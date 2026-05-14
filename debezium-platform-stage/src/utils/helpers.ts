@@ -57,6 +57,33 @@ export const getConnectionRole = (connectorType: string, catalog: Catalog[]): st
   return catalog.find((entry) => entry.class.toLowerCase() === lower || lower.includes(entry.class.toLowerCase()) || entry.class.toLowerCase().includes(lower))?.role;
 }
 
+export const extractConnectorType = (connectorClass: string): string => {
+  // Simple string
+  if (!connectorClass.includes('.')) {
+    return connectorClass;
+  }
+
+  // For source connectors: extract after "io.debezium.connector."
+  const sourcePrefix = "io.debezium.connector.";
+  if (connectorClass.startsWith(sourcePrefix)) {
+    const afterPrefix = connectorClass.substring(sourcePrefix.length);
+    const firstSegment = afterPrefix.split('.')[0];
+    return firstSegment;
+  }
+
+  // For destination/sink connectors: extract after "io.debezium.server."
+  const serverPrefix = "io.debezium.server.";
+  if (connectorClass.startsWith(serverPrefix)) {
+    const afterPrefix = connectorClass.substring(serverPrefix.length);
+    const firstSegment = afterPrefix.split('.')[0];
+    return firstSegment;
+  }
+
+  // Fallback
+  return connectorClass;
+};
+
+
 export const getConnectorTypeName = (connectorType: string) => {
   let name = "";
 
