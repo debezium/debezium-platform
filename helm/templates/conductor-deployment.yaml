@@ -22,7 +22,9 @@ spec:
         app.kubernetes.io/name: conductor
     spec:
       serviceAccountName: conductor-service-account
-{{- $pullSecrets := coalesce .Values.conductor.imagePullSecrets .Values.imagePullSecrets | default list }}
+{{- $conductorSecrets := .Values.conductor.imagePullSecrets | default list }}
+{{- $globalSecrets := .Values.imagePullSecrets | default list }}
+{{- $pullSecrets := ternary $conductorSecrets $globalSecrets (gt (len $conductorSecrets) 0) }}
 {{- if gt (len $pullSecrets) 0 }}
       imagePullSecrets:
         {{- toYaml $pullSecrets | nindent 8 }}
