@@ -32,6 +32,7 @@ public class MongoDbSourceInspector implements SourceInspector {
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoDbSourceInspector.class);
 
     public static final String MONGODB_CONNECTION_STRING = "connection.string";
+    public static final String MONGODB_CREDENTIALS_MASKING_REGEX = "^(mongodb(?:\\+srv)?://)([^:/@]+):([^@]+)@";
 
     @Override
     public CollectionTree listAvailableCollections(Connection connectionConfig) {
@@ -59,7 +60,7 @@ public class MongoDbSourceInspector implements SourceInspector {
         }
 
         return value.replaceFirst(
-                "^(mongodb(?:\\+srv)?://)([^:/@]+):([^@]+)@",
+                MONGODB_CREDENTIALS_MASKING_REGEX,
                 "$1$2:****@");
     }
 

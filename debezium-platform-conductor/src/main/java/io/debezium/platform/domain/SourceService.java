@@ -40,7 +40,6 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
     private final SourceInspectorFactory sourceInspectorFactory;
     private final ConnectionService connectionService;
 
-
     public SourceService(EntityManager em, CriteriaBuilderFactory cbf, EntityViewManager evm,
                          ConnectionService connectionService,
                          PipelineService pipelineService,
