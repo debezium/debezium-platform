@@ -196,6 +196,19 @@
             },
             "type": "object"
         },
+        "pipeline": {
+            "type": "object",
+            "properties": {
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "default": {},
+                    "description": "Map of labels to apply to DebeziumServer custom resources created by pipelines"
+                }
+            }
+        },
         "ingress": {
           "type": "object",
           "properties": {

@@ -7,6 +7,7 @@ package io.debezium.platform.environment.operator;
 
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.DATABASE;
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.USERNAME;
+import static io.debezium.platform.environment.operator.OperatorPipelineController.LABEL_DBZ_CONDUCTOR_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -17,13 +18,11 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import io.debezium.platform.config.OffsetConfigGroup;
-import io.debezium.platform.config.OffsetStorageConfigGroup;
 import io.debezium.platform.config.PipelineConfigGroup;
-import io.debezium.platform.config.SchemaHistoryConfigGroup;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.domain.views.flat.DestinationFlat;
@@ -34,29 +33,19 @@ import io.debezium.platform.environment.operator.configuration.TableNameResolver
 @ExtendWith(MockitoExtension.class)
 public class PipelineMapperTest {
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     PipelineConfigGroup pipelineConfigGroup;
 
     @Mock
     TableNameResolver tableNameResolver;
 
-    @Mock
-    private OffsetConfigGroup offsetConfigGroup;
-
-    @Mock
-    private OffsetStorageConfigGroup offsetStorageConfigGroup;
-
-    @Mock
-    private SchemaHistoryConfigGroup schemaHistoryConfigGroup;
-
     private PipelineMapper pipelineMapper;
 
     @BeforeEach
     void setUp() {
-        when(pipelineConfigGroup.offset()).thenReturn(offsetConfigGroup);
-        when(offsetConfigGroup.storage()).thenReturn(offsetStorageConfigGroup);
-        when(pipelineConfigGroup.schema()).thenReturn(schemaHistoryConfigGroup);
+
         when(tableNameResolver.resolve(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
+        when(pipelineConfigGroup.labels()).thenReturn(Map.of());
 
         pipelineMapper = new PipelineMapper(pipelineConfigGroup, tableNameResolver);
     }
@@ -85,6 +74,22 @@ public class PipelineMapperTest {
         assertThat(result.getSpec().getSource().getConfig().getProps())
                 .containsEntry("database.dbname", "customers")
                 .containsEntry("database.user", "sa");
+    }
+
+    @Test
+    public void testMapper_ShouldMergeConfiguredLabelsWithConductorLabel() {
+        when(pipelineConfigGroup.labels()).thenReturn(Map.of("argocd.argoproj.io/instance", "debezium-platform"));
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+        when(pipeline.getName()).thenReturn("pipeline-a");
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getMetadata().getLabels())
+                .containsEntry("argocd.argoproj.io/instance", "debezium-platform")
+                .containsEntry(LABEL_DBZ_CONDUCTOR_ID, "1");
     }
 
     private PipelineFlat mockPipelineWithSource(ConnectionEntity.Type type, Map<String, Object> connectionConfig) {

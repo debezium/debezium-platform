@@ -1,10 +1,5 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  act,
-  waitFor,
-} from "@testing-library/react";
+import { screen, fireEvent, act, waitFor } from "@testing-library/react";
+import { render } from "../__test__/unit/test-utils";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import AppNotification from "./AppNotification";
 import { NotificationProps } from "./AppNotificationContext";

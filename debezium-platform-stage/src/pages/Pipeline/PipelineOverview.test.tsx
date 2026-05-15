@@ -1,5 +1,4 @@
 import { describe, it, expect, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
 import { render } from "../../__test__/unit/test-utils";
 import { screen } from "@testing-library/react";
 import PipelineOverview from "./PipelineOverview";
@@ -34,11 +33,7 @@ describe("PipelineOverview", () => {
       )
     );
 
-    render(
-      <MemoryRouter>
-        <PipelineOverview pipelineId="2" />
-      </MemoryRouter>
-    );
+    render(<PipelineOverview pipelineId="2" />);
 
     expect(await screen.findByText("Pipeline composition")).toBeInTheDocument();
     expect(await screen.findByText("test-cass")).toBeInTheDocument();

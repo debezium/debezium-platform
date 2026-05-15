@@ -32,11 +32,11 @@ export type DestinationConfig = {
 };
 
 export type ConnectionUnknownConfig = {
-  [key: string]: string | number;
+  [key: string]: string | number | boolean;
 };
 
 export type ConnectionAdditionalConfig = {
-  [key: string]: string;
+  [key: string]: string | number | boolean;
 };
 
 export type ConnectionConfig = {

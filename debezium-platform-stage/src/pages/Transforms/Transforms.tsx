@@ -190,7 +190,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
   ];
 
   return (
-    <div data-tour="transform-page" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+    <div data-tour="transform-page" style={{ flex: 1, display: "flex", flexDirection: "column", maxHeight: "100%" }}>
       <>
         {error ? (
           <PageSection isWidthLimited>

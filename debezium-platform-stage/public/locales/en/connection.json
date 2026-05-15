@@ -32,6 +32,30 @@
         "connectionFieldLabel": "Connection to the {{val}}",
         "createConnection": "Create connection",
         "helperText": "Select a connection from the list of already created connections or create a new connection."
+    },
+    "additionalProperties": {
+        "keyPlaceholder": "Key",
+        "valuePlaceholder": "Value",
+        "integerPlaceholder": "Integer",
+        "keyAria": "Additional property key",
+        "valueTypeAria": "Value type",
+        "valueAria": "Additional property value",
+        "integerAria": "Integer value",
+        "removeRowAria": "Remove row",
+        "typeString": "String",
+        "typeBoolean": "Boolean",
+        "typeInteger": "Integer",
+        "booleanTrue": "True",
+        "booleanFalse": "False",
+        "validationFailedTitle": "Additional configuration is invalid",
+        "validationFailedDescription": "Fix the highlighted rows in additional properties before continuing.",
+        "errors": {
+            "duplicate_key": "This key is used more than once among contributing rows.",
+            "schema_collision": "This key is already set in the connection form above.",
+            "invalid_integer": "Enter a whole number.",
+            "empty_key": "Enter a key, or clear the value.",
+            "empty_value": "Enter a value for this key."
+        }
     }
 
 }

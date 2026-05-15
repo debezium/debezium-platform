@@ -353,7 +353,7 @@ const Pipelines: React.FunctionComponent = () => {
                             <Th key={0}>{t("name")}</Th>
                             <Th key={1}>{t("source")}</Th>
                             <Th key={2}>{t("destination")}</Th>
-                            <Th key={5}></Th>
+                            <Th key={5} screenReaderText={t("actions")} />
                           </Tr>
                         </Thead>
 

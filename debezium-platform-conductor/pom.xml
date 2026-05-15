@@ -93,6 +93,13 @@
                 <scope>import</scope>
             </dependency>
 
+            <!-- Override Kafka version from Quarkus BOM with Debezium's version -->
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>${version.kafka}</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.blazebit</groupId>
                 <artifactId>blaze-persistence-integration-jackson-jakarta</artifactId>

@@ -92,4 +92,8 @@ spec:
             - name: {{ .name }}
               value: {{ .value }}
 {{- end }}
+{{- range $key, $value := .Values.pipeline.labels }}
+            - name: {{ include "debezium-platform.toEnv" (dict "prefix" "PIPELINE_LABELS" "key" $key) | trim }}
+              value: {{ $value | quote }}
+{{- end }}
       restartPolicy: Always

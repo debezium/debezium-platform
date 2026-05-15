@@ -5,6 +5,8 @@
  */
 package io.debezium.platform.config;
 
+import java.util.Map;
+
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
@@ -21,4 +23,5 @@ public interface PipelineConfigGroup {
 
     ServerConfigGroup server();
 
+    Map<String, String> labels();
 }

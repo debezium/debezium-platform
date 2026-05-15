@@ -14,6 +14,7 @@ You need also to have a domain that must point to the cluster IP and then config
 
 ### Configurations
 
+fix-imagepullsecrets-1851
 | Name | Description | Default |
 |:---------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
 | domain.name | domain used as ingress host | "" |
@@ -63,6 +64,50 @@ You need also to have a domain that must point to the cluster IP and then config
 | conductor.descriptors.official.imagePullSecrets | Overrides global `imagePullSecrets` for the descriptors image. | [] |
 | server.imagePullPolicy | Image pull policy for Debezium Server instances created by pipelines. | IfNotPresent |
 | server.imagePullSecrets | Overrides global `imagePullSecrets` for the Debezium Server image. | [] |
+| Name                                       | Description                                                                                                                                                                            | Default                                    |
+|:-------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
+| domain.name                                | domain used as ingress host                                                                                                                                                            | ""                                         |
+| domain.url                                 | domain used as ingress host (DEPRECATED). Use `domain.name` instead.)                                                                                                                  | ""                                         |
+| ingress.enabled                            | Enable ingress resource for conductor/stage                                                                                                                                            | true                                       |
+| ingress.className                          | Optional ingress class name                                                                                                                                                            | ""                                         |
+| ingress.annotations                        | Extra ingress annotations                                                                                                                                                              | {}                                         |
+| ingress.tls.enabled                        | Enable TLS section on ingress                                                                                                                                                          | false                                      |
+| ingress.tls.secretName                     | Secret name used when TLS is enabled                                                                                                                                                   | ""                                         |
+| stage.image                                | Image for the stage (UI)                                                                                                                                                               | quay.io/debezium/platform-stage:latest     |
+| stage.imagePullPolicy                      | Image pull policy for the stage container (UI). If empty it will default to IfNotPresent.                                                                                              | IfNotPresent                               |
+| conductor.image                            | Image for the conductor                                                                                                                                                                | quay.io/debezium/platform-conductor:latest |
+| conductor.imagePullPolicy                  | Image pull policy for the conductor container. If empty it will default to IfNotPresent.                                                                                               | IfNotPresent                               |
+| conductor.offset.existingConfigMap         | Name of the config map used to store conductor offsets. If empty it will be automatically created.                                                                                     | ""                                         |
+| conductor.descriptors.official.enabled     | Enable official Debezium descriptors (downloaded via ORAS at startup)                                                                                                                  | true                                       |
+| conductor.descriptors.official.registry    | Registry hosting the descriptor OCI artifact                                                                                                                                           | quay.io                                    |
+| conductor.descriptors.official.image       | Image name for the descriptor OCI artifact                                                                                                                                             | debezium/debezium-descriptors              |
+| conductor.descriptors.official.tag         | Image tag for the descriptor OCI artifact                                                                                                                                              | nightly                                    |
+| conductor.descriptors.official.mountPath   | Path where descriptors will be downloaded inside the container                                                                                                                         | /opt/descriptors                           |
+| server.image                               | Image for Debezium Server instances created by pipelines. If empty, the operator's ServerImageProvider determines the image                                                            | ""                                         |
+| database.enabled                           | Enable the installation of PostgreSQL by the chart                                                                                                                                     | false                                      |
+| database.name                              | Database name                                                                                                                                                                          | postgres                                   |
+| database.host                              | Database host                                                                                                                                                                          | postgres                                   |
+| database.auth.existingSecret               | Name of the secret to where `username` and `password` are stored. If empty a secret will be created using the `username` and `password` properties                                     | ""                                         |
+| database.auth.username                     | Database username                                                                                                                                                                      | user                                       |
+| database.auth.password                     | Database password                                                                                                                                                                      | password                                   |
+| debezium-operator.enabled                  | Enable the installation of the debezium-operator by the chart                                                                                                                          | true                                       |
+| offset.reusePlatformDatabase               | Pipelines will use database to store offsets. By default the database used by the conductor service is used.<br/> If you want to use a dedicated one set this property to false        | true                                       |
+| offset.database.name                       | Database name                                                                                                                                                                          | postgres                                   |
+| offset.database.host                       | Database host                                                                                                                                                                          | postgres                                   |
+| offset.database.port                       | Database port                                                                                                                                                                          | 5432                                       |                                                                                                                                                                              |                                             |
+| offset.database.auth.existingSecret        | Name of the secret to where `username` and `password` are stored. If not set `offset.database.auth.username` and `offset.database.auth.password` will be used.                         | ""                                         |
+| offset.database.auth.username              | Database username                                                                                                                                                                      | user                                       |
+| offset.database.auth.password              | Database password                                                                                                                                                                      | password                                   |                                                                                                                                                                  |                                             |
+| schemaHistory.reusePlatformDatabase        | Pipelines will use database to store schema history. By default the database used by the conductor service is used.<br/> If you want to use a dedicated one set this property to false | true                                       |
+| schemaHistory.database.name                | Database name                                                                                                                                                                          | postgres                                   |
+| schemaHistory.database.host                | Database host                                                                                                                                                                          | postgres                                   |
+| schemaHistory.database.port                | Database port                                                                                                                                                                          | 5432                                       |                                                                                                                                                                              |                                             |
+| schemaHistory.database.auth.existingSecret | Name of the secret to where `username` and `password` are stored. If not set `schemaHistory.database.auth.username` and `schemaHistory.database.auth.password` will be used.           | ""                                         |
+| schemaHistory.database.auth.username       | Database username                                                                                                                                                                      | user                                       |
+| schemaHistory.database.auth.password       | Database password                                                                                                                                                                      | password                                   |                                                                                                                                                                       |                                                                                                                                                                                 |                                             |
+| env                                        | List of env variable to pass to the conductor                                                                                                                                          | []                                         |
+| pipeline.labels                            | Map of labels to apply to DebeziumServer custom resources created by pipelines. These labels are merged with the internal `debezium.io/conductor-id` label.                            | {}                                         |
+main
 
 ## Descriptor OCI Artifacts
 
@@ -157,6 +202,23 @@ server:
   server:
     image: ""
 ```
+
+## Pipeline Labels
+
+You can configure labels that will be applied to all DebeziumServer custom resources created by pipelines. These labels are merged with the internal `debezium.io/conductor-id` label that is always set automatically.
+
+This is useful for integrating with tools like ArgoCD that rely on labels to track and group resources.
+
+### Configuration
+
+```yaml
+pipeline:
+  labels:
+    argocd.argoproj.io/instance: debezium-platform
+    team: data-engineering
+```
+
+The labels are automatically converted to environment variables for the Conductor pod (e.g., `PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE`).
 
 # Install
 

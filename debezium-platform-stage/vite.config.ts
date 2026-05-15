@@ -53,12 +53,14 @@ export default defineConfig(({ mode }) => {
         },
       },
       coverage: {
-        reporter: ['text', 'json', 'html'],
+        reporter: ['text', 'json', 'html', 'lcov'],
+        reportsDirectory: './coverage',
         exclude: [
           'node_modules', 
           'dist', 
           'build',
           'src/stories/**',
+          '**/*.stories.tsx',
           'src/__mocks__/**',
           'src/__test__/**',
           '**/*.json',

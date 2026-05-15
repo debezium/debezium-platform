@@ -75,4 +75,6 @@ database:
     existingSecret: ""
 debezium-operator:
   enabled: true
+pipeline:
+  labels: {}
 env: []

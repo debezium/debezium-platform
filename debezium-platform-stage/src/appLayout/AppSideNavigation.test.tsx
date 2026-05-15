@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import AppSideNavigation from "./AppSideNavigation";
 import { expect, test, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { render } from "../__test__/unit/test-utils";
 
 // Partial mock of the AppContext module
 vi.mock("./AppContext", async () => {
@@ -20,11 +20,7 @@ vi.mock("./AppContext", async () => {
 });
 
 test("renders the side navigation Expanded", () => {
-  render(
-    <MemoryRouter>
-      <AppSideNavigation isSidebarOpen={true} />
-    </MemoryRouter>
-  );
+  render(<AppSideNavigation isSidebarOpen={true} />);
   const sideNavItems = screen.getAllByRole("link");
   expect(sideNavItems).toHaveLength(6);
 
@@ -42,18 +38,13 @@ test("renders the side navigation Expanded", () => {
   expectedTexts.forEach((text) => {
     expect(sideNavTexts).toContain(text);
   });
-
 });
 
 test("renders the side navigation Collapsed", () => {
-  render(
-    <MemoryRouter>
-      <AppSideNavigation isSidebarOpen={false} />
-    </MemoryRouter>
-  );
+  render(<AppSideNavigation isSidebarOpen={false} />);
   const sideNavItems = screen.getAllByRole("link");
   expect(sideNavItems).toHaveLength(6);
 
   const sideNavTexts = sideNavItems.map((item) => item.textContent);
-  expect(sideNavTexts.join("")).equal("");
+  expect(sideNavTexts.join("")).toBe("");
 });
