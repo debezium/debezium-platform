@@ -103,7 +103,7 @@ conductor:
   descriptors:
     official:
       enabled: true
-      tag: 3.5.0 # Override just the tag
+      tag: 3.5.0
 ```
 
 To disable descriptors:
@@ -118,17 +118,13 @@ conductor:
 ### OCI Artifact Structure
 
 Descriptor OCI artifacts should follow this structure:
-
-```
 debezium-descriptors:nightly
 └── /
-    ├── manifest.json
-    ├── source-connector/
-    │   └── io.debezium.connector.mysql.MySqlConnector.json
-    └── transformation/
-        └── io.debezium.transforms.ExtractNewRecordState.json
-```
-
+├── manifest.json
+├── source-connector/
+│   └── io.debezium.connector.mysql.MySqlConnector.json
+└── transformation/
+└── io.debezium.transforms.ExtractNewRecordState.json
 The artifact contents are extracted to the configured `mountPath`.
 
 ## Debezium Server Image Configuration
@@ -145,22 +141,22 @@ server:
 ### Use Cases
 
 - **Pinning to a specific version**: Ensure all pipelines use a specific Debezium Server version
-  ```yaml
+```yaml
   server:
     image: quay.io/debezium/server:3.0.0.Final
-  ```
+```
 
 - **Using custom server image**: Deploy pipelines with a customized Debezium Server image
-  ```yaml
+```yaml
   server:
     image: myregistry.io/custom-debezium-server:latest
-  ```
+```
 
 - **Default behavior**: Leave empty to let the operator decide
-  ```yaml
+```yaml
   server:
-    image: "" # Operator's ServerImageProvider determines the image
-  ```
+    image: ""
+```
 
 # Install
 
