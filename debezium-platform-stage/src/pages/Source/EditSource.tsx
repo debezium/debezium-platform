@@ -26,10 +26,10 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "react-query";
 import { ConnectorSchema } from "../../apis/types";
 import { getConnectorTypeName } from "../../utils/helpers";
-import CreateSourceSchemaForm, {
-  CreateSourceSchemaFormHandle,
-} from "@components/CreateSourceSchemaForm";
-import SourceSchemaReviewView from "@components/SourceSchemaReviewView";
+import CreateSchemaForm, {
+  CreateSchemaFormHandle,
+} from "@components/CreateSchemaForm";
+import SchemaReviewView from "@components/SchemaReviewView";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import { resolveSourcePageViewMode } from "./sourcePageNavigation";
 
@@ -50,7 +50,7 @@ const EditSource: React.FunctionComponent = () => {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const formRef = useRef<CreateSourceSchemaFormHandle>(null);
+  const formRef = useRef<CreateSchemaFormHandle>(null);
   const { addNotification } = useNotification();
   const queryClient = useQueryClient();
 
@@ -211,13 +211,13 @@ const EditSource: React.FunctionComponent = () => {
     return (
       <PageSection isFilled>
         {viewMode ? (
-          <SourceSchemaReviewView
+          <SchemaReviewView
             source={source}
             connectorSchema={connectorSchema}
             dataType={source.type}
           />
         ) : (
-          <CreateSourceSchemaForm
+          <CreateSchemaForm
             key={source.id}
             ref={formRef}
             connectorSchema={connectorSchema}

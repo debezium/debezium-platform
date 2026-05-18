@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import * as React from "react";
 import {
+  Alert,
   Button,
   Content,
   ContentVariants,
@@ -16,14 +18,17 @@ import {
 import { CogIcon, ListIcon, ThIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import { CatalogGrid } from "@components/CatalogGrid";
-import * as React from "react";
-import { FunctionComponent, useState } from "react";
-import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
+import { useState } from "react";
 import { debounce } from "lodash";
 import _ from "lodash";
 import { useTranslation } from "react-i18next";
 import PageTour from "../../components/PageTour";
 import { Step } from "react-joyride";
+import { useQuery } from "react-query";
+import { fetchData } from "../../apis/apis";
+import { API_URL } from "../../utils/constants";
+import { Catalog, CatalogApiResponse } from "../../apis/types";
+import CatalogSkeleton from "@components/CatalogSkeleton";
 
 const useDestinationCatalogTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
@@ -49,12 +54,26 @@ export interface ISinkProps {
   sampleProp?: string;
 }
 
-const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
+const DestinationCatalog: React.FunctionComponent<ISinkProps> = () => {
   const navigate = useNavigate();
-  const [isSelected, setIsSelected] = useState<"list" | "grid">("grid");
   const { t } = useTranslation();
+  const [isSelected, setIsSelected] = React.useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const catalogTourSteps = useDestinationCatalogTourSteps();
+
+  const {
+    data: destinationCatalog = [],
+    error: catalogError,
+    isLoading: isCatalogLoading,
+    refetch,
+  } = useQuery<Catalog[], Error>("destinationConnectorCatalog", async () => {
+    const response = await fetchData<CatalogApiResponse>(
+      `${API_URL}/api/catalog`
+    );
+    return (response.components["server-sink"] ?? []).map((entry) => ({
+      ...entry,
+      role: "destination",
+    }));
+  });
 
   const searchResult = React.useMemo(() => {
     if (searchQuery.length === 0) {
@@ -63,7 +82,7 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
     return _.filter(destinationCatalog, (o) =>
       o.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [searchQuery, destinationCatalog]);
 
   const onClear = () => {
     onSearch?.("");
@@ -102,8 +121,13 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
   );
 
   const onDestinationSelection = (destinationId: string) => {
-    navigate(`/destination/create_destination/${destinationId}`);
+    const entry = destinationCatalog.find((c) => c.class === destinationId);
+    navigate(`/destination/create_destination/${destinationId}`, {
+      state: { descriptor: entry?.descriptor },
+    });
   };
+
+  const catalogTourSteps = useDestinationCatalogTourSteps();
 
   return (
     <>
@@ -169,13 +193,34 @@ const DestinationCatalog: FunctionComponent<ISinkProps> = () => {
           </ToolbarContent>
         </Toolbar>
       </PageSection>
-      <CatalogGrid
-        onCardSelect={onDestinationSelection}
-        catalogType="destination"
-        displayType={isSelected}
-        isAddButtonVisible={searchQuery.length === 0}
-        searchResult={searchResult}
-      />
+
+      {catalogError ? (
+        <PageSection>
+          <Alert
+            variant="danger"
+            title={t("destination:catalog.fetchError", "Failed to load destination catalog")}
+            actionLinks={
+              <Button variant="link" onClick={() => refetch()}>
+                {t("retry", "Retry")}
+              </Button>
+            }
+          >
+            {catalogError.message}
+          </Alert>
+        </PageSection>
+      ) : isCatalogLoading ? (
+        <PageSection>
+          <CatalogSkeleton />
+        </PageSection>
+      ) : (
+        <CatalogGrid
+          onCardSelect={onDestinationSelection}
+          catalogType="destination"
+          displayType={isSelected}
+          isAddButtonVisible={searchQuery.length === 0}
+          searchResult={searchResult}
+        />
+      )}
       <PageTour pageKey="destination-catalog" steps={catalogTourSteps} />
     </>
   );

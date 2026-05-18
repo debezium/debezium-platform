@@ -7,6 +7,9 @@ import {
   CardBody,
   Divider,
   Content,
+  Alert,
+  Button,
+  PageSection,
 } from "@patternfly/react-core";
 import React, { useCallback, useState } from "react";
 import { Destination, fetchData } from "../../apis/apis";
@@ -15,7 +18,8 @@ import { API_URL } from "../../utils/constants";
 import SourceDestinationSelectionList from "../SourceDestinationSelectionList";
 import { CatalogGrid } from "@components/CatalogGrid";
 import { CreateDestination } from "@destinationPage/CreateDestination";
-import destinationCatalog from "../../__mocks__/data/DestinationCatalog.json";
+import { Catalog, CatalogApiResponse } from "../../apis/types";
+import CatalogSkeleton from "@components/CatalogSkeleton";
 
 type PipelineDestinationModelProps = {
   onDestinationSelection: (destination: Destination) => void;
@@ -37,9 +41,24 @@ const PipelineDestinationModel: React.FC<PipelineDestinationModelProps> = ({
     fetchData<Destination[]>(`${API_URL}/api/destinations`)
   );
 
+  const {
+    data: destinationCatalog = [],
+    error: catalogError,
+    isLoading: isCatalogLoading,
+    refetch: refetchCatalog,
+  } = useQuery<Catalog[], Error>("destinationConnectorCatalog", async () => {
+    const response = await fetchData<CatalogApiResponse>(
+      `${API_URL}/api/catalog`
+    );
+    return (response.components["server-sink"] ?? []).map((entry) => ({
+      ...entry,
+      role: "destination",
+    }));
+  });
+
   const [userSelection, setUserSelection] = useState<string | null>(null);
-  const isCreateChecked = userSelection !== null 
-    ? userSelection 
+  const isCreateChecked = userSelection !== null
+    ? userSelection
     : (!isDestinationLoading && destinationList.length === 0 ? id2 : id1);
 
   const selectDestination = useCallback(
@@ -130,13 +149,31 @@ const PipelineDestinationModel: React.FC<PipelineDestinationModelProps> = ({
           onSelection={onDestinationSelection}
         />
       ) : selectedDestination === "" ? (
-        <CatalogGrid
-          onCardSelect={selectDestination}
-          catalogType="destination"
-          isAddButtonVisible={false}
-          displayType={"grid"}
-          searchResult={destinationCatalog}
-        />
+        catalogError ? (
+          <PageSection>
+            <Alert
+              variant="danger"
+              title="Failed to load destination catalog"
+              actionLinks={
+                <Button variant="link" onClick={() => refetchCatalog()}>
+                  Retry
+                </Button>
+              }
+            >
+              {catalogError.message}
+            </Alert>
+          </PageSection>
+        ) : isCatalogLoading ? (
+          <CatalogSkeleton />
+        ) : (
+          <CatalogGrid
+            onCardSelect={selectDestination}
+            catalogType="destination"
+            isAddButtonVisible={false}
+            displayType={"grid"}
+            searchResult={destinationCatalog}
+          />
+        )
       ) : (
         <CreateDestination
           modelLoaded={true}

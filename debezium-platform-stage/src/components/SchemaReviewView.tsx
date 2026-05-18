@@ -33,15 +33,16 @@ import {
 import ApiComponentError from "./ApiComponentError";
 import TableViewComponent from "./TableViewComponent";
 import _ from "lodash";
-import "./CreateSourceSchemaForm.css";
-import "./SourceSchemaReviewView.css";
+import "./CreateSchemaForm.css";
+import "./SchemaReviewView.css";
 
 const EMPTY_DISPLAY = "—";
 
-export interface SourceSchemaReviewViewProps {
+export interface SchemaReviewViewProps {
   source: Source;
   connectorSchema: ConnectorSchema;
   dataType?: string;
+  hideSignalCollections?: boolean;
 }
 
 const ReviewDescriptionList: React.FC<{ children: React.ReactNode; ariaLabel: string }> = ({
@@ -80,10 +81,11 @@ const ReviewValueSpan: React.FC<{ raw: string | undefined }> = ({ raw }) => {
   );
 };
 
-const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
+const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
   source,
   connectorSchema,
   dataType,
+  hideSignalCollections = false,
 }) => {
   const { t } = useTranslation();
   const typeKey = dataType || source.type;
@@ -185,12 +187,14 @@ const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
       id: "additional-properties",
       label: t("source:jumplinks.additionalProperties", { defaultValue: "Additional Properties" }),
     });
-    sections.push({
-      id: "signal-collections",
-      label: t("source:jumplinks.signalCollections", { defaultValue: "Signal Collections" }),
-    });
+    if (!hideSignalCollections) {
+      sections.push({
+        id: "signal-collections",
+        label: t("source:jumplinks.signalCollections", { defaultValue: "Signal Collections" }),
+      });
+    }
     return sections;
-  }, [orderedGroups, groupedProperties, t]);
+  }, [orderedGroups, groupedProperties, t, hideSignalCollections]);
 
   useEffect(() => {
     const sectionIds = allSections.map((s) => s.id);
@@ -464,29 +468,31 @@ const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
           )}
         </section>
 
-        <section id="signal-collections" className="jumplinks-section-bordered">
-          <Content component="h2" className="jumplinks-section-title">
-            {t("source:signal.title")}
-          </Content>
-          <Content component="p" className="jumplinks-section-description">
-            {t("source:signal.description")}
-          </Content>
-          <ReviewDescriptionList ariaLabel={t("source:signal.title")}>
-            <DescriptionListGroup>
-              <DescriptionListTerm>
-                {t("source:signal.signalingCollectionField.label", {
-                  defaultValue: "Signaling collection",
-                })}
-              </DescriptionListTerm>
-              <DescriptionListDescription>
-                <ReviewValueSpan raw={signalCollectionName} />
-              </DescriptionListDescription>
-            </DescriptionListGroup>
-          </ReviewDescriptionList>
-        </section>
+        {!hideSignalCollections && (
+          <section id="signal-collections" className="jumplinks-section-bordered">
+            <Content component="h2" className="jumplinks-section-title">
+              {t("source:signal.title")}
+            </Content>
+            <Content component="p" className="jumplinks-section-description">
+              {t("source:signal.description")}
+            </Content>
+            <ReviewDescriptionList ariaLabel={t("source:signal.title")}>
+              <DescriptionListGroup>
+                <DescriptionListTerm>
+                  {t("source:signal.signalingCollectionField.label", {
+                    defaultValue: "Signaling collection",
+                  })}
+                </DescriptionListTerm>
+                <DescriptionListDescription>
+                  <ReviewValueSpan raw={signalCollectionName} />
+                </DescriptionListDescription>
+              </DescriptionListGroup>
+            </ReviewDescriptionList>
+          </section>
+        )}
       </div>
     </div>
   );
 };
 
-export default SourceSchemaReviewView;
+export default SchemaReviewView;
