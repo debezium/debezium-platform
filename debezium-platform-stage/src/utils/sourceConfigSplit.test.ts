@@ -93,8 +93,39 @@ describe("splitSourceConfigForHydration", () => {
     );
     expect(out.additionalProps.get("addprop-0")).toEqual({
       key: "custom.key",
-      value: "v",
+      valueKind: "string",
+      stringValue: "v",
+      booleanValue: false,
+      integerInput: "",
     });
     expect(out.additionalKeyCount).toBe(1);
+  });
+
+  it("routes boolean and integer keys into additionalProps with correct types", () => {
+    const out = splitSourceConfigForHydration(
+      { 
+        "boolean.key": true,
+        "integer.key": 123
+      },
+      [],
+    );
+    
+    expect(out.additionalProps.get("addprop-0")).toEqual({
+      key: "boolean.key",
+      valueKind: "boolean",
+      stringValue: "",
+      booleanValue: true,
+      integerInput: "",
+    });
+    
+    expect(out.additionalProps.get("addprop-1")).toEqual({
+      key: "integer.key",
+      valueKind: "integer",
+      stringValue: "",
+      booleanValue: false,
+      integerInput: "123",
+    });
+    
+    expect(out.additionalKeyCount).toBe(2);
   });
 });

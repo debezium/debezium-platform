@@ -28,7 +28,7 @@ import {
   Payload,
 } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
-import { convertMapToObject, getConnectorTypeName } from "../../utils/helpers";
+import { getConnectorTypeName } from "../../utils/helpers";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import SourceSinkForm from "@components/SourceSinkForm";
 import Ajv from "ajv";
@@ -40,10 +40,18 @@ import EditConfirmationModel from "../components/EditConfirmationModel";
 import CreateConnectionModal from "../components/CreateConnectionModal";
 import { useData } from "@appContext/AppContext";
 import { isValidJson } from "src/hooks/useFormatDetector";
+import {
+  AdditionalPropertyRow,
+  AdditionalPropertyRowErrorCode,
+  additionalPropertyRowFromApiValue,
+  additionalRowWithNewValueKind,
+  createEmptyAdditionalPropertyRow,
+  validateAdditionalPropertyRows,
+  AdditionalPropertyValueKind,
+} from "@utils/additionalConfigProperties";
 
 const ajv = new Ajv();
 
-type Properties = { key: string; value: string };
 
 const FormSyncManager: React.FC<{
   getFormValue: (key: string) => string;
@@ -51,9 +59,10 @@ const FormSyncManager: React.FC<{
   code: any;
   setCode: (code: any) => void;
   destinationId: string | undefined;
-  properties: Map<string, Properties>;
-  setProperties: (properties: Map<string, Properties>) => void;
+  properties: Map<string, AdditionalPropertyRow>;
+  setProperties: (properties: Map<string, AdditionalPropertyRow>) => void;
   setCodeAlert: (alert: string) => void;
+
 }> = ({
   getFormValue,
   setFormValue,
@@ -76,7 +85,8 @@ const FormSyncManager: React.FC<{
       }
 
       updateSource.current = "form";
-      const configuration = convertMapToObject(properties);
+      const validation = validateAdditionalPropertyRows(properties, {});
+      const configuration = validation.additionalFlat;
 
       setCode((prevCode: any) => {
         if (
@@ -122,14 +132,15 @@ const FormSyncManager: React.FC<{
             typeof code.description === "string" ? code.description : ""
           );
         }
-        const currentConfig = convertMapToObject(properties);
+        const currentConfig = validateAdditionalPropertyRows(properties, {}).additionalFlat;
         if (JSON.stringify(currentConfig) !== JSON.stringify(code.config)) {
           const configMap = new Map();
           Object.entries(code.config || {}).forEach(([key, value], index) => {
-            configMap.set(`key${index}`, { key, value: value as string });
+            configMap.set(`key${index}`, additionalPropertyRowFromApiValue(key, value));
           });
           setProperties(configMap);
         }
+
         setCodeAlert("");
       } else {
         setCodeAlert(ajv.errorsText(validate.errors));
@@ -151,15 +162,17 @@ const EditDestination: React.FunctionComponent = () => {
   const { addNotification } = useNotification();
   const { darkMode } = useData();
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
-  const [errorWarning, setErrorWarning] = useState<string[]>([]);
   const [destination, setDestination] = useState<Destination>();
   const [isFetchLoading, setIsFetchLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [properties, setProperties] = useState<Map<string, Properties>>(
-    new Map([["key0", { key: "", value: "" }]])
+  const [properties, setProperties] = useState<Map<string, AdditionalPropertyRow>>(
+    new Map([["key0", createEmptyAdditionalPropertyRow()]])
   );
+  const [additionalErrorRowIds, setAdditionalErrorRowIds] = useState<Set<string>>(new Set());
+  const [additionalRowErrorCodes, setAdditionalRowErrorCodes] = useState<Map<string, AdditionalPropertyRowErrorCode[]>>(new Map());
   const [keyCount, setKeyCount] = useState<number>(1);
+
 
   const [selectedConnection, setSelectedConnection] = useState<ConnectionConfig | undefined>();
   const [searchParams] = useSearchParams();
@@ -192,12 +205,13 @@ const EditDestination: React.FunctionComponent = () => {
     let i = 0;
     const configMap = new Map();
     for (const config in configProp) {
-      configMap.set(`key${i}`, { key: config, value: configProp[config] });
+      configMap.set(`key${i}`, additionalPropertyRowFromApiValue(config, configProp[config]));
       i++;
     }
     setProperties(configMap);
     setKeyCount(configMap.size);
   };
+
 
   React.useEffect(() => {
     const fetchDestinations = async () => {
@@ -229,10 +243,11 @@ const EditDestination: React.FunctionComponent = () => {
     const newKey = `key${keyCount}`;
     setProperties(
       (prevProperties) =>
-        new Map(prevProperties.set(newKey, { key: "", value: "" }))
+        new Map(prevProperties.set(newKey, createEmptyAdditionalPropertyRow()))
     );
     setKeyCount((prevCount) => prevCount + 1);
   };
+
 
   const handleDeleteProperty = (key: string) => {
     setProperties((prevProperties) => {
@@ -242,22 +257,31 @@ const EditDestination: React.FunctionComponent = () => {
     });
   };
 
-  const handlePropertyChange = (
-    key: string,
-    type: "key" | "value",
-    newValue: string
+  const handlePropertyPatch = (
+    id: string,
+    patch: Partial<AdditionalPropertyRow>
   ) => {
     setProperties((prevProperties) => {
       const newProperties = new Map(prevProperties);
-      const property = newProperties.get(key);
+      const property = newProperties.get(id);
       if (property) {
-        if (type === "key") property.key = newValue;
-        else if (type === "value") property.value = newValue;
-        newProperties.set(key, property);
+        newProperties.set(id, { ...property, ...patch });
       }
       return newProperties;
     });
   };
+
+  const handleValueKindChange = (id: string, kind: AdditionalPropertyValueKind) => {
+    setProperties((prevProperties) => {
+      const next = new Map(prevProperties);
+      const entry = next.get(id);
+      if (entry) {
+        next.set(id, additionalRowWithNewValueKind(entry, kind));
+      }
+      return next;
+    });
+  };
+
 
   const editDestination = async (payload: Payload) => {
     const response = await editPut(
@@ -292,20 +316,17 @@ const EditDestination: React.FunctionComponent = () => {
         setError("destination-name", "Destination name is required.");
       } else if(selectedConnection === undefined){
         setError("connection", t("statusMessage:smartEditor.connectionRequired"));
-      }else {
+      } else {
         setIsLoading(true);
-        const errorWarning = [] as string[];
-        properties.forEach((value: Properties, key: string) => {
-          if (value.key === "" || value.value === "") {
-            errorWarning.push(key);
-          }
-        });
-        setErrorWarning(errorWarning);
-        if (errorWarning.length > 0) {
+        const validation = validateAdditionalPropertyRows(properties, {});
+        setAdditionalErrorRowIds(validation.rowIdsWithErrors);
+        setAdditionalRowErrorCodes(validation.rowErrorCodes);
+
+        if (validation.hasErrors) {
           addNotification(
             "danger",
             `Destination edit failed`,
-            `Please fill both Key and Value fields for all the properties.`
+            `Please fix the errors in the additional properties.`
           );
           setIsLoading(false);
           return;
@@ -316,12 +337,13 @@ const EditDestination: React.FunctionComponent = () => {
           type: destination?.type ?? "",
           schema: destination?.schema ?? "",
           vaults: destination?.vaults ?? [],
-          config: convertMapToObject(properties) as DestinationConfig,
+          config: validation.additionalFlat as DestinationConfig,
           ...(selectedConnection ? { connection: selectedConnection } : {}),
         };
         await editDestination(payload);
         setIsLoading(false);
       }
+
     } else {
       if (codeAlert) return;
       const payload = code;
@@ -474,15 +496,18 @@ const EditDestination: React.FunctionComponent = () => {
                   getValue={getValue}
                   setError={setError}
                   errors={errors}
-                  errorWarning={errorWarning}
                   handleAddProperty={handleAddProperty}
                   handleDeleteProperty={handleDeleteProperty}
-                  handlePropertyChange={handlePropertyChange}
+                  handlePropertyPatch={handlePropertyPatch}
+                  handleValueKindChange={handleValueKindChange}
+                  additionalErrorRowIds={additionalErrorRowIds}
+                  additionalRowErrorCodes={additionalRowErrorCodes}
                   viewMode={viewMode}
                   setSelectedConnection={setSelectedConnection}
                   selectedConnection={selectedConnection}
                   handleConnectionModalToggle={handleConnectionModalToggle}
                 />
+
               ) : (
                 <>
                   {codeAlert && (

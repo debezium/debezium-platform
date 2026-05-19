@@ -456,7 +456,15 @@ const SourceSchemaReviewView: React.FC<SourceSchemaReviewViewProps> = ({
                     <code className="source-schema-review__code-key">{row.key}</code>
                   </DescriptionListTerm>
                   <DescriptionListDescription>
-                    <ReviewValueSpan raw={row.value} />
+                    <ReviewValueSpan
+                      raw={
+                        row.valueKind === "string"
+                          ? row.stringValue
+                          : row.valueKind === "boolean"
+                          ? String(row.booleanValue)
+                          : row.integerInput
+                      }
+                    />
                   </DescriptionListDescription>
                 </DescriptionListGroup>
               ))}

@@ -1,4 +1,7 @@
-export type SourceConfigAdditionalRow = { key: string; value: string };
+import {
+  AdditionalPropertyRow,
+  additionalPropertyRowFromApiValue,
+} from "./additionalConfigProperties";
 
 export type SourceIncludeSelection = {
   schemas: string[];
@@ -7,7 +10,7 @@ export type SourceIncludeSelection = {
 
 export type SourceConfigHydrationSplit = {
   schemaValues: Record<string, string>;
-  additionalProps: Map<string, SourceConfigAdditionalRow>;
+  additionalProps: Map<string, AdditionalPropertyRow>;
   signalCollectionName: string;
   selectedDataListItems: SourceIncludeSelection | undefined;
   additionalKeyCount: number;
@@ -57,15 +60,14 @@ export function splitSourceConfigForHydration(
 
   const schemaNameSet = new Set(schemaPropertyNames);
   const schemaValues: Record<string, string> = {};
-  const additionalProps = new Map<string, SourceConfigAdditionalRow>();
+  const additionalProps = new Map<string, AdditionalPropertyRow>();
   let additionalIndex = 0;
 
   for (const [key, value] of Object.entries(cfg)) {
-    const str = stringifyConfigValue(value);
     if (schemaNameSet.has(key)) {
-      schemaValues[key] = str;
+      schemaValues[key] = stringifyConfigValue(value);
     } else {
-      additionalProps.set(`addprop-${additionalIndex}`, { key, value: str });
+      additionalProps.set(`addprop-${additionalIndex}`, additionalPropertyRowFromApiValue(key, value));
       additionalIndex += 1;
     }
   }
@@ -83,3 +85,4 @@ export function splitSourceConfigForHydration(
     additionalKeyCount: additionalIndex,
   };
 }
+

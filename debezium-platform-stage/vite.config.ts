@@ -5,7 +5,9 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const API_URL = env.CONDUCTOR_URL || 'http://localhost:8080';
+  // const API_URL = env.CONDUCTOR_URL || 'http://localhost:8080';
+const API_URL = env.CONDUCTOR_URL || 'http://127.0.0.1:8080';
+
   const PORT = parseInt(env.VITE_PORT || '3000');
 
   if (mode === 'development') {
@@ -19,7 +21,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tsconfigPaths()],
     define: {
-      'import.meta.env.CONDUCTOR_URL': JSON.stringify(API_URL),
+      'import.meta.env.CONDUCTOR_URL': JSON.stringify(env.CONDUCTOR_URL || ''),
     },
     server: {
       proxy: {
@@ -36,6 +38,7 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       // 👋 add the line below to add jsdom to vite
+      testTimeout: 10000,
       include: ['src/**/*.test.{js,jsx,ts,tsx}'], 
       exclude: ['node_modules', 'dist', 'build', 'src/stories/**'],
       environment: "jsdom",

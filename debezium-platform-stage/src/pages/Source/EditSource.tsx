@@ -79,6 +79,8 @@ const EditSource: React.FunctionComponent = () => {
     { enabled: !!routeSourceId }
   );
 
+
+
   const connectorType = source?.type;
   const descriptorPath = connectorType
     ? `source-connector/${connectorType}`
@@ -93,6 +95,8 @@ const EditSource: React.FunctionComponent = () => {
     () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
     { enabled: !!descriptorPath }
   );
+
+
 
   const sourceErrorMessage =
     sourceQueryError instanceof Error ? sourceQueryError.message : sourceQueryError

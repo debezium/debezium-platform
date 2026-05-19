@@ -5,5 +5,5 @@ export const getBackendUrl = () => {
     }
   
     // Fallback to build-time env variable (VITE_ prefix required for Vite)
-    return import.meta.env.CONDUCTOR_URL || 'http://localhost:8080';
+    return import.meta.env.CONDUCTOR_URL || '';
   };
