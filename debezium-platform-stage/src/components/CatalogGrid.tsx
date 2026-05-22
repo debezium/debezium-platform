@@ -24,26 +24,30 @@ import { openDBZIssues } from "@utils/helpers";
 import { useTranslation } from "react-i18next";
 
 export interface ICatalogGridProps {
-  onCardSelect: (selectId: string) => void;
-  catalogType: "destination" | "source";
-  isAddButtonVisible: boolean;
+  onCardSelect: (selectId: string, role?: string) => void;
+  catalogType?: "destination" | "source" | "connection";
+  isAddButtonVisible?: boolean;
   searchResult: Catalog[];
   displayType: "grid" | "list";
+  showSubtitle?: boolean;
 }
 
 const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
   onCardSelect,
   catalogType,
-  isAddButtonVisible,
+  isAddButtonVisible = false,
   searchResult,
   displayType,
+  showSubtitle = false,
 }) => {
   const { t } = useTranslation();
   const [selectedDataListItemId, setSelectedDataListItemId] =
     React.useState("");
 
-  const onCardClick = (id: string) => {
-    onCardSelect(id);
+  const isConnectionMode = catalogType === "connection";
+
+  const onCardClick = (id: string, role?: string) => {
+    onCardSelect(id, role);
   };
 
   const onSelectDataListItem = (
@@ -51,7 +55,8 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
     id: string
   ) => {
     setSelectedDataListItemId(id);
-    onCardSelect(id);
+    const item = searchResult.find(r => r.class === id);
+    onCardSelect(id, item?.role);
   };
 
   const handleInputChange = (
@@ -59,7 +64,8 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
     id: string
   ) => {
     setSelectedDataListItemId(id);
-    onCardSelect(id);
+    const item = searchResult.find(r => r.class === id);
+    onCardSelect(id, item?.role);
   };
 
   return (
@@ -90,40 +96,41 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
 
           {searchResult.map((item) => (
             <GalleryItem key={item.class} data-tour={`catalog-card-${item.class}`}>
-              <Card isClickable variant={"default"} className={`catalog-grid-card-${catalogType}`}>
+              <Card
+                variant={"default"}
+                className={`catalog-grid-card-${catalogType || 'connection'}`}
+                onClick={() => onCardClick(item.class, item.role)}
+              >
                 <CardHeader
-                  selectableActions={{
-                    onClickAction: () => onCardClick(item.class),
-                    selectableActionAriaLabelledby: `catalog-card-id-${item.name}`,
-                  }}
+                  className={isConnectionMode ? "custom-connection-card-header" : undefined}
                 >
                   <ConnectorImage connectorType={item.class} />
-                  <CardTitle id={`catalog-card-id-${item.name}`}>
+                  <CardTitle id={`catalog-card-id-${item.name}`} className="catalog-card-title">
                     {item.name}
                   </CardTitle>
+                  {showSubtitle && item.role && (
+                    <div className="catalog-subtitle">
+                      {item.role === "source" ? `${t("source")} ${t("connection:connection")}` : `${t("destination")} ${t("connection:connection")}`}
+                    </div>
+                  )}
                 </CardHeader>
-                <CardBody>{item.description}</CardBody>
+                <CardBody className="catalog-card-description">{item.description}</CardBody>
               </Card>
             </GalleryItem>
           ))}
           {isAddButtonVisible && (
             <GalleryItem>
-              <Card isClickable variant={"secondary"} onClick={openDBZIssues} className={`catalog-grid-card-${catalogType}`}>
-                <CardHeader
-                  selectableActions={{
-                    onClickAction: () => { },
-                    selectableActionAriaLabelledby: `catalog-card-id-fill-out-form`,
-                  }}
-                >
+              <Card variant={"secondary"} onClick={openDBZIssues} className={`catalog-grid-card-${catalogType || 'connection'}`}>
+                <CardHeader>
                   <PlusCircleIcon
                     color="#0066CC"
                     style={{ fontSize: "60px", paddingBottom: "10px" }}
                   />
-                  <CardTitle id={`catalog-card-id-fill-out-form`}>
+                  <CardTitle id={`catalog-card-id-fill-out-form`} className="catalog-card-title">
                     {t("requestNewResource.title", { val: catalogType })} <ExternalLinkAltIcon />
                   </CardTitle>
                 </CardHeader>
-                <CardBody>
+                <CardBody className="catalog-card-description">
                   {t("requestNewResource.description", { val: catalogType })}
                 </CardBody>
               </Card>
@@ -181,6 +188,8 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
               aria-labelledby="simple-item1"
               id={item.class}
               key={item.class}
+              onClick={() => onCardClick(item.class, item.role)}
+              style={{ cursor: "pointer" }}
             >
               <DataListItemRow>
                 <DataListItemCells
@@ -190,7 +199,7 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                       isFilled={false}
                       style={{
                         minWidth: "80px",
-                        maxWidth: "80px",
+                        maxWidth: isConnectionMode ? "80px" : "80px",
                       }}
                     >
                       <ConnectorImage connectorType={item.class} />
@@ -198,10 +207,17 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                     <DataListCell key="secondary content">
                       <Flex direction={{ default: "column" }}>
                         <FlexItem>
-                          <Content component="h3">{item.name}</Content>
+                          <Content component="h3" className="catalog-card-title" style={showSubtitle ? { marginBottom: "0" } : undefined}>
+                            {item.name}
+                          </Content>
+                          {showSubtitle && item.role && (
+                            <div className="catalog-subtitle">
+                              {item.role === "source" ? `${t("source")} ${t("connection:connection")}` : `${t("destination")} ${t("connection:connection")}`}
+                            </div>
+                          )}
                         </FlexItem>
                         <FlexItem>
-                          <Content component="p">{item.description}</Content>
+                          <Content component="p" className="catalog-card-description">{item.description}</Content>
                         </FlexItem>
                       </Flex>
                     </DataListCell>,
@@ -233,12 +249,12 @@ const CatalogGrid: React.FunctionComponent<ICatalogGridProps> = ({
                     <DataListCell key="secondary content" onClick={openDBZIssues}>
                       <Flex direction={{ default: "column" }}>
                         <FlexItem>
-                          <Content component="h3">
+                          <Content component="h3" className="catalog-card-title">
                             {t("requestNewResource.title", { val: catalogType })} <ExternalLinkAltIcon />
                           </Content>
                         </FlexItem>
                         <FlexItem>
-                          <Content component="p">
+                          <Content component="p" className="catalog-card-description">
                             {t("requestNewResource.description", { val: catalogType })}
                           </Content>
                         </FlexItem>

@@ -99,6 +99,6 @@ describe("CatalogGrid", () => {
     const row = screen.getByText("MongoDB").closest("li");
     expect(row).toBeTruthy();
     fireEvent.click(row as HTMLElement);
-    expect(onCardSelect).toHaveBeenCalledWith("mongodb");
+    expect(onCardSelect).toHaveBeenCalledWith("mongodb", "source");
   });
 });

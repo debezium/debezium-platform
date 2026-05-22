@@ -3,12 +3,56 @@
     --pf-v6-l-gallery--GridTemplateColumns--min: 220px !important;
   }
 
-  .catalog-grid-card-source .pf-v6-c-card__body{
-    height: 70px;
-    overflow-y: auto;
+.catalog-card-title {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
-.catalog-grid-card-destination .pf-v6-c-card__body{
-    height: 110px;
-    overflow-y: auto;
+.catalog-card-description {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* Subtitle for connection catalog showing role */
+.catalog-subtitle {
+    font-size: smaller;
+    color: var(--pf-v6-global--Color--200, #6a6e73);
+    margin-top: 2px;
+}
+
+.catalog-grid-card-source,
+.catalog-grid-card-destination,
+.catalog-grid-card-connection {
+    height: 250px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    cursor: pointer;
+}
+
+.catalog-grid-card-source:hover,
+.catalog-grid-card-destination:hover,
+.catalog-grid-card-connection:hover {
+    border-color: #4394e5;
+    --pf-v6-c-card--BorderColor: #4394e5;
+    box-shadow: 0 0 0 1px #4394e5;
+}
+
+/* Ensure card header doesn't grow */
+.catalog-grid-card-source .pf-v6-c-card__header,
+.catalog-grid-card-destination .pf-v6-c-card__header,
+.catalog-grid-card-connection .pf-v6-c-card__header {
+    flex-shrink: 0 !important;
+}
+
+/* Card body with flexible height - scroll when content exceeds space */
+.catalog-grid-card-source .pf-v6-c-card__body,
+.catalog-grid-card-destination .pf-v6-c-card__body,
+.catalog-grid-card-connection .pf-v6-c-card__body {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
 }

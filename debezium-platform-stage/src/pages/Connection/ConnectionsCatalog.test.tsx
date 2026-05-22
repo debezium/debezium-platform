@@ -48,8 +48,8 @@ vi.mock("react-query", async (importOriginal) => {
   };
 });
 
-vi.mock("@components/ConnectionCatalogGrid", () => ({
-  ConnectionCatalogGrid: ({
+vi.mock("@components/CatalogGrid", () => ({
+  CatalogGrid: ({
     searchResult,
   }: {
     searchResult: Catalog[];

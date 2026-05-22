@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Catalog, CatalogApiResponse } from "src/apis/types";
 import _, { debounce } from "lodash";
 import { useNavigate } from "react-router-dom";
-import { ConnectionCatalogGrid } from "@components/ConnectionCatalogGrid";
+import { CatalogGrid } from "@components/CatalogGrid";
 import { useQuery } from "react-query";
 import { fetchData } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
@@ -117,9 +117,10 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
     [debouncedSetSearchQuery]
   );
 
-  const onConnectionSelection = (connectionId: string, role: string) => {
-
-    navigate(`/connections/create_connection/${connectionId}`, { state: { connectionType: role } });
+  const onConnectionSelection = (connectionId: string, role?: string) => {
+    if (role) {
+      navigate(`/connections/create_connection/${connectionId}`, { state: { connectionType: role } });
+    }
   };
 
   return (
@@ -215,10 +216,12 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
         </Toolbar>
       </PageSection>
       {searchResult.length > 0 ? (
-        <ConnectionCatalogGrid
+        <CatalogGrid
           onCardSelect={onConnectionSelection}
+          catalogType="connection"
           displayType={isSelected}
           searchResult={searchResult}
+          showSubtitle={true}
         />) : (
 
         <Bullseye>
