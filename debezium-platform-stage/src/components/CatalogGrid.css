@@ -23,9 +23,16 @@
 }
 
 .catalog-grid-card-source,
-.catalog-grid-card-destination,
-.catalog-grid-card-connection {
+.catalog-grid-card-destination {
     height: 250px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    cursor: pointer;
+}
+
+.catalog-grid-card-connection {
+    height: 280px !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;

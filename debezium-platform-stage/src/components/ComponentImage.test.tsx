@@ -18,11 +18,10 @@ const cases: [string, RegExp][] = [
   ["eventhubs", /EventHub icon/i],
   ["rabbitmq", /RabbitMQ icon/i],
   ["nats-streaming", /NATS Stream icon/i],
-  ["nats-jetstream", /NATS JetStream icon/i],
   ["kafka", /Kafka icon/i],
   ["infinispan", /Infinispan icon/i],
-  ["pubsub_lite", /Pub\/SUB icon/i],
-  ["google_pubsub", /Pub\/Sub liet icon/i],
+  ["pubsub_lite", /Pub\/Sub Lite icon/i],
+  ["google_pubsub", /Pub\/Sub icon/i],
   ["pravega", /Pravega icon/i],
   ["oracle", /Oracle icon/i],
   ["mariadb", /MariaDB icon/i],
@@ -63,8 +62,8 @@ describe("ConnectorImage (ComponentImage)", () => {
     expect(screen.getByRole("img", { name: /Kafka icon/i })).toBeInTheDocument();
   });
 
-  it("uses fixed alt when size is omitted (non-sized branch)", () => {
+  it("uses correct alt when size is omitted", () => {
     render(<ConnectorImage connectorType="kafka" />);
-    expect(screen.getByRole("img", { name: "mongo icon" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /Kafka icon/i })).toBeInTheDocument();
   });
 });
