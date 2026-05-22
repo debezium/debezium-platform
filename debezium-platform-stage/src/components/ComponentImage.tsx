@@ -2,13 +2,16 @@ import React from "react";
 
 import mongoDB from "../assets/MongoDB.png";
 import cassandra from "../assets/Cassandra.png";
-// import mySql from "../assets/my-sql.png";
 import postgreSql from "../assets/PostgreSQL.png";
 import sqlServer from "../assets/sql-server.png";
 import apachePulsar from "../assets/apachePulsar.png";
 import rocketMq from "../assets/Apache_RocketMQ.png";
 import eventHub from "../assets/Azure-event-hub.png";
 import pubsub from "../assets/G_pubsub.png";
+import fluss from "../assets/fluss.png";
+import instruct from "../assets/InstructLab.png";
+import sns from "../assets/sns.svg";
+import sqs from "../assets/sqs.png";
 import rabbitMq from "../assets/RabbitMQ.svg";
 import natsStreaming from "../assets/NATS_stream.png";
 import kafka from "../assets/kafka.png";
@@ -34,131 +37,61 @@ interface ConnectorImageProps {
   designerComponent?: boolean;
 }
 
+const CONNECTOR_PATTERNS: Array<[string, { src: string; altText: string }]> = [
+  ["pubsub_lite", { src: pubsubLite, altText: "Pub/Sub Lite" }],
+  ["pubsub", { src: pubsub, altText: "Pub/Sub" }],
+  ["mongo", { src: mongoDB, altText: "MongoDB" }],
+  ["postgre", { src: postgreSql, altText: "Postgres" }],
+  ["cassandra", { src: cassandra, altText: "Cassandra" }],
+  ["mysql", { src: databasePlaceholder, altText: "MySQL" }],
+  ["sqlserver", { src: sqlServer, altText: "SqlServer" }],
+  ["pulsar", { src: apachePulsar, altText: "Apache Pulsar" }],
+  ["rocketmq", { src: rocketMq, altText: "RocketMQ" }],
+  ["eventhubs", { src: eventHub, altText: "EventHub" }],
+  ["rabbitmq", { src: rabbitMq, altText: "RabbitMQ" }],
+  ["nats", { src: natsStreaming, altText: "NATS Stream" }],
+  ["kafka", { src: kafka, altText: "Kafka" }],
+  ["infinispan", { src: infinispan, altText: "Infinispan" }],
+  ["pravega", { src: pravega, altText: "Pravega" }],
+  ["oracle", { src: oracle, altText: "Oracle" }],
+  ["mariadb", { src: mariadb, altText: "MariaDB" }],
+  ["fluss", { src: fluss, altText: "Fluss Server Sink" }],
+  ["instructlab", { src: instruct, altText: "InstructLab Server Sink" }],
+  ["sns", { src: sns, altText: "SNS Server Sink" }],
+  ["sqs", { src: sqs, altText: "SQS Server Sink" }],
+  ["kinesis", { src: kinesis, altText: "Kinesis" }],
+  ["milvus", { src: milvus, altText: "Milvus" }],
+  ["qdrant", { src: qdrant, altText: "Qdrant" }],
+  ["redis", { src: redis, altText: "Redis(Stream)" }],
+  ["http", { src: http, altText: "HTTP" }],
+  ["db2", { src: db2, altText: "IBM Db2" }],
+];
+
+const DEFAULT_CONFIG = { src: dbz, altText: "Debezium" };
+
+const getConnectorConfig = (connectorType: string) => {
+  const normalizedType = connectorType.toLowerCase();
+  const match = CONNECTOR_PATTERNS.find(([pattern]) =>
+    normalizedType.includes(pattern)
+  );
+  return match ? match[1] : DEFAULT_CONFIG;
+};
+
 const ConnectorImage: React.FC<ConnectorImageProps> = ({
   connectorType = "",
   size,
   designerComponent = false,
 }) => {
-  let src = "";
-  let altText = "";
-
-  switch (true) {
-    case connectorType.includes("mongo"):
-      altText = "MongoDB";
-      src = mongoDB;
-      break;
-    case connectorType.includes("postgre"):
-      altText = "Postgres";
-      src = postgreSql;
-      break;
-    case connectorType.includes("cassandra"):
-      altText = "Cassandra";
-      src = cassandra;
-      break;
-    case connectorType.includes("mysql"):
-      altText = "MySQL";
-      src = databasePlaceholder;
-      break;
-    case connectorType.includes("sqlserver"):
-      altText = "SqlServer";
-      src = sqlServer;
-      break;
-    case connectorType.includes("pulsar"):
-      altText = "Apache Pulsar";
-      src = apachePulsar;
-      break;
-    case connectorType.includes("rocketmq"):
-      altText = "RocketMQ";
-      src = rocketMq;
-      break;
-    case connectorType.includes("eventhubs"):
-      altText = "EventHub";
-      src = eventHub;
-      break;
-
-    case connectorType.includes("rabbitmq"):
-      altText = "RabbitMQ";
-      src = rabbitMq;
-      break;
-    case connectorType.includes("nats-streaming"):
-      altText = "NATS Stream";
-      src = natsStreaming;
-      break;
-    case connectorType.includes("nats-jetstream"):
-        altText = "NATS JetStream";
-        src = natsStreaming;
-        break;  
-    case connectorType.includes("kafka"):
-      altText = "Kafka";
-      src = kafka;
-      break;
-    case connectorType.includes("infinispan"):
-      altText = "Infinispan";
-      src = infinispan;
-      break;
-    case connectorType.includes("pubsub_lite"):
-      altText = "Pub/SUB";
-      src = pubsubLite;
-      break;
-    case connectorType.includes("pubsub"):
-      altText = "Pub/Sub liet";
-      src = pubsub;
-      break;
-    case connectorType.includes("pravega"):
-      altText = "Pravega";
-      src = pravega;
-      break;
-    case connectorType.includes("oracle"):
-      altText = "Oracle";
-      src = oracle;
-      break;
-    case connectorType.includes("mariadb"):
-      altText = "MariaDB";
-      src = mariadb;
-      break;
-    case connectorType.includes("kinesis"):
-      altText = "Kinesis";
-      src = kinesis;
-      break;
-    case connectorType.includes("milvus"):
-      altText = "Milvus";
-      src = milvus;
-      break;
-    case connectorType.includes("qdrant"):
-      altText = "Qdrant";
-      src = qdrant;
-      break;
-    case connectorType.includes("redis"):
-      altText = "Redis(Stream)";
-      src = redis;
-      break;
-    case connectorType.includes("http"):
-      altText = "HTTP";
-      src = http;
-      break;
-    case connectorType.includes("db2"):
-      altText = "IBM Db2";
-      src = db2;
-      break;
-    default:
-      altText = "Debezium";
-      src = dbz;
-      break;
-  }
+  const { src, altText } = getConnectorConfig(connectorType);
 
   return (
     <>
       {!designerComponent && <TrademarkMessage />}
-
-      {size ? (
-        <img
-          src={src}
-          alt={`${altText} icon`}
-          style={{ maxHeight: `${size}px` }}
-        />
-      ) : (
-        <img src={src} alt={`mongo icon`} style={{ maxHeight: "60px" }} />
-      )}
+      <img
+        src={src}
+        alt={`${altText} icon`}
+        style={{ maxHeight: size ? `${size}px` : "60px" }}
+      />
     </>
   );
 };
