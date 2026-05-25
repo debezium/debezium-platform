@@ -2,3 +2,41 @@ You have deployed the following release: {{ .Release.Name }}.
 To get further information, you can run the commands:
   $ helm status {{ .Release.Name }}
   $ helm get all {{ .Release.Name }}
+{{- if .Values.monitoring.otel.enabled }}
+
+=== Monitoring ===
+
+Prerequisites: OpenTelemetry Operator and (optionally) Prometheus Operator must be
+installed separately before enabling monitoring. See the chart README for details.
+
+IMPORTANT: The OTel Collector must include the Prometheus exporter. The base
+(otelcol) distribution includes it, but the k8s distribution (otelcol-k8s) —
+which is the default when the OTel Operator is installed via Helm — does NOT.
+If your operator uses the k8s distribution, set monitoring.otel.collector.image
+to the base or contrib image, e.g.:
+  ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.152.0
+
+OpenTelemetry Collector has been deployed.
+  Collector Name: {{ include "debezium-platform.otelCollectorName" . }}
+  OTLP gRPC endpoint: {{ include "debezium-platform.otelCollectorName" . }}-collector.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.monitoring.otel.collector.receivers.grpc.port }}
+  OTLP HTTP endpoint: {{ include "debezium-platform.otelCollectorEndpoint" . }}
+  Prometheus metrics: http://{{ include "debezium-platform.otelCollectorName" . }}-collector.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.monitoring.otel.collector.exporters.prometheus.port }}/metrics
+{{- if .Values.monitoring.prometheus.serviceMonitor.enabled }}
+
+A ServiceMonitor has been created. Ensure your Prometheus Operator's
+serviceMonitorSelector matches these labels:
+{{- range $key, $value := .Values.monitoring.prometheus.serviceMonitor.labels }}
+  {{ $key }}: {{ $value }}
+{{- end }}
+{{- else }}
+
+To scrape metrics without Prometheus Operator, add to your prometheus.yml:
+
+  scrape_configs:
+    - job_name: 'debezium-otel-collector'
+      scrape_interval: 15s
+      static_configs:
+        - targets:
+            - '{{ include "debezium-platform.otelCollectorName" . }}-collector.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.monitoring.otel.collector.exporters.prometheus.port }}'
+{{- end }}
+{{- end }}

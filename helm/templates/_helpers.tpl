@@ -115,3 +115,18 @@ Result: PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE
 {{- define "debezium-platform.toEnv" -}}
 {{ .prefix }}_{{ .key | upper | replace "." "_" | replace "/" "_" | replace "-" "_" }}
 {{- end -}}
+
+{{/*
+Get the OpenTelemetry Collector resource name.
+*/}}
+{{- define "debezium-platform.otelCollectorName" -}}
+{{- printf "%s-otel-collector" .Chart.Name -}}
+{{- end -}}
+
+{{/*
+Get the OpenTelemetry Collector OTLP endpoint URL.
+The OTel Operator creates a service named <collector-name>-collector for deployment mode.
+*/}}
+{{- define "debezium-platform.otelCollectorEndpoint" -}}
+{{- printf "http://%s-collector.%s.svc.cluster.local:%d" (include "debezium-platform.otelCollectorName" .) .Release.Namespace (int .Values.monitoring.otel.collector.receivers.http.port) -}}
+{{- end -}}

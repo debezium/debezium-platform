@@ -1,0 +1,49 @@
+{{- if .Values.monitoring.otel.enabled }}
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: {{ include "debezium-platform.otelCollectorName" . }}
+  labels:
+    app.kubernetes.io/name: otel-collector
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: debezium-platform
+{{ include "common.labels" . | indent 4 }}
+spec:
+  mode: deployment
+  replicas: {{ .Values.monitoring.otel.collector.replicas }}
+  {{- if .Values.monitoring.otel.collector.image }}
+  image: {{ .Values.monitoring.otel.collector.image }}
+  {{- end }}
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:{{ .Values.monitoring.otel.collector.receivers.grpc.port }}
+          http:
+            endpoint: 0.0.0.0:{{ .Values.monitoring.otel.collector.receivers.http.port }}
+    processors:
+      batch:
+        timeout: {{ .Values.monitoring.otel.collector.processors.batch.timeout }}
+        send_batch_size: {{ .Values.monitoring.otel.collector.processors.batch.sendBatchSize }}
+    exporters:
+      prometheus:
+        endpoint: 0.0.0.0:{{ .Values.monitoring.otel.collector.exporters.prometheus.port }}
+        resource_to_telemetry_conversion:
+          enabled: {{ .Values.monitoring.otel.collector.exporters.prometheus.resourceToTelemetryConversion }}
+        const_labels:
+          {{- toYaml .Values.monitoring.otel.collector.exporters.prometheus.constLabels | nindent 10 }}
+      nop: {}
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [prometheus]
+        logs:
+          receivers: [otlp]
+          exporters: [nop]
+        traces:
+          receivers: [otlp]
+          exporters: [nop]
+{{- end }}

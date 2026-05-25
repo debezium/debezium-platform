@@ -14,6 +14,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,7 @@ public class PipelineMapperTest {
 
         when(tableNameResolver.resolve(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
         when(pipelineConfigGroup.labels()).thenReturn(Map.of());
+        when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(false);
 
         pipelineMapper = new PipelineMapper(pipelineConfigGroup, tableNameResolver);
     }
@@ -135,6 +137,50 @@ public class PipelineMapperTest {
     public void testResolveSinkType_ShouldHandleNullAndUnknown() {
         assertThat(PipelineMapper.resolveSinkType(null)).isNull();
         assertThat(PipelineMapper.resolveSinkType("com.custom.MySink")).isEqualTo("com.custom.MySink");
+    }
+
+    @Test
+    public void testMapper_ShouldEnableOpenTelemetryWhenConfigured() {
+        when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(true);
+        when(pipelineConfigGroup.monitoring().otel().endpoint()).thenReturn(Optional.of("http://otel-collector:4318"));
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        var otel = result.getSpec().getRuntime().getMetrics().getOpenTelemetry();
+        assertThat(otel.isEnabled()).isTrue();
+        assertThat(otel.getCollector().getEndpoint()).isEqualTo("http://otel-collector:4318");
+    }
+
+    @Test
+    public void testMapper_ShouldNotEnableOpenTelemetryWhenDisabled() {
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        var otel = result.getSpec().getRuntime().getMetrics().getOpenTelemetry();
+        assertThat(otel.isEnabled()).isFalse();
+    }
+
+    @Test
+    public void testMapper_ShouldEnableOpenTelemetryWithoutEndpointWhenNotConfigured() {
+        when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(true);
+        when(pipelineConfigGroup.monitoring().otel().endpoint()).thenReturn(Optional.empty());
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        var otel = result.getSpec().getRuntime().getMetrics().getOpenTelemetry();
+        assertThat(otel.isEnabled()).isTrue();
+        assertThat(otel.getCollector().getEndpoint()).isNull();
     }
 
     private PipelineFlat mockPipelineWithSource(ConnectionEntity.Type type, Map<String, Object> connectionConfig) {

@@ -52,6 +52,10 @@ pipeline:
   labels: {}
   server:
     image: ${PIPELINE_SERVER_IMAGE:}
+  monitoring:
+    otel:
+      enabled: ${PIPELINE_MONITORING_OTEL_ENABLED:false}
+      endpoint: ${PIPELINE_MONITORING_OTEL_ENDPOINT:http://localhost:4318}
 sources:
   database:
     connection:

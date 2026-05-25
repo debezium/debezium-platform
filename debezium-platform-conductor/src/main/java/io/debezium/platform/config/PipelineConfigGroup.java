@@ -24,4 +24,6 @@ public interface PipelineConfigGroup {
     ServerConfigGroup server();
 
     Map<String, String> labels();
+
+    MonitoringConfigGroup monitoring();
 }

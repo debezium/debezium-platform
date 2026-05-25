@@ -55,4 +55,37 @@ debezium-operator:
   enabled: true
 pipeline:
   labels: {}
+monitoring:
+  otel:
+    enabled: false
+    collector:
+      # The Prometheus exporter is included in the base (otelcol) and contrib distributions,
+      # but NOT in the k8s distribution (otelcol-k8s) which is the default when the OTel Operator
+      # is installed via Helm. Override the image if your operator defaults to k8s distribution.
+      # Example: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.152.0
+      image: ""
+      replicas: 1
+      receivers:
+        grpc:
+          port: 4317
+        http:
+          port: 4318
+      processors:
+        batch:
+          timeout: 5s
+          sendBatchSize: 512
+      exporters:
+        prometheus:
+          port: 8889
+          resourceToTelemetryConversion: true
+          constLabels:
+            platform: debezium
+  prometheus:
+    external:
+      url: ""
+    serviceMonitor:
+      enabled: true
+      scrapeInterval: 15s
+      labels:
+        prometheus: kube-prometheus
 env: []

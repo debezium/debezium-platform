@@ -36,6 +36,8 @@ import io.debezium.operator.api.model.runtime.RuntimeApiBuilder;
 import io.debezium.operator.api.model.runtime.RuntimeBuilder;
 import io.debezium.operator.api.model.runtime.metrics.JmxExporterBuilder;
 import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
+import io.debezium.operator.api.model.runtime.metrics.OpenTelemetryBuilder;
+import io.debezium.operator.api.model.runtime.metrics.OtelCollectorBuilder;
 import io.debezium.operator.api.model.source.Offset;
 import io.debezium.operator.api.model.source.OffsetBuilder;
 import io.debezium.operator.api.model.source.SchemaHistory;
@@ -149,13 +151,28 @@ public class PipelineMapper {
     }
 
     private Runtime createRuntime() {
+        var metricsBuilder = new MetricsBuilder()
+                .withJmxExporter(new JmxExporterBuilder()
+                        .withEnabled()
+                        .build());
+
+        if (pipelineConfigGroup.monitoring().otel().enabled()) {
+            var otelBuilder = new OpenTelemetryBuilder()
+                    .withEnabled();
+
+            pipelineConfigGroup.monitoring().otel().endpoint()
+                    .filter(e -> !e.isBlank())
+                    .ifPresent(endpoint -> otelBuilder.withCollector(
+                            new OtelCollectorBuilder()
+                                    .withEndpoint(endpoint)
+                                    .build()));
+
+            metricsBuilder.withOpenTelemetry(otelBuilder.build());
+        }
+
         return new RuntimeBuilder()
                 .withApi(new RuntimeApiBuilder().withEnabled().build())
-                .withMetrics(new MetricsBuilder()
-                        .withJmxExporter(new JmxExporterBuilder()
-                                .withEnabled()
-                                .build())
-                        .build())
+                .withMetrics(metricsBuilder.build())
                 .build();
     }
 

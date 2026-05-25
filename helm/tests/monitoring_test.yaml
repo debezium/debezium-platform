@@ -1,0 +1,210 @@
+suite: test monitoring resources
+templates:
+  - otel-collector.yaml
+  - servicemonitor.yaml
+  - conductor-deployment.yaml
+values:
+  - ../../examples/example.yaml
+tests:
+  # OpenTelemetryCollector CR tests
+  - it: should create OpenTelemetryCollector when monitoring.otel.enabled is true
+    template: otel-collector.yaml
+    set:
+      monitoring.otel.enabled: true
+    asserts:
+      - isKind:
+          of: OpenTelemetryCollector
+      - equal:
+          path: metadata.name
+          value: debezium-platform-otel-collector
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: otel-collector
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: monitoring
+      - equal:
+          path: metadata.labels["app.kubernetes.io/part-of"]
+          value: debezium-platform
+      - equal:
+          path: spec.mode
+          value: deployment
+      - equal:
+          path: spec.replicas
+          value: 1
+      - isNotEmpty:
+          path: spec.config
+
+  - it: should not create OpenTelemetryCollector when monitoring.otel.enabled is false
+    template: otel-collector.yaml
+    set:
+      monitoring.otel.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should configure custom replicas
+    template: otel-collector.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.otel.collector.replicas: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  - it: should configure custom receiver ports
+    template: otel-collector.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.otel.collector.receivers.grpc.port: 14317
+      monitoring.otel.collector.receivers.http.port: 14318
+    asserts:
+      - equal:
+          path: spec.config.receivers.otlp.protocols.grpc.endpoint
+          value: "0.0.0.0:14317"
+      - equal:
+          path: spec.config.receivers.otlp.protocols.http.endpoint
+          value: "0.0.0.0:14318"
+
+  - it: should configure custom batch processor settings
+    template: otel-collector.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.otel.collector.processors.batch.timeout: 10s
+      monitoring.otel.collector.processors.batch.sendBatchSize: 1024
+    asserts:
+      - equal:
+          path: spec.config.processors.batch.timeout
+          value: 10s
+      - equal:
+          path: spec.config.processors.batch.send_batch_size
+          value: 1024
+
+  - it: should configure custom prometheus exporter settings
+    template: otel-collector.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.otel.collector.exporters.prometheus.port: 9090
+    asserts:
+      - equal:
+          path: spec.config.exporters.prometheus.endpoint
+          value: "0.0.0.0:9090"
+
+  - it: should configure metrics pipeline
+    template: otel-collector.yaml
+    set:
+      monitoring.otel.enabled: true
+    asserts:
+      - equal:
+          path: spec.config.service.pipelines.metrics.receivers
+          value:
+            - otlp
+      - equal:
+          path: spec.config.service.pipelines.metrics.processors
+          value:
+            - batch
+      - equal:
+          path: spec.config.service.pipelines.metrics.exporters
+          value:
+            - prometheus
+
+  # ServiceMonitor tests
+  - it: should create ServiceMonitor when monitoring is fully enabled
+    template: servicemonitor.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.serviceMonitor.enabled: true
+    asserts:
+      - isKind:
+          of: ServiceMonitor
+      - equal:
+          path: metadata.name
+          value: debezium-platform-otel-collector
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: otel-collector
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: monitoring
+      - equal:
+          path: spec.endpoints[0].port
+          value: prometheus
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 15s
+
+  - it: should not create ServiceMonitor when monitoring.otel.enabled is false
+    template: servicemonitor.yaml
+    set:
+      monitoring.otel.enabled: false
+      monitoring.prometheus.serviceMonitor.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not create ServiceMonitor when serviceMonitor.enabled is false
+    template: servicemonitor.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.serviceMonitor.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should apply custom serviceMonitor labels
+    template: servicemonitor.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.serviceMonitor.enabled: true
+      monitoring.prometheus.serviceMonitor.labels:
+        release: my-prometheus
+    asserts:
+      - equal:
+          path: metadata.labels.release
+          value: my-prometheus
+
+  - it: should configure custom scrape interval
+    template: servicemonitor.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.serviceMonitor.enabled: true
+      monitoring.prometheus.serviceMonitor.scrapeInterval: 30s
+    asserts:
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 30s
+
+  # Conductor deployment monitoring env vars tests
+  - it: should inject monitoring env vars when monitoring.otel.enabled is true
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_ENDPOINT
+            value: "http://debezium-platform-otel-collector-collector.NAMESPACE.svc.cluster.local:4318"
+          any: true
+
+  - it: should not inject monitoring env vars when monitoring.otel.enabled is false
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: false
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_ENABLED
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_ENDPOINT
+          any: true

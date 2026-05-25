@@ -209,6 +209,139 @@
                 }
             }
         },
+        "monitoring": {
+            "type": "object",
+            "description": "Monitoring configuration for OpenTelemetry and Prometheus",
+            "properties": {
+                "otel": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "Enable OpenTelemetry monitoring infrastructure"
+                        },
+                        "collector": {
+                            "type": "object",
+                            "properties": {
+                                "image": {
+                                    "type": "string",
+                                    "default": "",
+                                    "description": "Override OTel Collector image. If empty, the operator's default is used. Must include the Prometheus exporter (available in the base otelcol and contrib distributions, but not in otelcol-k8s)"
+                                },
+                                "replicas": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "default": 1,
+                                    "description": "Number of OTel Collector replicas"
+                                },
+                                "receivers": {
+                                    "type": "object",
+                                    "properties": {
+                                        "grpc": {
+                                            "type": "object",
+                                            "properties": {
+                                                "port": {
+                                                    "type": "integer",
+                                                    "default": 4317
+                                                }
+                                            }
+                                        },
+                                        "http": {
+                                            "type": "object",
+                                            "properties": {
+                                                "port": {
+                                                    "type": "integer",
+                                                    "default": 4318
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "processors": {
+                                    "type": "object",
+                                    "properties": {
+                                        "batch": {
+                                            "type": "object",
+                                            "properties": {
+                                                "timeout": {
+                                                    "type": "string",
+                                                    "default": "5s"
+                                                },
+                                                "sendBatchSize": {
+                                                    "type": "integer",
+                                                    "default": 512
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "exporters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prometheus": {
+                                            "type": "object",
+                                            "properties": {
+                                                "port": {
+                                                    "type": "integer",
+                                                    "default": 8889
+                                                },
+                                                "resourceToTelemetryConversion": {
+                                                    "type": "boolean",
+                                                    "default": true
+                                                },
+                                                "constLabels": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "prometheus": {
+                    "type": "object",
+                    "properties": {
+                        "external": {
+                            "type": "object",
+                            "properties": {
+                                "url": {
+                                    "type": "string",
+                                    "default": "",
+                                    "description": "URL of an external Prometheus instance (for users not using Prometheus Operator)"
+                                }
+                            }
+                        },
+                        "serviceMonitor": {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean",
+                                    "default": true,
+                                    "description": "Create a ServiceMonitor for the OTel Collector"
+                                },
+                                "scrapeInterval": {
+                                    "type": "string",
+                                    "default": "15s"
+                                },
+                                "labels": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "description": "Labels for Prometheus Operator discovery"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "ingress": {
           "type": "object",
           "properties": {

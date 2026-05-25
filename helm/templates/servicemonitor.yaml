@@ -1,0 +1,21 @@
+{{- if and .Values.monitoring.otel.enabled .Values.monitoring.prometheus.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "debezium-platform.otelCollectorName" . }}
+  labels:
+    app.kubernetes.io/name: otel-collector
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: debezium-platform
+{{ include "common.labels" . | indent 4 }}
+    {{- toYaml .Values.monitoring.prometheus.serviceMonitor.labels | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: opentelemetry-collector
+      app.kubernetes.io/instance: {{ .Release.Namespace }}.{{ include "debezium-platform.otelCollectorName" . }}
+      operator.opentelemetry.io/collector-service-type: base
+  endpoints:
+    - port: prometheus
+      interval: {{ .Values.monitoring.prometheus.serviceMonitor.scrapeInterval }}
+{{- end }}

@@ -6,6 +6,8 @@ This chart will install the components required to run the Debezium Platform.
 4. [Optional] PostgreSQL database used by conductor to store its data.
 5. [Optional] Strimzi operator: operator for creating Kakfa cluster. In case you want to use a Kafka destination in you
    pipeline.
+6. OpenTelemetry Operator: manages the OpenTelemetry Collector used for pipeline monitoring.
+7. [Optional] Prometheus Operator: enables automatic ServiceMonitor creation for Prometheus scraping.
 
 # Prerequisites
 
@@ -15,6 +17,34 @@ an [ingress controller](https://kubernetes.io/docs/concepts/services-networking/
 cluster.
 You need also to have domain that must point to the cluster IP and then configure the `domain.name` property in
 you `values.yaml` with your domain.
+
+### Monitoring
+
+The platform's built-in monitoring features require an OpenTelemetry Collector to collect metrics from Debezium Server instances. 
+The following operators must be installed in the cluster **before** deploying the chart with monitoring enabled (`monitoring.otel.enabled: true`):
+
+1. **[OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator)** — manages the `OpenTelemetryCollector` custom resource that the chart creates.
+   Install via Helm:
+   ```shell
+   helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+   helm install opentelemetry-operator open-telemetry/opentelemetry-operator
+   ```
+
+2. **[Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator)** (optional) — required only if you want the chart to create a `ServiceMonitor` for automatic Prometheus scraping (`monitoring.prometheus.serviceMonitor.enabled: true`). 
+3. Commonly installed via the [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) chart:
+   ```shell
+   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+   helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack
+   ```
+
+> **Note:** The OTel Collector must include the **Prometheus exporter**. The base `otelcol` distribution
+> includes it, but when the OTel Operator is installed via Helm it defaults to the `otelcol-k8s` distribution
+> which does **not**. If your operator uses the `k8s` distribution, set `monitoring.otel.collector.image`
+> to override it with the base or contrib image, e.g.:
+> - Base: `ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.152.0`
+> - Contrib: `ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.152.0`
+>
+> See [opentelemetry-collector-releases](https://github.com/open-telemetry/opentelemetry-collector-releases) for available distributions and their included components.
 
 ### Configurations
 
@@ -61,6 +91,20 @@ you `values.yaml` with your domain.
 | schemaHistory.database.auth.password       | Database password                                                                                                                                                                      | password                                   |                                                                                                                                                                       |                                                                                                                                                                                 |                                             |
 | env                                        | List of env variable to pass to the conductor                                                                                                                                          | []                                         |
 | pipeline.labels                            | Map of labels to apply to DebeziumServer custom resources created by pipelines. These labels are merged with the internal `debezium.io/conductor-id` label.                            | {}                                         |
+| monitoring.otel.enabled                    | Enable OpenTelemetry monitoring infrastructure. Requires the OpenTelemetry Operator to be installed (see Prerequisites).                                                               | false                                      |
+| monitoring.otel.collector.image            | OTel Collector image. Must be the **contrib** distribution to include the Prometheus exporter. If empty, the operator's default is used (which lacks the Prometheus exporter).          | ""                                         |
+| monitoring.otel.collector.replicas         | Number of OTel Collector replicas                                                                                                                                                      | 1                                          |
+| monitoring.otel.collector.receivers.grpc.port | OTLP gRPC receiver port                                                                                                                                                              | 4317                                       |
+| monitoring.otel.collector.receivers.http.port | OTLP HTTP receiver port                                                                                                                                                              | 4318                                       |
+| monitoring.otel.collector.processors.batch.timeout | Batch processor flush timeout                                                                                                                                                    | 5s                                         |
+| monitoring.otel.collector.processors.batch.sendBatchSize | Maximum number of metrics per batch                                                                                                                                        | 512                                        |
+| monitoring.otel.collector.exporters.prometheus.port | Prometheus exporter listen port                                                                                                                                                 | 8889                                       |
+| monitoring.otel.collector.exporters.prometheus.resourceToTelemetryConversion | Convert OTel resource attributes to Prometheus labels                                                                                                    | true                                       |
+| monitoring.otel.collector.exporters.prometheus.constLabels | Static labels added to all exported metrics                                                                                                                              | {platform: debezium}                       |
+| monitoring.prometheus.external.url         | URL of an external Prometheus instance (for users not using Prometheus Operator)                                                                                                        | ""                                         |
+| monitoring.prometheus.serviceMonitor.enabled | Create a ServiceMonitor for automatic Prometheus scraping. Requires the Prometheus Operator to be installed (see Prerequisites).                                                      | true                                       |
+| monitoring.prometheus.serviceMonitor.scrapeInterval | Prometheus scrape interval                                                                                                                                                    | 15s                                        |
+| monitoring.prometheus.serviceMonitor.labels | Labels for Prometheus Operator ServiceMonitor discovery                                                                                                                                | {prometheus: kube-prometheus}              |
 
 ## Descriptor OCI Artifacts
 

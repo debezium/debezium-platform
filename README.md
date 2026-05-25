@@ -8,10 +8,11 @@ a data-centric view on Debezium components.
 **Disclaimer**: This project is still in early development stage and should not be used in production.
 
 ## Platform Architecture
-The platform is composed of two main components:
+The platform is composed of the following main components:
 
 1. Conductor: The back-end component which provides a set of APIs to orchestrate and control Debezium deployments.
 2. Stage: The front-end component which provides a user interface to interact with the Conductor.
+3. Monitoring: Built-in pipeline monitoring powered by OpenTelemetry and Prometheus. Debezium Server instances export metrics via OpenTelemetry to an OTel Collector, which exposes them to Prometheus.
 
 
 ### Conductor Architecture
@@ -82,6 +83,25 @@ If you are using minikube on Mac, you need also to run the `minikube tunnel` com
 
 > **_NOTE:_**
 If you are using Windows, add `127.0.0.1 platform.debezium.io` to `C:\Windows\System32\drivers\etc\hosts`.
+
+Install the [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator) for pipeline monitoring:
+
+```shell
+helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+helm install opentelemetry-operator open-telemetry/opentelemetry-operator \
+  -n opentelemetry-operator-system --create-namespace \
+  --set admissionWebhooks.certManager.enabled=false \
+  --set admissionWebhooks.autoGenerateCert.enabled=true
+```
+
+> **_NOTE:_** The above command uses Helm auto-generated self-signed certificates for the operator webhooks, which is suitable for development but not for production (certificates expire after 365 days without auto-renewal). For production environments, use a proper certificate management solution such as [cert-manager](https://cert-manager.io/) or provide your own certificates. See the [OTel Operator Helm chart documentation](https://github.com/open-telemetry/opentelemetry-helm-charts/tree/main/charts/opentelemetry-operator) for all available options.
+
+Install the [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator) for metrics scraping:
+
+```shell
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
+```
 
 Create a dedicated namespace
 

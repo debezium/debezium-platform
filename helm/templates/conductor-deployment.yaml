@@ -67,6 +67,12 @@ spec:
             - name: PIPELINE_SERVER_IMAGE
               value: {{ .Values.server.image }}
 {{- end }}
+{{- if .Values.monitoring.otel.enabled }}
+            - name: PIPELINE_MONITORING_OTEL_ENABLED
+              value: "true"
+            - name: PIPELINE_MONITORING_OTEL_ENDPOINT
+              value: {{ include "debezium-platform.otelCollectorEndpoint" . }}
+{{- end }}
 {{ include "debezium-platform.offsetConfig" . | indent 12 }}
 {{ include "debezium-platform.schemaHistoryConfig" . | indent 12 }}
 {{- range .Values.env }}
