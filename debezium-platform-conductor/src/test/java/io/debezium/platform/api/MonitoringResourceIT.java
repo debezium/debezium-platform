@@ -11,13 +11,19 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+import jakarta.inject.Inject;
+
 import org.junit.jupiter.api.Test;
 
 import io.debezium.platform.environment.monitoring.PrometheusTestResource;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
@@ -25,6 +31,9 @@ import io.restassured.http.ContentType;
 @QuarkusTest
 @QuarkusTestResource(value = PrometheusTestResource.class, restrictToAnnotatedClass = true)
 class MonitoringResourceIT {
+
+    @Inject
+    OpenTelemetry openTelemetry;
 
     @Test
     void listPanelsReturnsPanels() {
@@ -156,5 +165,20 @@ class MonitoringResourceIT {
                 .body("timeRange.step", is("15s"))
                 .body("series", not(empty()))
                 .body("series[0].datapoints.size()", greaterThan(0));
+    }
+
+    @Test
+    void verifyJvmMetricsAreExposed() {
+        assertNotNull(openTelemetry);
+
+        boolean otelMetricsEnabled = org.eclipse.microprofile.config.ConfigProvider.getConfig()
+                .getOptionalValue("quarkus.otel.metrics.enabled", Boolean.class)
+                .orElse(false);
+        assertTrue(otelMetricsEnabled, "Expected OpenTelemetry metrics to be enabled in configuration");
+
+        var meterProvider = openTelemetry.getMeterProvider();
+        assertNotNull(meterProvider);
+        assertTrue(meterProvider instanceof SdkMeterProvider || meterProvider.getClass().getName().contains("ObfuscatedMeterProvider"),
+                "Expected SdkMeterProvider or ObfuscatedMeterProvider, but found: " + meterProvider.getClass().getName());
     }
 }

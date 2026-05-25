@@ -219,6 +219,12 @@ quarkus:
         storage:
           type: org.apache.kafka.connect.storage.MemoryOffsetBackingStore
   quarkus:
+    otel:
+      metrics:
+        enabled: true
+      metric:
+        export:
+          interval: 100ms
     http:
       test-port: 0
     debezium-outbox:
