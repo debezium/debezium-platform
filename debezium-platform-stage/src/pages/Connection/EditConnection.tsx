@@ -29,6 +29,30 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "@patternfly/react-component-groups";
 
+const EMPTY_DISPLAY = "—";
+
+function reviewValue(raw: string | number | undefined): string {
+    if (raw === undefined || raw === null) return EMPTY_DISPLAY;
+    const strValue = String(raw);
+    return strValue.trim() === "" ? EMPTY_DISPLAY : strValue;
+}
+
+const ReviewValueSpan: React.FC<{ raw: string | number | undefined }> = ({ raw }) => {
+    const text = reviewValue(raw);
+    const unset = text === EMPTY_DISPLAY;
+    return (
+        <span
+            className={
+                unset
+                    ? "source-schema-review__value source-schema-review__value--empty"
+                    : "source-schema-review__value source-schema-review__value--set"
+            }
+        >
+            {text}
+        </span>
+    );
+};
+
 export interface IEditConnectionProps {
     sampleProp?: string;
 }
@@ -406,7 +430,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                                     name={"name"}
                                     control={control}
                                     rules={{ required: true }}
-                                    render={({ field }) => <TextInput id="connection-name" {...field} validated={errors.name ? "error" : "default"} readOnlyVariant={viewMode ? "plain" : undefined} />}
+                                    render={({ field }) => viewMode ? <ReviewValueSpan raw={field.value} /> : <TextInput id="connection-name" {...field} validated={errors.name ? "error" : "default"} />}
                                 />
                                 {(!viewMode && errors.name) && (
                                     <FormHelperText>
@@ -458,25 +482,26 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                                                         name={propertyName}
                                                         rules={{ required: selectedSchema?.schema?.required.includes(propertyName) }}
                                                         control={control}
-                                                        render={({ field }) => <TextInput id={propertyName}  {...field} validated={errors[propertyName] ? "error" : "default"} readOnlyVariant={viewMode ? "plain" : undefined} />}
+                                                        render={({ field }) => viewMode ? <ReviewValueSpan raw={field.value} /> : <TextInput id={propertyName}  {...field} validated={errors[propertyName] ? "error" : "default"} />}
                                                     />}
                                                     {propertySchema.type === "list" && <Controller
                                                         name={propertyName}
                                                         rules={{ required: selectedSchema?.schema?.required.includes(propertyName) }}
                                                         control={control}
-                                                        render={({ field }) => <TextInput id={propertyName}  {...field} validated={errors[propertyName] ? "error" : "default"} readOnlyVariant={viewMode ? "plain" : undefined} />}
+                                                        render={({ field }) => viewMode ? <ReviewValueSpan raw={field.value} /> : <TextInput id={propertyName}  {...field} validated={errors[propertyName] ? "error" : "default"} />}
                                                     />}
                                                     {propertySchema.type === "integer" && <Controller
                                                         name={propertyName}
                                                         control={control}
                                                         rules={{ required: selectedSchema?.schema?.required.includes(propertyName) }}
-                                                        render={({ field }) => (
+                                                        render={({ field }) => viewMode ? (
+                                                            <ReviewValueSpan raw={field.value} />
+                                                        ) : (
                                                             <TextInput
                                                                 id={propertyName}
                                                                 type="number"
                                                                 {...field}
                                                                 validated={errors[propertyName] ? "error" : "default"}
-                                                                readOnlyVariant={viewMode ? "plain" : undefined}
                                                                 onChange={(_e, value) => field.onChange(value === '' ? '' : Number(value))}
                                                             />
                                                         )}
@@ -509,7 +534,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                                 header={
                                     <FormFieldGroupHeader
                                         titleText={{
-                                            text: <span style={{ fontWeight: 500 }}>{t("form.subHeading.title")}</span>,
+                                            text: <span style={{ fontWeight: 500 }}>{selectedSchema ? `Additional properties` : `Configuration properties`}</span>,
                                             id: `field-group-${connectionId}-id`,
                                         }}
                                         titleDescription={!viewMode ? t("form.subHeading.description") : undefined}
@@ -545,7 +570,6 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                         </Form>
                     </CardBody>
                 </Card>
-
             </PageSection>
 
             {!viewMode && (

@@ -221,15 +221,15 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
 
         return selectedSchema
             ? ({
-                  type: selectedSchema?.type.toUpperCase() || extractConnectorType(connectionId || "").toUpperCase(),
-                  config: mergedConfig,
-                  name: name as string,
-              } as ConnectionPayload)
+                type: selectedSchema?.type.toUpperCase() || extractConnectorType(connectionId || "").toUpperCase(),
+                config: mergedConfig,
+                name: name as string,
+            } as ConnectionPayload)
             : {
-                  type: extractConnectorType(connectionId || "").toUpperCase(),
-                  config: validation.additionalFlat,
-                  name: name as string,
-              };
+                type: extractConnectorType(connectionId || "").toUpperCase(),
+                config: validation.additionalFlat,
+                name: name as string,
+            };
     };
 
     const handleValidateFromForm = (data: ConnectionFormValues) => {
@@ -439,7 +439,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                 header={
                                     <FormFieldGroupHeader
                                         titleText={{
-                                            text: <span style={{ fontWeight: 500 }}>{`Additional properties`}</span>,
+                                            text: <span style={{ fontWeight: 500 }}>{selectedSchemaProperties ? `Additional properties` : `Configuration properties`}</span>,
                                             id: `field-group-${connectionId}-properties-id`,
                                         }}
                                         titleDescription={t("form.subHeading.description")}

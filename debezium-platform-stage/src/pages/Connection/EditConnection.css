@@ -1,0 +1,14 @@
+/* Review value styling for view mode */
+.source-schema-review__value {
+  display: inline-block;
+}
+
+.source-schema-review__value--empty {
+  color: var(--pf-v6-global--Color--200, #6a6e73);
+  font-style: italic;
+}
+
+.source-schema-review__value--set {
+  color: var(--pf-v6-global--Color--100, #151515);
+  font-weight: 500;
+}

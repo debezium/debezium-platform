@@ -29,7 +29,7 @@ import milvus from "../assets/milvus.png";
 import qdrant from "../assets/qdrant.png";
 import redis from "../assets/redis.png";
 import http from "../assets/http2.png";
-import db2 from "../assets/ibm-db2.png";
+import db2 from "../assets/ibm_db2.svg";
 
 interface ConnectorImageProps {
   connectorType: string;

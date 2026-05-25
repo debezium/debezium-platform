@@ -5,9 +5,8 @@ import {
   EmptyStateVariant,
   Flex,
   FlexItem,
-  Label,
 } from "@patternfly/react-core";
-import { DataSinkIcon, DataSourceIcon, TagIcon } from "@patternfly/react-icons";
+import { DataSinkIcon, DataSourceIcon } from "@patternfly/react-icons";
 import { Table, Thead, Tr, Th, Tbody, Td } from "@patternfly/react-table";
 import React from "react";
 import {
@@ -22,8 +21,8 @@ import { getConnectorTypeName } from "../utils/helpers";
 import ConnectorImage from "./ComponentImage";
 import { API_URL } from "../utils/constants";
 import { useQuery } from "react-query";
-import { getActivePipelineCount } from "../utils/pipelineUtils";
 import { useTranslation } from "react-i18next";
+import UsedIn from "./UsedIn";
 
 interface ISourceDestinationSelectionListProps {
   tableType: "source" | "destination";
@@ -80,13 +79,7 @@ const SourceDestinationSelectionList: React.FunctionComponent<
                     </Flex>
                   </Td>
                   <Td dataLabel={t("active")}>
-                    <Label icon={<TagIcon />} color="blue">
-                      {getActivePipelineCount(
-                        pipelineList,
-                        instance.id,
-                        tableType
-                      )}
-                    </Label>
+                    <UsedIn resourceList={pipelineList} resourceType={"pipeline"} requestedPageType={"source"} instance={instance} />
                   </Td>
                 </Tr>
               ))}
@@ -95,12 +88,12 @@ const SourceDestinationSelectionList: React.FunctionComponent<
       ) : (
         <EmptyState
           headingLevel="h2"
-          titleText={t("emptyState.title", {val: tableType})}
+          titleText={t("emptyState.title", { val: tableType })}
           icon={tableType === "source" ? DataSourceIcon : DataSinkIcon}
           variant={EmptyStateVariant.lg}
         >
           <EmptyStateBody>
-           {t("emptyState.description", {val: tableType})}
+            {t("emptyState.description", { val: tableType })}
           </EmptyStateBody>
           {/* <EmptyStateFooter>
             <EmptyStateActions>
