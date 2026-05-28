@@ -29,6 +29,10 @@ spec:
           ports:
             - containerPort: 8080
               protocol: TCP
+{{- with .Values.conductor.extraVolumeMounts }}
+          volumeMounts:
+{{ toYaml . | indent 16 }}
+{{- end }}
           env:
             - name: QUARKUS_DATASOURCE_PASSWORD
               valueFrom:
@@ -76,5 +80,9 @@ spec:
 {{- range $key, $value := .Values.pipeline.labels }}
             - name: {{ include "debezium-platform.toEnv" (dict "prefix" "PIPELINE_LABELS" "key" $key) | trim }}
               value: {{ $value | quote }}
+{{- end }}
+{{- with .Values.conductor.extraVolumes }}
+      volumes:
+{{ toYaml . | indent 12 }}
 {{- end }}
       restartPolicy: Always

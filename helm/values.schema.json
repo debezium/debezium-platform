@@ -53,6 +53,14 @@
                             "required": ["enabled", "registry", "image", "tag", "mountPath"]
                         }
                     }
+                },
+                "extraVolumes": {
+                    "type": "array",
+                    "default": []
+                },
+                "extraVolumeMounts": {
+                    "type": "array",
+                    "default": []
                 }
             },
             "type": "object"

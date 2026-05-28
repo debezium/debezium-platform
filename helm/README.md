@@ -37,6 +37,8 @@ you `values.yaml` with your domain.
 | conductor.descriptors.official.image       | Image name for the descriptor OCI artifact                                                                                                                                             | debezium/debezium-descriptors              |
 | conductor.descriptors.official.tag         | Image tag for the descriptor OCI artifact                                                                                                                                              | nightly                                    |
 | conductor.descriptors.official.mountPath   | Path where descriptors will be downloaded inside the container                                                                                                                         | /opt/descriptors                           |
+| conductor.extraVolumes                     | Extra volumes to add to the conductor deployment                                                                                                                                       | []                                         |
+| conductor.extraVolumeMounts                | Extra volume mounts to add to the conductor container                                                                                                                                  | []                                         |
 | server.image                               | Image for Debezium Server instances created by pipelines. If empty, the operator's ServerImageProvider determines the image                                                            | ""                                         |
 | database.enabled                           | Enable the installation of PostgreSQL by the chart                                                                                                                                     | false                                      |
 | database.name                              | Database name                                                                                                                                                                          | postgres                                   |
@@ -126,6 +128,22 @@ debezium-descriptors:nightly
 ```
 
 The artifact contents are extracted to the configured `mountPath`.
+
+## Extra Conductor Volumes
+
+Additional volumes and volume mounts can be configured for the conductor container. This can be used, for example, to mount a ConfigMap containing a custom truststore.
+
+```yaml
+conductor:
+  extraVolumes: 
+    - name: truststore 
+      configMap: 
+        name: conductor-truststore
+  extraVolumeMounts: 
+    - name: truststore 
+      mountPath: /etc/truststore 
+      readOnly: true
+```
 
 ## Debezium Server Image Configuration
 

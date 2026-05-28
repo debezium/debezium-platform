@@ -272,3 +272,30 @@ tests:
           content:
             name: PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE
             value: "debezium-platform"
+
+  - it: should add extra volumes and volume mounts to conductor deployment
+    template: conductor-deployment.yaml
+    set:
+      conductor.extraVolumes:
+        - name: truststore
+          configMap:
+            name: conductor-truststore
+      conductor.extraVolumeMounts:
+        - name: truststore
+          mountPath: /etc/truststore
+          readOnly: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: truststore
+            configMap:
+              name: conductor-truststore
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: truststore
+            mountPath: /etc/truststore
+            readOnly: true
