@@ -68,21 +68,16 @@ public class PipelineMapper {
 
     private static final String KAFKA_CONNECTION_CONFIGURATION_PREFIX = "producer.";
     private static final String MONGODB_CONNECTION_CONFIGURATION_PREFIX = "mongodb.";
-    private static final String KINESIS_CONNECTION_CONFIGURATION_PREFIX = "kinesis";
-    private static final String PUBSUB_CONNECTION_CONFIGURATION_PREFIX = "pubsub";
-    private static final String HTTP_CONNECTION_CONFIGURATION_PREFIX = "http";
-    private static final String PULSAR_CONNECTION_CONFIGURATION_PREFIX = "pulsar.client";
-    private static final String EVENTHUBS_CONNECTION_CONFIGURATION_PREFIX = "eventhubs";
-    private static final String REDIS_CONNECTION_CONFIGURATION_PREFIX = "redis";
-    private static final String NATS_STREAMING_CONNECTION_CONFIGURATION_PREFIX = "nats-streaming";
-    private static final String NATS_JETSTREAM_CONNECTION_CONFIGURATION_PREFIX = "nats-jetstream";
-    private static final String PRAVEGA_CONNECTION_CONFIGURATION_PREFIX = "pravega.controller";
-    private static final String INFINISPAN_CONNECTION_CONFIGURATION_PREFIX = "infinispan";
-    private static final String ROCKETMQ_CONNECTION_CONFIGURATION_PREFIX = "rocketmq.producer";
-    private static final String RABBITMQ_CONNECTION_CONFIGURATION_PREFIX = "rabbitmq.connection";
-    private static final String RABBITMQ_STREAM_CONNECTION_CONFIGURATION_PREFIX = "rabbitmqstream.connection";
-    private static final String MILVUS_CONNECTION_CONFIGURATION_PREFIX = "milvus";
-    private static final String QDRANT_CONNECTION_CONFIGURATION_PREFIX = "qdrant";
+    private static final String PULSAR_CONNECTION_CONFIGURATION_PREFIX = "pulsar.client.";
+    private static final String RABBITMQ_CONNECTION_CONFIGURATION_PREFIX = "rabbitmq.connection.";
+    private static final String RABBITMQ_STREAM_CONNECTION_CONFIGURATION_PREFIX = "rabbitmqstream.connection.";
+
+    private static final String SERVER_SINK_FQCN_PREFIX = "io.debezium.server.";
+    private static final Map<String, String> SINK_TYPE_OVERRIDES = Map.of(
+            "io.debezium.server.pubsub.PubSubLiteChangeConsumer", "pubsublite",
+            "io.debezium.server.rabbitmq.RabbitMqStreamNativeChangeConsumer", "rabbitmqstream",
+            "io.debezium.server.nats.jetstream.NatsJetStreamChangeConsumer", "nats-jetstream",
+            "io.debezium.server.nats.streaming.NatsStreamingChangeConsumer", "nats-streaming");
 
     final PipelineConfigGroup pipelineConfigGroup;
     final TableNameResolver tableNameResolver;
@@ -177,7 +172,7 @@ public class PipelineMapper {
         sinkConfig.setAllProps(sink.getConfig());
 
         return new SinkBuilder()
-                .withType(sink.getType())
+                .withType(resolveSinkType(sink.getType()))
                 .withConfig(sinkConfig)
                 .build();
     }
@@ -221,26 +216,61 @@ public class PipelineMapper {
         return DEBEZIUM_DATABASE_NAME_CONFIG;
     }
 
+    /**
+     * Resolves the Debezium Server sink type from a fully qualified class name to the short
+     * {@code @Named} identifier expected by {@code debezium.sink.type}.
+     *
+     * <p>The general rule extracts the first package segment after {@code io.debezium.server.}:
+     * <ul>
+     *   <li>{@code io.debezium.server.kafka.KafkaChangeConsumer} &rarr; {@code kafka}</li>
+     *   <li>{@code io.debezium.server.kinesis.KinesisChangeConsumer} &rarr; {@code kinesis}</li>
+     *   <li>{@code io.debezium.server.fluss.FlussChangeConsumer} &rarr; {@code fluss}</li>
+     * </ul>
+     *
+     * <p>A few consumers use multi-level packages or share a package with another consumer,
+     * making the heuristic insufficient. These are handled via {@link #SINK_TYPE_OVERRIDES}:
+     * <ul>
+     *   <li>{@code io.debezium.server.nats.jetstream.NatsJetStreamChangeConsumer} &rarr; {@code nats-jetstream}</li>
+     *   <li>{@code io.debezium.server.pubsub.PubSubLiteChangeConsumer} &rarr; {@code pubsublite}</li>
+     *   <li>{@code io.debezium.server.rabbitmq.RabbitMqStreamNativeChangeConsumer} &rarr; {@code rabbitmqstream}</li>
+     * </ul>
+     *
+     * <p>If the type is already a short name (no dots), it is returned as-is for backward compatibility.
+     *
+     * @param type the sink type, either a FQCN or an already-resolved short name
+     * @return the short sink type identifier
+     */
+    static String resolveSinkType(String type) {
+        if (type == null || !type.contains(".")) {
+            return type;
+        }
+
+        String override = SINK_TYPE_OVERRIDES.get(type);
+        if (override != null) {
+            return override;
+        }
+
+        if (type.startsWith(SERVER_SINK_FQCN_PREFIX)) {
+            String afterPrefix = type.substring(SERVER_SINK_FQCN_PREFIX.length());
+            int dotIndex = afterPrefix.indexOf('.');
+            if (dotIndex > 0) {
+                return afterPrefix.substring(0, dotIndex);
+            }
+        }
+
+        return type;
+    }
+
     private String prefixResolver(ConnectionEntity.Type connectionType) {
         return switch (connectionType) {
             case ORACLE, MYSQL, MARIADB, SQLSERVER, POSTGRESQL -> DATABASE_CONNECTION_CONFIGURATION_PREFIX;
             case MONGODB -> MONGODB_CONNECTION_CONFIGURATION_PREFIX;
             case KAFKA -> KAFKA_CONNECTION_CONFIGURATION_PREFIX;
-            case AMAZON_KINESIS -> KINESIS_CONNECTION_CONFIGURATION_PREFIX;
-            case GOOGLE_PUB_SUB -> PUBSUB_CONNECTION_CONFIGURATION_PREFIX;
-            case HTTP -> HTTP_CONNECTION_CONFIGURATION_PREFIX;
+            case AMAZON_KINESIS, APACHE_ROCKETMQ, QDRANT, MILVUS, INFINISPAN, PRAVEGA, NATS_JETSTREAM, NATS_STREAMING, REDIS, AZURE_EVENTS_HUBS, HTTP, GOOGLE_PUB_SUB ->
+                "";
             case APACHE_PULSAR -> PULSAR_CONNECTION_CONFIGURATION_PREFIX;
-            case AZURE_EVENTS_HUBS -> EVENTHUBS_CONNECTION_CONFIGURATION_PREFIX;
-            case REDIS -> REDIS_CONNECTION_CONFIGURATION_PREFIX;
-            case NATS_STREAMING -> NATS_STREAMING_CONNECTION_CONFIGURATION_PREFIX;
-            case NATS_JETSTREAM -> NATS_JETSTREAM_CONNECTION_CONFIGURATION_PREFIX;
-            case PRAVEGA -> PRAVEGA_CONNECTION_CONFIGURATION_PREFIX;
-            case INFINISPAN -> INFINISPAN_CONNECTION_CONFIGURATION_PREFIX;
-            case APACHE_ROCKETMQ -> ROCKETMQ_CONNECTION_CONFIGURATION_PREFIX;
             case RABBITMQ_STREAM -> RABBITMQ_CONNECTION_CONFIGURATION_PREFIX;
             case RABBITMQ_NATIVE_STREAM -> RABBITMQ_STREAM_CONNECTION_CONFIGURATION_PREFIX;
-            case MILVUS -> MILVUS_CONNECTION_CONFIGURATION_PREFIX;
-            case QDRANT -> QDRANT_CONNECTION_CONFIGURATION_PREFIX;
         };
     }
 
