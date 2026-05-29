@@ -31,7 +31,7 @@ spec:
               protocol: TCP
 {{- with .Values.conductor.extraVolumeMounts }}
           volumeMounts:
-{{ toYaml . | indent 16 }}
+{{ toYaml . | indent 12 }}
 {{- end }}
           env:
             - name: QUARKUS_DATASOURCE_PASSWORD
@@ -83,6 +83,6 @@ spec:
 {{- end }}
 {{- with .Values.conductor.extraVolumes }}
       volumes:
-{{ toYaml . | indent 12 }}
+{{ toYaml . | indent 8 }}
 {{- end }}
       restartPolicy: Always
