@@ -71,7 +71,8 @@
         "overview": "Overview",
         "log": "Pipeline logs",
         "edit": "Edit pipeline",
-        "action": "Pipeline action"
+        "action": "Pipeline action",
+        "monitoring": "Monitoring"
     },
     "overview": {
         "description": "Pipeline overview for {{val}} with list of essential metrics, composition (source & destination) details, pipeline logs and option to edit pipeline.",
@@ -80,6 +81,10 @@
         "pipelineComposition": "Pipeline composition",
         "queueUsage": "Queue usage",
         "events": "Events"
+    },
+    "monitoring": {
+        "title": "Pipeline Monitoring",
+        "description": "Monitor your pipeline performance and metrics in real-time."
     },
     "actions": {
         "title": "Pipeline actions",
