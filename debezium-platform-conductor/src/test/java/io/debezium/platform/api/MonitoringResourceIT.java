@@ -36,11 +36,11 @@ class MonitoringResourceIT {
                 .contentType(ContentType.JSON)
                 .body("panels", notNullValue())
                 .body("panels", not(empty()))
-                .body("panels[0].id", is("event-count"))
-                .body("panels[0].title", is("Event Count"))
+                .body("panels[0].id", is("streaming-event-count"))
+                .body("panels[0].title", is("Streaming Event Count"))
                 .body("panels[0].category", is("streaming"))
                 .body("panels[0].unit", is("events/s"))
-                .body("panels[0].visualization.type", is("line"))
+                .body("panels[0].visualization.type", is("area"))
                 .body("panels[0].visualization.suggestedStep", is("15s"));
     }
 
@@ -56,11 +56,11 @@ class MonitoringResourceIT {
                 .queryParam("end", end)
                 .queryParam("step", "15s")
                 .when()
-                .get("api/monitoring/panels/event-count/query")
+                .get("api/monitoring/panels/streaming-event-count/query")
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("panelId", is("event-count"))
+                .body("panelId", is("streaming-event-count"))
                 .body("pipelineId", is("test-pipeline"))
                 .body("series", not(empty()))
                 .body("series[0].labels.service_name", is("test-pipeline"))
@@ -87,7 +87,7 @@ class MonitoringResourceIT {
                 .queryParam("start", Instant.now().minus(5, ChronoUnit.MINUTES).toString())
                 .queryParam("end", Instant.now().toString())
                 .when()
-                .get("api/monitoring/panels/event-count/query")
+                .get("api/monitoring/panels/streaming-event-count/query")
                 .then()
                 .statusCode(400);
     }
@@ -98,7 +98,7 @@ class MonitoringResourceIT {
                 .queryParam("start", Instant.now().minus(5, ChronoUnit.MINUTES).toString())
                 .queryParam("end", Instant.now().toString())
                 .when()
-                .get("api/monitoring/panels/event-count/query")
+                .get("api/monitoring/panels/streaming-event-count/query")
                 .then()
                 .statusCode(400);
     }
@@ -112,7 +112,7 @@ class MonitoringResourceIT {
                 .queryParam("start", now.minus(5, ChronoUnit.MINUTES).toString())
                 .queryParam("end", now.toString())
                 .when()
-                .get("api/monitoring/panels/event-count/query")
+                .get("api/monitoring/panels/streaming-event-count/query")
                 .then()
                 .statusCode(200)
                 .body("timeRange.step", is("15s"))
