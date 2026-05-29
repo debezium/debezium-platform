@@ -89,7 +89,8 @@ class MonitoringResourceIT {
                 .when()
                 .get("api/monitoring/panels/streaming-event-count/query")
                 .then()
-                .statusCode(400);
+                .statusCode(400)
+                .body("title", is("Constraint Violation"));
     }
 
     @Test
@@ -100,7 +101,32 @@ class MonitoringResourceIT {
                 .when()
                 .get("api/monitoring/panels/streaming-event-count/query")
                 .then()
-                .statusCode(400);
+                .statusCode(400)
+                .body("title", is("Constraint Violation"));
+    }
+
+    @Test
+    void queryPanelReturns400ForMissingStart() {
+        given()
+                .queryParam("pipeline_id", "test-pipeline")
+                .queryParam("end", Instant.now().toString())
+                .when()
+                .get("api/monitoring/panels/streaming-event-count/query")
+                .then()
+                .statusCode(400)
+                .body("title", is("Constraint Violation"));
+    }
+
+    @Test
+    void queryPanelReturns400ForMissingEnd() {
+        given()
+                .queryParam("pipeline_id", "test-pipeline")
+                .queryParam("start", Instant.now().minus(5, ChronoUnit.MINUTES).toString())
+                .when()
+                .get("api/monitoring/panels/streaming-event-count/query")
+                .then()
+                .statusCode(400)
+                .body("title", is("Constraint Violation"));
     }
 
     @Test

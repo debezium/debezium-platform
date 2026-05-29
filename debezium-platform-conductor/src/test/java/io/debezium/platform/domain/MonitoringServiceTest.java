@@ -122,26 +122,6 @@ class MonitoringServiceTest {
     }
 
     @Test
-    void queryPanelRejectsInvalidPipelineId() {
-        when(panelConfigLoader.loadPanels()).thenReturn(List.of(EVENT_COUNT_PANEL));
-
-        assertThatThrownBy(() -> service.queryPanel(
-                "event-count", "pipeline'; DROP TABLE--", "2026-04-23T10:00:00Z", "2026-04-23T11:00:00Z", "1m"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid pipeline_id");
-    }
-
-    @Test
-    void queryPanelRejectsNullPipelineId() {
-        when(panelConfigLoader.loadPanels()).thenReturn(List.of(EVENT_COUNT_PANEL));
-
-        assertThatThrownBy(() -> service.queryPanel(
-                "event-count", null, "2026-04-23T10:00:00Z", "2026-04-23T11:00:00Z", "1m"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid pipeline_id");
-    }
-
-    @Test
     void queryPanelHandlesEmptyPrometheusResponse() {
         when(panelConfigLoader.loadPanels()).thenReturn(List.of(EVENT_COUNT_PANEL));
 

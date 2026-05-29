@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -30,7 +29,6 @@ public class MonitoringService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MonitoringService.class);
 
-    private static final Pattern PIPELINE_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+");
     private static final String PIPELINE_ID_PLACEHOLDER = "{{pipeline_id}}";
 
     private final PanelConfigLoader panelConfigLoader;
@@ -53,10 +51,6 @@ public class MonitoringService {
                 .filter(p -> p.id().equals(panelId))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Panel not found: " + panelId));
-
-        validatePipelineId(pipelineId);
-        validateRequired(start, "start");
-        validateRequired(end, "end");
 
         String query = encodePromQLBraces(panelConfig.query().replace(PIPELINE_ID_PLACEHOLDER, pipelineId));
 
@@ -82,20 +76,8 @@ public class MonitoringService {
                 new PanelQueryResponse.Metadata(queryDuration));
     }
 
-    private static void validateRequired(String value, String paramName) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Missing required parameter: " + paramName);
-        }
-    }
-
     private static String encodePromQLBraces(String query) {
         return query.replace("{", "%7B").replace("}", "%7D");
-    }
-
-    private void validatePipelineId(String pipelineId) {
-        if (pipelineId == null || !PIPELINE_ID_PATTERN.matcher(pipelineId).matches()) {
-            throw new IllegalArgumentException("Invalid pipeline_id: must match pattern [a-zA-Z0-9_-]+");
-        }
     }
 
     private List<PanelQueryResponse.TimeSeries> transformResponse(PrometheusQueryRangeResponse response) {
