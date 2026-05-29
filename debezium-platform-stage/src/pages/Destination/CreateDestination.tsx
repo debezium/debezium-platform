@@ -126,7 +126,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
       <CreateSchemaForm
         ref={formRef}
         connectorSchema={connectorSchema}
-        sourceId={destinationId}
+        destinationId={destinationId}
         onSubmit={createNewDestination}
         hideSignalCollections={true}
         {...(modelLoaded ? { defaultLayoutMode: "tabs" as const } : {})}

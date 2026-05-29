@@ -222,7 +222,7 @@ const EditDestination: React.FunctionComponent = () => {
             key={destination.id}
             ref={formRef}
             connectorSchema={connectorSchema}
-            sourceId={destination.type}
+            destinationId={destination.type}
             dataType={destination.type}
             initialSource={destination}
             onSubmit={handleSchemaSubmit}

@@ -102,5 +102,20 @@
   "usedIn": "Used in",
   "replayTour": "Replay Guided Tour",
   "vaults": "Vaults",
-  "verify": "Verify"
+  "verify": "Verify",
+  "connector": {
+    "jumplinks": {
+      "connectorEssentials": "Connector Essentials",
+      "additionalProperties": "Additional Properties"
+    },
+    "form": {
+      "validationFailedGeneric": "Please fill all required fields.",
+      "validationFailedInOneSection": "Please fill all required fields in {{section}} section.",
+      "validationFailedInMultipleSections": "Please fill all required fields in {{list}} sections."
+    },
+    "create": {
+      "dataTableDescription": "Select the {{val}} to be targeted for sync",
+      "dataTableTitle": "{{val}} database"
+    }
+  }
 }

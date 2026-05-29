@@ -42,14 +42,15 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Catalog", navigate, true)}
           </BreadcrumbGenerator>
         );
-      case route.match("source/[^/]+") !== null:
+      case route.includes("/source/create_source"):
         return (
           <BreadcrumbGenerator>
             {generateBreadcrumbItem("/source", "Source", navigate)}
-            {generateBreadcrumbItem("#", "Edit source", navigate, true)}
+            {generateBreadcrumbItem("/source/catalog", "Catalog", navigate)}
+            {generateBreadcrumbItem("#", "Create source", navigate, true)}
           </BreadcrumbGenerator>
         );
-      case route.includes("/source/create_source"):
+      case route.match("source/[^/]+") !== null:
         return (
           <BreadcrumbGenerator>
             {generateBreadcrumbItem("/source", "Source", navigate)}
@@ -64,14 +65,15 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Catalog", navigate, true)}
           </BreadcrumbGenerator>
         );
-      case route.match("destination/[^/]+") !== null:
+      case route.includes("/destination/create_destination"):
         return (
           <BreadcrumbGenerator>
             {generateBreadcrumbItem("/destination", "Destination", navigate)}
-            {generateBreadcrumbItem("#", "Edit destination", navigate, true)}
+            {generateBreadcrumbItem("/destination/catalog", "Catalog", navigate)}
+            {generateBreadcrumbItem("#", "Create destination", navigate, true)}
           </BreadcrumbGenerator>
         );
-      case route.includes("/destination/create_destination"):
+      case route.match("destination/[^/]+") !== null:
         return (
           <BreadcrumbGenerator>
             {generateBreadcrumbItem("/destination", "Destination", navigate)}
@@ -101,27 +103,12 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Pipeline designer", navigate, true)}
           </BreadcrumbGenerator>
         );
-      case route.match("/pipeline/[^/]+") !== null:
-        return (
-          <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
-            {generateBreadcrumbItem("#", "Overview", navigate, true)}
-          </BreadcrumbGenerator>
-        );
-      case route.match("/pipeline/pipeline_edit/[^/]+") !== null:
-        return (
-          <BreadcrumbGenerator>
-            {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
-            {generateBreadcrumbItem("#", "indra-ui-test", navigate, true)}
-            {generateBreadcrumbItem("#", "Edit", navigate, true)}
-          </BreadcrumbGenerator>
-        );
       case route === "/pipeline/pipeline_designer/configure":
         return (
           <BreadcrumbGenerator>
             {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
-            {generateBreadcrumbItem("#", "Pipeline designer", navigate)}
-            {generateBreadcrumbItem("#", "Create pipeline", navigate)}
+            {generateBreadcrumbItem("/pipeline/pipeline_designer", "Pipeline designer", navigate)}
+            {generateBreadcrumbItem("#", "Create pipeline", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route === "/pipeline/pipeline_designer/destination":
@@ -130,10 +117,10 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
             {generateBreadcrumbItem(
               "/pipeline/pipeline_designer",
-              " Pipeline designer",
+              "Pipeline designer",
               navigate
             )}
-            {generateBreadcrumbItem("#", "Destination", navigate, true)}
+            {generateBreadcrumbItem("#", "Create pipeline", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route.includes(
@@ -147,12 +134,27 @@ const AppBreadcrumb: React.FC = () => {
               "Pipeline designer",
               navigate
             )}
+            {generateBreadcrumbItem("#", "Create pipeline", navigate, true)}
+          </BreadcrumbGenerator>
+        );
+      case route.match("/pipeline/pipeline_edit/[^/]+") !== null:
+        return (
+          <BreadcrumbGenerator>
+            {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
+            {generateBreadcrumbItem("#", "indra-ui-test", navigate, true)}
+            {generateBreadcrumbItem("#", "Edit", navigate, true)}
+          </BreadcrumbGenerator>
+        );
+      case route.match("/pipeline/[^/]+") !== null:
+        return (
+          <BreadcrumbGenerator>
+            {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
             {generateBreadcrumbItem(
-              "pipeline/pipeline_designer/destination",
-              "Destination",
+              "/pipeline/pipeline_designer",
+              "Pipeline designer",
               navigate
             )}
-            {generateBreadcrumbItem("#", "Create destination", navigate, true)}
+            {generateBreadcrumbItem("#", "Create pipeline", navigate, true)}
           </BreadcrumbGenerator>
         );
       default:

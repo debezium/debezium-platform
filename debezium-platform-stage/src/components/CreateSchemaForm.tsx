@@ -57,6 +57,7 @@ import { useQuery } from "react-query";
 import {
   Connection,
   ConnectionConfig,
+  Destination,
   fetchData,
   fetchDataCall,
   Source,
@@ -108,10 +109,11 @@ interface connectionsList extends Connection {
 
 interface CreateSchemaFormProps {
   connectorSchema: ConnectorSchema;
-  sourceId: string;
+  sourceId?: string;
+  destinationId?: string;
   dataType?: string;
   onSubmit: (payload: Record<string, unknown>) => void;
-  initialSource?: Source;
+  initialSource?: Source | Destination;
   readOnly?: boolean;
   /** Initial layout; user can still switch via the toggle. Pipeline designer modal uses "tabs". */
   defaultLayoutMode?: "jumplinks" | "tabs";
@@ -149,7 +151,7 @@ function getFirstJumplinkValidationErrorElementId(
   orderedGroups: SchemaGroup[],
   groupedProperties: Map<string, SchemaProperty[]>
 ): string | null {
-  if (newErrors["source-name"]) return "source-name";
+  if (newErrors["connector-name"]) return "connector-name";
   if (newErrors.connection) return "conn-typeahead-select";
 
   for (const group of orderedGroups) {
@@ -198,8 +200,8 @@ function collectValidationErrorSectionLabels(
     }
   };
 
-  if (newErrors["source-name"] || newErrors.connection) {
-    push(t("source:jumplinks.connectorEssentials"));
+  if (newErrors["connector-name"] || newErrors.connection) {
+    push(t("connector:jumplinks.connectorEssentials"));
   }
 
   for (const group of orderedGroups) {
@@ -211,7 +213,7 @@ function collectValidationErrorSectionLabels(
   }
 
   if (additionalErrorRowIds.size > 0) {
-    push(t("source:jumplinks.additionalProperties"));
+    push(t("connector:jumplinks.additionalProperties"));
   }
 
   return names;
@@ -219,27 +221,33 @@ function collectValidationErrorSectionLabels(
 
 function formatValidationFailureNotificationBody(sections: string[], t: TFunction): string {
   if (sections.length === 0) {
-    return t("source:form.validationFailedGeneric");
+    return t("connector:form.validationFailedGeneric");
   }
   if (sections.length === 1) {
-    return t("source:form.validationFailedInOneSection", { section: sections[0] });
+    return t("connector:form.validationFailedInOneSection", { section: sections[0] });
   }
-  return t("source:form.validationFailedInMultipleSections", { list: sections.join(", ") });
+  return t("connector:form.validationFailedInMultipleSections", { list: sections.join(", ") });
 }
 
 const CreateSchemaForm = React.forwardRef<
   CreateSchemaFormHandle,
   CreateSchemaFormProps
->(({ connectorSchema, sourceId, dataType, onSubmit, initialSource, readOnly = false, defaultLayoutMode = "jumplinks", hideSignalCollections = false }, ref) => {
+>(({ connectorSchema, sourceId, destinationId, dataType, onSubmit, initialSource, readOnly = false, defaultLayoutMode = "jumplinks", hideSignalCollections = false }, ref) => {
   const { t } = useTranslation();
   const { addNotification } = useNotification();
   const hydratedSourceIdRef = useRef<number | null>(null);
   const lastValidationFailureBodyRef = useRef<string>("");
 
+  // Use either sourceId or destinationId
+  const connectorId = sourceId || destinationId || "";
+  // Determine if this is a destination or source context
+  const isDestination = !!destinationId;
+  const connectorTypeLabel = isDestination ? "Destination" : "Source";
+
   // Layout toggle
   const [layoutMode, setLayoutMode] = useState<"jumplinks" | "tabs">(defaultLayoutMode);
 
-  const [sourceName, setSourceName] = useState("");
+  const [connectorName, setConnectorName] = useState("");
   const [description, setDescription] = useState("");
 
   const [schemaValues, setSchemaValues] = useState<Record<string, string>>({});
@@ -310,7 +318,7 @@ const CreateSchemaForm = React.forwardRef<
     [connectorSchema.properties]
   );
 
-  const connectorTypeString = dataType || sourceId;
+  const connectorTypeString = dataType || connectorId;
 
   const tableManagedFilterNames = useMemo(
     () => new Set(getTableManagedFilterPropertyNames(connectorTypeString)),
@@ -338,7 +346,7 @@ const CreateSchemaForm = React.forwardRef<
     );
   
     /* eslint-disable react-hooks/set-state-in-effect */
-    setSourceName(initialSource.name);
+    setConnectorName(initialSource.name);
     setDescription(initialSource.description ?? "");
     setSelectedConnection(initialSource.connection);
     setConnectionInputValue(initialSource.connection?.name ?? "");
@@ -464,7 +472,7 @@ const CreateSchemaForm = React.forwardRef<
       return response.data as TableData;
     },
     {
-      enabled: selectedConnectionId != null,
+      enabled: selectedConnectionId != null && !isDestination,
     }
   );
 
@@ -504,12 +512,12 @@ const CreateSchemaForm = React.forwardRef<
           id="field-group-data-table-id"
           className="table-explorer-section__title"
         >
-          {t("source:create.dataTableTitle", {
+          {t("connector:create.dataTableTitle", {
             val: getConnectorTypeName(connectorTypeString),
           })}
         </Content>
         <Content component="p" className="table-explorer-section__description">
-          {t("source:create.dataTableDescription", {
+          {t("connector:create.dataTableDescription", {
             val: getDataExplorerScopePhrase(connectorTypeString),
           })}
         </Content>
@@ -534,8 +542,8 @@ const CreateSchemaForm = React.forwardRef<
   ]);
 
   const baseSelectOptions = useMemo(
-    () => getInitialSelectOptions(connections, dataType || sourceId),
-    [connections, dataType, sourceId]
+    () => getInitialSelectOptions(connections, dataType || connectorId),
+    [connections, dataType, connectorId]
   );
 
   const selectOptions = useMemo(() => {
@@ -678,7 +686,7 @@ const CreateSchemaForm = React.forwardRef<
       return;
     }
     const payload = {
-      databaseType: getDatabaseType(sourceId),
+      databaseType: getDatabaseType(connectorId),
       connectionId: selectedConnection.id,
       fullyQualifiedTableName: signalCollectionNameVerify,
     };
@@ -741,7 +749,7 @@ const CreateSchemaForm = React.forwardRef<
   const validate = useCallback((): boolean => {
     if (readOnly) return true;
     const newErrors: Record<string, string | undefined> = {};
-    if (!sourceName.trim()) newErrors["source-name"] = t("statusMessage:smartEditor.sourceNameRequired", "Source name is required");
+    if (!connectorName.trim()) newErrors["connector-name"] = t("statusMessage:smartEditor.connectorNameRequired", `${connectorTypeLabel} name is required`);
     if (!selectedConnection) newErrors.connection = t("statusMessage:smartEditor.connectionRequired", "Connection is required");
 
     for (const prop of connectorSchema.properties) {
@@ -803,7 +811,7 @@ const CreateSchemaForm = React.forwardRef<
   }, [
     readOnly,
     layoutMode,
-    sourceName,
+    connectorName,
     selectedConnection,
     schemaValues,
     connectorSchema.properties,
@@ -816,7 +824,7 @@ const CreateSchemaForm = React.forwardRef<
   ]);
 
   const getLastValidationFailureBody = useCallback(
-    () => lastValidationFailureBodyRef.current || t("source:form.validationFailedGeneric"),
+    () => lastValidationFailureBodyRef.current || t("connector:form.validationFailedGeneric"),
     [t]
   );
 
@@ -844,9 +852,9 @@ const CreateSchemaForm = React.forwardRef<
     Object.assign(config, getIncludeList(selectedDataListItems, connectorTypeString));
 
     const payload: Record<string, unknown> = {
-      name: sourceName,
+      name: connectorName,
       description,
-      type: initialSource?.type ?? sourceId,
+      type: initialSource?.type ?? connectorId,
       schema: initialSource?.schema ?? "schema321",
       vaults: initialSource?.vaults ?? [],
       ...(selectedConnection ? { connection: selectedConnection } : {}),
@@ -866,9 +874,9 @@ const CreateSchemaForm = React.forwardRef<
     additionalProps,
     signalCollectionName,
     selectedDataListItems,
-    sourceName,
+    connectorName,
     description,
-    sourceId,
+    connectorId,
     selectedConnection,
     onSubmit,
     initialSource,
@@ -884,43 +892,43 @@ const CreateSchemaForm = React.forwardRef<
 
   const renderConnectorEssentials = () => (
     <Form isWidthLimited>
-      <FormGroup label={t("form.field.type", { val: "Source" })} isRequired fieldId="source-type-field">
+      <FormGroup label={t("form.field.type", { val: connectorTypeLabel })} isRequired fieldId="connector-type-field">
         <Split hasGutter>
           <SplitItem>
-            <ConnectorImage connectorType={dataType || sourceId} size={35} />
+            <ConnectorImage connectorType={dataType || connectorId} size={35} />
           </SplitItem>
           <SplitItem>
-            <Content component="p">{getConnectorTypeName(dataType || sourceId)}</Content>
+            <Content component="p">{getConnectorTypeName(dataType || connectorId)}</Content>
           </SplitItem>
         </Split>
       </FormGroup>
 
-      <FormGroup label={t("form.field.name", { val: "Source" })} isRequired fieldId="source-name-field">
+      <FormGroup label={t("form.field.name", { val: connectorTypeLabel })} isRequired fieldId="connector-name-field">
         <TextInput
-          id="source-name"
-          value={sourceName}
+          id="connector-name"
+          value={connectorName}
           onChange={(_e, val) => {
-            setSourceName(val);
-            setErrors((e) => ({ ...e, "source-name": undefined }));
+            setConnectorName(val);
+            setErrors((e) => ({ ...e, "connector-name": undefined }));
           }}
-          validated={errors["source-name"] ? "error" : "default"}
+          validated={errors["connector-name"] ? "error" : "default"}
           readOnly={readOnly}
           {...(readOnly ? { readOnlyVariant: "plain" as const } : {})}
         />
-        {errors["source-name"] && (
+        {errors["connector-name"] && (
           <FormHelperText>
             <HelperText>
               <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
-                {errors["source-name"]}
+                {errors["connector-name"]}
               </HelperTextItem>
             </HelperText>
           </FormHelperText>
         )}
       </FormGroup>
 
-      <FormGroup label={t("form.field.description.label")} fieldId="source-description-field">
+      <FormGroup label={t("form.field.description.label")} fieldId="connector-description-field">
         <TextInput
-          id="source-description"
+          id="connector-description"
           value={description}
           onChange={(_e, val) => setDescription(val)}
           readOnly={readOnly}
@@ -928,12 +936,12 @@ const CreateSchemaForm = React.forwardRef<
         />
         <FormHelperText>
           <HelperText>
-            <HelperTextItem>{t("form.field.description.helper", { val: "source" })}</HelperTextItem>
+            <HelperTextItem>{t("form.field.description.helper", { val: isDestination ? "destination" : "source" })}</HelperTextItem>
           </HelperText>
         </FormHelperText>
       </FormGroup>
 
-      <FormGroup label={t("connection:link.connectionFieldLabel", { val: "Source" })} isRequired fieldId="source-connection-field">
+      <FormGroup label={t("connection:link.connectionFieldLabel", { val: connectorTypeLabel })} isRequired fieldId="connector-connection-field">
         <InputGroup>
           <InputGroupItem isFill>
             <Select
@@ -1063,7 +1071,7 @@ const CreateSchemaForm = React.forwardRef<
               {signalCollectionName
                 ? `${t("source:signal.signalingCollectionField.label", { defaultValue: "Signaling collection" })}: ${signalCollectionName}`
                 : t("source:signal.notConfigured", {
-                    defaultValue: "Signaling is not configured for this source.",
+                    defaultValue: `Signaling is not configured for this ${isDestination ? 'destination' : 'source'}.`,
                   })}
             </Content>
           ) : (
@@ -1266,8 +1274,8 @@ const CreateSchemaForm = React.forwardRef<
       <CreateConnectionModal
         isConnectionModalOpen={isConnectionModalOpen}
         handleConnectionModalToggle={() => setIsConnectionModalOpen(false)}
-        selectedConnectionType="source"
-        resourceId={sourceId}
+        selectedConnectionType={isDestination ? "destination" : "source"}
+        resourceId={connectorId}
         setSelectedConnection={handleNewConnectionFromModal}
       />
 
@@ -1288,7 +1296,7 @@ const CreateSchemaForm = React.forwardRef<
               variant="danger"
               isInline
               isPlain
-              title={t("source:signal.errorMsg", { val: { connectorType: "source" } })}
+              title={t("source:signal.errorMsg", { val: { connectorType: isDestination ? "destination" : "source" } })}
               style={{ paddingBottom: "15px" }}
             />
           )}

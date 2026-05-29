@@ -101,5 +101,20 @@
   "type": "Tipo",
   "replayTour": "Ripeti il Tour Guidato",
   "vaults": "Vault",
-  "verify": "Verifica"
+  "verify": "Verifica",
+  "connector": {
+    "jumplinks": {
+      "connectorEssentials": "Elementi essenziali del connettore",
+      "additionalProperties": "Proprietà aggiuntive"
+    },
+    "form": {
+      "validationFailedGeneric": "Compila tutti i campi obbligatori.",
+      "validationFailedInOneSection": "Compila tutti i campi obbligatori nella sezione {{section}}.",
+      "validationFailedInMultipleSections": "Compila tutti i campi obbligatori nelle sezioni {{list}}."
+    },
+    "create": {
+      "dataTableDescription": "Seleziona il {{val}} da sincronizzare",
+      "dataTableTitle": "{{val}} database"
+    }
+  }
 }
