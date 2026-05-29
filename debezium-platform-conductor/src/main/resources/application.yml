@@ -1,3 +1,14 @@
+monitoring:
+  panels:
+    - id: event-count
+      title: "Event Count"
+      description: "Rate of change data capture events processed per second (create, update, delete)"
+      category: streaming
+      query: 'rate(debezium_event_count_total{service_name="{{pipeline_id}}"}[5m])'
+      unit: events/s
+      visualization:
+        type: line
+        suggested-step: 15s
 conductor:
   watcher:
     enabled: true
@@ -99,6 +110,9 @@ quarkus:
       url: http://localhost:8080
       # Avoid throwing an exception when HTTP status code is higher than 400
       disable-default-mapper: true
+    prometheus-api:
+      url: ${MONITORING_PROMETHEUS_URL:http://localhost:9090}
+      read-timeout: 30000
   http:
     cors:
         ~: true
@@ -208,6 +222,8 @@ quarkus:
         storage:
           type: org.apache.kafka.connect.storage.MemoryOffsetBackingStore
   quarkus:
+    http:
+      test-port: 0
     debezium-outbox:
       remove-after-insert: false
     datasource:
