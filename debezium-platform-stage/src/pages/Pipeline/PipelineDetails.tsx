@@ -20,6 +20,7 @@ import PipelineOverview from "./PipelineOverview";
 import { PipelineDesignerEdit } from "./PipelineDesignerEdit";
 import { useTranslation } from 'react-i18next';
 import PipelineAction from "./PipelineAction";
+import PipelineMonitoring from "./PipelineMonitoring";
 
 const PipelineDetails: React.FunctionComponent = () => {
   const { pipelineId, detailsTab } = useParams<{
@@ -43,7 +44,7 @@ const PipelineDetails: React.FunctionComponent = () => {
     if (prevDetailsTabRef.current !== detailsTab && detailsTab) {
       prevDetailsTabRef.current = detailsTab;
       
-      const validTabs = ["overview", "logs", "edit", "action"];
+      const validTabs = ["overview", "logs", "edit", "action", "monitoring"];
       if (validTabs.includes(detailsTab)) {
         setActiveTabKey(detailsTab);
       }
@@ -118,6 +119,11 @@ const PipelineDetails: React.FunctionComponent = () => {
             title={<TabTitleText>{t('pipeline:tabs.edit')}</TabTitleText>}
             tabContentId={`tabContent${"edit"}`}
           />
+          <Tab
+            eventKey={"monitoring"}
+            title={<TabTitleText>{t('pipeline:tabs.monitoring')}</TabTitleText>}
+            tabContentId={`tabContent${"monitoring"}`}
+          />
         </Tabs>
       </PageSection>
       <PageSection isWidthLimited isFilled>
@@ -179,6 +185,17 @@ const PipelineDetails: React.FunctionComponent = () => {
         >
           <TabContentBody>
             <PipelineAction  pipelineId={pipelineId} sourceId={pipeline?.source.id}/>
+          </TabContentBody>
+        </TabContent>
+        <TabContent
+          key={"monitoring"}
+          eventKey={"monitoring"}
+          id={`tabContent${"monitoring"}`}
+          activeKey={activeTabKey}
+          hidden={"monitoring" !== activeTabKey}
+        >
+          <TabContentBody>
+            <PipelineMonitoring pipelineId={pipelineId || ""} />
           </TabContentBody>
         </TabContent>
       </PageSection>
