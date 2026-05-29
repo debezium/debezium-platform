@@ -208,3 +208,23 @@ tests:
           content:
             name: PIPELINE_MONITORING_OTEL_ENDPOINT
           any: true
+
+  - it: should set MONITORING_PANELS_PATH when additionalPanelsPath is configured
+    template: conductor-deployment.yaml
+    set:
+      monitoring.panels.additionalPanelsPath: /opt/config/panels.yml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PANELS_PATH
+            value: /opt/config/panels.yml
+
+  - it: should not set MONITORING_PANELS_PATH when additionalPanelsPath is empty
+    template: conductor-deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PANELS_PATH
+          any: true

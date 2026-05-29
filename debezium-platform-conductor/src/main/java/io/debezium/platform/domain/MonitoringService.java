@@ -17,7 +17,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.debezium.platform.config.MonitoringApiConfigGroup;
+import io.debezium.platform.config.PanelConfig;
 import io.debezium.platform.data.dto.PanelQueryResponse;
 import io.debezium.platform.data.dto.PanelResponse;
 import io.debezium.platform.data.dto.PanelsListResponse;
@@ -33,23 +33,23 @@ public class MonitoringService {
     private static final Pattern PIPELINE_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+");
     private static final String PIPELINE_ID_PLACEHOLDER = "{{pipeline_id}}";
 
-    private final MonitoringApiConfigGroup config;
+    private final PanelConfigLoader panelConfigLoader;
     private final PrometheusClient prometheusClient;
 
-    public MonitoringService(MonitoringApiConfigGroup config, @RestClient PrometheusClient prometheusClient) {
-        this.config = config;
+    public MonitoringService(PanelConfigLoader panelConfigLoader, @RestClient PrometheusClient prometheusClient) {
+        this.panelConfigLoader = panelConfigLoader;
         this.prometheusClient = prometheusClient;
     }
 
     public PanelsListResponse listPanels() {
-        List<PanelResponse> panels = config.panels().stream()
+        List<PanelResponse> panels = panelConfigLoader.loadPanels().stream()
                 .map(this::toPanelResponse)
                 .toList();
         return new PanelsListResponse(panels);
     }
 
     public PanelQueryResponse queryPanel(String panelId, String pipelineId, String start, String end, String step) {
-        MonitoringApiConfigGroup.PanelConfig panelConfig = config.panels().stream()
+        PanelConfig panelConfig = panelConfigLoader.loadPanels().stream()
                 .filter(p -> p.id().equals(panelId))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Panel not found: " + panelId));
@@ -137,7 +137,7 @@ public class MonitoringService {
         };
     }
 
-    private PanelResponse toPanelResponse(MonitoringApiConfigGroup.PanelConfig panelConfig) {
+    private PanelResponse toPanelResponse(PanelConfig panelConfig) {
         return new PanelResponse(
                 panelConfig.id(),
                 panelConfig.title(),

@@ -312,6 +312,16 @@
                         }
                     }
                 },
+                "panels": {
+                    "type": "object",
+                    "properties": {
+                        "additionalPanelsPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "Path to a YAML file with additional monitoring panels. Panels defined here are merged with the built-in panels; panels with matching IDs override the built-in defaults."
+                        }
+                    }
+                },
                 "prometheus": {
                     "type": "object",
                     "properties": {

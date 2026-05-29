@@ -21,7 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import io.debezium.platform.config.MonitoringApiConfigGroup;
+import io.debezium.platform.config.PanelConfig;
 import io.debezium.platform.data.dto.PanelQueryResponse;
 import io.debezium.platform.data.dto.PanelsListResponse;
 import io.debezium.platform.data.dto.PrometheusQueryRangeResponse;
@@ -31,36 +31,31 @@ import io.debezium.platform.error.NotFoundException;
 @ExtendWith(MockitoExtension.class)
 class MonitoringServiceTest {
 
+    private static final PanelConfig EVENT_COUNT_PANEL = new PanelConfig(
+            "event-count",
+            "Event Count",
+            "Rate of events",
+            "streaming",
+            "rate(debezium_event_count_total{service_name=\"{{pipeline_id}}\"}[5m])",
+            "events/s",
+            new PanelConfig.Visualization("line", "15s"));
+
     @Mock
-    MonitoringApiConfigGroup config;
+    PanelConfigLoader panelConfigLoader;
 
     @Mock
     PrometheusClient prometheusClient;
-
-    @Mock
-    MonitoringApiConfigGroup.PanelConfig panelConfig;
-
-    @Mock
-    MonitoringApiConfigGroup.VisualizationConfig vizConfig;
 
     MonitoringService service;
 
     @BeforeEach
     void setUp() {
-        service = new MonitoringService(config, prometheusClient);
+        service = new MonitoringService(panelConfigLoader, prometheusClient);
     }
 
     @Test
     void listPanelsReturnsConfiguredPanels() {
-        when(panelConfig.id()).thenReturn("event-count");
-        when(panelConfig.title()).thenReturn("Event Count");
-        when(panelConfig.description()).thenReturn("Rate of events");
-        when(panelConfig.category()).thenReturn("streaming");
-        when(panelConfig.unit()).thenReturn("events/s");
-        when(panelConfig.visualization()).thenReturn(vizConfig);
-        when(vizConfig.type()).thenReturn("line");
-        when(vizConfig.suggestedStep()).thenReturn("15s");
-        when(config.panels()).thenReturn(List.of(panelConfig));
+        when(panelConfigLoader.loadPanels()).thenReturn(List.of(EVENT_COUNT_PANEL));
 
         PanelsListResponse response = service.listPanels();
 
@@ -72,9 +67,7 @@ class MonitoringServiceTest {
 
     @Test
     void queryPanelSubstitutesPipelineId() {
-        when(panelConfig.id()).thenReturn("event-count");
-        when(panelConfig.query()).thenReturn("rate(debezium_event_count_total{service_name=\"{{pipeline_id}}\"}[5m])");
-        when(config.panels()).thenReturn(List.of(panelConfig));
+        when(panelConfigLoader.loadPanels()).thenReturn(List.of(EVENT_COUNT_PANEL));
 
         PrometheusQueryRangeResponse prometheusResponse = new PrometheusQueryRangeResponse(
                 "success",
@@ -107,11 +100,7 @@ class MonitoringServiceTest {
 
     @Test
     void queryPanelUsesDefaultStepWhenNotProvided() {
-        when(panelConfig.id()).thenReturn("event-count");
-        when(panelConfig.query()).thenReturn("rate(debezium_event_count_total{service_name=\"{{pipeline_id}}\"}[5m])");
-        when(panelConfig.visualization()).thenReturn(vizConfig);
-        when(vizConfig.suggestedStep()).thenReturn("15s");
-        when(config.panels()).thenReturn(List.of(panelConfig));
+        when(panelConfigLoader.loadPanels()).thenReturn(List.of(EVENT_COUNT_PANEL));
 
         when(prometheusClient.queryRange(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new PrometheusQueryRangeResponse("success",
@@ -124,7 +113,7 @@ class MonitoringServiceTest {
 
     @Test
     void queryPanelThrowsNotFoundForUnknownPanel() {
-        when(config.panels()).thenReturn(List.of());
+        when(panelConfigLoader.loadPanels()).thenReturn(List.of());
 
         assertThatThrownBy(() -> service.queryPanel(
                 "unknown-panel", "my-pipeline", "2026-04-23T10:00:00Z", "2026-04-23T11:00:00Z", "1m"))
@@ -134,8 +123,7 @@ class MonitoringServiceTest {
 
     @Test
     void queryPanelRejectsInvalidPipelineId() {
-        when(panelConfig.id()).thenReturn("event-count");
-        when(config.panels()).thenReturn(List.of(panelConfig));
+        when(panelConfigLoader.loadPanels()).thenReturn(List.of(EVENT_COUNT_PANEL));
 
         assertThatThrownBy(() -> service.queryPanel(
                 "event-count", "pipeline'; DROP TABLE--", "2026-04-23T10:00:00Z", "2026-04-23T11:00:00Z", "1m"))
@@ -145,8 +133,7 @@ class MonitoringServiceTest {
 
     @Test
     void queryPanelRejectsNullPipelineId() {
-        when(panelConfig.id()).thenReturn("event-count");
-        when(config.panels()).thenReturn(List.of(panelConfig));
+        when(panelConfigLoader.loadPanels()).thenReturn(List.of(EVENT_COUNT_PANEL));
 
         assertThatThrownBy(() -> service.queryPanel(
                 "event-count", null, "2026-04-23T10:00:00Z", "2026-04-23T11:00:00Z", "1m"))
@@ -156,9 +143,7 @@ class MonitoringServiceTest {
 
     @Test
     void queryPanelHandlesEmptyPrometheusResponse() {
-        when(panelConfig.id()).thenReturn("event-count");
-        when(panelConfig.query()).thenReturn("rate(debezium_event_count_total{service_name=\"{{pipeline_id}}\"}[5m])");
-        when(config.panels()).thenReturn(List.of(panelConfig));
+        when(panelConfigLoader.loadPanels()).thenReturn(List.of(EVENT_COUNT_PANEL));
 
         when(prometheusClient.queryRange(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new PrometheusQueryRangeResponse("success",

@@ -77,6 +77,10 @@ spec:
             - name: PIPELINE_MONITORING_OTEL_ENDPOINT
               value: {{ include "debezium-platform.otelCollectorEndpoint" . }}
 {{- end }}
+{{- if .Values.monitoring.panels.additionalPanelsPath }}
+            - name: MONITORING_PANELS_PATH
+              value: {{ .Values.monitoring.panels.additionalPanelsPath | quote }}
+{{- end }}
 {{ include "debezium-platform.offsetConfig" . | indent 12 }}
 {{ include "debezium-platform.schemaHistoryConfig" . | indent 12 }}
 {{- range .Values.env }}

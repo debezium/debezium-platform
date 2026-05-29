@@ -1,14 +1,6 @@
 monitoring:
   panels:
-    - id: event-count
-      title: "Event Count"
-      description: "Rate of change data capture events processed per second (create, update, delete)"
-      category: streaming
-      query: 'rate(debezium_event_count_total{service_name="{{pipeline_id}}"}[5m])'
-      unit: events/s
-      visualization:
-        type: line
-        suggested-step: 15s
+    path: ${MONITORING_PANELS_PATH:}
 conductor:
   watcher:
     enabled: true
