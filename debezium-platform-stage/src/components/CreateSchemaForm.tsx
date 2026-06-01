@@ -812,6 +812,7 @@ const CreateSchemaForm = React.forwardRef<
     readOnly,
     layoutMode,
     connectorName,
+    connectorTypeLabel,
     selectedConnection,
     schemaValues,
     connectorSchema.properties,

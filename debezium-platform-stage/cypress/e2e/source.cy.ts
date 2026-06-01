@@ -51,10 +51,10 @@ describe('Source Management', () => {
   };
 
   const fillMinimalCreateSourceForm = (sourceName: string) => {
-    cy.get('#source-name', { timeout: 30000 }).should('be.visible').clear({ force: true }).type(sourceName, {
+    cy.get('#connector-name', { timeout: 30000 }).should('be.visible').clear({ force: true }).type(sourceName, {
       force: true,
     });
-    cy.get('#source-description').clear({ force: true }).type('Cypress test description', { force: true });
+    cy.get('#connector-description').clear({ force: true }).type('Cypress test description', { force: true });
     selectPostgresConnectionInForm();
     fillTopicPrefixField('dbz.cypress');
   };
@@ -113,7 +113,7 @@ describe('Source Management', () => {
     clickPostgresqlCatalogCard();
     cy.url().should('match', /\/source\/create_source\/.+/);
     cy.wait('@getSourceConnectorSchema');
-    cy.get('#source-name', { timeout: 30000 }).should('be.visible');
+    cy.get('#connector-name', { timeout: 30000 }).should('be.visible');
   };
 
   describe('Source Catalog', () => {
@@ -176,9 +176,9 @@ describe('Source Management', () => {
       cy.contains('Source type').should('be.visible');
       cy.contains('PostgreSQL').should('be.visible');
       cy.contains('Source name').should('be.visible');
-      cy.get('#source-name').should('exist');
+      cy.get('#connector-name').should('exist');
       cy.contains('Description').should('be.visible');
-      cy.get('#source-description').should('exist');
+      cy.get('#connector-description').should('exist');
       cy.contains('Connector Essentials').should('be.visible');
       cy.contains('button', 'Create source').should('be.visible');
       cy.contains('Back to catalog').should('be.visible');
@@ -193,20 +193,20 @@ describe('Source Management', () => {
       cy.wait(300);
       cy.get('#jumplinks-layout').click();
       cy.contains('Connector Essentials').should('be.visible');
-      cy.get('#source-name').should('be.visible');
+      cy.get('#connector-name').should('be.visible');
     });
 
     it('should validate required fields', () => {
       openCreateSourceFromCatalog();
-      cy.get('#source-name', { timeout: 30000 }).should('be.visible');
+      cy.get('#connector-name', { timeout: 30000 }).should('be.visible');
       cy.contains('button', 'Create source').should('not.be.disabled');
       cy.contains('button', 'Create source').click();
-      cy.get('#source-name').should('have.attr', 'aria-invalid', 'true');
+      cy.get('#connector-name').should('have.attr', 'aria-invalid', 'true');
     });
 
     it('should add and remove configuration properties', () => {
       openCreateSourceFromCatalog();
-      cy.get('#source-name', { timeout: 30000 }).should('be.visible');
+      cy.get('#connector-name', { timeout: 30000 }).should('be.visible');
       cy.contains('h2', 'Additional Properties').scrollIntoView();
       cy.contains('button', 'Add property').scrollIntoView().click({ force: true });
       cy.get('[id^="addprop-key-input-"]').should('have.length', 1);
@@ -324,25 +324,25 @@ describe('Source Management', () => {
       cy.get('table[aria-label="source table"] tbody tr').first().find('button').first().click();
       cy.url({ timeout: 30000 }).should('match', /[?&]state=view/);
       cy.contains('button', 'Edit', { timeout: 30000 }).should('be.visible').click();
-      cy.get('#source-name', { timeout: 30000 }).should('be.visible');
-      cy.get('#source-description', { timeout: 30000 }).should('be.visible');
+      cy.get('#connector-name', { timeout: 30000 }).should('be.visible');
+      cy.get('#connector-description', { timeout: 30000 }).should('be.visible');
     };
 
     it('should display edit source form', () => {
       createTestSource();
       cy.visitWithTourDisabled('/source');
       openEditableSourceFormFromListFirstRow();
-      cy.get('#source-name').invoke('val').should('not.be.empty');
+      cy.get('#connector-name').invoke('val').should('not.be.empty');
     });
 
     it('should toggle between view and edit mode', () => {
       createTestSource();
       cy.visitWithTourDisabled('/source');
       openEditableSourceFormFromListFirstRow();
-      cy.get('#source-name').should('not.have.attr', 'readonly');
+      cy.get('#connector-name').should('not.have.attr', 'readonly');
       cy.contains('button', 'Cancel').click();
       // Back to review layout: form unmounts. Header Edit can sit in a scroll-clipped region — avoid strict visibility.
-      cy.get('#source-name').should('not.exist');
+      cy.get('#connector-name').should('not.exist');
       cy.contains('button', 'Edit', { timeout: 30000 }).should('exist');
     });
 
@@ -350,7 +350,7 @@ describe('Source Management', () => {
       createTestSource();
       cy.visitWithTourDisabled('/source');
       openEditableSourceFormFromListFirstRow();
-      cy.get('#source-description').clear().type('Updated description by Cypress');
+      cy.get('#connector-description').clear().type('Updated description by Cypress');
       cy.contains('button', 'Save changes').click();
       cy.get('.pf-v6-c-modal-box').should('be.visible');
       cy.contains('button', 'Confirm').click();
@@ -361,9 +361,9 @@ describe('Source Management', () => {
       createTestSource();
       cy.visitWithTourDisabled('/source');
       openEditableSourceFormFromListFirstRow();
-      cy.get('#source-description').clear().type('Temporary change');
+      cy.get('#connector-description').clear().type('Temporary change');
       cy.contains('button', 'Cancel').click();
-      cy.get('#source-name').should('not.exist');
+      cy.get('#connector-name').should('not.exist');
       cy.contains('button', 'Edit', { timeout: 30000 }).should('exist');
     });
   });
@@ -388,7 +388,7 @@ describe('Source Management', () => {
       cy.contains('Delete').click();
       cy.get('.pf-v6-c-modal-box').should('be.visible');
       cy.contains('delete').should('be.visible');
-      cy.get('#dalete-name').should('exist');
+      cy.get('#delete-name').should('exist');
     });
 
     it('should require typing source name to confirm delete', () => {
@@ -400,9 +400,9 @@ describe('Source Management', () => {
         .click();
       cy.contains('Delete').click();
       cy.get('.pf-v6-c-modal-box').contains('button', 'Delete').should('be.disabled');
-      cy.get('#dalete-name').type('wrong-name');
+      cy.get('#delete-name').type('wrong-name');
       cy.get('.pf-v6-c-modal-box').contains('button', 'Delete').should('be.disabled');
-      cy.get('#dalete-name').clear();
+      cy.get('#delete-name').clear();
     });
 
     it('should successfully delete source', () => {
@@ -419,7 +419,7 @@ describe('Source Management', () => {
             .find('td[data-label="Actions"] button')
             .click();
           cy.contains('Delete').click();
-          cy.get('#dalete-name').type(name.trim());
+          cy.get('#delete-name').type(name.trim());
           cy.get('.pf-v6-c-modal-box').contains('button', 'Delete').click();
           cy.contains('Delete successful').should('be.visible');
         });

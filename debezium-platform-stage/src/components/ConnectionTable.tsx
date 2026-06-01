@@ -253,7 +253,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
           >
             <FormGroup isRequired fieldId={`connection-delete-name`}>
               <TextInput
-                id="dalete-name"
+                id="delete-name"
                 aria-label="delete name"
                 onChange={(_e, value) => setDeleteInstanceName(value)}
                 value={deleteInstanceName}

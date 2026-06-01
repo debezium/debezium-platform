@@ -247,7 +247,7 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
             }}>
             <FormGroup isRequired fieldId={`${tableType}-delete-name`}>
               <TextInput
-                id="dalete-name"
+                id="delete-name"
                 aria-label="delete name"
                 onChange={(_e, value) => setDeleteInstanceName(value)}
                 value={deleteInstanceName}

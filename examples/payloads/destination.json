@@ -1,6 +1,6 @@
 {
   "name": "test-destination",
-  "type": "kafka",
+  "type": "io.debezium.server.kafka.KafkaChangeConsumer",
   "description": "Some funny destination",
   "schema": "dummy",
   "vaults": [],
