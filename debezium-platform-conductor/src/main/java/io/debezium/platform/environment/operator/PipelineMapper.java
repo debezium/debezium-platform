@@ -34,6 +34,7 @@ import io.debezium.operator.api.model.TransformationBuilder;
 import io.debezium.operator.api.model.runtime.Runtime;
 import io.debezium.operator.api.model.runtime.RuntimeApiBuilder;
 import io.debezium.operator.api.model.runtime.RuntimeBuilder;
+import io.debezium.operator.api.model.runtime.metrics.Metrics;
 import io.debezium.operator.api.model.source.Offset;
 import io.debezium.operator.api.model.source.OffsetBuilder;
 import io.debezium.operator.api.model.source.SchemaHistory;
@@ -46,7 +47,6 @@ import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Transform;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.environment.operator.configuration.TableNameResolver;
-import io.debezium.platform.environment.operator.metrics.MetricsExporterStrategyManager;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 
 @ApplicationScoped
@@ -80,14 +80,14 @@ public class PipelineMapper {
 
     final PipelineConfigGroup pipelineConfigGroup;
     final TableNameResolver tableNameResolver;
-    final MetricsExporterStrategyManager metricsExporterStrategyManager;
+    final Metrics metrics;
 
     public PipelineMapper(PipelineConfigGroup pipelineConfigGroup,
                           TableNameResolver tableNameResolver,
-                          MetricsExporterStrategyManager metricsExporterStrategyManager) {
+                          Metrics metrics) {
         this.pipelineConfigGroup = pipelineConfigGroup;
         this.tableNameResolver = tableNameResolver;
-        this.metricsExporterStrategyManager = metricsExporterStrategyManager;
+        this.metrics = metrics;
     }
 
     public DebeziumServer map(PipelineFlat pipeline) {
@@ -152,11 +152,9 @@ public class PipelineMapper {
     }
 
     private Runtime createRuntime() {
-        var metricsBuilder = metricsExporterStrategyManager.buildMetrics(pipelineConfigGroup);
-
         return new RuntimeBuilder()
                 .withApi(new RuntimeApiBuilder().withEnabled().build())
-                .withMetrics(metricsBuilder.build())
+                .withMetrics(metrics)
                 .build();
     }
 

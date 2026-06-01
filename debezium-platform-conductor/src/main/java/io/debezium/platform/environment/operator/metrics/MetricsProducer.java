@@ -7,39 +7,33 @@ package io.debezium.platform.environment.operator.metrics;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 
+import io.debezium.operator.api.model.runtime.metrics.Metrics;
 import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
 import io.debezium.platform.config.PipelineConfigGroup;
 
-/**
- * Manager for applying metrics exporter strategies.
- * This class discovers all available {@link MetricsExporterStrategy} implementations
- * via CDI and applies them based on their applicability.
- */
 @ApplicationScoped
-public class MetricsExporterStrategyManager {
+public class MetricsProducer {
 
     private final Instance<MetricsExporterStrategy> strategies;
+    private final PipelineConfigGroup config;
 
     @Inject
-    public MetricsExporterStrategyManager(Instance<MetricsExporterStrategy> strategies) {
+    public MetricsProducer(Instance<MetricsExporterStrategy> strategies, PipelineConfigGroup config) {
         this.strategies = strategies;
+        this.config = config;
     }
 
-    /**
-     * Builds a metrics configuration by applying all applicable exporter strategies.
-     *
-     * @param config the pipeline configuration
-     * @return a configured MetricsBuilder
-     */
-    public MetricsBuilder buildMetrics(PipelineConfigGroup config) {
+    @Produces
+    Metrics metrics() {
         var metricsBuilder = new MetricsBuilder();
 
         strategies.stream()
                 .filter(strategy -> strategy.isApplicable(config))
                 .forEach(strategy -> strategy.apply(metricsBuilder, config));
 
-        return metricsBuilder;
+        return metricsBuilder.build();
     }
 }

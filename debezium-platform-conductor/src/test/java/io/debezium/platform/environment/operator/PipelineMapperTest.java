@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import io.debezium.operator.api.model.runtime.metrics.Metrics;
 import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
 import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.data.model.ConnectionEntity;
@@ -33,7 +34,6 @@ import io.debezium.platform.domain.views.flat.DestinationFlat;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.domain.views.flat.SourceFlat;
 import io.debezium.platform.environment.operator.configuration.TableNameResolver;
-import io.debezium.platform.environment.operator.metrics.MetricsExporterStrategyManager;
 import io.debezium.platform.environment.operator.metrics.OpenTelemetryExporterStrategy;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,17 +55,7 @@ public class PipelineMapperTest {
         when(pipelineConfigGroup.labels()).thenReturn(Map.of());
         when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(false);
 
-        var metricsStrategyManager = mock(MetricsExporterStrategyManager.class);
-        when(metricsStrategyManager.buildMetrics(any())).thenAnswer(invocation -> {
-            PipelineConfigGroup config = invocation.getArgument(0);
-            var metricsBuilder = new MetricsBuilder();
-            var otelStrategy = new OpenTelemetryExporterStrategy();
-            if (otelStrategy.isApplicable(config)) {
-                otelStrategy.apply(metricsBuilder, config);
-            }
-            return metricsBuilder;
-        });
-        pipelineMapper = new PipelineMapper(pipelineConfigGroup, tableNameResolver, metricsStrategyManager);
+        pipelineMapper = createMapper();
     }
 
     @Test
@@ -156,6 +146,7 @@ public class PipelineMapperTest {
     public void testMapper_ShouldEnableOpenTelemetryWhenConfigured() {
         when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(true);
         when(pipelineConfigGroup.monitoring().otel().endpoint()).thenReturn(Optional.of("http://otel-collector:4318"));
+        pipelineMapper = createMapper();
 
         var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
                 DATABASE, "customers",
@@ -184,6 +175,7 @@ public class PipelineMapperTest {
     public void testMapper_ShouldEnableOpenTelemetryWithoutEndpointWhenNotConfigured() {
         when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(true);
         when(pipelineConfigGroup.monitoring().otel().endpoint()).thenReturn(Optional.empty());
+        pipelineMapper = createMapper();
 
         var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
                 DATABASE, "customers",
@@ -194,6 +186,19 @@ public class PipelineMapperTest {
         var otel = result.getSpec().getRuntime().getMetrics().getOpenTelemetry();
         assertThat(otel.isEnabled()).isTrue();
         assertThat(otel.getCollector().getEndpoint()).isNull();
+    }
+
+    private PipelineMapper createMapper() {
+        return new PipelineMapper(pipelineConfigGroup, tableNameResolver, buildMetrics(pipelineConfigGroup));
+    }
+
+    private static Metrics buildMetrics(PipelineConfigGroup config) {
+        var metricsBuilder = new MetricsBuilder();
+        var otelStrategy = new OpenTelemetryExporterStrategy();
+        if (otelStrategy.isApplicable(config)) {
+            otelStrategy.apply(metricsBuilder, config);
+        }
+        return metricsBuilder.build();
     }
 
     private PipelineFlat mockPipelineWithSource(ConnectionEntity.Type type, Map<String, Object> connectionConfig) {
