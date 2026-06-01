@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
 import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
@@ -32,6 +33,8 @@ import io.debezium.platform.domain.views.flat.DestinationFlat;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.domain.views.flat.SourceFlat;
 import io.debezium.platform.environment.operator.configuration.TableNameResolver;
+import io.debezium.platform.environment.operator.metrics.MetricsExporterStrategyManager;
+import io.debezium.platform.environment.operator.metrics.OpenTelemetryExporterStrategy;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -52,7 +55,17 @@ public class PipelineMapperTest {
         when(pipelineConfigGroup.labels()).thenReturn(Map.of());
         when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(false);
 
-        pipelineMapper = new PipelineMapper(pipelineConfigGroup, tableNameResolver);
+        var metricsStrategyManager = mock(MetricsExporterStrategyManager.class);
+        when(metricsStrategyManager.buildMetrics(any())).thenAnswer(invocation -> {
+            PipelineConfigGroup config = invocation.getArgument(0);
+            var metricsBuilder = new MetricsBuilder();
+            var otelStrategy = new OpenTelemetryExporterStrategy();
+            if (otelStrategy.isApplicable(config)) {
+                otelStrategy.apply(metricsBuilder, config);
+            }
+            return metricsBuilder;
+        });
+        pipelineMapper = new PipelineMapper(pipelineConfigGroup, tableNameResolver, metricsStrategyManager);
     }
 
     @Test

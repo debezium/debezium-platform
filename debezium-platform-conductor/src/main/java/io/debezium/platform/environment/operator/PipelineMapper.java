@@ -34,10 +34,6 @@ import io.debezium.operator.api.model.TransformationBuilder;
 import io.debezium.operator.api.model.runtime.Runtime;
 import io.debezium.operator.api.model.runtime.RuntimeApiBuilder;
 import io.debezium.operator.api.model.runtime.RuntimeBuilder;
-import io.debezium.operator.api.model.runtime.metrics.JmxExporterBuilder;
-import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
-import io.debezium.operator.api.model.runtime.metrics.OpenTelemetryBuilder;
-import io.debezium.operator.api.model.runtime.metrics.OtelCollectorBuilder;
 import io.debezium.operator.api.model.source.Offset;
 import io.debezium.operator.api.model.source.OffsetBuilder;
 import io.debezium.operator.api.model.source.SchemaHistory;
@@ -50,6 +46,7 @@ import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Transform;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.environment.operator.configuration.TableNameResolver;
+import io.debezium.platform.environment.operator.metrics.MetricsExporterStrategyManager;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 
 @ApplicationScoped
@@ -83,10 +80,14 @@ public class PipelineMapper {
 
     final PipelineConfigGroup pipelineConfigGroup;
     final TableNameResolver tableNameResolver;
+    final MetricsExporterStrategyManager metricsExporterStrategyManager;
 
-    public PipelineMapper(PipelineConfigGroup pipelineConfigGroup, TableNameResolver tableNameResolver) {
+    public PipelineMapper(PipelineConfigGroup pipelineConfigGroup,
+                          TableNameResolver tableNameResolver,
+                          MetricsExporterStrategyManager metricsExporterStrategyManager) {
         this.pipelineConfigGroup = pipelineConfigGroup;
         this.tableNameResolver = tableNameResolver;
+        this.metricsExporterStrategyManager = metricsExporterStrategyManager;
     }
 
     public DebeziumServer map(PipelineFlat pipeline) {
@@ -151,24 +152,7 @@ public class PipelineMapper {
     }
 
     private Runtime createRuntime() {
-        var metricsBuilder = new MetricsBuilder()
-                .withJmxExporter(new JmxExporterBuilder()
-                        .withEnabled()
-                        .build());
-
-        if (pipelineConfigGroup.monitoring().otel().enabled()) {
-            var otelBuilder = new OpenTelemetryBuilder()
-                    .withEnabled();
-
-            pipelineConfigGroup.monitoring().otel().endpoint()
-                    .filter(e -> !e.isBlank())
-                    .ifPresent(endpoint -> otelBuilder.withCollector(
-                            new OtelCollectorBuilder()
-                                    .withEndpoint(endpoint)
-                                    .build()));
-
-            metricsBuilder.withOpenTelemetry(otelBuilder.build());
-        }
+        var metricsBuilder = metricsExporterStrategyManager.buildMetrics(pipelineConfigGroup);
 
         return new RuntimeBuilder()
                 .withApi(new RuntimeApiBuilder().withEnabled().build())
