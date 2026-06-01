@@ -6,8 +6,12 @@ This chart will install the components required to run the Debezium Platform.
 4. [Optional] PostgreSQL database used by conductor to store its data.
 5. [Optional] Strimzi operator: operator for creating Kakfa cluster. In case you want to use a Kafka destination in you
    pipeline.
-6. OpenTelemetry Operator: manages the OpenTelemetry Collector used for pipeline monitoring.
-7. [Optional] Prometheus Operator: enables automatic ServiceMonitor creation for Prometheus scraping.
+
+When monitoring is enabled, the chart also creates:
+1. An `OpenTelemetryCollector` custom resource, which requires the OpenTelemetry Operator to already be installed.
+2. [Optional] A `ServiceMonitor`, which requires the Prometheus Operator to already be installed.
+
+More details in the [Monitoring](#monitoring) section. 
 
 # Prerequisites
 
