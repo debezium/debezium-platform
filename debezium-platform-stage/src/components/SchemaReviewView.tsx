@@ -156,7 +156,7 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
       return response.data as TableData;
     },
     {
-      enabled: selectedConnectionId != null,
+      enabled: selectedConnectionId != null && !hideSignalCollections,
     }
   );
 

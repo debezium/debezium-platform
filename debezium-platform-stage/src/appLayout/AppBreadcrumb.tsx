@@ -50,12 +50,11 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Create source", navigate, true)}
           </BreadcrumbGenerator>
         );
-      case route.match("source/[^/]+") !== null:
+      case route.match(/^\/source\/[^/]+$/) !== null && !route.includes("/create_source"):
         return (
           <BreadcrumbGenerator>
             {generateBreadcrumbItem("/source", "Source", navigate)}
-            {generateBreadcrumbItem("/source/catalog", "Catalog", navigate)}
-            {generateBreadcrumbItem("#", "Create source", navigate, true)}
+            {generateBreadcrumbItem("#", "Edit source", navigate, true)}
           </BreadcrumbGenerator>
         );
       case route === "/destination/catalog":
@@ -73,12 +72,11 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Create destination", navigate, true)}
           </BreadcrumbGenerator>
         );
-      case route.match("destination/[^/]+") !== null:
+      case route.match(/^\/destination\/[^/]+$/) !== null && !route.includes("/create_destination"):
         return (
           <BreadcrumbGenerator>
             {generateBreadcrumbItem("/destination", "Destination", navigate)}
-            {generateBreadcrumbItem("/destination/catalog", "Catalog", navigate)}
-            {generateBreadcrumbItem("#", "Create destination", navigate, true)}
+            {generateBreadcrumbItem("#", "Edit destination", navigate, true)}
           </BreadcrumbGenerator>
         );
         case route === "/connections/catalog":
@@ -94,6 +92,13 @@ const AppBreadcrumb: React.FC = () => {
               {generateBreadcrumbItem("/connections", "Connections", navigate)}
               {generateBreadcrumbItem("/connections/catalog", "Catalog", navigate)}
               {generateBreadcrumbItem("#", "Create connection", navigate, true)}
+            </BreadcrumbGenerator>
+          );
+        case route.match(/^\/connections\/[^/]+$/) !== null && !route.includes("/create_connection"):
+          return (
+            <BreadcrumbGenerator>
+              {generateBreadcrumbItem("/connections", "Connections", navigate)}
+              {generateBreadcrumbItem("#", "Edit connection", navigate, true)}
             </BreadcrumbGenerator>
           );
       case route === "/pipeline/pipeline_designer":
