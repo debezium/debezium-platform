@@ -1,0 +1,95 @@
+{
+  "name" : "Debezium Kinesis Server Sink",
+  "type" : "server-sink",
+  "version" : "3.6.0-SNAPSHOT",
+  "metadata" : {
+    "description" : ""
+  },
+  "properties" : [ {
+    "name" : "region",
+    "type" : "string",
+    "display" : {
+      "label" : "AWS Region",
+      "description" : "AWS region for the Kinesis stream.",
+      "group" : "Advanced",
+      "groupOrder" : 9999,
+      "width" : "medium",
+      "importance" : "high"
+    },
+    "validation" : [ ],
+    "valueDependants" : [ ]
+  }, {
+    "name" : "endpoint",
+    "type" : "string",
+    "display" : {
+      "label" : "Kinesis Endpoint Override",
+      "description" : "Optional Kinesis endpoint override (for local testing with LocalStack).",
+      "group" : "Advanced",
+      "groupOrder" : 9999,
+      "width" : "long",
+      "importance" : "low"
+    },
+    "validation" : [ ],
+    "valueDependants" : [ ]
+  }, {
+    "name" : "credentials.profile",
+    "type" : "string",
+    "display" : {
+      "label" : "AWS Credentials Profile",
+      "description" : "AWS credentials profile name to use for authentication.",
+      "group" : "Advanced",
+      "groupOrder" : 9999,
+      "width" : "medium",
+      "importance" : "medium"
+    },
+    "validation" : [ ],
+    "valueDependants" : [ ]
+  }, {
+    "name" : "batch.size",
+    "type" : "number",
+    "default" : "500",
+    "display" : {
+      "label" : "Batch Size",
+      "description" : "Maximum number of records to send in a single batch (max 500). Default: 500",
+      "group" : "Advanced",
+      "groupOrder" : 9999,
+      "width" : "short",
+      "importance" : "medium"
+    },
+    "validation" : [ ],
+    "valueDependants" : [ ]
+  }, {
+    "name" : "default.retries",
+    "type" : "number",
+    "default" : "5",
+    "display" : {
+      "label" : "Default Retries",
+      "description" : "Maximum number of retry attempts for failed requests. Default: 5",
+      "group" : "Advanced",
+      "groupOrder" : 9999,
+      "width" : "short",
+      "importance" : "medium"
+    },
+    "validation" : [ ],
+    "valueDependants" : [ ]
+  }, {
+    "name" : "null.key",
+    "type" : "string",
+    "default" : "default",
+    "display" : {
+      "label" : "Null Key Value",
+      "description" : "Partition key to use when the record key is null. Default: default",
+      "group" : "Advanced",
+      "groupOrder" : 9999,
+      "width" : "short",
+      "importance" : "low"
+    },
+    "validation" : [ ],
+    "valueDependants" : [ ]
+  } ],
+  "groups" : [ {
+    "name" : "Advanced",
+    "order" : 10,
+    "description" : "Advanced configuration"
+  } ]
+}
