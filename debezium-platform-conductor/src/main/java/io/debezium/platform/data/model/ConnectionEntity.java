@@ -68,7 +68,9 @@ public class ConnectionEntity {
         RABBITMQ_STREAM,
         RABBITMQ_NATIVE_STREAM,
         MILVUS,
-        QDRANT
+        QDRANT,
+        @JsonProperty("SQS")
+        AMAZON_SQS
     }
 
     public Long getId() {
