@@ -208,7 +208,9 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
             <ToolbarGroup align={{ default: "alignEnd" }}>
               <ToolbarItem>
                 <Content component={ContentVariants.small}>
-                  {searchResult.length} {t("items")}
+                  {searchQuery.length > 0
+                                  ? `${searchResult.length} ${t("of")} ${sourceCatalog.length + destinationCatalog.length } ${t("items")}`
+                                  : `${searchResult.length} ${t("items")}`}
                 </Content>
               </ToolbarItem>
             </ToolbarGroup>

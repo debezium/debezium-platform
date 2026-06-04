@@ -263,13 +263,9 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                             <ToolbarGroup align={{ default: "alignEnd" }}>
                               <ToolbarItem>
                                 <Content component={ContentVariants.small}>
-                                  {
-                                    (searchQuery.length > 0
-                                      ? searchResult
-                                      : transformsList
-                                    ).length
-                                  }{" "}
-                                  {t("items")}
+                                   {searchQuery.length > 0
+                                  ? `${searchResult.length} ${t("of")} ${transformsList.length} ${t("items")}`
+                                  : `${searchResult.length} ${t("items")}`}
                                 </Content>
                               </ToolbarItem>
                             </ToolbarGroup>

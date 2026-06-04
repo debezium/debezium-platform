@@ -176,7 +176,7 @@ const DestinationCatalog: React.FunctionComponent<ISinkProps> = () => {
               <Tooltip
                 content={
                   <div>
-                      {t("smartEditorButtonTooltip", {val: "destination"})}
+                    {t("smartEditorButtonTooltip", { val: "destination" })}
                   </div>
                 }
               >
@@ -186,7 +186,9 @@ const DestinationCatalog: React.FunctionComponent<ISinkProps> = () => {
             <ToolbarGroup align={{ default: "alignEnd" }}>
               <ToolbarItem>
                 <Content component={ContentVariants.small}>
-                  {searchResult.length} {t("items")}
+                  {searchQuery.length > 0
+                    ? `${searchResult.length} ${t("of")} ${destinationCatalog.length} ${t("items")}`
+                    : `${searchResult.length} ${t("items")}`}
                 </Content>
               </ToolbarItem>
             </ToolbarGroup>

@@ -271,8 +271,9 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                           <ToolbarGroup align={{ default: "alignEnd" }}>
                             <ToolbarItem>
                               <Content component={ContentVariants.small}>
-                                {searchResult.length} {" "}
-                                {t("items")}
+                                                 {searchQuery.length > 0
+                                  ? `${searchResult.length} ${t("of")} ${connectionsList.length} ${t("items")}`
+                                  : `${searchResult.length} ${t("items")}`}
                               </Content>
                             </ToolbarItem>
                           </ToolbarGroup>

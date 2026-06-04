@@ -335,13 +335,9 @@ const Pipelines: React.FunctionComponent = () => {
                           <ToolbarGroup align={{ default: "alignEnd" }}>
                             <ToolbarItem>
                               <Content component={ContentVariants.small}>
-                                {
-                                  (searchQuery.length > 0
-                                    ? searchResult
-                                    : pipelinesList
-                                  ).length
-                                }{" "}
-                                Items
+                                                 {searchQuery.length > 0
+                                  ? `${searchResult.length} ${t("of")} ${pipelinesList.length} ${t("items")}`
+                                  : `${searchResult.length} ${t("items")}`}
                               </Content>
                             </ToolbarItem>
                           </ToolbarGroup>

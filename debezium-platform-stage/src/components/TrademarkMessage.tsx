@@ -1,32 +1,34 @@
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
-let trademarkMessageDisplayed = false;
+let displayOwnerId: number | null = null;
+let nextInstanceId = 0;
 
 const TrademarkMessage = () => {
   const { t } = useTranslation();
-  const hasMarkedDisplayed = useRef(false);
-  
-  const showTrademark = !trademarkMessageDisplayed;
+  const instanceId = useRef(++nextInstanceId).current;
+  const isOwner = useRef<boolean | null>(null);
+
+  if (isOwner.current === null) {
+    isOwner.current = displayOwnerId === null;
+    if (isOwner.current) {
+      displayOwnerId = instanceId;
+    }
+  }
 
   useEffect(() => {
-    if (showTrademark && !hasMarkedDisplayed.current) {
-      // Mark trademark message as displayed
-      trademarkMessageDisplayed = true;
-      hasMarkedDisplayed.current = true;
+    return () => {
+      if (displayOwnerId === instanceId) {
+        displayOwnerId = null;
+      }
+    };
+  }, [instanceId]);
 
-      // Cleanup function
-      return () => {
-        trademarkMessageDisplayed = false;
-      };
-    }
-  }, [showTrademark]);
-
-  if (!showTrademark) return null;
+  if (!isOwner.current) return null;
 
   return (
     <div id="trademark-msg" className="trademark_msg">
-      # {t('trademarkWarking')}
+      # {t('trademarkWarning')}
     </div>
   );
 };

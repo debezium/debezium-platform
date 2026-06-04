@@ -174,7 +174,9 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                           <ToolbarGroup align={{ default: "alignEnd" }}>
                             <ToolbarItem>
                               <Content component={ContentVariants.small}>
-                                {searchResult.length} {t("items")}
+                                {searchQuery.length > 0
+                                  ? `${searchResult.length} ${t("of")} ${sourcesList.length} ${t("items")}`
+                                  : `${searchResult.length} ${t("items")}`}
                               </Content>
                             </ToolbarItem>
                           </ToolbarGroup>
