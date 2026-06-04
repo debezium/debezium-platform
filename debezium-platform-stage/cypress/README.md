@@ -88,7 +88,7 @@ yarn cypress:run:firefox  # Firefox browser
 cypress/
 ├── e2e/                    # Test files
 │   ├── smoke.cy.ts        # Basic smoke tests
-│   └── navigation.cy.ts   # Navigation tests
+│   ├── pipeline.cy.ts     # Pipeline list, designer, create, details, delete
 ├── fixtures/              # Test data
 ├── support/               # Custom commands and configuration
 │   ├── commands.ts        # Custom Cypress commands
@@ -96,6 +96,10 @@ cypress/
 ├── tsconfig.json          # TypeScript configuration
 └── README.md             # This file
 ```
+
+## Pipeline E2E
+
+`pipeline.cy.ts` self-seeds `test-postgres-connection`, `test-kafka-connection`, and fixed Cypress source/destination names via the API in `before()` — it does not depend on other spec files running first.
 
 ## Writing Tests
 

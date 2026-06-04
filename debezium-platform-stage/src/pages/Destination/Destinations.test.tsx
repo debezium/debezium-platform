@@ -136,7 +136,7 @@ describe("Destinations", () => {
     const searchInput = screen.getByPlaceholderText("Find by name");
     fireEvent.change(searchInput, { target: { value: "xxx" } });
     await waitFor(() => {
-      expect(screen.getByText("0 Items")).toBeInTheDocument();
+      expect(screen.getByText("0 of 2 Items")).toBeInTheDocument();
       expect(
         screen.getByText("No matching destination is present.")
       ).toBeInTheDocument();

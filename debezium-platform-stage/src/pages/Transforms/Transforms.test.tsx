@@ -124,7 +124,7 @@ describe("Transforms", () => {
     fireEvent.change(searchInput, { target: { value: "filter" } });
     await waitFor(() => {
       expect(screen.getByText("filter-transform")).toBeInTheDocument();
-      expect(screen.getByText("3 Items")).toBeInTheDocument();
+      expect(screen.getByText("3 of 7 Items")).toBeInTheDocument();
     });
   });
 
@@ -133,7 +133,7 @@ describe("Transforms", () => {
     const searchInput = screen.getByPlaceholderText("Find by name");
     fireEvent.change(searchInput, { target: { value: "xxx" } });
     await waitFor(() => {
-      expect(screen.getByText("0 Items")).toBeInTheDocument();
+      expect(screen.getByText("0 of 7 Items")).toBeInTheDocument();
       expect(
         screen.getByText("No matching transform is present.")
       ).toBeInTheDocument();

@@ -1,5 +1,5 @@
 /**
- * Destination E2E tests — aligned with source.cy.ts patterns.
+ * Destination E2E tests
  * Destinations use hideSignalCollections={true} (no signal collections section).
  */
 describe('Destination Management', () => {
