@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactFlow, {
+import {
+  ReactFlow,
   applyNodeChanges,
   applyEdgeChanges,
   NodeChange,
@@ -14,7 +15,7 @@ import ReactFlow, {
   PanOnScrollMode,
   useReactFlow,
   NodeTypes,
-} from "reactflow";
+} from "@xyflow/react";
 import { useData } from "../../appLayout/AppContext";
 import DebeziumNode from "./DebeziumNode";
 import { AppColors } from "@utils/constants";

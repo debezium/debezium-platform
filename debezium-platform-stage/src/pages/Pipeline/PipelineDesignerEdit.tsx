@@ -68,7 +68,7 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@patternfly/react-icons";
-import { ReactFlowProvider } from "reactflow";
+import { ReactFlowProvider } from "@xyflow/react";
 import { useEffect, useState } from "react";
 import { API_URL } from "@utils/constants";
 import PipelineEditFlow from "@components/pipelineDesigner/PipelineEditFlow";

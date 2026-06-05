@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
-import { ReactFlowProvider } from "reactflow";
+import { ReactFlowProvider } from "@xyflow/react";
 import DataNode from "./DataNode";
 import { AppStrings } from "../../utils/constants";
 import { render } from "../../__test__/unit/test-utils";

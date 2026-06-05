@@ -41,7 +41,7 @@ declare global {
   }
 }
 import CompositionFlow from "@components/pipelineDesigner/CompositionFlow";
-import { ReactFlowProvider } from "reactflow";
+import { ReactFlowProvider } from "@xyflow/react";
 import { PencilAltIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";

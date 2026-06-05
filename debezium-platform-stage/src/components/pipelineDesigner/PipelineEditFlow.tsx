@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactFlow, {
+import {
+  ReactFlow,
   applyNodeChanges,
   applyEdgeChanges,
   NodeChange,
@@ -13,7 +14,7 @@ import ReactFlow, {
   addEdge,
   PanOnScrollMode,
   useReactFlow,
-} from "reactflow";
+} from "@xyflow/react";
 import { useData } from "../../appLayout/AppContext";
 import { AppColors } from "@utils/constants";
 import DataNode from "./DataNode";
@@ -112,8 +113,7 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
       source: "source",
       target: "destination",
       type: "editUnifiedCustomEdge",
-      data: { throughNode: "add_transformation" },
-      sourceHandle: "a",
+      data: { throughNodeNo: 0 },
     },
   ];
   const [nodes, setNodes] = useState<any>(initialNodes);
@@ -219,8 +219,8 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
     setNodes((prevNodes: any) => {
       return [
         ...prevNodes.filter((node: any) => node.id !== "transform_selector"),
-        addTransformNode,
         transformGroupNode,
+        addTransformNode,
       ];
     });
   }, [cardButtonTransform, openTransformDrawer]);
@@ -351,6 +351,15 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
         updatedDestinationNode,
       ];
     });
+    setEdges([
+      {
+        id: "complete-flow-path-edit",
+        source: "source",
+        target: "destination",
+        type: "editUnifiedCustomEdge",
+        data: { throughNodeNo: 0 },
+      },
+    ]);
   }, [TransformCollapsedNode]);
 
   // Update ref whenever handleCollapsed changes
@@ -433,9 +442,9 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
               node.id !== "transform_group" &&
               node.id !== "destination"
           ),
+          updatedTransformGroupNode,
           ...newTransformNode,
           updatedAddTransformNode,
-          updatedTransformGroupNode,
           updatedDataSelectorDestinationNode,
         ];
       });
@@ -452,7 +461,7 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
           id: "complete-multi-flow-path",
           source: "source",
           target: "destination",
-          type: "unifiedCustomEdge",
+          type: "editUnifiedCustomEdge",
           data: { throughNodeNo: noOfTransformNodes },
         },
       ];
@@ -466,7 +475,7 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
       updateSelectedTransform(updatedTransforms);
       setIsTransformModalOpen(false);
     },
-    [nodes, updateSelectedTransform, handleProcessor]
+    [nodes, updateSelectedTransform, handleProcessor, createNewTransformNode]
   );
 
   useEffect(() => {
@@ -582,16 +591,27 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
       };
       setNodes([dataSourceNode, transformSelectorNode, dataDestinationNode]);
     }
-    setEdges([
-      {
-        id: "complete-flow-path-edit",
-        source: "source",
-        target: "destination",
-        type: "editUnifiedCustomEdge",
-        data: { throughNode: "add_transformation" },
-        sourceHandle: "a",
-      },
-    ]);
+    if (selectedTransform.length > 0) {
+      setEdges([
+        {
+          id: "complete-multi-flow-path",
+          source: "source",
+          target: "destination",
+          type: "editUnifiedCustomEdge",
+          data: { throughNodeNo: selectedTransform.length },
+        },
+      ]);
+    } else {
+      setEdges([
+        {
+          id: "complete-flow-path-edit",
+          source: "source",
+          target: "destination",
+          type: "editUnifiedCustomEdge",
+          data: { throughNodeNo: 0 },
+        },
+      ]);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     destinationName,

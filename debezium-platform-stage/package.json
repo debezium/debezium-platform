@@ -37,6 +37,7 @@
     "@patternfly/react-topology": "^6.3.0",
     "@tanstack/react-virtual": "^3.13.23",
     "@types/lodash": "^4.17.23",
+    "@xyflow/react": "^12.11.0",
     "ajv": "^8.18.0",
     "axios": "^1.16.0",
     "i18next": "^26.1.0",
@@ -53,7 +54,6 @@
     "react-joyride": "^3.0.0-7",
     "react-query": "^3.39.3",
     "react-router-dom": "^7.14.2",
-    "reactflow": "^11.11.4",
     "uuid": "^14.0.0",
     "victory": "^37.3.2",
     "yup": "^1.7.1"

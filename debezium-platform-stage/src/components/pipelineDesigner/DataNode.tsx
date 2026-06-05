@@ -7,7 +7,7 @@ import {
   Content,
   Divider,
 } from "@patternfly/react-core";
-import { Handle, Position } from "reactflow";
+import { Handle, Position } from "@xyflow/react";
 import ConnectorImage from "../ComponentImage";
 import "./DataNode.css";
 import { PencilAltIcon } from "@patternfly/react-icons";

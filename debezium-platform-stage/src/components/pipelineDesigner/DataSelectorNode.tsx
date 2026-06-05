@@ -1,5 +1,5 @@
 import { Card, CardBody, Stack, StackItem } from "@patternfly/react-core";
-import { Handle, Position } from "reactflow";
+import { Handle, Position } from "@xyflow/react";
 import "./DataNode.css";
 import { DataSinkIcon, DataSourceIcon } from "@patternfly/react-icons";
 import { useData } from "../../appLayout/AppContext";

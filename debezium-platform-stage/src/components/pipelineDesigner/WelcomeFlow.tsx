@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactFlow, {
+import {
+  ReactFlow,
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
@@ -11,7 +12,7 @@ import ReactFlow, {
   Connection,
   Background,
   useReactFlow,
-} from "reactflow";
+} from "@xyflow/react";
 import DataNode from "./DataNode";
 import { MdLogin, MdLogout } from "react-icons/md";
 import DataNodeSelector from "./DataSelectorNode";
@@ -121,8 +122,7 @@ const WelcomeFlow: React.FC = () => {
       source: "source",
       target: "destination",
       type: "unifiedCustomEdge",
-      data: { throughNode: "add_transformation" },
-      sourceHandle: "a",
+      data: { throughNodeNo: 0 },
     },
   ];
 

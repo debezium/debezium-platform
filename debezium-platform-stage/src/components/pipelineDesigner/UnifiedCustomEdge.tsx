@@ -1,4 +1,4 @@
-import { EdgeProps, getBezierPath, Position } from "reactflow";
+import { EdgeProps, getBezierPath, Position } from "@xyflow/react";
 import "./UnifiedCustomEdge.css";
 
 const UnifiedCustomEdge: React.FC<EdgeProps> = ({

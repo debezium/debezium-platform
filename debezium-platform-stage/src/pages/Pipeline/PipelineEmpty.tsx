@@ -14,7 +14,7 @@ import {
 
 import { useNavigate } from "react-router-dom";
 import WelcomeFlow from "@components/pipelineDesigner/WelcomeFlow";
-import { ReactFlowProvider } from "reactflow";
+import { ReactFlowProvider } from "@xyflow/react";
 import { useTranslation } from 'react-i18next';
 
 const PipelineEmpty: React.FunctionComponent = () => {

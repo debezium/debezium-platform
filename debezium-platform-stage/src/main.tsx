@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx';
-import "reactflow/dist/style.css";
+import "@xyflow/react/dist/style.css";
 import { QueryClient, QueryClientProvider } from 'react-query';
 import './index.css';
 import './styles/shared.css';

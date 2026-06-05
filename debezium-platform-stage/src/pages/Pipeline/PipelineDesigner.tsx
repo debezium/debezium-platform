@@ -36,7 +36,7 @@ import {
   DraggableObject,
 } from "@patternfly/react-drag-drop";
 import { TrashIcon } from "@patternfly/react-icons";
-import { ReactFlowProvider } from "reactflow";
+import { ReactFlowProvider } from "@xyflow/react";
 import TrademarkMessage from "@components/TrademarkMessage";
 import { useTranslation } from "react-i18next";
 

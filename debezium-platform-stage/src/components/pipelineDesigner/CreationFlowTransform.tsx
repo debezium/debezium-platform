@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactFlow, {
+import {
+  ReactFlow,
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
@@ -13,8 +14,9 @@ import ReactFlow, {
   MiniMap,
   PanOnScrollMode,
   useReactFlow,
+  useUpdateNodeInternals,
   Panel,
-} from "reactflow";
+} from "@xyflow/react";
 import TransformAdditionNode from "./TransformAdditionNode";
 
 import DataNode from "./DataNode";
@@ -79,6 +81,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
   const { darkMode } = useData();
 
   const reactFlowInstance = useReactFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
 
   const [selectedTransform] = useAtom(selectedTransformAtom);
   const [selectedSource] = useAtom(selectedSourceAtom);
@@ -170,7 +173,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         label: "SMT2",
         action: cardButtonTransform(),
       },
-      position: { x: 45, y: 40 },
+      position: { x: 25, y: 40 },
       style: {
         zIndex: 10,
       },
@@ -269,8 +272,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
       source: "source",
       target: "destination",
       type: "unifiedCustomEdge",
-      data: { throughNode: "add_transformation" },
-      sourceHandle: "a",
+      data: { throughNodeNo: 0 },
     },
   ];
   const [nodes, setNodes] = useState<any>(initialNodes);
@@ -417,9 +419,15 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         addTransformNode,
         dataDestinationNode,
       ]);
-
-
-
+      setEdges([
+        {
+          id: "complete-multi-flow-path",
+          source: "source",
+          target: "destination",
+          type: "unifiedCustomEdge",
+          data: { throughNodeNo: selectedTransform.length },
+        },
+      ]);
     } else {
       if (selectedSource) {
         onSourceSelection(selectedSource);
@@ -531,7 +539,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
           ...updateAddTransformNode[0],
           position: {
             ...updateAddTransformNode[0].position,
-            x: 45 + selectedTransformRef.current.length * 150,
+            x: 25 + selectedTransformRef.current.length * 150,
           },
         },
       ];
@@ -559,9 +567,9 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
             (node: any) =>
               node.id === "source" || node.id === "transform_selector"
           ),
+          ...updatedTransformGroupNode,
           ...updatedTransformLinkNodes,
           ...updatedAddTransformNode,
-          ...updatedTransformGroupNode,
           ...updatedDataDestinationNode,
         ];
       });
@@ -606,6 +614,17 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     }
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateNodeInternals("source");
+      updateNodeInternals("destination");
+      if (nodes.some((node: any) => node.id === "transform_group")) {
+        updateNodeInternals("transform_group");
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [nodes, updateNodeInternals]);
+
   const handleExpand = useCallback(() => {
     const linkTransforms = selectedTransformRef.current.map((transform, id) => {
       const newId = `transform_${id + 1}`;
@@ -640,7 +659,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         label: "SMT2",
         action: cardButtonTransform(),
       },
-      position: { x: 45 + selectedTransformRef.current.length * 150, y: 36 },
+      position: { x: 25 + selectedTransformRef.current.length * 150, y: 36 },
       style: {
         zIndex: 10,
       },
@@ -743,8 +762,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         source: "source",
         target: "destination",
         type: "unifiedCustomEdge",
-        data: { throughNode: "add_transformation" },
-        sourceHandle: "a",
+        data: { throughNodeNo: 0 },
       },
     ]);
   }, [
@@ -780,8 +798,8 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     setNodes((prevNodes: any) => {
       return [
         ...prevNodes.filter((node: any) => node.id !== "transform_selector"),
-        addTransformNode,
         transformGroupNode,
+        addTransformNode,
       ];
     });
   }, [addTransformNode, transformGroupNode]);
@@ -861,9 +879,9 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
               node.id !== "transform_group" &&
               node.id !== "destination"
           ),
+          updatedTransformGroupNode,
           ...newTransformNode,
           updatedAddTransformNode,
-          updatedTransformGroupNode,
           updatedDataSelectorDestinationNode,
         ];
       });
@@ -901,7 +919,6 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     <>
       <div ref={reactFlowWrapper} style={{ width: "100%", height: "100%" }}>
         <ReactFlow
-          key={nodes.length} // Forces re-render when nodes change
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
