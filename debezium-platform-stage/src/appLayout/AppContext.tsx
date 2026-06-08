@@ -24,7 +24,10 @@ export const AppContextProvider: FC<{ children: ReactNode }> = ({
     const savedPreference = localStorage.getItem("side-nav-collapsed");
     return savedPreference ? JSON.parse(savedPreference) : false;
   });
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Initialize from DOM to match the theme applied by blocking script in index.html
+    return document.documentElement.classList.contains("pf-v6-theme-dark");
+  });
 
   const updateNavigationCollapsed = useCallback(
     (collapsed: boolean) => {

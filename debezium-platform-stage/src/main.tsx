@@ -12,12 +12,10 @@ const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
-    <Suspense fallback="loading">
+    <Suspense fallback={null}>
       <StrictMode>
         <App />
       </StrictMode>
-
     </Suspense>
   </QueryClientProvider>
-
 )

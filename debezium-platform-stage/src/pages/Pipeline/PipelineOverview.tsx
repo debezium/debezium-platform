@@ -46,6 +46,7 @@ import { PencilAltIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { sourcePageNavState } from "@sourcePage/sourcePageNavigation";
+import { useData } from "../../appLayout/AppContext";
 
 type PipelineOverviewProp = {
   pipelineId: string;
@@ -54,6 +55,7 @@ type PipelineOverviewProp = {
 const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { darkMode } = useData();
 
   const navigateTo = (url: string) => {
     navigate(url);
@@ -146,7 +148,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   isPlain
                   className="pipeline-overview__coming-soon-card"
                 >
-                  <div className="overlay">
+                  <div className="overlay" style={darkMode ? { background: "rgba(41, 41, 41, 0.6)" } : {}}>
                     <img src={comingSoonImage} alt="Coming Soon" />
                   </div>
                   <CardTitle>{t("pipeline:overview.queueUsage")}</CardTitle>
@@ -186,7 +188,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
                   isPlain
                   className="pipeline-overview__coming-soon-card"
                 >
-                  <div className="overlay">
+                  <div className="overlay" style={darkMode ? { background: "rgba(41, 41, 41, 0.6)" } : {}}>
                     <img src={comingSoonImage} alt="Coming Soon" />
                   </div>
                   <CardTitle>{t("pipeline:overview.events")}</CardTitle>

@@ -109,9 +109,15 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       document.documentElement.classList.remove("pf-v6-theme-dark");
     }
   }, [setDarkMode]);
+  
   useEffect(() => {
-    toggleDarkMode(selectedTheme || "system");
-  }, [toggleDarkMode]);
+    // Sync React state with the theme already applied by blocking script
+    // Only update state, don't manipulate DOM on initial mount
+    const theme = selectedTheme || "system";
+    const isDark = theme === "dark" ||
+      (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    setDarkMode(isDark);
+  }, [selectedTheme, setDarkMode]);
 
   return (
     <>

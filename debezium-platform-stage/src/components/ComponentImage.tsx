@@ -6,22 +6,23 @@ import postgreSql from "../assets/PostgreSQL.png";
 import sqlServer from "../assets/sql-server.png";
 import apachePulsar from "../assets/apachePulsar.png";
 import rocketMq from "../assets/Apache_RocketMQ.png";
-import eventHub from "../assets/Azure-event-hub.png";
-import pubsub from "../assets/G_pubsub.png";
+import eventHub from "../assets/eventHub.png";
+import pubsub from "../assets/pubsub.png";
 import fluss from "../assets/fluss.png";
-import instruct from "../assets/InstructLab.png";
+import instruct from "../assets/Instruct_Lab.png";
 import sns from "../assets/sns.svg";
 import sqs from "../assets/sqs.png";
 import rabbitMq from "../assets/RabbitMQ.svg";
 import natsStreaming from "../assets/NATS_stream.png";
 import kafka from "../assets/kafka.png";
+import kafkaDarkMode from "../assets/kafka_dark_mode.png";
 import infinispan from "../assets/infinispan.png";
-import pubsubLite from "../assets/pub-sub-lite.png";
 import pravega from "../assets/pravega.webp";
 import mariadb from "../assets/mariadb.png";
 import oracle from "../assets/oracle.png";
 import dbz from "../assets/dbz_logo.png";
 import databasePlaceholder from "../assets/database.png";
+import databaseWhite from "../assets/databaseWhite.png";
 import "./ComponentImage.css";
 import TrademarkMessage from "./TrademarkMessage";
 import kinesis from "../assets/kinesis.png";
@@ -30,6 +31,7 @@ import qdrant from "../assets/qdrant.png";
 import redis from "../assets/redis.png";
 import http from "../assets/http2.png";
 import db2 from "../assets/ibm_db2.svg";
+import { useData } from "../appLayout/AppContext";
 
 interface ConnectorImageProps {
   connectorType: string;
@@ -37,20 +39,20 @@ interface ConnectorImageProps {
   designerComponent?: boolean;
 }
 
-const CONNECTOR_PATTERNS: Array<[string, { src: string; altText: string }]> = [
-  ["pubsub_lite", { src: pubsubLite, altText: "Pub/Sub Lite" }],
+const CONNECTOR_PATTERNS: Array<[string, { src: string; srcDark?: string; altText: string }]> = [
+  ["pubsub_lite", { src: pubsub, altText: "Pub/Sub Lite" }],
   ["pubsub", { src: pubsub, altText: "Pub/Sub" }],
   ["mongo", { src: mongoDB, altText: "MongoDB" }],
   ["postgre", { src: postgreSql, altText: "Postgres" }],
   ["cassandra", { src: cassandra, altText: "Cassandra" }],
-  ["mysql", { src: databasePlaceholder, altText: "MySQL" }],
+  ["mysql", { src: databasePlaceholder,  srcDark: databaseWhite, altText: "MySQL" }],
   ["sqlserver", { src: sqlServer, altText: "SqlServer" }],
   ["pulsar", { src: apachePulsar, altText: "Apache Pulsar" }],
   ["rocketmq", { src: rocketMq, altText: "RocketMQ" }],
   ["eventhubs", { src: eventHub, altText: "EventHub" }],
   ["rabbitmq", { src: rabbitMq, altText: "RabbitMQ" }],
   ["nats", { src: natsStreaming, altText: "NATS Stream" }],
-  ["kafka", { src: kafka, altText: "Kafka" }],
+  ["kafka", { src: kafka, srcDark: kafkaDarkMode, altText: "Kafka" }],
   ["infinispan", { src: infinispan, altText: "Infinispan" }],
   ["pravega", { src: pravega, altText: "Pravega" }],
   ["oracle", { src: oracle, altText: "Oracle" }],
@@ -69,12 +71,19 @@ const CONNECTOR_PATTERNS: Array<[string, { src: string; altText: string }]> = [
 
 const DEFAULT_CONFIG = { src: dbz, altText: "Debezium" };
 
-const getConnectorConfig = (connectorType: string) => {
+const getConnectorConfig = (connectorType: string, darkMode: boolean) => {
   const normalizedType = connectorType.toLowerCase();
   const match = CONNECTOR_PATTERNS.find(([pattern]) =>
     normalizedType.includes(pattern)
   );
-  return match ? match[1] : DEFAULT_CONFIG;
+  
+  if (!match) return DEFAULT_CONFIG;
+  
+  const config = match[1];
+  // Use dark mode image if available and dark mode is enabled
+  const src = darkMode && config.srcDark ? config.srcDark : config.src;
+  
+  return { src, altText: config.altText };
 };
 
 const ConnectorImage: React.FC<ConnectorImageProps> = ({
@@ -82,7 +91,8 @@ const ConnectorImage: React.FC<ConnectorImageProps> = ({
   size,
   designerComponent = false,
 }) => {
-  const { src, altText } = getConnectorConfig(connectorType);
+  const { darkMode } = useData();
+  const { src, altText } = getConnectorConfig(connectorType, darkMode);
 
   return (
     <>

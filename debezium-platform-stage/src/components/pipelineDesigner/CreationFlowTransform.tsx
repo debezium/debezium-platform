@@ -950,7 +950,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
               </Button>
             </Tooltip>
           </Panel>
-          <MiniMap />
+          {/* <MiniMap /> */}
           <Background
             style={{
               borderRadius: "5px",

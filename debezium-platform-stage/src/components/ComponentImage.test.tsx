@@ -7,6 +7,15 @@ vi.mock("./TrademarkMessage", () => ({
   default: () => null,
 }));
 
+vi.mock("../appLayout/AppContext", () => ({
+  useData: () => ({
+    darkMode: false,
+    navigationCollapsed: false,
+    setDarkMode: vi.fn(),
+    updateNavigationCollapsed: vi.fn(),
+  }),
+}));
+
 const cases: [string, RegExp][] = [
   ["mongo", /MongoDB icon/i],
   ["postgre", /Postgres icon/i],

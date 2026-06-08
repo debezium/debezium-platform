@@ -184,7 +184,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
                     <FlexItem>
                       <ConnectorImage connectorType={instance.type.toLowerCase()} size={35} />
                     </FlexItem>
-                    <FlexItem>{getConnectorTypeName(instance.type.toLowerCase())} {getConnectionRole(instance.type.toLowerCase(), catalog)}</FlexItem>
+                    <FlexItem>{getConnectorTypeName(instance.type.toLowerCase())}</FlexItem>
                   </Flex>
                 </Td>
                 <Td dataLabel={t("usedIn")}>

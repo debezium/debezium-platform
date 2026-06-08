@@ -16,6 +16,15 @@ vi.mock("@components/pipelineDesigner/CompositionFlow", () => ({
   ),
 }));
 
+vi.mock("../../appLayout/AppContext", () => ({
+  useData: () => ({
+    darkMode: false,
+    navigationCollapsed: false,
+    setDarkMode: vi.fn(),
+    updateNavigationCollapsed: vi.fn(),
+  }),
+}));
+
 describe("PipelineOverview", () => {
   it("renders pipeline overview with source and destination details", async () => {
     server.use(

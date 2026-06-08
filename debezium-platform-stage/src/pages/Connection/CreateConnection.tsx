@@ -294,7 +294,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                             >
                                 <>
                                     <ConnectorImage connectorType={selectedSchema?.type.toLowerCase() || connectionId || ""} size={35} />
-                                    <Content component="p" style={{ paddingLeft: "10px" }}>
+                                    <Content component="p">
                                         {getConnectorTypeName(selectedSchema?.type.toLowerCase() || connectionId || "")}
                                     </Content>
                                 </>

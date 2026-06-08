@@ -89,70 +89,85 @@ export const getConnectorTypeName = (connectorType: string) => {
 
   switch (true) {
     case connectorType.includes("mongo"):
-      name = "MongoDB";
+      name = "MongoDB Connector";
       break;
     case connectorType.includes("postgre"):
-      name = "PostgreSQL";
+      name = "PostgreSQL Connector";
       break;
     case connectorType.includes("cassandra"):
-      name = "Cassandra";
+      name = "Cassandra Connector";
       break;
     case connectorType.includes("mysql"):
-      name = "MySQL";
+      name = "MySQL Connector";
       break;
     case connectorType.includes("mariadb"):
-      name = "MariaDB";
+      name = "MariaDB Connector";
       break;
     case connectorType.includes("sqlserver"):
-      name = "SQL Server";
+      name = "SQL Server Connector";
       break;
-    case connectorType.includes("apache_pulsar"):
-      name = "Apache Pulsar";
+    case connectorType.includes("db2"):
+      name = "IBM Db2 Connector";
+      break;
+    case connectorType.includes("apache_pulsar") || connectorType.includes("pulsar"):
+      name = "Pulsar Server Sink";
       break;
     case connectorType.includes("oracle"):
-      name = "Oracle";
+      name = "Oracle Connector";
       break;
     case connectorType.includes("rocketmq"):
-      name = "RocketMQ";
+      name = "RocketMQ Server Sink";
       break;
     case connectorType.includes("kinesis"):
-      name = "Amazon Kinesis";
+      name = "Kinesis Server Sink";
       break;
-    case connectorType.includes("events_hubs"):
-      name = "Event Hub";
+    case connectorType.includes("eventhubs") || connectorType.includes("events_hubs"):
+      name = "Event Hub Server Sink";
       break;
     case connectorType.includes("rabbitmq"):
-      name = "RabbitMQ";
+      name = "RabbitMQ Server Sink";
       break;
-    case connectorType.includes("nats_streaming"):
-      name = "NATS Streaming";
+    case connectorType.includes("nats"):
+      name = "NATS Streaming Server Sink";
       break;
     case connectorType.includes("kafka"):
-      name = "Kafka";
+      name = "Kafka Server Sink";
       break;
     case connectorType.includes("infinispan"):
-      name = "Infinispan";
+      name = "Infinispan Server Sink";
       break;
-    case connectorType.includes("pub_sub_lite"):
-      name = "Pub/Sub Lite";
+    case connectorType.includes("instructlab"):
+      name = "InstructLab Server Sink";
       break;
-    case connectorType.includes("pub_sub"):
-      name = "Pub/Sub";
+    case connectorType.includes("fluss"):
+      name = "Fluss Server Sink";
+      break;
+    case connectorType.includes("pub_sub_lite") || connectorType.includes("pubsub_lite"):
+      name = "Pub/Sub Lite Server Sink";
+      break;
+    case connectorType.includes("pub_sub") || connectorType.includes("pubsub"):
+      name = "Pub/Sub Server Sink";
       break;
     case connectorType.includes("pravega"):
-      name = "Pravega";
+      name = "Pravega Server Sink";
       break;
     case connectorType.includes("milvus"):
-      name = "Milvus";
+      name = "Milvus Server Sink";
       break;
     case connectorType.includes("qdrant"):
-      name = "Qdrant";
+      name = "Qdrant Server Sink";
       break;
     case connectorType.includes("redis"):
-      name = "Redis(Stream)";
+      name = "Redis(Stream) Server Sink";
       break;
     case connectorType.includes("http"):
-      name = "HTTP";
+      name = "HTTP Server Sink";
+      break;
+    case connectorType.includes("sns"):
+      name = "SNS Server Sink";
+      break;
+    case connectorType.includes("sqs"):
+      name = "SQS Server Sink";
       break;
   }
 
