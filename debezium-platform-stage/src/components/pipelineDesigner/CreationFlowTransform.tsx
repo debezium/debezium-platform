@@ -11,7 +11,7 @@ import {
   Edge,
   Connection,
   Background,
-  MiniMap,
+  // MiniMap,
   PanOnScrollMode,
   useReactFlow,
   useUpdateNodeInternals,

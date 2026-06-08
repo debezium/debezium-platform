@@ -73,7 +73,7 @@ describe("SchemaReviewView", () => {
     );
 
     expect(await screen.findByText("Review Source")).toBeInTheDocument();
-    expect(screen.getByText("MongoDB")).toBeInTheDocument();
+    expect(screen.getByText("MongoDB Connector")).toBeInTheDocument();
     expect(screen.getByText("A description")).toBeInTheDocument();
     expect(screen.getByTestId("connector-image-mock")).toBeInTheDocument();
   });

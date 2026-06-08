@@ -19,6 +19,15 @@ vi.mock("./TrademarkMessage", () => ({
   default: () => null,
 }));
 
+vi.mock("../appLayout/AppContext", () => ({
+  useData: () => ({
+    darkMode: false,
+    navigationCollapsed: false,
+    setDarkMode: vi.fn(),
+    updateNavigationCollapsed: vi.fn(),
+  }),
+}));
+
 describe("SourceDestinationSelectionList", () => {
   beforeEach(() => {
     vi.clearAllMocks();

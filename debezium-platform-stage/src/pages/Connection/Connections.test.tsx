@@ -30,6 +30,15 @@ vi.mock("src/apis", () => ({
   useDeleteData: vi.fn(),
 }));
 
+vi.mock("../../appLayout/AppContext", () => ({
+  useData: () => ({
+    darkMode: false,
+    navigationCollapsed: false,
+    setDarkMode: vi.fn(),
+    updateNavigationCollapsed: vi.fn(),
+  }),
+}));
+
 vi.mock("../../appLayout/AppNotificationContext", () => ({
   useNotification: vi.fn(),
 }));
