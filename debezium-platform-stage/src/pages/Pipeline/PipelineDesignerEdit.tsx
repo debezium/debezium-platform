@@ -69,7 +69,7 @@ import {
   TrashIcon,
 } from "@patternfly/react-icons";
 import { ReactFlowProvider } from "@xyflow/react";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { API_URL } from "@utils/constants";
 import PipelineEditFlow from "@components/pipelineDesigner/PipelineEditFlow";
 import ConnectorImage from "@components/ComponentImage";
@@ -261,9 +261,15 @@ const PipelineDesignerEdit: React.FunctionComponent<
       }
     }, [pipelineDestination]);
 
-    useEffect(() => {
-      setSelectedTransform(transforms);
+    useLayoutEffect(() => {
+      setSelectedTransform(transforms ?? []);
     }, [setSelectedTransform, transforms]);
+
+    const effectiveTransforms = useMemo(
+      () =>
+        selectedTransform.length > 0 ? selectedTransform : (transforms ?? []),
+      [selectedTransform, transforms]
+    );
 
     // Handle temporary deletion of items
     const handleTempDelete = React.useCallback((id: string) => {
@@ -297,7 +303,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
 
     const updateSelectedTransform = React.useCallback(
       (transform: Transform[]) => {
-        setSelectedTransform((prevTransforms) => [...prevTransforms, ...transform]);
+        setSelectedTransform(transform);
       },
       [setSelectedTransform]
     );
@@ -461,7 +467,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
                         <PipelineEditFlow
                           sourceName={source?.name || ""}
                           sourceType={source?.type || ""}
-                          selectedTransform={selectedTransform}
+                          selectedTransform={effectiveTransforms}
                           destinationName={destination?.name || ""}
                           destinationType={destination?.type || ""}
                           updateSelectedTransform={updateSelectedTransform}

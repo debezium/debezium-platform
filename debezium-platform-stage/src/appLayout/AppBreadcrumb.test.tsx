@@ -13,3 +13,11 @@ test("render the Breadcrumb component", () => {
   const catalogLink = screen.getByText("Source");
   expect(catalogLink).toHaveAttribute("href", "/source");
 });
+
+test("render pipeline overview breadcrumb", () => {
+  render(<AppBreadcrumb />, { initialEntries: ["/pipeline/123/overview"] });
+
+  expect(screen.getByText("Pipeline")).toBeInTheDocument();
+  expect(screen.getByText("Overview")).toBeInTheDocument();
+  expect(screen.queryByText("Create pipeline")).not.toBeInTheDocument();
+});

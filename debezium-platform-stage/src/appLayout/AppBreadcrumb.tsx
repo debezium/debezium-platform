@@ -150,18 +150,26 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Edit", navigate, true)}
           </BreadcrumbGenerator>
         );
-      case route.match("/pipeline/[^/]+") !== null:
+      case route.match(/^\/pipeline\/[^/]+\/(overview|logs|edit|action)$/) !== null: {
+        const detailsTab = route.split("/").pop() || "overview";
+        const tabLabels: Record<string, string> = {
+          overview: "Overview",
+          logs: "Pipeline logs",
+          edit: "Edit pipeline",
+          action: "Pipeline actions",
+        };
         return (
           <BreadcrumbGenerator>
             {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}
             {generateBreadcrumbItem(
-              "/pipeline/pipeline_designer",
-              "Pipeline designer",
-              navigate
+              "#",
+              tabLabels[detailsTab] ?? "Overview",
+              navigate,
+              true
             )}
-            {generateBreadcrumbItem("#", "Create pipeline", navigate, true)}
           </BreadcrumbGenerator>
         );
+      }
       default:
         return <></>;
     }
