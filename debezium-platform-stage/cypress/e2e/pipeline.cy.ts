@@ -149,7 +149,7 @@ describe('Pipeline Management', () => {
           body: {
             name: CYPRESS_PIPELINE_DESTINATION_NAME,
             description: 'Cypress pipeline E2E destination',
-            type: 'kafka',
+            type: 'io.debezium.server.kafka.KafkaChangeConsumer',
             schema: 'dummy',
             vaults: [],
             connection: { id: kafkaConn!.id },

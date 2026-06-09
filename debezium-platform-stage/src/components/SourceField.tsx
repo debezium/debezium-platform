@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 
 import { API_URL } from "../utils/constants";
-import { Flex, FlexItem, Skeleton } from "@patternfly/react-core";
+import { Button, Flex, FlexItem, Skeleton } from "@patternfly/react-core";
 import { Td } from "@patternfly/react-table";
 import { PipelineSource, Source, fetchDataTypeTwo } from "../apis/apis";
 import ConnectorImage from "./ComponentImage";
 import ApiError from "./ApiError";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 interface SourceFieldProps {
   pipelineSource: PipelineSource;
@@ -14,6 +15,7 @@ interface SourceFieldProps {
 
 const SourceField: React.FC<SourceFieldProps> = ({ pipelineSource }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [source, setSource] = useState<Source>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,15 @@ const SourceField: React.FC<SourceFieldProps> = ({ pipelineSource }) => {
               />
             )}
           </FlexItem>
-          <FlexItem>{pipelineSource.name}</FlexItem>
+          <FlexItem>
+            <Button
+              variant="link"
+              isInline
+              onClick={() => navigate(`/source/${pipelineSource.id}?state=view`, { state: { mode: "view" as const } })}
+            >
+              {pipelineSource.name}
+            </Button>
+          </FlexItem>
         </Flex>
       )}
     </Td>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { API_URL } from "../utils/constants";
-import { Flex, FlexItem, Skeleton } from "@patternfly/react-core";
+import { Button, Flex, FlexItem, Skeleton } from "@patternfly/react-core";
 import {
   Destination,
   PipelineDestination,
@@ -11,6 +11,7 @@ import { Td } from "@patternfly/react-table";
 import ConnectorImage from "./ComponentImage";
 import ApiError from "./ApiError";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 interface DestinationFieldProps {
   pipelineDestination: PipelineDestination;
@@ -20,6 +21,7 @@ const DestinationField: React.FC<DestinationFieldProps> = ({
   pipelineDestination,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [destination, setDestination] = useState<Destination>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +61,15 @@ const DestinationField: React.FC<DestinationFieldProps> = ({
               />
             )}
           </FlexItem>
-          <FlexItem>{pipelineDestination.name}</FlexItem>
+          <FlexItem>
+            <Button
+              variant="link"
+              isInline
+              onClick={() => navigate(`/destination/${pipelineDestination.id}?state=view`, { state: { mode: "view" as const } })}
+            >
+              {pipelineDestination.name}
+            </Button>
+          </FlexItem>
         </Flex>
       )}
     </Td>
