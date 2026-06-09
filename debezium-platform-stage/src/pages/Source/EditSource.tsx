@@ -212,9 +212,10 @@ const EditSource: React.FunctionComponent = () => {
       <PageSection isFilled>
         {viewMode ? (
           <SchemaReviewView
-            source={source}
+            connector={source}
             connectorSchema={connectorSchema}
             dataType={source.type}
+            connectorType="source"
           />
         ) : (
           <CreateSchemaForm

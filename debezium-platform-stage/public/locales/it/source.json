@@ -35,11 +35,24 @@
     },
     "jumplinks": {
         "connectorEssentials": "Elementi essenziali del connettore",
-        "additionalProperties": "Proprietà aggiuntive"
+        "additionalProperties": "Proprietà aggiuntive",
+        "signalCollections": "Collezioni di segnalazione",
+        "label": "Sezioni del modulo"
     },
     "form": {
         "validationFailedGeneric": "Compila tutti i campi obbligatori.",
         "validationFailedInOneSection": "Compila tutti i campi obbligatori nella sezione {{section}}.",
         "validationFailedInMultipleSections": "Compila tutti i campi obbligatori nelle sezioni {{list}}."
+    },
+    "review": {
+        "section": {
+            "essentials": "Elementi essenziali del connettore",
+            "additional": "Proprietà aggiuntive"
+        },
+        "essentialsAria": "Elementi essenziali del connettore",
+        "conditional": "Condizionale",
+        "noVisibleFieldsInGroup": "Nessun campo applicabile per la configurazione corrente.",
+        "additionalHelp": "Chiavi personalizzate non definite nello schema del connettore.",
+        "noAdditional": "Nessuna proprietà aggiuntiva."
     }
 }

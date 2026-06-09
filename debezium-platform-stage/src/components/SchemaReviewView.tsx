@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Button,
   Content,
   DescriptionList,
   DescriptionListDescription,
@@ -13,7 +14,8 @@ import {
 } from "@patternfly/react-core";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
-import type { Source, TableData } from "src/apis";
+import { useNavigate } from "react-router-dom";
+import type { Source, Destination, TableData } from "src/apis";
 import { fetchDataCall } from "src/apis";
 import { API_URL } from "@utils/constants";
 import type { ConnectorSchema, SchemaProperty } from "../apis/types";
@@ -39,10 +41,10 @@ import "./SchemaReviewView.css";
 const EMPTY_DISPLAY = "—";
 
 export interface SchemaReviewViewProps {
-  source: Source;
+  connector: Source | Destination;
   connectorSchema: ConnectorSchema;
   dataType?: string;
-  hideSignalCollections?: boolean;
+  connectorType: "source" | "destination";
 }
 
 const ReviewDescriptionList: React.FC<{ children: React.ReactNode; ariaLabel: string }> = ({
@@ -53,7 +55,7 @@ const ReviewDescriptionList: React.FC<{ children: React.ReactNode; ariaLabel: st
     aria-label={ariaLabel}
     isCompact
     columnModifier={{ default: "1Col", lg: "2Col" }}
-    className="source-schema-review__dl"
+    className="connector-schema-review__dl"
   >
     {children}
   </DescriptionList>
@@ -72,8 +74,8 @@ const ReviewValueSpan: React.FC<{ raw: string | undefined }> = ({ raw }) => {
     <span
       className={
         unset
-          ? "source-schema-review__value source-schema-review__value--empty"
-          : "source-schema-review__value source-schema-review__value--set"
+          ? "connector-schema-review__value connector-schema-review__value--empty"
+          : "connector-schema-review__value connector-schema-review__value--set"
       }
     >
       {text}
@@ -82,13 +84,15 @@ const ReviewValueSpan: React.FC<{ raw: string | undefined }> = ({ raw }) => {
 };
 
 const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
-  source,
+  connector,
   connectorSchema,
   dataType,
-  hideSignalCollections = false,
+  connectorType,
 }) => {
   const { t } = useTranslation();
-  const typeKey = dataType || source.type;
+  const navigate = useNavigate();
+  const typeKey = dataType || connector.type;
+  const hideSignalCollections = connectorType === "destination";
   const [activeSection, setActiveSection] = useState("connector-essentials");
   const activeSectionRef = useRef(activeSection);
 
@@ -104,10 +108,10 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
   const split = useMemo(
     () =>
       splitSourceConfigForHydration(
-        source.config as Record<string, unknown>,
+        connector.config as Record<string, unknown>,
         schemaPropertyNames
       ),
-    [source.config, schemaPropertyNames]
+    [connector.config, schemaPropertyNames]
   );
 
   const orderedGroups = useMemo(
@@ -137,7 +141,7 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
     [connectorTypeString]
   );
 
-  const selectedConnectionId = source.connection?.id;
+  const selectedConnectionId = connector.connection?.id;
 
   const {
     data: collections,
@@ -171,7 +175,7 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
     const sections: { id: string; label: string }[] = [
       {
         id: "connector-essentials",
-        label: t("source:jumplinks.connectorEssentials", { defaultValue: "Connector Essentials" }),
+        label: t("common:connector.jumplinks.connectorEssentials", { defaultValue: "Connector Essentials" }),
       },
     ];
     for (const group of orderedGroups) {
@@ -185,7 +189,7 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
     }
     sections.push({
       id: "additional-properties",
-      label: t("source:jumplinks.additionalProperties", { defaultValue: "Additional Properties" }),
+      label: t("common:connector.jumplinks.additionalProperties", { defaultValue: "Additional Properties" }),
     });
     if (!hideSignalCollections) {
       sections.push({
@@ -232,7 +236,7 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
   const noopSetSelectedDataListItems = useCallback(() => {}, []);
 
   const renderFiltersTableExplorer = useCallback(() => {
-    if (!source.connection?.id) return null;
+    if (!connector.connection?.id) return null;
     if (isCollectionsLoading) {
       return (
         <FormFieldGroup>
@@ -278,7 +282,7 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
       </div>
     );
   }, [
-    source.connection?.id,
+    connector.connection?.id,
     isCollectionsLoading,
     collectionsError,
     collections,
@@ -301,7 +305,7 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
         <DescriptionListTerm>
           {property.display.label}
           {isDep ? (
-            <Label isCompact color="teal" className="source-schema-review__conditional">
+            <Label isCompact color="teal" className="connector-schema-review__conditional">
               {t("source:review.conditional", { defaultValue: "Conditional" })}
             </Label>
           ) : null}
@@ -311,7 +315,7 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
           {raw.trim() !== "" && property.display.description ? (
             <Content
               component="small"
-              className="source-schema-review__hint source-schema-review__hint--after-value pf-u-text-color-subtle"
+              className="connector-schema-review__hint connector-schema-review__hint--after-value pf-u-text-color-subtle"
             >
               {property.display.description}
             </Content>
@@ -352,7 +356,7 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
   };
 
   return (
-    <div className="jumplinks-layout source-schema-review">
+    <div className="jumplinks-layout connector-schema-review">
       <div className="jumplinks-sidebar">
         <JumpLinks
           isVertical
@@ -383,34 +387,44 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
           </Content>
           <ReviewDescriptionList ariaLabel={t("source:review.essentialsAria", { defaultValue: "Connector essentials" })}>
             <DescriptionListGroup>
-              <DescriptionListTerm>{t("form.field.type", { val: "Source" })}</DescriptionListTerm>
+              <DescriptionListTerm>{t("form.field.type", { val: connectorType === "source" ? "Source" : "Destination" })}</DescriptionListTerm>
               <DescriptionListDescription>
-                <span className="source-schema-review__type-row">
+                <span className="connector-schema-review__type-row">
                   <ConnectorImage connectorType={typeKey} size={28} />
-                  <span className="source-schema-review__value source-schema-review__value--set">
+                  <span className="connector-schema-review__value connector-schema-review__value--set">
                     {getConnectorTypeName(typeKey)}
                   </span>
                 </span>
               </DescriptionListDescription>
             </DescriptionListGroup>
             <DescriptionListGroup>
-              <DescriptionListTerm>{t("form.field.name", { val: "Source" })}</DescriptionListTerm>
+              <DescriptionListTerm>{t("form.field.name", { val: connectorType === "source" ? "Source" : "Destination" })}</DescriptionListTerm>
               <DescriptionListDescription>
-                <ReviewValueSpan raw={source.name} />
+                <ReviewValueSpan raw={connector.name} />
               </DescriptionListDescription>
             </DescriptionListGroup>
             <DescriptionListGroup>
               <DescriptionListTerm>{t("form.field.description.label")}</DescriptionListTerm>
               <DescriptionListDescription>
-                <ReviewValueSpan raw={source.description} />
+                <ReviewValueSpan raw={connector.description} />
               </DescriptionListDescription>
             </DescriptionListGroup>
             <DescriptionListGroup>
               <DescriptionListTerm>
-                {t("connection:link.connectionFieldLabel", { val: "Source" })}
+                {t("connection:link.connectionFieldLabel", { val: connectorType === "source" ? "Source" : "Destination" })}
               </DescriptionListTerm>
               <DescriptionListDescription>
-                <ReviewValueSpan raw={source.connection?.name} />
+                {connector.connection?.id && connector.connection?.name ? (
+                  <Button
+                    variant="link"
+                    isInline
+                    onClick={() => navigate(`/connections/${connector.connection!.id}?state=view`)}
+                  >
+                    {connector.connection.name}
+                  </Button>
+                ) : (
+                  <ReviewValueSpan raw={connector.connection?.name} />
+                )}
               </DescriptionListDescription>
             </DescriptionListGroup>
           </ReviewDescriptionList>
@@ -457,7 +471,7 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
               {additionalRows.map((row, idx) => (
                 <DescriptionListGroup key={`${row.key}-${idx}`}>
                   <DescriptionListTerm>
-                    <code className="source-schema-review__code-key">{row.key}</code>
+                    <code className="connector-schema-review__code-key">{row.key}</code>
                   </DescriptionListTerm>
                   <DescriptionListDescription>
                     <ReviewValueSpan

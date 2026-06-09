@@ -35,11 +35,24 @@
     },
     "jumplinks": {
         "connectorEssentials": "Connector Essentials",
-        "additionalProperties": "Additional Properties"
+        "additionalProperties": "Additional Properties",
+        "signalCollections": "Signal Collections",
+        "label": "Form sections"
     },
     "form": {
         "validationFailedGeneric": "Please fill all required fields.",
         "validationFailedInOneSection": "Please fill all required fields in {{section}} section.",
         "validationFailedInMultipleSections": "Please fill all required fields in {{list}} sections."
+    },
+    "review": {
+        "section": {
+            "essentials": "Connector essentials",
+            "additional": "Additional properties"
+        },
+        "essentialsAria": "Connector essentials",
+        "conditional": "Conditional",
+        "noVisibleFieldsInGroup": "No fields apply for the current configuration.",
+        "additionalHelp": "Custom keys not defined in the connector schema.",
+        "noAdditional": "No additional properties."
     }
 }

@@ -69,7 +69,7 @@ describe("SchemaReviewView", () => {
     } as any);
 
     render(
-      <SchemaReviewView source={baseSource} connectorSchema={minimalSchema} />,
+      <SchemaReviewView connector={baseSource} connectorSchema={minimalSchema} connectorType="source" />,
     );
 
     expect(await screen.findByText("Review Source")).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe("SchemaReviewView", () => {
     } as any);
 
     render(
-      <SchemaReviewView source={baseSource} connectorSchema={minimalSchema} />,
+      <SchemaReviewView connector={baseSource} connectorSchema={minimalSchema} connectorType="source" />,
     );
 
     const unsetValues = await screen.findAllByText("—");
@@ -143,7 +143,7 @@ describe("SchemaReviewView", () => {
     };
 
     render(
-      <SchemaReviewView source={withConnection} connectorSchema={filtersSchema} />,
+      <SchemaReviewView connector={withConnection} connectorSchema={filtersSchema} connectorType="source" />,
     );
 
     expect(

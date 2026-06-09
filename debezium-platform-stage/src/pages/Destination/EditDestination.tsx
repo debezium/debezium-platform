@@ -212,10 +212,10 @@ const EditDestination: React.FunctionComponent = () => {
       <PageSection isFilled>
         {viewMode ? (
           <SchemaReviewView
-            source={destination}
+            connector={destination}
             connectorSchema={connectorSchema}
             dataType={destination.type}
-            hideSignalCollections={true}
+            connectorType="destination"
           />
         ) : (
           <CreateSchemaForm
