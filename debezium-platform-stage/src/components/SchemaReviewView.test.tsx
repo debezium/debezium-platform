@@ -184,7 +184,7 @@ describe("SchemaReviewView", () => {
 
     const sourceWithConfig: Source = {
       ...baseSource,
-      config: { "statistics.metrics.enabled": false },
+      config: { "statistics.metrics.enabled": "false" },
     };
 
     render(
