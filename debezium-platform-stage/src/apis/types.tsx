@@ -30,6 +30,7 @@ export interface SchemaProperty {
   name: string;
   type: "string" | "number" | "boolean" | "list";
   required?: boolean;
+  default?: string;
   display: SchemaPropertyDisplay;
   validation: SchemaPropertyValidation[];
   valueDependants: SchemaPropertyValueDependant[];

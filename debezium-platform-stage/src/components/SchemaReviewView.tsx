@@ -7,9 +7,11 @@ import {
   DescriptionListGroup,
   DescriptionListTerm,
   FormFieldGroup,
+  FormGroupLabelHelp,
   JumpLinks,
   JumpLinksItem,
   Label,
+  Popover,
   Skeleton,
 } from "@patternfly/react-core";
 import { useTranslation } from "react-i18next";
@@ -23,7 +25,10 @@ import ConnectorImage from "./ComponentImage";
 import { getConnectorTypeName } from "@utils/helpers";
 import {
   buildDependencyMap,
+  buildEffectiveSchemaValues,
   collectAllDependants,
+  getSchemaFieldDisplayValue,
+  getSchemaFieldReviewState,
   isSchemaFieldVisible,
 } from "@utils/connectorSchemaLayout";
 import { buildSourceConnectorDisplayGroupedProperties } from "@utils/sourceConnectorDisplayGroups";
@@ -33,6 +38,7 @@ import {
   getTableManagedFilterPropertyNames,
 } from "@utils/Datatype";
 import ApiComponentError from "./ApiComponentError";
+import SchemaReviewValue from "./SchemaReviewValue";
 import TableViewComponent from "./TableViewComponent";
 import _ from "lodash";
 import "./CreateSchemaForm.css";
@@ -66,7 +72,25 @@ function reviewValue(raw: string | undefined): string {
   return raw.trim() === "" ? EMPTY_DISPLAY : raw;
 }
 
-/** Option A: empty values muted; set values visually emphasized. */
+const ReviewFieldTerm: React.FC<{
+  label: string;
+  description?: string;
+  suffix?: React.ReactNode;
+}> = ({ label, description, suffix }) => (
+  <span className="connector-schema-review__term">
+    {label}
+    {description ? (
+      <span className="pf-v6-c-form__group-label-help connector-schema-review__term-help">
+        <Popover bodyContent={description}>
+          <FormGroupLabelHelp aria-label={`More info for ${label}`} />
+        </Popover>
+      </span>
+    ) : null}
+    {suffix}
+  </span>
+);
+
+/** Non-schema review rows (name, connection, additional props, etc.). */
 const ReviewValueSpan: React.FC<{ raw: string | undefined }> = ({ raw }) => {
   const text = reviewValue(raw);
   const unset = text === EMPTY_DISPLAY;
@@ -233,6 +257,11 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
 
   const { schemaValues, additionalProps, signalCollectionName, selectedDataListItems } = split;
 
+  const effectiveSchemaValues = useMemo(
+    () => buildEffectiveSchemaValues(connectorSchema.properties, schemaValues),
+    [connectorSchema.properties, schemaValues]
+  );
+
   const noopSetSelectedDataListItems = useCallback(() => {}, []);
 
   const renderFiltersTableExplorer = useCallback(() => {
@@ -294,32 +323,35 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
   ]);
 
   const schemaRow = (property: SchemaProperty) => {
-    const visible = isSchemaFieldVisible(property, schemaValues, dependencyMap);
+    const visible = isSchemaFieldVisible(property, effectiveSchemaValues, dependencyMap);
     if (!visible) return null;
 
-    const raw = schemaValues[property.name] ?? "";
+    const raw = getSchemaFieldDisplayValue(property, schemaValues);
+    const reviewState = getSchemaFieldReviewState(property, schemaValues);
     const isDep = allDependants.has(property.name);
 
     return (
       <DescriptionListGroup key={property.name}>
         <DescriptionListTerm>
-          {property.display.label}
-          {isDep ? (
-            <Label isCompact color="teal" className="connector-schema-review__conditional">
-              {t("source:review.conditional", { defaultValue: "Conditional" })}
-            </Label>
-          ) : null}
+          <ReviewFieldTerm
+            label={property.display.label}
+            description={property.display.description}
+            suffix={
+              isDep ? (
+                <Label isCompact color="teal" className="connector-schema-review__conditional">
+                  {t("source:review.conditional", { defaultValue: "Conditional" })}
+                </Label>
+              ) : null
+            }
+          />
         </DescriptionListTerm>
         <DescriptionListDescription>
-          <ReviewValueSpan raw={raw} />
-          {raw.trim() !== "" && property.display.description ? (
-            <Content
-              component="small"
-              className="connector-schema-review__hint connector-schema-review__hint--after-value pf-u-text-color-subtle"
-            >
-              {property.display.description}
-            </Content>
-          ) : null}
+          <SchemaReviewValue
+            raw={raw}
+            state={reviewState}
+            configuredLabel={t("source:review.configured", { defaultValue: "Configured" })}
+            defaultLabel={t("source:review.default", { defaultValue: "Default" })}
+          />
         </DescriptionListDescription>
       </DescriptionListGroup>
     );

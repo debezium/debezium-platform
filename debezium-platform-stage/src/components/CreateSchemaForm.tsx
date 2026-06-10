@@ -86,8 +86,10 @@ import {
 } from "@utils/Datatype";
 import {
   buildDependencyMap,
+  buildEffectiveSchemaValues,
   collectAllDependants,
 } from "@utils/connectorSchemaLayout";
+import { buildSchemaConfigPayload } from "@utils/schemaConfigPayload";
 import { buildSourceConnectorDisplayGroupedProperties } from "@utils/sourceConnectorDisplayGroups";
 import { splitSourceConfigForHydration } from "@utils/sourceConfigSplit";
 import {
@@ -236,6 +238,7 @@ const CreateSchemaForm = React.forwardRef<
   const { t } = useTranslation();
   const { addNotification } = useNotification();
   const hydratedSourceIdRef = useRef<number | null>(null);
+  const initialSchemaValuesRef = useRef<Record<string, string>>({});
   const lastValidationFailureBodyRef = useRef<string>("");
 
   // Use either sourceId or destinationId
@@ -313,6 +316,11 @@ const CreateSchemaForm = React.forwardRef<
     [connectorSchema.properties]
   );
 
+  const effectiveSchemaValues = useMemo(
+    () => buildEffectiveSchemaValues(connectorSchema.properties, schemaValues),
+    [connectorSchema.properties, schemaValues]
+  );
+
   const schemaPropertyNames = useMemo(
     () => connectorSchema.properties.map((p) => p.name),
     [connectorSchema.properties]
@@ -333,6 +341,7 @@ const CreateSchemaForm = React.forwardRef<
   useLayoutEffect(() => {
     if (!initialSource || !connectorSchema) {
       hydratedSourceIdRef.current = null;
+      initialSchemaValuesRef.current = {};
       return;
     }
     if (hydratedSourceIdRef.current === initialSource.id) {
@@ -344,6 +353,8 @@ const CreateSchemaForm = React.forwardRef<
       initialSource.config as Record<string, unknown>,
       schemaPropertyNames
     );
+
+    initialSchemaValuesRef.current = { ...split.schemaValues };
   
     /* eslint-disable react-hooks/set-state-in-effect */
     setConnectorName(initialSource.name);
@@ -762,14 +773,17 @@ const CreateSchemaForm = React.forwardRef<
       if (tableManagedFilterNames.has(prop.name)) {
         continue;
       }
-      if (prop.required && !schemaValues[prop.name]?.trim()) {
+      if (prop.required && !effectiveSchemaValues[prop.name]?.trim()) {
         if (!allDependants.has(prop.name)) {
           newErrors[prop.name] = `${prop.display.label} is required`;
         }
       }
     }
 
-    const additionalValidation = validateAdditionalPropertyRows(additionalProps, schemaValues);
+    const additionalValidation = validateAdditionalPropertyRows(
+      additionalProps,
+      effectiveSchemaValues
+    );
     setAdditionalErrorRowIds(additionalValidation.rowIdsWithErrors);
     setAdditionalRowErrorCodes(additionalValidation.rowErrorCodes);
 
@@ -814,7 +828,7 @@ const CreateSchemaForm = React.forwardRef<
     connectorName,
     connectorTypeLabel,
     selectedConnection,
-    schemaValues,
+    effectiveSchemaValues,
     connectorSchema.properties,
     additionalProps,
     allDependants,
@@ -836,15 +850,20 @@ const CreateSchemaForm = React.forwardRef<
       return;
     }
 
-    const additionalValidation = validateAdditionalPropertyRows(additionalProps, schemaValues);
+    const additionalValidation = validateAdditionalPropertyRows(
+      additionalProps,
+      effectiveSchemaValues
+    );
 
-    const config: Record<string, string | number | boolean> = {};
-
-    for (const [key, value] of Object.entries(schemaValues)) {
-      if (value === "") continue;
-      if (tableManagedIncludeListNames.has(key)) continue;
-      config[key] = value;
-    }
+    const config: Record<string, string | number | boolean> = {
+      ...buildSchemaConfigPayload({
+        properties: connectorSchema.properties,
+        schemaValues,
+        initialSchemaValues: initialSchemaValuesRef.current,
+        isEdit: !!initialSource,
+        tableManagedIncludeListNames,
+      }),
+    };
 
     Object.assign(config, additionalValidation.additionalFlat);
 
@@ -872,6 +891,7 @@ const CreateSchemaForm = React.forwardRef<
     getLastValidationFailureBody,
     addNotification,
     schemaValues,
+    effectiveSchemaValues,
     additionalProps,
     signalCollectionName,
     selectedDataListItems,
@@ -881,6 +901,7 @@ const CreateSchemaForm = React.forwardRef<
     selectedConnection,
     onSubmit,
     initialSource,
+    connectorSchema.properties,
     connectorTypeString,
     tableManagedIncludeListNames,
   ]);
@@ -1018,7 +1039,7 @@ const CreateSchemaForm = React.forwardRef<
         values={schemaValues}
         onChange={handleSchemaFieldChange}
         errors={errors}
-        allValues={schemaValues}
+        allValues={effectiveSchemaValues}
         dependencyMap={dependencyMap}
         allDependantNames={allDependants}
         readOnly={readOnly}

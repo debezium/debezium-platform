@@ -29,7 +29,27 @@ describe("SchemaField", () => {
     const input = screen.getByRole("textbox", { name: "Host" });
     fireEvent.change(input, { target: { value: "db.example.com" } });
     expect(onChange).toHaveBeenCalledWith("host", "db.example.com");
+
+    const helpButton = screen.getByRole("button", { name: "More info for Host" });
+    fireEvent.click(helpButton);
     expect(screen.getByText("Database host")).toBeInTheDocument();
+  });
+
+  it("pre-selects schema default in enum FormSelect", () => {
+    const property: SchemaProperty = {
+      name: "snapshot.mode",
+      type: "string",
+      default: "initial",
+      display: { ...baseDisplay, label: "Snapshot mode" },
+      validation: [{ type: "enum", values: ["initial", "never"] }],
+      valueDependants: [],
+    };
+
+    render(<SchemaField property={property} value="initial" onChange={vi.fn()} />);
+
+    const select = screen.getByRole("combobox", { name: "Snapshot mode" });
+    expect(select).toHaveValue("initial");
+    expect(screen.queryByText("Select an option")).not.toBeInTheDocument();
   });
 
   it("renders enum as FormSelect", () => {

@@ -34,6 +34,28 @@ describe("SchemaGroupSection", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it("shows schema default when field has not been touched", () => {
+    const booleanProp: SchemaProperty = {
+      ...textProp("metrics.enabled", 1),
+      type: "boolean",
+      default: "true",
+    };
+
+    render(
+      <SchemaGroupSection
+        properties={[booleanProp]}
+        values={{}}
+        onChange={vi.fn()}
+        errors={{}}
+        allValues={{ "metrics.enabled": "true" }}
+        dependencyMap={new Map()}
+        allDependantNames={new Set()}
+      />,
+    );
+
+    expect(screen.getByRole("switch", { name: "metrics.enabled" })).toBeChecked();
+  });
+
   it("renders visible fields sorted by groupOrder", () => {
     const onChange = vi.fn();
     render(

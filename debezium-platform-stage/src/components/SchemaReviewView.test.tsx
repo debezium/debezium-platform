@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { screen } from "@testing-library/react";
+import { screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import { useQuery } from "react-query";
 import SchemaReviewView from "./SchemaReviewView";
@@ -22,6 +22,14 @@ vi.mock("react-query", async (importOriginal) => {
   return {
     ...mod,
     useQuery: vi.fn(),
+  };
+});
+
+vi.mock("react-router-dom", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("react-router-dom")>();
+  return {
+    ...mod,
+    useNavigate: () => vi.fn(),
   };
 });
 
@@ -92,6 +100,104 @@ describe("SchemaReviewView", () => {
 
     const unsetValues = await screen.findAllByText("—");
     expect(unsetValues.length).toBeGreaterThan(0);
+  });
+
+  it("shows schema default values with (default) hint when not explicitly saved", async () => {
+    vi.mocked(useQuery).mockReturnValue({
+      data: undefined,
+      error: null,
+      isLoading: false,
+      refetch: vi.fn(),
+    } as any);
+
+    const schemaWithDefault: ConnectorSchema = {
+      ...minimalSchema,
+      groups: [
+        {
+          name: "Advanced",
+          order: 1,
+          description: "Advanced settings",
+        },
+      ],
+      properties: [
+        {
+          name: "statistics.metrics.enabled",
+          type: "boolean",
+          default: "true",
+          display: {
+            label: "Enable metrics",
+            description: "Collect statistics metrics",
+            group: "Advanced",
+            groupOrder: 0,
+          },
+          validation: [],
+          valueDependants: [],
+        },
+      ],
+    };
+
+    render(
+      <SchemaReviewView
+        connector={baseSource}
+        connectorSchema={schemaWithDefault}
+        connectorType="source"
+      />,
+    );
+
+    expect(await screen.findByText("true")).toBeInTheDocument();
+    expect(screen.getByText("Default")).toBeInTheDocument();
+    expect(screen.queryByText("Configured")).not.toBeInTheDocument();
+    expect(screen.getByText("Enable metrics")).toBeInTheDocument();
+
+    const helpButton = screen.getByRole("button", { name: "More info for Enable metrics" });
+    fireEvent.click(helpButton);
+    expect(screen.getByText("Collect statistics metrics")).toBeInTheDocument();
+  });
+
+  it("shows Configured badge when value is explicitly saved", async () => {
+    vi.mocked(useQuery).mockReturnValue({
+      data: undefined,
+      error: null,
+      isLoading: false,
+      refetch: vi.fn(),
+    } as any);
+
+    const schemaWithDefault: ConnectorSchema = {
+      ...minimalSchema,
+      groups: [{ name: "Advanced", order: 1, description: "Advanced settings" }],
+      properties: [
+        {
+          name: "statistics.metrics.enabled",
+          type: "boolean",
+          default: "true",
+          display: {
+            label: "Enable metrics",
+            description: "Collect statistics metrics",
+            group: "Advanced",
+            groupOrder: 0,
+          },
+          validation: [],
+          valueDependants: [],
+        },
+      ],
+    };
+
+    const sourceWithConfig: Source = {
+      ...baseSource,
+      config: { "statistics.metrics.enabled": false },
+    };
+
+    render(
+      <SchemaReviewView
+        connector={sourceWithConfig}
+        connectorSchema={schemaWithDefault}
+        connectorType="source"
+      />,
+    );
+
+    expect(await screen.findByText("false")).toBeInTheDocument();
+    expect(screen.getByText("Configured")).toBeInTheDocument();
+    expect(screen.queryByText("Default")).not.toBeInTheDocument();
   });
 
   it("shows collections error UI when connection collections query fails", async () => {

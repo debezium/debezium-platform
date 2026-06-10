@@ -1,9 +1,11 @@
 import {
   FormGroup,
+  FormGroupLabelHelp,
   FormHelperText,
   HelperText,
   HelperTextItem,
   Label,
+  Popover,
   TextInput,
   Switch,
   FormSelect,
@@ -49,7 +51,9 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
           validated={error ? "error" : "default"}
           isDisabled={readOnly}
         >
-          <FormSelectOption key="" value="" label="Select an option" />
+          {!value && (
+            <FormSelectOption key="" value="" label="Select an option" />
+          )}
           {enumValues.map((opt) => (
             <FormSelectOption key={opt} value={opt} label={opt} />
           ))}
@@ -118,6 +122,15 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
         label={fieldLabel}
         isRequired={property.required}
         fieldId={fieldId}
+        labelHelp={
+          property.display.description ? (
+            <Popover bodyContent={property.display.description}>
+              <FormGroupLabelHelp
+                aria-label={`More info for ${property.display.label}`}
+              />
+            </Popover>
+          ) : undefined
+        }
       >
         {renderField()}
         {error ? (
@@ -128,13 +141,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
               </HelperTextItem>
             </HelperText>
           </FormHelperText>
-        ) : (
-          <FormHelperText>
-            <HelperText>
-              <HelperTextItem>{property.display.description}</HelperTextItem>
-            </HelperText>
-          </FormHelperText>
-        )}
+        ) : null}
       </FormGroup>
     </div>
   );

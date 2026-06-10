@@ -2,7 +2,7 @@ import { Form } from "@patternfly/react-core";
 import { SchemaProperty } from "../apis/types";
 import SchemaField from "./SchemaField";
 import React from "react";
-import { isSchemaFieldVisible } from "@utils/connectorSchemaLayout";
+import { getSchemaFieldDisplayValue, isSchemaFieldVisible } from "@utils/connectorSchemaLayout";
 
 interface SchemaGroupSectionProps {
   properties: SchemaProperty[];
@@ -51,7 +51,7 @@ const SchemaGroupSection: React.FC<SchemaGroupSectionProps> = ({
         <SchemaField
           key={property.name}
           property={property}
-          value={values[property.name] || ""}
+          value={getSchemaFieldDisplayValue(property, values)}
           onChange={onChange}
           error={errors[property.name]}
           isDependant={allDependantNames.has(property.name)}

@@ -1,0 +1,18 @@
+.connector-schema-review__value-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pf-v5-global--spacer--sm, 0.5rem);
+  flex-wrap: wrap;
+}
+
+.connector-schema-review__value--default {
+  font-size: var(--pf-v5-global--FontSize--md, 1rem);
+  font-weight: var(--pf-v5-global--FontWeight--normal);
+  color: var(--pf-v5-global--Color--100, #151515);
+  display: inline-block;
+  word-break: break-word;
+}
+
+.connector-schema-review__state-badge {
+  vertical-align: middle;
+}

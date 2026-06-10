@@ -21,9 +21,17 @@
   -webkit-box-decoration-break: clone;
 }
 
-.connector-schema-review__hint--after-value {
-  margin-top: var(--pf-v5-global--spacer--sm);
-  color: var(--pf-v5-global--Color--200, #6a6e73);
+.connector-schema-review__term {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pf-v5-global--spacer--xs);
+  flex-wrap: wrap;
+}
+
+.connector-schema-review__term-help {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
 }
 
 .connector-schema-review__subtitle {
@@ -49,10 +57,6 @@
 .connector-schema-review__conditional {
   margin-left: var(--pf-v5-global--spacer--sm);
   vertical-align: middle;
-}
-
-.connector-schema-review__hint {
-  display: block;
 }
 
 .connector-schema-review__code-key {

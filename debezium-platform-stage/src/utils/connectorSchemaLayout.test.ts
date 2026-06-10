@@ -1,9 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
   buildDependencyMap,
+  buildEffectiveSchemaValues,
+  buildOccupiedSchemaKeys,
   collectAllDependants,
+  getSchemaFieldDisplayValue,
+  getSchemaFieldReviewState,
+  isSchemaFieldShowingDefault,
+  isSchemaFieldTouched,
   isSchemaFieldVisible,
 } from "./connectorSchemaLayout";
+import { validateAdditionalPropertyRows } from "./additionalConfigProperties";
 import type { SchemaProperty } from "../apis/types";
 
 const baseDisplay = {
@@ -22,6 +29,74 @@ const prop = (
   display: { ...baseDisplay, label: name },
   validation: [],
   valueDependants,
+});
+
+describe("schema field defaults", () => {
+  const withDefault = prop("metrics.enabled", []);
+  withDefault.default = "true";
+
+  it("uses schema default when field is untouched", () => {
+    expect(getSchemaFieldDisplayValue(withDefault, {})).toBe("true");
+    expect(isSchemaFieldTouched("metrics.enabled", {})).toBe(false);
+  });
+
+  it("uses touched value even when empty", () => {
+    expect(getSchemaFieldDisplayValue(withDefault, { "metrics.enabled": "" })).toBe("");
+    expect(isSchemaFieldTouched("metrics.enabled", { "metrics.enabled": "" })).toBe(true);
+  });
+
+  it("builds effective values for dependency checks", () => {
+    const properties = [withDefault, prop("other", [])];
+    expect(buildEffectiveSchemaValues(properties, {})).toEqual({
+      "metrics.enabled": "true",
+      other: "",
+    });
+  });
+
+  it("resolves review state for configured, default, and unset", () => {
+    expect(getSchemaFieldReviewState(withDefault, {})).toBe("default");
+    expect(getSchemaFieldReviewState(withDefault, { "metrics.enabled": "false" })).toBe(
+      "configured",
+    );
+    const noDefault = prop("host", []);
+    expect(getSchemaFieldReviewState(noDefault, {})).toBe("unset");
+    expect(getSchemaFieldReviewState(noDefault, { host: "db.local" })).toBe("configured");
+  });
+
+  it("detects when a field is showing schema default", () => {
+    expect(isSchemaFieldShowingDefault(withDefault, {})).toBe(true);
+    expect(isSchemaFieldShowingDefault(withDefault, { "metrics.enabled": "false" })).toBe(false);
+  });
+
+  it("builds occupied schema keys for collision detection", () => {
+    const properties = [withDefault, prop("other", [])];
+    expect(buildOccupiedSchemaKeys(properties, {})).toEqual(
+      new Set(["metrics.enabled"])
+    );
+    expect(buildOccupiedSchemaKeys(properties, { other: "" })).toEqual(
+      new Set(["metrics.enabled", "other"])
+    );
+  });
+
+  it("flags additional property collision with default-only schema field", () => {
+    const properties = [withDefault];
+    const effective = buildEffectiveSchemaValues(properties, {});
+    const rows = new Map([
+      [
+        "row-1",
+        {
+          key: "metrics.enabled",
+          valueKind: "string" as const,
+          stringValue: "false",
+          booleanValue: false,
+          integerInput: "",
+        },
+      ],
+    ]);
+    const result = validateAdditionalPropertyRows(rows, effective);
+    expect(result.hasErrors).toBe(true);
+    expect(result.rowIdsWithErrors.has("row-1")).toBe(true);
+  });
 });
 
 describe("buildDependencyMap", () => {
