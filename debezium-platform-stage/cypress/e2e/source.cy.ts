@@ -217,13 +217,16 @@ describe('Source Management', () => {
     });
 
     it('should successfully create a new source', () => {
+      cy.intercept('POST', /\/api\/sources\/?(\?|$)/i).as('createSource');
       openCreateSourceFromCatalog();
       const sourceName = `test-source-${Date.now()}`;
       fillMinimalCreateSourceForm(sourceName);
+      // Use a key outside the connector schema; schema property names (e.g. database.hostname) fail validation.
       cy.contains('button', 'Add property').scrollIntoView().click({ force: true });
-      cy.get('[id^="addprop-key-input-"]').last().scrollIntoView().type('database.hostname');
-      cy.get('[id^="addprop-value-input-"]').last().type('debezium');
+      cy.get('[id^="addprop-key-input-"]').last().scrollIntoView().type('cypress.e2e.extra.config');
+      cy.get('[id^="addprop-value-input-"]').last().type('true');
       cy.contains('button', 'Create source').click();
+      cy.wait('@createSource').its('response.statusCode').should('be.oneOf', [200, 201, 202]);
       cy.contains('Create successful', { timeout: 20000 }).should('be.visible');
       cy.url().should('include', '/source');
       cy.url().should('not.include', '/create_source');

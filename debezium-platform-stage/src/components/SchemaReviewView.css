@@ -54,9 +54,15 @@
   gap: var(--pf-v5-global--spacer--sm);
 }
 
-.connector-schema-review__conditional {
-  margin-left: var(--pf-v5-global--spacer--sm);
-  vertical-align: middle;
+.connector-schema-review__row--dependant {
+  background-color: color-mix(
+    in srgb,
+    var(--pf-t--global--border--color--nonstatus--teal--default, #009596) 8%,
+    transparent
+  );
+  border-radius: var(--pf-t--global--border--radius--small, 4px);
+  padding: var(--pf-v5-global--spacer--sm) var(--pf-v5-global--spacer--md);
+  margin-block-end: var(--pf-v5-global--spacer--xs);
 }
 
 .connector-schema-review__code-key {

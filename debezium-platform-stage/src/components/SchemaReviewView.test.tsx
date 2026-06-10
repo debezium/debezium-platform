@@ -154,6 +154,62 @@ describe("SchemaReviewView", () => {
     expect(screen.getByText("Collect statistics metrics")).toBeInTheDocument();
   });
 
+  it("shows teal background for dependant fields without Conditional badge", async () => {
+    vi.mocked(useQuery).mockReturnValue({
+      data: undefined,
+      error: null,
+      isLoading: false,
+      refetch: vi.fn(),
+    } as any);
+
+    const schemaWithDependants: ConnectorSchema = {
+      ...minimalSchema,
+      groups: [{ name: "Advanced", order: 1, description: "Advanced settings" }],
+      properties: [
+        {
+          name: "database.connection.adapter",
+          type: "string",
+          default: "logminer",
+          display: {
+            label: "Connector adapter",
+            description: "Adapter help",
+            group: "Advanced",
+            groupOrder: 0,
+          },
+          validation: [{ type: "enum", values: ["logminer", "xstream"] }],
+          valueDependants: [
+            { values: ["logminer"], dependants: ["log.mining.strategy"] },
+          ],
+        },
+        {
+          name: "log.mining.strategy",
+          type: "string",
+          default: "online_catalog",
+          display: {
+            label: "Log Mining Strategy",
+            description: "Strategy help",
+            group: "Advanced",
+            groupOrder: 1,
+          },
+          validation: [],
+          valueDependants: [],
+        },
+      ],
+    };
+
+    const { container } = render(
+      <SchemaReviewView
+        connector={baseSource}
+        connectorSchema={schemaWithDependants}
+        connectorType="source"
+      />,
+    );
+
+    expect(await screen.findByText("Log Mining Strategy")).toBeInTheDocument();
+    expect(screen.queryByText("Conditional")).not.toBeInTheDocument();
+    expect(container.querySelector(".connector-schema-review__row--dependant")).toBeTruthy();
+  });
+
   it("shows Configured badge when value is explicitly saved", async () => {
     vi.mocked(useQuery).mockReturnValue({
       data: undefined,

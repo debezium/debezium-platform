@@ -10,7 +10,6 @@ import {
   FormGroupLabelHelp,
   JumpLinks,
   JumpLinksItem,
-  Label,
   Popover,
   Skeleton,
 } from "@patternfly/react-core";
@@ -75,8 +74,7 @@ function reviewValue(raw: string | undefined): string {
 const ReviewFieldTerm: React.FC<{
   label: string;
   description?: string;
-  suffix?: React.ReactNode;
-}> = ({ label, description, suffix }) => (
+}> = ({ label, description }) => (
   <span className="connector-schema-review__term">
     {label}
     {description ? (
@@ -86,7 +84,6 @@ const ReviewFieldTerm: React.FC<{
         </Popover>
       </span>
     ) : null}
-    {suffix}
   </span>
 );
 
@@ -331,18 +328,14 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
     const isDep = allDependants.has(property.name);
 
     return (
-      <DescriptionListGroup key={property.name}>
+      <DescriptionListGroup
+        key={property.name}
+        className={isDep ? "connector-schema-review__row--dependant" : undefined}
+      >
         <DescriptionListTerm>
           <ReviewFieldTerm
             label={property.display.label}
             description={property.display.description}
-            suffix={
-              isDep ? (
-                <Label isCompact color="teal" className="connector-schema-review__conditional">
-                  {t("source:review.conditional", { defaultValue: "Conditional" })}
-                </Label>
-              ) : null
-            }
           />
         </DescriptionListTerm>
         <DescriptionListDescription>
