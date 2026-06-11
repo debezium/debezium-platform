@@ -69,9 +69,9 @@
     },
     "tabs": {
         "overview": "Overview",
-        "log": "Pipeline logs",
-        "edit": "Edit pipeline",
-        "action": "Pipeline action",
+        "log": "Logs",
+        "edit": "Edit",
+        "action": "Actions",
         "monitoring": "Monitoring"
     },
     "overview": {
@@ -87,7 +87,7 @@
         "description": "Monitor your pipeline performance and metrics in real-time."
     },
     "actions": {
-        "title": "Pipeline actions",
+        "title": "Actions",
         "description": "Use signaling to perform actions on the pipeline.",
         "actionField": "Action",
         "actionTypeField": "Action type",

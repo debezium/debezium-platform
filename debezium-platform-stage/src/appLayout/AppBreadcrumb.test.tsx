@@ -21,3 +21,11 @@ test("render pipeline overview breadcrumb", () => {
   expect(screen.getByText("Overview")).toBeInTheDocument();
   expect(screen.queryByText("Create pipeline")).not.toBeInTheDocument();
 });
+
+test("render pipeline monitoring breadcrumb", () => {
+  render(<AppBreadcrumb />, { initialEntries: ["/pipeline/123/monitoring"] });
+
+  expect(screen.getByText("Pipeline")).toBeInTheDocument();
+  expect(screen.getByText("Monitoring")).toBeInTheDocument();
+  expect(screen.queryByText("Create pipeline")).not.toBeInTheDocument();
+});

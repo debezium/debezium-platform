@@ -150,13 +150,14 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Edit", navigate, true)}
           </BreadcrumbGenerator>
         );
-      case route.match(/^\/pipeline\/[^/]+\/(overview|logs|edit|action)$/) !== null: {
+      case route.match(/^\/pipeline\/[^/]+\/(overview|logs|edit|action|monitoring)$/) !== null: {
         const detailsTab = route.split("/").pop() || "overview";
         const tabLabels: Record<string, string> = {
           overview: "Overview",
           logs: "Pipeline logs",
           edit: "Edit pipeline",
           action: "Pipeline actions",
+          monitoring: "Monitoring",
         };
         return (
           <BreadcrumbGenerator>
