@@ -214,8 +214,10 @@ const STATIC_DATA = {
   },
 };
 
-const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineId }) => {
-  const { t } = useTranslation();
+const CursorVoronoiContainer = createContainer("cursor", "voronoi");
+
+const PipelineMonitoring: FC<PipelineMonitoringProp> = () => {
+  useTranslation();
 
   // Time range state
   const [isTimeRangeOpen, setIsTimeRangeOpen] = useState(false);
@@ -308,9 +310,6 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineId }) => {
       )
     )
   );
-
-  // Create custom container for multi-line chart with legend tooltip
-  const CursorVoronoiContainer = createContainer("voronoi", "cursor");
 
   return (
     <Grid hasGutter>

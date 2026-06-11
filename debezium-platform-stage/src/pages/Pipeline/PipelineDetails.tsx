@@ -43,7 +43,7 @@ const PipelineDetails: React.FunctionComponent = () => {
   React.useEffect(() => {
     if (prevDetailsTabRef.current !== detailsTab && detailsTab) {
       prevDetailsTabRef.current = detailsTab;
-      
+
       const validTabs = ["overview", "logs", "edit", "action", "monitoring"];
       if (validTabs.includes(detailsTab)) {
         setActiveTabKey(detailsTab);
@@ -106,8 +106,13 @@ const PipelineDetails: React.FunctionComponent = () => {
           />
           <Tab
             eventKey={"action"}
-            title={<TabTitleText>{t('pipeline:actions.title')}</TabTitleText>}
+            title={<TabTitleText>{t('pipeline:tabs.action')}</TabTitleText>}
             tabContentId={`tabContent${"action"}`}
+          />
+          <Tab
+            eventKey={"monitoring"}
+            title={<TabTitleText>{t('pipeline:tabs.monitoring')}</TabTitleText>}
+            tabContentId={`tabContent${"monitoring"}`}
           />
           <Tab
             eventKey={"logs"}
@@ -119,11 +124,7 @@ const PipelineDetails: React.FunctionComponent = () => {
             title={<TabTitleText>{t('pipeline:tabs.edit')}</TabTitleText>}
             tabContentId={`tabContent${"edit"}`}
           />
-          <Tab
-            eventKey={"monitoring"}
-            title={<TabTitleText>{t('pipeline:tabs.monitoring')}</TabTitleText>}
-            tabContentId={`tabContent${"monitoring"}`}
-          />
+
         </Tabs>
       </PageSection>
       <PageSection isWidthLimited isFilled>
@@ -184,7 +185,7 @@ const PipelineDetails: React.FunctionComponent = () => {
           hidden={"action" !== activeTabKey}
         >
           <TabContentBody>
-            <PipelineAction  pipelineId={pipelineId} sourceId={pipeline?.source.id}/>
+            <PipelineAction pipelineId={pipelineId} sourceId={pipeline?.source.id} />
           </TabContentBody>
         </TabContent>
         <TabContent
