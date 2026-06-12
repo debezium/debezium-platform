@@ -17,7 +17,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.debezium.config.Configuration;
 import io.debezium.connector.postgresql.PostgresConnector;
@@ -26,6 +27,8 @@ import io.debezium.connector.postgresql.PostgresConnectorConfig.AutoCreateMode;
 import io.debezium.embedded.Connect;
 import io.debezium.embedded.EmbeddedEngineConfig;
 import io.debezium.engine.DebeziumEngine;
+import io.debezium.heartbeat.DatabaseHeartbeatImpl;
+import io.debezium.heartbeat.Heartbeat;
 import io.debezium.platform.config.OffsetConfigGroup;
 import io.debezium.platform.environment.watcher.config.WatcherConfig;
 import io.debezium.platform.environment.watcher.consumers.OutboxParentEventConsumer;
@@ -37,17 +40,22 @@ import io.quarkus.runtime.Startup;
 @Startup
 public class ConductorEnvironmentWatcher {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConductorEnvironmentWatcher.class);
+
     public static final String CONFIG_PORTION = "\\.config";
     public static final String OFFSET_STORAGE_PREFIX = "offset.storage.";
     public static final String OFFSET_PREFIX = "offset.";
-    private final Logger logger;
+    private static final String HEARTBEAT_DEFAULT_ACTION_QUERY = """
+            INSERT INTO public.heartbeat (id, timestamp) \
+            VALUES (1, now()) \
+            ON CONFLICT (id) DO UPDATE SET timestamp = now()\
+            """;
     private final OutboxParentEventConsumer eventConsumer;
     private final WatcherConfig watcherConfig;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private DebeziumEngine<?> engine;
 
-    public ConductorEnvironmentWatcher(Logger logger, WatcherConfig watcherConfig, OutboxParentEventConsumer eventConsumer) {
-        this.logger = logger;
+    public ConductorEnvironmentWatcher(WatcherConfig watcherConfig, OutboxParentEventConsumer eventConsumer) {
         this.watcherConfig = watcherConfig;
         this.eventConsumer = eventConsumer;
     }
@@ -55,12 +63,13 @@ public class ConductorEnvironmentWatcher {
     @PostConstruct
     public void start() {
         if (!watcherConfig.watcher().enabled()) {
-            logger.info("Skipping watcher because it is not enabled");
+            LOGGER.info("Skipping watcher because it is not enabled");
             return;
         }
 
         var connection = watcherConfig.connection();
-        var offset = watcherConfig.watcher().offset();
+        var watcher = watcherConfig.watcher();
+        var offset = watcher.offset();
         var outbox = watcherConfig.outbox();
         var extraFields = Stream.of(outbox.aggregateColumn(), outbox.aggregateIdColumn(), outbox.typeColumn())
                 .map(c -> c + ":envelope")
@@ -77,23 +86,38 @@ public class ConductorEnvironmentWatcher {
                 .with(PostgresConnectorConfig.DATABASE_NAME, connection.database())
                 .with(PostgresConnectorConfig.PLUGIN_NAME, PostgresConnectorConfig.LogicalDecoder.PGOUTPUT.getValue())
                 .with(PostgresConnectorConfig.INCLUDE_SCHEMA_CHANGES, false)
-                .with(PostgresConnectorConfig.TABLE_INCLUDE_LIST, "public.%s".formatted(outbox.table()))
+                .with(PostgresConnectorConfig.TABLE_INCLUDE_LIST, "public.%s,public.heartbeat".formatted(outbox.table()))
                 .with(PostgresConnectorConfig.PUBLICATION_AUTOCREATE_MODE, AutoCreateMode.FILTERED)
+                .with(Heartbeat.HEARTBEAT_INTERVAL_PROPERTY_NAME, watcher.heartbeat().intervalMs())
+                .with(DatabaseHeartbeatImpl.HEARTBEAT_ACTION_QUERY_PROPERTY_NAME,
+                        watcher.heartbeat().actionQuery().orElse(HEARTBEAT_DEFAULT_ACTION_QUERY))
                 .with("transforms", "outbox")
                 .with("transforms.outbox.type", EventRouter.class.getName())
-                .with("transforms.outbox.table.fields.additional.placement", extraFields);
+                .with("transforms.outbox.table.fields.additional.placement", extraFields)
+                .with("transforms.outbox.predicate", "isOutboxTable")
+                .with("predicates", "isOutboxTable")
+                .with("predicates.isOutboxTable.type", "org.apache.kafka.connect.transforms.predicates.TopicNameMatches")
+                .with("predicates.isOutboxTable.pattern", ".*\\.%s".formatted(outbox.table()));
 
         offsetConfigurations(offset).forEach(configurationBuilder::with);
 
         var config = configurationBuilder.build();
 
-        logger.info("Creating Debezium engine");
+        LOGGER.info("Creating Debezium engine");
         this.engine = DebeziumEngine.create(Connect.class)
                 .using(config.asProperties())
+                .using((success, message, error) -> {
+                    if (error != null) {
+                        LOGGER.error("Debezium engine stopped with error: %s".formatted(message), error);
+                    }
+                    else {
+                        LOGGER.info("Debezium engine stopped: success={}, message={}", success, message);
+                    }
+                })
                 .notifying(eventConsumer)
                 .build();
 
-        logger.info("Attempting to start debezium engine");
+        LOGGER.info("Attempting to start debezium engine");
         executor.execute(engine);
     }
 
@@ -121,13 +145,13 @@ public class ConductorEnvironmentWatcher {
         }
 
         try {
-            logger.info("Attempting to stop Debezium");
+            LOGGER.info("Attempting to stop Debezium");
             engine.close();
             executor.shutdown();
             executor.awaitTermination(10, TimeUnit.SECONDS);
         }
         catch (Exception e) {
-            logger.error("Exception while shutting down Debezium", e);
+            LOGGER.error("Exception while shutting down Debezium", e);
         }
     }
 }

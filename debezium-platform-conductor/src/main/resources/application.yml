@@ -1,6 +1,8 @@
 conductor:
   watcher:
     enabled: true
+    heartbeat:
+      interval-ms: 300000
     offset:
       storage:
         type: org.apache.kafka.connect.storage.FileOffsetBackingStore
