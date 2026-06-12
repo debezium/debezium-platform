@@ -417,8 +417,10 @@ describe('Pipeline Management', () => {
       cy.get(`${PIPELINE_TABLE} tbody tr`).contains('button', pipelineName).click();
       cy.url().should('match', /\/pipeline\/\d+\/overview/);
       cy.contains('Overview').should('be.visible');
-      cy.contains('Pipeline logs').should('be.visible');
-      cy.contains('Edit pipeline').should('be.visible');
+      cy.contains('Actions').should('be.visible');
+      cy.contains('Monitoring').should('be.visible');
+      cy.contains('Logs').should('be.visible');
+      cy.contains('Edit').should('be.visible');
     });
 
     it('should navigate to logs tab from row actions', () => {
