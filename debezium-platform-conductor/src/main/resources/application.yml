@@ -1,3 +1,7 @@
+monitoring:
+  panels:
+    path: ${MONITORING_PANELS_PATH:}
+    refresh-interval: 30s
 conductor:
   watcher:
     enabled: true
@@ -97,6 +101,9 @@ quarkus:
       url: http://localhost:8080
       # Avoid throwing an exception when HTTP status code is higher than 400
       disable-default-mapper: true
+    prometheus-api:
+      url: ${MONITORING_PROMETHEUS_URL:http://localhost:9090}
+      read-timeout: 30000
   http:
     cors:
         ~: true
@@ -206,6 +213,8 @@ quarkus:
         storage:
           type: org.apache.kafka.connect.storage.MemoryOffsetBackingStore
   quarkus:
+    http:
+      test-port: 0
     debezium-outbox:
       remove-after-insert: false
     datasource:

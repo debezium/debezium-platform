@@ -82,6 +82,8 @@ monitoring:
           resourceToTelemetryConversion: true
           constLabels:
             platform: debezium
+  panels:
+    additionalPanelsPath: ""
   prometheus:
     external:
       url: ""

@@ -97,6 +97,7 @@ The following operators must be installed in the cluster **before** deploying th
 | schemaHistory.database.auth.password       | Database password                                                                                                                                                                      | password                                   |                                                                                                                                                                       |                                                                                                                                                                                 |                                             |
 | env                                        | List of env variable to pass to the conductor                                                                                                                                          | []                                         |
 | pipeline.labels                            | Map of labels to apply to DebeziumServer custom resources created by pipelines. These labels are merged with the internal `debezium.io/conductor-id` label.                            | {}                                         |
+| monitoring.panels.additionalPanelsPath     | Path to a YAML file with additional monitoring panels. Panels are merged with built-in defaults; matching IDs override built-in panels.                                                | ""                                         |
 | monitoring.otel.enabled                    | Enable OpenTelemetry monitoring infrastructure. Requires the OpenTelemetry Operator to be installed (see Prerequisites).                                                               | false                                      |
 | monitoring.otel.collector.image            | OTel Collector image. Must be the **contrib** distribution to include the Prometheus exporter. If empty, the operator's default is used (which lacks the Prometheus exporter).          | ""                                         |
 | monitoring.otel.collector.replicas         | Number of OTel Collector replicas                                                                                                                                                      | 1                                          |
@@ -240,6 +241,54 @@ pipeline:
 ```
 
 The labels are automatically converted to environment variables for the Conductor pod (e.g., `PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE`).
+
+## Additional Monitoring Panels
+
+The platform ships with built-in monitoring panels. You can add custom panels or override built-in ones by providing an additional panels file via a ConfigMap.
+
+### Configuration
+
+1. Create a ConfigMap with your custom panels:
+
+```shell
+kubectl create configmap custom-panels --from-file=panels.yml
+```
+
+Where `panels.yml` follows this format:
+
+```yaml
+panels:
+  - id: my-custom-panel
+    title: "Custom Metric"
+    description: "My custom monitoring panel"
+    category: streaming
+    query: 'rate(my_custom_metric_total{service_name="{{pipeline_id}}"}[5m])'
+    unit: ops/s
+    visualization:
+      type: line
+      suggestedStep: 15s
+```
+
+2. Mount it and set the path in your Helm values:
+
+```yaml
+conductor:
+  extraVolumes:
+    - name: custom-panels
+      configMap:
+        name: custom-panels
+  extraVolumeMounts:
+    - name: custom-panels
+      mountPath: /opt/config/panels.yml
+      subPath: panels.yml
+      readOnly: true
+
+monitoring:
+  panels:
+    additionalPanelsPath: /opt/config/panels.yml
+```
+
+Panels with matching `id` values override the built-in defaults. New `id` values are added alongside the built-in panels.
 
 # Install
 
