@@ -1,0 +1,10 @@
+panels:
+  - id: streaming-event-count
+    title: "Overridden Event Count"
+    description: "User override for built-in panel"
+    category: streaming
+    query: 'custom_rate(debezium_event_count_total{service_name="{{pipeline_id}}"}[10m])'
+    unit: events/s
+    visualization:
+      type: line
+      suggestedStep: 30s

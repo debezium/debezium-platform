@@ -1,6 +1,7 @@
 monitoring:
   panels:
     path: ${MONITORING_PANELS_PATH:}
+    refresh-interval: 30s
 conductor:
   watcher:
     enabled: true

@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -33,19 +34,25 @@ public class PanelConfigLoader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PanelConfigLoader.class);
     private static final String BUILTIN_PANELS_RESOURCE = "panels.yml";
-    private static final Duration REFRESH_INTERVAL = Duration.ofSeconds(30);
 
-    @ConfigProperty(name = "monitoring.panels.path")
-    Optional<String> userPanelsPath;
-
+    private final Optional<String> userPanelsPath;
+    private final Duration refreshInterval;
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+
+    @Inject
+    public PanelConfigLoader(
+                             @ConfigProperty(name = "monitoring.panels.path") Optional<String> userPanelsPath,
+                             @ConfigProperty(name = "monitoring.panels.refresh-interval") Duration refreshInterval) {
+        this.userPanelsPath = userPanelsPath;
+        this.refreshInterval = refreshInterval;
+    }
 
     private volatile List<PanelConfig> cachedPanels;
     private volatile Instant lastLoadTime = Instant.MIN;
 
     public List<PanelConfig> loadPanels() {
         Instant now = Instant.now();
-        if (cachedPanels != null && Duration.between(lastLoadTime, now).compareTo(REFRESH_INTERVAL) < 0) {
+        if (cachedPanels != null && Duration.between(lastLoadTime, now).compareTo(refreshInterval) < 0) {
             return cachedPanels;
         }
 

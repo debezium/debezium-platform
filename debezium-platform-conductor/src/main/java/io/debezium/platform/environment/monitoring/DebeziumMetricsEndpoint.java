@@ -21,12 +21,10 @@ public class DebeziumMetricsEndpoint {
     private static final String LABELS_FMT = "service_name=\"%s\",debezium_connector_type=\"postgresql\"";
 
     private final HttpServer server;
-    private final String pipelineName;
     private final String commonLabels;
 
     private DebeziumMetricsEndpoint(HttpServer server, String pipelineName) {
         this.server = server;
-        this.pipelineName = pipelineName;
         this.commonLabels = String.format(LABELS_FMT, pipelineName);
     }
 

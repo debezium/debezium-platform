@@ -23,6 +23,7 @@ import io.debezium.platform.data.dto.PanelsListResponse;
 import io.debezium.platform.data.dto.PrometheusQueryRangeResponse;
 import io.debezium.platform.environment.actions.client.PrometheusClient;
 import io.debezium.platform.error.NotFoundException;
+import io.debezium.util.Strings;
 
 @ApplicationScoped
 public class MonitoringService {
@@ -54,7 +55,7 @@ public class MonitoringService {
 
         String query = encodePromQLBraces(panelConfig.query().replace(PIPELINE_ID_PLACEHOLDER, pipelineId));
 
-        if (step == null || step.isBlank()) {
+        if (Strings.isNullOrBlank(step)) {
             step = panelConfig.visualization().suggestedStep();
         }
 

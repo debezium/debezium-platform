@@ -1,0 +1,10 @@
+panels:
+  - id: user-custom-panel
+    title: "Custom Panel"
+    description: "A user-defined panel"
+    category: custom
+    query: 'custom_metric{service_name="{{pipeline_id}}"}'
+    unit: ops/s
+    visualization:
+      type: line
+      suggestedStep: 30s
