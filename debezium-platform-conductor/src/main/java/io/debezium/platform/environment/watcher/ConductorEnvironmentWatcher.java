@@ -17,6 +17,9 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.debezium.config.Configuration;
 import io.debezium.connector.postgresql.PostgresConnector;
 import io.debezium.connector.postgresql.PostgresConnectorConfig;
@@ -37,7 +40,7 @@ import io.quarkus.runtime.Startup;
 @Startup
 public class ConductorEnvironmentWatcher {
 
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(ConductorEnvironmentWatcher.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConductorEnvironmentWatcher.class);
 
     public static final String CONFIG_PORTION = "\\.config";
     public static final String OFFSET_STORAGE_PREFIX = "offset.storage.";
@@ -52,8 +55,7 @@ public class ConductorEnvironmentWatcher {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private DebeziumEngine<?> engine;
 
-    public ConductorEnvironmentWatcher(Logger logger, WatcherConfig watcherConfig, OutboxParentEventConsumer eventConsumer) {
-        this.logger = logger;
+    public ConductorEnvironmentWatcher(WatcherConfig watcherConfig, OutboxParentEventConsumer eventConsumer) {
         this.watcherConfig = watcherConfig;
         this.eventConsumer = eventConsumer;
     }
@@ -61,7 +63,7 @@ public class ConductorEnvironmentWatcher {
     @PostConstruct
     public void start() {
         if (!watcherConfig.watcher().enabled()) {
-            logger.info("Skipping watcher because it is not enabled");
+            LOGGER.info("Skipping watcher because it is not enabled");
             return;
         }
 
@@ -101,21 +103,21 @@ public class ConductorEnvironmentWatcher {
 
         var config = configurationBuilder.build();
 
-        logger.info("Creating Debezium engine");
+        LOGGER.info("Creating Debezium engine");
         this.engine = DebeziumEngine.create(Connect.class)
                 .using(config.asProperties())
                 .using((success, message, error) -> {
                     if (error != null) {
-                        logger.errorf(error, "Debezium engine stopped with error: %s", message);
+                        LOGGER.error("Debezium engine stopped with error: %s".formatted(message), error);
                     }
                     else {
-                        logger.infof("Debezium engine stopped: success=%s, message=%s", success, message);
+                        LOGGER.info("Debezium engine stopped: success={}, message={}", success, message);
                     }
                 })
                 .notifying(eventConsumer)
                 .build();
 
-        logger.info("Attempting to start debezium engine");
+        LOGGER.info("Attempting to start debezium engine");
         executor.execute(engine);
     }
 
@@ -143,13 +145,13 @@ public class ConductorEnvironmentWatcher {
         }
 
         try {
-            logger.info("Attempting to stop Debezium");
+            LOGGER.info("Attempting to stop Debezium");
             engine.close();
             executor.shutdown();
             executor.awaitTermination(10, TimeUnit.SECONDS);
         }
         catch (Exception e) {
-            logger.error("Exception while shutting down Debezium", e);
+            LOGGER.error("Exception while shutting down Debezium", e);
         }
     }
 }
