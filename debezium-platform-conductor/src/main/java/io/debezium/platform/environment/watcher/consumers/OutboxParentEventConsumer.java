@@ -12,7 +12,8 @@ import jakarta.enterprise.inject.Instance;
 
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.debezium.engine.ChangeEvent;
 import io.debezium.platform.environment.watcher.config.OutboxConfigGroup;
@@ -29,12 +30,12 @@ import io.debezium.platform.environment.watcher.config.OutboxConfigGroup;
 @Dependent
 public final class OutboxParentEventConsumer implements Consumer<ChangeEvent<SourceRecord, SourceRecord>> {
 
-    private final Logger logger;
+    private static final Logger LOGGER = LoggerFactory.getLogger(OutboxParentEventConsumer.class);
+
     private final OutboxConfigGroup outbox;
     private final Instance<EnvironmentEventConsumer<?>> eventConsumers;
 
-    public OutboxParentEventConsumer(Logger logger, OutboxConfigGroup outbox, Instance<EnvironmentEventConsumer<?>> eventConsumers) {
-        this.logger = logger;
+    public OutboxParentEventConsumer(OutboxConfigGroup outbox, Instance<EnvironmentEventConsumer<?>> eventConsumers) {
         this.outbox = outbox;
         this.eventConsumers = eventConsumers;
     }
@@ -43,12 +44,16 @@ public final class OutboxParentEventConsumer implements Consumer<ChangeEvent<Sou
     public void accept(ChangeEvent<SourceRecord, SourceRecord> event) {
         var value = (Struct) event.value().value();
 
+        if (value == null || value.schema().field(outbox.aggregateColumn()) == null) {
+            return;
+        }
+
         var aggregateType = value.getString(outbox.aggregateColumn());
         var aggregateId = value.getString(outbox.aggregateIdColumn());
         var eventType = value.getString(outbox.typeColumn());
         var payload = value.getString("payload");
 
-        logger.debugf("Consumed %s event for %s (#%s) with payload %s", eventType, aggregateType, aggregateId, payload);
+        LOGGER.debug("Consumed {} event for {} (#{}) with payload {}", eventType, aggregateType, aggregateId, payload);
 
         eventConsumers.forEach(consumer -> consumer.consume(
                 aggregateType, eventType, Long.valueOf(aggregateId), payload));

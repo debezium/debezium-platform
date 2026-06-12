@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS heartbeat (
+    id INTEGER PRIMARY KEY,
+    timestamp TIMESTAMP NOT NULL DEFAULT now()
+);

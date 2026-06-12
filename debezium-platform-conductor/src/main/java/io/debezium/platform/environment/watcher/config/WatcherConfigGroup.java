@@ -11,6 +11,7 @@ import io.debezium.platform.config.OffsetConfigGroup;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithName;
 
 @ConfigMapping(prefix = "conductor.watcher")
 @ConfigRoot(phase = ConfigPhase.RUN_TIME)
@@ -21,5 +22,16 @@ public interface WatcherConfigGroup {
     Optional<String> crd();
 
     OffsetConfigGroup offset();
+
+    HeartbeatConfig heartbeat();
+
+    interface HeartbeatConfig {
+
+        @WithName("interval-ms")
+        int intervalMs();
+
+        @WithName("action-query")
+        Optional<String> actionQuery();
+    }
 
 }
