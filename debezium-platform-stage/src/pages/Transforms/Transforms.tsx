@@ -54,6 +54,7 @@ import {
 } from "@patternfly/react-table";
 import { ActionData, DeleteInstance } from "@pipelinePage/index";
 import { useNotification } from "@appContext/index";
+import { FeatureGate } from "@components/FeatureGate";
 import { useTranslation } from "react-i18next";
 import UsedIn from "@components/UsedIn";
 
@@ -190,8 +191,8 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
   ];
 
   return (
-    <div data-tour="transform-page" style={{ flex: 1, display: "flex", flexDirection: "column", maxHeight: "100%" }}>
-      <>
+    <div data-tour="transform-page" style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", maxHeight: "100%" }}>
+      <FeatureGate flag="Transforms">
         {error ? (
           <PageSection isWidthLimited>
             <ApiError
@@ -439,7 +440,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
             </Modal>
           </>
         )}
-      </>
+      </FeatureGate>
     </div>
   );
 };

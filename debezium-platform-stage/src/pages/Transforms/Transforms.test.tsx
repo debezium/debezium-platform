@@ -32,6 +32,15 @@ vi.mock("../../appLayout/AppNotificationContext", () => ({
   useNotification: vi.fn(),
 }));
 
+vi.mock("../../appLayout/AppContext", () => ({
+  useData: () => ({
+    darkMode: false,
+    navigationCollapsed: false,
+    setDarkMode: vi.fn(),
+    updateNavigationCollapsed: vi.fn(),
+  }),
+}));
+
 describe("Transforms", () => {
   const mockTransforms = transformsMock;
   const mockPipelines = pipelinesMock;

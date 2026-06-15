@@ -34,6 +34,7 @@ import { Connections } from "./pages/Connection/Connections";
 import { CreateConnection } from "./pages/Connection/CreateConnection";
 import { ConnectionsCatalog } from "./pages/Connection/ConnectionsCatalog";
 import { EditConnection } from "./pages/Connection/EditConnection";
+import { FeatureFlag } from "./utils/featureFlag";
 
 export interface IAppRoute {
   label?: string; // Excluding the label will exclude the route from the nav sidebar in AppLayout
@@ -43,6 +44,7 @@ export interface IAppRoute {
   navSection: string;
   title: string;
   icon?: React.ReactElement;
+  featureFlag?: FeatureFlag;
   routes?: undefined;
 }
 
@@ -125,6 +127,7 @@ const routes: AppRouteConfig[] = [
     path: "/transform",
     navSection: "transform",
     title: `${AppBranding} | Transform`,
+    featureFlag: "Transforms",
   },
   {
     component: EditTransforms,
@@ -165,6 +168,7 @@ const routes: AppRouteConfig[] = [
     title: `${AppBranding} | Connections`,
     path: "/connections",
     navSection: "connections",
+    featureFlag: "Connection",
   },
   {
     component: ConnectionsCatalog,
@@ -191,6 +195,7 @@ const routes: AppRouteConfig[] = [
     path: "/vaults",
     navSection: "vaults",
     title: `${AppBranding} | Vaults`,
+    featureFlag: "Vault",
   },
 ];
 

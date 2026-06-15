@@ -9,6 +9,7 @@ import {
 import React, {  } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { IAppRoute, IAppRouteGroup, routes } from "../route";
+import { isRouteNavVisible } from "@utils/featureFlag";
 
 interface AppSideNavigationProps {
   isSidebarOpen: boolean;
@@ -18,6 +19,13 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
   isSidebarOpen,
 }) => {
   const location = useLocation();
+
+  const isNavRouteVisible = (route: IAppRoute) =>
+    route.label && isRouteNavVisible(route.featureFlag);
+
+  const visibleRoutes = routes.filter((route) =>
+    !route.routes ? isNavRouteVisible(route) : true
+  );
 
   const renderNavItem = (route: IAppRoute, index: number) => (
     <NavItem
@@ -56,7 +64,7 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
       isActive={group.routes.some((route) => route.path === location.pathname)}
     >
       {group.routes.map(
-        (route, idx) => route.label && renderNavItem(route, idx)
+        (route, idx) => isNavRouteVisible(route) && renderNavItem(route, idx)
       )}
     </NavExpandable>
   );
@@ -65,12 +73,11 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
     <div data-tour="sidebar-nav">
     <Nav id="nav-primary-simple">
       <NavList id="nav-list-simple">
-        {routes.map(
+        {visibleRoutes.map(
           (route, idx) =>
-            route.label &&
-            (!route.routes
+            !route.routes
               ? renderNavItem(route, idx)
-              : renderNavGroup(route, idx))
+              : renderNavGroup(route, idx)
         )}
       </NavList>
     </Nav>
@@ -81,12 +88,11 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
     <div data-tour="sidebar-nav">
     <Nav id="nav-primary-simple">
       <NavList id="nav-list-simple">
-        {routes.map(
+        {visibleRoutes.map(
           (route, idx) =>
-            route.label &&
-            (!route.routes
+            !route.routes
               ? renderNavIcon(route, idx)
-              : renderNavGroup(route, idx))
+              : renderNavGroup(route, idx)
         )}
       </NavList>
     </Nav>

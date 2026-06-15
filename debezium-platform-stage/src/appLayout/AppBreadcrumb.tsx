@@ -1,6 +1,7 @@
 import React, { FC } from "react";
 import { Breadcrumb, BreadcrumbItem } from "@patternfly/react-core";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getPipelineDetailsRoutePattern } from "@utils/featureFlag";
 
 const BreadcrumbGenerator: FC<{ children: React.ReactNode }> = ({
   children,
@@ -34,6 +35,8 @@ const AppBreadcrumb: React.FC = () => {
   const navigate = useNavigate();
 
   const appBreadcrumb = (route: string) => {
+    const pipelineDetailsPattern = getPipelineDetailsRoutePattern();
+
     switch (true) {
       case route.match("/source/catalog") !== null:
         return (
@@ -150,7 +153,7 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Edit", navigate, true)}
           </BreadcrumbGenerator>
         );
-      case route.match(/^\/pipeline\/[^/]+\/(overview|logs|edit|action|monitoring)$/) !== null: {
+      case route.match(pipelineDetailsPattern) !== null: {
         const detailsTab = route.split("/").pop() || "overview";
         const tabLabels: Record<string, string> = {
           overview: "Overview",
