@@ -70,7 +70,8 @@ public class ConnectionEntity {
         MILVUS,
         QDRANT,
         @JsonProperty("SQS")
-        AMAZON_SQS
+        AMAZON_SQS,
+        JDBC
     }
 
     public Long getId() {

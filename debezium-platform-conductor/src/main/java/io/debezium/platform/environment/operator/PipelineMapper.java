@@ -70,6 +70,7 @@ public class PipelineMapper {
     private static final String PULSAR_CONNECTION_CONFIGURATION_PREFIX = "pulsar.client.";
     private static final String RABBITMQ_CONNECTION_CONFIGURATION_PREFIX = "rabbitmq.connection.";
     private static final String RABBITMQ_STREAM_CONNECTION_CONFIGURATION_PREFIX = "rabbitmqstream.connection.";
+    private static final String JDBC_CONNECTION_CONFIGURATION_PREFIX = "connection.";
 
     private static final String SERVER_SINK_FQCN_PREFIX = "io.debezium.server.";
     private static final Map<String, String> SINK_TYPE_OVERRIDES = Map.of(
@@ -269,6 +270,7 @@ public class PipelineMapper {
                     AMAZON_SQS ->
                 "";
             case APACHE_PULSAR -> PULSAR_CONNECTION_CONFIGURATION_PREFIX;
+            case JDBC -> JDBC_CONNECTION_CONFIGURATION_PREFIX;
             case RABBITMQ_STREAM -> RABBITMQ_CONNECTION_CONFIGURATION_PREFIX;
             case RABBITMQ_NATIVE_STREAM -> RABBITMQ_STREAM_CONNECTION_CONFIGURATION_PREFIX;
         };
