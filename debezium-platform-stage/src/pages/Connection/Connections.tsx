@@ -15,6 +15,7 @@ import { useState } from "react";
 import { getConnectionRole } from "@utils/helpers";
 import ConnectionTable from "@components/ConnectionTable";
 import { Catalog, CatalogApiResponse } from "src/apis/types";
+import { FeatureGate } from "@components/FeatureGate";
 
 
 export interface IConnectionsProps {
@@ -165,8 +166,8 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
 
   return (
-    <div data-tour="connection-page" style={{ flex: 1, display: "flex", flexDirection: "column", maxHeight: "100%" }}>
-
+    <div data-tour="connection-page" style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", maxHeight: "100%" }}>
+      <FeatureGate flag="Connection">
       {error ? (
         <ApiError
           errorType="large"
@@ -327,6 +328,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
           )}
         </>
       )}
+      </FeatureGate>
     </div>
   );
 };

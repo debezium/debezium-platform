@@ -17,6 +17,8 @@ import {
   Flex,
   FlexItem,
   Divider,
+  ToolbarGroup,
+  TextInput,
 } from "@patternfly/react-core";
 import {
   Table,
@@ -46,7 +48,8 @@ import {
   PauseCircleIcon,
   BanIcon,
   InProgressIcon,
-  ClockIcon,
+  OutlinedClockIcon,
+  RedoIcon,
 } from "@patternfly/react-icons";
 import { FC, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -222,6 +225,8 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = () => {
   // Time range state
   const [isTimeRangeOpen, setIsTimeRangeOpen] = useState(false);
   const [selectedTimeRange, setSelectedTimeRange] = useState("Last 5 minutes");
+  const [fromDateTime, setFromDateTime] = useState("2026-06-12T10:00");
+  const [toDateTime, setToDateTime] = useState("2026-06-12T10:05");
 
   // Refresh frequency state
   const [isRefreshOpen, setIsRefreshOpen] = useState(false);
@@ -245,6 +250,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = () => {
     "Last 6 hours",
     "Last 12 hours",
     "Last 24 hours",
+    "Custom",
   ];
 
   const refreshOptions = [
@@ -317,10 +323,11 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = () => {
       <GridItem span={12}>
         <Toolbar style={{ paddingLeft: 0, paddingRight: 0 }}>
           <ToolbarContent>
-            <ToolbarItem>
+              <ToolbarGroup align={{ default: 'alignStart' }}><ToolbarItem>
               <Title headingLevel="h1">Pipeline Monitoring</Title>
             </ToolbarItem>
-            <ToolbarItem variant="separator" />
+            </ToolbarGroup>
+      <ToolbarGroup align={{ default: "alignEnd" }}>
             <ToolbarItem>
               <Select
                 id="time-range-select"
@@ -333,7 +340,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = () => {
                     ref={toggleRef}
                     onClick={onTimeRangeToggle}
                     isExpanded={isTimeRangeOpen}
-                    icon={<ClockIcon />}
+                    icon={<OutlinedClockIcon />}
                   >
                     {selectedTimeRange}
                   </MenuToggle>
@@ -348,6 +355,28 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = () => {
                 </SelectList>
               </Select>
             </ToolbarItem>
+            {selectedTimeRange === "Custom" && (
+              <>
+                <ToolbarItem>
+                  <TextInput
+                    id="time-range-from"
+                    type="datetime-local"
+                    aria-label="Monitoring from date and time"
+                    value={fromDateTime}
+                    onChange={(_event, value) => setFromDateTime(value)}
+                  />
+                </ToolbarItem>
+                <ToolbarItem>
+                  <TextInput
+                    id="time-range-to"
+                    type="datetime-local"
+                    aria-label="Monitoring to date and time"
+                    value={toDateTime}
+                    onChange={(_event, value) => setToDateTime(value)}
+                  />
+                </ToolbarItem>
+              </>
+            )}
             <ToolbarItem>
               <Select
                 id="refresh-frequency-select"
@@ -360,7 +389,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = () => {
                     ref={toggleRef}
                     onClick={onRefreshToggle}
                     isExpanded={isRefreshOpen}
-                    icon={<span style={{ fontSize: "16px", fontWeight: "bold" }}>⟳</span>}
+                    icon={<RedoIcon/>}
                   >
                     {selectedRefresh}
                   </MenuToggle>
@@ -374,7 +403,9 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = () => {
                   ))}
                 </SelectList>
               </Select>
-            </ToolbarItem>
+            </ToolbarItem></ToolbarGroup>
+            
+            
           </ToolbarContent>
         </Toolbar>
       </GridItem>

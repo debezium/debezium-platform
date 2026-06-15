@@ -1,14 +1,5 @@
 import ConnectorImage from "@components/ComponentImage";
 import {
-  ChartDonutUtilization,
-  Chart,
-  ChartVoronoiContainer,
-  ChartThemeColor,
-  ChartAxis,
-  ChartGroup,
-  ChartBar,
-} from "@patternfly/react-charts/victory";
-import {
   Grid,
   GridItem,
   Card,
@@ -33,7 +24,6 @@ import {
   fetchDataTypeTwo,
   Transform,
 } from "src/apis/apis";
-import comingSoonImage from "../../assets/comingSoon.png";
 import "./PipelineOverview.css";
 declare global {
   interface Window {
@@ -46,7 +36,6 @@ import { PencilAltIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { sourcePageNavState } from "@sourcePage/sourcePageNavigation";
-import { useData } from "../../appLayout/AppContext";
 
 type PipelineOverviewProp = {
   pipelineId: string;
@@ -55,7 +44,6 @@ type PipelineOverviewProp = {
 const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { darkMode } = useData();
 
   const navigateTo = (url: string) => {
     navigate(url);
@@ -138,7 +126,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
 
   return (
     <Grid hasGutter>
-      <GridItem span={12}>
+      {/* <GridItem span={12}>
         <Card ouiaId="BasicCard">
           <CardBody>
             <Grid hasGutter>
@@ -228,7 +216,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
             </Grid>
           </CardBody>
         </Card>
-      </GridItem>
+      </GridItem> */}
       <GridItem span={12} rowSpan={1}>
         <Card ouiaId="BasicCard" isFullHeight>
           <CardHeader

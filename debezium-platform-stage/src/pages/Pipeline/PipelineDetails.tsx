@@ -21,6 +21,10 @@ import { PipelineDesignerEdit } from "./PipelineDesignerEdit";
 import { useTranslation } from 'react-i18next';
 import PipelineAction from "./PipelineAction";
 import PipelineMonitoring from "./PipelineMonitoring";
+import {
+  getEnabledPipelineTabs,
+  isPipelineTabEnabled,
+} from "@utils/featureFlag";
 
 const PipelineDetails: React.FunctionComponent = () => {
   const { pipelineId, detailsTab } = useParams<{
@@ -30,7 +34,12 @@ const PipelineDetails: React.FunctionComponent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [activeTabKey, setActiveTabKey] = React.useState(() => detailsTab || "overview");
+  const validTabs = React.useMemo(() => getEnabledPipelineTabs(), []);
+
+  const [activeTabKey, setActiveTabKey] = React.useState(() => {
+    const initialTab = detailsTab || "overview";
+    return isPipelineTabEnabled(initialTab) ? initialTab : "overview";
+  });
 
   const [pipeline, setPipeline] = useState<Pipeline>();
 
@@ -44,12 +53,21 @@ const PipelineDetails: React.FunctionComponent = () => {
     if (prevDetailsTabRef.current !== detailsTab && detailsTab) {
       prevDetailsTabRef.current = detailsTab;
 
-      const validTabs = ["overview", "logs", "edit", "action", "monitoring"];
       if (validTabs.includes(detailsTab)) {
         setActiveTabKey(detailsTab);
       }
     }
-  }, [detailsTab]);
+  }, [detailsTab, validTabs]);
+
+  React.useEffect(() => {
+    if (
+      detailsTab &&
+      pipelineId &&
+      !isPipelineTabEnabled(detailsTab)
+    ) {
+      navigate(`/pipeline/${pipelineId}/overview`, { replace: true });
+    }
+  }, [detailsTab, pipelineId, navigate]);
 
   useEffect(() => {
     const fetchPipeline = async () => {
@@ -104,21 +122,27 @@ const PipelineDetails: React.FunctionComponent = () => {
             title={<TabTitleText>{t('pipeline:tabs.overview')}</TabTitleText>}
             tabContentId={`tabContent${"overview"}`}
           />
-          <Tab
-            eventKey={"action"}
-            title={<TabTitleText>{t('pipeline:tabs.action')}</TabTitleText>}
-            tabContentId={`tabContent${"action"}`}
-          />
-          <Tab
-            eventKey={"monitoring"}
-            title={<TabTitleText>{t('pipeline:tabs.monitoring')}</TabTitleText>}
-            tabContentId={`tabContent${"monitoring"}`}
-          />
-          <Tab
-            eventKey={"logs"}
-            title={<TabTitleText>{t('pipeline:tabs.log')}</TabTitleText>}
-            tabContentId={`tabContent${"logs"}`}
-          />
+          {isPipelineTabEnabled("action") && (
+            <Tab
+              eventKey={"action"}
+              title={<TabTitleText>{t('pipeline:tabs.action')}</TabTitleText>}
+              tabContentId={`tabContent${"action"}`}
+            />
+          )}
+          {isPipelineTabEnabled("monitoring") && (
+            <Tab
+              eventKey={"monitoring"}
+              title={<TabTitleText>{t('pipeline:tabs.monitoring')}</TabTitleText>}
+              tabContentId={`tabContent${"monitoring"}`}
+            />
+          )}
+          {isPipelineTabEnabled("logs") && (
+            <Tab
+              eventKey={"logs"}
+              title={<TabTitleText>{t('pipeline:tabs.log')}</TabTitleText>}
+              tabContentId={`tabContent${"logs"}`}
+            />
+          )}
           <Tab
             eventKey={"edit"}
             title={<TabTitleText>{t('pipeline:tabs.edit')}</TabTitleText>}
@@ -139,21 +163,23 @@ const PipelineDetails: React.FunctionComponent = () => {
             <PipelineOverview pipelineId={pipelineId || ""} />
           </TabContentBody>
         </TabContent>
-        <TabContent
-          key={"logs"}
-          eventKey={"logs"}
-          id={`tabContent${"logs"}`}
-          activeKey={activeTabKey}
-          hidden={"logs" !== activeTabKey}
-        >
-          <TabContentBody>
-            <PipelineLog
-              activeTabKey={activeTabKey}
-              pipelineId={pipelineId}
-              pipelineName={pipeline?.name || ""}
-            />
-          </TabContentBody>
-        </TabContent>
+        {isPipelineTabEnabled("logs") && (
+          <TabContent
+            key={"logs"}
+            eventKey={"logs"}
+            id={`tabContent${"logs"}`}
+            activeKey={activeTabKey}
+            hidden={"logs" !== activeTabKey}
+          >
+            <TabContentBody>
+              <PipelineLog
+                activeTabKey={activeTabKey}
+                pipelineId={pipelineId}
+                pipelineName={pipeline?.name || ""}
+              />
+            </TabContentBody>
+          </TabContent>
+        )}
         <TabContent
           key={"edit"}
           eventKey={"edit"}
@@ -177,28 +203,32 @@ const PipelineDetails: React.FunctionComponent = () => {
             )}
           </TabContentBody>
         </TabContent>
-        <TabContent
-          key={"action"}
-          eventKey={"action"}
-          id={`tabContent${"action"}`}
-          activeKey={activeTabKey}
-          hidden={"action" !== activeTabKey}
-        >
-          <TabContentBody>
-            <PipelineAction pipelineId={pipelineId} sourceId={pipeline?.source.id} />
-          </TabContentBody>
-        </TabContent>
-        <TabContent
-          key={"monitoring"}
-          eventKey={"monitoring"}
-          id={`tabContent${"monitoring"}`}
-          activeKey={activeTabKey}
-          hidden={"monitoring" !== activeTabKey}
-        >
-          <TabContentBody>
-            <PipelineMonitoring pipelineId={pipelineId || ""} />
-          </TabContentBody>
-        </TabContent>
+        {isPipelineTabEnabled("action") && (
+          <TabContent
+            key={"action"}
+            eventKey={"action"}
+            id={`tabContent${"action"}`}
+            activeKey={activeTabKey}
+            hidden={"action" !== activeTabKey}
+          >
+            <TabContentBody>
+              <PipelineAction pipelineId={pipelineId} sourceId={pipeline?.source.id} />
+            </TabContentBody>
+          </TabContent>
+        )}
+        {isPipelineTabEnabled("monitoring") && (
+          <TabContent
+            key={"monitoring"}
+            eventKey={"monitoring"}
+            id={`tabContent${"monitoring"}`}
+            activeKey={activeTabKey}
+            hidden={"monitoring" !== activeTabKey}
+          >
+            <TabContentBody>
+              <PipelineMonitoring pipelineId={pipelineId || ""} />
+            </TabContentBody>
+          </TabContent>
+        )}
       </PageSection>
     </>
   );

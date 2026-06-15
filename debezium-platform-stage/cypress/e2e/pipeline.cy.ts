@@ -418,7 +418,8 @@ describe('Pipeline Management', () => {
       cy.url().should('match', /\/pipeline\/\d+\/overview/);
       cy.contains('Overview').should('be.visible');
       cy.contains('Actions').should('be.visible');
-      cy.contains('Monitoring').should('be.visible');
+      // Monitoring is disabled via feature-flags
+      // cy.contains('Monitoring').should('be.visible');
       cy.contains('Logs').should('be.visible');
       cy.contains('Edit').should('be.visible');
     });
