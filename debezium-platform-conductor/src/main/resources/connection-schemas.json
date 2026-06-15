@@ -550,5 +550,35 @@
         }
       }
     }
+  },
+  {
+    "type": "JDBC",
+    "schema": {
+      "title": "JDBC connection properties",
+      "description": "JDBC connection properties",
+      "type": "object",
+      "required": [
+        "url",
+        "username",
+        "password"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "url": {
+          "type": "string",
+          "title": "JDBC connection URL (e.g. jdbc:postgresql://localhost:5432/mydb)"
+        },
+        "username": {
+          "type": "string",
+          "title": "Username to connect to the database"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password to connect to the database"
+        }
+      }
+    }
   }
 ]
