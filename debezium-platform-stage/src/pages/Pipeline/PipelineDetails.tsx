@@ -20,6 +20,7 @@ import PipelineOverview from "./PipelineOverview";
 import { PipelineDesignerEdit } from "./PipelineDesignerEdit";
 import { useTranslation } from 'react-i18next';
 import PipelineAction from "./PipelineAction";
+import PipelineMonitoring from "./PipelineMonitoring";
 
 const PipelineDetails: React.FunctionComponent = () => {
   const { pipelineId, detailsTab } = useParams<{
@@ -42,8 +43,8 @@ const PipelineDetails: React.FunctionComponent = () => {
   React.useEffect(() => {
     if (prevDetailsTabRef.current !== detailsTab && detailsTab) {
       prevDetailsTabRef.current = detailsTab;
-      
-      const validTabs = ["overview", "logs", "edit", "action"];
+
+      const validTabs = ["overview", "logs", "edit", "action", "monitoring"];
       if (validTabs.includes(detailsTab)) {
         setActiveTabKey(detailsTab);
       }
@@ -105,8 +106,13 @@ const PipelineDetails: React.FunctionComponent = () => {
           />
           <Tab
             eventKey={"action"}
-            title={<TabTitleText>{t('pipeline:actions.title')}</TabTitleText>}
+            title={<TabTitleText>{t('pipeline:tabs.action')}</TabTitleText>}
             tabContentId={`tabContent${"action"}`}
+          />
+          <Tab
+            eventKey={"monitoring"}
+            title={<TabTitleText>{t('pipeline:tabs.monitoring')}</TabTitleText>}
+            tabContentId={`tabContent${"monitoring"}`}
           />
           <Tab
             eventKey={"logs"}
@@ -118,6 +124,7 @@ const PipelineDetails: React.FunctionComponent = () => {
             title={<TabTitleText>{t('pipeline:tabs.edit')}</TabTitleText>}
             tabContentId={`tabContent${"edit"}`}
           />
+
         </Tabs>
       </PageSection>
       <PageSection isWidthLimited isFilled>
@@ -178,7 +185,18 @@ const PipelineDetails: React.FunctionComponent = () => {
           hidden={"action" !== activeTabKey}
         >
           <TabContentBody>
-            <PipelineAction  pipelineId={pipelineId} sourceId={pipeline?.source.id}/>
+            <PipelineAction pipelineId={pipelineId} sourceId={pipeline?.source.id} />
+          </TabContentBody>
+        </TabContent>
+        <TabContent
+          key={"monitoring"}
+          eventKey={"monitoring"}
+          id={`tabContent${"monitoring"}`}
+          activeKey={activeTabKey}
+          hidden={"monitoring" !== activeTabKey}
+        >
+          <TabContentBody>
+            <PipelineMonitoring pipelineId={pipelineId || ""} />
           </TabContentBody>
         </TabContent>
       </PageSection>

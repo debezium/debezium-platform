@@ -71,7 +71,8 @@
     "overview": "Panoramica",
     "log": "Log della pipeline",
     "edit": "Modifica pipeline",
-    "action": "Azione pipeline"
+    "action": "Azione pipeline",
+    "monitoring": "Monitoraggio"
   },
   "overview": {
     "description": "Panoramica della pipeline per {{val}} con elenco di metriche essenziali, dettagli sulla composizione (origine e destinazione), log della pipeline e opzione per modificare la pipeline.",
@@ -80,6 +81,10 @@
     "pipelineComposition": "Composizione della pipeline",
     "queueUsage": "Utilizzo della coda",
     "events": "Eventi"
+  },
+  "monitoring": {
+    "title": "Monitoraggio della Pipeline",
+    "description": "Monitora le prestazioni e le metriche della tua pipeline in tempo reale."
   },
   "actions": {
     "title": "Azioni pipeline",
