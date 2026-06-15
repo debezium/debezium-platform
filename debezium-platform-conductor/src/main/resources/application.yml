@@ -31,9 +31,10 @@ pipeline:
       type: io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore
       config:
         jdbc:
-          url: ${OFFSET_JDBC_URL:${quarkus.datasource.jdbc.url}}
-          user: ${OFFSET_JDBC_USERNAME:${quarkus.datasource.username}}
-          password: ${OFFSET_JDBC_PASSWORD:${quarkus.datasource.password}}
+          connection:
+            url: ${OFFSET_JDBC_URL:${quarkus.datasource.jdbc.url}}
+            user: ${OFFSET_JDBC_USERNAME:${quarkus.datasource.username}}
+            password: ${OFFSET_JDBC_PASSWORD:${quarkus.datasource.password}}
           offset:
             table:
               name: "@{pipeline_name}_offset"
@@ -42,9 +43,10 @@ pipeline:
       internal: io.debezium.storage.jdbc.history.JdbcSchemaHistory
       config:
         jdbc:
-          url: ${SCHEMA_HISTORY_JDBC_URL:${quarkus.datasource.jdbc.url}}
-          user: ${SCHEMA_HISTORY_JDBC_USERNAME:${quarkus.datasource.username}}
-          password: ${SCHEMA_HISTORY_JDBC_PASSWORD:${quarkus.datasource.password}}
+          connection:
+            url: ${SCHEMA_HISTORY_JDBC_URL:${quarkus.datasource.jdbc.url}}
+            user: ${SCHEMA_HISTORY_JDBC_USERNAME:${quarkus.datasource.username}}
+            password: ${SCHEMA_HISTORY_JDBC_PASSWORD:${quarkus.datasource.password}}
           schema:
             history:
               table:
