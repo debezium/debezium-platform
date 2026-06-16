@@ -45,8 +45,8 @@
     "i18next-http-backend": "^3.0.6",
     "jotai": "^2.19.1",
     "lodash": "^4.18.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "react-dropzone": "^15.0.0",
     "react-hook-form": "^7.76.0",
     "react-i18next": "^16.5.8",
@@ -76,13 +76,13 @@
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.59.2",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitejs/plugin-react-swc": "^4.3.0",
-    "@vitest/coverage-v8": "^4.0.10",
+    "@vitest/coverage-v8": "^4.1.0",
     "chromatic": "^16.2.0",
     "cypress": "^15.14.2",
     "eslint": "^9.8.0",
@@ -94,9 +94,9 @@
     "msw": "^2.13.1",
     "start-server-and-test": "^3.0.4",
     "storybook": "^8.6.17",
-    "typescript": "^5.2.2",
+    "typescript": "^5.9.3",
     "vite": "^6.4.2",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.0.10"
+    "vitest": "^4.1.0"
   }
 }
