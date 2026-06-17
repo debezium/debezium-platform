@@ -78,6 +78,7 @@ public class MonitoringService {
                 new PanelQueryResponse.Metadata(queryDuration));
     }
 
+    // Curly braces must be pre-encoded to avoid JAX-RS interpreting them as URI template variables
     private static String encodePromQLBraces(String query) {
         return query.replace("{", "%7B").replace("}", "%7D");
     }
