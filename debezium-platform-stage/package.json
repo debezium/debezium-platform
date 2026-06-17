@@ -59,7 +59,9 @@
     "yup": "^1.7.1"
   },
   "resolutions": {
-    "jackspeak": "2.1.1"
+    "jackspeak": "2.1.1",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^3.2.7",
@@ -94,7 +96,7 @@
     "msw": "^2.13.1",
     "start-server-and-test": "^3.0.4",
     "storybook": "^8.6.17",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vite": "^6.4.2",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.0"
