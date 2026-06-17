@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -97,7 +98,7 @@ public class ConductorEnvironmentWatcher {
                 .with("transforms.outbox.predicate", "isOutboxTable")
                 .with("predicates", "isOutboxTable")
                 .with("predicates.isOutboxTable.type", "org.apache.kafka.connect.transforms.predicates.TopicNameMatches")
-                .with("predicates.isOutboxTable.pattern", ".*\\.%s".formatted(outbox.table()));
+                .with("predicates.isOutboxTable.pattern", ".*\\.%s".formatted(Pattern.quote(outbox.table())));
 
         offsetConfigurations(offset).forEach(configurationBuilder::with);
 
