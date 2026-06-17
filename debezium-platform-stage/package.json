@@ -59,7 +59,9 @@
     "yup": "^1.7.1"
   },
   "resolutions": {
-    "jackspeak": "2.1.1"
+    "jackspeak": "2.1.1",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^3.2.7",
