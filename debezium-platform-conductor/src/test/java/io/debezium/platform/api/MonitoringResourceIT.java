@@ -130,6 +130,18 @@ class MonitoringResourceIT {
     }
 
     @Test
+    void queryPanelReturns400ForInvalidTimestampFormat() {
+        given()
+                .queryParam("pipeline_id", "test-pipeline")
+                .queryParam("start", "not-a-timestamp")
+                .queryParam("end", Instant.now().toString())
+                .when()
+                .get("api/monitoring/panels/streaming-event-count/query")
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
     void queryPanelUsesDefaultStepWhenOmitted() {
         Instant now = Instant.now();
 

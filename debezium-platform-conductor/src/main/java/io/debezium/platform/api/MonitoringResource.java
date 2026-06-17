@@ -7,7 +7,10 @@ package io.debezium.platform.api;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
+import java.time.Instant;
+
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -56,8 +59,8 @@ public class MonitoringResource {
     public PanelQueryResponse queryPanel(
                                          @PathParam("id") String panelId,
                                          @Parameter(required = true, description = "Pipeline identifier") @QueryParam("pipeline_id") @NotBlank @Pattern(regexp = "[a-zA-Z0-9_-]+") String pipelineId,
-                                         @Parameter(required = true, description = "Start time (ISO 8601 or Unix timestamp)") @QueryParam("start") @NotBlank String start,
-                                         @Parameter(required = true, description = "End time (ISO 8601 or Unix timestamp)") @QueryParam("end") @NotBlank String end,
+                                         @Parameter(required = true, description = "Start time (ISO 8601)") @QueryParam("start") @NotNull Instant start,
+                                         @Parameter(required = true, description = "End time (ISO 8601)") @QueryParam("end") @NotNull Instant end,
                                          @Parameter(description = "Query resolution step (e.g. 15s, 1m)") @QueryParam("step") String step) {
 
         return monitoringService.queryPanel(panelId, pipelineId, start, end, step);

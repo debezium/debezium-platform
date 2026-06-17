@@ -5,6 +5,7 @@
  */
 package io.debezium.platform.domain;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -47,7 +48,7 @@ public class MonitoringService {
         return new PanelsListResponse(panels);
     }
 
-    public PanelQueryResponse queryPanel(String panelId, String pipelineId, String start, String end, String step) {
+    public PanelQueryResponse queryPanel(String panelId, String pipelineId, Instant start, Instant end, String step) {
         PanelConfig panelConfig = panelConfigLoader.loadPanels().stream()
                 .filter(p -> p.id().equals(panelId))
                 .findFirst()
@@ -63,7 +64,7 @@ public class MonitoringService {
 
         LOGGER.debug("Querying Prometheus for panel '{}', pipeline '{}': {}", panelId, pipelineId, query);
 
-        PrometheusQueryRangeResponse prometheusResponse = prometheusClient.queryRange(query, start, end, step);
+        PrometheusQueryRangeResponse prometheusResponse = prometheusClient.queryRange(query, start.toString(), end.toString(), step);
 
         long queryDuration = System.currentTimeMillis() - startTime;
 
@@ -72,7 +73,7 @@ public class MonitoringService {
         return new PanelQueryResponse(
                 panelId,
                 pipelineId,
-                new PanelQueryResponse.TimeRange(start, end, step),
+                new PanelQueryResponse.TimeRange(start.toString(), end.toString(), step),
                 series,
                 new PanelQueryResponse.Metadata(queryDuration));
     }

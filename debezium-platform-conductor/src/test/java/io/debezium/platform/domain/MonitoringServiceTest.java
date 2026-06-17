@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -82,7 +83,7 @@ class MonitoringServiceTest {
                 .thenReturn(prometheusResponse);
 
         PanelQueryResponse response = service.queryPanel(
-                "event-count", "my-pipeline", "2026-04-23T10:00:00Z", "2026-04-23T11:00:00Z", "1m");
+                "event-count", "my-pipeline", Instant.parse("2026-04-23T10:00:00Z"), Instant.parse("2026-04-23T11:00:00Z"), "1m");
 
         verify(prometheusClient).queryRange(
                 eq("rate(debezium_event_count_total%7Bservice_name=\"my-pipeline\"%7D[5m])"),
@@ -106,7 +107,7 @@ class MonitoringServiceTest {
                 .thenReturn(new PrometheusQueryRangeResponse("success",
                         new PrometheusQueryRangeResponse.Data("matrix", List.of())));
 
-        service.queryPanel("event-count", "my-pipeline", "2026-04-23T10:00:00Z", "2026-04-23T11:00:00Z", null);
+        service.queryPanel("event-count", "my-pipeline", Instant.parse("2026-04-23T10:00:00Z"), Instant.parse("2026-04-23T11:00:00Z"), null);
 
         verify(prometheusClient).queryRange(anyString(), anyString(), anyString(), eq("15s"));
     }
@@ -116,7 +117,7 @@ class MonitoringServiceTest {
         when(panelConfigLoader.loadPanels()).thenReturn(List.of());
 
         assertThatThrownBy(() -> service.queryPanel(
-                "unknown-panel", "my-pipeline", "2026-04-23T10:00:00Z", "2026-04-23T11:00:00Z", "1m"))
+                "unknown-panel", "my-pipeline", Instant.parse("2026-04-23T10:00:00Z"), Instant.parse("2026-04-23T11:00:00Z"), "1m"))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("unknown-panel");
     }
@@ -130,7 +131,7 @@ class MonitoringServiceTest {
                         new PrometheusQueryRangeResponse.Data("matrix", List.of())));
 
         PanelQueryResponse response = service.queryPanel(
-                "event-count", "my-pipeline", "2026-04-23T10:00:00Z", "2026-04-23T11:00:00Z", "1m");
+                "event-count", "my-pipeline", Instant.parse("2026-04-23T10:00:00Z"), Instant.parse("2026-04-23T11:00:00Z"), "1m");
 
         assertThat(response.series()).isEmpty();
     }

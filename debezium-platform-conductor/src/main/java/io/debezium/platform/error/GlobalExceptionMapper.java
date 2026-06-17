@@ -5,6 +5,7 @@
  */
 package io.debezium.platform.error;
 
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import jakarta.validation.ConstraintViolationException;
@@ -79,6 +80,21 @@ public class GlobalExceptionMapper {
                 .build();
     }
 
+    @ServerExceptionMapper(jakarta.ws.rs.NotFoundException.class)
+    public Response mapJaxRsNotFoundException(jakarta.ws.rs.NotFoundException ex) {
+
+        if (hasCause(ex, DateTimeParseException.class)) {
+            LOGGER.error("Error while processing request", ex);
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("invalid timestamp format", List.of(ex.getCause().getMessage())))
+                    .build();
+        }
+
+        return Response.status(Response.Status.NOT_FOUND)
+                .entity(new ErrorResponse("resource not found", List.of(ex.getMessage())))
+                .build();
+    }
+
     @ServerExceptionMapper(IllegalArgumentException.class)
     public Response mapIllegalArgumentExceptionException(IllegalArgumentException ex) {
 
@@ -87,6 +103,17 @@ public class GlobalExceptionMapper {
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity(new ErrorResponse("invalid argument", List.of(ex.getMessage())))
                 .build();
+    }
+
+    private static boolean hasCause(Throwable ex, Class<? extends Throwable> type) {
+        Throwable cause = ex.getCause();
+        while (cause != null) {
+            if (type.isInstance(cause)) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
     }
 
     public record ErrorResponse(String error, List<String> details) {
