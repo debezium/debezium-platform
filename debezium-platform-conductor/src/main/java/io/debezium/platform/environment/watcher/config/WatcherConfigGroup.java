@@ -30,8 +30,6 @@ public interface WatcherConfigGroup {
         @WithName("interval-ms")
         int intervalMs();
 
-        @WithName("action-query")
-        Optional<String> actionQuery();
     }
 
 }
