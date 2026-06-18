@@ -910,6 +910,7 @@ const CreateSchemaForm = React.forwardRef<
     connectorSchema.properties,
     connectorTypeString,
     tableManagedIncludeListNames,
+    isDestination,
   ]);
 
   React.useImperativeHandle(
