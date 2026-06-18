@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,11 +26,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import io.debezium.doc.FixFor;
 import io.debezium.operator.api.model.runtime.metrics.Metrics;
 import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
 import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
+import io.debezium.platform.domain.views.Transform;
 import io.debezium.platform.domain.views.flat.DestinationFlat;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.domain.views.flat.SourceFlat;
@@ -186,6 +189,33 @@ public class PipelineMapperTest {
         var otel = result.getSpec().getRuntime().getMetrics().getOpenTelemetry();
         assertThat(otel.isEnabled()).isTrue();
         assertThat(otel.getCollector().getEndpoint()).isNull();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2112")
+    public void testMapper_ShouldHandleTransformWithEmptyPredicate() {
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var predicate = mock(io.debezium.platform.domain.views.Predicate.class);
+        when(predicate.getType()).thenReturn(null);
+        when(predicate.getConfig()).thenReturn(null);
+        when(predicate.isNegate()).thenReturn(false);
+
+        var transform = mock(Transform.class);
+        when(transform.getId()).thenReturn(1L);
+        when(transform.getType()).thenReturn("io.debezium.transforms.ExtractNewRecordState");
+        when(transform.getConfig()).thenReturn(Map.of("delete.handling.mode", "none"));
+        when(transform.getPredicate()).thenReturn(predicate);
+        when(pipeline.getTransforms()).thenReturn(List.of(transform));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getTransforms()).hasSize(1);
+        assertThat(result.getSpec().getTransforms().get(0).getType())
+                .isEqualTo("io.debezium.transforms.ExtractNewRecordState");
+        assertThat(result.getSpec().getPredicates()).isEmpty();
     }
 
     private PipelineMapper createMapper() {
