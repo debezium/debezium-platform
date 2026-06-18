@@ -329,13 +329,13 @@ const CreateSchemaForm = React.forwardRef<
   const connectorTypeString = dataType || connectorId;
 
   const tableManagedFilterNames = useMemo(
-    () => new Set(getTableManagedFilterPropertyNames(connectorTypeString)),
-    [connectorTypeString]
+    () => isDestination ? new Set<string>() : new Set(getTableManagedFilterPropertyNames(connectorTypeString)),
+    [connectorTypeString, isDestination]
   );
 
   const tableManagedIncludeListNames = useMemo(
-    () => new Set(getTableManagedIncludeListPropertyNames(connectorTypeString)),
-    [connectorTypeString]
+    () => isDestination ? new Set<string>() : new Set(getTableManagedIncludeListPropertyNames(connectorTypeString)),
+    [connectorTypeString, isDestination]
   );
 
   useLayoutEffect(() => {
@@ -495,6 +495,8 @@ const CreateSchemaForm = React.forwardRef<
       : undefined;
 
   const renderDataTableExplorer = useCallback(() => {
+    // Table Explorer is only for sources, not destinations
+    if (isDestination) return null;
     if (!selectedConnection?.id) return null;
     if (isCollectionsLoading) {
       return (
@@ -541,6 +543,7 @@ const CreateSchemaForm = React.forwardRef<
       </div>
     );
   }, [
+    isDestination,
     selectedConnection?.id,
     isCollectionsLoading,
     collectionsError,
@@ -869,7 +872,10 @@ const CreateSchemaForm = React.forwardRef<
 
     if (signalCollectionName) config["signal.data.collection"] = signalCollectionName;
 
-    Object.assign(config, getIncludeList(selectedDataListItems, connectorTypeString));
+    // Only add include lists from table selections for sources, not destinations
+    if (!isDestination) {
+      Object.assign(config, getIncludeList(selectedDataListItems, connectorTypeString));
+    }
 
     const payload: Record<string, unknown> = {
       name: connectorName,

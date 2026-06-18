@@ -127,6 +127,9 @@ export const getConnectorTypeName = (connectorType: string) => {
     case connectorType.includes("rabbitmq"):
       name = "RabbitMQ Server Sink";
       break;
+    case connectorType.includes("jdbc"):
+      name = "JDBC Server Sink";
+      break;  
     case connectorType.includes("nats"):
       name = "NATS Streaming Server Sink";
       break;
