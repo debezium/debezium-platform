@@ -22,6 +22,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 
 import com.blazebit.persistence.view.EntityViewManager;
 
+import io.debezium.doc.FixFor;
 import io.debezium.platform.domain.DestinationService;
 import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.SourceService;
@@ -34,6 +35,7 @@ import io.debezium.platform.domain.views.Transform;
 import io.debezium.platform.domain.views.Vault;
 import io.debezium.platform.domain.views.refs.DestinationReference;
 import io.debezium.platform.domain.views.refs.SourceReference;
+import io.debezium.platform.domain.views.refs.TransformReference;
 import io.debezium.platform.domain.views.refs.VaultReference;
 import io.quarkus.test.junit.QuarkusTest;
 
@@ -193,6 +195,24 @@ public class ServiceIT {
 
     @Test
     @Order(52)
+    @FixFor("debezium/dbz#2111")
+    public void updatePipelineTransforms() {
+        Assumptions.assumeThat(pipeline).isNotNull();
+        Assumptions.assumeThat(transforms).isNotEmpty();
+
+        var uPipeline = pipelineService.findById(pipeline.getId()).orElse(null);
+        Assertions.assertThat(uPipeline).isNotNull();
+
+        var transformRef = transformService.viewAs(transforms.get(0), TransformReference.class);
+        uPipeline.setTransforms(List.of(transformRef));
+
+        pipeline = pipelineService.update(uPipeline);
+
+        Assertions.assertThat(pipeline.getTransforms()).hasSize(1);
+    }
+
+    @Test
+    @Order(53)
     public void listPipelines() {
         var list = pipelineService.list();
 
