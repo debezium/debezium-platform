@@ -15,9 +15,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.inject.Inject;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import io.agroal.api.AgroalDataSource;
 import io.debezium.platform.HeartbeatTestProfile;

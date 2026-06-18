@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import jakarta.inject.Inject;
 
+import org.awaitility.Awaitility;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +26,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import io.debezium.doc.FixFor;
 import io.debezium.operator.api.model.DebeziumServer;
