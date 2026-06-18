@@ -106,6 +106,7 @@ public class PipelineMapper {
                 .toList();
 
         Map<String, Predicate> predicates = pipeline.getTransforms().stream()
+                .filter(this::hasPredicate)
                 .collect(Collectors.toMap(
                         this::getPredicateName,
                         this::buildPredicate));
@@ -301,13 +302,20 @@ public class PipelineMapper {
         var transformConfig = new ConfigProperties();
         transformConfig.setAllProps(transform.getConfig());
 
-        return new TransformationBuilder()
+        var builder = new TransformationBuilder()
                 .withType(transform.getType())
-                .withConfig(transformConfig)
-                .withPredicate(getPredicateName(transform))
-                .withNegate(transform.getPredicate().isNegate())
-                .build();
+                .withConfig(transformConfig);
 
+        if (hasPredicate(transform)) {
+            builder.withPredicate(getPredicateName(transform))
+                    .withNegate(transform.getPredicate().isNegate());
+        }
+
+        return builder.build();
+    }
+
+    private boolean hasPredicate(Transform transform) {
+        return transform.getPredicate() != null && transform.getPredicate().getType() != null;
     }
 
     private String getPredicateName(Transform transform) {
