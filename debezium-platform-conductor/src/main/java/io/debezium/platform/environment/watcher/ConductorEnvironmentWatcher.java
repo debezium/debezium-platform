@@ -90,8 +90,7 @@ public class ConductorEnvironmentWatcher {
                 .with(PostgresConnectorConfig.TABLE_INCLUDE_LIST, "public.%s,public.heartbeat".formatted(outbox.table()))
                 .with(PostgresConnectorConfig.PUBLICATION_AUTOCREATE_MODE, AutoCreateMode.FILTERED)
                 .with(Heartbeat.HEARTBEAT_INTERVAL_PROPERTY_NAME, watcher.heartbeat().intervalMs())
-                .with(DatabaseHeartbeatImpl.HEARTBEAT_ACTION_QUERY_PROPERTY_NAME,
-                        watcher.heartbeat().actionQuery().orElse(HEARTBEAT_DEFAULT_ACTION_QUERY))
+                .with(DatabaseHeartbeatImpl.HEARTBEAT_ACTION_QUERY_PROPERTY_NAME, HEARTBEAT_DEFAULT_ACTION_QUERY)
                 .with("transforms", "outbox")
                 .with("transforms.outbox.type", EventRouter.class.getName())
                 .with("transforms.outbox.table.fields.additional.placement", extraFields)
