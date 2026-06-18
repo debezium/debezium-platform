@@ -8,9 +8,9 @@ package io.debezium.platform.environment.database.db;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
 import org.bson.Document;
 import org.testcontainers.mongodb.MongoDBContainer;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.testcontainers.utility.DockerImageName;
 
 import com.mongodb.client.MongoClients;
