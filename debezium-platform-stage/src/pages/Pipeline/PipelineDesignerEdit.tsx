@@ -54,6 +54,7 @@ import {
   Pipeline,
   PipelineDestination,
   PipelineSource,
+  PipelineUpdatePayload,
   Source,
   Transform,
 } from "../../apis/apis";
@@ -157,6 +158,8 @@ const PipelineDesignerEdit: React.FunctionComponent<
 
     const [isExpanded, setIsExpanded] = React.useState(false);
     const drawerRef = React.useRef<HTMLDivElement>(null);
+    const hasLocalTransformChangesRef = React.useRef(false);
+    const initializedPipelineIdRef = React.useRef<number | null>(null);
 
     const [source, setSource] = useState<Source>();
     const [destination, setDestination] = useState<Destination>();
@@ -262,47 +265,64 @@ const PipelineDesignerEdit: React.FunctionComponent<
     }, [pipelineDestination]);
 
     useLayoutEffect(() => {
+      if (initializedPipelineIdRef.current === pipelineId) {
+        return;
+      }
+      initializedPipelineIdRef.current = pipelineId;
+      hasLocalTransformChangesRef.current = false;
       setSelectedTransform(transforms ?? []);
-    }, [setSelectedTransform, transforms]);
+    }, [setSelectedTransform, transforms, pipelineId]);
 
-    const effectiveTransforms = useMemo(
-      () =>
-        selectedTransform.length > 0 ? selectedTransform : (transforms ?? []),
-      [selectedTransform, transforms]
-    );
+    const effectiveTransforms = useMemo(() => {
+      if (selectedTransform.length > 0 || hasLocalTransformChangesRef.current) {
+        return selectedTransform;
+      }
+      return transforms ?? [];
+    }, [selectedTransform, transforms]);
 
     // Handle temporary deletion of items
     const handleTempDelete = React.useCallback((id: string) => {
       setItems((prevItems) => prevItems.filter((item) => item.id !== id));
     }, []);
 
-    // Initialize items when selectedTransform changes
+    // Sync drawer items when transforms change externally, but not while the drawer is open
+    // (user may have pending deletes/reorders that must not be overwritten)
     useEffect(() => {
-      if (selectedTransform.length > 0) {
-        setItems(getItems(selectedTransform, handleTempDelete));
+      if (isExpanded) {
+        return;
       }
-    }, [selectedTransform, handleTempDelete]);
+      if (effectiveTransforms.length > 0) {
+        setItems(getItems(effectiveTransforms, handleTempDelete));
+      } else {
+        setItems([]);
+      }
+    }, [effectiveTransforms, handleTempDelete, isExpanded]);
 
     const onExpand = () => {
       drawerRef.current && drawerRef.current.focus();
     };
 
     const onToggleDrawer = () => {
-      if (isExpanded) {
-        // Reset temporary state when closing drawer without applying
-        setItems(getItems(selectedTransform, handleTempDelete));
+      if (!isExpanded) {
+        setItems(getItems(effectiveTransforms, handleTempDelete));
+        if (
+          effectiveTransforms.length > 0 &&
+          selectedTransform.length !== effectiveTransforms.length
+        ) {
+          setSelectedTransform(effectiveTransforms);
+        }
       }
       setIsExpanded(!isExpanded);
     };
 
     const onCloseClick = () => {
-      // Reset temporary state when closing drawer without applying
-      setItems(getItems(selectedTransform, handleTempDelete));
+      setItems(getItems(effectiveTransforms, handleTempDelete));
       setIsExpanded(false);
     };
 
     const updateSelectedTransform = React.useCallback(
       (transform: Transform[]) => {
+        hasLocalTransformChangesRef.current = true;
         setSelectedTransform(transform);
       },
       [setSelectedTransform]
@@ -320,9 +340,14 @@ const PipelineDesignerEdit: React.FunctionComponent<
         return { id: Number(id), name };
       });
 
-      setSelectedTransform(...[updatedTransforms]);
-      // setRearrangeTrigger((prev) => !prev);
-      onToggleDrawer();
+      hasLocalTransformChangesRef.current = true;
+      setSelectedTransform(updatedTransforms);
+      setItems(
+        updatedTransforms.length > 0
+          ? getItems(updatedTransforms, handleTempDelete)
+          : []
+      );
+      setIsExpanded(false);
     };
 
     const reArrangeTransform = (
@@ -334,13 +359,25 @@ const PipelineDesignerEdit: React.FunctionComponent<
       setItems(newItems);
     };
 
+    const buildLogLevelsPayload = () =>
+      Array.from(pkgLevelLog.entries()).reduce(
+        (acc, [, entry]) => {
+          if (entry.key && entry.value) {
+            acc[entry.key] = entry.value;
+          }
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+
     const editPipeline = async (values: Record<string, string>) => {
       setIsLoading(true);
-      const payload = {
+      const payload: PipelineUpdatePayload = {
         description: values["descriptions"],
         logLevel: logLevel,
+        logLevels: buildLogLevelsPayload(),
         name: values["pipeline-name"],
-        transforms: selectedTransform,
+        transforms: effectiveTransforms.map(({ id, name }) => ({ id, name })),
       };
 
       const response = await editPut(
@@ -410,9 +447,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
           {t('pipeline:transformDrawer.description')}
         </DrawerPanelDescription>
         <DrawerPanelBody style={{ display: "inline-block" }}>
-          {selectedTransform.length === 0 ? (
-            <>{t('pipeline:transformDrawer.emptyState')}</>
-          ) : (
+          {isExpanded ? (
             <>
               <DragDropSort
                 items={items}
@@ -430,7 +465,9 @@ const PipelineDesignerEdit: React.FunctionComponent<
                 {t('apply')}
               </Button>
             </>
-          )}
+          ) : effectiveTransforms.length === 0 ? (
+            <>{t('pipeline:transformDrawer.emptyState')}</>
+          ) : null}
         </DrawerPanelBody>
       </DrawerPanelContent>
     );
@@ -786,9 +823,34 @@ const PipelineDesignerEdit: React.FunctionComponent<
                               const pipelineNameError = getPipelineNameValidationError(values["pipeline-name"]);
                               if (pipelineNameError) {
                                 setError("pipeline-name", pipelineNameError);
-                              } else {
-                                handleEditPipeline(values);
+                                return;
                               }
+
+                              if (!logLevel) {
+                                return;
+                              }
+
+                              const invalidLogEntries = Array.from(
+                                pkgLevelLog.entries()
+                              ).filter(([, entry]) => !entry.key || !entry.value);
+
+                              if (invalidLogEntries.length > 0) {
+                                const keyValueError = t(
+                                  "pipeline:validation.keyValueRequired"
+                                );
+                                const invalidKey = invalidLogEntries[0][0];
+                                setError(
+                                  `pkg-level-log-config-props-key-field-${invalidKey}`,
+                                  keyValueError
+                                );
+                                setError(
+                                  `pkg-level-log-config-props-value-field-${invalidKey}`,
+                                  keyValueError
+                                );
+                                return;
+                              }
+
+                              handleEditPipeline(values);
                             }}
                           >
                             {t('pipeline:overview.updatePipeline')}

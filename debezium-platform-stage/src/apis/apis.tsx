@@ -157,6 +157,14 @@ export type PipelinePayload = {
   logLevels: Record<string, string>;
 };
 
+export type PipelineUpdatePayload = {
+  name: string;
+  description?: string;
+  transforms: Transform[];
+  logLevel: string;
+  logLevels: Record<string, string>;
+};
+
 
 export type DestinationApiResponse = Destination[];
 
