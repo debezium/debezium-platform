@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import io.debezium.engine.ChangeEvent;
 import io.debezium.platform.environment.watcher.config.OutboxConfigGroup;
+import io.debezium.platform.environment.watcher.config.WatcherConfigGroup;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 
 /**
@@ -32,14 +33,16 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
 public final class OutboxParentEventConsumer implements Consumer<ChangeEvent<SourceRecord, SourceRecord>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OutboxParentEventConsumer.class);
-    private static final int MAX_RETRIES = 3;
 
     private final OutboxConfigGroup outbox;
     private final Instance<EnvironmentEventConsumer<?>> eventConsumers;
+    private final int maxRetries;
 
-    public OutboxParentEventConsumer(OutboxConfigGroup outbox, Instance<EnvironmentEventConsumer<?>> eventConsumers) {
+    public OutboxParentEventConsumer(OutboxConfigGroup outbox, WatcherConfigGroup watcherConfig,
+                                     Instance<EnvironmentEventConsumer<?>> eventConsumers) {
         this.outbox = outbox;
         this.eventConsumers = eventConsumers;
+        this.maxRetries = watcherConfig.retry().maxRetries();
     }
 
     @Override
@@ -60,19 +63,19 @@ public final class OutboxParentEventConsumer implements Consumer<ChangeEvent<Sou
 
     private void consumeWithRetry(EnvironmentEventConsumer<?> consumer, EventContext context) {
 
-        for (int attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
+        for (int attempt = 1; attempt <= maxRetries + 1; attempt++) {
             try {
                 consumer.consume(context.aggregateType(), context.eventType(),
                         Long.valueOf(context.aggregateId()), context.payload());
                 return;
             }
             catch (Exception e) {
-                if (isRetriable(e) && attempt <= MAX_RETRIES) {
+                if (isRetriable(e) && attempt <= maxRetries) {
                     var delay = backoffDelay(attempt);
                     LOGGER.warn("Retriable error processing {} event for aggregate {} (#{}),"
                             + " attempt {}/{}, retrying in {}ms",
                             context.eventType(), context.aggregateType(), context.aggregateId(),
-                            attempt, MAX_RETRIES, delay, e);
+                            attempt, maxRetries, delay, e);
                     if (!sleep(delay)) {
                         return;
                     }

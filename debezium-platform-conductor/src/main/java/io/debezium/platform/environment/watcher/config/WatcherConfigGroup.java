@@ -11,6 +11,7 @@ import io.debezium.platform.config.OffsetConfigGroup;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 
 @ConfigMapping(prefix = "conductor.watcher")
@@ -25,10 +26,20 @@ public interface WatcherConfigGroup {
 
     HeartbeatConfig heartbeat();
 
+    RetryConfig retry();
+
     interface HeartbeatConfig {
 
         @WithName("interval-ms")
         int intervalMs();
+
+    }
+
+    interface RetryConfig {
+
+        @WithDefault("3")
+        @WithName("max-retries")
+        int maxRetries();
 
     }
 
