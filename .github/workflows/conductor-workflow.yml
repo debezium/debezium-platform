@@ -30,7 +30,7 @@ jobs:
       cache_key: ${{ steps.build-cache.outputs.cache_key }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Build and cache dependencies
         id: build-cache
@@ -48,7 +48,7 @@ jobs:
         working-directory: debezium-platform-conductor
     steps:
       - name: Checkout Action
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run tests
         uses: ./.github/actions/tests
