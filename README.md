@@ -103,6 +103,16 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
 ```
 
+When monitoring is enabled, configure the Prometheus URL in your values file so the conductor can query metrics:
+
+```yaml
+monitoring:
+  otel:
+    enabled: true
+  prometheus:
+    url: "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
+```
+
 Create a dedicated namespace
 
 ```shell

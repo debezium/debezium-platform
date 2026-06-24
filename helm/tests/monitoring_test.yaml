@@ -11,6 +11,7 @@ tests:
     template: otel-collector.yaml
     set:
       monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
     asserts:
       - isKind:
           of: OpenTelemetryCollector
@@ -47,6 +48,7 @@ tests:
     template: otel-collector.yaml
     set:
       monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
       monitoring.otel.collector.replicas: 3
     asserts:
       - equal:
@@ -57,6 +59,7 @@ tests:
     template: otel-collector.yaml
     set:
       monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
       monitoring.otel.collector.receivers.grpc.port: 14317
       monitoring.otel.collector.receivers.http.port: 14318
     asserts:
@@ -71,6 +74,7 @@ tests:
     template: otel-collector.yaml
     set:
       monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
       monitoring.otel.collector.processors.batch.timeout: 10s
       monitoring.otel.collector.processors.batch.sendBatchSize: 1024
     asserts:
@@ -85,6 +89,7 @@ tests:
     template: otel-collector.yaml
     set:
       monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
       monitoring.otel.collector.exporters.prometheus.port: 9090
     asserts:
       - equal:
@@ -95,6 +100,7 @@ tests:
     template: otel-collector.yaml
     set:
       monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
     asserts:
       - equal:
           path: spec.config.service.pipelines.metrics.receivers
@@ -114,6 +120,7 @@ tests:
     template: servicemonitor.yaml
     set:
       monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
       monitoring.prometheus.serviceMonitor.enabled: true
     asserts:
       - isKind:
@@ -147,6 +154,7 @@ tests:
     template: servicemonitor.yaml
     set:
       monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
       monitoring.prometheus.serviceMonitor.enabled: false
     asserts:
       - hasDocuments:
@@ -156,6 +164,7 @@ tests:
     template: servicemonitor.yaml
     set:
       monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
       monitoring.prometheus.serviceMonitor.enabled: true
       monitoring.prometheus.serviceMonitor.labels:
         release: my-prometheus
@@ -168,6 +177,7 @@ tests:
     template: servicemonitor.yaml
     set:
       monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
       monitoring.prometheus.serviceMonitor.enabled: true
       monitoring.prometheus.serviceMonitor.scrapeInterval: 30s
     asserts:
@@ -180,6 +190,7 @@ tests:
     template: conductor-deployment.yaml
     set:
       monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
@@ -192,6 +203,11 @@ tests:
             name: PIPELINE_MONITORING_OTEL_ENDPOINT
             value: "http://debezium-platform-otel-collector-collector.NAMESPACE.svc.cluster.local:4318"
           any: true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_URL
+            value: "http://prometheus:9090"
 
   - it: should not inject monitoring env vars when monitoring.otel.enabled is false
     template: conductor-deployment.yaml
@@ -207,6 +223,11 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: PIPELINE_MONITORING_OTEL_ENDPOINT
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_URL
           any: true
 
   - it: should set MONITORING_PANELS_PATH when additionalPanelsPath is configured
@@ -228,3 +249,11 @@ tests:
           content:
             name: MONITORING_PANELS_PATH
           any: true
+
+  - it: should fail when monitoring.otel.enabled is true but monitoring.prometheus.url is not set
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "monitoring.prometheus.url is required when monitoring.otel.enabled is true"
