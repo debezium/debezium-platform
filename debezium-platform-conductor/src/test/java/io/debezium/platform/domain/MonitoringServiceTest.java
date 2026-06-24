@@ -86,7 +86,7 @@ class MonitoringServiceTest {
                 "event-count", "my-pipeline", Instant.parse("2026-04-23T10:00:00Z"), Instant.parse("2026-04-23T11:00:00Z"), "1m");
 
         verify(prometheusClient).queryRange(
-                eq("rate(debezium_event_count_total%7Bservice_name=\"my-pipeline\"%7D[5m])"),
+                eq("rate(debezium_event_count_total{service_name=\"my-pipeline\"}[5m])"),
                 eq("2026-04-23T10:00:00Z"),
                 eq("2026-04-23T11:00:00Z"),
                 eq("1m"));

@@ -41,7 +41,7 @@ public class PrometheusTestResource implements QuarkusTestResourceLifecycleManag
         String config = DebeziumMetricsEndpoint.prometheusConfig(
                 "host.testcontainers.internal", metricsPort, "1s");
 
-        prometheus = new GenericContainer<>(DockerImageName.parse("prom/prometheus:v2.53.0"))
+        prometheus = new GenericContainer<>(DockerImageName.parse("prom/prometheus:v3.12.0"))
                 .withExposedPorts(PROMETHEUS_PORT)
                 .withCopyToContainer(
                         Transferable.of(config.getBytes(StandardCharsets.UTF_8)),
