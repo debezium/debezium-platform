@@ -117,6 +117,13 @@ Result: PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE
 {{- end -}}
 
 {{/*
+Get the Prometheus URL. Required when monitoring.otel.enabled is true.
+*/}}
+{{- define "debezium-platform.prometheusUrl" -}}
+{{- required "monitoring.prometheus.url is required when monitoring.otel.enabled is true" .Values.monitoring.prometheus.url -}}
+{{- end -}}
+
+{{/*
 Get the OpenTelemetry Collector resource name.
 */}}
 {{- define "debezium-platform.otelCollectorName" -}}

@@ -85,8 +85,7 @@ monitoring:
   panels:
     additionalPanelsPath: ""
   prometheus:
-    external:
-      url: ""
+    url: ""
     serviceMonitor:
       enabled: true
       scrapeInterval: 15s

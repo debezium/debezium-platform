@@ -41,6 +41,15 @@ The following operators must be installed in the cluster **before** deploying th
    helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack
    ```
 
+> **Note:** When monitoring is enabled you must set `monitoring.prometheus.url` to point to your Prometheus instance
+> so that the conductor can query metrics. This is required regardless of how Prometheus was installed (operator, standalone, etc.).
+> For example, if you installed `kube-prometheus-stack` in the `monitoring` namespace with default settings:
+> ```yaml
+> monitoring:
+>   prometheus:
+>     url: "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
+> ```
+
 > **Note:** The OTel Collector must include the **Prometheus exporter**. The base `otelcol` distribution
 > includes it, but when the OTel Operator is installed via Helm it defaults to the `otelcol-k8s` distribution
 > which does **not**. If your operator uses the `k8s` distribution, set `monitoring.otel.collector.image`
@@ -108,7 +117,7 @@ The following operators must be installed in the cluster **before** deploying th
 | monitoring.otel.collector.exporters.prometheus.port | Prometheus exporter listen port                                                                                                                                                 | 8889                                       |
 | monitoring.otel.collector.exporters.prometheus.resourceToTelemetryConversion | Convert OTel resource attributes to Prometheus labels                                                                                                    | true                                       |
 | monitoring.otel.collector.exporters.prometheus.constLabels | Static labels added to all exported metrics                                                                                                                              | {platform: debezium}                       |
-| monitoring.prometheus.external.url         | URL of an external Prometheus instance (for users not using Prometheus Operator)                                                                                                        | ""                                         |
+| monitoring.prometheus.url                  | URL of the Prometheus instance used by the conductor to query metrics. **Required** when `monitoring.otel.enabled` is `true`.                                                          | ""                                         |
 | monitoring.prometheus.serviceMonitor.enabled | Create a ServiceMonitor for automatic Prometheus scraping. Requires the Prometheus Operator to be installed (see Prerequisites).                                                      | true                                       |
 | monitoring.prometheus.serviceMonitor.scrapeInterval | Prometheus scrape interval                                                                                                                                                    | 15s                                        |
 | monitoring.prometheus.serviceMonitor.labels | Labels for Prometheus Operator ServiceMonitor discovery                                                                                                                                | {prometheus: kube-prometheus}              |

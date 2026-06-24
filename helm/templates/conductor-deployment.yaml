@@ -76,6 +76,8 @@ spec:
               value: "true"
             - name: PIPELINE_MONITORING_OTEL_ENDPOINT
               value: {{ include "debezium-platform.otelCollectorEndpoint" . }}
+            - name: MONITORING_PROMETHEUS_URL
+              value: {{ include "debezium-platform.prometheusUrl" . }}
 {{- end }}
 {{- if .Values.monitoring.panels.additionalPanelsPath }}
             - name: MONITORING_PANELS_PATH
