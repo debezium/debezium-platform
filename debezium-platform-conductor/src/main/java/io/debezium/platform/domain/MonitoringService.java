@@ -54,7 +54,7 @@ public class MonitoringService {
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Panel not found: " + panelId));
 
-        String query = encodePromQLBraces(panelConfig.query().replace(PIPELINE_ID_PLACEHOLDER, pipelineId));
+        String query = panelConfig.query().replace(PIPELINE_ID_PLACEHOLDER, pipelineId);
 
         if (Strings.isNullOrBlank(step)) {
             step = panelConfig.visualization().suggestedStep();
@@ -76,11 +76,6 @@ public class MonitoringService {
                 new PanelQueryResponse.TimeRange(start.toString(), end.toString(), step),
                 series,
                 new PanelQueryResponse.Metadata(queryDuration));
-    }
-
-    // Curly braces must be pre-encoded to avoid JAX-RS interpreting them as URI template variables
-    private static String encodePromQLBraces(String query) {
-        return query.replace("{", "%7B").replace("}", "%7D");
     }
 
     private List<PanelQueryResponse.TimeSeries> transformResponse(PrometheusQueryRangeResponse response) {
