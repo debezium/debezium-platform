@@ -3,10 +3,10 @@ panels:
   # --- Streaming ---
 
   - id: streaming-event-count
-    title: "Streaming Event Count"
+    title: "Streaming Event Count Rate"
     description: "Rate of streaming change data capture events per second, grouped by event type (create, update, delete)"
     category: streaming
-    query: 'rate(debezium_event_count_total{service_name="{{pipeline_id}}",debezium_context="streaming"}[5m])'
+    query: 'rate(debezium_event_count_total{service_name="{{pipeline_id}}",debezium_context="streaming"}[5m]) or label_replace(sum(rate(debezium_event_count_total{service_name="{{pipeline_id}}",debezium_context="streaming"}[5m])), "debezium_event_type", "total", "", "")'
     unit: events/s
     visualization:
       type: area
@@ -16,7 +16,7 @@ panels:
     title: "Source Lag"
     description: "Time between a change occurring in the source database and Debezium processing it"
     category: streaming
-    query: 'debezium_source_lag{service_name="{{pipeline_id}}"}'
+    query: 'debezium_source_lag_seconds{service_name="{{pipeline_id}}"}'
     unit: s
     visualization:
       type: line
@@ -26,14 +26,14 @@ panels:
     title: "Time Since Last Event"
     description: "Elapsed time since the last change event was processed"
     category: streaming
-    query: 'debezium_event_time_since_last{service_name="{{pipeline_id}}"}'
+    query: 'debezium_event_time_since_last_seconds{service_name="{{pipeline_id}}"}'
     unit: s
     visualization:
       type: line
       suggestedStep: 15s
 
   - id: erroneous-events
-    title: "Erroneous Events"
+    title: "Erroneous Events Rate"
     description: "Rate of events that resulted in an error during processing"
     category: streaming
     query: 'rate(debezium_event_erroneous_count_total{service_name="{{pipeline_id}}"}[5m])'
@@ -43,7 +43,7 @@ panels:
       suggestedStep: 15s
 
   - id: events-filtered
-    title: "Events Filtered"
+    title: "Events Filtered Rate"
     description: "Rate of events excluded by the connector filter configuration"
     category: streaming
     query: 'rate(debezium_event_filtered_count_total{service_name="{{pipeline_id}}"}[5m])'
@@ -53,7 +53,7 @@ panels:
       suggestedStep: 15s
 
   - id: committed-transactions
-    title: "Committed Transactions"
+    title: "Committed Transactions Rate"
     description: "Rate of committed transactions processed from the source database"
     category: streaming
     query: 'rate(debezium_transaction_committed_count_total{service_name="{{pipeline_id}}"}[5m])'
@@ -64,7 +64,7 @@ panels:
 
   - id: connection-status
     title: "Connection Status"
-    description: "Database connection status (1 = connected, 0 = disconnected)"
+    description: "Whether the connector is connected to the source database listening for changes"
     category: streaming
     query: 'debezium_connection_status{service_name="{{pipeline_id}}",debezium_connection_state="connected"}'
     unit: ""
@@ -88,7 +88,7 @@ panels:
     title: "Queue Size Utilization"
     description: "Percentage of the internal event queue byte capacity currently in use"
     category: streaming
-    query: 'debezium_queue_size{service_name="{{pipeline_id}}"} / debezium_queue_size_limit{service_name="{{pipeline_id}}"} * 100'
+    query: 'debezium_queue_size_bytes{service_name="{{pipeline_id}}"} / debezium_queue_size_limit_bytes{service_name="{{pipeline_id}}"} * 100'
     unit: "%"
     visualization:
       type: donut-utilization
@@ -97,7 +97,7 @@ panels:
   # --- Snapshot ---
 
   - id: snapshot-event-count
-    title: "Snapshot Event Count"
+    title: "Snapshot Event Count Rate"
     description: "Rate of snapshot change data capture events per second, grouped by event type (create, update, delete)"
     category: snapshot
     query: 'rate(debezium_event_count_total{service_name="{{pipeline_id}}",debezium_context="snapshot"}[5m])'
@@ -106,11 +106,21 @@ panels:
       type: area
       suggestedStep: 15s
 
+  - id: snapshot-table-count
+    title: "Snapshot Table Count"
+    description: "Total number of tables included in the snapshot"
+    category: snapshot
+    query: 'max(debezium_snapshot_table_count{service_name="{{pipeline_id}}"})'
+    unit: tables
+    visualization:
+      type: line
+      suggestedStep: 15s
+
   - id: snapshot-table-progress
     title: "Snapshot Table Progress"
     description: "Number of tables remaining to be captured during the snapshot"
     category: snapshot
-    query: 'debezium_snapshot_table_remaining_count{service_name="{{pipeline_id}}"}'
+    query: 'max(debezium_snapshot_table_remaining_count{service_name="{{pipeline_id}}"})'
     unit: tables
     visualization:
       type: donut-utilization
@@ -120,37 +130,17 @@ panels:
     title: "Snapshot Duration"
     description: "Total elapsed time of the current or most recent snapshot"
     category: snapshot
-    query: 'debezium_snapshot_duration{service_name="{{pipeline_id}}"}'
+    query: 'max(debezium_snapshot_duration_seconds{service_name="{{pipeline_id}}"})'
     unit: s
     visualization:
       type: line
       suggestedStep: 15s
 
-  - id: snapshot-running
-    title: "Snapshot Running"
-    description: "Whether a snapshot is currently running (1 = running, 0 = not running)"
+  - id: snapshot-status
+    title: "Snapshot Status"
+    description: "Current snapshot lifecycle state (running, completed, aborted, or skipped)"
     category: snapshot
-    query: 'debezium_snapshot_running{service_name="{{pipeline_id}}",debezium_snapshot_running_state="running"}'
-    unit: ""
-    visualization:
-      type: donut-utilization
-      suggestedStep: 15s
-
-  - id: snapshot-completed
-    title: "Snapshot Completed"
-    description: "Whether the snapshot has completed (1 = completed, 0 = not completed)"
-    category: snapshot
-    query: 'debezium_snapshot_completed{service_name="{{pipeline_id}}",debezium_snapshot_completed_state="completed"}'
-    unit: ""
-    visualization:
-      type: donut-utilization
-      suggestedStep: 15s
-
-  - id: snapshot-aborted
-    title: "Snapshot Aborted"
-    description: "Whether the snapshot was aborted (1 = aborted, 0 = not aborted)"
-    category: snapshot
-    query: 'debezium_snapshot_aborted{service_name="{{pipeline_id}}",debezium_snapshot_aborted_state="aborted"}'
+    query: 'max by(debezium_snapshot_status) (label_replace(debezium_snapshot_running{service_name="{{pipeline_id}}",debezium_snapshot_running_state="running"}, "debezium_snapshot_status", "running", "", "") or label_replace(debezium_snapshot_completed{service_name="{{pipeline_id}}",debezium_snapshot_completed_state="completed"}, "debezium_snapshot_status", "completed", "", "") or label_replace(debezium_snapshot_aborted{service_name="{{pipeline_id}}",debezium_snapshot_aborted_state="aborted"}, "debezium_snapshot_status", "aborted", "", "") or label_replace(debezium_snapshot_skipped{service_name="{{pipeline_id}}",debezium_snapshot_skipped_state="skipped"}, "debezium_snapshot_status", "skipped", "", ""))'
     unit: ""
     visualization:
       type: donut-utilization
