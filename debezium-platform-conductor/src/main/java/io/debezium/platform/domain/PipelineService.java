@@ -5,12 +5,12 @@
  */
 package io.debezium.platform.domain;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
+import jakarta.enterprise.inject.Instance;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
@@ -25,7 +25,6 @@ import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.domain.views.refs.PipelineReference;
 import io.debezium.platform.environment.EnvironmentController;
 import io.debezium.platform.environment.watcher.events.PipelineEvent;
-import io.quarkus.arc.All;
 
 @ApplicationScoped
 public class PipelineService extends AbstractService<PipelineEntity, Pipeline, PipelineReference> {
@@ -33,7 +32,7 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
     private final Event<ExportedEvent<?, ?>> event;
     private final ObjectMapper objectMapper;
     private final LogStreamingService logStreamer;
-    private final List<EnvironmentController> environmentControllers;
+    private final Instance<EnvironmentController> environmentController;
 
     public PipelineService(EntityManager em,
                            CriteriaBuilderFactory cbf,
@@ -41,12 +40,12 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
                            Event<ExportedEvent<?, ?>> event,
                            ObjectMapper objectMapper,
                            LogStreamingService logStreamer,
-                           @All List<EnvironmentController> environmentControllers) {
+                           Instance<EnvironmentController> environmentController) {
         super(PipelineEntity.class, Pipeline.class, PipelineReference.class, em, cbf, evm);
         this.event = event;
         this.objectMapper = objectMapper;
         this.logStreamer = logStreamer;
-        this.environmentControllers = environmentControllers;
+        this.environmentController = environmentController;
     }
 
     @Override
@@ -69,8 +68,7 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
      * @return {@link EnvironmentController} instance for the given pipeline
      */
     public Optional<EnvironmentController> environmentController(Long id) {
-        // TODO: only operator environment is supported currently;
-        return findById(id).map(pipeline -> environmentControllers.getFirst());
+        return findById(id).map(pipeline -> environmentController.get());
     }
 
     /**
