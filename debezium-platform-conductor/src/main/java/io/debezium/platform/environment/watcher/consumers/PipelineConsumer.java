@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Instance;
 
 import org.jboss.logging.Logger;
 
@@ -23,7 +24,7 @@ import io.debezium.platform.environment.watcher.events.EventType;
 @Dependent
 public class PipelineConsumer extends AbstractEventConsumer<PipelineFlat> {
 
-    public PipelineConsumer(Logger logger, EnvironmentController environment, ObjectMapper objectMapper, EntityViewManager evm) {
+    public PipelineConsumer(Logger logger, Instance<EnvironmentController> environment, ObjectMapper objectMapper, EntityViewManager evm) {
         super(logger, environment, objectMapper, evm, PipelineFlat.class);
     }
 
