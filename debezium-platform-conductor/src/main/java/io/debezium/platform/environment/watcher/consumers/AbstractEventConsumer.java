@@ -5,6 +5,8 @@
  */
 package io.debezium.platform.environment.watcher.consumers;
 
+import jakarta.enterprise.inject.Instance;
+
 import org.jboss.logging.Logger;
 
 import com.blazebit.persistence.integration.jackson.EntityViewAwareObjectMapper;
@@ -24,9 +26,10 @@ public abstract class AbstractEventConsumer<T> implements EnvironmentEventConsum
     // This is required to correctly deserialize EntityView see: https://persistence.blazebit.com/documentation/1.6/entity-view/manual/en_US/#usage-5
     protected final EntityViewAwareObjectMapper mapper;
 
-    public AbstractEventConsumer(Logger logger, EnvironmentController environment, ObjectMapper objectMapper, EntityViewManager evm, Class<T> payloadType) {
+    public AbstractEventConsumer(Logger logger, Instance<EnvironmentController> environmentInstance, ObjectMapper objectMapper, EntityViewManager evm,
+                                 Class<T> payloadType) {
         this.logger = logger;
-        this.environment = environment;
+        this.environment = environmentInstance.get();
         this.objectMapper = objectMapper;
         this.evm = evm;
         this.payloadType = payloadType;
