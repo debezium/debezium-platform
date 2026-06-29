@@ -32,6 +32,16 @@ public class GlobalExceptionMapper {
                 .build();
     }
 
+    @ServerExceptionMapper(AlreadyExistsException.class)
+    public Response mapAlreadyExistsException(AlreadyExistsException ex) {
+
+        LOGGER.error("Resource already exists", ex);
+
+        return Response.status(Response.Status.CONFLICT)
+                .entity(new ErrorResponse("Already exists", List.of(ex.getMessage())))
+                .build();
+    }
+
     @ServerExceptionMapper(RuntimeException.class)
     public Response mapRuntimeException(RuntimeException ex) {
 
@@ -51,6 +61,19 @@ public class GlobalExceptionMapper {
 
                 ErrorResponse response = new ErrorResponse("Validation failed", violations);
                 return Response.status(Response.Status.BAD_REQUEST).entity(response).build();
+            }
+            cause = cause.getCause();
+        }
+
+        // Safety fallback: unwrap to check for Hibernate unique constraint violations
+        cause = ex;
+        while (cause != null) {
+            String className = cause.getClass().getName();
+            if ("org.hibernate.exception.ConstraintViolationException".equals(className) ||
+                    "java.sql.SQLIntegrityConstraintViolationException".equals(className)) {
+                return Response.status(Response.Status.CONFLICT)
+                        .entity(new ErrorResponse("Already exists", List.of(ex.getMessage())))
+                        .build();
             }
             cause = cause.getCause();
         }

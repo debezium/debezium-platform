@@ -49,10 +49,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "./ConfigurePipeline.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "react-query";
 import {
   createPost,
   Destination,
+  fetchData,
   fetchDataTypeTwo,
+  Pipeline,
   PipelinePayload,
   Source,
   Transform,
@@ -165,6 +168,11 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   const params = new URLSearchParams(location.search);
   const sourceId = params.get("sourceId");
   const destinationId = params.get("destinationId");
+
+  const { data: pipelines = [] } = useQuery<Pipeline[], Error>(
+    "pipelines",
+    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
+  );
 
 
   const [pkgLevelLog, setPkgLevelLog] = useState<Map<string, Properties>>(
@@ -341,6 +349,9 @@ const ConfigurePipeline: React.FunctionComponent = () => {
       if (pipelineNameError) {
         setError("pipeline-name", t(pipelineNameError));
         return;
+      } else if (pipelines.some((p) => p.name === values["pipeline-name"].trim())) {
+        setError("pipeline-name", "Pipeline with this name already exists");
+        return;
       } else if (!values["log-level"]) {
         setError("log-level", t("pipeline:validation.logLevelRequired"));
         return;
@@ -398,6 +409,9 @@ const ConfigurePipeline: React.FunctionComponent = () => {
             ? t(pipelineSchemaError)
             : ajv.errorsText(validate.errors)
         );
+        return;
+      } else if (pipelines.some((p) => p.name === payload.name.trim())) {
+        setCodeAlert("Pipeline with this name already exists");
         return;
       } else {
         setIsLoading(true);

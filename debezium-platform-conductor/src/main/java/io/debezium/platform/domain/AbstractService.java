@@ -21,6 +21,8 @@ import com.blazebit.persistence.view.EntityViewManager;
 import com.blazebit.persistence.view.EntityViewSetting;
 
 import io.debezium.platform.domain.views.base.IdView;
+import io.debezium.platform.domain.views.base.NamedView;
+import io.debezium.platform.error.AlreadyExistsException;
 import io.debezium.platform.error.NotFoundException;
 
 /**
@@ -97,6 +99,9 @@ public class AbstractService<E, T extends IdView, R extends IdView> {
     }
 
     public T create(@Valid T view) {
+        if (view instanceof NamedView namedView) {
+            checkNameUniqueness(namedView.getName(), null);
+        }
         evm.save(em, view);
         onChange(view);
         return view;
@@ -108,6 +113,9 @@ public class AbstractService<E, T extends IdView, R extends IdView> {
 
     public T update(@Valid T view) {
         findByIdAs(viewType, view.getId()).orElseThrow(() -> new NotFoundException(view.getId()));
+        if (view instanceof NamedView namedView) {
+            checkNameUniqueness(namedView.getName(), view.getId());
+        }
         evm.save(em, view);
         onChange(view);
         return view;
@@ -126,6 +134,18 @@ public class AbstractService<E, T extends IdView, R extends IdView> {
     @Transactional(REQUIRED)
     public void onChange(Long id) {
         // default no-op
+    }
+
+    private void checkNameUniqueness(String name, Long id) {
+        var builder = cb().where("name").eq(name);
+        if (id != null) {
+            builder.where("id").notEq(id);
+        }
+        if (!builder.setMaxResults(1).getResultList().isEmpty()) {
+            String entityName = entityType.getSimpleName().replace("Entity", "");
+            throw new AlreadyExistsException(
+                    String.format("%s with name '%s' already exists", entityName, name));
+        }
     }
 
 }

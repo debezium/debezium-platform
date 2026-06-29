@@ -53,7 +53,7 @@ import transforms from "../../__mocks__/data/DebeziumTransfroms.json";
 import predicates from "../../__mocks__/data/Predicates.json";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createPost, TransformData, TransformPayload } from "src/apis";
+import { createPost, fetchData, TransformData, TransformPayload } from "src/apis";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { find } from "lodash";
@@ -62,6 +62,7 @@ import { useTranslation } from "react-i18next";
 import { transformSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css"
 import { useData } from "@appContext/AppContext";
+import { useQuery } from "react-query";
 
 const ajv = new Ajv();
 
@@ -81,6 +82,14 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
   };
   const { darkMode } = useData();
   const { addNotification } = useNotification();
+
+  const { data: existingTransforms = [] } = useQuery<TransformData[]>(
+    "transforms",
+    () => fetchData<TransformData[]>(`${API_URL}/api/transforms`),
+    {
+      select: (data) => data,
+    }
+  );
 
   const [editorSelected, setEditorSelected] = useState("form-editor");
 
@@ -351,15 +360,15 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
     if (response.error) {
       addNotification(
         "danger",
-        `Source creation failed`,
-        `Failed to create ${(response.data as any).name}: ${response.error}`
+        `Transform creation failed`,
+        `Failed to create ${payload.name}: ${response.error}`
       );
     } else {
       modelLoaded && onSelection?.([response.data as TransformData]);
       addNotification(
         "success",
         `Create successful`,
-        `Source "${(response.data as any).name}" created successfully.`
+        `Transform "${payload.name}" created successfully.`
       );
       !modelLoaded && navigateTo("/transform");
     }
@@ -372,6 +381,8 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
     if (editorSelected === "form-editor") {
       if (!values["transform-name"]) {
         setError("transform-name", "transform name is required.");
+      } else if (existingTransforms.some((t) => t.name === values["transform-name"])) {
+        setError("transform-name", "Transform with this name already exists");
       } else {
         setIsLoading(true);
         const {

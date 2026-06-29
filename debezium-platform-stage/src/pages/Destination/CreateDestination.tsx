@@ -65,6 +65,13 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     { enabled: !!descriptorPath }
   );
 
+  const { data: destinations = [] } = useQuery<Destination[], Error>(
+    "destinations",
+    () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
+  );
+
+  const existingDestinations = React.useMemo(() => destinations.map((d) => d.name), [destinations]);
+
   const createNewDestination = async (payload: Record<string, unknown>) => {
     setIsLoading(true);
     const response = await createPost(
@@ -75,7 +82,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
       addNotification(
         "danger",
         "Destination creation failed",
-        `Failed to create ${(response.data as Destination)?.name}: ${response.error}`
+        `Failed to create ${(payload as { name: string }).name}: ${response.error}`
       );
     } else {
       if (modelLoaded) onSelection?.(response.data as Destination);
@@ -128,6 +135,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
         connectorSchema={connectorSchema}
         destinationId={destinationId}
         onSubmit={createNewDestination}
+        existingNames={existingDestinations}
         hideSignalCollections={true}
         {...(modelLoaded ? { defaultLayoutMode: "tabs" as const } : {})}
       />
