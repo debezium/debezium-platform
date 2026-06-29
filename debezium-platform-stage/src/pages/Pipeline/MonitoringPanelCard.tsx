@@ -29,7 +29,7 @@ import {
   InProgressIcon,
   PauseCircleIcon,
 } from "@patternfly/react-icons";
-import { FC, memo, ReactNode } from "react";
+import { ComponentProps, FC, memo, ReactNode } from "react";
 import type { PanelQueryResponse, PanelResponse } from "../../apis/types";
 import {
   formatValueWithUnit,
@@ -246,6 +246,10 @@ const TimeSeriesChart: FC<{
     : CHART_HEIGHT_DEFAULT;
   const yDomain = getChartYDomain(data);
 
+  const legendPosition = (
+    useAreaChartLegend ? "top" : isMultiSeries ? "bottom" : undefined
+  ) as ComponentProps<typeof Chart>["legendPosition"];
+
   const ChartSeries = chartType === "area" ? ChartArea : ChartLine;
 
   return (
@@ -299,7 +303,7 @@ const TimeSeriesChart: FC<{
             height={chartHeight}
             legendData={legendData}
             legendOrientation={useAreaChartLegend ? "horizontal" : isMultiSeries ? "horizontal" : undefined}
-            legendPosition={useAreaChartLegend ? "top" : isMultiSeries ? "bottom" : undefined}
+            legendPosition={legendPosition}
             maxDomain={{ y: yDomain.max }}
             minDomain={{ y: yDomain.min }}
             padding={
