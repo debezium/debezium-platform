@@ -1,4 +1,6 @@
 import { QueryClient } from "react-query";
+import { API_URL } from "../utils/constants";
+import { fetchMockPanelData, shouldUseMockData } from "./mockPanelData";
 
 const queryClient = new QueryClient();
 
@@ -437,5 +439,62 @@ export const fetchDataCall = async <T,>(
         body: (error as Error).message,
       },
     };
+  }
+};
+
+// Monitoring API Functions
+export const fetchMonitoringPanels = async (): Promise<ApiResponse<import('./types').PanelsListResponse>> => {
+  try {
+    const response = await fetch(`${API_URL}/api/monitoring/panels`);
+
+    if (!response.ok) {
+      const errorMsg = `Failed to fetch monitoring panels: ${response.statusText}`;
+      return { error: errorMsg };
+    }
+
+    const data = await response.json();
+    return { data };
+  } catch (error) {
+    console.error("Error fetching monitoring panels:", error);
+    return { error: "An error occurred while fetching monitoring panels" };
+  }
+};
+
+export const fetchPanelData = async (
+  panelId: string,
+  pipelineName: string,
+  start: string,
+  end: string,
+  step?: string
+): Promise<ApiResponse<import('./types').PanelQueryResponse>> => {
+  if (shouldUseMockData(panelId)) {
+    return fetchMockPanelData(panelId, pipelineName, start, end, step);
+  }
+
+  try {
+    const params = new URLSearchParams({
+      pipeline_id: pipelineName,
+      start,
+      end,
+    });
+
+    if (step) {
+      params.append("step", step);
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/monitoring/panels/${panelId}/query?${params.toString()}`
+    );
+
+    if (!response.ok) {
+      const errorMsg = `Failed to fetch panel data: ${response.statusText}`;
+      return { error: errorMsg };
+    }
+
+    const data = await response.json();
+    return { data };
+  } catch (error) {
+    console.error(`Error fetching panel data for ${panelId}:`, error);
+    return { error: `An error occurred while fetching data for panel ${panelId}` };
   }
 };

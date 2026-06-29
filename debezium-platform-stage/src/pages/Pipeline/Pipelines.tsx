@@ -215,8 +215,12 @@ const Pipelines: React.FunctionComponent = () => {
     navigateTo(`/pipeline/${id}/logs`);
   };
 
-  const onActionHandler = (id: number, _name: string) => {
+   const onActionHandler = (id: number, _name: string) => {
     navigateTo(`/pipeline/${id}/action`);
+  };
+
+  const onMonitoringHandler = (id: number, _name: string) => {
+    navigateTo(`/pipeline/${id}/monitoring`);
   };
 
   const onDeleteHandler = (id: number, name: string) => {
@@ -240,6 +244,10 @@ const Pipelines: React.FunctionComponent = () => {
     {
       title: t("pipeline:userActions.actions"),
       onClick: () => onActionHandler(actionData.id, actionData.name),
+    },
+     {
+      title: t("pipeline:userActions.monitoring"),
+      onClick: () => onMonitoringHandler(actionData.id, actionData.name),
     },
     {
       title: t("pipeline:userActions.logs"),
