@@ -3,7 +3,7 @@ import type { PanelQueryResponse } from "./types";
 
 export type MonitoringMockDataMap = Record<string, PanelQueryResponse>;
 
-export const monitoringMockData = mockData as MonitoringMockDataMap;
+export const monitoringMockData = mockData as unknown as MonitoringMockDataMap;
 
 export const getMockPanelData = (
   panelId: string,

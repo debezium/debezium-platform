@@ -21,7 +21,7 @@ import {
   LabelColor,
 } from "@patternfly/react-core";
 import { ExclamationCircleIcon, InProgressIcon, OutlinedClockIcon, RedoIcon, SyncAltIcon } from "@patternfly/react-icons";
-import { FC, useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { FC, useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import "./PipelineMonitoring.css";
 
@@ -80,9 +80,17 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
   const [selectedRefresh, setSelectedRefresh] = useState<RefreshInterval>("15 seconds");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
+  const [panelsEverLoaded, setPanelsEverLoaded] = useState<Record<string, boolean>>({});
 
-  const panelDataRef = useRef(panelData);
-  panelDataRef.current = panelData;
+  const [prevPipelineName, setPrevPipelineName] = useState(pipelineName);
+
+  if (pipelineName !== prevPipelineName) {
+    setPrevPipelineName(pipelineName);
+    setPanelData({});
+    setPanelDataErrors({});
+    setPanelDataLoading({});
+    setPanelsEverLoaded({});
+  }
 
   useEffect(() => {
     const originalSize = (window as Window & { EVENT_BUFFER_SIZE?: number }).EVENT_BUFFER_SIZE;
@@ -157,7 +165,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
       step = timeRange.step;
     }
 
-    const panelsNeedingInitialLoad = panels.filter((panel) => !panelDataRef.current[panel.id]);
+    const panelsNeedingInitialLoad = panels.filter((panel) => !panelsEverLoaded[panel.id]);
 
     if (panelsNeedingInitialLoad.length > 0) {
       setPanelDataLoading((prev) => {
@@ -186,6 +194,20 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
         }
         if (!panelSeriesEqual(prev[panelId], response.data)) {
           next[panelId] = response.data;
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+
+    setPanelsEverLoaded((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      results.forEach(({ panelId, response }) => {
+        if (response.data && !next[panelId]) {
+          next[panelId] = true;
           changed = true;
         }
       });
@@ -223,19 +245,15 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     }
 
     setLastRefreshTime(new Date());
-  }, [panels, selectedTimeRange, appliedCustomFrom, appliedCustomTo, pipelineName]);
-
-  useEffect(() => {
-    setPanelData({});
-    setPanelDataErrors({});
-    setPanelDataLoading({});
-  }, [pipelineName]);
+  }, [panels, selectedTimeRange, appliedCustomFrom, appliedCustomTo, pipelineName, panelsEverLoaded]);
 
   useEffect(() => {
     if (!panelsLoading && panels.length > 0 && pipelineName.trim() && selectedTimeRange !== "Custom") {
-      fetchAllPanelData();
+      void fetchAllPanelData();
     }
-  }, [panels, panelsLoading, pipelineName, selectedTimeRange, fetchAllPanelData]);
+    // fetchAllPanelData excluded: only re-fetch when query inputs change, not when load tracking updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panels, panelsLoading, pipelineName, selectedTimeRange]);
 
   useEffect(() => {
     const intervalMs = parseRefreshInterval(selectedRefresh);

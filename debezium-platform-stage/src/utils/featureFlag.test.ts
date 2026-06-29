@@ -16,10 +16,6 @@ describe("featureFlag", () => {
       enabled: false,
       mode: "comingSoon",
     });
-    expect(featureConfig.PipelineMonitoring).toEqual({
-      enabled: false,
-      mode: "hidden",
-    });
   });
 
   it("exposes enabled coming-soon and hidden features", () => {
@@ -30,6 +26,10 @@ describe("featureFlag", () => {
     expect(featureConfig.Transforms).toEqual({
       enabled: true,
       mode: "comingSoon",
+    });
+    expect(featureConfig.PipelineMonitoring).toEqual({
+      enabled: true,
+      mode: "hidden",
     });
     expect(featureConfig.PipelineAction).toEqual({
       enabled: true,
@@ -43,7 +43,7 @@ describe("featureFlag", () => {
 
   it("identifies enabled and disabled features", () => {
     expect(isFeatureEnabled("Vault")).toBe(false);
-    expect(isFeatureEnabled("PipelineMonitoring")).toBe(false);
+    expect(isFeatureEnabled("PipelineMonitoring")).toBe(true);
     expect(isFeatureEnabled("Connection")).toBe(true);
     expect(isFeatureEnabled("Transforms")).toBe(true);
     expect(isFeatureEnabled("PipelineAction")).toBe(true);
@@ -51,7 +51,7 @@ describe("featureFlag", () => {
   });
 
   it("identifies hidden features only when disabled", () => {
-    expect(isFeatureHidden("PipelineMonitoring")).toBe(true);
+    expect(isFeatureHidden("PipelineMonitoring")).toBe(false);
     expect(isFeatureHidden("PipelineAction")).toBe(false);
     expect(isFeatureHidden("PipelineLogs")).toBe(false);
     expect(isFeatureHidden("Vault")).toBe(false);
@@ -72,7 +72,7 @@ describe("featureFlag", () => {
   });
 
   it("hides disabled hidden features from navigation", () => {
-    expect(isRouteNavVisible("PipelineMonitoring")).toBe(false);
+    expect(isRouteNavVisible("PipelineMonitoring")).toBe(true);
     expect(isRouteNavVisible("PipelineAction")).toBe(true);
     expect(isRouteNavVisible("PipelineLogs")).toBe(true);
   });
@@ -81,10 +81,11 @@ describe("featureFlag", () => {
     expect(getEnabledPipelineTabs()).toEqual([
       "overview",
       "action",
+      "monitoring",
       "logs",
       "edit",
     ]);
-    expect(isPipelineTabEnabled("monitoring")).toBe(false);
+    expect(isPipelineTabEnabled("monitoring")).toBe(true);
     expect(isPipelineTabEnabled("action")).toBe(true);
     expect(isPipelineTabEnabled("logs")).toBe(true);
   });
@@ -94,7 +95,7 @@ describe("featureFlag", () => {
       true
     );
     expect(getPipelineDetailsRoutePattern().test("/pipeline/1/monitoring")).toBe(
-      false
+      true
     );
     expect(getPipelineDetailsRoutePattern().test("/pipeline/1/logs")).toBe(true);
   });
