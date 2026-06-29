@@ -15,6 +15,10 @@ bin/
 *.iml
 *.iws
 
+# IDE
+.claude
+.cursor
+
 # NetBeans
 nb-configuration.xml
 

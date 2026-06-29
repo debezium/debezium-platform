@@ -225,7 +225,7 @@ const PipelineDetails: React.FunctionComponent = () => {
             hidden={"monitoring" !== activeTabKey}
           >
             <TabContentBody>
-              <PipelineMonitoring pipelineId={pipelineId || ""} />
+              <PipelineMonitoring pipelineName={pipeline?.name || ""} />
             </TabContentBody>
           </TabContent>
         )}

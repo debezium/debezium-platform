@@ -76,3 +76,45 @@ export interface CatalogApiResponse {
     transformation: CatalogComponentEntry[];
   };
 }
+
+// Monitoring API Types
+export interface PanelVisualization {
+  type: "area" | "line" | "donut-utilization";
+  suggestedStep: string;
+}
+
+export interface PanelResponse {
+  id: string;
+  title: string;
+  description: string;
+  category: "streaming" | "snapshot";
+  unit: string;
+  visualization: PanelVisualization;
+}
+
+export interface PanelsListResponse {
+  panels: PanelResponse[];
+}
+
+export interface TimeRange {
+  start: string;
+  end: string;
+  step: string;
+}
+
+export interface TimeSeries {
+  labels: Record<string, string>;
+  datapoints: [number, number][]; // [timestamp, value]
+}
+
+export interface PanelMetadata {
+  queryDurationMs: number;
+}
+
+export interface PanelQueryResponse {
+  panelId: string;
+  pipelineId: string;
+  timeRange: TimeRange;
+  series: TimeSeries[];
+  metadata: PanelMetadata;
+}

@@ -10,7 +10,7 @@ export const featureConfig = {
   Connection: { enabled: true, mode: "comingSoon" },
   Transforms: { enabled: true, mode: "comingSoon" },
 
-  PipelineMonitoring: { enabled: false, mode: "hidden" },
+  PipelineMonitoring: { enabled: true, mode: "hidden" },
   PipelineAction: { enabled: true, mode: "hidden" },
   PipelineLogs: { enabled: true, mode: "hidden" },
 } as const satisfies Record<string, FeatureFlagConfig>;
