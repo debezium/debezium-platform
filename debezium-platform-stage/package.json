@@ -54,7 +54,7 @@
     "react-joyride": "^3.0.0-7",
     "react-query": "^3.39.3",
     "react-router-dom": "^7.14.2",
-    "uuid": "^14.0.0",
+    "uuid": "^14.0.1",
     "victory": "^37.3.2",
     "yup": "^1.7.1"
   },
