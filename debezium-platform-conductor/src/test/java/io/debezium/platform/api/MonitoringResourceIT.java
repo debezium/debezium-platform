@@ -37,7 +37,7 @@ class MonitoringResourceIT {
                 .body("panels", notNullValue())
                 .body("panels", not(empty()))
                 .body("panels[0].id", is("streaming-event-count"))
-                .body("panels[0].title", is("Streaming Event Count"))
+                .body("panels[0].title", is("Streaming Event Count Rate"))
                 .body("panels[0].category", is("streaming"))
                 .body("panels[0].unit", is("events/s"))
                 .body("panels[0].visualization.type", is("area"))
