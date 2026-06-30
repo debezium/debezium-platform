@@ -27,10 +27,7 @@ export const STREAMING_PANELS = {
  */
 export const SNAPSHOT_PANELS = {
   snapshotTableProgress: 'snapshot-table-progress',
-  snapshotRunning: 'snapshot-running',
-  snapshotCompleted: 'snapshot-completed',
-  snapshotPaused: 'snapshot-paused',
-  snapshotAborted: 'snapshot-aborted',
+  snapshotStatus: 'snapshot-status',
   snapshotEventCount: 'snapshot-event-count',
   snapshotDuration: 'snapshot-duration',
 } as const;
@@ -94,11 +91,9 @@ export const STREAMING_PANEL_ORDER = [
 ];
 
 export const SNAPSHOT_PANEL_ORDER = [
+  
+  "snapshot-status",
   "snapshot-table-progress",
-  "snapshot-running",
-  "snapshot-completed",
-  "snapshot-paused",
-  "snapshot-aborted",
   "snapshot-event-count",
   "snapshot-duration",
 ];
@@ -145,20 +140,11 @@ export const STREAMING_STATUS_ROW: PanelRowLayout = {
  * with the same compact card shell (status label + primary value).
  */
 export const SNAPSHOT_STATUS_ROW: PanelRowLayout = {
-  panelIds: [
-    "snapshot-table-progress",
-    "snapshot-running",
-    "snapshot-completed",
-    "snapshot-paused",
-    "snapshot-aborted",
-  ],
-  lg: 2,
+  panelIds: ["snapshot-status","snapshot-table-progress" ],
+  lg: 4,
   lgByPanel: {
-    "snapshot-table-progress": 4,
-    "snapshot-completed": 2,
-    "snapshot-running": 2,
-    "snapshot-paused": 2,
-    "snapshot-aborted": 2,
+    "snapshot-table-progress": 8,
+    "snapshot-status": 4,
   },
   compact: true,
   divided: true,
@@ -173,13 +159,7 @@ export const AUXILIARY_PANEL_IDS = new Set<string>([SNAPSHOT_TABLE_COUNT_PANEL_I
 
 export const isAuxiliaryPanel = (panelId: string): boolean => AUXILIARY_PANEL_IDS.has(panelId);
 
-export const SNAPSHOT_STATUS_PANEL_IDS = new Set([
-
-  "snapshot-completed",
-  "snapshot-running",
-  "snapshot-paused",
-  "snapshot-aborted",
-]);
+export const SNAPSHOT_STATUS_PANEL_ID = "snapshot-status";
 
 const COMPACT_STATUS_ROWS: PanelRowLayout[] = [STREAMING_STATUS_ROW, SNAPSHOT_STATUS_ROW];
 

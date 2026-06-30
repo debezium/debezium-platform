@@ -22879,5 +22879,1163 @@
     "metadata": {
       "queryDurationMs": 2
     }
+  },
+  "snapshot-status": {
+    "panelId": "snapshot-status",
+    "pipelineId": "test-pipeline-2",
+    "timeRange": {
+      "start": "2026-06-30T06:55:31.595Z",
+      "end": "2026-06-30T07:10:31.595Z",
+      "step": "15s"
+    },
+    "series": [
+      {
+        "labels": {
+          "__name__": "debezium_snapshot_aborted",
+          "container": "otc-container",
+          "container_id": "6836adba3d974fcc28637b50432fbaa30745019d24011740e92c94406d014713",
+          "debezium_connector_type": "postgresql",
+          "debezium_context": "snapshot",
+          "debezium_logical_name": "inventory",
+          "debezium_snapshot_aborted_state": "aborted",
+          "debezium_snapshot_status": "aborted",
+          "endpoint": "prometheus",
+          "exported_instance": "8cc082cb-b8c4-416e-b630-af8a8a4fbd10",
+          "exported_job": "test-pipeline-2",
+          "host_arch": "aarch64",
+          "host_name": "test-pipeline-2-865db774f-mqx65",
+          "instance": "10.244.0.21:8889",
+          "job": "debezium-platform-otel-collector-collector",
+          "namespace": "debezium-platform",
+          "os_description": "Linux 6.8.0-50-generic",
+          "os_type": "linux",
+          "os_version": "6.8.0-50-generic",
+          "otel_scope_name": "io.opentelemetry.jmx",
+          "platform": "debezium",
+          "pod": "debezium-platform-otel-collector-collector-54f65694f8-2tbn4",
+          "process_command_args": "[\"/usr/lib/jvm/java-21-openjdk-21.0.11.0.10-1.el8.aarch64/bin/java\",\"-javaagent:lib_metrics/opentelemetry-javaagent-2.27.0.jar\",\"-javaagent:lib_metrics/jmx_prometheus_javaagent-1.0.1.jar=0.0.0.0:9090:config/metrics.yml\",\"-cp\",\"debezium-server-dist-3.6.0.Beta2-runner.jar:config/lib:lib/*\",\"io.debezium.server.Main\"]",
+          "process_executable_path": "/usr/lib/jvm/java-21-openjdk-21.0.11.0.10-1.el8.aarch64/bin/java",
+          "process_pid": "1",
+          "process_runtime_description": "Red Hat, Inc. OpenJDK 64-Bit Server VM 21.0.11+10-LTS",
+          "process_runtime_name": "OpenJDK Runtime Environment",
+          "process_runtime_version": "21.0.11+10-LTS",
+          "service": "debezium-platform-otel-collector-collector",
+          "service_instance_id": "8cc082cb-b8c4-416e-b630-af8a8a4fbd10",
+          "service_name": "test-pipeline-2",
+          "telemetry_distro_name": "opentelemetry-java-instrumentation",
+          "telemetry_distro_version": "2.27.0",
+          "telemetry_sdk_language": "java",
+          "telemetry_sdk_name": "opentelemetry",
+          "telemetry_sdk_version": "1.61.0"
+        },
+        "datapoints": [
+          [
+            1.782802531595E9,
+            0.0
+          ],
+          [
+            1.782802546595E9,
+            0.0
+          ],
+          [
+            1.782802561595E9,
+            0.0
+          ],
+          [
+            1.782802576595E9,
+            0.0
+          ],
+          [
+            1.782802591595E9,
+            0.0
+          ],
+          [
+            1.782802606595E9,
+            0.0
+          ],
+          [
+            1.782802621595E9,
+            0.0
+          ],
+          [
+            1.782802636595E9,
+            0.0
+          ],
+          [
+            1.782802651595E9,
+            0.0
+          ],
+          [
+            1.782802666595E9,
+            0.0
+          ],
+          [
+            1.782802681595E9,
+            0.0
+          ],
+          [
+            1.782802696595E9,
+            0.0
+          ],
+          [
+            1.782802711595E9,
+            0.0
+          ],
+          [
+            1.782802726595E9,
+            0.0
+          ],
+          [
+            1.782802741595E9,
+            0.0
+          ],
+          [
+            1.782802756595E9,
+            0.0
+          ],
+          [
+            1.782802771595E9,
+            0.0
+          ],
+          [
+            1.782802786595E9,
+            0.0
+          ],
+          [
+            1.782802801595E9,
+            0.0
+          ],
+          [
+            1.782802816595E9,
+            0.0
+          ],
+          [
+            1.782802831595E9,
+            0.0
+          ],
+          [
+            1.782802846595E9,
+            0.0
+          ],
+          [
+            1.782802861595E9,
+            0.0
+          ],
+          [
+            1.782802876595E9,
+            0.0
+          ],
+          [
+            1.782802891595E9,
+            0.0
+          ],
+          [
+            1.782802906595E9,
+            0.0
+          ],
+          [
+            1.782802921595E9,
+            0.0
+          ],
+          [
+            1.782802936595E9,
+            0.0
+          ],
+          [
+            1.782802951595E9,
+            0.0
+          ],
+          [
+            1.782802966595E9,
+            0.0
+          ],
+          [
+            1.782802981595E9,
+            0.0
+          ],
+          [
+            1.782802996595E9,
+            0.0
+          ],
+          [
+            1.782803011595E9,
+            0.0
+          ],
+          [
+            1.782803026595E9,
+            0.0
+          ],
+          [
+            1.782803041595E9,
+            0.0
+          ],
+          [
+            1.782803056595E9,
+            0.0
+          ],
+          [
+            1.782803071595E9,
+            0.0
+          ],
+          [
+            1.782803086595E9,
+            0.0
+          ],
+          [
+            1.782803101595E9,
+            0.0
+          ],
+          [
+            1.782803116595E9,
+            0.0
+          ],
+          [
+            1.782803131595E9,
+            0.0
+          ],
+          [
+            1.782803146595E9,
+            0.0
+          ],
+          [
+            1.782803161595E9,
+            0.0
+          ],
+          [
+            1.782803176595E9,
+            0.0
+          ],
+          [
+            1.782803191595E9,
+            0.0
+          ],
+          [
+            1.782803206595E9,
+            0.0
+          ],
+          [
+            1.782803221595E9,
+            0.0
+          ],
+          [
+            1.782803236595E9,
+            0.0
+          ],
+          [
+            1.782803251595E9,
+            0.0
+          ],
+          [
+            1.782803266595E9,
+            0.0
+          ],
+          [
+            1.782803281595E9,
+            0.0
+          ],
+          [
+            1.782803296595E9,
+            0.0
+          ],
+          [
+            1.782803311595E9,
+            0.0
+          ],
+          [
+            1.782803326595E9,
+            0.0
+          ],
+          [
+            1.782803341595E9,
+            0.0
+          ],
+          [
+            1.782803356595E9,
+            0.0
+          ],
+          [
+            1.782803371595E9,
+            0.0
+          ],
+          [
+            1.782803386595E9,
+            0.0
+          ],
+          [
+            1.782803401595E9,
+            0.0
+          ],
+          [
+            1.782803416595E9,
+            0.0
+          ],
+          [
+            1.782803431595E9,
+            0.0
+          ]
+        ]
+      },
+      {
+        "labels": {
+          "__name__": "debezium_snapshot_completed",
+          "container": "otc-container",
+          "container_id": "6836adba3d974fcc28637b50432fbaa30745019d24011740e92c94406d014713",
+          "debezium_connector_type": "postgresql",
+          "debezium_context": "snapshot",
+          "debezium_logical_name": "inventory",
+          "debezium_snapshot_completed_state": "completed",
+          "debezium_snapshot_status": "completed",
+          "endpoint": "prometheus",
+          "exported_instance": "8cc082cb-b8c4-416e-b630-af8a8a4fbd10",
+          "exported_job": "test-pipeline-2",
+          "host_arch": "aarch64",
+          "host_name": "test-pipeline-2-865db774f-mqx65",
+          "instance": "10.244.0.21:8889",
+          "job": "debezium-platform-otel-collector-collector",
+          "namespace": "debezium-platform",
+          "os_description": "Linux 6.8.0-50-generic",
+          "os_type": "linux",
+          "os_version": "6.8.0-50-generic",
+          "otel_scope_name": "io.opentelemetry.jmx",
+          "platform": "debezium",
+          "pod": "debezium-platform-otel-collector-collector-54f65694f8-2tbn4",
+          "process_command_args": "[\"/usr/lib/jvm/java-21-openjdk-21.0.11.0.10-1.el8.aarch64/bin/java\",\"-javaagent:lib_metrics/opentelemetry-javaagent-2.27.0.jar\",\"-javaagent:lib_metrics/jmx_prometheus_javaagent-1.0.1.jar=0.0.0.0:9090:config/metrics.yml\",\"-cp\",\"debezium-server-dist-3.6.0.Beta2-runner.jar:config/lib:lib/*\",\"io.debezium.server.Main\"]",
+          "process_executable_path": "/usr/lib/jvm/java-21-openjdk-21.0.11.0.10-1.el8.aarch64/bin/java",
+          "process_pid": "1",
+          "process_runtime_description": "Red Hat, Inc. OpenJDK 64-Bit Server VM 21.0.11+10-LTS",
+          "process_runtime_name": "OpenJDK Runtime Environment",
+          "process_runtime_version": "21.0.11+10-LTS",
+          "service": "debezium-platform-otel-collector-collector",
+          "service_instance_id": "8cc082cb-b8c4-416e-b630-af8a8a4fbd10",
+          "service_name": "test-pipeline-2",
+          "telemetry_distro_name": "opentelemetry-java-instrumentation",
+          "telemetry_distro_version": "2.27.0",
+          "telemetry_sdk_language": "java",
+          "telemetry_sdk_name": "opentelemetry",
+          "telemetry_sdk_version": "1.61.0"
+        },
+        "datapoints": [
+          [
+            1.782802531595E9,
+            1.0
+          ],
+          [
+            1.782802546595E9,
+            1.0
+          ],
+          [
+            1.782802561595E9,
+            1.0
+          ],
+          [
+            1.782802576595E9,
+            1.0
+          ],
+          [
+            1.782802591595E9,
+            1.0
+          ],
+          [
+            1.782802606595E9,
+            1.0
+          ],
+          [
+            1.782802621595E9,
+            1.0
+          ],
+          [
+            1.782802636595E9,
+            1.0
+          ],
+          [
+            1.782802651595E9,
+            1.0
+          ],
+          [
+            1.782802666595E9,
+            1.0
+          ],
+          [
+            1.782802681595E9,
+            1.0
+          ],
+          [
+            1.782802696595E9,
+            1.0
+          ],
+          [
+            1.782802711595E9,
+            1.0
+          ],
+          [
+            1.782802726595E9,
+            1.0
+          ],
+          [
+            1.782802741595E9,
+            1.0
+          ],
+          [
+            1.782802756595E9,
+            1.0
+          ],
+          [
+            1.782802771595E9,
+            1.0
+          ],
+          [
+            1.782802786595E9,
+            1.0
+          ],
+          [
+            1.782802801595E9,
+            1.0
+          ],
+          [
+            1.782802816595E9,
+            1.0
+          ],
+          [
+            1.782802831595E9,
+            1.0
+          ],
+          [
+            1.782802846595E9,
+            1.0
+          ],
+          [
+            1.782802861595E9,
+            1.0
+          ],
+          [
+            1.782802876595E9,
+            1.0
+          ],
+          [
+            1.782802891595E9,
+            1.0
+          ],
+          [
+            1.782802906595E9,
+            1.0
+          ],
+          [
+            1.782802921595E9,
+            1.0
+          ],
+          [
+            1.782802936595E9,
+            1.0
+          ],
+          [
+            1.782802951595E9,
+            1.0
+          ],
+          [
+            1.782802966595E9,
+            1.0
+          ],
+          [
+            1.782802981595E9,
+            1.0
+          ],
+          [
+            1.782802996595E9,
+            1.0
+          ],
+          [
+            1.782803011595E9,
+            1.0
+          ],
+          [
+            1.782803026595E9,
+            1.0
+          ],
+          [
+            1.782803041595E9,
+            1.0
+          ],
+          [
+            1.782803056595E9,
+            1.0
+          ],
+          [
+            1.782803071595E9,
+            1.0
+          ],
+          [
+            1.782803086595E9,
+            1.0
+          ],
+          [
+            1.782803101595E9,
+            1.0
+          ],
+          [
+            1.782803116595E9,
+            1.0
+          ],
+          [
+            1.782803131595E9,
+            1.0
+          ],
+          [
+            1.782803146595E9,
+            1.0
+          ],
+          [
+            1.782803161595E9,
+            1.0
+          ],
+          [
+            1.782803176595E9,
+            1.0
+          ],
+          [
+            1.782803191595E9,
+            1.0
+          ],
+          [
+            1.782803206595E9,
+            1.0
+          ],
+          [
+            1.782803221595E9,
+            1.0
+          ],
+          [
+            1.782803236595E9,
+            1.0
+          ],
+          [
+            1.782803251595E9,
+            1.0
+          ],
+          [
+            1.782803266595E9,
+            1.0
+          ],
+          [
+            1.782803281595E9,
+            1.0
+          ],
+          [
+            1.782803296595E9,
+            1.0
+          ],
+          [
+            1.782803311595E9,
+            1.0
+          ],
+          [
+            1.782803326595E9,
+            1.0
+          ],
+          [
+            1.782803341595E9,
+            1.0
+          ],
+          [
+            1.782803356595E9,
+            1.0
+          ],
+          [
+            1.782803371595E9,
+            1.0
+          ],
+          [
+            1.782803386595E9,
+            1.0
+          ],
+          [
+            1.782803401595E9,
+            1.0
+          ],
+          [
+            1.782803416595E9,
+            1.0
+          ],
+          [
+            1.782803431595E9,
+            1.0
+          ]
+        ]
+      },
+      {
+        "labels": {
+          "__name__": "debezium_snapshot_running",
+          "container": "otc-container",
+          "container_id": "6836adba3d974fcc28637b50432fbaa30745019d24011740e92c94406d014713",
+          "debezium_connector_type": "postgresql",
+          "debezium_context": "snapshot",
+          "debezium_logical_name": "inventory",
+          "debezium_snapshot_running_state": "running",
+          "debezium_snapshot_status": "running",
+          "endpoint": "prometheus",
+          "exported_instance": "8cc082cb-b8c4-416e-b630-af8a8a4fbd10",
+          "exported_job": "test-pipeline-2",
+          "host_arch": "aarch64",
+          "host_name": "test-pipeline-2-865db774f-mqx65",
+          "instance": "10.244.0.21:8889",
+          "job": "debezium-platform-otel-collector-collector",
+          "namespace": "debezium-platform",
+          "os_description": "Linux 6.8.0-50-generic",
+          "os_type": "linux",
+          "os_version": "6.8.0-50-generic",
+          "otel_scope_name": "io.opentelemetry.jmx",
+          "platform": "debezium",
+          "pod": "debezium-platform-otel-collector-collector-54f65694f8-2tbn4",
+          "process_command_args": "[\"/usr/lib/jvm/java-21-openjdk-21.0.11.0.10-1.el8.aarch64/bin/java\",\"-javaagent:lib_metrics/opentelemetry-javaagent-2.27.0.jar\",\"-javaagent:lib_metrics/jmx_prometheus_javaagent-1.0.1.jar=0.0.0.0:9090:config/metrics.yml\",\"-cp\",\"debezium-server-dist-3.6.0.Beta2-runner.jar:config/lib:lib/*\",\"io.debezium.server.Main\"]",
+          "process_executable_path": "/usr/lib/jvm/java-21-openjdk-21.0.11.0.10-1.el8.aarch64/bin/java",
+          "process_pid": "1",
+          "process_runtime_description": "Red Hat, Inc. OpenJDK 64-Bit Server VM 21.0.11+10-LTS",
+          "process_runtime_name": "OpenJDK Runtime Environment",
+          "process_runtime_version": "21.0.11+10-LTS",
+          "service": "debezium-platform-otel-collector-collector",
+          "service_instance_id": "8cc082cb-b8c4-416e-b630-af8a8a4fbd10",
+          "service_name": "test-pipeline-2",
+          "telemetry_distro_name": "opentelemetry-java-instrumentation",
+          "telemetry_distro_version": "2.27.0",
+          "telemetry_sdk_language": "java",
+          "telemetry_sdk_name": "opentelemetry",
+          "telemetry_sdk_version": "1.61.0"
+        },
+        "datapoints": [
+          [
+            1.782802531595E9,
+            0.0
+          ],
+          [
+            1.782802546595E9,
+            0.0
+          ],
+          [
+            1.782802561595E9,
+            0.0
+          ],
+          [
+            1.782802576595E9,
+            0.0
+          ],
+          [
+            1.782802591595E9,
+            0.0
+          ],
+          [
+            1.782802606595E9,
+            0.0
+          ],
+          [
+            1.782802621595E9,
+            0.0
+          ],
+          [
+            1.782802636595E9,
+            0.0
+          ],
+          [
+            1.782802651595E9,
+            0.0
+          ],
+          [
+            1.782802666595E9,
+            0.0
+          ],
+          [
+            1.782802681595E9,
+            0.0
+          ],
+          [
+            1.782802696595E9,
+            0.0
+          ],
+          [
+            1.782802711595E9,
+            0.0
+          ],
+          [
+            1.782802726595E9,
+            0.0
+          ],
+          [
+            1.782802741595E9,
+            0.0
+          ],
+          [
+            1.782802756595E9,
+            0.0
+          ],
+          [
+            1.782802771595E9,
+            0.0
+          ],
+          [
+            1.782802786595E9,
+            0.0
+          ],
+          [
+            1.782802801595E9,
+            0.0
+          ],
+          [
+            1.782802816595E9,
+            0.0
+          ],
+          [
+            1.782802831595E9,
+            0.0
+          ],
+          [
+            1.782802846595E9,
+            0.0
+          ],
+          [
+            1.782802861595E9,
+            0.0
+          ],
+          [
+            1.782802876595E9,
+            0.0
+          ],
+          [
+            1.782802891595E9,
+            0.0
+          ],
+          [
+            1.782802906595E9,
+            0.0
+          ],
+          [
+            1.782802921595E9,
+            0.0
+          ],
+          [
+            1.782802936595E9,
+            0.0
+          ],
+          [
+            1.782802951595E9,
+            0.0
+          ],
+          [
+            1.782802966595E9,
+            0.0
+          ],
+          [
+            1.782802981595E9,
+            0.0
+          ],
+          [
+            1.782802996595E9,
+            0.0
+          ],
+          [
+            1.782803011595E9,
+            0.0
+          ],
+          [
+            1.782803026595E9,
+            0.0
+          ],
+          [
+            1.782803041595E9,
+            0.0
+          ],
+          [
+            1.782803056595E9,
+            0.0
+          ],
+          [
+            1.782803071595E9,
+            0.0
+          ],
+          [
+            1.782803086595E9,
+            0.0
+          ],
+          [
+            1.782803101595E9,
+            0.0
+          ],
+          [
+            1.782803116595E9,
+            0.0
+          ],
+          [
+            1.782803131595E9,
+            0.0
+          ],
+          [
+            1.782803146595E9,
+            0.0
+          ],
+          [
+            1.782803161595E9,
+            0.0
+          ],
+          [
+            1.782803176595E9,
+            0.0
+          ],
+          [
+            1.782803191595E9,
+            0.0
+          ],
+          [
+            1.782803206595E9,
+            0.0
+          ],
+          [
+            1.782803221595E9,
+            0.0
+          ],
+          [
+            1.782803236595E9,
+            0.0
+          ],
+          [
+            1.782803251595E9,
+            0.0
+          ],
+          [
+            1.782803266595E9,
+            0.0
+          ],
+          [
+            1.782803281595E9,
+            0.0
+          ],
+          [
+            1.782803296595E9,
+            0.0
+          ],
+          [
+            1.782803311595E9,
+            0.0
+          ],
+          [
+            1.782803326595E9,
+            0.0
+          ],
+          [
+            1.782803341595E9,
+            0.0
+          ],
+          [
+            1.782803356595E9,
+            0.0
+          ],
+          [
+            1.782803371595E9,
+            0.0
+          ],
+          [
+            1.782803386595E9,
+            0.0
+          ],
+          [
+            1.782803401595E9,
+            0.0
+          ],
+          [
+            1.782803416595E9,
+            0.0
+          ],
+          [
+            1.782803431595E9,
+            0.0
+          ]
+        ]
+      },
+      {
+        "labels": {
+          "__name__": "debezium_snapshot_skipped",
+          "container": "otc-container",
+          "container_id": "6836adba3d974fcc28637b50432fbaa30745019d24011740e92c94406d014713",
+          "debezium_connector_type": "postgresql",
+          "debezium_context": "snapshot",
+          "debezium_logical_name": "inventory",
+          "debezium_snapshot_skipped_state": "skipped",
+          "debezium_snapshot_status": "skipped",
+          "endpoint": "prometheus",
+          "exported_instance": "8cc082cb-b8c4-416e-b630-af8a8a4fbd10",
+          "exported_job": "test-pipeline-2",
+          "host_arch": "aarch64",
+          "host_name": "test-pipeline-2-865db774f-mqx65",
+          "instance": "10.244.0.21:8889",
+          "job": "debezium-platform-otel-collector-collector",
+          "namespace": "debezium-platform",
+          "os_description": "Linux 6.8.0-50-generic",
+          "os_type": "linux",
+          "os_version": "6.8.0-50-generic",
+          "otel_scope_name": "io.opentelemetry.jmx",
+          "platform": "debezium",
+          "pod": "debezium-platform-otel-collector-collector-54f65694f8-2tbn4",
+          "process_command_args": "[\"/usr/lib/jvm/java-21-openjdk-21.0.11.0.10-1.el8.aarch64/bin/java\",\"-javaagent:lib_metrics/opentelemetry-javaagent-2.27.0.jar\",\"-javaagent:lib_metrics/jmx_prometheus_javaagent-1.0.1.jar=0.0.0.0:9090:config/metrics.yml\",\"-cp\",\"debezium-server-dist-3.6.0.Beta2-runner.jar:config/lib:lib/*\",\"io.debezium.server.Main\"]",
+          "process_executable_path": "/usr/lib/jvm/java-21-openjdk-21.0.11.0.10-1.el8.aarch64/bin/java",
+          "process_pid": "1",
+          "process_runtime_description": "Red Hat, Inc. OpenJDK 64-Bit Server VM 21.0.11+10-LTS",
+          "process_runtime_name": "OpenJDK Runtime Environment",
+          "process_runtime_version": "21.0.11+10-LTS",
+          "service": "debezium-platform-otel-collector-collector",
+          "service_instance_id": "8cc082cb-b8c4-416e-b630-af8a8a4fbd10",
+          "service_name": "test-pipeline-2",
+          "telemetry_distro_name": "opentelemetry-java-instrumentation",
+          "telemetry_distro_version": "2.27.0",
+          "telemetry_sdk_language": "java",
+          "telemetry_sdk_name": "opentelemetry",
+          "telemetry_sdk_version": "1.61.0"
+        },
+        "datapoints": [
+          [
+            1.782802531595E9,
+            0.0
+          ],
+          [
+            1.782802546595E9,
+            0.0
+          ],
+          [
+            1.782802561595E9,
+            0.0
+          ],
+          [
+            1.782802576595E9,
+            0.0
+          ],
+          [
+            1.782802591595E9,
+            0.0
+          ],
+          [
+            1.782802606595E9,
+            0.0
+          ],
+          [
+            1.782802621595E9,
+            0.0
+          ],
+          [
+            1.782802636595E9,
+            0.0
+          ],
+          [
+            1.782802651595E9,
+            0.0
+          ],
+          [
+            1.782802666595E9,
+            0.0
+          ],
+          [
+            1.782802681595E9,
+            0.0
+          ],
+          [
+            1.782802696595E9,
+            0.0
+          ],
+          [
+            1.782802711595E9,
+            0.0
+          ],
+          [
+            1.782802726595E9,
+            0.0
+          ],
+          [
+            1.782802741595E9,
+            0.0
+          ],
+          [
+            1.782802756595E9,
+            0.0
+          ],
+          [
+            1.782802771595E9,
+            0.0
+          ],
+          [
+            1.782802786595E9,
+            0.0
+          ],
+          [
+            1.782802801595E9,
+            0.0
+          ],
+          [
+            1.782802816595E9,
+            0.0
+          ],
+          [
+            1.782802831595E9,
+            0.0
+          ],
+          [
+            1.782802846595E9,
+            0.0
+          ],
+          [
+            1.782802861595E9,
+            0.0
+          ],
+          [
+            1.782802876595E9,
+            0.0
+          ],
+          [
+            1.782802891595E9,
+            0.0
+          ],
+          [
+            1.782802906595E9,
+            0.0
+          ],
+          [
+            1.782802921595E9,
+            0.0
+          ],
+          [
+            1.782802936595E9,
+            0.0
+          ],
+          [
+            1.782802951595E9,
+            0.0
+          ],
+          [
+            1.782802966595E9,
+            0.0
+          ],
+          [
+            1.782802981595E9,
+            0.0
+          ],
+          [
+            1.782802996595E9,
+            0.0
+          ],
+          [
+            1.782803011595E9,
+            0.0
+          ],
+          [
+            1.782803026595E9,
+            0.0
+          ],
+          [
+            1.782803041595E9,
+            0.0
+          ],
+          [
+            1.782803056595E9,
+            0.0
+          ],
+          [
+            1.782803071595E9,
+            0.0
+          ],
+          [
+            1.782803086595E9,
+            0.0
+          ],
+          [
+            1.782803101595E9,
+            0.0
+          ],
+          [
+            1.782803116595E9,
+            0.0
+          ],
+          [
+            1.782803131595E9,
+            0.0
+          ],
+          [
+            1.782803146595E9,
+            0.0
+          ],
+          [
+            1.782803161595E9,
+            0.0
+          ],
+          [
+            1.782803176595E9,
+            0.0
+          ],
+          [
+            1.782803191595E9,
+            0.0
+          ],
+          [
+            1.782803206595E9,
+            0.0
+          ],
+          [
+            1.782803221595E9,
+            0.0
+          ],
+          [
+            1.782803236595E9,
+            0.0
+          ],
+          [
+            1.782803251595E9,
+            0.0
+          ],
+          [
+            1.782803266595E9,
+            0.0
+          ],
+          [
+            1.782803281595E9,
+            0.0
+          ],
+          [
+            1.782803296595E9,
+            0.0
+          ],
+          [
+            1.782803311595E9,
+            0.0
+          ],
+          [
+            1.782803326595E9,
+            0.0
+          ],
+          [
+            1.782803341595E9,
+            0.0
+          ],
+          [
+            1.782803356595E9,
+            0.0
+          ],
+          [
+            1.782803371595E9,
+            0.0
+          ],
+          [
+            1.782803386595E9,
+            0.0
+          ],
+          [
+            1.782803401595E9,
+            0.0
+          ],
+          [
+            1.782803416595E9,
+            0.0
+          ],
+          [
+            1.782803431595E9,
+            0.0
+          ]
+        ]
+      }
+    ],
+    "metadata": {
+      "queryDurationMs": 5
+    }
   }
 }

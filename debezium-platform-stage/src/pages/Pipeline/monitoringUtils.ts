@@ -28,6 +28,18 @@ export const getSeriesLabel = (labels: Record<string, string>): string => {
   return labels.__name__ ?? "value";
 };
 
+/** Series identifier for chart tooltips; prefers the replica/pod host name when present. */
+export const getSeriesTooltipLabel = (labels: Record<string, string>): string =>
+  labels.host_name ?? getSeriesLabel(labels);
+
+export const getSeriesChildName = (seriesIndex: number): string => `series-${seriesIndex}`;
+
+export const buildChartLegendTooltipData = (seriesList: TimeSeries[]) =>
+  seriesList.map((series, index) => ({
+    childName: getSeriesChildName(index),
+    name: getSeriesTooltipLabel(series.labels),
+  }));
+
 export const hasPanelData = (data?: PanelQueryResponse): boolean => {
   if (!data?.series?.length) {
     return false;
@@ -117,6 +129,60 @@ export const getStatusValue = (data?: PanelQueryResponse): number | null => {
 export const isStatusActive = (value: number | null | undefined): boolean =>
   value != null && value >= 1;
 
+export type SnapshotStatus = "completed" | "running" | "skipped" | "aborted";
+
+const SNAPSHOT_STATUS_LABEL_KEY = "debezium_snapshot_status";
+
+const SNAPSHOT_STATUS_FROM_STATE_LABEL: Record<string, SnapshotStatus> = {
+  debezium_snapshot_completed_state: "completed",
+  debezium_snapshot_running_state: "running",
+  debezium_snapshot_skipped_state: "skipped",
+  debezium_snapshot_aborted_state: "aborted",
+};
+
+export const extractSnapshotStatusFromLabels = (
+  labels: Record<string, string>
+): SnapshotStatus | null => {
+  const directStatus = labels[SNAPSHOT_STATUS_LABEL_KEY];
+  if (
+    directStatus === "completed" ||
+    directStatus === "running" ||
+    directStatus === "skipped" ||
+    directStatus === "aborted"
+  ) {
+    return directStatus;
+  }
+
+  for (const [labelKey, status] of Object.entries(SNAPSHOT_STATUS_FROM_STATE_LABEL)) {
+    if (labels[labelKey]) {
+      return status;
+    }
+  }
+
+  return null;
+};
+
+/** Returns the snapshot status whose series latest value is 1, or null when all are inactive. */
+export const getActiveSnapshotStatus = (
+  data?: PanelQueryResponse
+): SnapshotStatus | null => {
+  if (!data?.series?.length) {
+    return null;
+  }
+
+  for (const series of data.series) {
+    const latest = getLatestFromSeries(series);
+    if (latest === 1) {
+      const status = extractSnapshotStatusFromLabels(series.labels);
+      if (status) {
+        return status;
+      }
+    }
+  }
+
+  return null;
+};
+
 export const getCombinedLatestRate = (data?: PanelQueryResponse): number => {
   if (!data?.series?.length) {
     return 0;
@@ -140,7 +206,7 @@ export const transformToChartData = (seriesList: TimeSeries[]) => {
         {
           x: formatChartTimestamp(timestamp),
           y: parsed,
-          name: getSeriesLabel(series.labels),
+          name: getSeriesTooltipLabel(series.labels),
         },
       ];
     })
