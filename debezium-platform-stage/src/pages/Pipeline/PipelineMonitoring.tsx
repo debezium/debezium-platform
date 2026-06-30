@@ -39,7 +39,7 @@ import { hasPanelData, panelSeriesEqual } from "./monitoringUtils";
 import { MonitoringPanelCard } from "./MonitoringPanelCard";
 import {
   AUXILIARY_PANEL_IDS,
-  buildPanelRows,
+  buildSectionPanelRows,
   getPanelLayout,
   isAuxiliaryPanel,
   isTallChartPanel,
@@ -362,7 +362,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     heading: string,
     rowLayouts: typeof STREAMING_PANEL_ROWS
   ) => {
-    const rows = buildPanelRows(sectionPanels, rowLayouts);
+    const rows = buildSectionPanelRows(sectionPanels, rowLayouts);
 
     return (
       <>
