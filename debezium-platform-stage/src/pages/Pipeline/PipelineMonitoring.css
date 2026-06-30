@@ -3,7 +3,6 @@
   flex-direction: column;
 }
 
-/* Vertical dividers between compact status-row panels (lg+ only; stacked on smaller viewports). */
 @media (min-width: 992px) {
   .monitoring-grid-item--divided {
     position: relative;

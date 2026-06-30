@@ -1,14 +1,7 @@
 /**
  * Panel Configuration for Pipeline Monitoring
- *
- * Maps panel IDs from the backend to UI components and defines
- * which panels are displayed in each section of the monitoring page.
  */
 
-/**
- * Streaming metrics panel IDs
- * These panels display real-time CDC streaming metrics
- */
 export const STREAMING_PANELS = {
   timeSinceLastEvent: 'time-since-last-event',
   sourceLag: 'source-lag',
@@ -21,10 +14,6 @@ export const STREAMING_PANELS = {
   queueSizeUtilization: 'queue-size-utilization',
 } as const;
 
-/**
- * Snapshot metrics panel IDs
- * These panels display initial snapshot progress and status
- */
 export const SNAPSHOT_PANELS = {
   snapshotTableProgress: 'snapshot-table-progress',
   snapshotStatus: 'snapshot-status',
@@ -40,37 +29,22 @@ export const PANEL_CATEGORIES = {
   SNAPSHOT: 'snapshot',
 } as const;
 
-/**
- * Get all streaming panel IDs as an array
- */
 export const getStreamingPanelIds = (): string[] => {
   return Object.values(STREAMING_PANELS);
 };
 
-/**
- * Get all snapshot panel IDs as an array
- */
 export const getSnapshotPanelIds = (): string[] => {
   return Object.values(SNAPSHOT_PANELS);
 };
 
-/**
- * Get all panel IDs
- */
 export const getAllPanelIds = (): string[] => {
   return [...getStreamingPanelIds(), ...getSnapshotPanelIds()];
 };
 
-/**
- * Check if a panel ID belongs to streaming category
- */
 export const isStreamingPanel = (panelId: string): boolean => {
   return getStreamingPanelIds().includes(panelId);
 };
 
-/**
- * Check if a panel ID belongs to snapshot category
- */
 export const isSnapshotPanel = (panelId: string): boolean => {
   return getSnapshotPanelIds().includes(panelId);
 };
@@ -98,16 +72,7 @@ export const SNAPSHOT_PANEL_ORDER = [
   "snapshot-duration",
 ];
 
-/** Panels with a taller chart area. */
 export const TALL_CHART_PANEL_IDS = new Set<string>([
-  // "streaming-event-count",
-  // "source-lag",
-  // "time-since-last-event",
-  // "events-filtered",
-  // "erroneous-events",
-  // "snapshot-event-count",
-  // "snapshot-duration",
-  // "committed-transactions"
 ]);
 
 export const CHART_HEIGHT_DEFAULT = 175;
@@ -115,19 +80,12 @@ export const CHART_HEIGHT_TALL = 230;
 
 export type PanelRowLayout = {
   panelIds: string[];
-  /** Default lg column span (12-column grid) for panels in this row. */
   lg: number;
-  /** Per-panel lg overrides; must sum to 12 when all panels in the row are present. */
   lgByPanel?: Partial<Record<string, number>>;
   compact?: boolean;
-  /** When true, vertical dividers are shown between panels in the row. */
   divided?: boolean;
 };
 
-/**
- * Streaming status row: connection + queue utilization panels rendered together
- * with the same compact card shell and relative sizing.
- */
 export const STREAMING_STATUS_ROW: PanelRowLayout = {
   panelIds: ["connection-status", "queue-size-utilization", "queue-utilization"],
   lg: 4,
@@ -135,10 +93,6 @@ export const STREAMING_STATUS_ROW: PanelRowLayout = {
   divided: true,
 };
 
-/**
- * Snapshot status row: table progress + snapshot state panels rendered together
- * with the same compact card shell (status label + primary value).
- */
 export const SNAPSHOT_STATUS_ROW: PanelRowLayout = {
   panelIds: ["snapshot-status","snapshot-table-progress" ],
   lg: 4,
