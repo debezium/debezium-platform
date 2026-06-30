@@ -1,6 +1,5 @@
 import { QueryClient } from "react-query";
 import { API_URL } from "../utils/constants";
-import { fetchMockPanelData, shouldUseMockData } from "./mockPanelData";
 
 const queryClient = new QueryClient();
 
@@ -467,10 +466,6 @@ export const fetchPanelData = async (
   end: string,
   step?: string
 ): Promise<ApiResponse<import('./types').PanelQueryResponse>> => {
-  if (shouldUseMockData(panelId)) {
-    return fetchMockPanelData(panelId, pipelineName, start, end, step);
-  }
-
   try {
     const params = new URLSearchParams({
       pipeline_id: pipelineName,
