@@ -17,11 +17,18 @@ import {
   ChartAxis,
   ChartDonutUtilization,
   ChartGroup,
+  ChartLabel,
   ChartLine,
   ChartThemeColor,
   ChartVoronoiContainer,
   createContainer,
 } from "@patternfly/react-charts/victory";
+import chart_donut_label_subtitle_Fill from "@patternfly/react-tokens/dist/js/chart_donut_label_subtitle_Fill";
+import chart_donut_label_title_Fill from "@patternfly/react-tokens/dist/js/chart_donut_label_title_Fill";
+import chart_donut_threshold_danger_Color from "@patternfly/react-tokens/dist/js/chart_donut_threshold_danger_Color";
+import chart_donut_threshold_first_Color from "@patternfly/react-tokens/dist/js/chart_donut_threshold_first_Color";
+import chart_donut_threshold_warning_Color from "@patternfly/react-tokens/dist/js/chart_donut_threshold_warning_Color";
+import chart_theme_green_ColorScale_100 from "@patternfly/react-tokens/dist/js/chart_theme_green_ColorScale_100";
 import {
   BanIcon,
   CheckCircleIcon,
@@ -30,16 +37,18 @@ import {
   PauseCircleIcon,
 } from "@patternfly/react-icons";
 import { ComponentProps, FC, memo, ReactNode } from "react";
+import { useData } from "../../appLayout/AppContext";
 import type { PanelQueryResponse, PanelResponse } from "../../apis/types";
 import {
+  computeSnapshotTableProgress,
   formatValueWithUnit,
   getCombinedLatestRate,
   getLatestValue,
   getPanelEmptyMessage,
   getChartYDomain,
   getSeriesLabel,
-  formatChartTooltipValue,
-  formatYAxisTick,
+  getYAxisTickFormat,
+  getChartTooltipFormat,
   getStatusValue,
   hasPanelData,
   hasPlottableMetricData,
@@ -67,9 +76,40 @@ type MonitoringPanelCardProps = {
   error?: string;
   compact?: boolean;
   tallChart?: boolean;
-  snapshotCompletedValue?: number | null;
+  snapshotTableCountData?: PanelQueryResponse;
+  snapshotTableCountLoading?: boolean;
+  snapshotTableCountError?: string;
   onRetry?: () => void;
 };
+
+/** Matches @patternfly/react-charts default utilization thresholds (warning → danger). */
+const DONUT_UTILIZATION_THRESHOLDS = [
+  { value: 60, color: chart_donut_threshold_warning_Color.var },
+  { value: 90, color: chart_donut_threshold_danger_Color.var },
+];
+
+/** Green at 100% complete; warning for any progress below 100%. */
+const getSnapshotTableProgressThresholds = (progressPercent: number) =>
+  progressPercent >= 100
+    ? [{ value: 100, color: chart_theme_green_ColorScale_100.var }]
+    : [{ value: 0, color: chart_donut_threshold_warning_Color.var }];
+
+/** Compact center labels for the small snapshot-table donut. */
+const SNAPSHOT_DONUT_CENTER_LABEL = (
+  <ChartLabel
+    style={[
+      {
+        fill: chart_donut_label_title_Fill.var,
+        fontSize: 13,
+        fontWeight: 600,
+      },
+      {
+        fill: chart_donut_label_subtitle_Fill.var,
+        fontSize: 10,
+      },
+    ]}
+  />
+);
 
 const cardClass = (compact?: boolean, extra?: string) =>
   [
@@ -167,7 +207,7 @@ const PanelEmpty: FC<{ title: string; description?: string; message: string; com
         <Title headingLevel="h4" size={compact ? "md" : "lg"}>
           No data
         </Title>
-        {message && <EmptyStateBody>{message}</EmptyStateBody>}
+        {/* {message && <EmptyStateBody>{message}</EmptyStateBody>} */}
       </EmptyState>
     </CardBody>
   </Card>
@@ -209,6 +249,18 @@ const SnapshotStatusLabel: FC<{ panelId: string; value: number | null }> = ({ pa
     );
   }
 
+  if (panelId === "snapshot-paused") {
+    return isStatusActive(value) ? (
+      <Label color="orange" icon={<PauseCircleIcon />} isCompact>
+        Paused
+      </Label>
+    ) : (
+      <Label color="grey" icon={<PauseCircleIcon />} isCompact>
+        Not Paused
+      </Label>
+    );
+  }
+
   if (panelId === "snapshot-aborted") {
     return isStatusActive(value) ? (
       <Label color="orange" icon={<BanIcon />} isCompact>
@@ -230,6 +282,7 @@ const TimeSeriesChart: FC<{
   chartType: "area" | "line";
   tallChart?: boolean;
 }> = ({ panel, data, chartType, tallChart = false }) => {
+  const { darkMode } = useData();
   const series = data.series;
   const isMultiSeries = series.length > 1;
   const useAreaChartLegend = chartType === "area" && isMultiSeries;
@@ -245,6 +298,8 @@ const TimeSeriesChart: FC<{
     ? CHART_HEIGHT_TALL
     : CHART_HEIGHT_DEFAULT;
   const yDomain = getChartYDomain(data);
+  const yAxisTickFormat = getYAxisTickFormat(panel.id);
+  const chartTooltipFormat = getChartTooltipFormat(panel.id);
 
   const legendPosition = (
     useAreaChartLegend ? "top" : isMultiSeries ? "bottom" : undefined
@@ -278,13 +333,14 @@ const TimeSeriesChart: FC<{
             .join(" ")}
         >
           <Chart
+            key={darkMode ? "dark" : "light"}
             ariaDesc={panel.description}
             ariaTitle={panel.title}
             containerComponent={
               chartType === "area" ? (
                 <ChartVoronoiContainer
                   labels={({ datum }: { datum: { name: string; y: number } }) =>
-                    `${datum.name}: ${formatChartTooltipValue(Number(datum.y))}`
+                    `${datum.name}: ${chartTooltipFormat(Number(datum.y))}`
                   }
                   constrainToVisibleArea
                 />
@@ -292,7 +348,7 @@ const TimeSeriesChart: FC<{
                 <CursorVoronoiContainer
                   cursorDimension="x"
                   labels={({ datum }: { datum: { x: string; y: number; name: string } }) =>
-                    `${datum.name}: ${formatChartTooltipValue(Number(datum.y))}`
+                    `${datum.name}: ${chartTooltipFormat(Number(datum.y))}`
                   }
                   mouseFollowTooltips
                   voronoiDimension="x"
@@ -324,7 +380,7 @@ const TimeSeriesChart: FC<{
               }}
               fixLabelOverlap
             />
-            <ChartAxis dependentAxis showGrid style={{ tickLabels: { fontSize: 9 } }} tickFormat={formatYAxisTick} />
+            <ChartAxis dependentAxis showGrid style={{ tickLabels: { fontSize: 9 } }} tickFormat={yAxisTickFormat} />
             {isMultiSeries ? (
               <ChartGroup>
                 {series.map((s, idx) => (
@@ -361,6 +417,7 @@ const DonutGauge: FC<{ panel: PanelResponse; data: PanelQueryResponse; compact?:
   data,
   compact,
 }) => {
+  const { darkMode } = useData();
   const value = getLatestValue(data) ?? 0;
   const percentage = Math.max(0, Math.min(100, value));
   const inStatusRow = compact && isStreamingStatusRowPanel(panel.id);
@@ -373,6 +430,7 @@ const DonutGauge: FC<{ panel: PanelResponse; data: PanelQueryResponse; compact?:
   const donut = (
     <div className="monitoring-donut-compact">
       <ChartDonutUtilization
+        key={darkMode ? "dark" : "light"}
         ariaDesc={panel.description}
         ariaTitle={panel.title}
         constrainToVisibleArea
@@ -382,11 +440,7 @@ const DonutGauge: FC<{ panel: PanelResponse; data: PanelQueryResponse; compact?:
         }
         subTitle={inStatusRow || compact ? undefined : "utilization"}
         title={formatValueWithUnit(value, panel.unit)}
-        thresholds={[
-          { value: 60, color: "#3e8635" },
-          { value: 80, color: "#f0ab00" },
-          { value: 100, color: "#c9190b" },
-        ]}
+        thresholds={DONUT_UTILIZATION_THRESHOLDS}
         {...size}
         padding={{ bottom: 12, left: 12, right: 12, top: 12 }}
       />
@@ -413,40 +467,69 @@ const DonutGauge: FC<{ panel: PanelResponse; data: PanelQueryResponse; compact?:
 
 const SnapshotTableProgress: FC<{
   panel: PanelResponse;
-  data: PanelQueryResponse;
+  progressData: PanelQueryResponse;
+  countData: PanelQueryResponse;
   compact?: boolean;
-  snapshotCompletedValue?: number | null;
-}> = ({ panel, data, compact, snapshotCompletedValue }) => {
-  const remaining = getLatestValue(data) ?? 0;
-  const isComplete = remaining === 0 || isStatusActive(snapshotCompletedValue);
+}> = ({ panel, progressData, countData, compact }) => {
+  const { darkMode } = useData();
+  const { total, remaining, completed, progressPercent } = computeSnapshotTableProgress(
+    getLatestValue(countData),
+    getLatestValue(progressData)
+  );
+  const progressLabel = `${Math.round(progressPercent)}%`;
+  const progressSliceColor =
+    progressPercent >= 100
+      ? chart_theme_green_ColorScale_100.var
+      : chart_donut_threshold_warning_Color.var;
 
   return (
     <CompactStatusRowCard panel={panel} compact={compact}>
-      <FlexItem>
-        {isComplete ? (
-          <Label color="green" icon={<CheckCircleIcon />} isCompact>
-            Complete
-          </Label>
-        ) : (
-          <Label color="blue" icon={<InProgressIcon />} isCompact>
-            In Progress
-          </Label>
-        )}
-      </FlexItem>
-      {!compact && (
-        <FlexItem>
-          <span className="monitoring-chart-stat__label">Remaining Tables</span>
-        </FlexItem>
-      )}
-      <FlexItem>
-        <Title headingLevel="h3" size={compact ? "lg" : "2xl"}>
-          {remaining.toFixed(0)}
-        </Title>
-        {!compact && (
-          <span style={{ fontSize: "14px", color: "var(--pf-v5-global--Color--200)" }}>
-            {panel.unit}
-          </span>
-        )}
+      <FlexItem className="monitoring-snapshot-table-donut">
+        <Flex
+          alignItems={{ default: "alignItemsCenter" }}
+          justifyContent={{ default: "justifyContentCenter" }}
+          spaceItems={{ default: "spaceItemsMd" }}
+        >
+          <ChartDonutUtilization
+            key={darkMode ? "dark" : "light"}
+            ariaDesc={panel.description}
+            ariaTitle={panel.title}
+            constrainToVisibleArea
+            data={{ x: "Tables captured", y: progressPercent }}
+            labels={({ datum }: { datum: { x: string; y: number } }) =>
+              datum.x ? `${Math.round(datum.y)}%` : null
+            }
+            subTitle={`of ${total}`}
+            subTitlePosition="center"
+            title={progressLabel}
+            titleComponent={SNAPSHOT_DONUT_CENTER_LABEL}
+            thresholds={getSnapshotTableProgressThresholds(progressPercent)}
+            height={96}
+            width={96}
+            padding={{ bottom: 2, left: 2, right: 2, top: 2 }}
+          />
+          <Flex
+            direction={{ default: "column" }}
+            spaceItems={{ default: "spaceItemsSm" }}
+            className="monitoring-snapshot-table-legend"
+          >
+         
+            <Flex alignItems={{ default: "alignItemsCenter" }} spaceItems={{ default: "spaceItemsSm" }}>
+              <span
+                className="monitoring-snapshot-table-legend__swatch"
+                style={{ backgroundColor: chart_donut_threshold_first_Color.var }}
+              />
+              <span>{`In progress: ${remaining}`}</span>
+            </Flex>
+            <Flex alignItems={{ default: "alignItemsCenter" }} spaceItems={{ default: "spaceItemsSm" }}>
+              <span
+                className="monitoring-snapshot-table-legend__swatch"
+                style={{ backgroundColor: progressSliceColor }}
+              />
+              <span>{`Completed: ${completed}`}</span>
+            </Flex>
+          </Flex>
+        </Flex>
       </FlexItem>
     </CompactStatusRowCard>
   );
@@ -464,11 +547,11 @@ const ConnectionStatusPanel: FC<{
       <FlexItem>
         <ConnectionStatusLabel value={value} />
       </FlexItem>
-      <FlexItem>
+      {/* <FlexItem>
         <Title headingLevel="h3" size={compact ? "lg" : "2xl"}>
           {value.toFixed(0)}
         </Title>
-      </FlexItem>
+      </FlexItem> */}
     </CompactStatusRowCard>
   );
 };
@@ -485,11 +568,11 @@ const SnapshotStatusPanel: FC<{
       <FlexItem>
         <SnapshotStatusLabel panelId={panel.id} value={value} />
       </FlexItem>
-      <FlexItem>
+      {/* <FlexItem>
         <Title headingLevel="h3" size={compact ? "lg" : "2xl"}>
           {value.toFixed(0)}
         </Title>
-      </FlexItem>
+      </FlexItem> */}
     </CompactStatusRowCard>
   );
 };
@@ -501,9 +584,74 @@ const MonitoringPanelCardComponent: FC<MonitoringPanelCardProps> = ({
   error,
   compact = false,
   tallChart = false,
-  snapshotCompletedValue,
+  snapshotTableCountData,
+  snapshotTableCountLoading = false,
+  snapshotTableCountError,
   onRetry,
 }) => {
+  if (panel.id === SNAPSHOT_TABLE_PROGRESS_PANEL_ID) {
+    if ((loading && !data) || snapshotTableCountLoading) {
+      return (
+        <PanelLoading title={panel.title} description={panel.description} compact={compact} />
+      );
+    }
+
+    if (error) {
+      return (
+        <PanelError
+          title={panel.title}
+          description={panel.description}
+          message={error}
+          compact={compact}
+          onRetry={onRetry}
+        />
+      );
+    }
+
+    if (snapshotTableCountError) {
+      return (
+        <PanelError
+          title={panel.title}
+          description={panel.description}
+          message={snapshotTableCountError}
+          compact={compact}
+          onRetry={onRetry}
+        />
+      );
+    }
+
+    if (!hasPanelData(data) || !hasPlottableMetricData(data)) {
+      return (
+        <PanelEmpty
+          title={panel.title}
+          description={panel.description}
+          message={getPanelEmptyMessage(panel.id)}
+          compact={compact}
+        />
+      );
+    }
+
+    if (!hasPanelData(snapshotTableCountData) || !hasPlottableMetricData(snapshotTableCountData)) {
+      return (
+        <PanelEmpty
+          title={panel.title}
+          description={panel.description}
+          message={getPanelEmptyMessage(panel.id)}
+          compact={compact}
+        />
+      );
+    }
+
+    return (
+      <SnapshotTableProgress
+        panel={panel}
+        progressData={data!}
+        countData={snapshotTableCountData!}
+        compact={compact}
+      />
+    );
+  }
+
   if (loading && !data) {
     return (
       <PanelLoading title={panel.title} description={panel.description} compact={compact} />
@@ -529,17 +677,6 @@ const MonitoringPanelCardComponent: FC<MonitoringPanelCardProps> = ({
         description={panel.description}
         message={getPanelEmptyMessage(panel.id)}
         compact={compact}
-      />
-    );
-  }
-
-  if (panel.id === SNAPSHOT_TABLE_PROGRESS_PANEL_ID) {
-    return (
-      <SnapshotTableProgress
-        panel={panel}
-        data={data!}
-        compact={compact}
-        snapshotCompletedValue={snapshotCompletedValue}
       />
     );
   }
@@ -585,6 +722,8 @@ export const MonitoringPanelCard = memo(
     prev.tallChart === next.tallChart &&
     prev.loading === next.loading &&
     prev.error === next.error &&
-    prev.snapshotCompletedValue === next.snapshotCompletedValue &&
-    panelSeriesEqual(prev.data, next.data)
+    prev.snapshotTableCountLoading === next.snapshotTableCountLoading &&
+    prev.snapshotTableCountError === next.snapshotTableCountError &&
+    panelSeriesEqual(prev.data, next.data) &&
+    panelSeriesEqual(prev.snapshotTableCountData, next.snapshotTableCountData)
 );

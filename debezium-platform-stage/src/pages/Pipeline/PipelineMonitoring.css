@@ -3,8 +3,26 @@
   flex-direction: column;
 }
 
-.monitoring-grid-item--divided {
-  border-right: 1px solid #d2d2d2;
+/* Vertical dividers between compact status-row panels (lg+ only; stacked on smaller viewports). */
+@media (min-width: 992px) {
+  .monitoring-grid-item--divided {
+    position: relative;
+  }
+
+  .monitoring-grid-item--divided::after {
+    content: "";
+    position: absolute;
+    top: var(--pf-v5-global--spacer--sm, 0.5rem);
+    bottom: var(--pf-v5-global--spacer--sm, 0.5rem);
+    right: 0;
+    width: 1px;
+    background-color: var(--pf-t--global--border--color--default, #d2d2d2);
+    pointer-events: none;
+  }
+}
+
+.pf-v6-theme-dark .monitoring-grid-item--divided::after {
+  background-color: var(--pf-t--global--border--color--default, #6a6e73);
 }
 
 .monitoring-grid-item > .monitoring-panel-card {
@@ -133,4 +151,40 @@
 
 .monitoring-status-row-card .monitoring-donut-compact {
   flex: none;
+}
+
+.monitoring-snapshot-table-donut {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 100px;
+  overflow: visible;
+}
+
+.monitoring-snapshot-table-donut .pf-v5-c-chart {
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.monitoring-snapshot-table-legend {
+  font-size: var(--pf-v5-global--FontSize--sm);
+  color: var(--pf-t--global--text--color--regular, #151515);
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.pf-v6-theme-dark .monitoring-snapshot-table-legend {
+  color: var(--pf-t--global--text--color--regular, #f0f0f0);
+}
+
+.monitoring-snapshot-table-legend__swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.monitoring-status-row-card .monitoring-compact-card__body {
+  overflow: visible;
 }
