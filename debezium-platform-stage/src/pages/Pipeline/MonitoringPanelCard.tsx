@@ -18,9 +18,9 @@ import {
   ChartDonutUtilization,
   ChartGroup,
   ChartLabel,
+  ChartLegendTooltip,
   ChartLine,
   ChartThemeColor,
-  ChartVoronoiContainer,
   createContainer,
 } from "@patternfly/react-charts/victory";
 import chart_donut_label_subtitle_Fill from "@patternfly/react-tokens/dist/js/chart_donut_label_subtitle_Fill";
@@ -34,18 +34,21 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   InProgressIcon,
+  OutlinedClockIcon,
   PauseCircleIcon,
 } from "@patternfly/react-icons";
 import { ComponentProps, FC, memo, ReactNode } from "react";
 import { useData } from "../../appLayout/AppContext";
 import type { PanelQueryResponse, PanelResponse } from "../../apis/types";
 import {
+  buildChartLegendTooltipData,
   computeSnapshotTableProgress,
   formatValueWithUnit,
-  getCombinedLatestRate,
+  getActiveSnapshotStatus,
   getLatestValue,
   getPanelEmptyMessage,
   getChartYDomain,
+  getSeriesChildName,
   getSeriesLabel,
   getYAxisTickFormat,
   getChartTooltipFormat,
@@ -55,11 +58,12 @@ import {
   isStatusActive,
   panelSeriesEqual,
   transformToChartData,
+  type SnapshotStatus,
 } from "./monitoringUtils";
 
 import {
   CONNECTION_STATUS_PANEL_ID,
-  SNAPSHOT_STATUS_PANEL_IDS,
+  SNAPSHOT_STATUS_PANEL_ID,
   SNAPSHOT_TABLE_PROGRESS_PANEL_ID,
   TALL_CHART_PANEL_IDS,
   CHART_HEIGHT_DEFAULT,
@@ -67,7 +71,7 @@ import {
   isStreamingStatusRowPanel,
 } from "./panelConfig";
 
-const CursorVoronoiContainer = createContainer('voronoi', 'cursor');
+const CursorVoronoiContainer = createContainer("voronoi", "cursor");
 
 type MonitoringPanelCardProps = {
   panel: PanelResponse;
@@ -188,7 +192,9 @@ const PanelEmpty: FC<{ title: string; description?: string; message: string; com
   description,
   message,
   compact,
-}) => (
+}) => {
+  console.log("PanelEmpty", message);
+  return (
   <Card
     isCompact={compact}
     isFullHeight
@@ -211,7 +217,8 @@ const PanelEmpty: FC<{ title: string; description?: string; message: string; com
       </EmptyState>
     </CardBody>
   </Card>
-);
+)
+};
 
 const ConnectionStatusLabel: FC<{ value: number | null }> = ({ value }) =>
   isStatusActive(value) ? (
@@ -224,56 +231,44 @@ const ConnectionStatusLabel: FC<{ value: number | null }> = ({ value }) =>
     </Label>
   );
 
-const SnapshotStatusLabel: FC<{ panelId: string; value: number | null }> = ({ panelId, value }) => {
-  if (panelId === "snapshot-running") {
-    return isStatusActive(value) ? (
-      <Label color="blue" icon={<InProgressIcon />} isCompact>
-        In Progress
-      </Label>
-    ) : (
-      <Label color="grey" icon={<PauseCircleIcon />} isCompact>
-        Idle
-      </Label>
-    );
-  }
-
-  if (panelId === "snapshot-completed") {
-    return isStatusActive(value) ? (
+const ConsolidatedSnapshotStatusLabel: FC<{ status: SnapshotStatus | null }> = ({ status }) => {
+  if (status === "completed") {
+    return (
       <Label color="green" icon={<CheckCircleIcon />} isCompact>
         Completed
       </Label>
-    ) : (
-      <Label color="grey" icon={<PauseCircleIcon />} isCompact>
-        Not Completed
+    );
+  }
+
+  if (status === "running") {
+    return (
+      <Label color="blue" icon={<InProgressIcon />} isCompact>
+        In Progress
       </Label>
     );
   }
 
-  if (panelId === "snapshot-paused") {
-    return isStatusActive(value) ? (
-      <Label color="orange" icon={<PauseCircleIcon />} isCompact>
-        Paused
-      </Label>
-    ) : (
-      <Label color="grey" icon={<PauseCircleIcon />} isCompact>
-        Not Paused
+  if (status === "skipped") {
+    return (
+      <Label color="orange" icon={<OutlinedClockIcon />} isCompact>
+        Skipped
       </Label>
     );
   }
 
-  if (panelId === "snapshot-aborted") {
-    return isStatusActive(value) ? (
-      <Label color="orange" icon={<BanIcon />} isCompact>
+  if (status === "aborted") {
+    return (
+      <Label color="red" icon={<BanIcon />} isCompact>
         Aborted
       </Label>
-    ) : (
-      <Label color="grey" icon={<PauseCircleIcon />} isCompact>
-        Not Aborted
-      </Label>
     );
   }
 
-  return null;
+  return (
+    <Label color="grey" icon={<PauseCircleIcon />} isCompact>
+      Idle
+    </Label>
+  );
 };
 
 const TimeSeriesChart: FC<{
@@ -292,14 +287,15 @@ const TimeSeriesChart: FC<{
   // const legendRightPadding = useAreaChartLegend
   //   ? Math.min(180, 90 + series.length * 28)
   //   : 16;
-  const showCombinedRate =
-    panel.id === "streaming-event-count" && panel.unit === "events/s";
+  // const showCombinedRate =
+  //   panel.id === "streaming-event-count" && panel.unit === "events/s";
   const chartHeight = tallChart || TALL_CHART_PANEL_IDS.has(panel.id)
     ? CHART_HEIGHT_TALL
     : CHART_HEIGHT_DEFAULT;
   const yDomain = getChartYDomain(data);
   const yAxisTickFormat = getYAxisTickFormat(panel.id);
   const chartTooltipFormat = getChartTooltipFormat(panel.id);
+  const tooltipLegendData = buildChartLegendTooltipData(series);
 
   const legendPosition = (
     useAreaChartLegend ? "top" : isMultiSeries ? "bottom" : undefined
@@ -311,7 +307,7 @@ const TimeSeriesChart: FC<{
     <Card isCompact isFullHeight className="monitoring-chart-card monitoring-panel-card">
       <CardTitle subtitle={panel.description}>{panel.title}</CardTitle>
       <CardBody>
-        {showCombinedRate && (
+        {/* {showCombinedRate && (
           <div className="monitoring-chart-stat">
             <div className="monitoring-chart-stat__label">Combined Event Rate</div>
             <div>
@@ -321,7 +317,7 @@ const TimeSeriesChart: FC<{
               <span className="monitoring-chart-stat__unit">{panel.unit}</span>
             </div>
           </div>
-        )}
+        )} */}
 
         <div
           className={[
@@ -337,24 +333,23 @@ const TimeSeriesChart: FC<{
             ariaDesc={panel.description}
             ariaTitle={panel.title}
             containerComponent={
-              chartType === "area" ? (
-                <ChartVoronoiContainer
-                  labels={({ datum }: { datum: { name: string; y: number } }) =>
-                    `${datum.name}: ${chartTooltipFormat(Number(datum.y))}`
-                  }
-                  constrainToVisibleArea
-                />
-              ) : (
-                <CursorVoronoiContainer
-                  cursorDimension="x"
-                  labels={({ datum }: { datum: { x: string; y: number; name: string } }) =>
-                    `${datum.name}: ${chartTooltipFormat(Number(datum.y))}`
-                  }
-                  mouseFollowTooltips
-                  voronoiDimension="x"
-                  voronoiPadding={30}
-                />
-              )
+              <CursorVoronoiContainer
+                constrainToVisibleArea
+                cursorDimension="x"
+                labels={({ datum }: { datum: { y: number } }) => {
+                  const value = Number(datum.y);
+                  return Number.isFinite(value) ? chartTooltipFormat(value) : null;
+                }}
+                labelComponent={
+                  <ChartLegendTooltip
+                    legendData={tooltipLegendData}
+                    title={(datum) => String(datum.x ?? "")}
+                  />
+                }
+                mouseFollowTooltips
+                voronoiDimension="x"
+                voronoiPadding={30}
+              />
             }
             height={chartHeight}
             legendData={legendData}
@@ -386,6 +381,7 @@ const TimeSeriesChart: FC<{
                 {series.map((s, idx) => (
                   <ChartSeries
                     key={idx}
+                    name={getSeriesChildName(idx)}
                     data={transformToChartData([s])}
                     interpolation={chartType === "area" ? "monotoneX" : undefined}
                     style={
@@ -400,6 +396,7 @@ const TimeSeriesChart: FC<{
               series.map((s, idx) => (
                 <ChartSeries
                   key={idx}
+                  name={getSeriesChildName(idx)}
                   data={transformToChartData([s])}
                   interpolation={chartType === "area" ? "monotoneX" : undefined}
                 />
@@ -561,18 +558,13 @@ const SnapshotStatusPanel: FC<{
   data: PanelQueryResponse;
   compact?: boolean;
 }> = ({ panel, data, compact }) => {
-  const value = getStatusValue(data) ?? 0;
+  const status = getActiveSnapshotStatus(data);
 
   return (
     <CompactStatusRowCard panel={panel} compact={compact}>
       <FlexItem>
-        <SnapshotStatusLabel panelId={panel.id} value={value} />
+        <ConsolidatedSnapshotStatusLabel status={status} />
       </FlexItem>
-      {/* <FlexItem>
-        <Title headingLevel="h3" size={compact ? "lg" : "2xl"}>
-          {value.toFixed(0)}
-        </Title>
-      </FlexItem> */}
     </CompactStatusRowCard>
   );
 };
@@ -685,7 +677,7 @@ const MonitoringPanelCardComponent: FC<MonitoringPanelCardProps> = ({
     return <ConnectionStatusPanel panel={panel} data={data!} compact={compact} />;
   }
 
-  if (SNAPSHOT_STATUS_PANEL_IDS.has(panel.id)) {
+  if (panel.id === SNAPSHOT_STATUS_PANEL_ID) {
     return <SnapshotStatusPanel panel={panel} data={data!} compact={compact} />;
   }
 
