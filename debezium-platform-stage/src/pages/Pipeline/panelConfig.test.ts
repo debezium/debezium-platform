@@ -81,7 +81,7 @@ describe("buildSectionPanelRows", () => {
       "queue-size-utilization",
       "queue-utilization",
     ]);
-    expect(rowPanelIds.at(-1)).toEqual(["custom-metric-a", "custom-metric-b"]);
+    expect(rowPanelIds[rowPanelIds.length - 1]).toEqual(["custom-metric-a", "custom-metric-b"]);
   });
 
   it("omits known panels missing from the API without affecting custom panels", () => {
