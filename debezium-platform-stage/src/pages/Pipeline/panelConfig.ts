@@ -244,6 +244,61 @@ export const buildPanelRows = (
     .filter((row) => row.panels.length > 0);
 };
 
+/** Default lg column span for user-defined panels not in the opinionated layout. */
+export const CUSTOM_PANEL_LG = 6;
+
+/** Panel IDs referenced by the built-in row layouts (streaming + snapshot). */
+export const getKnownPanelIds = (
+  rows: PanelRowLayout[] = [...STREAMING_PANEL_ROWS, ...SNAPSHOT_PANEL_ROWS]
+): Set<string> => {
+  const ids = new Set<string>();
+  rows.forEach((row) => row.panelIds.forEach((id) => ids.add(id)));
+  return ids;
+};
+
+export const isKnownPanel = (panelId: string): boolean => getKnownPanelIds().has(panelId);
+
+/** User-defined panels from the API that are not part of the opinionated layout. */
+export const getCustomPanels = (
+  sectionPanels: import("../../apis/types").PanelResponse[]
+): import("../../apis/types").PanelResponse[] =>
+  sectionPanels.filter((panel) => !isKnownPanel(panel.id) && !isAuxiliaryPanel(panel.id));
+
+/**
+ * Groups custom panels into rows of up to two cards (lg=6 each).
+ * Preserves the order returned by the panels API.
+ */
+export const buildCustomPanelRows = (
+  panels: import("../../apis/types").PanelResponse[]
+): { layout: PanelRowLayout; panels: import("../../apis/types").PanelResponse[] }[] => {
+  const rows: {
+    layout: PanelRowLayout;
+    panels: import("../../apis/types").PanelResponse[];
+  }[] = [];
+
+  for (let i = 0; i < panels.length; i += 2) {
+    const rowPanels = panels.slice(i, i + 2);
+    rows.push({
+      layout: {
+        panelIds: rowPanels.map((panel) => panel.id),
+        lg: CUSTOM_PANEL_LG,
+      },
+      panels: rowPanels,
+    });
+  }
+
+  return rows;
+};
+
+/** Opinionated rows first, then user-defined panels appended at the end of the section. */
+export const buildSectionPanelRows = (
+  sectionPanels: import("../../apis/types").PanelResponse[],
+  opinionatedRows: PanelRowLayout[]
+): { layout: PanelRowLayout; panels: import("../../apis/types").PanelResponse[] }[] => [
+  ...buildPanelRows(sectionPanels, opinionatedRows),
+  ...buildCustomPanelRows(getCustomPanels(sectionPanels)),
+];
+
 export const isTallChartPanel = (panelId: string): boolean =>
   TALL_CHART_PANEL_IDS.has(panelId);
 
