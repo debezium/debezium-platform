@@ -35,13 +35,16 @@ import {
   type TimeRangePreset,
   type RefreshInterval,
 } from "../../utils/timeRangeUtils";
-import { getStatusValue, hasPanelData, panelSeriesEqual } from "./monitoringUtils";
+import { hasPanelData, panelSeriesEqual } from "./monitoringUtils";
 import { MonitoringPanelCard } from "./MonitoringPanelCard";
 import {
+  AUXILIARY_PANEL_IDS,
   buildPanelRows,
   getPanelLayout,
+  isAuxiliaryPanel,
   isTallChartPanel,
   SNAPSHOT_PANEL_ROWS,
+  SNAPSHOT_TABLE_COUNT_PANEL_ID,
   STREAMING_PANEL_ROWS,
 } from "./panelConfig";
 
@@ -141,8 +144,14 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     loadPanels();
   }, []);
 
+  const fetchPanelIds = useMemo(() => {
+    const ids = new Set(panels.map((panel) => panel.id));
+    AUXILIARY_PANEL_IDS.forEach((id) => ids.add(id));
+    return [...ids];
+  }, [panels]);
+
   const fetchAllPanelData = useCallback(async (customOverride?: { from: string; to: string }) => {
-    if (!panels.length || !pipelineName.trim()) {
+    if (!fetchPanelIds.length || !pipelineName.trim()) {
       return;
     }
 
@@ -165,22 +174,22 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
       step = timeRange.step;
     }
 
-    const panelsNeedingInitialLoad = panels.filter((panel) => !panelsEverLoaded[panel.id]);
+    const panelIdsNeedingInitialLoad = fetchPanelIds.filter((panelId) => !panelsEverLoaded[panelId]);
 
-    if (panelsNeedingInitialLoad.length > 0) {
+    if (panelIdsNeedingInitialLoad.length > 0) {
       setPanelDataLoading((prev) => {
         const next = { ...prev };
-        panelsNeedingInitialLoad.forEach((panel) => {
-          next[panel.id] = true;
+        panelIdsNeedingInitialLoad.forEach((panelId) => {
+          next[panelId] = true;
         });
         return next;
       });
     }
 
     const results = await Promise.all(
-      panels.map(async (panel) => {
-        const response = await fetchPanelData(panel.id, pipelineName, start, end, step);
-        return { panelId: panel.id, response };
+      fetchPanelIds.map(async (panelId) => {
+        const response = await fetchPanelData(panelId, pipelineName, start, end, step);
+        return { panelId, response };
       })
     );
 
@@ -234,26 +243,26 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
       return changed ? next : prev;
     });
 
-    if (panelsNeedingInitialLoad.length > 0) {
+    if (panelIdsNeedingInitialLoad.length > 0) {
       setPanelDataLoading((prev) => {
         const next = { ...prev };
-        panelsNeedingInitialLoad.forEach((panel) => {
-          next[panel.id] = false;
+        panelIdsNeedingInitialLoad.forEach((panelId) => {
+          next[panelId] = false;
         });
         return next;
       });
     }
 
     setLastRefreshTime(new Date());
-  }, [panels, selectedTimeRange, appliedCustomFrom, appliedCustomTo, pipelineName, panelsEverLoaded]);
+  }, [fetchPanelIds, selectedTimeRange, appliedCustomFrom, appliedCustomTo, pipelineName, panelsEverLoaded]);
 
   useEffect(() => {
-    if (!panelsLoading && panels.length > 0 && pipelineName.trim() && selectedTimeRange !== "Custom") {
+    if (!panelsLoading && fetchPanelIds.length > 0 && pipelineName.trim() && selectedTimeRange !== "Custom") {
       void fetchAllPanelData();
     }
     // fetchAllPanelData excluded: only re-fetch when query inputs change, not when load tracking updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panels, panelsLoading, pipelineName, selectedTimeRange]);
+  }, [fetchPanelIds, panelsLoading, pipelineName, selectedTimeRange]);
 
   useEffect(() => {
     const intervalMs = parseRefreshInterval(selectedRefresh);
@@ -312,16 +321,14 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
   };
 
   const streamingPanels = useMemo(
-    () => panels.filter((panel) => panel.category === "streaming"),
+    () => panels.filter((panel) => panel.category === "streaming" && !isAuxiliaryPanel(panel.id)),
     [panels]
   );
 
   const snapshotPanels = useMemo(
-    () => panels.filter((panel) => panel.category === "snapshot"),
+    () => panels.filter((panel) => panel.category === "snapshot" && !isAuxiliaryPanel(panel.id)),
     [panels]
   );
-
-  const snapshotCompletedValue = getStatusValue(panelData["snapshot-completed"]);
 
   const hasDataForPanel = useCallback(
     (panelId: string) => hasPanelData(panelData[panelId]),
@@ -340,7 +347,12 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
       error={panelDataErrors[panel.id]}
       compact={compact}
       tallChart={tallChart}
-      snapshotCompletedValue={snapshotCompletedValue}
+      snapshotTableCountData={panelData[SNAPSHOT_TABLE_COUNT_PANEL_ID]}
+      snapshotTableCountLoading={
+        !!panelDataLoading[SNAPSHOT_TABLE_COUNT_PANEL_ID] &&
+        !panelData[SNAPSHOT_TABLE_COUNT_PANEL_ID]
+      }
+      snapshotTableCountError={panelDataErrors[SNAPSHOT_TABLE_COUNT_PANEL_ID]}
       onRetry={fetchAllPanelData}
     />
   );
@@ -377,11 +389,13 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
                 const showDivider =
                   layout.divided && panelIndex < rowPanels.length - 1;
 
+                const lgSpan = layout.lgByPanel?.[panel.id] ?? layout.lg;
+
                 return (
                   <GridItem
                     key={panel.id}
                     md={12}
-                    lg={layout.lg as 3 | 4 | 6}
+                    lg={lgSpan as 2 | 3 | 4 | 5 | 6}
                     className={[
                       "monitoring-grid-item",
                       showDivider ? "monitoring-grid-item--divided" : undefined,

@@ -29,6 +29,7 @@ export const SNAPSHOT_PANELS = {
   snapshotTableProgress: 'snapshot-table-progress',
   snapshotRunning: 'snapshot-running',
   snapshotCompleted: 'snapshot-completed',
+  snapshotPaused: 'snapshot-paused',
   snapshotAborted: 'snapshot-aborted',
   snapshotEventCount: 'snapshot-event-count',
   snapshotDuration: 'snapshot-duration',
@@ -96,6 +97,7 @@ export const SNAPSHOT_PANEL_ORDER = [
   "snapshot-table-progress",
   "snapshot-running",
   "snapshot-completed",
+  "snapshot-paused",
   "snapshot-aborted",
   "snapshot-event-count",
   "snapshot-duration",
@@ -118,7 +120,10 @@ export const CHART_HEIGHT_TALL = 230;
 
 export type PanelRowLayout = {
   panelIds: string[];
+  /** Default lg column span (12-column grid) for panels in this row. */
   lg: number;
+  /** Per-panel lg overrides; must sum to 12 when all panels in the row are present. */
+  lgByPanel?: Partial<Record<string, number>>;
   compact?: boolean;
   /** When true, vertical dividers are shown between panels in the row. */
   divided?: boolean;
@@ -144,19 +149,35 @@ export const SNAPSHOT_STATUS_ROW: PanelRowLayout = {
     "snapshot-table-progress",
     "snapshot-running",
     "snapshot-completed",
+    "snapshot-paused",
     "snapshot-aborted",
   ],
-  lg: 3,
+  lg: 2,
+  lgByPanel: {
+    "snapshot-table-progress": 4,
+    "snapshot-completed": 2,
+    "snapshot-running": 2,
+    "snapshot-paused": 2,
+    "snapshot-aborted": 2,
+  },
   compact: true,
   divided: true,
 };
 
 export const CONNECTION_STATUS_PANEL_ID = "connection-status";
 export const SNAPSHOT_TABLE_PROGRESS_PANEL_ID = "snapshot-table-progress";
+export const SNAPSHOT_TABLE_COUNT_PANEL_ID = "snapshot-table-count";
+
+/** Fetched for composite panels but not rendered as their own card. */
+export const AUXILIARY_PANEL_IDS = new Set<string>([SNAPSHOT_TABLE_COUNT_PANEL_ID]);
+
+export const isAuxiliaryPanel = (panelId: string): boolean => AUXILIARY_PANEL_IDS.has(panelId);
 
 export const SNAPSHOT_STATUS_PANEL_IDS = new Set([
-  "snapshot-running",
+
   "snapshot-completed",
+  "snapshot-running",
+  "snapshot-paused",
   "snapshot-aborted",
 ]);
 

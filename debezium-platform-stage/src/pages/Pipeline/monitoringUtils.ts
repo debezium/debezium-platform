@@ -1,5 +1,6 @@
 import type { PanelQueryResponse, TimeSeries } from "../../apis/types";
 import { formatChartTimestamp } from "../../utils/timeRangeUtils";
+import { SNAPSHOT_PANELS, STREAMING_PANELS } from "./panelConfig";
 
 export const PANEL_EMPTY_MESSAGES: Record<string, string> = {
   "source-lag": "No lag detected — pipeline is processing in real-time",
@@ -198,6 +199,95 @@ export const getChartYDomain = (data: PanelQueryResponse): { min: number; max: n
 
 const trimTrailingZeros = (fixed: string): string => fixed.replace(/\.?0+$/, "");
 
+const SECONDS_PER_MINUTE = 60;
+const SECONDS_PER_HOUR = 3600;
+
+const DURATION_FORMAT_PANEL_IDS = new Set<string>([STREAMING_PANELS.timeSinceLastEvent]);
+
+/** Panels whose Y-axis values are seconds and should show an "s" suffix. */
+const SECONDS_SUFFIX_AXIS_PANEL_IDS = new Set<string>([
+  STREAMING_PANELS.sourceLag,
+  SNAPSHOT_PANELS.snapshotDuration,
+]);
+
+const formatDecimal = (value: number, decimals: number): string =>
+  trimTrailingZeros(value.toFixed(decimals));
+
+/** Adaptive duration labels for chart Y-axis ticks (e.g. 45s, 12m, 5.2h). */
+export const formatDurationAxis = (tick: number | string): string => {
+  const value = Number(tick);
+  if (!Number.isFinite(value) || value <= 0) {
+    return "0s";
+  }
+
+  if (value < 1) {
+    return `${formatDecimal(value, 1)}s`;
+  }
+
+  if (value < SECONDS_PER_MINUTE) {
+    return `${Math.round(value)}s`;
+  }
+
+  if (value < SECONDS_PER_HOUR) {
+    const minutes = value / SECONDS_PER_MINUTE;
+    return Number.isInteger(minutes) ? `${minutes}m` : `${formatDecimal(minutes, 1)}m`;
+  }
+
+  const hours = value / SECONDS_PER_HOUR;
+  return Number.isInteger(hours) ? `${hours}h` : `${formatDecimal(hours, 1)}h`;
+};
+
+/** Richer duration labels for chart tooltips (e.g. 45.2s, 12m 30s, 5h 13m). */
+export const formatDurationTooltip = (value: number): string => {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "0s";
+  }
+
+  if (value < SECONDS_PER_MINUTE) {
+    return `${formatDecimal(value, 1)}s`;
+  }
+
+  if (value < SECONDS_PER_HOUR) {
+    const totalSeconds = Math.round(value);
+    const minutes = Math.floor(totalSeconds / SECONDS_PER_MINUTE);
+    const seconds = totalSeconds % SECONDS_PER_MINUTE;
+    return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
+  }
+
+  const totalSeconds = Math.round(value);
+  const hours = Math.floor(totalSeconds / SECONDS_PER_HOUR);
+  const minutes = Math.round((totalSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE);
+  if (minutes === SECONDS_PER_MINUTE) {
+    return `${hours + 1}h`;
+  }
+  return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
+};
+
+export const usesDurationAxisFormat = (panelId: string): boolean =>
+  DURATION_FORMAT_PANEL_IDS.has(panelId);
+
+export const getYAxisTickFormat = (
+  panelId: string
+): ((tick: number | string) => string) => {
+  if (usesDurationAxisFormat(panelId)) {
+    return formatDurationAxis;
+  }
+  if (SECONDS_SUFFIX_AXIS_PANEL_IDS.has(panelId)) {
+    return formatSecondsAxis;
+  }
+  return formatYAxisTick;
+};
+
+export const getChartTooltipFormat = (panelId: string): ((value: number) => string) => {
+  if (usesDurationAxisFormat(panelId)) {
+    return formatDurationTooltip;
+  }
+  if (SECONDS_SUFFIX_AXIS_PANEL_IDS.has(panelId)) {
+    return formatSecondsTooltip;
+  }
+  return formatChartTooltipValue;
+};
+
 /** Format numbers with at most 3 decimal places; use K suffix above 999. */
 const formatCompactNumber = (value: number): string => {
   const absValue = Math.abs(value);
@@ -224,6 +314,15 @@ export const formatYAxisTick = (tick: number | string): string => {
   return formatCompactNumber(value);
 };
 
+/** Y-axis ticks with an "s" suffix (e.g. 45s, 1.5Ks). */
+export const formatSecondsAxis = (tick: number | string): string => {
+  const base = formatYAxisTick(tick);
+  return base === "0" ? "0s" : `${base}s`;
+};
+
+/** Tooltip values with an "s" suffix (e.g. 45s, 1.5Ks). */
+export const formatSecondsTooltip = (value: number): string => formatSecondsAxis(value);
+
 export const formatChartTooltipValue = (value: number): string =>
   formatYAxisTick(value);
 
@@ -245,6 +344,23 @@ export const formatValueWithUnit = (value: number, unit: string): string => {
 
 export const getPanelEmptyMessage = (panelId: string): string =>
   PANEL_EMPTY_MESSAGES[panelId] ?? "";
+
+export const computeSnapshotTableProgress = (
+  totalRaw: number | null,
+  remainingRaw: number | null
+): {
+  total: number;
+  remaining: number;
+  completed: number;
+  progressPercent: number;
+} => {
+  const total = Math.max(0, totalRaw ?? 0);
+  const remaining = Math.min(Math.max(0, remainingRaw ?? 0), total);
+  const completed = Math.max(0, total - remaining);
+  const progressPercent = total > 0 ? (completed / total) * 100 : 0;
+
+  return { total, remaining, completed, progressPercent };
+};
 
 export const panelSeriesEqual = (
   a?: PanelQueryResponse,
