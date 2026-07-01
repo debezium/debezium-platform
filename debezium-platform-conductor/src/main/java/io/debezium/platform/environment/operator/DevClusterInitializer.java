@@ -67,7 +67,10 @@ public class DevClusterInitializer {
             crds.resource(crd).serverSideApply();
         }
         catch (MalformedURLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Invalid CRD URL: " + crdUrl, e);
+        }
+        catch (io.fabric8.kubernetes.client.KubernetesClientException e) {
+            logger.warnf("Failed to install CRD from %s. Kubernetes cluster might not be available: %s", crdUrl, e.getMessage());
         }
     }
 
