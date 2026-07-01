@@ -24,7 +24,11 @@ import { TimesIcon } from "@patternfly/react-icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGuidedTour, TourMode } from "./GuidedTourContext";
 
-const PatternFlyTooltip: React.FC<TooltipRenderProps> = ({
+interface PatternFlyTooltipProps extends TooltipRenderProps {
+  onForceSkip?: () => void;
+}
+
+const PatternFlyTooltip: React.FC<PatternFlyTooltipProps> = ({
   index,
   size,
   step,
@@ -33,6 +37,7 @@ const PatternFlyTooltip: React.FC<TooltipRenderProps> = ({
   primaryProps,
   skipProps,
   tooltipProps,
+  onForceSkip,
 }) => {
   return (
     <div {...tooltipProps}>
@@ -75,7 +80,14 @@ const PatternFlyTooltip: React.FC<TooltipRenderProps> = ({
               {step.showSkipButton && (
                 <Button
                   variant="link"
-                  onClick={skipProps.onClick}
+                  onClick={
+                    index === 0 && onForceSkip
+                      ? (event) => {
+                          event.preventDefault();
+                          onForceSkip();
+                        }
+                      : skipProps.onClick
+                  }
                   aria-label={skipProps["aria-label"]}
                   isDanger
                 >
@@ -127,9 +139,10 @@ const PatternFlyTooltip: React.FC<TooltipRenderProps> = ({
 interface FlowSelectorProps {
   onSelect: (mode: TourMode) => void;
   onDefer: () => void;
+  onStopTour: () => void;
 }
 
-const FlowSelector: React.FC<FlowSelectorProps> = ({ onSelect, onDefer }) => {
+const FlowSelector: React.FC<FlowSelectorProps> = ({ onSelect, onDefer, onStopTour }) => {
   const { t } = useTranslation("tour");
 
   return (
@@ -212,9 +225,25 @@ const FlowSelector: React.FC<FlowSelectorProps> = ({ onSelect, onDefer }) => {
           </Flex>
         </CardBody>
         <CardFooter>
-          <Button variant="link" onClick={onDefer}>
+          <Flex>
+            <FlexItem>
+              <Button variant="tertiary" onClick={onDefer}>
             {t("flowSelector.maybeLater")}
           </Button>
+            </FlexItem>
+            <FlexItem>
+             <Button
+                  variant="link"
+                  onClick={onStopTour}
+                  isDanger
+                >
+                 {t("buttons.skip")}
+                </Button>
+            </FlexItem>
+          </Flex>
+          
+
+            
         </CardFooter>
       </Card>
     </div>
@@ -440,7 +469,7 @@ const GuidedTour: React.FC = () => {
       }
 
       if (type === EVENTS.STEP_AFTER) {
-        if (action === ACTIONS.CLOSE) {
+        if (action === ACTIONS.CLOSE || action === ACTIONS.SKIP) {
           stopTour();
           return;
         }
@@ -527,7 +556,7 @@ const GuidedTour: React.FC = () => {
     return null;
   }
   if (!tourMode) {
-    return <FlowSelector onSelect={handleFlowSelect} onDefer={handleDefer} />;
+    return <FlowSelector onSelect={handleFlowSelect} onDefer={handleDefer} onStopTour={stopTour} />;
   }
 
   return (
@@ -540,7 +569,9 @@ const GuidedTour: React.FC = () => {
       showProgress
       disableOverlayClose={false}
       callback={handleCallback}
-      tooltipComponent={PatternFlyTooltip}
+      tooltipComponent={(props) => (
+        <PatternFlyTooltip {...props} onForceSkip={stopTour} />
+      )}
       locale={{
         back: t("buttons.back"),
         close: t("buttons.close"),
