@@ -125,6 +125,27 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     "5 minutes",
   ];
 
+  const buildFetchPanelIds = useCallback((panelList: PanelResponse[]) => {
+    const ids = new Set(panelList.map((panel) => panel.id));
+    AUXILIARY_PANEL_IDS.forEach((id) => ids.add(id));
+    return [...ids];
+  }, []);
+
+  const reloadPanels = useCallback(async (): Promise<PanelResponse[] | null> => {
+    const response = await fetchMonitoringPanels();
+
+    if (response.error) {
+      return null;
+    }
+
+    if (response.data) {
+      setPanels(response.data.panels);
+      return response.data.panels;
+    }
+
+    return null;
+  }, []);
+
   useEffect(() => {
     const loadPanels = async () => {
       setPanelsLoading(true);
@@ -144,14 +165,18 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     loadPanels();
   }, []);
 
-  const fetchPanelIds = useMemo(() => {
-    const ids = new Set(panels.map((panel) => panel.id));
-    AUXILIARY_PANEL_IDS.forEach((id) => ids.add(id));
-    return [...ids];
-  }, [panels]);
+  const fetchPanelIds = useMemo(
+    () => buildFetchPanelIds(panels),
+    [panels, buildFetchPanelIds]
+  );
 
-  const fetchAllPanelData = useCallback(async (customOverride?: { from: string; to: string }) => {
-    if (!fetchPanelIds.length || !pipelineName.trim()) {
+  const fetchAllPanelData = useCallback(async (
+    customOverride?: { from: string; to: string },
+    panelIdsOverride?: string[]
+  ) => {
+    const panelIds = panelIdsOverride ?? fetchPanelIds;
+
+    if (!panelIds.length || !pipelineName.trim()) {
       return;
     }
 
@@ -174,7 +199,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
       step = timeRange.step;
     }
 
-    const panelIdsNeedingInitialLoad = fetchPanelIds.filter((panelId) => !panelsEverLoaded[panelId]);
+    const panelIdsNeedingInitialLoad = panelIds.filter((panelId) => !panelsEverLoaded[panelId]);
 
     if (panelIdsNeedingInitialLoad.length > 0) {
       setPanelDataLoading((prev) => {
@@ -187,7 +212,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     }
 
     const results = await Promise.all(
-      fetchPanelIds.map(async (panelId) => {
+      panelIds.map(async (panelId) => {
         const response = await fetchPanelData(panelId, pipelineName, start, end, step);
         return { panelId, response };
       })
@@ -316,7 +341,14 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await fetchAllPanelData();
+
+    const reloadedPanels = await reloadPanels();
+    if (reloadedPanels) {
+      await fetchAllPanelData(undefined, buildFetchPanelIds(reloadedPanels));
+    } else {
+      await fetchAllPanelData();
+    }
+
     setIsRefreshing(false);
   };
 
