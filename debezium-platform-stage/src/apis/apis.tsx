@@ -88,6 +88,7 @@ export type ConnectionPayload = {
   type: string;
   id?: string;
   config: ConnectionUnknownConfig | ConnectionAdditionalConfig;
+  description?: string;
   name: string;
 };
 
@@ -133,6 +134,7 @@ export type ConnectionSchema = {
 export type Connection = {
   type: string;
   config: ConnectionUnknownConfig;
+  description?: string;
   name: string;
   id: number;
 };
