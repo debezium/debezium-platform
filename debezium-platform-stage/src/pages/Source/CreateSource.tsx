@@ -65,6 +65,13 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     { enabled: !!descriptorPath }
   );
 
+  const { data: sources = [] } = useQuery<Source[], Error>(
+    "sources",
+    () => fetchData<Source[]>(`${API_URL}/api/sources`)
+  );
+
+  const existingSources = React.useMemo(() => sources.map((s) => s.name), [sources]);
+
   const createNewSource = async (payload: Record<string, unknown>) => {
     setIsLoading(true);
     const response = await createPost(
@@ -75,7 +82,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
       addNotification(
         "danger",
         "Source creation failed",
-        `Failed to create ${(response.data as Source)?.name}: ${response.error}`
+        `Failed to create ${(payload as { name: string }).name}: ${response.error}`
       );
     } else {
       if (modelLoaded) onSelection?.(response.data as Source);
@@ -128,6 +135,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         connectorSchema={connectorSchema}
         sourceId={sourceId}
         onSubmit={createNewSource}
+        existingNames={existingSources}
         {...(modelLoaded ? { defaultLayoutMode: "tabs" as const } : {})}
       />
     );

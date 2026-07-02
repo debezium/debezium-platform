@@ -233,7 +233,17 @@ export const createPost = async <T,>(
     });
 
     if (!response.ok) {
-      const errorMsg = `Failed to create source: ${response.statusText}`;
+      let errorMsg = `Failed: ${response.statusText}`;
+      try {
+        const errData = await response.json();
+        if (errData && errData.details && errData.details.length > 0) {
+          errorMsg = errData.details[0];
+        } else if (errData && errData.error) {
+          errorMsg = errData.error;
+        }
+      } catch {
+        // Fallback to status text
+      }
       return { error: errorMsg };
     }
 
@@ -262,7 +272,17 @@ export const editPut = async <T,>(
     });
 
     if (!response.ok) {
-      const errorMsg = `Failed to create source: ${response.statusText}`;
+      let errorMsg = `Failed: ${response.statusText}`;
+      try {
+        const errData = await response.json();
+        if (errData && errData.details && errData.details.length > 0) {
+          errorMsg = errData.details[0];
+        } else if (errData && errData.error) {
+          errorMsg = errData.error;
+        }
+      } catch {
+        // Fallback to status text
+      }
       return { error: errorMsg };
     }
 
@@ -377,7 +397,17 @@ export const verifySignals = async <T,>(
     });
 
     if (!response.ok) {
-      const errorMsg = `Failed to verify the signals: ${response.statusText}`;
+      let errorMsg = `Failed: ${response.statusText}`;
+      try {
+        const errData = await response.json();
+        if (errData && errData.details && errData.details.length > 0) {
+          errorMsg = errData.details[0];
+        } else if (errData && errData.error) {
+          errorMsg = errData.error;
+        }
+      } catch {
+        // Fallback to status text
+      }
       return { error: errorMsg };
     }
 

@@ -120,6 +120,7 @@ interface CreateSchemaFormProps {
   /** Initial layout; user can still switch via the toggle. Pipeline designer modal uses "tabs". */
   defaultLayoutMode?: "jumplinks" | "tabs";
   hideSignalCollections?: boolean;
+  existingNames?: string[];
 }
 
 export interface CreateSchemaFormHandle {
@@ -234,7 +235,7 @@ function formatValidationFailureNotificationBody(sections: string[], t: TFunctio
 const CreateSchemaForm = React.forwardRef<
   CreateSchemaFormHandle,
   CreateSchemaFormProps
->(({ connectorSchema, sourceId, destinationId, dataType, onSubmit, initialSource, readOnly = false, defaultLayoutMode = "jumplinks", hideSignalCollections = false }, ref) => {
+>(({ connectorSchema, sourceId, destinationId, dataType, onSubmit, initialSource, readOnly = false, defaultLayoutMode = "jumplinks", hideSignalCollections = false, existingNames }, ref) => {
   const { t } = useTranslation();
   const { addNotification } = useNotification();
   const hydratedSourceIdRef = useRef<number | null>(null);
@@ -763,7 +764,11 @@ const CreateSchemaForm = React.forwardRef<
   const validate = useCallback((): boolean => {
     if (readOnly) return true;
     const newErrors: Record<string, string | undefined> = {};
-    if (!connectorName.trim()) newErrors["connector-name"] = t("statusMessage:smartEditor.connectorNameRequired", `${connectorTypeLabel} name is required`);
+    if (!connectorName.trim()) {
+      newErrors["connector-name"] = t("statusMessage:smartEditor.connectorNameRequired", `${connectorTypeLabel} name is required`);
+    } else if (existingNames && existingNames.includes(connectorName.trim())) {
+      newErrors["connector-name"] = `${connectorTypeLabel} with name '${connectorName.trim()}' already exists`;
+    }
     if (!selectedConnection) newErrors.connection = t("statusMessage:smartEditor.connectionRequired", "Connection is required");
 
     for (const prop of connectorSchema.properties) {
@@ -839,6 +844,7 @@ const CreateSchemaForm = React.forwardRef<
     groupedProperties,
     tableManagedFilterNames,
     t,
+    existingNames,
   ]);
 
   const getLastValidationFailureBody = useCallback(

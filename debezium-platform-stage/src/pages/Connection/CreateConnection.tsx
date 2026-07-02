@@ -65,6 +65,14 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
         fetchData<ConnectionsSchema[]>(`${API_URL}/api/connections/schemas`)
     );
 
+    const { data: existingConnections = [] } = useQuery<Connection[]>(
+        "connectionsList",
+        () => fetchData<Connection[]>(`${API_URL}/api/connections`),
+        {
+            select: (data) => data,
+        }
+    );
+
     const selectedSchema = React.useMemo(() => {
         const normalizedId = (connectionId || "").toLowerCase().replace(/-/g, "_");
         return connectionsSchema.find((schema) => {
@@ -84,7 +92,16 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
 
 
     const schema = yup.object({
-        name: yup.string().required(),
+        name: yup.string().required().test(
+            'unique-name',
+            'Connection with this name already exists',
+            (value) => {
+                if (!value || !existingConnections.length) return true;
+                const isEditing = !!connectionId && existingConnections.some(c => c.id === Number(connectionId) && c.name === value);
+                if (isEditing) return true;
+                return !existingConnections.some(c => c.name === value);
+            }
+        ),
         ...buildNestedConnectionYupFields(selectedSchemaProperties)
     }).required() as yup.ObjectSchema<ConnectionFormValues>;
 
