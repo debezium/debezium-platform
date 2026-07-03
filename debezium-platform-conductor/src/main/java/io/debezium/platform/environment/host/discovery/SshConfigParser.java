@@ -137,80 +137,51 @@ public class SshConfigParser {
     private List<SshHostEntry> buildHostEntries(List<ParsedLine> parsedLines) {
         List<SshHostEntry> hostEntries = new ArrayList<>();
         Set<String> seenAliases = new HashSet<>();
-
-        String currentAlias = null;
-        String currentHostname = null;
-        String currentUser = null;
-        int currentPort = DEFAULT_PORT;
-        String currentIdentityFile = null;
+        HostBlock current = new HostBlock();
 
         for (ParsedLine parsed : parsedLines) {
             if (isHostLine(parsed.keyword())) {
-                if (currentAlias != null) {
-                    hostEntries.add(new SshHostEntry(currentAlias, currentHostname,
-                            currentUser, currentPort, currentIdentityFile));
+                if (current.hasAlias()) {
+                    hostEntries.add(current.toSshHostEntry());
                 }
 
                 if (isWildcard(parsed.value())) {
                     logger.warnv("Skipping wildcard Host entry: {0}", parsed.value());
-                    currentAlias = null;
-                    currentHostname = null;
-                    currentUser = null;
-                    currentPort = DEFAULT_PORT;
-                    currentIdentityFile = null;
+                    current.reset();
                     continue;
                 }
 
                 if (!seenAliases.add(parsed.value())) {
                     logger.warnv("Skipping duplicate Host alias: {0}", parsed.value());
-                    currentAlias = null;
-                    currentHostname = null;
-                    currentUser = null;
-                    currentPort = DEFAULT_PORT;
-                    currentIdentityFile = null;
+                    current.reset();
                     continue;
                 }
 
-                currentAlias = parsed.value();
-                currentHostname = null;
-                currentUser = null;
-                currentPort = DEFAULT_PORT;
-                currentIdentityFile = null;
+                current.startNew(parsed.value());
             }
-            else if (currentAlias != null) {
+            else if (current.hasAlias()) {
                 switch (parsed.keyword()) {
-                    case "hostname":
-                        currentHostname = parsed.value();
-                        break;
-                    case "user":
-                        currentUser = parsed.value();
-                        break;
-                    case "port":
+                    case "hostname" -> current.hostname = parsed.value();
+                    case "user" -> current.user = parsed.value();
+                    case "port" -> {
                         int port = parsePort(parsed.value());
                         if (port < 0) {
-                            logger.warnv("Skipping host entry ''{0}'' due to invalid port: {1}", currentAlias, parsed.value());
-                            currentAlias = null;
-                            currentHostname = null;
-                            currentUser = null;
-                            currentPort = DEFAULT_PORT;
-                            currentIdentityFile = null;
+                            logger.warnv("Skipping host entry ''{0}'' due to invalid port: {1}", current.alias, parsed.value());
+                            current.reset();
                         }
                         else {
-                            currentPort = port;
+                            current.port = port;
                         }
-                        break;
-                    case "identityfile":
-                        currentIdentityFile = parsed.value();
-                        break;
-                    default:
-                        break;
+                    }
+                    case "identityfile" -> current.identityFile = parsed.value();
+                    default -> {
+                    }
                 }
             }
         }
 
-        if (currentAlias != null) {
-            hostEntries.add(new SshHostEntry(currentAlias, currentHostname,
-                    currentUser, currentPort, currentIdentityFile));
+        if (current.hasAlias()) {
+            hostEntries.add(current.toSshHostEntry());
         }
 
         return hostEntries;
@@ -296,5 +267,39 @@ public class SshConfigParser {
      * Represents a parsed keyword-value pair from a single SSH config line.
      */
     private record ParsedLine(String keyword, String value) {
+    }
+
+    /**
+     * Mutable accumulator for the fields of a single Host block during parsing.
+     * Encapsulates the reset and conversion logic to avoid repeating field
+     * assignments across the parser.
+     */
+    private static class HostBlock {
+        private String alias;
+        private String hostname;
+        private String user;
+        private int port = DEFAULT_PORT;
+        private String identityFile;
+
+        boolean hasAlias() {
+            return alias != null;
+        }
+
+        void startNew(String alias) {
+            reset();
+            this.alias = alias;
+        }
+
+        void reset() {
+            alias = null;
+            hostname = null;
+            user = null;
+            port = DEFAULT_PORT;
+            identityFile = null;
+        }
+
+        SshHostEntry toSshHostEntry() {
+            return new SshHostEntry(alias, hostname, user, port, identityFile);
+        }
     }
 }
