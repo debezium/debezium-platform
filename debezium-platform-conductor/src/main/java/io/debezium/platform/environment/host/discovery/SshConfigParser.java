@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -47,6 +48,7 @@ public class SshConfigParser {
     private static final int MAX_PORT = 65535;
     private static final char EQUALS_DELIMITER = '=';
     private static final char COMMENT_CHAR = '#';
+    private static final char QUOTE_CHAR = '"';
     private static final String WILDCARD_CHARS = "*?!";
     private static final String HOST_KEYWORD = "host";
 
@@ -81,8 +83,58 @@ public class SshConfigParser {
 
     /**
      * Core parsing logic that operates on a list of lines.
+     * Streams each raw line through {@link #parseLine(String)} to extract keyword-value
+     * pairs, then groups them into host entries via {@link #buildHostEntries(List)}.
      */
     private List<SshHostEntry> parseLines(List<String> lines) {
+        List<ParsedLine> parsedLines = lines.stream()
+                .map(this::parseLine)
+                .flatMap(Optional::stream)
+                .toList();
+
+        return buildHostEntries(parsedLines);
+    }
+
+    /**
+     * Parses a single raw line into a keyword-value pair.
+     * Returns empty for blank lines, comments, and malformed lines.
+     */
+    private Optional<ParsedLine> parseLine(String rawLine) {
+        String stripped = rawLine.strip();
+
+        if (isBlankOrComment(stripped)) {
+            return Optional.empty();
+        }
+
+        int splitIndex = findDelimiterIndex(stripped);
+        if (splitIndex < 0) {
+            logger.warnv("Malformed line in SSH config (no keyword-value delimiter): {0}", stripped);
+            return Optional.empty();
+        }
+
+        String keyword = stripped.substring(0, splitIndex).strip().toLowerCase();
+        String rawValue = stripped.substring(splitIndex + 1).strip();
+
+        if (!rawValue.isEmpty() && rawValue.charAt(0) == EQUALS_DELIMITER) {
+            rawValue = rawValue.substring(1).strip();
+        }
+
+        if (rawValue.isEmpty()) {
+            logger.warnv("Malformed line in SSH config (empty value): {0}", stripped);
+            return Optional.empty();
+        }
+
+        String value = stripInlineComment(rawValue);
+        value = stripQuotes(value);
+
+        return Optional.of(new ParsedLine(keyword, value));
+    }
+
+    /**
+     * Groups parsed keyword-value lines into host entries, handling wildcards,
+     * duplicates, and invalid ports.
+     */
+    private List<SshHostEntry> buildHostEntries(List<ParsedLine> parsedLines) {
         List<SshHostEntry> hostEntries = new ArrayList<>();
         Set<String> seenAliases = new HashSet<>();
 
@@ -92,44 +144,15 @@ public class SshConfigParser {
         int currentPort = DEFAULT_PORT;
         String currentIdentityFile = null;
 
-        for (String line : lines) {
-            String stripped = line.strip();
-
-            if (isBlankOrComment(stripped)) {
-                continue;
-            }
-
-            String keyword;
-            String value;
-            int splitIndex = findDelimiterIndex(stripped);
-            if (splitIndex < 0) {
-                logger.warnv("Malformed line in SSH config (no keyword-value delimiter): {0}", stripped);
-                continue;
-            }
-
-            keyword = stripped.substring(0, splitIndex).strip().toLowerCase();
-            String rawValue = stripped.substring(splitIndex + 1).strip();
-
-            if (!rawValue.isEmpty() && rawValue.charAt(0) == EQUALS_DELIMITER) {
-                rawValue = rawValue.substring(1).strip();
-            }
-
-            if (rawValue.isEmpty()) {
-                logger.warnv("Malformed line in SSH config (empty value): {0}", stripped);
-                continue;
-            }
-
-            value = stripInlineComment(rawValue);
-            value = stripQuotes(value);
-
-            if (isHostLine(keyword)) {
+        for (ParsedLine parsed : parsedLines) {
+            if (isHostLine(parsed.keyword())) {
                 if (currentAlias != null) {
                     hostEntries.add(new SshHostEntry(currentAlias, currentHostname,
                             currentUser, currentPort, currentIdentityFile));
                 }
 
-                if (isWildcard(value)) {
-                    logger.warnv("Skipping wildcard Host entry: {0}", value);
+                if (isWildcard(parsed.value())) {
+                    logger.warnv("Skipping wildcard Host entry: {0}", parsed.value());
                     currentAlias = null;
                     currentHostname = null;
                     currentUser = null;
@@ -138,8 +161,8 @@ public class SshConfigParser {
                     continue;
                 }
 
-                if (!seenAliases.add(value)) {
-                    logger.warnv("Skipping duplicate Host alias: {0}", value);
+                if (!seenAliases.add(parsed.value())) {
+                    logger.warnv("Skipping duplicate Host alias: {0}", parsed.value());
                     currentAlias = null;
                     currentHostname = null;
                     currentUser = null;
@@ -148,24 +171,24 @@ public class SshConfigParser {
                     continue;
                 }
 
-                currentAlias = value;
+                currentAlias = parsed.value();
                 currentHostname = null;
                 currentUser = null;
                 currentPort = DEFAULT_PORT;
                 currentIdentityFile = null;
             }
             else if (currentAlias != null) {
-                switch (keyword) {
+                switch (parsed.keyword()) {
                     case "hostname":
-                        currentHostname = value;
+                        currentHostname = parsed.value();
                         break;
                     case "user":
-                        currentUser = value;
+                        currentUser = parsed.value();
                         break;
                     case "port":
-                        int port = parsePort(value);
+                        int port = parsePort(parsed.value());
                         if (port < 0) {
-                            logger.warnv("Skipping host entry ''{0}'' due to invalid port: {1}", currentAlias, value);
+                            logger.warnv("Skipping host entry ''{0}'' due to invalid port: {1}", currentAlias, parsed.value());
                             currentAlias = null;
                             currentHostname = null;
                             currentUser = null;
@@ -177,7 +200,7 @@ public class SshConfigParser {
                         }
                         break;
                     case "identityfile":
-                        currentIdentityFile = value;
+                        currentIdentityFile = parsed.value();
                         break;
                     default:
                         break;
@@ -223,7 +246,7 @@ public class SshConfigParser {
         boolean inQuotes = false;
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
-            if (c == '"') {
+            if (c == QUOTE_CHAR) {
                 inQuotes = !inQuotes;
             }
             else if (c == COMMENT_CHAR && !inQuotes) {
@@ -237,7 +260,7 @@ public class SshConfigParser {
      * Strips surrounding double quotes from a value if present.
      */
     private String stripQuotes(String value) {
-        if (value.length() >= 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
+        if (value.length() >= 2 && value.charAt(0) == QUOTE_CHAR && value.charAt(value.length() - 1) == QUOTE_CHAR) {
             return value.substring(1, value.length() - 1);
         }
         return value;
@@ -267,5 +290,11 @@ public class SshConfigParser {
             logger.warnv("Invalid port value: {0}", value);
             return -1;
         }
+    }
+
+    /**
+     * Represents a parsed keyword-value pair from a single SSH config line.
+     */
+    private record ParsedLine(String keyword, String value) {
     }
 }
