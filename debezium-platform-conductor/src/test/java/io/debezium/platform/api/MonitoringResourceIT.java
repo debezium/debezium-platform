@@ -16,14 +16,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
+import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import org.junit.jupiter.api.Test;
 
 import io.debezium.platform.environment.monitoring.PrometheusTestResource;
-import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.sdk.metrics.SdkMeterProvider;
+import io.opentelemetry.sdk.metrics.data.MetricData;
+import io.opentelemetry.sdk.testing.exporter.InMemoryMetricExporter;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
@@ -32,8 +35,14 @@ import io.restassured.http.ContentType;
 @QuarkusTestResource(value = PrometheusTestResource.class, restrictToAnnotatedClass = true)
 class MonitoringResourceIT {
 
+    @Produces
+    @Singleton
+    public static InMemoryMetricExporter inMemoryMetricExporter() {
+        return InMemoryMetricExporter.create();
+    }
+
     @Inject
-    OpenTelemetry openTelemetry;
+    InMemoryMetricExporter metricExporter;
 
     @Test
     void listPanelsReturnsPanels() {
@@ -169,16 +178,15 @@ class MonitoringResourceIT {
 
     @Test
     void verifyJvmMetricsAreExposed() {
-        assertNotNull(openTelemetry);
+        assertNotNull(metricExporter);
 
-        boolean otelMetricsEnabled = org.eclipse.microprofile.config.ConfigProvider.getConfig()
-                .getOptionalValue("quarkus.otel.metrics.enabled", Boolean.class)
-                .orElse(false);
-        assertTrue(otelMetricsEnabled, "Expected OpenTelemetry metrics to be enabled in configuration");
-
-        var meterProvider = openTelemetry.getMeterProvider();
-        assertNotNull(meterProvider);
-        assertTrue(meterProvider instanceof SdkMeterProvider || meterProvider.getClass().getName().contains("ObfuscatedMeterProvider"),
-                "Expected SdkMeterProvider or ObfuscatedMeterProvider, but found: " + meterProvider.getClass().getName());
+        org.awaitility.Awaitility.await()
+                .atMost(java.time.Duration.ofSeconds(10))
+                .untilAsserted(() -> {
+                    List<MetricData> metrics = metricExporter.getFinishedMetricItems();
+                    boolean hasJvmMetrics = metrics.stream()
+                            .anyMatch(metric -> metric.getName().startsWith("jvm.") || metric.getName().startsWith("process.runtime.jvm"));
+                    assertTrue(hasJvmMetrics, "Expected JVM metrics to be registered and collected by OpenTelemetry, but found none");
+                });
     }
 }
