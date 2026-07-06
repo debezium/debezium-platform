@@ -2757,10 +2757,12 @@ chromatic@^11.15.0:
   resolved "https://registry.npmjs.org/chromatic/-/chromatic-11.29.0.tgz"
   integrity sha512-yisBlntp9hHVj19lIQdpTlcYIXuU9H/DbFuu6tyWHmj6hWT2EtukCCcxYXL78XdQt1vm2GfIrtgtKpj/Rzmo4A==
 
-chromatic@^16.2.0:
-  version "16.2.0"
-  resolved "https://registry.npmjs.org/chromatic/-/chromatic-16.2.0.tgz"
-  integrity sha512-yFUC0iCumsw5JDQPmrNAgYuln25HRh79iGdJgm+dj87lv7kFatlRBgRcw8Kmzdw1si3qzGlzu36aCABS7Wg5aQ==
+chromatic@^18.0.1:
+  version "18.0.1"
+  resolved "https://registry.yarnpkg.com/chromatic/-/chromatic-18.0.1.tgz#d70692b8131ea25913ec51e560da7735cd84ab73"
+  integrity sha512-GlTYrZ4ui5ZW8Jzut6SAo5bMH3sIugYZ37Nq2DyVHBfPINeEzGA8eG5xNo4N/I2aRdM9Xnqw0SCls7wgf2llvA==
+  dependencies:
+    semver "^7.3.5"
 
 ci-info@^4.1.0:
   version "4.3.1"
@@ -6091,10 +6093,10 @@ semver@^6.3.1:
   resolved "https://registry.npmjs.org/semver/-/semver-6.3.1.tgz"
   integrity sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==
 
-semver@^7.5.3, semver@^7.6.2, semver@^7.7.3:
-  version "7.7.3"
-  resolved "https://registry.npmjs.org/semver/-/semver-7.7.3.tgz"
-  integrity sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==
+semver@^7.3.5, semver@^7.5.3, semver@^7.6.2, semver@^7.7.3:
+  version "7.8.5"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-7.8.5.tgz#39b646037dd50c14fb451e7e4cac58ed8b863f69"
+  integrity sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==
 
 set-cookie-parser@^2.6.0:
   version "2.7.2"
