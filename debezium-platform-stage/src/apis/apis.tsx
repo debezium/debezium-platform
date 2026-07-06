@@ -442,9 +442,16 @@ export const fetchDataCall = async <T,>(
 };
 
 // Monitoring API Functions
-export const fetchMonitoringPanels = async (): Promise<ApiResponse<import('./types').PanelsListResponse>> => {
+export const fetchMonitoringPanels = async (
+  options?: { bustCache?: boolean }
+): Promise<ApiResponse<import('./types').PanelsListResponse>> => {
   try {
-    const response = await fetch(`${API_URL}/api/monitoring/panels`);
+    let url = `${API_URL}/api/monitoring/panels`;
+    if (options?.bustCache) {
+      url += `?_${Date.now()}`;
+    }
+
+    const response = await fetch(url, { cache: "no-store" });
 
     if (!response.ok) {
       const errorMsg = `Failed to fetch monitoring panels: ${response.statusText}`;

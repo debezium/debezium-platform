@@ -21,7 +21,7 @@ import {
   LabelColor,
 } from "@patternfly/react-core";
 import { ExclamationCircleIcon, InProgressIcon, OutlinedClockIcon, RedoIcon, SyncAltIcon } from "@patternfly/react-icons";
-import { FC, useState, useEffect, useCallback, useMemo } from "react";
+import { FC, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import "./PipelineMonitoring.css";
 
@@ -83,7 +83,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
   const [selectedRefresh, setSelectedRefresh] = useState<RefreshInterval>("15 seconds");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
-  const [panelsEverLoaded, setPanelsEverLoaded] = useState<Record<string, boolean>>({});
+  const panelsEverLoadedRef = useRef<Record<string, boolean>>({});
 
   const [prevPipelineName, setPrevPipelineName] = useState(pipelineName);
 
@@ -92,7 +92,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     setPanelData({});
     setPanelDataErrors({});
     setPanelDataLoading({});
-    setPanelsEverLoaded({});
+    panelsEverLoadedRef.current = {};
   }
 
   useEffect(() => {
@@ -131,19 +131,22 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     return [...ids];
   }, []);
 
-  const reloadPanels = useCallback(async (): Promise<PanelResponse[] | null> => {
-    const response = await fetchMonitoringPanels();
+  const reloadPanels = useCallback(async (
+    options?: { bustCache?: boolean }
+  ): Promise<{ panels: PanelResponse[] } | { error: string }> => {
+    const response = await fetchMonitoringPanels(options);
 
     if (response.error) {
-      return null;
+      return { error: response.error };
     }
 
-    if (response.data) {
-      setPanels(response.data.panels);
-      return response.data.panels;
+    const nextPanels = response.data?.panels;
+    if (!Array.isArray(nextPanels)) {
+      return { error: "Panels API returned an invalid response" };
     }
 
-    return null;
+    setPanels(nextPanels);
+    return { panels: nextPanels };
   }, []);
 
   useEffect(() => {
@@ -151,19 +154,16 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
       setPanelsLoading(true);
       setPanelsError(null);
 
-      const response = await fetchMonitoringPanels();
-
-      if (response.error) {
-        setPanelsError(response.error);
-      } else if (response.data) {
-        setPanels(response.data.panels);
+      const result = await reloadPanels();
+      if ("error" in result) {
+        setPanelsError(result.error);
       }
 
       setPanelsLoading(false);
     };
 
-    loadPanels();
-  }, []);
+    void loadPanels();
+  }, [reloadPanels]);
 
   const fetchPanelIds = useMemo(
     () => buildFetchPanelIds(panels),
@@ -199,7 +199,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
       step = timeRange.step;
     }
 
-    const panelIdsNeedingInitialLoad = panelIds.filter((panelId) => !panelsEverLoaded[panelId]);
+    const panelIdsNeedingInitialLoad = panelIds.filter((panelId) => !panelsEverLoadedRef.current[panelId]);
 
     if (panelIdsNeedingInitialLoad.length > 0) {
       setPanelDataLoading((prev) => {
@@ -234,19 +234,10 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
 
       return changed ? next : prev;
     });
-
-    setPanelsEverLoaded((prev) => {
-      const next = { ...prev };
-      let changed = false;
-
-      results.forEach(({ panelId, response }) => {
-        if (response.data && !next[panelId]) {
-          next[panelId] = true;
-          changed = true;
-        }
-      });
-
-      return changed ? next : prev;
+    results.forEach(({ panelId, response }) => {
+      if (response.data && !panelsEverLoadedRef.current[panelId]) {
+        panelsEverLoadedRef.current = { ...panelsEverLoadedRef.current, [panelId]: true };
+      }
     });
 
     setPanelDataErrors((prev) => {
@@ -279,7 +270,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     }
 
     setLastRefreshTime(new Date());
-  }, [fetchPanelIds, selectedTimeRange, appliedCustomFrom, appliedCustomTo, pipelineName, panelsEverLoaded]);
+  }, [fetchPanelIds, selectedTimeRange, appliedCustomFrom, appliedCustomTo, pipelineName]);
 
   useEffect(() => {
     if (!panelsLoading && fetchPanelIds.length > 0 && pipelineName.trim() && selectedTimeRange !== "Custom") {
@@ -296,7 +287,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     }
 
     const intervalId = setInterval(() => {
-      fetchAllPanelData();
+      void fetchAllPanelData();
     }, intervalMs);
 
     return () => clearInterval(intervalId);
@@ -342,11 +333,12 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
 
-    const reloadedPanels = await reloadPanels();
-    if (reloadedPanels) {
-      await fetchAllPanelData(undefined, buildFetchPanelIds(reloadedPanels));
-    } else {
+    const result = await reloadPanels({ bustCache: true });
+    if ("error" in result) {
+      console.error("[PipelineMonitoring] Failed to reload panels config:", result.error);
       await fetchAllPanelData();
+    } else {
+      await fetchAllPanelData(undefined, buildFetchPanelIds(result.panels));
     }
 
     setIsRefreshing(false);
@@ -580,21 +572,25 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
                   </SelectList>
                 </Select>
               </ToolbarItem>
-            {lastRefreshTime && (
+              <ToolbarItem>
+                <Button
+                  variant="secondary"
+                  icon={isRefreshing ? <Spinner size="sm" /> : <RedoIcon />}
+                  aria-label="Refresh monitoring data"
+                  onClick={handleManualRefresh}
+                  isDisabled={isRefreshing}
+                >
+                  Refresh
+                </Button>
+              </ToolbarItem>
+              {lastRefreshTime && (
                 <ToolbarItem>
-                         <Button
-                           variant="tertiary"
-                           icon={isRefreshing ? <Spinner size="sm" /> : <RedoIcon />}
-                           aria-label="Refresh monitoring data"
-                           onClick={handleManualRefresh}
-                         />
-                  <Label 
-                   color={LabelColor.purple}
-                   icon={<InProgressIcon/>}>
-
-            Last updated: {lastRefreshTime.toLocaleTimeString()}
-      </Label>
-          
+                  <Label
+                    color={LabelColor.purple}
+                    icon={<InProgressIcon />}
+                  >
+                    Last updated: {lastRefreshTime.toLocaleTimeString()}
+                  </Label>
                 </ToolbarItem>
               )}
             </ToolbarGroup>

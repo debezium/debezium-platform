@@ -190,10 +190,9 @@ const PanelError: FC<{
 const PanelEmpty: FC<{ title: string; description?: string; message: string; compact?: boolean }> = ({
   title,
   description,
-  message,
+  message: _message,
   compact,
 }) => {
-  console.log("PanelEmpty", message);
   return (
   <Card
     isCompact={compact}
@@ -710,6 +709,11 @@ export const MonitoringPanelCard = memo(
   MonitoringPanelCardComponent,
   (prev, next) =>
     prev.panel.id === next.panel.id &&
+    prev.panel.title === next.panel.title &&
+    prev.panel.description === next.panel.description &&
+    prev.panel.category === next.panel.category &&
+    prev.panel.unit === next.panel.unit &&
+    prev.panel.visualization.type === next.panel.visualization.type &&
     prev.compact === next.compact &&
     prev.tallChart === next.tallChart &&
     prev.loading === next.loading &&
