@@ -8,6 +8,7 @@ package io.debezium.platform.api;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 
 import java.time.Duration;
@@ -30,6 +31,8 @@ import org.mockito.Mockito;
 import io.debezium.doc.FixFor;
 import io.debezium.operator.api.model.DebeziumServer;
 import io.debezium.platform.MockedTestProfile;
+import io.debezium.platform.data.model.DeploymentStatus;
+import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.environment.operator.actions.DebeziumKubernetesAdapter;
 import io.debezium.platform.util.TestDatasourceHelper;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -46,6 +49,9 @@ class PipelineResourceIT {
 
     @Inject
     private KubernetesClient kubernetesClient;
+
+    @Inject
+    PipelineService pipelineService;
 
     @InjectMock
     DebeziumKubernetesAdapter k8sAdapter;
@@ -289,6 +295,8 @@ class PipelineResourceIT {
                 .pollInterval(Duration.of(500, ChronoUnit.MILLIS))
                 .untilAsserted(() -> {
                     Mockito.verify(k8sAdapter, Mockito.atLeastOnce()).deployPipeline(debeziumServerArgumentCaptor.capture());
+                    assertThat(debeziumServerArgumentCaptor.getAllValues().stream()
+                            .anyMatch(ds -> ds.getMetadata().getName().equals("test-pipeline-no-image"))).isTrue();
                 });
 
         DebeziumServer debeziumServer = debeziumServerArgumentCaptor.getAllValues().stream()
@@ -500,6 +508,92 @@ class PipelineResourceIT {
                 .statusCode(400)
                 .body("title", is("Constraint Violation"))
                 .body("violations.field", hasItem("put.request." + fieldName));
+    }
+
+    @Test
+    @DisplayName("When a pipeline is failed then the failure status and error message must be exposed")
+    void getPipelineShouldExposeFailureStatusAndErrorMessage() {
+
+        String createBody = """
+                {
+                   "name": "test-pipeline-failed-status",
+                   "description": "Pipeline for failed status test",
+                   "source": {
+                     "id": %s,
+                     "name": "test-source-%s"
+                   },
+                   "destination": {
+                     "id": %s,
+                     "name": "test-destination-%s"
+                   },
+                   "transforms": [],
+                   "logLevel": "INFO",
+                   "logLevels": {}
+                 }""".formatted(sourceId, resourceSuffix, destinationId, resourceSuffix);
+
+        Number pipelineId = given()
+                .header("Content-Type", "application/json")
+                .body(createBody).when().post("api/pipelines")
+                .then()
+                .statusCode(201)
+                .extract()
+                .path("id");
+
+        pipelineService.markFailed(pipelineId.longValue(), "simulated deployment failure");
+
+        given()
+                .when().get("api/pipelines/" + pipelineId)
+                .then()
+                .statusCode(200)
+                .body("status", is(DeploymentStatus.FAILED.name()))
+                .body("errorMessage", is("simulated deployment failure"));
+    }
+
+    @Test
+    @DisplayName("When pipeline deployment fails with a non-retriable error then the pipeline must be marked as failed")
+    void failedPipelineDeploymentShouldUpdatePipelineStatus() {
+
+        Mockito.doThrow(new IllegalArgumentException("simulated non-retriable deployment failure"))
+                .when(k8sAdapter)
+                .deployPipeline(Mockito.any());
+
+        String jsonBody = """
+                {
+                   "name": "test-pipeline-deployment-failure",
+                   "description": "Pipeline that fails during deployment",
+                   "source": {
+                     "id": %s,
+                     "name": "test-source-%s"
+                   },
+                   "destination": {
+                     "id": %s,
+                     "name": "test-destination-%s"
+                   },
+                   "transforms": [],
+                   "logLevel": "INFO",
+                   "logLevels": {}
+                 }""".formatted(sourceId, resourceSuffix, destinationId, resourceSuffix);
+
+        Number pipelineId = given()
+                .header("Content-Type", "application/json")
+                .body(jsonBody).when().post("api/pipelines")
+                .then()
+                .statusCode(201)
+                .extract()
+                .path("id");
+
+        Awaitility.await()
+                .atMost(Duration.of(30, ChronoUnit.SECONDS))
+                .pollDelay(Duration.of(100, ChronoUnit.MILLIS))
+                .pollInterval(Duration.of(500, ChronoUnit.MILLIS))
+                .untilAsserted(() -> {
+                    given()
+                            .when().get("api/pipelines/" + pipelineId)
+                            .then()
+                            .statusCode(200)
+                            .body("status", is(DeploymentStatus.FAILED.name()))
+                            .body("errorMessage", containsString("simulated non-retriable deployment failure"));
+                });
     }
 
     static Stream<Arguments> invalidPipelineUpdateRequests() {
