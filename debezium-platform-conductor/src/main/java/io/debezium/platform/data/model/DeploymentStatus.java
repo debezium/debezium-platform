@@ -6,14 +6,14 @@
 package io.debezium.platform.data.model;
 
 /**
- * Represents the runtime status of a pipeline deployment on a remote host.
+ * Represents the runtime status of a pipeline deployment.
  *
  * <ul>
- *   <li>{@code DEPLOYING} — Docker container creation requested, awaiting confirmation</li>
- *   <li>{@code RUNNING} — container is running normally</li>
- *   <li>{@code STOPPED} — container was explicitly stopped by the user</li>
- *   <li>{@code FAILED} — container exited unexpectedly or Agent is unreachable</li>
- *   <li>{@code CONFIG_DRIFT} — SHA-256 hash of deployed config does not match expected hash</li>
+ *   <li>{@code DEPLOYING} — deployment creation or update has been requested and is awaiting confirmation</li>
+ *   <li>{@code RUNNING} — deployment is running normally</li>
+ *   <li>{@code STOPPED} — deployment was explicitly stopped by the user</li>
+ *   <li>{@code FAILED} — deployment failed, exited unexpectedly, or the runtime is unreachable</li>
+ *   <li>{@code CONFIG_DRIFT} — deployed configuration does not match the expected configuration</li>
  * </ul>
  */
 public enum DeploymentStatus {

@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.debezium.engine.ChangeEvent;
+import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.environment.watcher.config.OutboxConfigGroup;
 import io.debezium.platform.environment.watcher.config.WatcherConfigGroup;
 import io.fabric8.kubernetes.client.KubernetesClientException;
@@ -36,12 +37,15 @@ public final class OutboxParentEventConsumer implements Consumer<ChangeEvent<Sou
 
     private final OutboxConfigGroup outbox;
     private final Instance<EnvironmentEventConsumer<?>> eventConsumers;
+    private final PipelineService pipelineService;
     private final int maxRetries;
 
     public OutboxParentEventConsumer(OutboxConfigGroup outbox, WatcherConfigGroup watcherConfig,
-                                     Instance<EnvironmentEventConsumer<?>> eventConsumers) {
+                                     Instance<EnvironmentEventConsumer<?>> eventConsumers,
+                                     PipelineService pipelineService) {
         this.outbox = outbox;
         this.eventConsumers = eventConsumers;
+        this.pipelineService = pipelineService;
         this.maxRetries = watcherConfig.retry().maxRetries();
     }
 
@@ -85,9 +89,16 @@ public final class OutboxParentEventConsumer implements Consumer<ChangeEvent<Sou
                             context.eventType(), context.aggregateType(), context.aggregateId(),
                             attempt > 1 ? " after %d retries".formatted(attempt - 1) : "",
                             e);
+                    markPipelineFailed(context, e);
                     return;
                 }
             }
+        }
+    }
+
+    private void markPipelineFailed(EventContext context, Exception e) {
+        if ("pipeline".equals(context.aggregateType())) {
+            pipelineService.markFailed(Long.valueOf(context.aggregateId()), e.getMessage());
         }
     }
 

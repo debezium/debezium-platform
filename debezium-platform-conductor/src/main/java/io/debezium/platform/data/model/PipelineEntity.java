@@ -14,6 +14,8 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -57,6 +59,12 @@ public class PipelineEntity {
     @NotEmpty
     @Column(name = "default_log_level")
     private String defaultLogLevel = "info";
+
+    @Enumerated(EnumType.STRING)
+    private DeploymentStatus status;
+
+    @Column(name = "error_message", columnDefinition = "TEXT")
+    private String errorMessage;
 
     public Long getId() {
         return id;
@@ -120,5 +128,21 @@ public class PipelineEntity {
 
     public void setLogLevels(Map<String, String> logLevels) {
         this.logLevels = logLevels;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public DeploymentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(DeploymentStatus status) {
+        this.status = status;
     }
 }

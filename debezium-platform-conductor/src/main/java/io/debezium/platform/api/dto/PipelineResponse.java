@@ -8,6 +8,8 @@ package io.debezium.platform.api.dto;
 import java.util.List;
 import java.util.Map;
 
+import io.debezium.platform.data.model.DeploymentStatus;
+
 public record PipelineResponse(
         Long id,
         String name,
@@ -16,5 +18,7 @@ public record PipelineResponse(
         NamedRef destination,
         List<NamedRef> transforms,
         String logLevel,
-        Map<String, String> logLevels) {
+        Map<String, String> logLevels,
+        DeploymentStatus status,
+        String errorMessage) {
 }
