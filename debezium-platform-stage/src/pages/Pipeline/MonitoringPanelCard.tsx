@@ -190,7 +190,6 @@ const PanelError: FC<{
 const PanelEmpty: FC<{ title: string; description?: string; message: string; compact?: boolean }> = ({
   title,
   description,
-  message: _message,
   compact,
 }) => {
   return (
