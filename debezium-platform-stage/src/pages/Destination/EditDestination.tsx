@@ -54,6 +54,15 @@ const EditDestination: React.FunctionComponent = () => {
   const { addNotification } = useNotification();
   const queryClient = useQueryClient();
 
+  const { data: destinations = [] } = useQuery<Destination[], Error>(
+    "destinations",
+    () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
+  );
+
+  const existingDestinations = React.useMemo(() => {
+    return Array.isArray(destinations) ? destinations.map((d) => d.name) : [];
+  }, [destinations]);
+
   useEffect(() => {
     setViewMode(
       resolveDestinationPageViewMode(location.state, searchParams.get("state"))
@@ -226,6 +235,7 @@ const EditDestination: React.FunctionComponent = () => {
             dataType={destination.type}
             initialSource={destination}
             onSubmit={handleSchemaSubmit}
+            existingNames={existingDestinations}
             hideSignalCollections={true}
           />
         )}

@@ -54,6 +54,15 @@ const EditSource: React.FunctionComponent = () => {
   const { addNotification } = useNotification();
   const queryClient = useQueryClient();
 
+  const { data: sources = [] } = useQuery<Source[], Error>(
+    "sources",
+    () => fetchData<Source[]>(`${API_URL}/api/sources`)
+  );
+
+  const existingSources = React.useMemo(() => {
+    return Array.isArray(sources) ? sources.map((s) => s.name) : [];
+  }, [sources]);
+
   useEffect(() => {
     setViewMode(
       resolveSourcePageViewMode(location.state, searchParams.get("state"))
@@ -226,6 +235,7 @@ const EditSource: React.FunctionComponent = () => {
             dataType={source.type}
             initialSource={source}
             onSubmit={handleSchemaSubmit}
+            existingNames={existingSources}
           />
         )}
       </PageSection>

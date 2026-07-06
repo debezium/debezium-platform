@@ -21,6 +21,10 @@ public class GlobalExceptionMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionMapper.class);
 
+    private static final java.util.regex.Pattern UNIQUE_CONSTRAINT_PATTERN = java.util.regex.Pattern.compile(
+            "([a-zA-Z0-9]+)_name_key",
+            java.util.regex.Pattern.CASE_INSENSITIVE);
+
     @ServerExceptionMapper(WebApplicationException.class)
     public Response mapWebApplicationException(WebApplicationException ex) {
 
@@ -36,8 +40,7 @@ public class GlobalExceptionMapper {
     public Response mapRuntimeException(RuntimeException ex) {
 
         LOGGER.error("Error while processing request", ex);
-        // Try to unwrap a ConstraintViolationException
-        // Seems that Bean Validation on REST object don't work with Blazebit views.
+        // Try to unwrap unique constraint or validation exceptions
         Throwable cause = ex;
         while (cause != null) {
             if (cause instanceof ConstraintViolationException cve) {
@@ -52,11 +55,36 @@ public class GlobalExceptionMapper {
                 ErrorResponse response = new ErrorResponse("Validation failed", violations);
                 return Response.status(Response.Status.BAD_REQUEST).entity(response).build();
             }
+            if (cause instanceof org.hibernate.exception.ConstraintViolationException hce) {
+                return mapHibernateConstraintViolationException(hce);
+            }
             cause = cause.getCause();
         }
 
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(new ErrorResponse("An unexpected error happened", List.of(ex.getMessage())))
+                .build();
+    }
+
+    @ServerExceptionMapper(org.hibernate.exception.ConstraintViolationException.class)
+    public Response mapHibernateConstraintViolationException(org.hibernate.exception.ConstraintViolationException ex) {
+        LOGGER.error("Constraint violation exception occurred", ex);
+
+        String constraintName = ex.getConstraintName();
+        String message = "Resource with this name already exists";
+
+        if (constraintName != null) {
+            java.util.regex.Matcher matcher = UNIQUE_CONSTRAINT_PATTERN.matcher(constraintName);
+
+            if (matcher.find()) {
+                String rawResource = matcher.group(1);
+                String resource = rawResource.substring(0, 1).toUpperCase() + rawResource.substring(1).toLowerCase();
+                message = String.format("%s with this name already exists", resource);
+            }
+        }
+
+        return Response.status(Response.Status.CONFLICT)
+                .entity(new ErrorResponse("Already exists", List.of(message)))
                 .build();
     }
 

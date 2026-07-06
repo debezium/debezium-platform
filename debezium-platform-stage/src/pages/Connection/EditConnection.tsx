@@ -4,7 +4,8 @@ import * as React from "react";
 import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Connection, ConnectionAdditionalConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost, editPut, fetchDataTypeTwo } from "src/apis";
+import { Connection, ConnectionAdditionalConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost, editPut, fetchData, fetchDataTypeTwo } from "src/apis";
+import { useQuery } from "react-query";
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
 import { buildFlatConfigFromFormData, buildNestedConnectionYupFields, flatConnectionConfigToRhfShape } from "@utils/connectionForm";
@@ -62,6 +63,10 @@ type ConnectionFormValues = {
 };
 
 const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
+    const { data: connections = [] } = useQuery<Connection[], Error>(
+        "connections",
+        () => fetchData<Connection[]>(`${API_URL}/api/connections`)
+    );
     // const navigate = useNavigate();
     const { t } = useTranslation();
     const { addNotification } = useNotification();
@@ -100,7 +105,17 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
     };
 
     const schema = yup.object({
-        name: yup.string().required(),
+        name: yup.string().required().test(
+            'unique-name',
+            t("connection:form.nameExists", "Connection with this name already exists"),
+            (value) => {
+                const conns = Array.isArray(connections) ? connections : [];
+                if (!value || !conns.length) return true;
+                const isEditing = conns.some(c => c.id === Number(connectionId) && c.name === value);
+                if (isEditing) return true;
+                return !conns.some(c => c.name === value);
+            }
+        ),
         ...buildNestedConnectionYupFields(selectedSchema?.schema)
     }).required() as yup.ObjectSchema<ConnectionFormValues>;
 

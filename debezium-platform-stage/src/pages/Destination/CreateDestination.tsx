@@ -23,14 +23,14 @@ import CreateSchemaForm, {
   CreateSchemaFormHandle,
 } from "@components/CreateSchemaForm";
 
-interface CreateDestinationProps {
+export interface ICreateDestinationProps {
   modelLoaded?: boolean;
   selectedId?: string;
   selectDestination?: (destinationId: string) => void;
-  onSelection?: (selection: Destination) => void;
+  onSelection?: (destination: Destination) => void;
 }
 
-const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
+const CreateDestination: React.FunctionComponent<ICreateDestinationProps> = ({
   modelLoaded,
   selectedId,
   selectDestination,
@@ -65,6 +65,15 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     { enabled: !!descriptorPath }
   );
 
+  const { data: destinations = [] } = useQuery<Destination[], Error>(
+    "destinations",
+    () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
+  );
+
+  const existingDestinations = React.useMemo(() => {
+    return Array.isArray(destinations) ? destinations.map((d) => d.name) : [];
+  }, [destinations]);
+
   const createNewDestination = async (payload: Record<string, unknown>) => {
     setIsLoading(true);
     const response = await createPost(
@@ -75,7 +84,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
       addNotification(
         "danger",
         "Destination creation failed",
-        `Failed to create ${(response.data as Destination)?.name}: ${response.error}`
+        `Failed to create ${(payload as { name: string }).name}: ${response.error}`
       );
     } else {
       if (modelLoaded) onSelection?.(response.data as Destination);
@@ -128,6 +137,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
         connectorSchema={connectorSchema}
         destinationId={destinationId}
         onSubmit={createNewDestination}
+        existingNames={existingDestinations}
         hideSignalCollections={true}
         {...(modelLoaded ? { defaultLayoutMode: "tabs" as const } : {})}
       />

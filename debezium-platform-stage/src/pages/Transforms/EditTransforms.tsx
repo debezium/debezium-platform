@@ -53,10 +53,12 @@ import { useState } from "react";
 import style from "../../styles/createConnector.module.css"
 import {
   editPut,
+  fetchData,
   fetchDataTypeTwo,
   TransformData,
   TransformPayload,
 } from "src/apis";
+import { useQuery } from "react-query";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { isEmpty } from "lodash";
@@ -98,6 +100,11 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   const [transformData, setTransformData] = useState<TransformData>();
   const [isFetchLoading, setIsFetchLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { data: existingTransforms = [] } = useQuery<TransformData[], Error>(
+    "transforms",
+    () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
+  );
 
   const [editorSelected, setEditorSelected] = React.useState("form-editor");
 
@@ -419,7 +426,12 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
     ) => {
       if (editorSelected === "form-editor") {
         if (!values["transform-name"]) {
-          setError("transform-name", "transform name is required.");
+          setError("transform-name", t("transforms:form.nameRequired", "transform name is required."));
+        } else if (Array.isArray(existingTransforms) && existingTransforms.some((t) => t.name === values["transform-name"] && t.id !== transformData?.id)) {
+          setError("transform-name", t("transforms:form.nameExists", {
+            defaultValue: "Transform with name '{{name}}' already exists",
+            name: values["transform-name"]
+          }));
         } else {
           setIsLoading(true);
           const {
@@ -492,6 +504,9 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
       editTransform,
       code,
       validate,
+      existingTransforms,
+      t,
+      transformData?.id,
     ]
   );
 

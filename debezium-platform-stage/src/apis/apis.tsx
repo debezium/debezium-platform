@@ -233,7 +233,17 @@ export const createPost = async <T,>(
     });
 
     if (!response.ok) {
-      const errorMsg = `Failed to create source: ${response.statusText}`;
+      let errorMsg = `Failed to create source: ${response.statusText}`;
+      try {
+        const errJson = await response.json();
+        if (errJson && errJson.details && errJson.details.length > 0) {
+          errorMsg = errJson.details[0];
+        } else if (errJson && errJson.error) {
+          errorMsg = errJson.error;
+        }
+      } catch {
+        // ignore
+      }
       return { error: errorMsg };
     }
 
@@ -262,7 +272,17 @@ export const editPut = async <T,>(
     });
 
     if (!response.ok) {
-      const errorMsg = `Failed to create source: ${response.statusText}`;
+      let errorMsg = `Failed to create source: ${response.statusText}`;
+      try {
+        const errJson = await response.json();
+        if (errJson && errJson.details && errJson.details.length > 0) {
+          errorMsg = errJson.details[0];
+        } else if (errJson && errJson.error) {
+          errorMsg = errJson.error;
+        }
+      } catch {
+        // ignore
+      }
       return { error: errorMsg };
     }
 
@@ -377,7 +397,17 @@ export const verifySignals = async <T,>(
     });
 
     if (!response.ok) {
-      const errorMsg = `Failed to verify the signals: ${response.statusText}`;
+      let errorMsg = `Failed to verify the signals: ${response.statusText}`;
+      try {
+        const errJson = await response.json();
+        if (errJson && errJson.details && errJson.details.length > 0) {
+          errorMsg = errJson.details[0];
+        } else if (errJson && errJson.error) {
+          errorMsg = errJson.error;
+        }
+      } catch {
+        // ignore
+      }
       return { error: errorMsg };
     }
 
