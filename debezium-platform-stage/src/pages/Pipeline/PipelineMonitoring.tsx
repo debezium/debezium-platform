@@ -50,6 +50,7 @@ import {
 
 type PipelineMonitoringProp = {
   pipelineName: string;
+  activeTabKey: string;
 };
 
 const getDefaultCustomRange = () => {
@@ -60,11 +61,11 @@ const getDefaultCustomRange = () => {
   };
 };
 
-const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
+const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName, activeTabKey }) => {
   useTranslation();
 
   const [panels, setPanels] = useState<PanelResponse[]>([]);
-  const [panelsLoading, setPanelsLoading] = useState<boolean>(true);
+  const [panelsLoading, setPanelsLoading] = useState<boolean>(false);
   const [panelsError, setPanelsError] = useState<string | null>(null);
 
   const [panelData, setPanelData] = useState<Record<string, PanelQueryResponse>>({});
@@ -150,6 +151,8 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
   }, []);
 
   useEffect(() => {
+    if (activeTabKey !== "monitoring") return;
+
     const loadPanels = async () => {
       setPanelsLoading(true);
       setPanelsError(null);
@@ -163,7 +166,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     };
 
     void loadPanels();
-  }, [reloadPanels]);
+  }, [reloadPanels, activeTabKey]);
 
   const fetchPanelIds = useMemo(
     () => buildFetchPanelIds(panels),
@@ -273,14 +276,17 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
   }, [fetchPanelIds, selectedTimeRange, appliedCustomFrom, appliedCustomTo, pipelineName]);
 
   useEffect(() => {
-    if (!panelsLoading && fetchPanelIds.length > 0 && pipelineName.trim() && selectedTimeRange !== "Custom") {
+    if (activeTabKey !== "monitoring") return;
+    if (!panelsLoading && panels.length > 0 && pipelineName.trim() && selectedTimeRange !== "Custom") {
       void fetchAllPanelData();
     }
     // fetchAllPanelData excluded: only re-fetch when query inputs change, not when load tracking updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchPanelIds, panelsLoading, pipelineName, selectedTimeRange]);
+  }, [fetchPanelIds, panels, panelsLoading, pipelineName, selectedTimeRange, activeTabKey]);
 
   useEffect(() => {
+    if (activeTabKey !== "monitoring") return;
+
     const intervalMs = parseRefreshInterval(selectedRefresh);
     if (intervalMs === null) {
       return;
@@ -291,7 +297,7 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName }) => {
     }, intervalMs);
 
     return () => clearInterval(intervalId);
-  }, [selectedRefresh, fetchAllPanelData]);
+  }, [selectedRefresh, fetchAllPanelData, activeTabKey]);
 
   const onTimeRangeSelect = (
     _event: React.MouseEvent<Element, MouseEvent> | undefined,

@@ -62,11 +62,13 @@ interface Inputs {
 interface PipelineActionProps {
     pipelineId: string | undefined;
     sourceId: number | undefined;
+    activeTabKey: string;
 }
 
 const PipelineAction: React.FC<PipelineActionProps> = ({
     pipelineId,
-    sourceId
+    sourceId,
+    activeTabKey,
 }) => {
     const { t } = useTranslation();
     const { addNotification } = useNotification();
@@ -83,7 +85,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
    
 
     useEffect(() => {
-        if (!sourceId) return;
+        if (!sourceId || activeTabKey !== "action") return;
 
         const fetchConnectionCollections = async () => {
             setIsCollectionsLoading(true);
@@ -111,7 +113,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
         };
 
         fetchConnectionCollections();
-    }, [sourceId]);
+    }, [sourceId, activeTabKey]);
 
     const {
         register,

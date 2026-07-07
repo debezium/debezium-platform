@@ -160,7 +160,7 @@ const PipelineDetails: React.FunctionComponent = () => {
           hidden={"overview" !== activeTabKey}
         >
           <TabContentBody>
-            <PipelineOverview pipelineId={pipelineId || ""} />
+            <PipelineOverview pipelineId={pipelineId || ""} activeTabKey={activeTabKey} />
           </TabContentBody>
         </TabContent>
         {isPipelineTabEnabled("logs") && (
@@ -212,7 +212,7 @@ const PipelineDetails: React.FunctionComponent = () => {
             hidden={"action" !== activeTabKey}
           >
             <TabContentBody>
-              <PipelineAction pipelineId={pipelineId} sourceId={pipeline?.source.id} />
+              <PipelineAction pipelineId={pipelineId} sourceId={pipeline?.source.id} activeTabKey={activeTabKey} />
             </TabContentBody>
           </TabContent>
         )}
@@ -225,7 +225,7 @@ const PipelineDetails: React.FunctionComponent = () => {
             hidden={"monitoring" !== activeTabKey}
           >
             <TabContentBody>
-              <PipelineMonitoring pipelineName={pipeline?.name || ""} />
+              <PipelineMonitoring pipelineName={pipeline?.name || ""} activeTabKey={activeTabKey} />
             </TabContentBody>
           </TabContent>
         )}

@@ -39,9 +39,10 @@ import { sourcePageNavState } from "@sourcePage/sourcePageNavigation";
 
 type PipelineOverviewProp = {
   pipelineId: string;
+  activeTabKey: string;
 };
 
-const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
+const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -59,6 +60,8 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (activeTabKey !== "overview") return;
+
     const fetchData = async () => {
       setIsFetchLoading(true);
       try {
@@ -101,7 +104,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId }) => {
     };
 
     fetchData();
-  }, [pipelineId]);
+  }, [pipelineId, activeTabKey]);
 
   const CompositionFlowMemo = memo(CompositionFlow);
 

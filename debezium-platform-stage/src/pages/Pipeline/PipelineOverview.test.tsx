@@ -42,7 +42,7 @@ describe("PipelineOverview", () => {
       )
     );
 
-    render(<PipelineOverview pipelineId="2" />);
+    render(<PipelineOverview pipelineId="2" activeTabKey="overview" />);
 
     expect(await screen.findByText("Pipeline composition")).toBeInTheDocument();
     expect(await screen.findByText("test-cass")).toBeInTheDocument();

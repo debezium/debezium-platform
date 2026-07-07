@@ -49,7 +49,7 @@ describe("PipelineMonitoring refresh", () => {
   it("reloads the panels list and renders newly added panels on manual refresh", async () => {
     const user = userEvent.setup();
 
-    render(<PipelineMonitoring pipelineName="test-pipeline" />);
+    render(<PipelineMonitoring pipelineName="test-pipeline" activeTabKey="monitoring" />);
 
     expect(await screen.findByText("Streaming Metrics")).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: /refresh monitoring data/i })).toBeInTheDocument();
