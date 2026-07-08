@@ -17,6 +17,8 @@ import org.jboss.logging.Logger;
 import com.blazebit.persistence.view.EntityViewManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.debezium.platform.data.model.PipelineStatus;
+import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.environment.EnvironmentController;
 import io.debezium.platform.environment.watcher.events.EventType;
@@ -24,8 +26,12 @@ import io.debezium.platform.environment.watcher.events.EventType;
 @Dependent
 public class PipelineConsumer extends AbstractEventConsumer<PipelineFlat> {
 
-    public PipelineConsumer(Logger logger, Instance<EnvironmentController> environment, ObjectMapper objectMapper, EntityViewManager evm) {
+    private final PipelineService pipelineService;
+
+    public PipelineConsumer(Logger logger, Instance<EnvironmentController> environment, ObjectMapper objectMapper, EntityViewManager evm,
+                            PipelineService pipelineService) {
         super(logger, environment, objectMapper, evm, PipelineFlat.class);
+        this.pipelineService = pipelineService;
     }
 
     @Override
@@ -45,5 +51,10 @@ public class PipelineConsumer extends AbstractEventConsumer<PipelineFlat> {
         var pipelines = environment.pipelines();
 
         payload.ifPresentOrElse(pipelines::deploy, () -> pipelines.undeploy(id));
+    }
+
+    @Override
+    public void onError(String id, String aggregateType, String eventType, Exception e) {
+        pipelineService.updateStatus(Long.valueOf(id), PipelineStatus.FAILED, e.getMessage());
     }
 }

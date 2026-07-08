@@ -18,8 +18,8 @@ import com.blazebit.persistence.view.EntityView;
 import com.blazebit.persistence.view.Mapping;
 import com.blazebit.persistence.view.UpdatableEntityView;
 
-import io.debezium.platform.data.model.DeploymentStatus;
 import io.debezium.platform.data.model.PipelineEntity;
+import io.debezium.platform.data.model.PipelineStatus;
 import io.debezium.platform.domain.views.base.NamedView;
 import io.debezium.platform.domain.views.refs.DestinationReference;
 import io.debezium.platform.domain.views.refs.SourceReference;
@@ -52,7 +52,7 @@ public interface Pipeline extends NamedView {
 
     Map<String, String> getLogLevels();
 
-    DeploymentStatus getStatus();
+    PipelineStatus getStatus();
 
     String getErrorMessage();
 
@@ -68,7 +68,7 @@ public interface Pipeline extends NamedView {
 
     void setLogLevels(Map<String, String> logLevels);
 
-    void setStatus(DeploymentStatus status);
+    void setStatus(PipelineStatus status);
 
     void setErrorMessage(String errorMessage);
 

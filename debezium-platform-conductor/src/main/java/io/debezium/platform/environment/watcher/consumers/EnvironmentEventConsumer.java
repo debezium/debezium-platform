@@ -75,4 +75,15 @@ public interface EnvironmentEventConsumer<T> extends BiConsumer<Long, Optional<T
             accept(id, Optional.ofNullable(object));
         }
     }
+
+    /**
+     * Handles a failure that happened while processing an event consumed by this consumer.
+     *
+     * @param id aggregate id
+     * @param aggregateType event aggregate type
+     * @param eventType event type
+     * @param e processing exception
+     */
+    default void onError(String id, String aggregateType, String eventType, Exception e) {
+    }
 }

@@ -61,7 +61,7 @@ public class PipelineEntity {
     private String defaultLogLevel = "info";
 
     @Enumerated(EnumType.STRING)
-    private DeploymentStatus status;
+    private PipelineStatus status;
 
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
@@ -138,11 +138,11 @@ public class PipelineEntity {
         this.errorMessage = errorMessage;
     }
 
-    public DeploymentStatus getStatus() {
+    public PipelineStatus getStatus() {
         return status;
     }
 
-    public void setStatus(DeploymentStatus status) {
+    public void setStatus(PipelineStatus status) {
         this.status = status;
     }
 }

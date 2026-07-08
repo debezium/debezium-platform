@@ -31,7 +31,7 @@ import org.mockito.Mockito;
 import io.debezium.doc.FixFor;
 import io.debezium.operator.api.model.DebeziumServer;
 import io.debezium.platform.MockedTestProfile;
-import io.debezium.platform.data.model.DeploymentStatus;
+import io.debezium.platform.data.model.PipelineStatus;
 import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.environment.operator.actions.DebeziumKubernetesAdapter;
 import io.debezium.platform.util.TestDatasourceHelper;
@@ -539,13 +539,13 @@ class PipelineResourceIT {
                 .extract()
                 .path("id");
 
-        pipelineService.markFailed(pipelineId.longValue(), "simulated deployment failure");
+        pipelineService.updateStatus(pipelineId.longValue(), PipelineStatus.FAILED, "simulated deployment failure");
 
         given()
                 .when().get("api/pipelines/" + pipelineId)
                 .then()
                 .statusCode(200)
-                .body("status", is(DeploymentStatus.FAILED.name()))
+                .body("status", is(PipelineStatus.FAILED.name()))
                 .body("errorMessage", is("simulated deployment failure"));
     }
 
@@ -591,7 +591,7 @@ class PipelineResourceIT {
                             .when().get("api/pipelines/" + pipelineId)
                             .then()
                             .statusCode(200)
-                            .body("status", is(DeploymentStatus.FAILED.name()))
+                            .body("status", is(PipelineStatus.FAILED.name()))
                             .body("errorMessage", containsString("simulated non-retriable deployment failure"));
                 });
     }

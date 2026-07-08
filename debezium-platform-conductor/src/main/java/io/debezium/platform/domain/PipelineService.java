@@ -19,8 +19,8 @@ import com.blazebit.persistence.view.EntityViewManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.debezium.outbox.quarkus.ExportedEvent;
-import io.debezium.platform.data.model.DeploymentStatus;
 import io.debezium.platform.data.model.PipelineEntity;
+import io.debezium.platform.data.model.PipelineStatus;
 import io.debezium.platform.domain.views.Pipeline;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.domain.views.refs.PipelineReference;
@@ -96,12 +96,12 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void markFailed(Long pipelineId, String errorMessage) {
+    public void updateStatus(Long pipelineId, PipelineStatus status, String errorMessage) {
         var pipeline = em.find(PipelineEntity.class, pipelineId);
 
         if (pipeline != null) {
-            pipeline.setStatus(DeploymentStatus.FAILED);
-            pipeline.setErrorMessage(errorMessage);
+            pipeline.setStatus(status);
+            pipeline.setErrorMessage(status == PipelineStatus.FAILED ? errorMessage : null);
         }
     }
 }
