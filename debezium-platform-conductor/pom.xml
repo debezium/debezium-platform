@@ -466,6 +466,11 @@
             <artifactId>quarkus-rest-client-jackson</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-scheduler</artifactId>
+        </dependency>
+
         <!-- Flyway -->
         <dependency>
             <groupId>io.quarkus</groupId>
