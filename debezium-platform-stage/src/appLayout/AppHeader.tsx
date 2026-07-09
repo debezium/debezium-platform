@@ -19,6 +19,8 @@ import {
   DropdownItem,
   Dropdown,
   DropdownList,
+  Tooltip,
+  Button,
 } from "@patternfly/react-core";
 import { BarsIcon, QuestionCircleIcon } from "@patternfly/react-icons";
 import React, { useCallback, useEffect, useState } from "react";
@@ -34,6 +36,7 @@ import { useTranslation } from "react-i18next";
 import { useGuidedTour } from "../components/GuidedTourContext";
 import { useDocHelp } from "../components/DocHelpContext";
 import { resolveDocMapping } from "../docs/docMappings";
+import GlassModeIcon from "src/assets/customeIcons/GlassModeIcon";
 
 interface AppHeaderProps {
   toggleSidebar: () => void;
@@ -51,7 +54,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   handleNotificationBadgeClick,
   getNotificationBadgeVariant,
 }) => {
-  const { darkMode, setDarkMode } = useData();
+  const { darkMode, setDarkMode, glassMode, setGlassMode } = useData();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -99,6 +102,17 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     </MenuToggle>
   );
 
+  const toggleGlassMode = useCallback(() => {
+    const next = !glassMode;
+    setGlassMode(next);
+    localStorage.setItem("glassMode", String(next));
+    if (next) {
+      document.documentElement.classList.add("pf-v6-theme-glass");
+    } else {
+      document.documentElement.classList.remove("pf-v6-theme-glass");
+    }
+  }, [glassMode, setGlassMode]);
+
   const toggleDarkMode = useCallback((val: string) => {
     let newDarkMode = val === "dark";
     if (val === "system") {
@@ -113,8 +127,18 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     } else {
       document.documentElement.classList.remove("pf-v6-theme-dark");
     }
-  }, [setDarkMode]);
-  
+
+    // Apply theme-linked glass default: dark → glass ON, light → glass OFF
+    const preferredGlass = newDarkMode;
+    setGlassMode(preferredGlass);
+    localStorage.setItem("glassMode", String(preferredGlass));
+    if (preferredGlass) {
+      document.documentElement.classList.add("pf-v6-theme-glass");
+    } else {
+      document.documentElement.classList.remove("pf-v6-theme-glass");
+    }
+  }, [setDarkMode, setGlassMode]);
+
   useEffect(() => {
     // Sync React state with the theme already applied by blocking script
     // Only update state, don't manipulate DOM on initial mount
@@ -122,7 +146,19 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     const isDark = theme === "dark" ||
       (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches);
     setDarkMode(isDark);
-  }, [selectedTheme, setDarkMode]);
+
+    // On fresh install (no stored glassMode), derive the default from the resolved theme
+    if (localStorage.getItem("glassMode") === null) {
+      const preferredGlass = isDark;
+      setGlassMode(preferredGlass);
+      localStorage.setItem("glassMode", String(preferredGlass));
+      if (preferredGlass) {
+        document.documentElement.classList.add("pf-v6-theme-glass");
+      } else {
+        document.documentElement.classList.remove("pf-v6-theme-glass");
+      }
+    }
+  }, [selectedTheme, setDarkMode, setGlassMode]);
 
   return (
     <>
@@ -155,6 +191,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               <ToolbarGroup
                 variant="action-group-plain"
               >
+                <ToolbarItem visibility={{ default: 'hidden', md: 'visible' }}>
+                  <Tooltip content={t('glassMode')} position="bottom" >
+                    <Button variant="stateful" icon={<GlassModeIcon color="currentColor" />} state={!glassMode? "read" : "unread"} onClick={toggleGlassMode}>
+     
+      </Button>
+     
+                  </Tooltip>
+                </ToolbarItem>
                 <ToolbarItem visibility={{ default: 'hidden', md: 'visible' }}>
                   <div data-tour="theme-selector">
                   <Dropdown

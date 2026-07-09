@@ -12,6 +12,8 @@ interface AppContextType {
   navigationCollapsed: boolean;
   darkMode: boolean;
   setDarkMode: (darkMode: boolean) => void;
+  glassMode: boolean;
+  setGlassMode: (glassMode: boolean) => void;
   updateNavigationCollapsed: (collapsed: boolean) => void;
 }
 
@@ -28,6 +30,10 @@ export const AppContextProvider: FC<{ children: ReactNode }> = ({
     // Initialize from DOM to match the theme applied by blocking script in index.html
     return document.documentElement.classList.contains("pf-v6-theme-dark");
   });
+  const [glassMode, setGlassMode] = useState(() => {
+    // Initialize from DOM to match glass mode applied by blocking script in index.html
+    return document.documentElement.classList.contains("pf-v6-theme-glass");
+  });
 
   const updateNavigationCollapsed = useCallback(
     (collapsed: boolean) => {
@@ -43,8 +49,10 @@ export const AppContextProvider: FC<{ children: ReactNode }> = ({
       updateNavigationCollapsed,
       darkMode,
       setDarkMode,
+      glassMode,
+      setGlassMode,
     }),
-    [navigationCollapsed, updateNavigationCollapsed, darkMode, setDarkMode]
+    [navigationCollapsed, updateNavigationCollapsed, darkMode, setDarkMode, glassMode, setGlassMode]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -32,6 +32,8 @@ const renderAppHeader = (darkMode = false) => {
     navigationCollapsed: false,
     darkMode,
     setDarkMode: vi.fn(),
+    glassMode: false,
+    setGlassMode: vi.fn(),
     updateNavigationCollapsed: vi.fn(),
   });
 

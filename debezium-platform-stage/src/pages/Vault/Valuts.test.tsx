@@ -27,6 +27,8 @@ describe("Vaults Component", () => {
       darkMode: false,
       navigationCollapsed: false,
       setDarkMode: vi.fn(),
+      glassMode: false,
+      setGlassMode: vi.fn(),
       updateNavigationCollapsed: vi.fn(),
     });
   });
