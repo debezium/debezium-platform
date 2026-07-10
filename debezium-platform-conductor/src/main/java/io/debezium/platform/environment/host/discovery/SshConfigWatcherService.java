@@ -15,16 +15,12 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -32,8 +28,8 @@ import jakarta.enterprise.event.Observes;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
-import io.debezium.platform.data.model.HostStatusEntity;
-import io.debezium.platform.data.model.ProvisioningStatus;
+import io.debezium.platform.domain.HostStatusService;
+import io.debezium.platform.domain.views.HostStatus;
 import io.debezium.platform.environment.host.provisioning.HostProvisioningService;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
@@ -57,9 +53,9 @@ import io.quarkus.scheduler.Scheduled;
  *
  * <p>Reconciliation logic:
  * <ul>
- *   <li>Host in file, not in DB → create {@link HostStatusEntity} with
- *       {@link ProvisioningStatus#PENDING}, trigger Ansible provisioning</li>
- *   <li>Host in DB, not in file → mark {@link ProvisioningStatus#REMOVED}</li>
+ *   <li>Host in file, not in DB → create {@link HostStatus} with
+ *       status {@code PENDING}, trigger Ansible provisioning</li>
+ *   <li>Host in DB, not in file → mark status {@code REMOVED}</li>
  *   <li>Host in both, hostname changed → update entity, re-trigger provisioning</li>
  * </ul>
  */
@@ -87,8 +83,9 @@ public class SshConfigWatcherService {
 
     private final Logger logger;
     private final SshConfigParser parser;
-    private final HostReconciliationRepository repository;
+    private final HostStatusService hostStatusService;
     private final HostProvisioningService provisioningService;
+    private final HostReconciliationPlanBuilder planBuilder;
     private final ScheduledExecutorService debounceExecutor;
 
     private Path sshConfigPath;
@@ -101,12 +98,13 @@ public class SshConfigWatcherService {
 
     public SshConfigWatcherService(Logger logger,
                                    SshConfigParser parser,
-                                   HostReconciliationRepository repository,
+                                   HostStatusService hostStatusService,
                                    HostProvisioningService provisioningService) {
         this.logger = logger;
         this.parser = parser;
-        this.repository = repository;
+        this.hostStatusService = hostStatusService;
         this.provisioningService = provisioningService;
+        this.planBuilder = new HostReconciliationPlanBuilder();
         this.debounceExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "ssh-config-debounce");
             t.setDaemon(true);
@@ -232,39 +230,37 @@ public class SshConfigWatcherService {
                 break;
             }
 
-            if (key == null) {
-                continue;
-            }
+            if (key != null) {
+                boolean configFileAffected = false;
 
-            boolean configFileAffected = false;
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
+                        logger.warn("WatchService OVERFLOW — triggering full reconciliation");
+                        configFileAffected = true;
+                        break;
+                    }
 
-            for (WatchEvent<?> event : key.pollEvents()) {
-                if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
-                    logger.warn("WatchService OVERFLOW — triggering full reconciliation");
-                    configFileAffected = true;
+                    @SuppressWarnings("unchecked")
+                    WatchEvent<Path> pathEvent = (WatchEvent<Path>) event;
+                    Path changedFile = pathEvent.context();
+
+                    if (changedFile.equals(configFileName)) {
+                        logger.debugv("SSH config file event: {0} — {1}",
+                                event.kind().name(), changedFile);
+                        configFileAffected = true;
+                    }
+                }
+
+                if (configFileAffected) {
+                    scheduleReconciliation();
+                }
+
+                boolean valid = key.reset();
+                if (!valid) {
+                    logger.errorv("Watch directory {0} was deleted — SSH config watcher stopping",
+                            watchDirectory);
                     break;
                 }
-
-                @SuppressWarnings("unchecked")
-                WatchEvent<Path> pathEvent = (WatchEvent<Path>) event;
-                Path changedFile = pathEvent.context();
-
-                if (changedFile.equals(configFileName)) {
-                    logger.debugv("SSH config file event: {0} — {1}",
-                            event.kind().name(), changedFile);
-                    configFileAffected = true;
-                }
-            }
-
-            if (configFileAffected) {
-                scheduleReconciliation();
-            }
-
-            boolean valid = key.reset();
-            if (!valid) {
-                logger.errorv("Watch directory {0} was deleted — SSH config watcher stopping",
-                        watchDirectory);
-                break;
             }
         }
     }
@@ -306,76 +302,24 @@ public class SshConfigWatcherService {
 
         validateKeyPermissions(fileHosts);
 
-        List<HostStatusEntity> dbHosts = repository.findAllActiveHosts();
+        List<HostStatus> dbHosts = hostStatusService.findAllActiveHosts();
 
-        ReconciliationPlan plan = buildReconciliationPlan(fileHosts, dbHosts);
+        ReconciliationPlan plan = planBuilder.buildPlan(fileHosts, dbHosts);
 
-        for (SshHostEntry entry : plan.toAdd()) {
-            repository.createPendingHost(entry.alias(), resolveHostname(entry));
+        plan.toAdd().forEach(entry -> {
+            hostStatusService.createPendingHost(entry.alias(), planBuilder.resolveHostname(entry));
             provisioningService.provision(entry.alias());
-        }
+        });
 
-        for (String alias : plan.toRemove()) {
-            repository.markHostRemoved(alias);
-        }
+        plan.toRemove().forEach(hostStatusService::markHostRemoved);
 
-        for (SshHostEntry entry : plan.toUpdate()) {
-            repository.updateHostDetails(entry.alias(), entry.hostname());
+        plan.toUpdate().forEach(entry -> {
+            hostStatusService.updateHostDetails(entry.alias(), entry.hostname());
             provisioningService.provision(entry.alias());
-        }
+        });
 
         logger.infov("Reconciliation complete: {0} added, {1} removed, {2} updated",
                 plan.toAdd().size(), plan.toRemove().size(), plan.toUpdate().size());
-    }
-
-    /**
-     * Compares SSH config file state against database state and produces
-     * a reconciliation plan.
-     *
-     * <p>This method is a <strong>pure function</strong> — it has zero database
-     * access and zero side effects. It exists as package-visible so that unit
-     * tests can exercise the reconciliation logic without a running database.
-     *
-     * @param fileHosts hosts parsed from the SSH config file
-     * @param dbHosts   active host entities from the database (status ≠ REMOVED)
-     * @return the reconciliation plan describing what needs to change
-     */
-    ReconciliationPlan buildReconciliationPlan(List<SshHostEntry> fileHosts,
-                                               List<HostStatusEntity> dbHosts) {
-        Map<String, HostStatusEntity> dbByAlias = dbHosts.stream()
-                .collect(Collectors.toMap(HostStatusEntity::getSshAlias, Function.identity()));
-        Map<String, SshHostEntry> fileByAlias = fileHosts.stream()
-                .collect(Collectors.toMap(SshHostEntry::alias, Function.identity()));
-
-        List<SshHostEntry> toAdd = new ArrayList<>();
-        List<SshHostEntry> toUpdate = new ArrayList<>();
-
-        for (SshHostEntry fileHost : fileHosts) {
-            HostStatusEntity dbHost = dbByAlias.get(fileHost.alias());
-            if (dbHost == null) {
-                toAdd.add(fileHost);
-            }
-            else if (isModified(fileHost, dbHost)) {
-                toUpdate.add(fileHost);
-            }
-        }
-
-        List<String> toRemove = dbHosts.stream()
-                .map(HostStatusEntity::getSshAlias)
-                .filter(alias -> !fileByAlias.containsKey(alias))
-                .toList();
-
-        return new ReconciliationPlan(toAdd, toRemove, toUpdate);
-    }
-
-    /**
-     * Hostname is the critical field — if the IP/address changed, re-provisioning
-     * is needed. Per ssh_config(5), absent HostName defaults to the alias.
-     */
-    private boolean isModified(SshHostEntry fileHost, HostStatusEntity dbHost) {
-        String fileHostname = resolveHostname(fileHost);
-        String dbHostname = dbHost.getHostname();
-        return !fileHostname.equals(dbHostname);
     }
 
     /**
@@ -420,13 +364,6 @@ public class SshConfigWatcherService {
 
     private boolean isHostMode() {
         return HOST_DEPLOYMENT_MODE.equals(deploymentMode);
-    }
-
-    /**
-     * Per ssh_config(5): if {@code HostName} is absent, the alias is used as hostname.
-     */
-    private String resolveHostname(SshHostEntry entry) {
-        return entry.hostname() != null ? entry.hostname() : entry.alias();
     }
 
     private void resolveSshConfigPath() {

@@ -11,7 +11,7 @@ import java.util.List;
  * Immutable result of comparing SSH config file state against database state.
  *
  * <p>Produced by
- * {@link SshConfigWatcherService#buildReconciliationPlan(List, List)}
+ * {@link HostReconciliationPlanBuilder#buildPlan(List, List)}
  * — a pure function with zero side effects and zero database access.
  *
  * @param toAdd    hosts present in the file but not in the database

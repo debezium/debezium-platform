@@ -7,45 +7,39 @@ package io.debezium.platform.environment.host.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.List;
 
-import org.jboss.logging.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.debezium.platform.data.model.HostStatusEntity;
-import io.debezium.platform.data.model.ProvisioningStatus;
-import io.debezium.platform.environment.host.provisioning.HostProvisioningService;
+import io.debezium.platform.domain.views.HostStatus;
 
 /**
  * Unit tests for the pure reconciliation logic in
- * {@link SshConfigWatcherService#buildReconciliationPlan(List, List)}.
+ * {@link HostReconciliationPlanBuilder#buildPlan(List, List)}.
  *
  * <p>These are plain JUnit 5 tests with no {@code @QuarkusTest} — they test only
  * the stateless comparison function, which has zero database access and zero side effects.
  */
-class SshConfigWatcherServiceTest {
+class HostReconciliationPlanBuilderTest {
 
-    private SshConfigWatcherService service;
+    private HostReconciliationPlanBuilder planBuilder;
 
     @BeforeEach
     void setUp() {
-        Logger logger = Logger.getLogger(SshConfigWatcherService.class);
-        SshConfigParser parser = new SshConfigParser(Logger.getLogger(SshConfigParser.class));
-        HostReconciliationRepository repository = mock(HostReconciliationRepository.class);
-        HostProvisioningService provisioning = mock(HostProvisioningService.class);
-        service = new SshConfigWatcherService(logger, parser, repository, provisioning);
+        planBuilder = new HostReconciliationPlanBuilder();
     }
 
     @Test
     void testNewHostInFileNotInDb() {
         List<SshHostEntry> fileHosts = List.of(
                 new SshHostEntry("db-server-1", "192.168.1.10", "ubuntu", 22, null));
-        List<HostStatusEntity> dbHosts = Collections.emptyList();
+        List<HostStatus> dbHosts = Collections.emptyList();
 
-        ReconciliationPlan plan = service.buildReconciliationPlan(fileHosts, dbHosts);
+        ReconciliationPlan plan = planBuilder.buildPlan(fileHosts, dbHosts);
 
         assertThat(plan.toAdd()).hasSize(1);
         assertThat(plan.toAdd().get(0).alias()).isEqualTo("db-server-1");
@@ -56,10 +50,10 @@ class SshConfigWatcherServiceTest {
     @Test
     void testHostRemovedFromFile() {
         List<SshHostEntry> fileHosts = Collections.emptyList();
-        List<HostStatusEntity> dbHosts = List.of(
-                createDbHost("db-server-1", "192.168.1.10", ProvisioningStatus.READY));
+        List<HostStatus> dbHosts = List.of(
+                mockHostView("db-server-1", "192.168.1.10"));
 
-        ReconciliationPlan plan = service.buildReconciliationPlan(fileHosts, dbHosts);
+        ReconciliationPlan plan = planBuilder.buildPlan(fileHosts, dbHosts);
 
         assertThat(plan.toRemove()).containsExactly("db-server-1");
         assertThat(plan.toAdd()).isEmpty();
@@ -70,10 +64,10 @@ class SshConfigWatcherServiceTest {
     void testHostUnchanged() {
         List<SshHostEntry> fileHosts = List.of(
                 new SshHostEntry("db-server-1", "192.168.1.10", "ubuntu", 22, null));
-        List<HostStatusEntity> dbHosts = List.of(
-                createDbHost("db-server-1", "192.168.1.10", ProvisioningStatus.READY));
+        List<HostStatus> dbHosts = List.of(
+                mockHostView("db-server-1", "192.168.1.10"));
 
-        ReconciliationPlan plan = service.buildReconciliationPlan(fileHosts, dbHosts);
+        ReconciliationPlan plan = planBuilder.buildPlan(fileHosts, dbHosts);
 
         assertThat(plan.toAdd()).isEmpty();
         assertThat(plan.toRemove()).isEmpty();
@@ -84,10 +78,10 @@ class SshConfigWatcherServiceTest {
     void testHostHostnameChanged() {
         List<SshHostEntry> fileHosts = List.of(
                 new SshHostEntry("db-server-1", "10.0.0.99", "ubuntu", 22, null));
-        List<HostStatusEntity> dbHosts = List.of(
-                createDbHost("db-server-1", "192.168.1.10", ProvisioningStatus.READY));
+        List<HostStatus> dbHosts = List.of(
+                mockHostView("db-server-1", "192.168.1.10"));
 
-        ReconciliationPlan plan = service.buildReconciliationPlan(fileHosts, dbHosts);
+        ReconciliationPlan plan = planBuilder.buildPlan(fileHosts, dbHosts);
 
         assertThat(plan.toUpdate()).hasSize(1);
         assertThat(plan.toUpdate().get(0).alias()).isEqualTo("db-server-1");
@@ -102,12 +96,12 @@ class SshConfigWatcherServiceTest {
                 new SshHostEntry("new-host", "10.0.0.1", "admin", 22, null),
                 new SshHostEntry("unchanged-host", "10.0.0.2", "deploy", 22, null),
                 new SshHostEntry("changed-host", "10.0.0.99", "ubuntu", 22, null));
-        List<HostStatusEntity> dbHosts = List.of(
-                createDbHost("unchanged-host", "10.0.0.2", ProvisioningStatus.READY),
-                createDbHost("changed-host", "10.0.0.3", ProvisioningStatus.READY),
-                createDbHost("removed-host", "10.0.0.4", ProvisioningStatus.READY));
+        List<HostStatus> dbHosts = List.of(
+                mockHostView("unchanged-host", "10.0.0.2"),
+                mockHostView("changed-host", "10.0.0.3"),
+                mockHostView("removed-host", "10.0.0.4"));
 
-        ReconciliationPlan plan = service.buildReconciliationPlan(fileHosts, dbHosts);
+        ReconciliationPlan plan = planBuilder.buildPlan(fileHosts, dbHosts);
 
         assertThat(plan.toAdd()).hasSize(1);
         assertThat(plan.toAdd().get(0).alias()).isEqualTo("new-host");
@@ -118,7 +112,7 @@ class SshConfigWatcherServiceTest {
 
     @Test
     void testEmptyFileEmptyDb() {
-        ReconciliationPlan plan = service.buildReconciliationPlan(
+        ReconciliationPlan plan = planBuilder.buildPlan(
                 Collections.emptyList(), Collections.emptyList());
 
         assertThat(plan.toAdd()).isEmpty();
@@ -130,10 +124,10 @@ class SshConfigWatcherServiceTest {
     void testHostWithNullHostnameUsesAliasForComparison() {
         List<SshHostEntry> fileHosts = List.of(
                 new SshHostEntry("db-server-1", null, "ubuntu", 22, null));
-        List<HostStatusEntity> dbHosts = List.of(
-                createDbHost("db-server-1", "db-server-1", ProvisioningStatus.READY));
+        List<HostStatus> dbHosts = List.of(
+                mockHostView("db-server-1", "db-server-1"));
 
-        ReconciliationPlan plan = service.buildReconciliationPlan(fileHosts, dbHosts);
+        ReconciliationPlan plan = planBuilder.buildPlan(fileHosts, dbHosts);
 
         assertThat(plan.toAdd()).isEmpty();
         assertThat(plan.toRemove()).isEmpty();
@@ -141,14 +135,14 @@ class SshConfigWatcherServiceTest {
     }
 
     /**
-     * Creates a {@link HostStatusEntity} for test purposes.
+     * Creates a mocked {@link HostStatus} entity view for test purposes.
+     * Only stubs the two getters used by the pure reconciliation function:
+     * {@code getSshAlias()} and {@code getHostname()}.
      */
-    private HostStatusEntity createDbHost(String alias, String hostname,
-                                          ProvisioningStatus status) {
-        HostStatusEntity entity = new HostStatusEntity();
-        entity.setSshAlias(alias);
-        entity.setHostname(hostname);
-        entity.setProvisioningStatus(status);
-        return entity;
+    private HostStatus mockHostView(String alias, String hostname) {
+        HostStatus host = mock(HostStatus.class);
+        when(host.getSshAlias()).thenReturn(alias);
+        when(host.getHostname()).thenReturn(hostname);
+        return host;
     }
 }
