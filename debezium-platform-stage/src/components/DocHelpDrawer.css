@@ -1,0 +1,53 @@
+/* Drawer header row */
+.dbz-doc-drawer-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* iframe wrapper — fills the remaining panel height. overflow:hidden here
+   is what crops debezium.io's own chrome out of view 
+ */
+.dbz-doc-iframe-container {
+  --dbz-doc-crop-height: 106px;
+  position: relative;
+  height: calc(100% - 60px);
+  overflow: hidden;
+}
+
+.dbz-doc-toc-btn {
+  z-index: 2;
+}
+.dbz-doc-toc-btn .pf-v6-c-button {
+  font-size: var(--pf-t--global--font--size--body--sm) !important;
+}
+
+.dbz-doc-iframe {
+  position: absolute;
+  top: calc(var(--dbz-doc-crop-height) * -1);
+  left: 0;
+  width: 100%;
+  height: calc(100% + var(--dbz-doc-crop-height));
+  border: none;
+  z-index: 1;
+  animation: dbz-doc-iframe-fade-in 280ms ease-out;
+}
+
+@keyframes dbz-doc-iframe-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dbz-doc-iframe {
+    animation: none;
+  }
+}

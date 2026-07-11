@@ -24,7 +24,7 @@ import { BarsIcon, QuestionCircleIcon } from "@patternfly/react-icons";
 import React, { useCallback, useEffect, useState } from "react";
 import dbz_logo_black from "../assets/color_black_debezium.svg";
 import dbz_svg from "../assets/debezium_logo.png";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useData } from "./AppContext";
 import { NotificationProps } from "./AppNotificationContext";
 import SystemThemeIcon from "src/assets/customeIcons/SystemThemeIcon";
@@ -32,6 +32,8 @@ import LightThemeIcon from "src/assets/customeIcons/LightThemeIcon";
 import DarkThemeIcon from "src/assets/customeIcons/DarkThemeIcon";
 import { useTranslation } from "react-i18next";
 import { useGuidedTour } from "../components/GuidedTourContext";
+import { useDocHelp } from "../components/DocHelpContext";
+import { resolveDocMapping } from "../docs/docMappings";
 
 interface AppHeaderProps {
   toggleSidebar: () => void;
@@ -52,7 +54,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const { darkMode, setDarkMode } = useData();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { replayTour } = useGuidedTour();
+  const { toggleDocHelp } = useDocHelp();
+  const hasDocMapping = !!resolveDocMapping(pathname);
   const [selectedTheme, setSelectedTheme] = useState<string>(() => {
     return localStorage.getItem("themeMode") || "system";
   });
@@ -215,6 +220,16 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                     }}
                   >
                     <DropdownList>
+                      <DropdownItem
+                        key="doc-help"
+                        isAriaDisabled={!hasDocMapping}
+                        onClick={() => {
+                          toggleDocHelp();
+                          setIsHelpDropdownOpen(false);
+                        }}
+                      >
+                        {t("documentation")}
+                      </DropdownItem>
                       <DropdownItem
                         key="replay-tour"
                         onClick={() => {

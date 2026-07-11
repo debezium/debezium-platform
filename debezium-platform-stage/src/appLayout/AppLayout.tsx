@@ -20,6 +20,7 @@ import {
 } from "../pages/Pipeline/PipelineDesigner";
 import GuidedTour from "../components/GuidedTour";
 import { useGuidedTour } from "../components/GuidedTourContext";
+import DocHelpDrawer from "../components/DocHelpDrawer";
 
 interface IAppLayout {
   children: React.ReactNode;
@@ -115,7 +116,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   };
 
   return (
-    <>
+    <DocHelpDrawer>
       {isTourActive && <GuidedTour />}
       <Page
         className={sidebarOpen ? "" : "custom-app-page"}
@@ -158,7 +159,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
       >
         {alerts.slice(0, 3)}
       </AlertGroup>
-    </>
+    </DocHelpDrawer>
   );
 };
 

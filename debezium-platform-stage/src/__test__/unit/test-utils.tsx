@@ -14,6 +14,7 @@ import {
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { GuidedTourProvider } from "../../components/GuidedTourContext";
+import { DocHelpProvider } from "../../components/DocHelpContext";
 
 import commonEN from "../../../public/locales/en/common.json";
 import pipelineEN from "../../../public/locales/en/pipeline.json";
@@ -95,7 +96,9 @@ function render(
       <QueryClientProvider client={queryClient}>
         <RouterShell>
           <GuidedTourProvider>
-            <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
+            <DocHelpProvider>
+              <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
+            </DocHelpProvider>
           </GuidedTourProvider>
         </RouterShell>
       </QueryClientProvider>

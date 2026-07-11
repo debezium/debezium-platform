@@ -18,6 +18,12 @@ margin-left: auto;
     max-height: 100%;
 }
 
+.pf-v6-c-drawer__body > .pf-v6-c-page {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+}
+
 /* .custom-app-page__sidebar-body {
     padding-inline-start: 1rem;
     padding-inline-end: 1rem;

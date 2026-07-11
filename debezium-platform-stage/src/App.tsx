@@ -7,6 +7,7 @@ import { AppRoutes } from "./AppRoutes";
 import { AppContextProvider } from "./appLayout/AppContext";
 import { NotificationProvider } from "./appLayout/AppNotificationContext";
 import { GuidedTourProvider } from "./components/GuidedTourContext";
+import { DocHelpProvider } from "./components/DocHelpContext";
 
 function App() {
   return (
@@ -14,9 +15,11 @@ function App() {
       <AppContextProvider>
         <NotificationProvider>
           <GuidedTourProvider>
-            <AppLayout>
-              <AppRoutes />
-            </AppLayout>
+            <DocHelpProvider>
+              <AppLayout>
+                <AppRoutes />
+              </AppLayout>
+            </DocHelpProvider>
           </GuidedTourProvider>
         </NotificationProvider>
       </AppContextProvider>

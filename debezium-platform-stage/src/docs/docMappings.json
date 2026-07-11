@@ -1,0 +1,210 @@
+{
+  "pages": [
+    {
+      "route": "/",
+      "exact": true,
+      "title": "Debezium Management Platform",
+      "docUrl": "operations/debezium-platform.html",
+      "sectionId": "_basic_concepts"
+    },
+    {
+      "route": "/pipeline",
+      "title": "Defining Pipelines",
+     "docUrl": "operations/debezium-platform.html",
+      "sectionId": "_basic_concepts"
+    },
+    {
+      "route": "/connections",
+      "title": "Defining Connections",
+      "docUrl": "operations/debezium-platform.html",
+      "sectionId": "_defining_connections"
+    },
+    {
+      "route": "/pipeline/pipeline_designer",
+      "title": "Creating and Managing Pipelines",
+      "docUrl": "operations/debezium-platform.html",
+      "sectionId": "_creating_and_managing_pipelines"
+    },
+    {
+      "route": "/source",
+      "title": "Defining Sources",
+      "docUrl": "operations/debezium-platform.html",
+      "sectionId": "_defining_sources"
+    },
+    {
+      "route": "/source/create_source",
+      "title": "Source Connectors",
+      "docUrl": "connectors/index.html"
+    },
+    {
+      "route": "/destination",
+      "title": "Defining Destinations",
+      "docUrl": "operations/debezium-platform.html",
+      "sectionId": "_defining_destinations"
+    },
+    {
+      "route": "/destination/create_destination",
+      "title": "Destinations",
+      "docUrl": "operations/debezium-server.html",
+      "sectionId": "_sink_configuration"
+    },
+    {
+      "route": "/transform",
+      "title": "Transformations",
+      "docUrl": "operations/debezium-platform.html",
+      "sectionId": "_managing_transforms"
+    },
+        {
+      "route": "/transform/create_transform",
+      "title": "Transformations",
+      "docUrl": "transformations/index.html"
+    }
+  ],
+  "connectorClasses": [
+    {
+      "class": "io.debezium.connector.db2.Db2Connector",
+      "title": "Db2 Connector",
+      "sectionId": "db2-overview"
+    },
+    {
+      "class": "io.debezium.connector.mariadb.MariaDbConnector",
+      "title": "MariaDB Connector",
+      "sectionId": "how-the-mariadb-connector-works"
+    },
+    {
+      "class": "io.debezium.connector.mongodb.MongoDbConnector",
+      "title": "MongoDB Connector",
+      "sectionId": "mongodb-overview"
+    },
+    {
+      "class": "io.debezium.connector.mysql.MySqlConnector",
+      "title": "MySQL Connector",
+      "sectionId": "how-the-mysql-connector-works"
+    },
+    {
+      "class": "io.debezium.connector.oracle.OracleConnector",
+      "title": "Oracle Connector",
+      "sectionId": "oracle-overview"
+    },
+    {
+      "class": "io.debezium.connector.postgresql.PostgresConnector",
+      "title": "PostgreSQL Connector",
+      "sectionId": "postgresql-overview"
+    },
+    {
+      "class": "io.debezium.connector.sqlserver.SqlServerConnector",
+      "title": "SQL Server Connector",
+      "sectionId": "sqlserver-overview"
+    },
+    {
+      "class": "io.debezium.connector.jdbc.JdbcSinkConnector",
+      "title": "JDBC Sink Connector",
+      "sectionId": "jdbc-overview"
+    },
+    {
+      "class": "io.debezium.connector.mongodb.MongoDbSinkConnector",
+      "title": "MongoDB Sink Connector",
+      "sectionId": "mongodb-sink-overview"
+    },
+    {
+      "class": "io.debezium.server.eventhubs.EventHubsChangeConsumer",
+      "title": "Azure Event Hubs Sink",
+      "sectionId": "_azure_event_hubs"
+    },
+    {
+      "class": "io.debezium.server.http.HttpChangeConsumer",
+      "title": "HTTP Client Sink",
+      "sectionId": "_http_client"
+    },
+    {
+      "class": "io.debezium.server.infinispan.InfinispanSinkConsumer",
+      "title": "Infinispan Sink",
+      "sectionId": "_infinispan"
+    },
+    {
+      "class": "io.debezium.server.instructlab.InstructLabSinkConsumer",
+      "title": "InstructLab Sink",
+      "sectionId": "_instructlab"
+    },
+    {
+      "class": "io.debezium.server.kafka.KafkaChangeConsumer",
+      "title": "Apache Kafka Sink",
+      "sectionId": "_apache_kafka"
+    },
+    {
+      "class": "io.debezium.server.kinesis.KinesisChangeConsumer",
+      "title": "Amazon Kinesis Sink",
+      "sectionId": "_amazon_kinesis"
+    },
+    {
+      "class": "io.debezium.server.milvus.MilvusChangeConsumer",
+      "title": "Milvus Sink",
+      "sectionId": "_milvus"
+    },
+    {
+      "class": "io.debezium.server.nats.jetstream.NatsJetStreamChangeConsumer",
+      "title": "NATS JetStream Sink",
+      "sectionId": "_nats_jetstream"
+    },
+    {
+      "class": "io.debezium.server.nats.streaming.NatsStreamingChangeConsumer",
+      "title": "NATS Streaming Sink",
+      "sectionId": "_nats_streaming"
+    },
+    {
+      "class": "io.debezium.server.pravega.PravegaChangeConsumer",
+      "title": "Pravega Sink",
+      "sectionId": "_pravega"
+    },
+    {
+      "class": "io.debezium.server.pubsub.PubSubLiteChangeConsumer",
+      "title": "Google Pub/Sub Lite Sink",
+      "sectionId": "_pubsub_lite"
+    },
+    {
+      "class": "io.debezium.server.pubsub.PubSubChangeConsumer",
+      "title": "Google Cloud Pub/Sub Sink",
+      "sectionId": "_google_cloud_pubsub"
+    },
+    {
+      "class": "io.debezium.server.pulsar.PulsarChangeConsumer",
+      "title": "Apache Pulsar Sink",
+      "sectionId": "_apache_pulsar"
+    },
+    {
+      "class": "io.debezium.server.qdrant.QdrantChangeConsumer",
+      "title": "Qdrant Sink",
+      "sectionId": "_qdrant_sink"
+    },
+    {
+      "class": "io.debezium.server.rabbitmq.RabbitMqStreamNativeChangeConsumer",
+      "title": "RabbitMQ Native Stream Sink",
+      "sectionId": "_rabbitmq_native_stream"
+    },
+    {
+      "class": "io.debezium.server.rabbitmq.RabbitMqStreamChangeConsumer",
+      "title": "RabbitMQ Stream Sink",
+      "sectionId": "_rabbitmq_stream"
+    },
+    {
+      "class": "io.debezium.server.redis.RedisStreamChangeConsumer",
+      "title": "Redis (Stream) Sink",
+      "sectionId": "_redis_stream"
+    },
+    {
+      "class": "io.debezium.server.rocketmq.RocketMqChangeConsumer",
+      "title": "Apache RocketMQ Sink",
+      "sectionId": "_apache_rocketmq"
+    },
+     {
+      "class": "io.debezium.server.jdbc.JdbcChangeConsumer",
+      "title": "Amazon SQS Sink",
+      "sectionId": "_jdbc"
+    },
+     {
+      "class": "io.debezium.server.fluss.FlussChangeConsumer",
+      "title": "Amazon SQS Sink",
+      "sectionId": "_apache_fluss"
+    }
+  ]
+}
