@@ -99,12 +99,13 @@ public class SshConfigWatcherService {
     public SshConfigWatcherService(Logger logger,
                                    SshConfigParser parser,
                                    HostStatusService hostStatusService,
-                                   HostProvisioningService provisioningService) {
+                                   HostProvisioningService provisioningService,
+                                   HostReconciliationPlanBuilder planBuilder) {
         this.logger = logger;
         this.parser = parser;
         this.hostStatusService = hostStatusService;
         this.provisioningService = provisioningService;
-        this.planBuilder = new HostReconciliationPlanBuilder();
+        this.planBuilder = planBuilder;
         this.debounceExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "ssh-config-debounce");
             t.setDaemon(true);
@@ -231,12 +232,10 @@ public class SshConfigWatcherService {
             }
 
             if (key != null) {
-                boolean configFileAffected = false;
-
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
                         logger.warn("WatchService OVERFLOW — triggering full reconciliation");
-                        configFileAffected = true;
+                        scheduleReconciliation();
                         break;
                     }
 
@@ -247,12 +246,8 @@ public class SshConfigWatcherService {
                     if (changedFile.equals(configFileName)) {
                         logger.debugv("SSH config file event: {0} — {1}",
                                 event.kind().name(), changedFile);
-                        configFileAffected = true;
+                        scheduleReconciliation();
                     }
-                }
-
-                if (configFileAffected) {
-                    scheduleReconciliation();
                 }
 
                 boolean valid = key.reset();

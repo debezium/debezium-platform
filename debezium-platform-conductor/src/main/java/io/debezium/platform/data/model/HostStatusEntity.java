@@ -32,24 +32,26 @@ public class HostStatusEntity {
     @GeneratedValue
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "ssh_alias", unique = true, nullable = false)
     private String sshAlias;
 
     @Column(nullable = false)
     private String hostname;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "provisioning_status", nullable = false)
     private ProvisioningStatus provisioningStatus;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "provisioning_report", columnDefinition = "TEXT")
     private String provisioningReport;
 
-    @Column(nullable = false)
+    @Column(name = "agent_port", nullable = false)
     private int agentPort;
 
+    @Column(name = "agent_token")
     private String agentToken;
 
+    @Column(name = "last_checked_at")
     private Instant lastCheckedAt;
 
     public Long getId() {

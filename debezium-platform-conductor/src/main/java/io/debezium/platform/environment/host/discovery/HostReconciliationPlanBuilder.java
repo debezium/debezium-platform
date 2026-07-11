@@ -10,17 +10,21 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 import io.debezium.platform.domain.views.HostStatus;
 
 /**
  * Pure-function builder that compares SSH config file state against database
  * state and produces a {@link ReconciliationPlan}.
  *
- * <p>This class is intentionally <strong>not</strong> a CDI bean — it has no
- * injected dependencies, no mutable state, and no side effects. Every method
- * is a deterministic transformation of its inputs.
+ * <p>This class has no injected dependencies, no mutable state, and no side
+ * effects. Every method is a deterministic transformation of its inputs.
+ * It is registered as a CDI bean for consistency with the project's
+ * dependency injection conventions.
  */
-class HostReconciliationPlanBuilder {
+@ApplicationScoped
+public class HostReconciliationPlanBuilder {
 
     /**
      * Compares SSH config file state against database state and produces
@@ -30,8 +34,8 @@ class HostReconciliationPlanBuilder {
      * @param dbHosts   active host views from the database (status ≠ REMOVED)
      * @return the reconciliation plan describing what needs to change
      */
-    ReconciliationPlan buildPlan(List<SshHostEntry> fileHosts,
-                                 List<HostStatus> dbHosts) {
+    public ReconciliationPlan buildPlan(List<SshHostEntry> fileHosts,
+                                        List<HostStatus> dbHosts) {
         Map<String, HostStatus> dbByAlias = dbHosts.stream()
                 .collect(Collectors.toMap(HostStatus::getSshAlias, Function.identity()));
         Map<String, SshHostEntry> fileByAlias = fileHosts.stream()
@@ -57,7 +61,7 @@ class HostReconciliationPlanBuilder {
     /**
      * Per ssh_config(5): if {@code HostName} is absent, the alias is used as hostname.
      */
-    String resolveHostname(SshHostEntry entry) {
+    public String resolveHostname(SshHostEntry entry) {
         return entry.hostname() != null ? entry.hostname() : entry.alias();
     }
 

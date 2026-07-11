@@ -41,20 +41,20 @@ public class HostDeploymentEntity {
     @JoinColumn(name = "host_status_id", nullable = false)
     private HostStatusEntity hostStatus;
 
-    @Column(nullable = false)
+    @Column(name = "container_name", nullable = false)
     private String containerName;
 
-    @Column(nullable = false)
+    @Column(name = "image_version", nullable = false)
     private String imageVersion;
 
-    @Column(nullable = false)
+    @Column(name = "server_port", nullable = false)
     private int serverPort;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "deployment_status", nullable = false)
     private DeploymentStatus deploymentStatus;
 
-    @Column(nullable = false)
+    @Column(name = "config_hash", nullable = false)
     private String configHash;
 
     public Long getId() {
