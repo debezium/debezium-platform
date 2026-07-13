@@ -204,7 +204,7 @@ function collectValidationErrorSectionLabels(
   };
 
   if (newErrors["connector-name"] || newErrors.connection) {
-    push(t("connector:jumplinks.connectorEssentials"));
+    push(t("connector.jumplinks.connectorEssentials"));
   }
 
   for (const group of orderedGroups) {
@@ -216,7 +216,7 @@ function collectValidationErrorSectionLabels(
   }
 
   if (additionalErrorRowIds.size > 0) {
-    push(t("connector:jumplinks.additionalProperties"));
+    push(t("connector.jumplinks.additionalProperties"));
   }
 
   return names;
@@ -224,12 +224,12 @@ function collectValidationErrorSectionLabels(
 
 function formatValidationFailureNotificationBody(sections: string[], t: TFunction): string {
   if (sections.length === 0) {
-    return t("connector:form.validationFailedGeneric");
+    return t("connector.form.validationFailedGeneric");
   }
   if (sections.length === 1) {
-    return t("connector:form.validationFailedInOneSection", { section: sections[0] });
+    return t("connector.form.validationFailedInOneSection", { section: sections[0] });
   }
-  return t("connector:form.validationFailedInMultipleSections", { list: sections.join(", ") });
+  return t("connector.form.validationFailedInMultipleSections", { list: sections.join(", ") });
 }
 
 const CreateSchemaForm = React.forwardRef<
@@ -526,12 +526,12 @@ const CreateSchemaForm = React.forwardRef<
           id="field-group-data-table-id"
           className="table-explorer-section__title"
         >
-          {t("connector:create.dataTableTitle", {
+          {t("connector.create.dataTableTitle", {
             val: getConnectorTypeName(connectorTypeString),
           })}
         </Content>
         <Content component="p" className="table-explorer-section__description">
-          {t("connector:create.dataTableDescription", {
+          {t("connector.create.dataTableDescription", {
             val: getDataExplorerScopePhrase(connectorTypeString),
           })}
         </Content>
@@ -856,7 +856,7 @@ const CreateSchemaForm = React.forwardRef<
   ]);
 
   const getLastValidationFailureBody = useCallback(
-    () => lastValidationFailureBodyRef.current || t("connector:form.validationFailedGeneric"),
+    () => lastValidationFailureBodyRef.current || t("connector.form.validationFailedGeneric"),
     [t]
   );
 
