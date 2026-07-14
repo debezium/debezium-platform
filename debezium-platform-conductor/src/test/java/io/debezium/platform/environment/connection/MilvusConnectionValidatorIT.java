@@ -16,13 +16,13 @@ import java.util.concurrent.TimeUnit;
 
 import jakarta.inject.Inject;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
@@ -47,9 +47,8 @@ class MilvusConnectionValidatorIT {
     @BeforeAll
     static void checkDockerAvailable() {
         Assumptions.assumeTrue(
-            DockerClientFactory.instance().isDockerAvailable(),
-            "Docker is not available; skipping Milvus integration tests"
-        );
+                DockerClientFactory.instance().isDockerAvailable(),
+                "Docker is not available; skipping Milvus integration tests");
     }
 
     @Inject
