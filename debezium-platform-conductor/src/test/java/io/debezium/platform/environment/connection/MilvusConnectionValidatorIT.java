@@ -60,10 +60,13 @@ class MilvusConnectionValidatorIT {
 
         Awaitility.await()
                 .atMost(600, TimeUnit.SECONDS)
+                .pollDelay(2, TimeUnit.SECONDS)
                 .pollInterval(2, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
+                .ignoreExceptions()
+                .until(() -> {
                     try (Socket s = new Socket()) {
-                        s.connect(new InetSocketAddress(host, port), 1000);
+                        s.connect(new InetSocketAddress(host, port), 5000);
+                        return true;
                     }
                 });
     }
