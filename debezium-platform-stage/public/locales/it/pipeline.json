@@ -48,6 +48,7 @@
     "overview": "Panoramica",
     "logs": "Visualizza log",
     "download": "Scarica log",
+    "exportServerConfig": "Esporta configurazione server",
     "monitoring": "Monitora",
     "actions": "Azioni",
     "edit": "Modifica",

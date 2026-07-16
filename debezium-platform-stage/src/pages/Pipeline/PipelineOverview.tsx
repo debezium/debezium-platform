@@ -16,13 +16,15 @@ import {
 } from "@patternfly/react-core";
 import { API_URL } from "@utils/constants";
 import { getConnectorTypeName } from "@utils/helpers";
-import { FC, memo, useEffect, useState } from "react";
+import { FC, memo, useCallback, useEffect, useState } from "react";
 import {
   Pipeline,
   Source,
   Destination,
+  Connection,
   fetchDataTypeTwo,
   Transform,
+  TransformData,
 } from "src/apis/apis";
 import "./PipelineOverview.css";
 declare global {
@@ -32,10 +34,15 @@ declare global {
 }
 import CompositionFlow from "@components/pipelineDesigner/CompositionFlow";
 import { ReactFlowProvider } from "@xyflow/react";
-import { PencilAltIcon } from "@patternfly/react-icons";
+import { DownloadIcon, PencilAltIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { sourcePageNavState } from "@sourcePage/sourcePageNavigation";
+import { useNotification } from "@appContext/AppNotificationContext";
+import {
+  generatePropertiesContent,
+  triggerPropertiesDownload,
+} from "@utils/generateServerConfig";
 
 type PipelineOverviewProp = {
   pipelineId: string;
@@ -45,6 +52,7 @@ type PipelineOverviewProp = {
 const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { addNotification } = useNotification();
 
   const navigateTo = (url: string) => {
     navigate(url);
@@ -58,6 +66,73 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }
   const [isDestinationFetchLoading, setIsDestinationFetchLoading] =
     useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExportLoading, setIsExportLoading] = useState<boolean>(false);
+
+  const handleExportServerConfig = useCallback(async () => {
+    if (!source || !destination) return;
+    setIsExportLoading(true);
+    try {
+      const transformFetches = transforms.map((t) =>
+        fetchDataTypeTwo<TransformData>(`${API_URL}/api/transforms/${t.id}`)
+      );
+      const connectionFetches: Promise<{ data?: Connection | null; error?: string }>[] = [];
+      if (source.connection?.id) {
+        connectionFetches.push(
+          fetchDataTypeTwo<Connection>(
+            `${API_URL}/api/connections/${source.connection.id}`
+          )
+        );
+      } else {
+        connectionFetches.push(Promise.resolve({ data: null }));
+      }
+      if (destination.connection?.id) {
+        connectionFetches.push(
+          fetchDataTypeTwo<Connection>(
+            `${API_URL}/api/connections/${destination.connection.id}`
+          )
+        );
+      } else {
+        connectionFetches.push(Promise.resolve({ data: null }));
+      }
+
+      const [transformResults, [sourceConnRes, destConnRes]] =
+        await Promise.all([
+          Promise.all(transformFetches),
+          Promise.all(connectionFetches),
+        ]);
+
+      const resolvedTransforms = transformResults
+        .filter((r) => !r.error && r.data)
+        .map((r) => r.data as TransformData);
+
+      const sourceConn =
+        !sourceConnRes.error && sourceConnRes.data
+          ? (sourceConnRes.data as Connection)
+          : null;
+      const destConn =
+        !destConnRes.error && destConnRes.data
+          ? (destConnRes.data as Connection)
+          : null;
+
+      const content = generatePropertiesContent(
+        source.name,
+        source,
+        sourceConn,
+        destination,
+        destConn,
+        resolvedTransforms
+      );
+      triggerPropertiesDownload(`${source.name}.properties`, content);
+    } catch {
+      addNotification(
+        "danger",
+        t("pipeline:userActions.exportServerConfig"),
+        `An unexpected error occurred while generating the server config.`
+      );
+    } finally {
+      setIsExportLoading(false);
+    }
+  }, [source, destination, transforms, addNotification, t]);
 
   useEffect(() => {
     if (activeTabKey !== "overview") return;
@@ -225,13 +300,24 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }
           <CardHeader
             actions={{
               actions: (
-                <Button
-                  variant="link"
-                  icon={<PencilAltIcon />}
-                  onClick={() => navigateTo(`/pipeline/${pipelineId}/edit`)}
-                >
-                  {t("edit")}
-                </Button>
+                <>
+                  <Button
+                    variant="link"
+                    icon={<DownloadIcon />}
+                    onClick={() => void handleExportServerConfig()}
+                    isLoading={isExportLoading}
+                    isDisabled={isExportLoading}
+                  >
+                    {t("pipeline:userActions.exportServerConfig")}
+                  </Button>
+                  <Button
+                    variant="link"
+                    icon={<PencilAltIcon />}
+                    onClick={() => navigateTo(`/pipeline/${pipelineId}/edit`)}
+                  >
+                    {t("edit")}
+                  </Button>
+                </>
               ),
             }}
           >

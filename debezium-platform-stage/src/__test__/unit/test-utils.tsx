@@ -15,6 +15,7 @@ import {
 import { QueryClient, QueryClientProvider } from "react-query";
 import { GuidedTourProvider } from "../../components/GuidedTourContext";
 import { DocHelpProvider } from "../../components/DocHelpContext";
+import { NotificationProvider } from "../../appLayout/AppNotificationContext";
 
 import commonEN from "../../../public/locales/en/common.json";
 import pipelineEN from "../../../public/locales/en/pipeline.json";
@@ -95,11 +96,13 @@ function render(
     return (
       <QueryClientProvider client={queryClient}>
         <RouterShell>
-          <GuidedTourProvider>
-            <DocHelpProvider>
-              <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
-            </DocHelpProvider>
-          </GuidedTourProvider>
+          <NotificationProvider>
+            <GuidedTourProvider>
+              <DocHelpProvider>
+                <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
+              </DocHelpProvider>
+            </GuidedTourProvider>
+          </NotificationProvider>
         </RouterShell>
       </QueryClientProvider>
     );

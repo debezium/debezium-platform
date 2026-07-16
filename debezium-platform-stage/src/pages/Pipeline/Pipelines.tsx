@@ -30,7 +30,20 @@ import {
 } from "@patternfly/react-core";
 import { PlusIcon, SearchIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
-import { Pipeline, fetchData, fetchFile } from "../../apis/apis";
+import {
+  Connection,
+  Destination,
+  fetchDataTypeTwo,
+  Pipeline,
+  fetchData,
+  fetchFile,
+  Source,
+  TransformData,
+} from "../../apis/apis";
+import {
+  generatePropertiesContent,
+  triggerPropertiesDownload,
+} from "../../utils/generateServerConfig";
 import {
   Table,
   Thead,
@@ -76,6 +89,7 @@ const Pipelines: React.FunctionComponent = () => {
   const { addNotification } = useNotification();
 
   const [isLogLoading, setIsLogLoading] = useState<boolean>(false);
+  const [isExportLoading, setIsExportLoading] = useState<boolean>(false);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [deleteInstance, setDeleteInstance] = useState<DeleteInstance>({
@@ -148,6 +162,90 @@ const Pipelines: React.FunctionComponent = () => {
     }
 
     setIsLogLoading(false);
+  };
+
+  const exportServerConfig = async (pipeline: Pipeline) => {
+    setIsExportLoading(true);
+    try {
+      const [sourceRes, destRes] = await Promise.all([
+        fetchDataTypeTwo<Source>(`${API_URL}/api/sources/${pipeline.source.id}`),
+        fetchDataTypeTwo<Destination>(
+          `${API_URL}/api/destinations/${pipeline.destination.id}`
+        ),
+      ]);
+
+      if (sourceRes.error || destRes.error) {
+        addNotification(
+          "danger",
+          `Export failed for ${pipeline.name}`,
+          `Failed to fetch pipeline resources: ${sourceRes.error ?? destRes.error}`
+        );
+        return;
+      }
+
+      const source = sourceRes.data as Source;
+      const dest = destRes.data as Destination;
+
+      const transformFetches = pipeline.transforms.map((t) =>
+        fetchDataTypeTwo<TransformData>(`${API_URL}/api/transforms/${t.id}`)
+      );
+      const connectionFetches: Promise<{ data?: Connection | null; error?: string }>[] = [];
+      if (source.connection?.id) {
+        connectionFetches.push(
+          fetchDataTypeTwo<Connection>(
+            `${API_URL}/api/connections/${source.connection.id}`
+          )
+        );
+      } else {
+        connectionFetches.push(Promise.resolve({ data: null }));
+      }
+      if (dest.connection?.id) {
+        connectionFetches.push(
+          fetchDataTypeTwo<Connection>(
+            `${API_URL}/api/connections/${dest.connection.id}`
+          )
+        );
+      } else {
+        connectionFetches.push(Promise.resolve({ data: null }));
+      }
+
+      const [transformResults, [sourceConnRes, destConnRes]] =
+        await Promise.all([
+          Promise.all(transformFetches),
+          Promise.all(connectionFetches),
+        ]);
+
+      const resolvedTransforms = transformResults
+        .filter((r) => !r.error && r.data)
+        .map((r) => r.data as TransformData);
+
+      const sourceConn =
+        !sourceConnRes.error && sourceConnRes.data
+          ? (sourceConnRes.data as Connection)
+          : null;
+      const destConn =
+        !destConnRes.error && destConnRes.data
+          ? (destConnRes.data as Connection)
+          : null;
+
+      const content = generatePropertiesContent(
+        pipeline.name,
+        source,
+        sourceConn,
+        dest,
+        destConn,
+        resolvedTransforms
+      );
+      triggerPropertiesDownload(`${pipeline.name}.properties`, content);
+    } catch {
+      addNotification(
+        "danger",
+        `Export failed for ${pipeline.name}`,
+        `An unexpected error occurred while generating the server config.`
+      );
+    } finally {
+      setIsExportLoading(false);
+    }
   };
 
   const { mutate: deleteData } = useDeleteData({
@@ -236,6 +334,10 @@ const Pipelines: React.FunctionComponent = () => {
     downloadLogFile("" + id, name);
   };
 
+  const onExportServerConfigHandler = (pipeline: Pipeline) => {
+    void exportServerConfig(pipeline);
+  };
+
   const rowActions = (actionData: ActionData): IAction[] => [
     {
       title: t("pipeline:userActions.overview"),
@@ -256,6 +358,15 @@ const Pipelines: React.FunctionComponent = () => {
     {
       title: logAction(),
       onClick: () => onLogDownloadHandler(actionData.id, actionData.name),
+    },
+    {
+      title: isExportLoading
+        ? t("downloading")
+        : t("pipeline:userActions.exportServerConfig"),
+      onClick: () => {
+        const pipeline = pipelinesList.find((p) => p.id === actionData.id);
+        if (pipeline) onExportServerConfigHandler(pipeline);
+      },
     },
 
     { isSeparator: true },

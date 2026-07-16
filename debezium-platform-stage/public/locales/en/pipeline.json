@@ -48,6 +48,7 @@
         "overview": "Overview",
         "logs": "View logs",
         "download": "Download logs",
+        "exportServerConfig": "Export server config",
         "monitoring": "Monitoring",
         "actions": "Actions",
         "edit": "Edit",
