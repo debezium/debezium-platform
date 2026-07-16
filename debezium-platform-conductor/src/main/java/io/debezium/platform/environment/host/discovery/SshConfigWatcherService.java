@@ -282,7 +282,7 @@ public class SshConfigWatcherService {
      *   <li>{@link #scheduledReconciliation} — every 5 minutes as fallback</li>
      * </ol>
      */
-    private void reconcile() {
+    private synchronized void reconcile() {
         logger.infov("Reconciling hosts from SSH config at {0}", sshConfigPath);
 
         List<SshHostEntry> fileHosts;
@@ -309,7 +309,7 @@ public class SshConfigWatcherService {
         plan.toRemove().forEach(hostStatusService::markHostRemoved);
 
         plan.toUpdate().forEach(entry -> {
-            hostStatusService.updateHostDetails(entry.alias(), entry.hostname());
+            hostStatusService.updateHostDetails(entry.alias(), planBuilder.resolveHostname(entry));
             provisioningService.provision(entry.alias());
         });
 
