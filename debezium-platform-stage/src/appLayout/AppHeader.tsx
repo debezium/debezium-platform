@@ -127,17 +127,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     } else {
       document.documentElement.classList.remove("pf-v6-theme-dark");
     }
-
-    // Apply theme-linked glass default: dark → glass ON, light → glass OFF
-    const preferredGlass = newDarkMode;
-    setGlassMode(preferredGlass);
-    localStorage.setItem("glassMode", String(preferredGlass));
-    if (preferredGlass) {
-      document.documentElement.classList.add("pf-v6-theme-glass");
-    } else {
-      document.documentElement.classList.remove("pf-v6-theme-glass");
-    }
-  }, [setDarkMode, setGlassMode]);
+  }, [setDarkMode]);
 
   useEffect(() => {
     // Sync React state with the theme already applied by blocking script
@@ -146,19 +136,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     const isDark = theme === "dark" ||
       (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches);
     setDarkMode(isDark);
-
-    // On fresh install (no stored glassMode), derive the default from the resolved theme
-    if (localStorage.getItem("glassMode") === null) {
-      const preferredGlass = isDark;
-      setGlassMode(preferredGlass);
-      localStorage.setItem("glassMode", String(preferredGlass));
-      if (preferredGlass) {
-        document.documentElement.classList.add("pf-v6-theme-glass");
-      } else {
-        document.documentElement.classList.remove("pf-v6-theme-glass");
-      }
-    }
-  }, [selectedTheme, setDarkMode, setGlassMode]);
+  }, [selectedTheme, setDarkMode]);
 
   return (
     <>
