@@ -8,9 +8,13 @@
 .connector-schema-review__value--default {
   font-size: var(--pf-v5-global--FontSize--md, 1rem);
   font-weight: var(--pf-v5-global--FontWeight--normal);
-  color: var(--pf-v5-global--Color--100, #151515);
+  color: var(--pf-t--global--text--color--regular, var(--pf-v5-global--Color--100, #151515));
   display: inline-block;
   word-break: break-word;
+}
+
+.pf-v6-theme-dark .connector-schema-review__value--default {
+  color: var(--pf-t--global--text--color--regular, #f0f0f0);
 }
 
 .connector-schema-review__state-badge {

@@ -77,7 +77,7 @@ const AdditionalPropertiesRows: React.FunctionComponent<AdditionalPropertiesRows
                       isRequired={!viewMode}
                     >
                       <TextInput
-                        readOnlyVariant={viewMode ? "default" : undefined}
+                        readOnlyVariant={viewMode ? "plain" : undefined}
                         isRequired={!viewMode}
                         type="text"
                         placeholder={t("connection:additionalProperties.keyPlaceholder")}
@@ -114,7 +114,7 @@ const AdditionalPropertiesRows: React.FunctionComponent<AdditionalPropertiesRows
                     {row.valueKind === "string" && (
                       <FormGroup fieldId={`${fieldIdPrefix}-value-input-${rowId}`} isRequired={!viewMode}>
                         <TextInput
-                          readOnlyVariant={viewMode ? "default" : undefined}
+                          readOnlyVariant={viewMode ? "plain" : undefined}
                           isRequired={!viewMode}
                           type="text"
                           id={`${fieldIdPrefix}-value-input-${rowId}`}
@@ -153,7 +153,7 @@ const AdditionalPropertiesRows: React.FunctionComponent<AdditionalPropertiesRows
                     {row.valueKind === "integer" && (
                       <FormGroup fieldId={`${fieldIdPrefix}-value-input-${rowId}`} isRequired={!viewMode}>
                         <TextInput
-                          readOnlyVariant={viewMode ? "default" : undefined}
+                          readOnlyVariant={viewMode ? "plain" : undefined}
                           isRequired={!viewMode}
                           type="text"
                           inputMode="numeric"

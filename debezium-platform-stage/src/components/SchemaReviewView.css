@@ -1,7 +1,7 @@
 
 
 .connector-schema-review__value--empty {
-  color: var(--pf-v5-global--Color--200, #6a6e73);
+  color: var(--pf-t--global--text--color--subtle, var(--pf-v5-global--Color--200, #6a6e73));
   font-weight: var(--pf-v5-global--FontWeight--normal);
 }
 
@@ -19,6 +19,10 @@
   word-break: break-word;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+}
+
+.pf-v6-theme-dark .connector-schema-review__value--set {
+  color: var(--pf-t--global--color--link--default, #ad9fcb);
 }
 
 .connector-schema-review__term {
@@ -41,7 +45,7 @@
 
 .connector-schema-review__desc {
   margin-bottom: 0;
-  color: var(--pf-v5-global--Color--200);
+  color: var(--pf-t--global--text--color--subtle, var(--pf-v5-global--Color--200, #6a6e73));
 }
 
 .connector-schema-review__dl {
