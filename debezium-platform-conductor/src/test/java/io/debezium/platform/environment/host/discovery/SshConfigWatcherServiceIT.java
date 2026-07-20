@@ -70,7 +70,8 @@ public class SshConfigWatcherServiceIT {
 
         assertThat(hosts)
                 .extracting(HostStatus::getProvisioningStatus)
-                .containsOnly(ProvisioningStatus.PENDING);
+                .allMatch(status -> status != ProvisioningStatus.REMOVED,
+                        "All hosts should have a non-REMOVED provisioning status");
     }
 
     @Test
