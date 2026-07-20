@@ -1,0 +1,51 @@
+---
+# Idempotent Ansible playbook that tears down the Debezium Host Agent
+# from a remote host. Used during deprovisioning when a host is removed
+# from the SSH config file.
+#
+# Invoked from HostProvisioningService via:
+#   ansible-playbook host-teardown.yml -i "db-server-1,"
+#
+# This playbook does NOT remove Docker itself or deployed pipelines.
+# Pipeline cleanup is handled by the HostPipelineController (Sub-Issue #2101).
+
+- name: Deprovision host — remove Debezium Host Agent
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    # ── Step 1: Stop and disable the Host Agent systemd service ───────────
+    # Instead of using ignore_errors: true (which swallows ALL failures
+    # including SSH drops and permission errors), we first check if the
+    # unit file exists. This way, we only skip the stop task when the
+    # service genuinely isn't installed — any other failure surfaces loudly.
+    - name: Check if Host Agent service is installed
+      ansible.builtin.stat:
+        path: /etc/systemd/system/debezium-host-agent.service
+      register: agent_unit_file
+
+    - name: Stop and disable Host Agent service
+      ansible.builtin.systemd:
+        name: debezium-host-agent
+        state: stopped
+        enabled: false
+      when: agent_unit_file.stat.exists
+
+    # ── Step 2: Remove the systemd unit file ──────────────────────────────
+    - name: Remove Host Agent systemd unit file
+      ansible.builtin.file:
+        path: /etc/systemd/system/debezium-host-agent.service
+        state: absent
+      notify: Reload systemd daemon
+
+    # ── Step 3: Remove the Agent installation directory ───────────────────
+    - name: Remove Host Agent directory
+      ansible.builtin.file:
+        path: /opt/debezium/agent
+        state: absent
+
+  handlers:
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: true

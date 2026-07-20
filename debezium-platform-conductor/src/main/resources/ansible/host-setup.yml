@@ -1,0 +1,210 @@
+---
+# Idempotent Ansible playbook that provisions a remote host for Debezium
+# pipeline deployment. Safe to re-run — all tasks check for existing state
+# before making changes.
+#
+# Invoked from HostProvisioningService via:
+#   ansible-playbook host-setup.yml -i "db-server-1," --extra-vars "agent_token=<uuid>"
+#
+# Ansible resolves HostName, User, IdentityFile from ~/.ssh/config automatically.
+
+- name: Provision host for Debezium pipeline deployment
+  hosts: all
+  become: true
+  # gather_facts: false because the target host may not have Python yet.
+  gather_facts: false
+
+  tasks:
+    # ── Step 1: Bootstrap Python ──────────────────────────────────────────
+    # Ansible's own modules (including the 'setup' module that gathers facts)
+    # require Python on the target host. Minimal server images often ship
+    # without Python. The 'raw' module bypasses Ansible's module system and
+    # runs a shell command directly over SSH, so it works even without Python.
+    - name: Bootstrap Python on target host
+      ansible.builtin.raw: >-
+        test -e /usr/bin/python3 ||
+        (apt-get -y update && apt-get install -y python3-minimal) ||
+        (yum -y install python3) ||
+        (dnf -y install python3)
+      changed_when: false
+
+    # ── Step 2: Gather facts ──────────────────────────────────────────────
+    # Now that Python is available, gather host facts (OS family, architecture,
+    # distribution release, user info) needed by subsequent conditional tasks.
+    - name: Gather host facts
+      ansible.builtin.setup:
+
+    # ── Step 3: Add Docker's official repository ──────────────────────────
+    # Stock Ubuntu/Debian repos ship 'docker.io' (an older community build)
+    # but NOT 'docker-compose-plugin'. RHEL 8+ replaced Docker with Podman
+    # entirely — 'yum install docker' fails. Both families require the
+    # official Docker repository from download.docker.com.
+
+    # ── Step 3a: Debian/Ubuntu — GPG key and APT repository ───────────────
+    - name: Install prerequisite packages for Docker repo (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    - name: Create keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+      when: ansible_os_family == "Debian"
+
+    - name: Download Docker GPG key (Debian/Ubuntu)
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+      when: ansible_os_family == "Debian"
+
+    - name: Add Docker APT repository (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch={{ ansible_architecture | regex_replace('x86_64', 'amd64') | regex_replace('aarch64', 'arm64') }}
+          signed-by=/etc/apt/keyrings/docker.asc]
+          https://download.docker.com/linux/{{ ansible_distribution | lower }}
+          {{ ansible_distribution_release }} stable
+        state: present
+        filename: docker
+      when: ansible_os_family == "Debian"
+
+    # ── Step 3b: RHEL/CentOS/Fedora — YUM/DNF repository ─────────────────
+    - name: Add Docker CE repository (RHEL/CentOS/Fedora)
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+        mode: "0644"
+      when: ansible_os_family == "RedHat"
+
+    - name: Remove podman/runc conflicts (RHEL/CentOS/Fedora)
+      ansible.builtin.dnf:
+        name:
+          - podman
+          - runc
+        state: absent
+      when: ansible_os_family == "RedHat"
+      ignore_errors: true
+
+    # ── Step 3c: Install Docker Engine ────────────────────────────────────
+    - name: Install Docker Engine on Debian/Ubuntu
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    - name: Install Docker Engine on RHEL/CentOS/Fedora
+      ansible.builtin.yum:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    # ── Step 4: Start Docker daemon and enable on boot ────────────────────
+    - name: Enable and start Docker service
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    # ── Step 5: Configure Docker permissions ──────────────────────────────
+    # Adds the SSH login user to the docker group for interactive/manual
+    # docker CLI access during debugging. The Host Agent itself runs as
+    # root (see the systemd unit below) and does not depend on this group
+    # membership. We use ansible_env.SUDO_USER to resolve the original
+    # SSH login user, since become: true escalates to root and would cause
+    # ansible_user_id to report 'root' instead of the actual login user.
+    - name: Add SSH user to docker group
+      ansible.builtin.user:
+        name: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+        groups: docker
+        append: true
+
+    # ── Step 6: Deploy Host Agent as a systemd service ────────────────────
+    # NOTE: The Host Agent binary is built by an upcoming feature and is not
+    # yet available. This task creates the systemd service file pointing to
+    # the documented artifact path. The actual binary copy task will be
+    # added once that feature lands.
+    - name: Create Host Agent directory
+      ansible.builtin.file:
+        path: /opt/debezium/agent
+        state: directory
+        mode: "0755"
+
+    - name: Deploy Host Agent systemd unit file
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/debezium-host-agent.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Debezium Host Agent
+          After=network.target docker.service
+          Requires=docker.service
+
+          [Service]
+          Type=simple
+          User=root
+          Environment="AGENT_TOKEN={{ agent_token }}"
+          ExecStart=/usr/bin/java -jar /opt/debezium/agent/debezium-host-agent-runner.jar
+          Restart=always
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: Restart Host Agent
+
+    - name: Enable and start Host Agent service
+      ansible.builtin.systemd:
+        name: debezium-host-agent
+        state: started
+        enabled: true
+        daemon_reload: true
+
+    # ── Step 7: Install Docker SDK for Python ─────────────────────────────
+    # The community.docker modules (used in Step 8 below) require the
+    # Docker SDK for Python on the target host. The SDK bundles the
+    # 'requests' library as a transitive dependency.
+    - name: Ensure python3-pip is present
+      ansible.builtin.package:
+        name: python3-pip
+        state: present
+
+    - name: Install Docker SDK for Python
+      ansible.builtin.pip:
+        name: docker
+        executable: pip3
+
+    # ── Step 8: Pre-pull Debezium Server Docker image ─────────────────────
+    # Uses the dedicated community.docker.docker_image_pull module (preferred
+    # over the legacy community.docker.docker_image since the collection
+    # split into granular, single-purpose modules). The 'latest' tag is
+    # intentional for provisioning — we want the newest stable image on
+    # first deployment to avoid cold-start delays.
+    - name: Pre-pull Debezium Server Docker image
+      community.docker.docker_image_pull:
+        name: quay.io/debezium/server
+        tag: latest
+
+  handlers:
+    # Only restarts the Agent when the systemd unit file content actually
+    # changes (re-provisioning after a token rotation, for example).
+    - name: Restart Host Agent
+      ansible.builtin.systemd:
+        name: debezium-host-agent
+        state: restarted
+        daemon_reload: true

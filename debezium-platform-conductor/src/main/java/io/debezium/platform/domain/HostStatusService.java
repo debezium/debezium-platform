@@ -5,6 +5,7 @@
  */
 package io.debezium.platform.domain;
 
+import static jakarta.transaction.Transactional.TxType.REQUIRES_NEW;
 import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
 import java.time.Instant;
@@ -115,6 +116,60 @@ public class HostStatusService extends AbstractService<HostStatusEntity, HostSta
             host.setLastCheckedAt(Instant.now());
             update(host);
             logger.infov("Updated host details and reset to PENDING: {0}", alias);
+        });
+    }
+
+    /**
+     * Transitions a host to {@code PROVISIONING} and clears any stale report
+     * or token from a previous provisioning attempt.
+     * Uses an independent transaction so this state is isolated.
+     *
+     * @param sshAlias the SSH config alias identifying the target host
+     */
+    @Transactional(REQUIRES_NEW)
+    public void markProvisioning(String sshAlias) {
+        findBySshAlias(sshAlias).ifPresent(host -> {
+            host.setProvisioningStatus(ProvisioningStatus.PROVISIONING);
+            host.setProvisioningReport(null);
+            host.setAgentToken(null);
+            host.setLastCheckedAt(Instant.now());
+            update(host);
+        });
+    }
+
+    /**
+     * Transitions a host to {@code READY} and saves the generated bearer token.
+     * Uses an independent transaction.
+     *
+     * @param sshAlias   the SSH config alias identifying the target host
+     * @param agentToken the bearer token generated for Agent API authentication
+     */
+    @Transactional(REQUIRES_NEW)
+    public void markReady(String sshAlias, String agentToken) {
+        findBySshAlias(sshAlias).ifPresent(host -> {
+            host.setProvisioningStatus(ProvisioningStatus.READY);
+            host.setAgentToken(agentToken);
+            host.setProvisioningReport(null);
+            host.setLastCheckedAt(Instant.now());
+            update(host);
+        });
+    }
+
+    /**
+     * Transitions a host to {@code FAILED} and saves the Ansible output.
+     * Uses an independent transaction so the failure report is never lost
+     * to an outer transaction rollback.
+     *
+     * @param sshAlias           the SSH config alias identifying the target host
+     * @param provisioningReport the captured (and token-redacted) Ansible output
+     */
+    @Transactional(REQUIRES_NEW)
+    public void markFailed(String sshAlias, String provisioningReport) {
+        findBySshAlias(sshAlias).ifPresent(host -> {
+            host.setProvisioningStatus(ProvisioningStatus.FAILED);
+            host.setProvisioningReport(provisioningReport);
+            host.setLastCheckedAt(Instant.now());
+            update(host);
         });
     }
 }

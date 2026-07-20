@@ -38,6 +38,10 @@ public interface HostStatus extends HostStatusReference {
 
     void setAgentToken(String token);
 
+    String getProvisioningReport();
+
+    void setProvisioningReport(String provisioningReport);
+
     Instant getLastCheckedAt();
 
     void setLastCheckedAt(Instant lastCheckedAt);
