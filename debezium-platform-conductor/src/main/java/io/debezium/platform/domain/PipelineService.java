@@ -31,6 +31,7 @@ import io.debezium.platform.environment.watcher.events.PipelineEvent;
 public class PipelineService extends AbstractService<PipelineEntity, Pipeline, PipelineReference> {
 
     private final Event<ExportedEvent<?, ?>> event;
+    private final Event<PipelineStatusChanged> statusChangedEvent;
     private final ObjectMapper objectMapper;
     private final LogStreamingService logStreamer;
     private final Instance<EnvironmentController> environmentController;
@@ -39,11 +40,13 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
                            CriteriaBuilderFactory cbf,
                            EntityViewManager evm,
                            Event<ExportedEvent<?, ?>> event,
+                           Event<PipelineStatusChanged> statusChangedEvent,
                            ObjectMapper objectMapper,
                            LogStreamingService logStreamer,
                            Instance<EnvironmentController> environmentController) {
         super(PipelineEntity.class, Pipeline.class, PipelineReference.class, em, cbf, evm);
         this.event = event;
+        this.statusChangedEvent = statusChangedEvent;
         this.objectMapper = objectMapper;
         this.logStreamer = logStreamer;
         this.environmentController = environmentController;
@@ -102,6 +105,7 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
         if (pipeline != null) {
             pipeline.setStatus(status);
             pipeline.setErrorMessage(status == PipelineStatus.FAILED ? errorMessage : null);
+            statusChangedEvent.fire(new PipelineStatusChanged(pipelineId, status, pipeline.getErrorMessage()));
         }
     }
 }

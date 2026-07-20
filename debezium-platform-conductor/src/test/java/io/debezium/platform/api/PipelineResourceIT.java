@@ -33,6 +33,7 @@ import io.debezium.operator.api.model.DebeziumServer;
 import io.debezium.platform.MockedTestProfile;
 import io.debezium.platform.data.model.PipelineStatus;
 import io.debezium.platform.domain.PipelineService;
+import io.debezium.platform.domain.RecordingPipelineStatusListener;
 import io.debezium.platform.environment.operator.actions.DebeziumKubernetesAdapter;
 import io.debezium.platform.util.TestDatasourceHelper;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -52,6 +53,9 @@ class PipelineResourceIT {
 
     @Inject
     PipelineService pipelineService;
+
+    @Inject
+    RecordingPipelineStatusListener statusListener;
 
     @InjectMock
     DebeziumKubernetesAdapter k8sAdapter;
@@ -547,6 +551,61 @@ class PipelineResourceIT {
                 .statusCode(200)
                 .body("status", is(PipelineStatus.FAILED.name()))
                 .body("errorMessage", is("simulated deployment failure"));
+    }
+
+    @Test
+    @DisplayName("When a pipeline status is updated then a PipelineStatusChanged event is published after the write commits")
+    void updateStatusShouldPublishPipelineStatusChangedEvent() {
+
+        String createBody = """
+                {
+                   "name": "test-pipeline-status-event",
+                   "description": "Pipeline for status event test",
+                   "source": {
+                     "id": %s,
+                     "name": "test-source-%s"
+                   },
+                   "destination": {
+                     "id": %s,
+                     "name": "test-destination-%s"
+                   },
+                   "transforms": [],
+                   "logLevel": "INFO",
+                   "logLevels": {}
+                 }""".formatted(sourceId, resourceSuffix, destinationId, resourceSuffix);
+
+        Number pipelineId = given()
+                .header("Content-Type", "application/json")
+                .body(createBody).when().post("api/pipelines")
+                .then()
+                .statusCode(201)
+                .extract()
+                .path("id");
+
+        long id = pipelineId.longValue();
+
+        statusListener.reset();
+        pipelineService.updateStatus(id, PipelineStatus.FAILED, "simulated deployment failure");
+
+        assertThat(statusListener.events())
+                .filteredOn(e -> e.pipelineId().equals(id))
+                .singleElement()
+                .satisfies(e -> {
+                    assertThat(e.status()).isEqualTo(PipelineStatus.FAILED);
+                    assertThat(e.errorMessage()).isEqualTo("simulated deployment failure");
+                });
+
+        // A non-failure transition carries the persisted (null) error message, not the argument
+        statusListener.reset();
+        pipelineService.updateStatus(id, PipelineStatus.RUNNING, "ignored");
+
+        assertThat(statusListener.events())
+                .filteredOn(e -> e.pipelineId().equals(id))
+                .singleElement()
+                .satisfies(e -> {
+                    assertThat(e.status()).isEqualTo(PipelineStatus.RUNNING);
+                    assertThat(e.errorMessage()).isNull();
+                });
     }
 
     @Test
