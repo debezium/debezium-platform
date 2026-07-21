@@ -49,6 +49,7 @@
     "logs": "Visualizza log",
     "download": "Scarica log",
     "exportServerConfig": "Esporta configurazione server",
+    "exportServerConfigError": "Si è verificato un errore imprevisto durante la generazione della configurazione del server.",
     "monitoring": "Monitora",
     "actions": "Azioni",
     "edit": "Modifica",

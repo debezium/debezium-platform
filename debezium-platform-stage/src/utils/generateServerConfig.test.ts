@@ -88,6 +88,32 @@ describe("generatePropertiesContent", () => {
     expect(out).toContain("debezium.sink.type=pubsub");
   });
 
+  it("extracts short sink type from full class name and prefixes config keys", () => {
+    const kafkaDest: Destination = {
+      id: 3,
+      name: "my-kafka-sink",
+      type: "io.debezium.server.kafka.KafkaChangeConsumer",
+      schema: "schema123",
+      vaults: [],
+      config: {
+        "producer.key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
+      },
+    };
+    const out = generatePropertiesContent(
+      "test-pipeline",
+      source,
+      null,
+      kafkaDest,
+      null,
+      []
+    );
+    expect(out).toContain("debezium.sink.type=kafka");
+    expect(out).toContain(
+      "debezium.sink.kafka.producer.key.serializer=org.apache.kafka.common.serialization.StringSerializer"
+    );
+    expect(out).not.toContain("debezium.sink.io.debezium");
+  });
+
   it("emits debezium.source.connector.class from source.type", () => {
     const out = generatePropertiesContent(
       "test-pipeline",
@@ -201,6 +227,36 @@ describe("generatePropertiesContent", () => {
     );
   });
 
+  it("sanitises spaces in transform names to underscores in all property keys", () => {
+    const spaced: TransformData = {
+      id: 20,
+      name: "my unwrap",
+      type: "io.debezium.transforms.ExtractNewRecordState",
+      schema: "schema123",
+      vaults: [],
+      config: { "drop.tombstones": "false" },
+      predicate: {
+        type: "org.apache.kafka.connect.transforms.predicates.RecordIsTombstone",
+        config: {},
+      },
+    };
+    const out = generatePropertiesContent(
+      "test-pipeline",
+      source,
+      null,
+      destination,
+      null,
+      [spaced]
+    );
+    expect(out).toContain("debezium.transforms=my_unwrap");
+    expect(out).toContain("debezium.transforms.my_unwrap.type=");
+    expect(out).toContain("debezium.transforms.my_unwrap.drop.tombstones=false");
+    expect(out).toContain("debezium.transforms.my_unwrap.predicate=my_unwrapPredicate");
+    expect(out).toContain("debezium.predicates=my_unwrapPredicate");
+    expect(out).toContain("debezium.predicates.my_unwrapPredicate.type=");
+    expect(out).not.toMatch(/debezium\.transforms\.my unwrap/);
+  });
+
   it("does not emit transforms or predicates section when no transforms provided", () => {
     const out = generatePropertiesContent(
       "test-pipeline",
@@ -226,7 +282,7 @@ describe("generatePropertiesContent", () => {
     expect(out).toContain("# Pipeline: my-postgres-pipeline");
   });
 
-  it("includes runtime stub as comments", () => {
+  it("emits destination config keys under debezium.sink.{type}.*", () => {
     const out = generatePropertiesContent(
       "test-pipeline",
       source,
@@ -235,23 +291,7 @@ describe("generatePropertiesContent", () => {
       null,
       []
     );
-    expect(out).toContain(
-      "# debezium.source.offset.storage.file.filename=data/offsets.dat"
-    );
-    expect(out).toContain(
-      "# debezium.source.offset.flush.interval.ms=0"
-    );
-  });
-
-  it("emits destination config keys under debezium.sink.*", () => {
-    const out = generatePropertiesContent(
-      "test-pipeline",
-      source,
-      null,
-      destination,
-      null,
-      []
-    );
+    // fixture keys already have "pubsub." prefix — dedup logic keeps them as-is
     expect(out).toContain("debezium.sink.pubsub.project.id=my-project");
     expect(out).toContain("debezium.sink.pubsub.ordering.enabled=true");
   });

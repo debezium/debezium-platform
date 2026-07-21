@@ -111,7 +111,7 @@ const AppBreadcrumb: React.FC = () => {
             {generateBreadcrumbItem("#", "Pipeline designer", navigate, true)}
           </BreadcrumbGenerator>
         );
-      case route === "/pipeline/pipeline_designer/configure":
+      case route === "/pipeline/pipeline_designer/create_pipeline":
         return (
           <BreadcrumbGenerator>
             {generateBreadcrumbItem("/pipeline", "Pipeline", navigate)}

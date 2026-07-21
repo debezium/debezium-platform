@@ -241,7 +241,7 @@ const Pipelines: React.FunctionComponent = () => {
       addNotification(
         "danger",
         `Export failed for ${pipeline.name}`,
-        `An unexpected error occurred while generating the server config.`
+        t("pipeline:userActions.exportServerConfigError")
       );
     } finally {
       setIsExportLoading(false);

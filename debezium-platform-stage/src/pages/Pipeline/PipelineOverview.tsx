@@ -57,6 +57,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }
   const navigateTo = (url: string) => {
     navigate(url);
   };
+  const [pipeline, setPipeline] = useState<Pipeline>()
   const [source, setSource] = useState<Source>();
   const [transforms, setTransforms] = useState<Transform[]>([]);
   const [destination, setDestination] = useState<Destination>();
@@ -69,7 +70,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }
   const [isExportLoading, setIsExportLoading] = useState<boolean>(false);
 
   const handleExportServerConfig = useCallback(async () => {
-    if (!source || !destination) return;
+    if (!source || !destination || !pipeline) return;
     setIsExportLoading(true);
     try {
       const transformFetches = transforms.map((t) =>
@@ -122,12 +123,12 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }
         destConn,
         resolvedTransforms
       );
-      triggerPropertiesDownload(`${source.name}.properties`, content);
+      triggerPropertiesDownload(`${pipeline.name}.properties`, content);
     } catch {
       addNotification(
         "danger",
         t("pipeline:userActions.exportServerConfig"),
-        `An unexpected error occurred while generating the server config.`
+        t("pipeline:userActions.exportServerConfigError")
       );
     } finally {
       setIsExportLoading(false);
@@ -150,7 +151,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }
 
         const pipelineData = pipelineResponse.data as Pipeline;
         setTransforms(pipelineData.transforms as Transform[]);
-
+        setPipeline(pipelineData);
         if (pipelineData?.source?.id && pipelineData?.destination?.id) {
           const [sourceResponse, destinationResponse] = await Promise.all([
             fetchDataTypeTwo<Source>(

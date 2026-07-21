@@ -49,6 +49,7 @@
         "logs": "View logs",
         "download": "Download logs",
         "exportServerConfig": "Export server config",
+        "exportServerConfigError": "An unexpected error occurred while generating the server config.",
         "monitoring": "Monitoring",
         "actions": "Actions",
         "edit": "Edit",

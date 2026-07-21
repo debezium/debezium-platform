@@ -1,16 +1,22 @@
 import { Connection, Destination, Source, TransformData } from "src/apis";
+import { extractConnectorType } from "@utils/helpers";
 
 const SENSITIVE_KEY_PATTERN = /password|secret|credential|token|\.key$/i;
+
+/** Replaces runs of whitespace with underscores so the name is safe as a .properties key segment. */
+function toSafeKey(name: string): string {
+  return name.trim().replace(/\s+/g, "_");
+}
 
 function redactIfSensitive(key: string, value: string): string {
   return SENSITIVE_KEY_PATTERN.test(key) ? "<REDACTED>" : value;
 }
 
 function buildSection(
-  comment: string,
-  entries: Array<[string, string]>
+  entries: Array<[string, string]>,
+  comment?: string,
 ): string[] {
-  const lines: string[] = [`# ${comment}`];
+  const lines: string[] =comment ?  [`# ${comment}`] : [];
   for (const [key, value] of entries) {
     lines.push(`${key}=${redactIfSensitive(key, value)}`);
   }
@@ -19,10 +25,7 @@ function buildSection(
 
 /**
  * Generates the content of an application.properties file for Debezium Server
- * from a fully-resolved pipeline (source, destination, transforms + their connections).
- *
- * Connection config is merged under the source/sink prefix so that the output
- * is a self-contained, ready-to-run server configuration.
+ * Connection config is merged under the source/sink prefix 
  */
 export function generatePropertiesContent(
   pipelineName: string,
@@ -40,20 +43,21 @@ export function generatePropertiesContent(
     `# To run: debezium-server --conf application.properties`,
   ];
 
-  // ── Sink (Destination) ─────────────────────────────────────────────────────
+  const sinkType = extractConnectorType(destination.type);
   const sinkEntries: Array<[string, string]> = [];
-  sinkEntries.push(["debezium.sink.type", destination.type]);
+  sinkEntries.push(["debezium.sink.type", sinkType]);
 
   if (destConnection) {
     for (const [k, v] of Object.entries(destConnection.config)) {
-      sinkEntries.push([`debezium.sink.${k}`, String(v)]);
+      const key = k.startsWith(`${sinkType}.`) ? k : `${sinkType}.${k}`;
+      sinkEntries.push([`debezium.sink.${key}`, String(v)]);
     }
   }
   for (const [k, v] of Object.entries(destination.config)) {
-    sinkEntries.push([`debezium.sink.${k}`, String(v)]);
+    const key = k.startsWith(`${sinkType}.`) ? k : `${sinkType}.${k}`;
+    sinkEntries.push([`debezium.sink.${key}`, String(v)]);
   }
 
-  // ── Source (Connector) ─────────────────────────────────────────────────────
   const sourceEntries: Array<[string, string]> = [];
   sourceEntries.push([
     "debezium.source.connector.class",
@@ -69,47 +73,45 @@ export function generatePropertiesContent(
     sourceEntries.push([`debezium.source.${k}`, String(v)]);
   }
 
-  // ── Transforms ─────────────────────────────────────────────────────────────
   const transformLines: string[] = [];
   const predicateLines: string[] = [];
 
   if (transforms.length > 0) {
-    transformLines.push(`# ── Transforms ${"─".repeat(51)}`);
     transformLines.push(
-      `debezium.transforms=${transforms.map((t) => t.name).join(",")}`
+      `debezium.transforms=${transforms.map((t) => toSafeKey(t.name)).join(",")}`
     );
 
     const predicateNames: string[] = [];
 
     for (const t of transforms) {
-      transformLines.push(`debezium.transforms.${t.name}.type=${t.type}`);
+      const safeKey = toSafeKey(t.name);
+      transformLines.push(`debezium.transforms.${safeKey}.type=${t.type}`);
       for (const [k, v] of Object.entries(t.config)) {
         transformLines.push(
-          `debezium.transforms.${t.name}.${k}=${redactIfSensitive(k, String(v))}`
+          `debezium.transforms.${safeKey}.${k}=${redactIfSensitive(k, String(v))}`
         );
       }
       if (t.predicate) {
-        const predicateName = `${t.name}Predicate`;
+        const predicateName = `${safeKey}Predicate`;
         predicateNames.push(predicateName);
         transformLines.push(
-          `debezium.transforms.${t.name}.predicate=${predicateName}`
+          `debezium.transforms.${safeKey}.predicate=${predicateName}`
         );
         if (t.predicate.negate !== undefined) {
           transformLines.push(
-            `debezium.transforms.${t.name}.negate=${t.predicate.negate}`
+            `debezium.transforms.${safeKey}.negate=${t.predicate.negate}`
           );
         }
       }
     }
 
     if (predicateNames.length > 0) {
-      predicateLines.push(`# ── Predicates ${"─".repeat(50)}`);
       predicateLines.push(
         `debezium.predicates=${predicateNames.join(",")}`
       );
       for (const t of transforms) {
         if (!t.predicate) continue;
-        const predicateName = `${t.name}Predicate`;
+        const predicateName = `${toSafeKey(t.name)}Predicate`;
         predicateLines.push(
           `debezium.predicates.${predicateName}.type=${t.predicate.type}`
         );
@@ -123,37 +125,35 @@ export function generatePropertiesContent(
   }
 
   // ── Runtime stub ───────────────────────────────────────────────────────────
-  const runtimeStub = [
-    `# ── Runtime properties (fill in before running) ${"─".repeat(16)}`,
-    `# debezium.source.offset.storage.file.filename=data/offsets.dat`,
-    `# debezium.source.offset.flush.interval.ms=0`,
-  ];
+  // const runtimeStub = [
+  //   `# ── Runtime properties (fill in before running) ${"─".repeat(16)}`,
+  //   `# debezium.source.offset.storage.file.filename=data/offsets.dat`,
+  //   `# debezium.source.offset.flush.interval.ms=0`,
+  // ];
 
   const sinkSection = buildSection(
-    `── Sink (Destination) ${"─".repeat(51)}`,
     sinkEntries
   );
   const sourceSection = buildSection(
-    `── Source (Connector) ${"─".repeat(51)}`,
-    sourceEntries
+    sourceEntries,
+        // `── Source (Connector) ${"─".repeat(51)}`,
   );
 
   const parts: string[][] = [
     header,
     [""],
     sinkSection,
-    [""],
     sourceSection,
   ];
 
   if (transformLines.length > 0) {
-    parts.push([""], transformLines);
+    parts.push(transformLines);
   }
   if (predicateLines.length > 0) {
-    parts.push([""], predicateLines);
+    parts.push(predicateLines);
   }
-
-  parts.push([""], runtimeStub);
+  // For now
+  // parts.push(runtimeStub);
 
   return parts.map((section) => section.join("\n")).join("\n");
 }
