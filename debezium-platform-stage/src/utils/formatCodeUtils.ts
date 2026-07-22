@@ -155,3 +155,50 @@ export function extractTransformsAndPredicates(code: string | object): Transform
 
 
 }
+
+// Debezium property files namespace connection fields under a connector-specific prefix
+// (e.g. "database.hostname", "pubsub.project.id") while the connection-schema catalog uses
+// bare leaf names ("hostname", "project.id"). A handful of leaf names also differ outright
+// between the two (e.g. "user" vs "username"); this maps those known aliases.
+const CONNECTION_KEY_ALIASES: Record<string, string> = {
+    user: "username",
+    dbname: "database",
+};
+
+export function splitConnectionProperties(
+    config: Record<string, string>,
+    schemaPropertyKeys: string[]
+): { connectionConfig: Record<string, string>; remainingConfig: Record<string, string> } {
+    const connectionKeys = new Set(schemaPropertyKeys);
+    const connectionConfig: Record<string, string> = {};
+    const remainingConfig: Record<string, string> = {};
+
+    // Find the schema property key that a (possibly prefixed) config key corresponds to, if any.
+    const matchSchemaKey = (key: string): string | undefined => {
+        if (connectionKeys.has(key)) return key;
+
+        // e.g. "database.hostname" -> matches schema key "hostname" via suffix
+        //      "pubsub.project.id" -> matches schema key "project.id" via suffix
+        const suffixMatch = schemaPropertyKeys.find(
+            (schemaKey) => key !== schemaKey && key.endsWith(`.${schemaKey}`)
+        );
+        if (suffixMatch) return suffixMatch;
+
+        // e.g. "database.user" -> leaf "user" -> alias "username" -> matches schema key "username"
+        const leaf = key.split(".").pop() || key;
+        const aliasedLeaf = CONNECTION_KEY_ALIASES[leaf];
+        if (aliasedLeaf && connectionKeys.has(aliasedLeaf)) return aliasedLeaf;
+
+        return undefined;
+    };
+
+    for (const [key, value] of Object.entries(config)) {
+        const schemaKey = matchSchemaKey(key);
+        if (schemaKey) {
+            connectionConfig[schemaKey] = value;
+        } else {
+            remainingConfig[key] = value;
+        }
+    }
+    return { connectionConfig, remainingConfig };
+}

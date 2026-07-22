@@ -1,11 +1,11 @@
 import { Modal, ModalVariant, ModalHeader, ModalBody, ModalFooter, Button, MultipleFileUpload, MultipleFileUploadMain, MultipleFileUploadStatus, MultipleFileUploadStatusItem, Alert, AlertActionCloseButton, DropEvent, ProgressStep, ProgressStepper, TextArea } from "@patternfly/react-core";
-import { InProgressIcon, PendingIcon, UploadIcon } from "@patternfly/react-icons";
-import { useMemo, useState } from "react";
+import { InProgressIcon, MinusCircleIcon, PendingIcon, UploadIcon } from "@patternfly/react-icons";
+import { useMemo, useState, useEffect } from "react";
 import { FileRejection } from 'react-dropzone';
 import { faker } from '@faker-js/faker';
 import "./ServerConfigModal.css"
-import { extractTransformsAndPredicates, formatCode } from "@utils/formatCodeUtils";
-import { createPost, Destination, Payload, Source, Transform, TransformData } from "src/apis";
+import { extractTransformsAndPredicates, formatCode, splitConnectionProperties } from "@utils/formatCodeUtils";
+import { createPost, fetchData, Connection, ConnectionsSchema, Destination, Payload, Source, Transform, TransformData } from "src/apis";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { getConnectorTypeName } from "@utils/helpers";
@@ -27,7 +27,7 @@ interface readFile {
     loadError?: DOMException;
 }
 
-type PipelineResourceType = "source" | "transform" | "destination" | "" | "done";
+type PipelineResourceType = "source_connection" | "source" | "transform" | "destination_connection" | "destination" | "" | "done";
 
 const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     isModalOpen,
@@ -52,6 +52,20 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     const [createPipelineResource, setCreatePipelineResource] = useState<PipelineResourceType>("");
     const [createdPipelineResources, setCreatedPipelineResources] = useState<PipelineResourceType[]>([]);
     const [dbzServerFileConfig, setDbzServerFileConfig] = useState<string | object>("");
+
+    const [connectionsSchemas, setConnectionsSchemas] = useState<ConnectionsSchema[]>([]);
+    const [createdSourceConnection, setCreatedSourceConnection] = useState<Connection | null>(null);
+    const [createdDestConnection, setCreatedDestConnection] = useState<Connection | null>(null);
+    // null = not yet determined; false = no schema (skipped); true = schema found
+    const [sourceConnectionSupported, setSourceConnectionSupported] = useState<boolean | null>(null);
+    const [destConnectionSupported, setDestConnectionSupported] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        if (!isModalOpen) return;
+        fetchData<ConnectionsSchema[]>(`${API_URL}/api/connections/schemas`)
+            .then(setConnectionsSchemas)
+            .catch(() => { /* silent — all connector types fall back to full config */ });
+    }, [isModalOpen]);
 
     const statusIcon = useMemo(() => {
         if (readFileData.length < currentFiles.length) {
@@ -150,13 +164,58 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
 
     const [isCreationLoading, setIsCreationLoading] = useState(false);
 
+    const findConnectionSchema = (connectorType: string): ConnectionsSchema | undefined => {
+        // One-directional on purpose: only match when the (usually fully-qualified) connector
+        // type string contains the schema's type name, e.g. "...postgresql..." contains "postgresql".
+        // Do NOT also check the reverse direction — some schema catalog entries (e.g.
+        // "GOOGLE_PUB_SUB", "APACHE_PULSAR", "NATS_STREAMING") use a different string than what the
+        // backend's connection-type enum actually accepts on POST /api/connections (e.g. "PUBSUB",
+        // "PULSAR", "NATS-STREAMING" respectively). A reverse-direction match would find these and
+        // attempt a connection creation that the backend rejects, which aborts the whole
+        // Source/Destination creation. Skipping (no match) is the safe, intended fallback.
+        const norm = connectorType.toLowerCase().replace(/-/g, "_");
+        return connectionsSchemas.find(s =>
+            norm.includes(s.type.toLowerCase().replace(/-/g, "_"))
+        );
+    };
+
     const createPipelineSource = async () => {
-        setCreatePipelineResource("source");
         const sourcePayload = formatCode("source", "properties-file", dbzServerFileConfig);
+        const matchedSchema = findConnectionSchema(sourcePayload.type);
+
+        if (matchedSchema) {
+            setCreatePipelineResource("source_connection");
+            const { connectionConfig, remainingConfig } =
+                splitConnectionProperties(sourcePayload.config, Object.keys(matchedSchema.schema.properties));
+
+            if (Object.keys(connectionConfig).length > 0) {
+                const connName = `dbz-src-conn-${faker.word.noun()}-${faker.number.int(1000)}`;
+                const connResponse = await createPost<Connection>(`${API_URL}/api/connections`, {
+                    name: connName,
+                    type: matchedSchema.type,
+                    config: connectionConfig,
+                });
+                if (connResponse.error) {
+                    addNotification("danger", "Source connection creation failed",
+                        `Failed to create source connection: ${connResponse.error}`);
+                    return; // abort — do NOT create source with missing connection ref
+                }
+                const conn = connResponse.data as Connection;
+                setCreatedSourceConnection(conn);
+                setCreatedPipelineResources(prev => [...prev, "source_connection"]);
+                sourcePayload.config = remainingConfig;
+                sourcePayload.connection = { id: conn.id, name: conn.name };
+            } else {
+                // schema matched but no overlapping keys in file — mark step done silently
+                setCreatedPipelineResources(prev => [...prev, "source_connection"]);
+            }
+        }
+
+        setCreatePipelineResource("source");
         const name = `dbz-${faker.word.verb()}-${faker.word.noun()}-${faker.number.int(1000)}`;
         sourcePayload.name = name;
         await createNewSource(sourcePayload, "source");
-    }
+    };
 
     const createNewTransform = async (payload: Payload) => {
         const response = await createPost(`${API_URL}/api/transforms`, payload) as { data: TransformData | null, error: string | null };
@@ -194,16 +253,51 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     }
 
     const createPipelineDestination = async () => {
-        setCreatePipelineResource("destination");
         const destinationPayload = formatCode("destination", "properties-file", dbzServerFileConfig);
+        const matchedSchema = findConnectionSchema(destinationPayload.type);
+
+        if (matchedSchema) {
+            setCreatePipelineResource("destination_connection");
+            const { connectionConfig, remainingConfig } =
+                splitConnectionProperties(destinationPayload.config, Object.keys(matchedSchema.schema.properties));
+
+            if (Object.keys(connectionConfig).length > 0) {
+                const connName = `dbz-dest-conn-${faker.word.adjective()}-${faker.number.int(1000)}`;
+                const connResponse = await createPost<Connection>(`${API_URL}/api/connections`, {
+                    name: connName,
+                    type: matchedSchema.type,
+                    config: connectionConfig,
+                });
+                if (connResponse.error) {
+                    addNotification("danger", "Destination connection creation failed",
+                        `Failed to create destination connection: ${connResponse.error}`);
+                    return;
+                }
+                const conn = connResponse.data as Connection;
+                setCreatedDestConnection(conn);
+                setCreatedPipelineResources(prev => [...prev, "destination_connection"]);
+                destinationPayload.config = remainingConfig;
+                destinationPayload.connection = { id: conn.id, name: conn.name };
+            } else {
+                setCreatedPipelineResources(prev => [...prev, "destination_connection"]);
+            }
+        }
+
+        setCreatePipelineResource("destination");
         const name = `dbz-${faker.word.adjective()}-${faker.animal.type()}-${faker.number.int(1000)}`;
         destinationPayload.name = name;
         await createNewSource(destinationPayload, "destination");
         setCreatePipelineResource("done");
-    }
+    };
 
     const handleCreatePipelineResource = async () => {
         setIsCreationLoading(true);
+        // Pre-compute both schema flags before any API call so the stepper
+        // renders all 5 steps immediately with correct pending vs skipped state
+        const srcPayloadPreview = formatCode("source", "properties-file", dbzServerFileConfig);
+        const dstPayloadPreview = formatCode("destination", "properties-file", dbzServerFileConfig);
+        setSourceConnectionSupported(!!findConnectionSchema(srcPayloadPreview.type));
+        setDestConnectionSupported(!!findConnectionSchema(dstPayloadPreview.type));
         await new Promise((resolve) => setTimeout(resolve, 500));
         await createPipelineSource();
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -212,7 +306,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         await createPipelineDestination();
         await new Promise((resolve) => setTimeout(resolve, 500));
         setIsCreationLoading(false);
-    }
+    };
 
     const getTransformNames = () => {
         return createdTransform?.map((transform) => transform.name).join(", ") || "";
@@ -222,7 +316,11 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         toggleModal(event);
         setCurrentFiles([]);
         setReadFileData([]);
-    }
+        setCreatedSourceConnection(null);
+        setCreatedDestConnection(null);
+        setSourceConnectionSupported(null);
+        setDestConnectionSupported(null);
+    };
 
     return (
         <Modal
@@ -253,6 +351,35 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                             <ProgressStepper
                                 aria-label="Pipeline resource creation progress stepper"
                             >
+                                {/* ── Step 1: Source Connection ── always rendered ── */}
+                                <ProgressStep
+                                    variant={
+                                        sourceConnectionSupported === false ? "default"
+                                        : createdPipelineResources.includes("source_connection") ? "success"
+                                        : createPipelineResource === "source_connection" ? undefined
+                                        : "pending"
+                                    }
+                                    isCurrent={createPipelineResource === "source_connection" || undefined}
+                                    icon={
+                                        sourceConnectionSupported === false ? <MinusCircleIcon />
+                                        : createPipelineResource === "source_connection" ? <InProgressIcon />
+                                        : !createdPipelineResources.includes("source_connection") ? <PendingIcon />
+                                        : undefined
+                                    }
+                                    description={
+                                        sourceConnectionSupported === false
+                                            ? "Skipped — no connection schema for this connector type"
+                                            : createdSourceConnection
+                                                ? <>Created a {getConnectorTypeName(createdSourceConnection.type)} source connection <b><i>{createdSourceConnection.name}</i></b></>
+                                                : t('pipeline:debeziumServerModal.creatingResource', { val: "source connection" })
+                                    }
+                                    id="source-connection-step"
+                                    titleId="source-connection-step-title"
+                                    aria-label="Create source connection"
+                                >
+                                    Source Connection
+                                </ProgressStep>
+                                {/* ── Step 2: Source ── */}
                                 <ProgressStep
                                     variant={createPipelineResource !== "source" ? (createdPipelineResources.includes("source") ? "success" : "pending") : undefined}
                                     isCurrent={createPipelineResource === "source" ? true : undefined}
@@ -264,6 +391,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                 >
                                     {t('source')}
                                 </ProgressStep>
+                                {/* ── Step 3: Transforms ── */}
                                 <ProgressStep
                                     variant={createPipelineResource !== "transform" ? (createdPipelineResources.includes("transform") ? "success" : "pending") : undefined}
                                     isCurrent={createPipelineResource === "transform" ? true : undefined}
@@ -275,6 +403,35 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                 >
                                     {t('transforms')}
                                 </ProgressStep>
+                                {/* ── Step 4: Destination Connection ── always rendered ── */}
+                                <ProgressStep
+                                    variant={
+                                        destConnectionSupported === false ? "default"
+                                        : createdPipelineResources.includes("destination_connection") ? "success"
+                                        : createPipelineResource === "destination_connection" ? undefined
+                                        : "pending"
+                                    }
+                                    isCurrent={createPipelineResource === "destination_connection" || undefined}
+                                    icon={
+                                        destConnectionSupported === false ? <MinusCircleIcon />
+                                        : createPipelineResource === "destination_connection" ? <InProgressIcon />
+                                        : !createdPipelineResources.includes("destination_connection") ? <PendingIcon />
+                                        : undefined
+                                    }
+                                    description={
+                                        destConnectionSupported === false
+                                            ? "Skipped — no connection schema for this connector type"
+                                            : createdDestConnection
+                                                ? <>Created a {getConnectorTypeName(createdDestConnection.type)} destination connection <b><i>{createdDestConnection.name}</i></b></>
+                                                : t('pipeline:debeziumServerModal.creatingResource', { val: "destination connection" })
+                                    }
+                                    id="dest-connection-step"
+                                    titleId="dest-connection-step-title"
+                                    aria-label="Create destination connection"
+                                >
+                                    Destination Connection
+                                </ProgressStep>
+                                {/* ── Step 5: Destination ── */}
                                 <ProgressStep
                                     variant={createPipelineResource !== "destination" ? (createdPipelineResources.includes("destination") ? "success" : "pending") : undefined}
                                     isCurrent={createPipelineResource === "destination" ? true : undefined}
