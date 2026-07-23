@@ -52,7 +52,7 @@ public class SshConfigWatcherServiceIT {
     @Inject
     SshConfigWatcherService watcherService;
 
-    @org.eclipse.microprofile.config.inject.ConfigProperty(name = "debezium.host.ssh-config-path")
+    @org.eclipse.microprofile.config.inject.ConfigProperty(name = "platform.host.ssh-config-path")
     String sshConfigPath;
 
     @Test

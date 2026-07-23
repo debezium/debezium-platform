@@ -30,6 +30,7 @@ import org.jboss.logging.Logger;
 
 import io.debezium.platform.domain.HostStatusService;
 import io.debezium.platform.domain.views.HostStatus;
+import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.debezium.platform.environment.host.provisioning.HostProvisioningService;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
@@ -78,14 +79,12 @@ public class SshConfigWatcherService {
     @ConfigProperty(name = "debezium.deployment.mode", defaultValue = "operator")
     String deploymentMode;
 
-    @ConfigProperty(name = "debezium.host.ssh-config-path", defaultValue = "~/.ssh/config")
-    String sshConfigPathRaw;
-
     private final Logger logger;
     private final SshConfigParser parser;
     private final HostStatusService hostStatusService;
     private final HostProvisioningService provisioningService;
     private final HostReconciliationPlanBuilder planBuilder;
+    private final HostConfigGroup hostConfig;
     private final ScheduledExecutorService debounceExecutor;
 
     private Path sshConfigPath;
@@ -100,12 +99,14 @@ public class SshConfigWatcherService {
                                    SshConfigParser parser,
                                    HostStatusService hostStatusService,
                                    HostProvisioningService provisioningService,
-                                   HostReconciliationPlanBuilder planBuilder) {
+                                   HostReconciliationPlanBuilder planBuilder,
+                                   HostConfigGroup hostConfig) {
         this.logger = logger;
         this.parser = parser;
         this.hostStatusService = hostStatusService;
         this.provisioningService = provisioningService;
         this.planBuilder = planBuilder;
+        this.hostConfig = hostConfig;
         this.debounceExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "ssh-config-debounce");
             t.setDaemon(true);
@@ -362,7 +363,7 @@ public class SshConfigWatcherService {
     }
 
     private void resolveSshConfigPath() {
-        String expanded = sshConfigPathRaw.replace(HOME_TILDE, System.getProperty(USER_HOME_PROPERTY));
+        String expanded = hostConfig.sshConfigPath().replace(HOME_TILDE, System.getProperty(USER_HOME_PROPERTY));
         sshConfigPath = Path.of(expanded);
         watchDirectory = sshConfigPath.getParent();
         configFileName = sshConfigPath.getFileName();
