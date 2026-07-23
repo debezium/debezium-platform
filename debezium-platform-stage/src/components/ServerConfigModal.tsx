@@ -1,5 +1,5 @@
 import { Modal, ModalVariant, ModalHeader, ModalBody, ModalFooter, Button, MultipleFileUpload, MultipleFileUploadMain, MultipleFileUploadStatus, MultipleFileUploadStatusItem, Alert, AlertActionCloseButton, DropEvent, ProgressStep, ProgressStepper, TextArea } from "@patternfly/react-core";
-import { InProgressIcon, MinusCircleIcon, PendingIcon, UploadIcon } from "@patternfly/react-icons";
+import { ErrorCircleOIcon, InProgressIcon, MinusCircleIcon, PendingIcon, UploadIcon } from "@patternfly/react-icons";
 import { useMemo, useState, useEffect } from "react";
 import { FileRejection } from 'react-dropzone';
 import { faker } from '@faker-js/faker';
@@ -59,6 +59,15 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     // null = not yet determined; false = no schema (skipped); true = schema found
     const [sourceConnectionSupported, setSourceConnectionSupported] = useState<boolean | null>(null);
     const [destConnectionSupported, setDestConnectionSupported] = useState<boolean | null>(null);
+
+    // Set whenever an essential resource (connection, source, transform, destination) creation
+    // call fails. Presence of this stops the whole creation sequence (blocking) and drives the
+    // "danger" state + error message shown on the step that failed.
+    const [creationError, setCreationError] = useState<{ step: PipelineResourceType; message: string } | null>(null);
+    // Number of transforms declared in the uploaded file, set once the transform step runs.
+    // null = not yet run. Used to tell "no transforms declared" (optional, still a success)
+    // apart from "transforms created" in the stepper description.
+    const [transformCount, setTransformCount] = useState<number | null>(null);
 
     useEffect(() => {
         if (!isModalOpen) return;
@@ -138,26 +147,28 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     const successfullyReadFileCount = readFileData.filter((fileData) => fileData.loadResult === 'success').length;
 
 
-    const createNewSource = async (payload: Payload, resourceType: PipelineResourceType) => {
+    // Returns true on success, false on failure. On failure it records a blocking
+    // creationError so the caller can stop the rest of the creation sequence instead of
+    // silently continuing on to the next resource.
+    const createNewSource = async (payload: Payload, resourceType: PipelineResourceType): Promise<boolean> => {
         const response = await createPost(`${API_URL}/api/${resourceType}s`, payload);
         if (response.error) {
-            addNotification(
-                "danger",
-                `${resourceType} creation failed`,
-                `Failed to create ${(response.data as Source)?.name}: ${response.error}`
-            );
-        } else {
-            resourceType === "source" && setCreatedSource(response.data as Source);
-            resourceType === "source" && updateSelectedSource(response.data as Source);
-            resourceType === "destination" && setCreatedDestination(response.data as Destination);
-            resourceType === "destination" && updateSelectedDestination(response.data as Destination);
-            addNotification(
-                "success",
-                `Create successful`,
-                `${resourceType} "${(response.data as Source).name}" created successfully.`
-            );
-            setCreatedPipelineResources((prevResources) => [...prevResources, resourceType]);
+            const message = `Failed to create the "${payload.name}" ${resourceType}: ${response.error}`;
+            setCreationError({ step: resourceType, message });
+            addNotification("danger", `${resourceType} creation failed`, message);
+            return false;
         }
+        resourceType === "source" && setCreatedSource(response.data as Source);
+        resourceType === "source" && updateSelectedSource(response.data as Source);
+        resourceType === "destination" && setCreatedDestination(response.data as Destination);
+        resourceType === "destination" && updateSelectedDestination(response.data as Destination);
+        addNotification(
+            "success",
+            `Create successful`,
+            `${resourceType} "${(response.data as Source).name}" created successfully.`
+        );
+        setCreatedPipelineResources((prevResources) => [...prevResources, resourceType]);
+        return true;
     };
 
 
@@ -179,7 +190,9 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         );
     };
 
-    const createPipelineSource = async () => {
+    // Returns true if the source (and its connection, if applicable) was created successfully,
+    // false if creation was blocked by a failure — callers must stop the sequence in that case.
+    const createPipelineSource = async (): Promise<boolean> => {
         const sourcePayload = formatCode("source", "properties-file", dbzServerFileConfig);
         const matchedSchema = findConnectionSchema(sourcePayload.type);
 
@@ -196,9 +209,10 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                     config: connectionConfig,
                 });
                 if (connResponse.error) {
-                    addNotification("danger", "Source connection creation failed",
-                        `Failed to create source connection: ${connResponse.error}`);
-                    return; // abort — do NOT create source with missing connection ref
+                    const message = `Failed to create the source connection "${connName}": ${connResponse.error}`;
+                    setCreationError({ step: "source_connection", message });
+                    addNotification("danger", "Source connection creation failed", message);
+                    return false; // abort — do NOT create source with missing connection ref
                 }
                 const conn = connResponse.data as Connection;
                 setCreatedSourceConnection(conn);
@@ -214,45 +228,56 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         setCreatePipelineResource("source");
         const name = `dbz-${faker.word.verb()}-${faker.word.noun()}-${faker.number.int(1000)}`;
         sourcePayload.name = name;
-        await createNewSource(sourcePayload, "source");
+        return await createNewSource(sourcePayload, "source");
     };
 
-    const createNewTransform = async (payload: Payload) => {
+    // Returns the created transform on success, or null on failure (a declared transform that
+    // could not be created is a blocking error — it does NOT mark the step as complete).
+    const createNewTransform = async (payload: Payload): Promise<TransformData | null> => {
         const response = await createPost(`${API_URL}/api/transforms`, payload) as { data: TransformData | null, error: string | null };
         if (response.error) {
-            addNotification(
-                "danger",
-                `Transforms creation failed`,
-                `Failed to create ${(response.data as Source)?.name}: ${response.error}`
-            );
-        } else {
-            addNotification(
-                "success",
-                `Create successful`,
-                `Transforms "${(response.data as Source).name}" created successfully.`
-            );
-            setCreatedPipelineResources((prevResources) => [...prevResources, "transform"]);
-            return response.data as TransformData;
+            const message = `Failed to create the "${payload.name}" transform: ${response.error}`;
+            setCreationError({ step: "transform", message });
+            addNotification("danger", `Transforms creation failed`, message);
+            return null;
         }
+        addNotification(
+            "success",
+            `Create successful`,
+            `Transforms "${(response.data as TransformData).name}" created successfully.`
+        );
+        return response.data as TransformData;
     };
 
-    const createPipelineTransform = async () => {
+    // Transforms are optional — a config file that declares none is a valid, successful case
+    // (not an error). Returns false only when a *declared* transform fails to create.
+    const createPipelineTransform = async (): Promise<boolean> => {
         setCreatePipelineResource("transform");
         const transformPayloads = extractTransformsAndPredicates(dbzServerFileConfig);
+        setTransformCount(transformPayloads.length);
+
         const addedTransforms: TransformData[] = [];
         for (const transformPayload of transformPayloads) {
             const transform = await createNewTransform(transformPayload);
-            if (transform) {
-                addedTransforms.push(transform);
+            if (!transform) {
+                return false; // abort — a declared transform failed to create
             }
+            addedTransforms.push(transform);
         }
-        const updatedCreatedTransform = addedTransforms.map((transform) => ({ name: transform.name, id: transform.id } as Transform));
-        setCreatedTransform([...(createdTransform || []), ...updatedCreatedTransform]);
-        setCreatedTransformData([...(createdTransformData || []), ...addedTransforms]);
-        handleAddTransform(addedTransforms);
+
+        if (addedTransforms.length > 0) {
+            const updatedCreatedTransform = addedTransforms.map((transform) => ({ name: transform.name, id: transform.id } as Transform));
+            setCreatedTransform([...(createdTransform || []), ...updatedCreatedTransform]);
+            setCreatedTransformData([...(createdTransformData || []), ...addedTransforms]);
+            handleAddTransform(addedTransforms);
+        }
+        setCreatedPipelineResources((prevResources) => [...prevResources, "transform"]);
+        return true;
     }
 
-    const createPipelineDestination = async () => {
+    // Returns true if the destination (and its connection, if applicable) was created
+    // successfully, false if creation was blocked by a failure.
+    const createPipelineDestination = async (): Promise<boolean> => {
         const destinationPayload = formatCode("destination", "properties-file", dbzServerFileConfig);
         const matchedSchema = findConnectionSchema(destinationPayload.type);
 
@@ -269,9 +294,10 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                     config: connectionConfig,
                 });
                 if (connResponse.error) {
-                    addNotification("danger", "Destination connection creation failed",
-                        `Failed to create destination connection: ${connResponse.error}`);
-                    return;
+                    const message = `Failed to create the destination connection "${connName}": ${connResponse.error}`;
+                    setCreationError({ step: "destination_connection", message });
+                    addNotification("danger", "Destination connection creation failed", message);
+                    return false;
                 }
                 const conn = connResponse.data as Connection;
                 setCreatedDestConnection(conn);
@@ -286,12 +312,16 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         setCreatePipelineResource("destination");
         const name = `dbz-${faker.word.adjective()}-${faker.animal.type()}-${faker.number.int(1000)}`;
         destinationPayload.name = name;
-        await createNewSource(destinationPayload, "destination");
-        setCreatePipelineResource("done");
+        const success = await createNewSource(destinationPayload, "destination");
+        if (success) {
+            setCreatePipelineResource("done");
+        }
+        return success;
     };
 
     const handleCreatePipelineResource = async () => {
         setIsCreationLoading(true);
+        setCreationError(null);
         // Pre-compute both schema flags before any API call so the stepper
         // renders all 5 steps immediately with correct pending vs skipped state
         const srcPayloadPreview = formatCode("source", "properties-file", dbzServerFileConfig);
@@ -299,11 +329,26 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         setSourceConnectionSupported(!!findConnectionSchema(srcPayloadPreview.type));
         setDestConnectionSupported(!!findConnectionSchema(dstPayloadPreview.type));
         await new Promise((resolve) => setTimeout(resolve, 500));
-        await createPipelineSource();
+
+        // Each step is blocking: if an essential resource (connection, source, transform,
+        // destination) fails to create, stop immediately instead of continuing on to build a
+        // pipeline on top of a resource that doesn't actually exist.
+        if (!(await createPipelineSource())) {
+            setIsCreationLoading(false);
+            return;
+        }
         await new Promise((resolve) => setTimeout(resolve, 500));
-        await createPipelineTransform();
+
+        if (!(await createPipelineTransform())) {
+            setIsCreationLoading(false);
+            return;
+        }
         await new Promise((resolve) => setTimeout(resolve, 500));
-        await createPipelineDestination();
+
+        if (!(await createPipelineDestination())) {
+            setIsCreationLoading(false);
+            return;
+        }
         await new Promise((resolve) => setTimeout(resolve, 500));
         setIsCreationLoading(false);
     };
@@ -311,6 +356,38 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     const getTransformNames = () => {
         return createdTransform?.map((transform) => transform.name).join(", ") || "";
     }
+
+    // Single source of truth for a step's visual state, used by all 5 ProgressStep entries below.
+    // Precedence matters: a failed step must show as "danger" even if it also happens to be the
+    // "current" one (execution stops right where it failed), and a skipped connection step is
+    // never re-evaluated as pending/current/success since it's never attempted.
+    type StepStatus = "pending" | "current" | "success" | "skipped" | "danger";
+
+    const getStepStatus = (stepKey: PipelineResourceType, schemaSupported?: boolean | null): StepStatus => {
+        if (schemaSupported === false) return "skipped";
+        if (creationError?.step === stepKey) return "danger";
+        if (createdPipelineResources.includes(stepKey)) return "success";
+        if (createPipelineResource === stepKey) return "current";
+        return "pending";
+    };
+
+    const STEP_VARIANT: Record<StepStatus, "pending" | "success" | "danger" | "default" | undefined> = {
+        pending: "pending",
+        current: undefined,
+        success: "success",
+        skipped: "default",
+        danger: "danger",
+    };
+
+    const stepIcon = (status: StepStatus) => {
+        switch (status) {
+            case "pending": return <PendingIcon />;
+            case "current": return <InProgressIcon />;
+            case "skipped": return <MinusCircleIcon />;
+            case "danger": return <ErrorCircleOIcon />;
+            case "success": default: return undefined; // PatternFly's default success checkmark
+        }
+    };
 
     const closeModal = (event: KeyboardEvent | React.MouseEvent<Element>) => {
         toggleModal(event);
@@ -320,7 +397,15 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         setCreatedDestConnection(null);
         setSourceConnectionSupported(null);
         setDestConnectionSupported(null);
+        setCreationError(null);
+        setTransformCount(null);
     };
+
+    const sourceConnStatus = getStepStatus("source_connection", sourceConnectionSupported);
+    const sourceStatus = getStepStatus("source");
+    const transformStatus = getStepStatus("transform");
+    const destConnStatus = getStepStatus("destination_connection", destConnectionSupported);
+    const destStatus = getStepStatus("destination");
 
     return (
         <Modal
@@ -345,6 +430,15 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                 >
                     <p>{modalText}</p>
                 </Alert>}
+                {!!creationError && <Alert
+                    isInline
+                    variant="danger"
+                    title="Pipeline resource creation stopped"
+                    style={{ marginBottom: '1rem' }}
+                >
+                    <p>{creationError.message}</p>
+                    <p>Any resources created before this failure remain available for use.</p>
+                </Alert>}
                 {showStatus ? (
                     <>
                         {createPipelineResource !== "" ? (
@@ -353,25 +447,17 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                             >
                                 {/* ── Step 1: Source Connection ── always rendered ── */}
                                 <ProgressStep
-                                    variant={
-                                        sourceConnectionSupported === false ? "default"
-                                        : createdPipelineResources.includes("source_connection") ? "success"
-                                        : createPipelineResource === "source_connection" ? undefined
-                                        : "pending"
-                                    }
-                                    isCurrent={createPipelineResource === "source_connection" || undefined}
-                                    icon={
-                                        sourceConnectionSupported === false ? <MinusCircleIcon />
-                                        : createPipelineResource === "source_connection" ? <InProgressIcon />
-                                        : !createdPipelineResources.includes("source_connection") ? <PendingIcon />
-                                        : undefined
-                                    }
+                                    variant={STEP_VARIANT[sourceConnStatus]}
+                                    isCurrent={sourceConnStatus === "current" || undefined}
+                                    icon={stepIcon(sourceConnStatus)}
                                     description={
-                                        sourceConnectionSupported === false
+                                        sourceConnStatus === "skipped"
                                             ? "Skipped — no connection schema for this connector type"
-                                            : createdSourceConnection
-                                                ? <>Created a {getConnectorTypeName(createdSourceConnection.type)} source connection <b><i>{createdSourceConnection.name}</i></b></>
-                                                : t('pipeline:debeziumServerModal.creatingResource', { val: "source connection" })
+                                            : sourceConnStatus === "danger"
+                                                ? creationError?.message
+                                                : createdSourceConnection
+                                                    ? <>Created a {getConnectorTypeName(createdSourceConnection.type)} source connection <b><i>{createdSourceConnection.name}</i></b></>
+                                                    : t('pipeline:debeziumServerModal.creatingResource', { val: "source connection" })
                                     }
                                     id="source-connection-step"
                                     titleId="source-connection-step-title"
@@ -381,22 +467,36 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                 </ProgressStep>
                                 {/* ── Step 2: Source ── */}
                                 <ProgressStep
-                                    variant={createPipelineResource !== "source" ? (createdPipelineResources.includes("source") ? "success" : "pending") : undefined}
-                                    isCurrent={createPipelineResource === "source" ? true : undefined}
-                                    icon={createPipelineResource === "source" ? <InProgressIcon /> : !createdPipelineResources.includes("source") ? <PendingIcon /> : undefined}
-                                    description={createPipelineResource === "source" ? t('pipeline:debeziumServerModal.creatingResource',{val: "source"}) : <>Created a {getConnectorTypeName(createdSource?.type || "")} connector <b><i>{createdSource?.name}</i></b></>}
+                                    variant={STEP_VARIANT[sourceStatus]}
+                                    isCurrent={sourceStatus === "current" || undefined}
+                                    icon={stepIcon(sourceStatus)}
+                                    description={
+                                        sourceStatus === "danger"
+                                            ? creationError?.message
+                                            : createdSource
+                                                ? <>Created a {getConnectorTypeName(createdSource?.type || "")} connector <b><i>{createdSource?.name}</i></b></>
+                                                : t('pipeline:debeziumServerModal.creatingResource', { val: "source" })
+                                    }
                                     id="source-step"
                                     titleId="source-step-title"
                                     aria-label="Create a source connector"
                                 >
                                     {t('source')}
                                 </ProgressStep>
-                                {/* ── Step 3: Transforms ── */}
+                                {/* ── Step 3: Transforms ── transforms are optional; zero declared is a valid success, not an error ── */}
                                 <ProgressStep
-                                    variant={createPipelineResource !== "transform" ? (createdPipelineResources.includes("transform") ? "success" : "pending") : undefined}
-                                    isCurrent={createPipelineResource === "transform" ? true : undefined}
-                                    icon={createPipelineResource === "transform" ? <InProgressIcon /> : !createdPipelineResources.includes("transform") ? <PendingIcon /> : undefined}
-                                    description={createdTransform ? <>Created <b><i>{getTransformNames()}</i></b> transforms</> : createdPipelineResources.includes("transform") ? "" : t('pipeline:debeziumServerModal.creatingTransform')}
+                                    variant={STEP_VARIANT[transformStatus]}
+                                    isCurrent={transformStatus === "current" || undefined}
+                                    icon={stepIcon(transformStatus)}
+                                    description={
+                                        transformStatus === "danger"
+                                            ? creationError?.message
+                                            : transformStatus === "success"
+                                                ? (transformCount === 0
+                                                    ? "No transforms found in the configuration file"
+                                                    : <>Created <b><i>{getTransformNames()}</i></b> transforms</>)
+                                                : t('pipeline:debeziumServerModal.creatingTransform')
+                                    }
                                     id="transform-step"
                                     titleId="transform-step-title"
                                     aria-label="Create pipeline transformations"
@@ -405,25 +505,17 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                 </ProgressStep>
                                 {/* ── Step 4: Destination Connection ── always rendered ── */}
                                 <ProgressStep
-                                    variant={
-                                        destConnectionSupported === false ? "default"
-                                        : createdPipelineResources.includes("destination_connection") ? "success"
-                                        : createPipelineResource === "destination_connection" ? undefined
-                                        : "pending"
-                                    }
-                                    isCurrent={createPipelineResource === "destination_connection" || undefined}
-                                    icon={
-                                        destConnectionSupported === false ? <MinusCircleIcon />
-                                        : createPipelineResource === "destination_connection" ? <InProgressIcon />
-                                        : !createdPipelineResources.includes("destination_connection") ? <PendingIcon />
-                                        : undefined
-                                    }
+                                    variant={STEP_VARIANT[destConnStatus]}
+                                    isCurrent={destConnStatus === "current" || undefined}
+                                    icon={stepIcon(destConnStatus)}
                                     description={
-                                        destConnectionSupported === false
+                                        destConnStatus === "skipped"
                                             ? "Skipped — no connection schema for this connector type"
-                                            : createdDestConnection
-                                                ? <>Created a {getConnectorTypeName(createdDestConnection.type)} destination connection <b><i>{createdDestConnection.name}</i></b></>
-                                                : t('pipeline:debeziumServerModal.creatingResource', { val: "destination connection" })
+                                            : destConnStatus === "danger"
+                                                ? creationError?.message
+                                                : createdDestConnection
+                                                    ? <>Created a {getConnectorTypeName(createdDestConnection.type)} destination connection <b><i>{createdDestConnection.name}</i></b></>
+                                                    : t('pipeline:debeziumServerModal.creatingResource', { val: "destination connection" })
                                     }
                                     id="dest-connection-step"
                                     titleId="dest-connection-step-title"
@@ -433,10 +525,16 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                                 </ProgressStep>
                                 {/* ── Step 5: Destination ── */}
                                 <ProgressStep
-                                    variant={createPipelineResource !== "destination" ? (createdPipelineResources.includes("destination") ? "success" : "pending") : undefined}
-                                    isCurrent={createPipelineResource === "destination" ? true : undefined}
-                                    icon={createPipelineResource === "destination" ? <InProgressIcon /> : !createdPipelineResources.includes("destination") ? <PendingIcon /> : undefined}
-                                    description={createdDestination ? <>Created a {getConnectorTypeName(createdDestination?.type || "")} connector <b><i>{createdDestination?.name}</i></b></> : t('pipeline:debeziumServerModal.creatingResource',{val: "destination"})}
+                                    variant={STEP_VARIANT[destStatus]}
+                                    isCurrent={destStatus === "current" || undefined}
+                                    icon={stepIcon(destStatus)}
+                                    description={
+                                        destStatus === "danger"
+                                            ? creationError?.message
+                                            : createdDestination
+                                                ? <>Created a {getConnectorTypeName(createdDestination?.type || "")} connector <b><i>{createdDestination?.name}</i></b></>
+                                                : t('pipeline:debeziumServerModal.creatingResource', { val: "destination" })
+                                    }
                                     id="destination-step"
                                     titleId="destination-step-title"
                                     aria-label="Create a destination connector"
@@ -506,16 +604,28 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
             </ModalBody>
             {!!showStatus && (
                 <ModalFooter>
-                    {createPipelineResource === "done" ? (<Button key="confirm" variant="primary" onClick={toggleModal} >
-                        {t('done')}
-                    </Button>) : (
+                    {createPipelineResource === "done" ? (
+                        <Button key="confirm" variant="primary" onClick={toggleModal} >
+                            {t('done')}
+                        </Button>
+                    ) : creationError ? (
+                        // Creation was blocked by a failure — do not offer to retry from here,
+                        // since steps that already succeeded (e.g. a connection or the source)
+                        // would otherwise be recreated as duplicates. The user must close, fix
+                        // the underlying issue, and re-upload the file to try again.
+                        <Button key="close-error" variant="primary" onClick={closeModal}>
+                            Close
+                        </Button>
+                    ) : (
                         <Button key="confirm" variant="primary" onClick={handleCreatePipelineResource} isLoading={isCreationLoading}>
                             {t('create')}
                         </Button>
                     )}
-                    <Button key="cancel" variant="link" onClick={closeModal}>
-                        {t('cancel')}
-                    </Button>
+                    {!creationError && (
+                        <Button key="cancel" variant="link" onClick={closeModal}>
+                            {t('cancel')}
+                        </Button>
+                    )}
                 </ModalFooter>
             )}
         </Modal>
