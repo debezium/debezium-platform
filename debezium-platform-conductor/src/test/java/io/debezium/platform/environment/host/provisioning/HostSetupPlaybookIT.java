@@ -85,8 +85,8 @@ class HostSetupPlaybookIT {
 
     /**
      * Runs the smoke-test playbook to verify Ansible can execute basic
-     * commands in this environment. This is Mario's "fallback" test — if
-     * the real playbook fails due to environment constraints, this smaller
+     * commands in this environment.
+     * if the real playbook fails due to environment constraints, this smaller
      * test still proves our Java→Ansible integration works.
      */
     @Test
@@ -102,9 +102,7 @@ class HostSetupPlaybookIT {
                 "-c", "local");
 
         String output = runCommand(command);
-        // The smoke test playbook has hosts: localhost and connection: local
-        // built into the YAML, but we pass -i and -c for consistency.
-        // If it reached the PLAY RECAP line, the playbook ran to completion.
+
         assertThat(output)
                 .as("Smoke test should complete successfully")
                 .contains("PLAY RECAP");
@@ -149,8 +147,6 @@ class HostSetupPlaybookIT {
                 .as("Second run should report zero changes (idempotent). Output:\n%s", output)
                 .contains("changed=0");
     }
-
-    // ── Helpers ──────────────────────────────────────────────────────────
 
     /**
      * Runs the real host-setup.yml playbook against localhost.

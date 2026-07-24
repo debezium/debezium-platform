@@ -15,7 +15,6 @@
   gather_facts: false
 
   tasks:
-    # ── Step 1: Bootstrap Python ──────────────────────────────────────────
     # Ansible's own modules (including the 'setup' module that gathers facts)
     # require Python on the target host. Minimal server images often ship
     # without Python. The 'raw' module bypasses Ansible's module system and
@@ -28,13 +27,11 @@
         (dnf -y install python3)
       changed_when: false
 
-    # ── Step 2: Gather facts ──────────────────────────────────────────────
     # Now that Python is available, gather host facts (OS family, architecture,
     # distribution release, user info) needed by subsequent conditional tasks.
     - name: Gather host facts
       ansible.builtin.setup:
 
-    # ── Step 2a: Fail fast on unsupported OS families ─────────────────────
     # Every task below is gated on ansible_os_family == Debian/RedHat. Without
     # this guard, an unsupported family (Suse, Alpine, Darwin, ...) would
     # silently skip every conditional task, then fail confusingly later at
@@ -46,7 +43,6 @@
           Only Debian (Ubuntu/Debian) and RedHat (CentOS/Fedora/RHEL) are supported.
       when: ansible_facts['os_family'] not in ["Debian", "RedHat"]
 
-    # ── Step 3: Add Docker's official repository ──────────────────────────
     # Stock Ubuntu/Debian repos ship 'docker.io' (an older community build)
     # but NOT 'docker-compose-plugin'. RHEL 8+ replaced Docker with Podman
     # entirely — 'yum install docker' fails. Both families require the
@@ -56,7 +52,6 @@
     # block level instead of repeating the same `when` on every task —
     # this is the "blocks" pattern for OS-family-specific task groups.
 
-    # ── Step 3a: Debian/Ubuntu — GPG key and APT repository ───────────────
     - name: Debian/Ubuntu Docker repository setup
       when: ansible_facts['os_family'] == "Debian"
       block:
@@ -91,7 +86,6 @@
             state: present
             filename: docker
 
-    # ── Step 3b: RHEL/CentOS/Fedora — YUM/DNF repository ─────────────────
     - name: RHEL/CentOS/Fedora Docker repository setup
       when: ansible_facts['os_family'] == "RedHat"
       block:
@@ -109,7 +103,6 @@
             state: absent
           ignore_errors: true
 
-    # ── Step 3c: Install Docker Engine ────────────────────────────────────
     # Package names (docker-ce, docker-ce-cli, containerd.io,
     # docker-compose-plugin) are IDENTICAL across Debian and RedHat, so the
     # generic 'package' module can install both in a single task — it
@@ -132,14 +125,12 @@
         state: present
         update_cache: true
 
-    # ── Step 4: Start Docker daemon and enable on boot ────────────────────
     - name: Enable and start Docker service
       ansible.builtin.systemd:
         name: docker
         state: started
         enabled: true
 
-    # ── Step 5: Configure Docker permissions ──────────────────────────────
     # Adds the SSH login user to the docker group for interactive/manual
     # docker CLI access during debugging. The Host Agent itself runs as
     # root (see the systemd unit below) and does not depend on this group
@@ -152,7 +143,6 @@
         groups: docker
         append: true
 
-    # ── Step 6: Deploy Host Agent as a systemd service ────────────────────
     # NOTE: The Host Agent binary is built by an upcoming feature and is not
     # yet available. This task creates the systemd service file pointing to
     # the documented artifact path. The actual binary copy task will be
@@ -195,23 +185,19 @@
         daemon_reload: true
       tags: [host_agent]
 
-    # ── Step 7: Install Python 'requests' for community.docker modules ────
     # community.docker.docker_image_pull (used in Step 8) does NOT use the
     # Docker SDK for Python — as of community.docker 3.6.0 it talks to the
     # Docker API directly using code bundled in the collection itself. Per
     # the current module docs, its only Python-side requirement is
     # 'requests'.
-    - name: Ensure python3-pip is present
+    #
+    # We use the OS package manager (apt/dnf) instead of pip to avoid
+    # PEP 668 'externally-managed-environment' errors on Ubuntu 24.04+.
+    - name: Install Python requests library for community.docker modules
       ansible.builtin.package:
-        name: python3-pip
+        name: python3-requests
         state: present
 
-    - name: Install Python requests library for community.docker modules
-      ansible.builtin.pip:
-        name: requests
-        executable: pip3
-
-    # ── Step 8: Pre-pull Debezium Server Docker image ─────────────────────
     # Uses the dedicated community.docker.docker_image_pull module (preferred
     # over the legacy community.docker.docker_image since the collection
     # split into granular, single-purpose modules). The 'latest' tag is
