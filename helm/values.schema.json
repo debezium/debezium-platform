@@ -61,6 +61,36 @@
                 "extraVolumeMounts": {
                     "type": "array",
                     "default": []
+                },
+                "oidc": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "Enable OIDC bearer-token security (resource-server / service mode)"
+                        },
+                        "authServerUrl": {
+                            "type": "string",
+                            "default": "",
+                            "description": "OIDC issuer / realm URL. Required when enabled"
+                        },
+                        "clientId": {
+                            "type": "string",
+                            "default": "conductor",
+                            "description": "Client id the conductor identifies as to the issuer"
+                        },
+                        "apiPolicy": {
+                            "type": "string",
+                            "default": "authenticated",
+                            "description": "Policy applied to /api/*: authenticated, permit, or a named role policy"
+                        },
+                        "audience": {
+                            "type": "string",
+                            "default": "",
+                            "description": "Expected aud claim. Empty disables audience enforcement"
+                        }
+                    }
                 }
             },
             "type": "object"

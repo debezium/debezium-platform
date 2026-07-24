@@ -93,6 +93,21 @@ spec:
 {{- end }}
             - name: MONITORING_PANELS_REFRESH_INTERVAL
               value: {{ .Values.monitoring.panels.refreshInterval | quote }}
+{{- if .Values.conductor.oidc.enabled }}
+            # OIDC bearer-token security (service mode). See values.yaml conductor.oidc.
+            - name: QUARKUS_OIDC_TENANT_ENABLED
+              value: "true"
+            - name: OIDC_ISSUER
+              value: {{ required "conductor.oidc.authServerUrl is required when conductor.oidc.enabled=true" .Values.conductor.oidc.authServerUrl | quote }}
+            - name: OIDC_CLIENT_ID
+              value: {{ .Values.conductor.oidc.clientId | quote }}
+            - name: CONDUCTOR_API_POLICY
+              value: {{ .Values.conductor.oidc.apiPolicy | quote }}
+{{- if .Values.conductor.oidc.audience }}
+            - name: QUARKUS_OIDC_TOKEN_AUDIENCE
+              value: {{ .Values.conductor.oidc.audience | quote }}
+{{- end }}
+{{- end }}
 {{ include "debezium-platform.offsetConfig" . | indent 12 }}
 {{ include "debezium-platform.schemaHistoryConfig" . | indent 12 }}
 {{- range .Values.env }}

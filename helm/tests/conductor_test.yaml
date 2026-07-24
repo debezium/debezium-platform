@@ -273,6 +273,69 @@ tests:
             name: PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE
             value: "debezium-platform"
 
+  - it: should not add OIDC env variables when oidc is disabled
+    template: conductor-deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_OIDC_TENANT_ENABLED
+            value: "true"
+
+  - it: should add OIDC env variables when oidc is enabled
+    template: conductor-deployment.yaml
+    set:
+      conductor.oidc:
+        enabled: true
+        authServerUrl: https://keycloak.example.com/realms/dmp
+        clientId: conductor
+        apiPolicy: authenticated
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_OIDC_TENANT_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OIDC_ISSUER
+            value: https://keycloak.example.com/realms/dmp
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_API_POLICY
+            value: authenticated
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_OIDC_TOKEN_AUDIENCE
+            value: conductor
+
+  - it: should add audience env variable when oidc audience is set
+    template: conductor-deployment.yaml
+    set:
+      conductor.oidc:
+        enabled: true
+        authServerUrl: https://keycloak.example.com/realms/dmp
+        audience: conductor
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_OIDC_TOKEN_AUDIENCE
+            value: conductor
+
+  - it: should fail when oidc is enabled without authServerUrl
+    template: conductor-deployment.yaml
+    set:
+      conductor.oidc:
+        enabled: true
+        authServerUrl: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: conductor.oidc.authServerUrl is required when conductor.oidc.enabled=true
+
   - it: should add extra volumes and volume mounts to conductor deployment
     template: conductor-deployment.yaml
     set:

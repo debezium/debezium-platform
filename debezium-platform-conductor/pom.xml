@@ -408,6 +408,12 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest-jackson</artifactId>
         </dependency>
+        <!-- OIDC bearer-token validation (service mode). Disabled by default via
+             quarkus.oidc.tenant-enabled=false; all enforcement is runtime-config driven. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-oidc</artifactId>
+        </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-hibernate-orm</artifactId>

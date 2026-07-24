@@ -18,6 +18,24 @@ conductor:
       mountPath: /opt/descriptors
   extraVolumes: [ ]
   extraVolumeMounts: [ ]
+  # OIDC bearer-token security (resource-server / "service" mode). Disabled by
+  # default: the conductor behaves like an unsecured upstream deployment and
+  # contacts no OIDC issuer. When enabled, tokens are validated against the
+  # issuer's JWKS (no client secret required).
+  oidc:
+    enabled: false
+    # OIDC issuer / realm URL, e.g. https://keycloak.example.com/realms/dmp.
+    # Required when enabled.
+    authServerUrl: ""
+    # Client id the conductor identifies as to the issuer.
+    clientId: conductor
+    # Policy applied to /api/*: "authenticated" requires a valid bearer token;
+    # "permit" leaves the API open (token validated if present). May also name
+    # a custom role policy defined in the conductor configuration.
+    apiPolicy: authenticated
+    # Expected audience (aud) claim. Empty disables audience enforcement; set
+    # once the issuer adds this value to tokens (e.g. a Keycloak Audience mapper).
+    audience: ""
 server:
   image: ""
 ingress:

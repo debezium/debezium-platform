@@ -112,9 +112,35 @@ quarkus:
     prometheus-api:
       url: ${MONITORING_PROMETHEUS_URL:http://localhost:9090}
       read-timeout: 30000
+  # OIDC bearer-token validation (service mode), OFF by default. Enable with
+  # QUARKUS_OIDC_TENANT_ENABLED=true, OIDC_ISSUER, CONDUCTOR_API_POLICY=authenticated.
+  oidc:
+    tenant-enabled: false
+    application-type: service
+    auth-server-url: ${OIDC_ISSUER:https://keycloak.invalid/realms/none}
+    client-id: ${OIDC_CLIENT_ID:conductor}
+    # Enable audience enforcement via QUARKUS_OIDC_TOKEN_AUDIENCE.
+    # Roles read from realm_access.roles natively (no role-claim-path).
+  keycloak:
+    devservices:
+      enabled: false
   http:
     cors:
         ~: true
+    auth:
+      # /api/* policy defaults to "permit" (unsecured upstream behavior);
+      # set CONDUCTOR_API_POLICY=authenticated to require a valid token.
+      permission:
+        api:
+          paths: /api/*
+          policy: ${CONDUCTOR_API_POLICY:permit}
+        infra:
+          paths: /q/*
+          policy: permit
+      # Example RBAC policy; set CONDUCTOR_API_POLICY=admin-only to use.
+      # policy:
+      #   admin-only:
+      #     roles-allowed: dmp-admin
   debezium-outbox:
     table-name: events
     aggregate-type:
