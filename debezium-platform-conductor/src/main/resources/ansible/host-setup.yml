@@ -42,9 +42,9 @@
     - name: Fail on unsupported OS family
       ansible.builtin.fail:
         msg: >-
-          Unsupported OS family: {{ ansible_os_family }}.
-          This playbook only supports Debian and RedHat family hosts.
-      when: ansible_os_family not in ["Debian", "RedHat"]
+          Unsupported OS family: {{ ansible_facts['os_family'] }}.
+          Only Debian (Ubuntu/Debian) and RedHat (CentOS/Fedora/RHEL) are supported.
+      when: ansible_facts['os_family'] not in ["Debian", "RedHat"]
 
     # ── Step 3: Add Docker's official repository ──────────────────────────
     # Stock Ubuntu/Debian repos ship 'docker.io' (an older community build)
@@ -58,7 +58,7 @@
 
     # ── Step 3a: Debian/Ubuntu — GPG key and APT repository ───────────────
     - name: Debian/Ubuntu Docker repository setup
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
       block:
         - name: Install prerequisite packages for Docker repo
           ansible.builtin.apt:
@@ -77,23 +77,23 @@
 
         - name: Download Docker GPG key
           ansible.builtin.get_url:
-            url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+            url: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"
             dest: /etc/apt/keyrings/docker.asc
             mode: "0644"
 
         - name: Add Docker APT repository
           ansible.builtin.apt_repository:
             repo: >-
-              deb [arch={{ ansible_architecture | regex_replace('x86_64', 'amd64') | regex_replace('aarch64', 'arm64') }}
+              deb [arch={{ ansible_facts['architecture'] | regex_replace('x86_64', 'amd64') | regex_replace('aarch64', 'arm64') }}
               signed-by=/etc/apt/keyrings/docker.asc]
-              https://download.docker.com/linux/{{ ansible_distribution | lower }}
-              {{ ansible_distribution_release }} stable
+              https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}
+              {{ ansible_facts['distribution_release'] }} stable
             state: present
             filename: docker
 
     # ── Step 3b: RHEL/CentOS/Fedora — YUM/DNF repository ─────────────────
     - name: RHEL/CentOS/Fedora Docker repository setup
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts['os_family'] == "RedHat"
       block:
         - name: Add Docker CE repository
           ansible.builtin.get_url:
@@ -148,7 +148,7 @@
     # ansible_user_id to report 'root' instead of the actual login user.
     - name: Add SSH user to docker group
       ansible.builtin.user:
-        name: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+        name: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
         groups: docker
         append: true
 
@@ -162,6 +162,7 @@
         path: /opt/debezium/agent
         state: directory
         mode: "0755"
+      tags: [host_agent]
 
     - name: Deploy Host Agent systemd unit file
       ansible.builtin.copy:
@@ -184,6 +185,7 @@
           [Install]
           WantedBy=multi-user.target
       notify: Restart Host Agent
+      tags: [host_agent]
 
     - name: Enable and start Host Agent service
       ansible.builtin.systemd:
@@ -191,6 +193,7 @@
         state: started
         enabled: true
         daemon_reload: true
+      tags: [host_agent]
 
     # ── Step 7: Install Python 'requests' for community.docker modules ────
     # community.docker.docker_image_pull (used in Step 8) does NOT use the

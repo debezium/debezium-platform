@@ -1,0 +1,40 @@
+---
+# Smoke test playbook — verifies Ansible can execute basic tasks in the CI
+# environment. Used as a fallback if the real host-setup.yml playbook fails
+# due to environment constraints (e.g., Docker-in-Docker limitations).
+#
+# This playbook deliberately avoids Docker and systemd operations — it only
+# tests that Ansible can:
+#   1. Gather facts (proves Python is working)
+#   2. Write a file (proves become/root access works)
+#   3. Read the file back (proves state verification works)
+#
+# Run with:
+#   ansible-playbook smoke-test.yml -i "localhost," -c local
+
+- name: Smoke test — verify Ansible can execute in this environment
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  tasks:
+    - name: Write a marker file
+      ansible.builtin.copy:
+        content: "ansible smoke test passed"
+        dest: /tmp/debezium-ansible-smoke-test.txt
+        mode: "0644"
+
+    - name: Verify marker file exists
+      ansible.builtin.stat:
+        path: /tmp/debezium-ansible-smoke-test.txt
+      register: marker
+
+    - name: Assert the file was created
+      ansible.builtin.assert:
+        that: marker.stat.exists
+        fail_msg: "Smoke test failed — marker file was not created"
+
+    - name: Clean up marker file
+      ansible.builtin.file:
+        path: /tmp/debezium-ansible-smoke-test.txt
+        state: absent

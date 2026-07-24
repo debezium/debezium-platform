@@ -38,6 +38,13 @@ runs:
         key: ${{ inputs.cache-key }}
         restore-keys: ${{ inputs.cache-key }}
 
+    - name: Install Ansible
+      shell: bash
+      run: |
+        pip3 install ansible
+        ansible-galaxy collection install community.docker
+        ansible --version
+
     - name: Run tests
       shell: bash
       working-directory: ${{ inputs.working-directory }}
