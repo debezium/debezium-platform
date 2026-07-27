@@ -86,10 +86,13 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
 {{/*
-Get the scheme for the domain, derived from ingress TLS.
+Get the scheme for the domain. An explicit .Values.domain.scheme wins; otherwise
+it is derived from ingress TLS.
 */}}
 {{- define "debezium-platform.domainScheme" -}}
-{{- if and .Values.ingress.enabled .Values.ingress.tls.enabled -}}
+{{- if .Values.domain.scheme -}}
+{{ .Values.domain.scheme }}
+{{- else if and .Values.ingress.enabled .Values.ingress.tls.enabled -}}
 https
 {{- else -}}
 http

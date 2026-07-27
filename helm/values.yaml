@@ -1,6 +1,11 @@
 domain:
   url: ""
   name: ""
+  # Optional. Overrides the scheme otherwise derived from ingress TLS. Set this
+  # when TLS terminates outside the chart's ingress (e.g. an external reverse
+  # proxy) and ingress.enabled is false, otherwise the stage UI builds an http://
+  # conductor URL and the browser blocks /api calls as mixed content.
+  # scheme: https
 stage:
   image: quay.io/debezium/platform-stage:nightly
   imagePullPolicy: IfNotPresent
@@ -18,16 +23,16 @@ conductor:
       mountPath: /opt/descriptors
   extraVolumes: [ ]
   extraVolumeMounts: [ ]
-  # OIDC bearer-token security (resource-server / "service" mode). Disabled by
-  # default: the conductor behaves like an unsecured upstream deployment and
-  # contacts no OIDC issuer. When enabled, tokens are validated against the
-  # issuer's JWKS (no client secret required).
+  # OIDC bearer-token security (resource-server in service mode). Disabled by
+  # default. When enabled, tokens are validated against the issuer's JWKS.
   oidc:
     enabled: false
     # OIDC issuer / realm URL, e.g. https://keycloak.example.com/realms/dmp.
     # Required when enabled.
     authServerUrl: ""
-    # Client id the conductor identifies as to the issuer.
+    # Keycloak client id whose roles are read from resource_access.<clientId>.
+    # Must match a client in the realm. Realm roles resolve regardless of this
+    # value.
     clientId: conductor
     # Policy applied to /api/*: "authenticated" requires a valid bearer token;
     # "permit" leaves the API open (token validated if present). May also name

@@ -259,6 +259,19 @@ tests:
           path: spec.rules[0].host
           value: legacy.example.com
 
+  - it: should apply domain.scheme to the CORS origin
+    template: conductor-deployment.yaml
+    set:
+      domain.name: dmp.example.com
+      domain.scheme: https
+      ingress.enabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_HTTP_CORS_ORIGINS
+            value: https://dmp.example.com
+
   - it: should configure pipeline labels via env variables
     template: conductor-deployment.yaml
     set:

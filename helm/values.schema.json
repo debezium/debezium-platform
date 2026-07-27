@@ -78,7 +78,7 @@
                         "clientId": {
                             "type": "string",
                             "default": "conductor",
-                            "description": "Client id the conductor identifies as to the issuer"
+                            "description": "Keycloak client id whose roles are read from resource_access.<clientId>. Must match a client in the realm"
                         },
                         "apiPolicy": {
                             "type": "string",
@@ -133,6 +133,12 @@
                 "url": {
                     "type": "string",
                     "deprecated": true
+                },
+                "scheme": {
+                    "type": "string",
+                    "enum": ["", "http", "https"],
+                    "default": "",
+                    "description": "Scheme for the conductor URL and CORS origin. Empty derives it from ingress TLS"
                 }
             },
             "type": "object"

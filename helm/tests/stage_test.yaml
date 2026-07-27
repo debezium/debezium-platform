@@ -53,6 +53,58 @@ tests:
           path: spec.template.spec.restartPolicy
           value: Always
 
+  - it: should build an http conductor URL when ingress TLS is disabled
+    template: stage-deployment.yaml
+    set:
+      domain.name: dmp.example.com
+      ingress.enabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_URL
+            value: http://dmp.example.com
+
+  - it: should build an https conductor URL from ingress TLS
+    template: stage-deployment.yaml
+    set:
+      domain.name: dmp.example.com
+      ingress.enabled: true
+      ingress.tls.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_URL
+            value: https://dmp.example.com
+
+  - it: should let domain.scheme override the scheme when ingress is disabled
+    template: stage-deployment.yaml
+    set:
+      domain.name: dmp.example.com
+      domain.scheme: https
+      ingress.enabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_URL
+            value: https://dmp.example.com
+
+  - it: should let domain.scheme take precedence over ingress TLS
+    template: stage-deployment.yaml
+    set:
+      domain.name: dmp.example.com
+      domain.scheme: http
+      ingress.enabled: true
+      ingress.tls.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_URL
+            value: http://dmp.example.com
+
   - it: should create stage service with correct ports
     template: stage-service.yaml
     asserts:
