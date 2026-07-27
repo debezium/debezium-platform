@@ -5,6 +5,7 @@
  */
 package io.debezium.platform.environment.watcher.consumers;
 
+import java.time.Duration;
 import java.util.function.Consumer;
 
 import jakarta.enterprise.context.Dependent;
@@ -18,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.platform.environment.watcher.config.OutboxConfigGroup;
 import io.debezium.platform.environment.watcher.config.WatcherConfigGroup;
+import io.debezium.util.DelayStrategy;
+import io.debezium.util.RetryingRunnable;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 
 /**
@@ -62,58 +65,24 @@ public final class OutboxParentEventConsumer implements Consumer<ChangeEvent<Sou
     }
 
     private void consumeWithRetry(EnvironmentEventConsumer<?> consumer, EventContext context) {
-
-        for (int attempt = 1; attempt <= maxRetries + 1; attempt++) {
-            try {
-                consumer.consume(context.aggregateType(), context.eventType(),
-                        Long.valueOf(context.aggregateId()), context.payload());
-                return;
-            }
-            catch (Exception e) {
-                if (isRetriable(e) && attempt <= maxRetries) {
-                    var delay = backoffDelay(attempt);
-                    LOGGER.warn("Retriable error processing {} event for aggregate {} (#{}),"
-                            + " attempt {}/{}, retrying in {}ms",
-                            context.eventType(), context.aggregateType(), context.aggregateId(),
-                            attempt, maxRetries, delay, e);
-                    if (!sleep(delay)) {
-                        return;
-                    }
-                }
-                else {
-                    LOGGER.error("Failed to process {} event for aggregate {} (#{}){}. Skipping event.",
-                            context.eventType(), context.aggregateType(), context.aggregateId(),
-                            attempt > 1 ? " after %d retries".formatted(attempt - 1) : "",
-                            e);
-                    consumer.onError(context.aggregateId, context.aggregateType(), context.eventType(), e);
-                    return;
-                }
-            }
-        }
-    }
-
-    private long backoffDelay(int attempt) {
-        return (long) Math.pow(2, attempt - 1) * 1000;
-    }
-
-    private boolean sleep(long millis) {
         try {
-            Thread.sleep(millis);
-            return true;
+            RetryingRunnable.<RuntimeException> builder()
+                    .retries(maxRetries)
+                    .doRun(() -> consumer.consume(context.aggregateType(), context.eventType(),
+                            Long.valueOf(context.aggregateId()), context.payload()))
+                    .delayStrategy(DelayStrategy.exponential(Duration.ofSeconds(1), Duration.ofSeconds(8)))
+                    .retriableExceptions(KubernetesClientException.class)
+                    .build()
+                    .run();
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return false;
         }
-    }
-
-    private boolean isRetriable(Throwable throwable) {
-        for (var current = throwable; current != null; current = current.getCause()) {
-            if (current instanceof KubernetesClientException) {
-                return true;
-            }
+        catch (Exception e) {
+            LOGGER.error("Failed to process {} event for aggregate {} (#{}). Skipping event.",
+                    context.eventType(), context.aggregateType(), context.aggregateId(), e);
+            consumer.onError(context.aggregateId(), context.aggregateType(), context.eventType(), e);
         }
-        return false;
     }
 
     private record EventContext(String aggregateType, String aggregateId, String eventType, String payload) {
