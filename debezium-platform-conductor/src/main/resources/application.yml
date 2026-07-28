@@ -113,7 +113,8 @@ quarkus:
       url: ${MONITORING_PROMETHEUS_URL:http://localhost:9090}
       read-timeout: 30000
   # OIDC bearer-token validation (service mode), OFF by default. Enable with
-  # QUARKUS_OIDC_TENANT_ENABLED=true, OIDC_ISSUER, CONDUCTOR_API_POLICY=authenticated.
+  # QUARKUS_OIDC_TENANT_ENABLED=true and OIDC_ISSUER; /api/* is then secured by
+  # default (see quarkus.http.auth.permission.api below).
   oidc:
     tenant-enabled: false
     application-type: service
@@ -128,12 +129,14 @@ quarkus:
     cors:
         ~: true
     auth:
-      # /api/* policy defaults to "permit" (unsecured upstream behavior);
-      # set CONDUCTOR_API_POLICY=authenticated to require a valid token.
+      # /api/* policy defaults to "authenticated" when OIDC is enabled;
+      # set CONDUCTOR_API_POLICY=permit to open back the API;
+      # or a custom role policy
       permission:
         api:
+          enabled: ${quarkus.oidc.tenant-enabled}
           paths: /api/*
-          policy: ${CONDUCTOR_API_POLICY:permit}
+          policy: ${CONDUCTOR_API_POLICY:authenticated}
         infra:
           paths: /q/*
           policy: permit

@@ -17,7 +17,6 @@ public class OidcTestProfile implements QuarkusTestProfile {
                 // Points at the WireMock issuer started by OidcWiremockTestResource, which exposes
                 // its dynamic port as 'keycloak.url' and stubs the 'quarkus' realm.
                 "quarkus.oidc.auth-server-url", "${keycloak.url}/realms/quarkus",
-                "quarkus.http.auth.permission.api.policy", "authenticated",
                 "quarkus.oras.devservices.base-port", "25002");
     }
 }

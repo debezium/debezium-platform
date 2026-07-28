@@ -83,7 +83,7 @@
                         "apiPolicy": {
                             "type": "string",
                             "default": "authenticated",
-                            "description": "Policy applied to /api/*: authenticated, permit, or a named role policy"
+                            "description": "Policy applied to /api/*: authenticated by default (require a token), permit (opt back out), or a named role policy"
                         },
                         "audience": {
                             "type": "string",

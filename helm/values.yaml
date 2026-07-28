@@ -34,9 +34,9 @@ conductor:
     # Must match a client in the realm. Realm roles resolve regardless of this
     # value.
     clientId: conductor
-    # Policy applied to /api/*: "authenticated" requires a valid bearer token;
-    # "permit" leaves the API open (token validated if present). May also name
-    # a custom role policy defined in the conductor configuration.
+    # /api/* policy defaults to "authenticated" when OIDC is enabled;
+    # set CONDUCTOR_API_POLICY=permit to open back the API;
+    # or a custom role policy
     apiPolicy: authenticated
     # Expected audience (aud) claim. Empty disables audience enforcement; set
     # once the issuer adds this value to tokens (e.g. a Keycloak Audience mapper).
