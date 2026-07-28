@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -213,7 +214,7 @@ public class AnsibleHostProvisioner implements HostProvisioner {
 
         private final Process process;
         private final String tokenToRedact;
-        private final StringBuilder outputBuilder = new StringBuilder();
+        private volatile String output = "";
 
         AnsibleOutputDrainer(Process process, String tokenToRedact) {
             this.process = process;
@@ -224,15 +225,12 @@ public class AnsibleHostProvisioner implements HostProvisioner {
         public void run() {
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    String sanitized = redactToken(line);
-                    outputBuilder.append(sanitized).append('\n');
-                }
+                output = reader.lines()
+                        .map(this::redactToken)
+                        .collect(Collectors.joining("\n", "", "\n"));
             }
             catch (IOException e) {
-                outputBuilder.append("[Error reading Ansible output: ")
-                        .append(e.getMessage()).append("]\n");
+                output = "[Error reading Ansible output: " + e.getMessage() + "]\n";
             }
         }
 
@@ -244,7 +242,7 @@ public class AnsibleHostProvisioner implements HostProvisioner {
         }
 
         String getOutput() {
-            return outputBuilder.toString();
+            return output;
         }
     }
 }

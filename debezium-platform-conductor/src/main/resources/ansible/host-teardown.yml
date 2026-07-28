@@ -15,7 +15,6 @@
   gather_facts: false
 
   tasks:
-    # ── Step 1: Stop and disable the Host Agent systemd service ───────────
     # Instead of using ignore_errors: true (which swallows ALL failures
     # including SSH drops and permission errors), we first check if the
     # unit file exists. This way, we only skip the stop task when the
@@ -32,14 +31,13 @@
         enabled: false
       when: agent_unit_file.stat.exists
 
-    # ── Step 2: Remove the systemd unit file ──────────────────────────────
+
     - name: Remove Host Agent systemd unit file
       ansible.builtin.file:
         path: /etc/systemd/system/debezium-host-agent.service
         state: absent
       notify: Reload systemd daemon
 
-    # ── Step 3: Remove the Agent installation directory ───────────────────
     - name: Remove Host Agent directory
       ansible.builtin.file:
         path: /opt/debezium/agent

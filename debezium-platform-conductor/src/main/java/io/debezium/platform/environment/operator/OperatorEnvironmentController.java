@@ -16,7 +16,7 @@ import io.debezium.platform.environment.VaultController;
 import io.quarkus.arc.lookup.LookupIfProperty;
 
 @ApplicationScoped
-@LookupIfProperty(name = "debezium.deployment.mode", stringValue = "operator", lookupIfMissing = true)
+@LookupIfProperty(name = "platform.deployment.mode", stringValue = "operator", lookupIfMissing = true)
 @Named(OperatorEnvironmentController.BEAN_NAME)
 public class OperatorEnvironmentController implements EnvironmentController {
     public static final String BEAN_NAME = "operator-environment-controller";

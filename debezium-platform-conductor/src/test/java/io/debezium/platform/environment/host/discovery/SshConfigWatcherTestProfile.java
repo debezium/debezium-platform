@@ -50,7 +50,7 @@ public class SshConfigWatcherTestProfile implements QuarkusTestProfile {
     @Override
     public Map<String, String> getConfigOverrides() {
         return Map.of(
-                "debezium.deployment.mode", "host",
+                "platform.deployment.mode", "host",
                 "platform.host.ssh-config-path", TEMP_SSH_CONFIG.toString(),
                 "quarkus.oras.devservices.base-port", "25002",
                 "quarkus.arc.exclude-types",

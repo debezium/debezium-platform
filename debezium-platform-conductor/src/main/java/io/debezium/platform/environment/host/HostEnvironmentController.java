@@ -17,7 +17,7 @@ import io.quarkus.arc.lookup.LookupIfProperty;
 /**
  * Host-mode implementation of {@link EnvironmentController}.
  * <p>
- * Activated when {@code debezium.deployment.mode=host} is set at runtime.
+ * Activated when {@code platform.deployment.mode=host} is set at runtime.
  * Both this and {@link io.debezium.platform.environment.operator.OperatorEnvironmentController}
  * exist in the CDI container at all times &mdash;
  * {@link io.quarkus.arc.lookup.LookupIfProperty} filters which one is returned
@@ -34,7 +34,7 @@ import io.quarkus.arc.lookup.LookupIfProperty;
  * (e.g., trying to watch {@code ~/.ssh/config} inside container).
  */
 @ApplicationScoped
-@LookupIfProperty(name = "debezium.deployment.mode", stringValue = "host")
+@LookupIfProperty(name = "platform.deployment.mode", stringValue = "host")
 public class HostEnvironmentController implements EnvironmentController {
 
     private final Logger logger;

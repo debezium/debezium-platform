@@ -47,7 +47,7 @@ import io.quarkus.scheduler.Scheduled;
  * atomic symlink-swap rather than {@code ENTRY_MODIFY} events).
  *
  * <p>This bean is active in both operator and host deployment modes. The
- * {@code debezium.deployment.mode} runtime guard at the start of each
+ * {@code platform.deployment.mode} runtime guard at the start of each
  * {@code @Observes} and {@code @Scheduled} method ensures no file-system
  * operations are attempted in operator mode, where {@code ~/.ssh/config}
  * may not exist.
@@ -76,7 +76,7 @@ public class SshConfigWatcherService {
             PosixFilePermission.OTHERS_READ,
             PosixFilePermission.OTHERS_WRITE);
 
-    @ConfigProperty(name = "debezium.deployment.mode", defaultValue = "operator")
+    @ConfigProperty(name = "platform.deployment.mode", defaultValue = "operator")
     String deploymentMode;
 
     private final Logger logger;

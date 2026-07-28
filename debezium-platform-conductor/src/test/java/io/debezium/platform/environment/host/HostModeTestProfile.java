@@ -10,7 +10,7 @@ import java.util.Map;
 import io.quarkus.test.junit.QuarkusTestProfile;
 
 /**
- * Test profile that sets {@code debezium.deployment.mode=host} to activate
+ * Test profile that sets {@code platform.deployment.mode=host} to activate
  * the host deployment path for CDI bean selection tests.
  */
 public class HostModeTestProfile implements QuarkusTestProfile {
@@ -18,7 +18,7 @@ public class HostModeTestProfile implements QuarkusTestProfile {
     @Override
     public Map<String, String> getConfigOverrides() {
         return Map.of(
-                "debezium.deployment.mode", "host",
+                "platform.deployment.mode", "host",
                 "quarkus.oras.devservices.base-port", "25001");
     }
 
