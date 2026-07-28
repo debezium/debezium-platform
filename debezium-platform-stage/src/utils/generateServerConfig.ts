@@ -91,7 +91,7 @@ export function generatePropertiesContent(
           `debezium.transforms.${safeKey}.${k}=${redactIfSensitive(k, String(v))}`
         );
       }
-      if (t.predicate) {
+      if (t.predicate && t.predicate?.type) {
         const predicateName = `${safeKey}Predicate`;
         predicateNames.push(predicateName);
         transformLines.push(
@@ -110,7 +110,7 @@ export function generatePropertiesContent(
         `debezium.predicates=${predicateNames.join(",")}`
       );
       for (const t of transforms) {
-        if (!t.predicate) continue;
+        if (!t.predicate || !t.predicate.type) continue;
         const predicateName = `${toSafeKey(t.name)}Predicate`;
         predicateLines.push(
           `debezium.predicates.${predicateName}.type=${t.predicate.type}`
