@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import ApiError from "@components/ApiError";
 import { Connection, Destination, fetchData, Source } from "src/apis";
 import { useQuery } from "react-query";
+import { useResourceQuery } from "src/hooks/useResourceQuery";
 import { API_URL } from "@utils/constants";
 import _, { debounce } from "lodash";
 import PageHeader from "@components/PageHeader";
@@ -53,34 +54,25 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
   const {
     data: sourceList = [],
-  } = useQuery<Source[], Error>(
+  } = useResourceQuery<Source[], Error>(
     "sources",
-    () => fetchData<Source[]>(`${API_URL}/api/sources`),
-    {
-      refetchInterval: 7000,
-    }
+    () => fetchData<Source[]>(`${API_URL}/api/sources`)
   );
 
   const {
     data: destinationList = [],
-  } = useQuery<Destination[], Error>(
+  } = useResourceQuery<Destination[], Error>(
     "destinations",
-    () => fetchData<Destination[]>(`${API_URL}/api/destinations`),
-    {
-      refetchInterval: 7000,
-    }
+    () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
   );
 
   const {
     data: connectionsList = [],
     error,
     isLoading: isConnectionsLoading,
-  } = useQuery<Connection[], Error>(
+  } = useResourceQuery<Connection[], Error>(
     "connections",
-    () => fetchData<Connection[]>(`${API_URL}/api/connections`),
-    {
-      refetchInterval: 7000,
-    }
+    () => fetchData<Connection[]>(`${API_URL}/api/connections`)
   );
 
   const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>(

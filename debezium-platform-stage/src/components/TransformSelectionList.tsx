@@ -15,7 +15,7 @@ import {
   fetchData,
 } from "../apis/apis";
 import { API_URL } from "../utils/constants";
-import { useQuery } from "react-query";
+import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useTranslation } from "react-i18next";
 import { getActivePipelineCount } from "@utils/pipelineUtils";
 
@@ -32,12 +32,9 @@ const TransformSelectionList: React.FunctionComponent<
     data: pipelineList = [],
     error: _pipelineError,
     isLoading: _isPipelineLoading,
-  } = useQuery<Pipeline[], Error>(
+  } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`),
-    {
-      refetchInterval: 7000,
-    }
+    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
   );
 
   return (

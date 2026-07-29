@@ -19,7 +19,7 @@ import EmptyStatus from "../../components/EmptyStatus";
 import { useNavigate } from "react-router-dom";
 import { Source, fetchData } from "../../apis/apis";
 import _, { debounce } from "lodash";
-import { useQuery } from "react-query";
+import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { API_URL } from "../../utils/constants";
 import SourceSinkTable from "../../components/SourceSinkTable";
 import ApiError from "../../components/ApiError";
@@ -68,12 +68,9 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
     data: sourcesList = [],
     error,
     isLoading: isSourceLoading,
-  } = useQuery<Source[], Error>(
+  } = useResourceQuery<Source[], Error>(
     "sources",
-    () => fetchData<Source[]>(`${API_URL}/api/sources`),
-    {
-      refetchInterval: 7000,
-    }
+    () => fetchData<Source[]>(`${API_URL}/api/sources`)
   );
 
   // Compute filtered results based on search query

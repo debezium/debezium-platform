@@ -20,7 +20,7 @@ import EmptyStatus from "../../components/EmptyStatus";
 import { Destination, fetchData } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import _, { debounce } from "lodash";
-import { useQuery } from "react-query";
+import { useResourceQuery } from "../../hooks/useResourceQuery";
 import SourceSinkTable from "../../components/SourceSinkTable";
 import ApiError from "../../components/ApiError";
 import "./Destinations.css";
@@ -63,12 +63,9 @@ const Destinations: React.FunctionComponent = () => {
     data: destinationsList = [],
     error,
     isLoading: isDestinationLoading,
-  } = useQuery<Destination[], Error>(
+  } = useResourceQuery<Destination[], Error>(
     "destinations",
-    () => fetchData<Destination[]>(`${API_URL}/api/destinations`),
-    {
-      refetchInterval: 7000,
-    }
+    () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
   );
 
   // Compute filtered results based on search query

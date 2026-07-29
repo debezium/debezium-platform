@@ -37,7 +37,7 @@ import "./Transforms.css";
 import { useNavigate } from "react-router-dom";
 import { fetchData, Pipeline, TransformData, useDeleteData } from "src/apis";
 import { API_URL } from "@utils/constants";
-import { useQuery } from "react-query";
+import { useResourceQuery } from "src/hooks/useResourceQuery";
 import _, { debounce } from "lodash";
 import { useState } from "react";
 import ApiError from "@components/ApiError";
@@ -86,24 +86,18 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
     data: pipelineList = [],
     error: _pipelineError,
     isLoading: _isPipelineLoading,
-  } = useQuery<Pipeline[], Error>(
+  } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`),
-    {
-      refetchInterval: 7000,
-    }
+    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
   );
 
   const {
     data: transformsList = [],
     error,
     isLoading: isTransformsLoading,
-  } = useQuery<TransformData[], Error>(
+  } = useResourceQuery<TransformData[], Error>(
     "transforms",
-    () => fetchData<TransformData[]>(`${API_URL}/api/transforms`),
-    {
-      refetchInterval: 7000,
-    }
+    () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
   );
 
   // Compute filtered results based on search query

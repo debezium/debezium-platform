@@ -38,7 +38,7 @@ import {
 import { getConnectorTypeName } from "../utils/helpers";
 import ConnectorImage from "./ComponentImage";
 import { API_URL } from "../utils/constants";
-import { useQuery } from "react-query";
+import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../appLayout/AppNotificationContext";
 import { useDeleteData } from "src/apis";
@@ -85,12 +85,9 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
     data: pipelineList = [],
     error: _pipelineError,
     isLoading: _isPipelineLoading,
-  } = useQuery<Pipeline[], Error>(
+  } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`),
-    {
-      refetchInterval: 7000,
-    }
+    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
   );
 
   const { mutate: deleteData } = useDeleteData({

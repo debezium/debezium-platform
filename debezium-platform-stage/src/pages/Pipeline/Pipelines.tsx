@@ -55,7 +55,7 @@ import {
   IAction,
 } from "@patternfly/react-table";
 import _, { debounce } from "lodash";
-import { useQuery } from "react-query";
+import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { API_URL } from "../../utils/constants";
 import { ReactNode, useState } from "react";
 import SourceField from "../../components/SourceField";
@@ -105,12 +105,9 @@ const Pipelines: React.FunctionComponent = () => {
     data: pipelinesList = [],
     error: pipelinesError,
     isLoading: pipelinesLoading,
-  } = useQuery<Pipeline[], Error>(
+  } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`),
-    {
-      refetchInterval: 7000,
-    }
+    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
   );
 
   // Compute filtered results based on search query

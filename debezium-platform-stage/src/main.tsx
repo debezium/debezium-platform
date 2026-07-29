@@ -7,8 +7,14 @@ import './styles/shared.css';
 import { StrictMode, Suspense } from 'react';
 import './i18n';
 
-// Create a client 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchIntervalInBackground: false,
+      refetchOnWindowFocus: true,
+    },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>

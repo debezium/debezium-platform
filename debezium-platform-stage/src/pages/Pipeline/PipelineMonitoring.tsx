@@ -22,6 +22,7 @@ import {
 } from "@patternfly/react-core";
 import { ExclamationCircleIcon, InProgressIcon, OutlinedClockIcon, RedoIcon, SyncAltIcon } from "@patternfly/react-icons";
 import { FC, useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useVisibilityPolling } from "../../hooks/useVisibilityPolling";
 import { useTranslation } from "react-i18next";
 import "./PipelineMonitoring.css";
 
@@ -284,20 +285,13 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName, activeTa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchPanelIds, panels, panelsLoading, pipelineName, selectedTimeRange, activeTabKey]);
 
-  useEffect(() => {
-    if (activeTabKey !== "monitoring") return;
+  const refreshIntervalMs = parseRefreshInterval(selectedRefresh);
 
-    const intervalMs = parseRefreshInterval(selectedRefresh);
-    if (intervalMs === null) {
-      return;
-    }
-
-    const intervalId = setInterval(() => {
-      void fetchAllPanelData();
-    }, intervalMs);
-
-    return () => clearInterval(intervalId);
-  }, [selectedRefresh, fetchAllPanelData, activeTabKey]);
+  useVisibilityPolling(
+    refreshIntervalMs,
+    fetchAllPanelData,
+    activeTabKey === "monitoring"
+  );
 
   const onTimeRangeSelect = (
     _event: React.MouseEvent<Element, MouseEvent> | undefined,

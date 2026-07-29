@@ -54,6 +54,7 @@ import {
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
+import { useResourceQuery } from "../hooks/useResourceQuery";
 import {
   Connection,
   ConnectionConfig,
@@ -449,11 +450,11 @@ const CreateSchemaForm = React.forwardRef<
 
   const catalog: Catalog[] = [...sourceCatalog, ...destinationCatalog];
 
-  const { isLoading: isConnectionsLoading } = useQuery<Connection[], Error>(
+  const { isLoading: isConnectionsLoading } = useResourceQuery<Connection[], Error>(
     "connections",
     () => fetchData<Connection[]>(`${API_URL}/api/connections`),
     {
-      refetchInterval: 70000,
+      profile: "slow",
       onSuccess: (data) => {
         setConnections(
           data.map((conn) => ({
