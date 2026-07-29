@@ -6,6 +6,7 @@
 package io.debezium.platform.domain;
 
 import java.time.Duration;
+import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
@@ -63,6 +64,11 @@ public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule
         if (!exists) {
             throw new BadRequestException("Panel '" + panelId + "' does not exist");
         }
+    }
+
+    public List<AlertRuleEntity> findAllEnabled() {
+        return cb().where("enabled").eq(true)
+                .getResultList();
     }
 
     private void validateForDuration(String forDuration) {
