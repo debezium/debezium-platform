@@ -2,6 +2,9 @@ monitoring:
   panels:
     path: ${MONITORING_PANELS_PATH:}
     refresh-interval: 30s
+alerting:
+  evaluation:
+    interval: ${ALERTING_EVALUATION_INTERVAL:60s}
 conductor:
   watcher:
     enabled: true

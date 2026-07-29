@@ -15,12 +15,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity(name = "alert_state")
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = { "rule_id", "pipeline_id" }))
+@NamedQuery(name = AlertStateEntity.FIND_BY_RULE_ID, query = "SELECT s FROM alert_state s WHERE s.rule.id = :ruleId")
 public class AlertStateEntity {
+
+    public static final String FIND_BY_RULE_ID = "AlertState.findByRuleId";
 
     @Id
     @GeneratedValue
