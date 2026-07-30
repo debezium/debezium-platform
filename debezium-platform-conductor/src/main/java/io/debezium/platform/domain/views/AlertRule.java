@@ -26,7 +26,7 @@ import io.debezium.platform.domain.views.refs.NotificationChannelSummary;
 import io.debezium.platform.validation.ValidationPatterns;
 
 @EntityView(AlertRuleEntity.class)
-@CreatableEntityView
+@CreatableEntityView(excludedEntityAttributes = { "createdAt", "updatedAt" })
 @UpdatableEntityView
 public interface AlertRule extends NamedView {
 
