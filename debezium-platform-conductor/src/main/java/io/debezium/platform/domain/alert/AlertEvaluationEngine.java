@@ -16,8 +16,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import io.debezium.platform.config.PanelConfig;
 import io.debezium.platform.data.dto.PrometheusInstantQueryResponse;
@@ -33,7 +32,7 @@ import io.quarkus.scheduler.Scheduled;
 @ApplicationScoped
 public class AlertEvaluationEngine {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlertEvaluationEngine.class);
+    private static final Logger LOGGER = Logger.getLogger(AlertEvaluationEngine.class);
 
     private final AlertRuleService ruleService;
     private final PanelConfigLoader panelConfigLoader;
@@ -59,7 +58,7 @@ public class AlertEvaluationEngine {
             return;
         }
 
-        LOGGER.debug("Starting evaluation cycle for {} enabled rule(s)", rules.size());
+        LOGGER.debugv("Starting evaluation cycle for {0} enabled rule(s)", rules.size());
         Instant now = Instant.now();
 
         for (AlertRuleEntity rule : rules) {
@@ -67,7 +66,7 @@ public class AlertEvaluationEngine {
                 evaluateRule(rule, now);
             }
             catch (Exception e) {
-                LOGGER.error("Failed to evaluate rule '{}'", rule.getName(), e);
+                LOGGER.errorv(e, "Failed to evaluate rule ''{0}''", rule.getName());
             }
         }
     }
@@ -79,7 +78,7 @@ public class AlertEvaluationEngine {
                 .orElse(null);
 
         if (panel == null) {
-            LOGGER.warn("Panel '{}' not found for rule '{}', skipping", rule.getPanelId(), rule.getName());
+            LOGGER.warnv("Panel ''{0}'' not found for rule ''{1}'', skipping", rule.getPanelId(), rule.getName());
             return;
         }
 
@@ -138,7 +137,7 @@ public class AlertEvaluationEngine {
                 results.put(pipelineId, value);
             }
             catch (NumberFormatException e) {
-                LOGGER.warn("Skipping non-numeric value for pipeline '{}': {}", pipelineId, result.value());
+                LOGGER.warnv("Skipping non-numeric value for pipeline ''{0}'': {1}", pipelineId, result.value());
             }
         }
         return results;

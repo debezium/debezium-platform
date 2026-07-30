@@ -514,6 +514,11 @@
             <artifactId>quarkus-scheduler</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-mailer</artifactId>
+        </dependency>
+
         <!-- Flyway -->
         <dependency>
             <groupId>io.quarkus</groupId>

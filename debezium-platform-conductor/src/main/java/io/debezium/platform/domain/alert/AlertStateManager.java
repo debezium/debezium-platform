@@ -13,8 +13,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import io.debezium.platform.data.model.AlertEventEntity;
 import io.debezium.platform.data.model.AlertRuleEntity;
@@ -24,7 +23,7 @@ import io.debezium.platform.data.model.AlertStateValue;
 @ApplicationScoped
 public class AlertStateManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlertStateManager.class);
+    private static final Logger LOGGER = Logger.getLogger(AlertStateManager.class);
 
     private final EntityManager em;
     private final NotificationDispatcher dispatcher;
@@ -99,7 +98,7 @@ public class AlertStateManager {
                     em.merge(state);
                 }
             }
-            default -> LOGGER.warn("Unexpected state '{}' for rule '{}', pipeline '{}'",
+            default -> LOGGER.warnv("Unexpected state ''{0}'' for rule ''{1}'', pipeline ''{2}''",
                     state.getState(), rule.getName(), pipelineId);
         }
     }
