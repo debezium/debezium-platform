@@ -21,7 +21,7 @@ import io.debezium.platform.data.model.NotificationChannelEntity;
 import io.debezium.platform.domain.views.base.NamedView;
 
 @EntityView(NotificationChannelEntity.class)
-@CreatableEntityView
+@CreatableEntityView(excludedEntityAttributes = { "createdAt", "updatedAt" })
 @UpdatableEntityView
 public interface NotificationChannel extends NamedView {
 
