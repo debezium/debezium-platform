@@ -34,7 +34,6 @@ import org.jboss.logging.Logger;
 
 import io.debezium.platform.api.dto.NotificationChannelRequest;
 import io.debezium.platform.api.dto.NotificationChannelResponse;
-import io.debezium.platform.api.dto.TestNotificationResponse;
 import io.debezium.platform.api.mapper.NotificationChannelMapper;
 import io.debezium.platform.domain.NotificationChannelService;
 import io.debezium.platform.error.NotFoundException;
@@ -106,8 +105,7 @@ public class NotificationChannelResource {
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
-    @Operation(summary = "Sends a test notification through the channel")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = TestNotificationResponse.class, required = true)))
+    @Operation(hidden = true)
     @POST
     @Path("/{id}/test")
     public Response test(@PathParam("id") Long id) {
