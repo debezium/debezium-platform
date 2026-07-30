@@ -22,10 +22,19 @@ public class DebeziumMetricsEndpoint {
 
     private final HttpServer server;
     private final String commonLabels;
+    private volatile Double sourceLagOverride;
 
     private DebeziumMetricsEndpoint(HttpServer server, String pipelineName) {
         this.server = server;
         this.commonLabels = String.format(LABELS_FMT, pipelineName);
+    }
+
+    public void setSourceLag(double value) {
+        this.sourceLagOverride = value;
+    }
+
+    public void clearSourceLag() {
+        this.sourceLagOverride = null;
     }
 
     public static DebeziumMetricsEndpoint start(String pipelineName) throws IOException {
@@ -40,6 +49,28 @@ public class DebeziumMetricsEndpoint {
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(body);
             }
+        });
+
+        server.createContext("/control/source-lag", exchange -> {
+            if ("PUT".equalsIgnoreCase(exchange.getRequestMethod())) {
+                String query = exchange.getRequestURI().getQuery();
+                if (query != null && query.startsWith("value=")) {
+                    double value = Double.parseDouble(query.substring(6));
+                    endpoint.setSourceLag(value);
+                    exchange.sendResponseHeaders(204, -1);
+                }
+                else {
+                    exchange.sendResponseHeaders(400, -1);
+                }
+            }
+            else if ("DELETE".equalsIgnoreCase(exchange.getRequestMethod())) {
+                endpoint.clearSourceLag();
+                exchange.sendResponseHeaders(204, -1);
+            }
+            else {
+                exchange.sendResponseHeaders(405, -1);
+            }
+            exchange.close();
         });
 
         server.start();
@@ -94,12 +125,14 @@ public class DebeziumMetricsEndpoint {
         appendCounter(sb, "debezium_transaction_committed_count_total", streamingLabels(null), 3000 + now % 300);
 
         // --- Source lag (gauge, seconds) ---
-        appendHeader(sb, "debezium_source_lag", "gauge", "Lag between source database and Debezium.");
-        appendGauge(sb, "debezium_source_lag", streamingLabels(null), 0.5 + sinWave * 0.3 + (now % 10) * 0.02);
+        Double lagOverride = sourceLagOverride;
+        double lagValue = lagOverride != null ? lagOverride : 0.5 + sinWave * 0.3 + (now % 10) * 0.02;
+        appendHeader(sb, "debezium_source_lag_seconds", "gauge", "Lag between source database and Debezium.");
+        appendGauge(sb, "debezium_source_lag_seconds", streamingLabels(null), lagValue);
 
         // --- Time since last event (gauge, seconds) ---
-        appendHeader(sb, "debezium_event_time_since_last", "gauge", "Elapsed time since the last change event.");
-        appendGauge(sb, "debezium_event_time_since_last", streamingLabels(null), 0.1 + Math.abs(sinWave) * 2.0);
+        appendHeader(sb, "debezium_event_time_since_last_seconds", "gauge", "Elapsed time since the last change event.");
+        appendGauge(sb, "debezium_event_time_since_last_seconds", streamingLabels(null), 0.1 + Math.abs(sinWave) * 2.0);
 
         // --- Connection status (gauge with state label) ---
         appendHeader(sb, "debezium_connection_status", "gauge", "Database connection status.");
