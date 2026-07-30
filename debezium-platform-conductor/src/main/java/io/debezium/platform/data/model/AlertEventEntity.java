@@ -15,10 +15,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.PrePersist;
 
 @Entity(name = "alert_event")
+@NamedQuery(name = AlertEventEntity.DELETE_RESOLVED_OLDER_THAN, query = "DELETE FROM alert_event e WHERE e.resolvedAt IS NOT NULL AND e.resolvedAt < :cutoff")
 public class AlertEventEntity {
+
+    public static final String DELETE_RESOLVED_OLDER_THAN = "AlertEvent.deleteResolvedOlderThan";
 
     @Id
     @GeneratedValue

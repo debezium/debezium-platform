@@ -5,6 +5,10 @@ monitoring:
 alerting:
   evaluation:
     interval: ${ALERTING_EVALUATION_INTERVAL:60s}
+  history:
+    retention: ${ALERTING_HISTORY_RETENTION:30d}
+    cleanup:
+      interval: ${ALERTING_HISTORY_CLEANUP_INTERVAL:24h}
 conductor:
   watcher:
     enabled: true
