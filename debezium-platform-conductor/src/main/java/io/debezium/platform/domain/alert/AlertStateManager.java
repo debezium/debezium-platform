@@ -27,10 +27,13 @@ public class AlertStateManager {
 
     private final EntityManager em;
     private final NotificationDispatcher dispatcher;
+    private final AlertTransitionEvaluator transitionEvaluator;
 
-    public AlertStateManager(EntityManager em, NotificationDispatcher dispatcher) {
+    public AlertStateManager(EntityManager em, NotificationDispatcher dispatcher,
+                             AlertTransitionEvaluator transitionEvaluator) {
         this.em = em;
         this.dispatcher = dispatcher;
+        this.transitionEvaluator = transitionEvaluator;
     }
 
     public List<AlertStateEntity> findByRuleId(Long ruleId) {
@@ -55,52 +58,10 @@ public class AlertStateManager {
         state.setValue(value);
         state.setLastEvaluatedAt(now);
 
-        switch (state.getState()) {
-            case OK -> {
-                if (conditionMet) {
-                    if (forDuration.isZero()) {
-                        state.setState(AlertStateValue.FIRING);
-                        state.setFiredAt(now);
-                        em.persist(state);
-                        fireAlert(rule, state, now);
-                    }
-                    else {
-                        state.setState(AlertStateValue.PENDING);
-                        state.setPendingSince(now);
-                        em.persist(state);
-                    }
-                }
-                else {
-                    em.persist(state);
-                }
-            }
-            case PENDING -> {
-                if (!conditionMet) {
-                    state.setState(AlertStateValue.OK);
-                    state.setPendingSince(null);
-                    em.persist(state);
-                }
-                else if (Duration.between(state.getPendingSince(), now).compareTo(forDuration) >= 0) {
-                    state.setState(AlertStateValue.FIRING);
-                    state.setFiredAt(now);
-                    em.persist(state);
-                    fireAlert(rule, state, now);
-                }
-                else {
-                    em.persist(state);
-                }
-            }
-            case FIRING -> {
-                if (!conditionMet) {
-                    resolve(rule, state, now);
-                }
-                else {
-                    em.merge(state);
-                }
-            }
-            default -> LOGGER.warnv("Unexpected state ''{0}'' for rule ''{1}'', pipeline ''{2}''",
-                    state.getState(), rule.getName(), pipelineId);
-        }
+        StateTransition transition = transitionEvaluator.evaluate(
+                state.getState(), conditionMet, forDuration, state.getPendingSince(), now);
+
+        applyTransition(rule, state, transition, now);
     }
 
     @Transactional
@@ -117,6 +78,29 @@ public class AlertStateManager {
         state.setPendingSince(null);
         state.setActiveEvent(null);
         em.merge(state);
+    }
+
+    private void applyTransition(AlertRuleEntity rule, AlertStateEntity state,
+                                 StateTransition transition, Instant now) {
+        state.setState(transition.newState());
+        state.setPendingSince(transition.pendingSince());
+        state.setFiredAt(transition.firedAt());
+
+        switch (transition.action()) {
+            case FIRE -> {
+                em.persist(state);
+                fireAlert(rule, state, now);
+            }
+            case RESOLVE -> resolve(rule, state, now);
+            case NONE -> {
+                if (state.getId() == null) {
+                    em.persist(state);
+                }
+                else {
+                    em.merge(state);
+                }
+            }
+        }
     }
 
     private void fireAlert(AlertRuleEntity rule, AlertStateEntity state, Instant now) {
