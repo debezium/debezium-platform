@@ -6,11 +6,18 @@
 package io.debezium.platform.environment.host.provisioning;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -50,6 +57,12 @@ public class AnsibleHostProvisioner implements HostProvisioner {
     private static final int SUCCESS_EXIT_CODE = 0;
     private static final long DRAINER_JOIN_TIMEOUT_SECONDS = 5;
     private static final String TOKEN_REDACTION_MARKER = "[REDACTED]";
+
+    /** Classpath resource name for the bundled provisioning playbook. */
+    static final String SETUP_RESOURCE = "ansible/host-setup.yml";
+
+    /** Classpath resource name for the bundled teardown playbook. */
+    static final String TEARDOWN_RESOURCE = "ansible/host-teardown.yml";
 
     private final Logger logger;
     private final HostConfigGroup hostConfig;
@@ -107,10 +120,11 @@ public class AnsibleHostProvisioner implements HostProvisioner {
      * @return the command array for ProcessBuilder
      */
     List<String> buildProvisionCommand(String sshAlias, String agentToken) {
+        String playbook = resolvePlaybookPath(hostConfig.ansiblePlaybookPath(), SETUP_RESOURCE);
         String adHocInventory = sshAlias + AD_HOC_INVENTORY_SUFFIX;
         String tokenVar = AGENT_TOKEN_VAR_PREFIX + agentToken;
         String sshArgs = SSH_CONFIG_FLAG + " " + resolveSshConfigPath();
-        return List.of(ANSIBLE_PLAYBOOK_BINARY, hostConfig.ansiblePlaybookPath(),
+        return List.of(ANSIBLE_PLAYBOOK_BINARY, playbook,
                 INVENTORY_FLAG, adHocInventory,
                 SSH_EXTRA_ARGS_FLAG, sshArgs,
                 EXTRA_VARS_FLAG, tokenVar);
@@ -123,9 +137,10 @@ public class AnsibleHostProvisioner implements HostProvisioner {
      * @return the command array for ProcessBuilder
      */
     List<String> buildDeprovisionCommand(String sshAlias) {
+        String playbook = resolvePlaybookPath(hostConfig.ansibleTeardownPath(), TEARDOWN_RESOURCE);
         String adHocInventory = sshAlias + AD_HOC_INVENTORY_SUFFIX;
         String sshArgs = SSH_CONFIG_FLAG + " " + resolveSshConfigPath();
-        return List.of(ANSIBLE_PLAYBOOK_BINARY, hostConfig.ansibleTeardownPath(),
+        return List.of(ANSIBLE_PLAYBOOK_BINARY, playbook,
                 INVENTORY_FLAG, adHocInventory,
                 SSH_EXTRA_ARGS_FLAG, sshArgs);
     }
@@ -200,6 +215,80 @@ public class AnsibleHostProvisioner implements HostProvisioner {
         return new ProcessBuilder(command)
                 .redirectErrorStream(true)
                 .start();
+    }
+
+    /**
+     * Resolves the filesystem path to an Ansible playbook.
+     *
+     * <p>Resolution order:
+     * <ol>
+     *   <li>If the user explicitly configured a path <em>and</em> that file
+     *       exists on disk, use it.</li>
+     *   <li>Otherwise, load the bundled playbook from the classpath
+     *       ({@code src/main/resources/ansible/}). In dev mode the resource
+     *       is already a real file; in a packaged JAR it is extracted to a
+     *       temporary file so that the external {@code ansible-playbook}
+     *       process can read it.</li>
+     * </ol>
+     *
+     * @param configuredPath  the user-configured path ({@code Optional.empty()}
+     *                        when not set)
+     * @param classpathResource  the classpath resource name to fall back to
+     *                           (e.g. {@code "ansible/host-setup.yml"})
+     * @return an absolute filesystem path to the playbook
+     * @throws IllegalStateException if the playbook cannot be found anywhere
+     */
+    String resolvePlaybookPath(Optional<String> configuredPath, String classpathResource) {
+        if (configuredPath.isPresent()) {
+            Path userPath = Path.of(configuredPath.get());
+            if (Files.exists(userPath)) {
+                logger.infov("Using user-configured playbook: {0}", userPath.toAbsolutePath());
+                return userPath.toAbsolutePath().toString();
+            }
+            logger.warnv("Configured playbook path does not exist: {0} — falling back to classpath resource",
+                    configuredPath.get());
+        }
+
+        URL resourceUrl = Thread.currentThread().getContextClassLoader().getResource(classpathResource);
+        if (resourceUrl != null) {
+            try {
+                if ("file".equals(resourceUrl.getProtocol())) {
+                    String resolvedPath = Path.of(resourceUrl.toURI()).toAbsolutePath().toString();
+                    logger.infov("Using classpath playbook: {0}", resolvedPath);
+                    return resolvedPath;
+                }
+                else {
+                    String extractedPath = extractResourceToTempFile(classpathResource);
+                    logger.infov("Extracted classpath playbook to temp file: {0}", extractedPath);
+                    return extractedPath;
+                }
+            }
+            catch (URISyntaxException | IOException e) {
+                throw new IllegalStateException(
+                        "Failed to resolve classpath playbook: " + classpathResource, e);
+            }
+        }
+
+        throw new IllegalStateException(
+                "Ansible playbook not found — neither configured nor available on classpath: " + classpathResource);
+    }
+
+    /**
+     * Extracts a classpath resource to a temporary file, returning its
+     * absolute path. The temp file is marked for deletion on JVM exit.
+     */
+    private String extractResourceToTempFile(String resourceName) throws IOException {
+        String prefix = resourceName.replace("/", "_").replace(".yml", "");
+        Path tempFile = Files.createTempFile(prefix + "-", ".yml");
+        tempFile.toFile().deleteOnExit();
+
+        try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName)) {
+            if (is == null) {
+                throw new FileNotFoundException("Resource not found in classpath: " + resourceName);
+            }
+            Files.copy(is, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        }
+        return tempFile.toAbsolutePath().toString();
     }
 
     /**

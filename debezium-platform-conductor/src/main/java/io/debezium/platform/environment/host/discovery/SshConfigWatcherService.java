@@ -198,7 +198,7 @@ public class SshConfigWatcherService {
      * <p>The {@code delayed = "5m"} prevents a race condition with the initial
      * reconciliation that runs in {@link #onStart}.
      */
-    @Scheduled(every = "5m", delayed = "5m")
+    @Scheduled(every = "30s", delayed = "30s")
     void scheduledReconciliation() {
         if (!isHostMode()) {
             return;
@@ -284,7 +284,7 @@ public class SshConfigWatcherService {
      * </ol>
      */
     private synchronized void reconcile() {
-        logger.infov("Reconciling hosts from SSH config at {0}", sshConfigPath);
+        logger.debugv("Reconciling hosts from SSH config at {0}", sshConfigPath);
 
         List<SshHostEntry> fileHosts;
         try {
@@ -314,8 +314,14 @@ public class SshConfigWatcherService {
             provisioningService.provision(entry.alias());
         });
 
-        logger.infov("Reconciliation complete: {0} added, {1} removed, {2} updated",
-                plan.toAdd().size(), plan.toRemove().size(), plan.toUpdate().size());
+        boolean anyChanges = !plan.toAdd().isEmpty() || !plan.toRemove().isEmpty() || !plan.toUpdate().isEmpty();
+        if (anyChanges) {
+            logger.infov("Reconciliation complete: {0} added, {1} removed, {2} updated",
+                    plan.toAdd().size(), plan.toRemove().size(), plan.toUpdate().size());
+        }
+        else {
+            logger.debugv("Reconciliation complete: no changes detected");
+        }
     }
 
     /**

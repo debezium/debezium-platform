@@ -137,11 +137,15 @@ public class HostProvisioningService {
         ProvisionResult result = provisioner.provision(sshAlias, agentToken);
 
         switch (result) {
-            case ProvisionResult.Success success ->
+            case ProvisionResult.Success success -> {
                 hostStatusService.markReady(sshAlias, agentToken);
+                logger.infov("Provisioning completed successfully for host {0}", sshAlias);
+            }
 
-            case ProvisionResult.Failure failure ->
+            case ProvisionResult.Failure failure -> {
                 hostStatusService.markFailed(sshAlias, failure.report());
+                logger.errorv("Provisioning failed for host {0}: {1}", sshAlias, failure.report());
+            }
         }
     }
 

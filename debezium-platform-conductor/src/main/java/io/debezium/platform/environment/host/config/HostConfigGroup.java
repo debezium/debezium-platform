@@ -5,6 +5,8 @@
  */
 package io.debezium.platform.environment.host.config;
 
+import java.util.Optional;
+
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
@@ -17,8 +19,8 @@ import io.smallrye.config.WithName;
  * <p>Properties are mapped under the {@code platform.host} prefix:
  * <pre>
  *   platform.host.ssh-config-path=~/.ssh/config
- *   platform.host.ansible-playbook-path=/opt/debezium/ansible/host-setup.yml
- *   platform.host.ansible-teardown-path=/opt/debezium/ansible/host-teardown.yml
+ *   platform.host.ansible-playbook-path=/custom/path/to/host-setup.yml  (optional)
+ *   platform.host.ansible-teardown-path=/custom/path/to/host-teardown.yml  (optional)
  *   platform.host.ansible-timeout-minutes=30
  *   platform.host.executor-pool-size=4
  *   platform.host.shutdown-timeout-seconds=5
@@ -33,12 +35,10 @@ public interface HostConfigGroup {
     String sshConfigPath();
 
     @WithName("ansible-playbook-path")
-    @WithDefault("/opt/debezium/ansible/host-setup.yml")
-    String ansiblePlaybookPath();
+    Optional<String> ansiblePlaybookPath();
 
     @WithName("ansible-teardown-path")
-    @WithDefault("/opt/debezium/ansible/host-teardown.yml")
-    String ansibleTeardownPath();
+    Optional<String> ansibleTeardownPath();
 
     @WithName("ansible-timeout-minutes")
     @WithDefault("30")

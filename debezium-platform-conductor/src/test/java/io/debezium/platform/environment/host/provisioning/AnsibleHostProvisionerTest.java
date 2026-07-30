@@ -6,6 +6,7 @@
 package io.debezium.platform.environment.host.provisioning;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -17,12 +18,16 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.jboss.logging.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.debezium.platform.environment.host.provisioning.HostProvisioner.ProvisionResult;
@@ -34,6 +39,7 @@ import io.debezium.platform.environment.host.provisioning.HostProvisioner.Provis
  * seam ({@code launchProcess()}) is overridden via Mockito spy. This verifies:
  * <ul>
  *   <li>Command construction correctness (trailing comma, extra-vars, SSH args)</li>
+ *   <li>Playbook path resolution (user-configured vs. classpath fallback)</li>
  *   <li>Bearer token redaction from captured Ansible output</li>
  *   <li>ProcessBuilder.start() IOException handling</li>
  *   <li>Timeout handling via destroyForcibly()</li>
@@ -49,8 +55,8 @@ class AnsibleHostProvisionerTest {
         Logger logger = Logger.getLogger(AnsibleHostProvisionerTest.class);
 
         HostConfigGroup hostConfig = mock(HostConfigGroup.class);
-        when(hostConfig.ansiblePlaybookPath()).thenReturn("/opt/debezium/ansible/host-setup.yml");
-        when(hostConfig.ansibleTeardownPath()).thenReturn("/opt/debezium/ansible/host-teardown.yml");
+        when(hostConfig.ansiblePlaybookPath()).thenReturn(Optional.empty());
+        when(hostConfig.ansibleTeardownPath()).thenReturn(Optional.empty());
         when(hostConfig.ansibleTimeoutMinutes()).thenReturn(30);
         when(hostConfig.sshConfigPath()).thenReturn("/etc/ssh/test-config");
 
@@ -61,12 +67,15 @@ class AnsibleHostProvisionerTest {
     void buildProvisionCommandProducesCorrectArray() {
         List<String> command = provisioner.buildProvisionCommand("db-server-1", "test-token-abc");
 
-        assertThat(command).containsExactly(
-                "ansible-playbook",
-                "/opt/debezium/ansible/host-setup.yml",
-                "-i", "db-server-1,",
-                "--ssh-extra-args", "-F /etc/ssh/test-config",
-                "--extra-vars", "agent_token=test-token-abc");
+        assertThat(command).hasSize(8);
+        assertThat(command.get(0)).isEqualTo("ansible-playbook");
+        assertThat(command.get(1)).endsWith("host-setup.yml");
+        assertThat(command.get(2)).isEqualTo("-i");
+        assertThat(command.get(3)).isEqualTo("db-server-1,");
+        assertThat(command.get(4)).isEqualTo("--ssh-extra-args");
+        assertThat(command.get(5)).isEqualTo("-F /etc/ssh/test-config");
+        assertThat(command.get(6)).isEqualTo("--extra-vars");
+        assertThat(command.get(7)).isEqualTo("agent_token=test-token-abc");
     }
 
     @Test
@@ -80,11 +89,13 @@ class AnsibleHostProvisionerTest {
     void buildDeprovisionCommandProducesCorrectArray() {
         List<String> command = provisioner.buildDeprovisionCommand("db-server-2");
 
-        assertThat(command).containsExactly(
-                "ansible-playbook",
-                "/opt/debezium/ansible/host-teardown.yml",
-                "-i", "db-server-2,",
-                "--ssh-extra-args", "-F /etc/ssh/test-config");
+        assertThat(command).hasSize(6);
+        assertThat(command.get(0)).isEqualTo("ansible-playbook");
+        assertThat(command.get(1)).endsWith("host-teardown.yml");
+        assertThat(command.get(2)).isEqualTo("-i");
+        assertThat(command.get(3)).isEqualTo("db-server-2,");
+        assertThat(command.get(4)).isEqualTo("--ssh-extra-args");
+        assertThat(command.get(5)).isEqualTo("-F /etc/ssh/test-config");
     }
 
     @Test
@@ -162,6 +173,57 @@ class AnsibleHostProvisionerTest {
         ProvisionResult result = provisioner.deprovision("db-server-1");
 
         assertThat(result).isInstanceOf(ProvisionResult.Success.class);
+    }
+
+    // --- resolvePlaybookPath tests ---
+
+    @Test
+    void resolvePlaybookPathUsesCustomPathWhenFileExists(@TempDir Path tempDir) throws Exception {
+        Path customPlaybook = tempDir.resolve("my-custom-setup.yml");
+        Files.writeString(customPlaybook, "---\n- hosts: all\n");
+
+        String resolved = provisioner.resolvePlaybookPath(
+                Optional.of(customPlaybook.toString()),
+                AnsibleHostProvisioner.SETUP_RESOURCE);
+
+        assertThat(resolved).isEqualTo(customPlaybook.toAbsolutePath().toString());
+    }
+
+    @Test
+    void resolvePlaybookPathFallsBackToClasspathWhenCustomPathMissing() {
+        String resolved = provisioner.resolvePlaybookPath(
+                Optional.of("/nonexistent/path/playbook.yml"),
+                AnsibleHostProvisioner.SETUP_RESOURCE);
+
+        // Should fall back to the classpath resource, which ends with the resource name
+        assertThat(resolved).endsWith("host-setup.yml");
+    }
+
+    @Test
+    void resolvePlaybookPathFallsBackToClasspathWhenOptionalEmpty() {
+        String resolved = provisioner.resolvePlaybookPath(
+                Optional.empty(),
+                AnsibleHostProvisioner.SETUP_RESOURCE);
+
+        assertThat(resolved).endsWith("host-setup.yml");
+    }
+
+    @Test
+    void resolvePlaybookPathThrowsWhenNeitherConfiguredNorOnClasspath() {
+        assertThatThrownBy(() -> provisioner.resolvePlaybookPath(
+                Optional.empty(),
+                "nonexistent/playbook.yml"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("neither configured nor available on classpath");
+    }
+
+    @Test
+    void resolvePlaybookPathResolvesToClasspathForTeardown() {
+        String resolved = provisioner.resolvePlaybookPath(
+                Optional.empty(),
+                AnsibleHostProvisioner.TEARDOWN_RESOURCE);
+
+        assertThat(resolved).endsWith("host-teardown.yml");
     }
 
     private Process createMockProcess(String output, int exitCode) throws Exception {
