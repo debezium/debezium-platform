@@ -32,7 +32,7 @@ public class PrometheusTestResource implements QuarkusTestResourceLifecycleManag
     private static final String PIPELINE_NAME = "test-pipeline";
 
     private GenericContainer<?> prometheus;
-    private DebeziumMetricsEndpoint metricsEndpoint;
+    protected DebeziumMetricsEndpoint metricsEndpoint;
 
     @Override
     public Map<String, String> start() {

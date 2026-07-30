@@ -5,7 +5,8 @@
  */
 package io.debezium.platform.domain;
 
-import static io.debezium.platform.environment.notifications.Notifier.*;
+import static io.debezium.platform.environment.notifications.Notifier.CONFIG_RECIPIENTS;
+import static io.debezium.platform.environment.notifications.Notifier.CONFIG_URL;
 
 import java.time.Instant;
 import java.util.List;
