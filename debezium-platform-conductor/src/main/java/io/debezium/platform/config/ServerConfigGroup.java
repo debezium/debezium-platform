@@ -5,8 +5,11 @@
  */
 package io.debezium.platform.config;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ServerConfigGroup {
     Optional<String> image();
+
+    Optional<List<String>> imagePullSecrets();
 }

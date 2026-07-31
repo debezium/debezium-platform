@@ -19,6 +19,11 @@ spec:
       labels:
         app.kubernetes.io/name: stage
     spec:
+{{- $pullSecrets := coalesce .Values.stage.imagePullSecrets .Values.imagePullSecrets }}
+{{- if $pullSecrets }}
+      imagePullSecrets:
+{{ toYaml $pullSecrets | indent 8 }}
+{{- end }}
       containers:
         - image: {{ .Values.stage.image }}
           imagePullPolicy: {{ .Values.stage.imagePullPolicy }}

@@ -38,6 +38,7 @@ import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.domain.views.flat.SourceFlat;
 import io.debezium.platform.environment.operator.configuration.TableNameResolver;
 import io.debezium.platform.environment.operator.metrics.OpenTelemetryExporterStrategy;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -260,6 +261,53 @@ public class PipelineMapperTest {
         assertThat(result.getSpec().getTransforms().get(0).getType())
                 .isEqualTo("io.debezium.transforms.ExtractNewRecordState");
         assertThat(result.getSpec().getPredicates()).isEmpty();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#1851")
+    public void testMapper_ShouldSetPodImagePullSecretsWhenConfigured() {
+        when(pipelineConfigGroup.server().imagePullSecrets()).thenReturn(Optional.of(List.of("regcred", "srv")));
+        pipelineMapper = createMapper();
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getRuntime().getTemplates().getPod().getImagePullSecrets())
+                .extracting(LocalObjectReference::getName)
+                .containsExactly("regcred", "srv");
+    }
+
+    @Test
+    @FixFor("debezium/dbz#1851")
+    public void testMapper_ShouldNotSetPodImagePullSecretsWhenEmpty() {
+        when(pipelineConfigGroup.server().imagePullSecrets()).thenReturn(Optional.of(List.of()));
+        pipelineMapper = createMapper();
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getRuntime().getTemplates().getPod().getImagePullSecrets()).isEmpty();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#1851")
+    public void testMapper_ShouldNotSetPodImagePullSecretsWhenNotConfigured() {
+        when(pipelineConfigGroup.server().imagePullSecrets()).thenReturn(Optional.empty());
+        pipelineMapper = createMapper();
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getRuntime().getTemplates().getPod().getImagePullSecrets()).isEmpty();
     }
 
     private PipelineMapper createMapper() {

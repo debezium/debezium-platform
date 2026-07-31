@@ -121,3 +121,43 @@ tests:
       # Init containers should not exist
       - isNull:
           path: spec.template.spec.initContainers
+
+  - it: should inject registry credentials env vars when existingSecret is configured
+    template: conductor-deployment.yaml
+    set:
+      conductor.descriptors.official.auth.existingSecret: oras-creds
+    asserts:
+      - isKind:
+          of: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_DESCRIPTORS_REGISTRY_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: oras-creds
+                key: username
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_DESCRIPTORS_REGISTRY_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: oras-creds
+                key: password
+
+  - it: should not inject registry credentials env vars when existingSecret is empty
+    template: conductor-deployment.yaml
+    set:
+      conductor.descriptors.official.auth.existingSecret: ""
+    asserts:
+      - isKind:
+          of: Deployment
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_DESCRIPTORS_REGISTRY_USERNAME
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_DESCRIPTORS_REGISTRY_PASSWORD

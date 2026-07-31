@@ -10,6 +10,20 @@
                     "type": "string",
                     "enum": ["IfNotPresent", "Always", "Never"]
                 },
+                "imagePullSecrets": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Replaces the global imagePullSecrets for the conductor pod. Leave empty to inherit it",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": ["name"]
+                    }
+                },
                 "offset": {
                     "properties": {
                         "existingConfigMap": {
@@ -48,6 +62,17 @@
                                     "type": "string",
                                     "default": "/opt/descriptors",
                                     "description": "Path where descriptors will be downloaded inside the container"
+                                },
+                                "auth": {
+                                    "type": "object",
+                                    "properties": {
+                                        "existingSecret": {
+                                            "type": "string",
+                                            "default": "",
+                                            "description": "Name of an existing K8s Secret containing 'username' and 'password' keys for the descriptors registry"
+                                        }
+                                    },
+                                    "required": ["existingSecret"]
                                 }
                             },
                             "required": ["enabled", "registry", "image", "tag", "mountPath"]
@@ -226,6 +251,20 @@
                 "imagePullPolicy": {
                     "type": "string",
                     "enum": ["IfNotPresent", "Always", "Never"]
+                },
+                "imagePullSecrets": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Replaces the global imagePullSecrets for the stage pod. Leave empty to inherit it",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": ["name"]
+                    }
                 }
             },
             "type": "object"
@@ -236,6 +275,20 @@
                     "type": "string",
                     "default": "",
                     "description": "Image for Debezium Server instances created by pipelines. If empty, the operator's ServerImageProvider determines the image"
+                },
+                "imagePullSecrets": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Replaces the global imagePullSecrets for Debezium Server pods created by pipelines. Leave empty to inherit it",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": ["name"]
+                    }
                 }
             },
             "type": "object"
@@ -597,6 +650,20 @@
             }
           },
           "required": ["enabled", "tls"]
+        },
+        "imagePullSecrets": {
+            "type": "array",
+            "default": [],
+            "description": "Global list of image pull secrets, applied to every pod created by this chart. A per-component imagePullSecrets replaces this list, it is not merged with it",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": ["name"]
+            }
         }
     },
     "type": "object"
