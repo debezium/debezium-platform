@@ -5,6 +5,8 @@
  */
 package io.debezium.platform.environment.host.provisioning;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -130,21 +132,26 @@ public class HostProvisioningService {
      */
     private void executeProvisioningPlaybook(String sshAlias) {
         String agentToken = UUID.randomUUID().toString();
+        Instant provisioningStarted = Instant.now();
 
         hostStatusService.markProvisioning(sshAlias);
         logger.infov("Starting provisioning for host {0}", sshAlias);
 
         ProvisionResult result = provisioner.provision(sshAlias, agentToken);
 
+        Duration elapsed = Duration.between(provisioningStarted, Instant.now());
+
         switch (result) {
             case ProvisionResult.Success success -> {
                 hostStatusService.markReady(sshAlias, agentToken);
-                logger.infov("Provisioning completed successfully for host {0}", sshAlias);
+                logger.infov("Provisioning completed successfully for host {0} in {1}",
+                        sshAlias, formatDuration(elapsed));
             }
 
             case ProvisionResult.Failure failure -> {
                 hostStatusService.markFailed(sshAlias, failure.report());
-                logger.errorv("Provisioning failed for host {0}: {1}", sshAlias, failure.report());
+                logger.errorv("Provisioning failed for host {0} after {1}: {2}",
+                        sshAlias, formatDuration(elapsed), failure.report());
             }
         }
     }
@@ -155,17 +162,27 @@ public class HostProvisioningService {
      * marking the host as REMOVED via {@code HostStatusService.markHostRemoved()}.
      */
     private void executeDeprovisioningPlaybook(String sshAlias) {
+        Instant deprovisioningStarted = Instant.now();
         logger.infov("Starting deprovisioning for host {0}", sshAlias);
 
         ProvisionResult result = provisioner.deprovision(sshAlias);
 
+        Duration elapsed = Duration.between(deprovisioningStarted, Instant.now());
+
         switch (result) {
             case ProvisionResult.Success ignored ->
-                logger.infov("Host {0} deprovisioned successfully", sshAlias);
+                logger.infov("Host {0} deprovisioned successfully in {1}",
+                        sshAlias, formatDuration(elapsed));
 
             case ProvisionResult.Failure failure ->
-                logger.errorv("Deprovisioning failed for host {0}: {1}",
-                        sshAlias, failure.report());
+                logger.errorv("Deprovisioning failed for host {0} after {1}: {2}",
+                        sshAlias, formatDuration(elapsed), failure.report());
         }
+    }
+
+    private static String formatDuration(Duration d) {
+        long minutes = d.toMinutes();
+        long seconds = d.minusMinutes(minutes).getSeconds();
+        return minutes > 0 ? minutes + "m " + seconds + "s" : seconds + "s";
     }
 }

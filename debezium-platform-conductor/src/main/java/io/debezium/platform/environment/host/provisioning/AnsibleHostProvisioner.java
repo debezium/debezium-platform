@@ -19,7 +19,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -78,14 +78,14 @@ public class AnsibleHostProvisioner implements HostProvisioner {
     @Override
     public ProvisionResult provision(String sshAlias, String agentToken) {
         List<String> command = buildProvisionCommand(sshAlias, agentToken);
-        logger.infov("Executing Ansible provisioning command for host {0}", sshAlias);
+        logger.debugv("Executing Ansible provisioning command for host {0}", sshAlias);
         return runAnsibleProcess(command, agentToken);
     }
 
     @Override
     public ProvisionResult deprovision(String sshAlias) {
         List<String> command = buildDeprovisionCommand(sshAlias);
-        logger.infov("Executing Ansible deprovisioning command for host {0}", sshAlias);
+        logger.debugv("Executing Ansible deprovisioning command for host {0}", sshAlias);
         return runAnsibleProcess(command, null);
     }
 
@@ -166,7 +166,15 @@ public class AnsibleHostProvisioner implements HostProvisioner {
         try {
             process = launchProcess(command);
 
-            AnsibleOutputDrainer drainer = new AnsibleOutputDrainer(process, tokenToRedact);
+            AnsibleOutputDrainer drainer = new AnsibleOutputDrainer(process, tokenToRedact,
+                    line -> {
+                        if (isProgressLine(line)) {
+                            logger.infov("ansible | {0}", line);
+                        }
+                        else {
+                            logger.debugv("ansible | {0}", line);
+                        }
+                    });
             Thread drainerThread = new Thread(drainer, "ansible-output-drainer");
             drainerThread.setDaemon(true);
             drainerThread.start();
@@ -212,9 +220,11 @@ public class AnsibleHostProvisioner implements HostProvisioner {
      * allow test overrides via Mockito spy.
      */
     Process launchProcess(List<String> command) throws IOException {
-        return new ProcessBuilder(command)
-                .redirectErrorStream(true)
-                .start();
+        ProcessBuilder builder = new ProcessBuilder(command)
+                .redirectErrorStream(true);
+        builder.environment().put("ANSIBLE_CALLBACKS_ENABLED",
+                "ansible.posix.profile_tasks,ansible.posix.timer");
+        return builder.start();
     }
 
     /**
@@ -254,12 +264,12 @@ public class AnsibleHostProvisioner implements HostProvisioner {
             try {
                 if ("file".equals(resourceUrl.getProtocol())) {
                     String resolvedPath = Path.of(resourceUrl.toURI()).toAbsolutePath().toString();
-                    logger.infov("Using classpath playbook: {0}", resolvedPath);
+                    logger.debugv("Using classpath playbook: {0}", resolvedPath);
                     return resolvedPath;
                 }
                 else {
                     String extractedPath = extractResourceToTempFile(classpathResource);
-                    logger.infov("Extracted classpath playbook to temp file: {0}", extractedPath);
+                    logger.debugv("Extracted classpath playbook to temp file: {0}", extractedPath);
                     return extractedPath;
                 }
             }
@@ -292,6 +302,26 @@ public class AnsibleHostProvisioner implements HostProvisioner {
     }
 
     /**
+     * Returns {@code true} if the Ansible output line conveys meaningful
+     * progress to the user: task/play headers, the final recap result,
+     * and fatal errors. Everything else (timestamps, warnings, empty
+     * lines, per-task {@code ok/changed/skipping} results) is treated
+     * as debug-level detail.
+     */
+    private static boolean isProgressLine(String line) {
+        if (line == null || line.isBlank()) {
+            return false;
+        }
+        String trimmed = line.trim();
+        return trimmed.startsWith("TASK [")
+                || trimmed.startsWith("PLAY [")
+                || trimmed.startsWith("PLAY RECAP")
+                || trimmed.startsWith("RUNNING HANDLER [")
+                || trimmed.contains(": ok=")
+                || trimmed.contains("fatal:");
+    }
+
+    /**
      * Drains a process's merged stdout+stderr stream line-by-line,
      * redacting any occurrence of the bearer token from the captured output.
      *
@@ -303,20 +333,29 @@ public class AnsibleHostProvisioner implements HostProvisioner {
 
         private final Process process;
         private final String tokenToRedact;
+        private final Consumer<String> lineCallback;
         private volatile String output = "";
 
-        AnsibleOutputDrainer(Process process, String tokenToRedact) {
+        AnsibleOutputDrainer(Process process, String tokenToRedact, Consumer<String> lineCallback) {
             this.process = process;
             this.tokenToRedact = tokenToRedact;
+            this.lineCallback = lineCallback;
         }
 
         @Override
         public void run() {
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-                output = reader.lines()
-                        .map(this::redactToken)
-                        .collect(Collectors.joining("\n", "", "\n"));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String redacted = redactToken(line);
+                    if (lineCallback != null) {
+                        lineCallback.accept(redacted);
+                    }
+                    sb.append(redacted).append('\n');
+                }
+                output = sb.toString();
             }
             catch (IOException e) {
                 output = "[Error reading Ansible output: " + e.getMessage() + "]\n";
