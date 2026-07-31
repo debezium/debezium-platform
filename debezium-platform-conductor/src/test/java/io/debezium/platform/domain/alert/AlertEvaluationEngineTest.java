@@ -187,7 +187,7 @@ class AlertEvaluationEngineTest {
     }
 
     @Test
-    void evaluateAllResolvesOrphanedFiringState() {
+    void evaluateAllKeepsFiringStateWhenPipelineDisappears() {
         AlertRuleEntity rule = createRule("test-rule", "event-count", Operator.GREATER_THAN, 100.0);
         when(ruleService.findAllEnabled()).thenReturn(List.of(rule));
 
@@ -207,10 +207,10 @@ class AlertEvaluationEngineTest {
 
         engine.evaluateAll();
 
-        org.mockito.Mockito.verify(stateManager).resolve(
-                org.mockito.ArgumentMatchers.eq(rule),
-                org.mockito.ArgumentMatchers.eq(orphanedState),
-                org.mockito.ArgumentMatchers.any(Instant.class));
+        org.mockito.Mockito.verify(stateManager, org.mockito.Mockito.never()).resolve(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any());
     }
 
     private AlertRuleEntity createRule(String name, String panelId, Operator operator, double threshold) {
