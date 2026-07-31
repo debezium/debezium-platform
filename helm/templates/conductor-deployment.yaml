@@ -22,6 +22,11 @@ spec:
         app.kubernetes.io/name: conductor
     spec:
       serviceAccountName: conductor-service-account
+{{- $pullSecrets := coalesce .Values.conductor.imagePullSecrets .Values.imagePullSecrets }}
+{{- if $pullSecrets }}
+      imagePullSecrets:
+{{ toYaml $pullSecrets | indent 8 }}
+{{- end }}
       containers:
         - name: conductor
           image: {{ .Values.conductor.image }}
@@ -66,10 +71,31 @@ spec:
               value: {{ .Values.conductor.descriptors.official.image }}
             - name: CONDUCTOR_DESCRIPTORS_IMAGE_TAG
               value: {{ .Values.conductor.descriptors.official.tag }}
+{{- if .Values.conductor.descriptors.official.auth.existingSecret }}
+            - name: CONDUCTOR_DESCRIPTORS_REGISTRY_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.conductor.descriptors.official.auth.existingSecret }}
+                  key: username
+            - name: CONDUCTOR_DESCRIPTORS_REGISTRY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.conductor.descriptors.official.auth.existingSecret }}
+                  key: password
+{{- end }}
 {{- end }}
 {{- if .Values.server.image }}
             - name: PIPELINE_SERVER_IMAGE
               value: {{ .Values.server.image }}
+{{- end }}
+{{- $serverPullSecrets := coalesce .Values.server.imagePullSecrets .Values.imagePullSecrets }}
+{{- if $serverPullSecrets }}
+{{- $serverPullSecretNames := list }}
+{{- range $serverPullSecrets }}
+{{- $serverPullSecretNames = append $serverPullSecretNames .name }}
+{{- end }}
+            - name: PIPELINE_SERVER_IMAGE_PULL_SECRETS
+              value: {{ join "," $serverPullSecretNames | quote }}
 {{- end }}
             - name: PIPELINE_HEALTH_LIVENESS_INITIAL_DELAY_SECONDS
               value: {{ .Values.pipeline.health.liveness.initialDelaySeconds | quote }}

@@ -131,3 +131,58 @@ tests:
       - equal:
           path: spec.ports[0].targetPort
           value: 3000
+
+  - it: should not render imagePullSecrets by default
+    template: stage-deployment.yaml
+    asserts:
+      - isKind:
+          of: Deployment
+      - isNull:
+          path: spec.template.spec.imagePullSecrets
+
+  - it: should apply the global imagePullSecrets
+    template: stage-deployment.yaml
+    set:
+      imagePullSecrets:
+        - name: global-registry-secret
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: global-registry-secret
+
+  - it: should replace the global imagePullSecrets with the stage ones
+    template: stage-deployment.yaml
+    set:
+      imagePullSecrets:
+        - name: global-registry-secret
+      stage.imagePullSecrets:
+        - name: stage-registry-secret
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: stage-registry-secret
+      - notContains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: global-registry-secret
+
+  - it: should leave stage inheriting the global imagePullSecrets when only conductor overrides
+    template: stage-deployment.yaml
+    set:
+      imagePullSecrets:
+        - name: global-registry-secret
+      conductor.imagePullSecrets:
+        - name: conductor-registry-secret
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: global-registry-secret

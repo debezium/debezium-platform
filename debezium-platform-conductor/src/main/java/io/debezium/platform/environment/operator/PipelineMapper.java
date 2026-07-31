@@ -36,6 +36,7 @@ import io.debezium.operator.api.model.runtime.RuntimeApiBuilder;
 import io.debezium.operator.api.model.runtime.RuntimeBuilder;
 import io.debezium.operator.api.model.runtime.metrics.Metrics;
 import io.debezium.operator.api.model.runtime.templates.ContainerTemplate;
+import io.debezium.operator.api.model.runtime.templates.PodTemplate;
 import io.debezium.operator.api.model.runtime.templates.Probe;
 import io.debezium.operator.api.model.runtime.templates.Probes;
 import io.debezium.operator.api.model.runtime.templates.Templates;
@@ -51,6 +52,7 @@ import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Transform;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.environment.operator.configuration.TableNameResolver;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 
 @ApplicationScoped
@@ -181,6 +183,19 @@ public class PipelineMapper {
 
         var templates = new Templates();
         templates.setContainer(container);
+
+        pipelineConfigGroup.server().imagePullSecrets()
+                .map(names -> names.stream()
+                        .filter(name -> name != null && !name.isBlank())
+                        .toList())
+                .filter(names -> !names.isEmpty())
+                .ifPresent(names -> {
+                    var pod = new PodTemplate();
+                    pod.setImagePullSecrets(names.stream()
+                            .map(LocalObjectReference::new)
+                            .toList());
+                    templates.setPod(pod);
+                });
 
         return new RuntimeBuilder()
                 .withApi(new RuntimeApiBuilder().withEnabled().build())

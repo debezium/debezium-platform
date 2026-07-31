@@ -6,12 +6,22 @@ domain:
   # proxy) and ingress.enabled is false, otherwise the stage UI builds an http://
   # conductor URL and the browser blocks /api calls as mixed content.
   # scheme: https
+# Global list of image pull secrets, applied to every pod created by this chart.
+# A per-component imagePullSecrets replaces this list, it is not merged with it.
+# Example:
+#   imagePullSecrets:
+#     - name: my-registry-secret
+imagePullSecrets: []
 stage:
   image: quay.io/debezium/platform-stage:nightly
   imagePullPolicy: IfNotPresent
+  # Replaces the global imagePullSecrets for the stage pod. Leave empty to inherit it.
+  imagePullSecrets: []
 conductor:
   image: quay.io/debezium/platform-conductor:nightly
   imagePullPolicy: IfNotPresent
+  # Replaces the global imagePullSecrets for the conductor pod. Leave empty to inherit it.
+  imagePullSecrets: []
   offset:
     existingConfigMap: ""
   descriptors:
@@ -21,6 +31,9 @@ conductor:
       image: debezium/debezium-descriptors
       tag: nightly
       mountPath: /opt/descriptors
+      # Name of a Secret holding keys `username` and `password` for the descriptors registry.
+      auth:
+        existingSecret: ""
   extraVolumes: [ ]
   extraVolumeMounts: [ ]
   # OIDC bearer-token security (resource-server in service mode). Disabled by
@@ -43,6 +56,8 @@ conductor:
     audience: ""
 server:
   image: ""
+  # Replaces the global imagePullSecrets for Debezium Server pods created by pipelines. Leave empty to inherit it.
+  imagePullSecrets: []
 ingress:
   enabled: true
   className: ""
