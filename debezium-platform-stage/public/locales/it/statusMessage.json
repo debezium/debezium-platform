@@ -11,6 +11,12 @@
         "successTitle": "Creazione di {{val}} riuscita.",
         "successDescription": "{{val}} creato con successo."
     },
+    "restart": {
+        "failedTitle": "Riavvio fallito",
+        "successTitle": "Riavvio riuscito",
+        "failedDescription": "Riavvio di {{val}} non riuscito",
+        "successDescription": "Riavvio di {{val}} avviato con successo."
+    },
     "download": {
         "failedTitle": "Download fallito",
         "failedDescription": "Download dei log per {{val}} non riuscito",

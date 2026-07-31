@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
-  Content,
+  Alert,
+  Button,
+  Label,
+  LabelStatus,
   PageSection,
   Tab,
   TabContent,
@@ -10,8 +13,13 @@ import {
   TabTitleText,
 } from "@patternfly/react-core";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { fetchDataTypeTwo, Pipeline } from "../../apis/apis";
+import { useCallback, useEffect, useState } from "react";
+import {
+  buildPipelineRestartPayload,
+  editPut,
+  fetchDataTypeTwo,
+  Pipeline,
+} from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 
 import "./PipelineDetails.css";
@@ -25,6 +33,8 @@ import {
   getEnabledPipelineTabs,
   isPipelineTabEnabled,
 } from "@utils/featureFlag";
+import { PageHeader } from "@patternfly/react-component-groups";
+import { useNotification } from "../../appLayout/AppNotificationContext";
 
 const PipelineDetails: React.FunctionComponent = () => {
   const { pipelineId, detailsTab } = useParams<{
@@ -33,6 +43,7 @@ const PipelineDetails: React.FunctionComponent = () => {
   }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { addNotification } = useNotification();
 
   const validTabs = React.useMemo(() => getEnabledPipelineTabs(), []);
 
@@ -44,6 +55,7 @@ const PipelineDetails: React.FunctionComponent = () => {
   const [pipeline, setPipeline] = useState<Pipeline>();
 
   const [isFetchLoading, setIsFetchLoading] = useState<boolean>(true);
+  const [isRestarting, setIsRestarting] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -69,33 +81,96 @@ const PipelineDetails: React.FunctionComponent = () => {
     }
   }, [detailsTab, pipelineId, navigate]);
 
-  useEffect(() => {
-    const fetchPipeline = async () => {
+  const fetchPipeline = useCallback(async (showLoading = true) => {
+    if (showLoading) {
       setIsFetchLoading(true);
-      const response = await fetchDataTypeTwo<Pipeline>(
-        `${API_URL}/api/pipelines/${pipelineId}`
-      );
+    }
+    const response = await fetchDataTypeTwo<Pipeline>(
+      `${API_URL}/api/pipelines/${pipelineId}`
+    );
 
-      if (response.error) {
-        setError(response.error);
-      } else {
-        setPipeline(response.data as Pipeline);
-      }
+    if (response.error) {
+      setError(response.error);
+    } else {
+      setPipeline(response.data as Pipeline);
+    }
 
+    if (showLoading) {
       setIsFetchLoading(false);
-    };
-
-    fetchPipeline();
+    }
   }, [pipelineId]);
 
-  // Toggle currently active tab and update the URL
+  useEffect(() => {
+    void fetchPipeline();
+  }, [fetchPipeline]);
+
+  const onRestartHandler = async () => {
+    if (!pipeline) {
+      return;
+    }
+
+    setIsRestarting(true);
+    const response = await editPut(
+      `${API_URL}/api/pipelines/${pipeline.id}`,
+      buildPipelineRestartPayload(pipeline)
+    );
+    setIsRestarting(false);
+
+    if (response.error) {
+      addNotification(
+        "danger",
+        t("statusMessage:restart.failedTitle"),
+        t("statusMessage:restart.failedDescription", {
+          val: `${t("pipeline")} ${pipeline.name}: ${response.error}`,
+        })
+      );
+      return;
+    }
+
+    addNotification(
+      "success",
+      t("statusMessage:restart.successTitle"),
+      t("statusMessage:restart.successDescription", {
+        val: `${t("pipeline")} ${pipeline.name}`,
+      })
+    );
+    void fetchPipeline(false);
+  };
+
+  // Update local active tab first so the accent can animate, then sync the URL 
   const handleTabClick = (_event: any, tabIndex: string | number) => {
     const selectedTab = tabIndex as string;
+    if (selectedTab === activeTabKey) {
+      return;
+    }
     setActiveTabKey(selectedTab);
-
-    // Update the URL without reloading the page
-    navigate(`/pipeline/${pipelineId}/${selectedTab}`);
+    requestAnimationFrame(() => {
+      navigate(`/pipeline/${pipelineId}/${selectedTab}`);
+    });
   };
+
+  // Stable title nodes prevent Tab's internal useEffect from calling
+  // setAccentStyles(true) on every render, which zeroes the accent transition.
+  const overviewTabTitle = React.useMemo(
+    () => <TabTitleText>{t("pipeline:tabs.overview")}</TabTitleText>,
+    [t]
+  );
+  const actionTabTitle = React.useMemo(
+    () => <TabTitleText>{t("pipeline:tabs.action")}</TabTitleText>,
+    [t]
+  );
+  const monitoringTabTitle = React.useMemo(
+    () => <TabTitleText>{t("pipeline:tabs.monitoring")}</TabTitleText>,
+    [t]
+  );
+  const logsTabTitle = React.useMemo(
+    () => <TabTitleText>{t("pipeline:tabs.log")}</TabTitleText>,
+    [t]
+  );
+  const editTabTitle = React.useMemo(
+    () => <TabTitleText>{t("pipeline:tabs.edit")}</TabTitleText>,
+    [t]
+  );
 
   if (isFetchLoading) {
     return <div>Loading...</div>;
@@ -107,45 +182,73 @@ const PipelineDetails: React.FunctionComponent = () => {
 
   return (
     <>
-      <PageSection isWidthLimited>
-        <Content component="h1"> {pipeline?.name}</Content>
-      </PageSection>
+      <PageHeader
+        title={pipeline?.name}
+        subtitle={pipeline?.description}
+        label={<Label className="pf-v5-u-align-content-center" status={LabelStatus.danger}>Failed</Label>}
+        actionMenu={
+          pipeline?.status === "FAILED" ? (
+            <Button
+              variant="primary"
+              isLoading={isRestarting}
+              isDisabled={isRestarting}
+              onClick={() => void onRestartHandler()}
+            >
+              {t("pipeline:userActions.restart")}
+            </Button>
+          ) : undefined
+        }
+      />
+      {pipeline?.errorMessage && (
+        <PageSection
+          isWidthLimited
+          padding={{ default: "noPadding" }}
+          style={{
+            paddingInlineStart: "var(--pf-v6-c-page__main-section--PaddingInlineStart)",
+            paddingInlineEnd: "var(--pf-v6-c-page__main-section--PaddingInlineEnd)",
+          }}
+        >
+          <Alert variant="danger" isInline isPlain title={pipeline.errorMessage} />
+        </PageSection>
+      )}
       <PageSection type="tabs" isWidthLimited>
         <Tabs
           activeKey={activeTabKey}
           onSelect={handleTabClick}
           usePageInsets
-          id="open-tabs-example-tabs-list"
+          id="pipeline-details-tabs"
         >
           <Tab
             eventKey={"overview"}
-            title={<TabTitleText>{t('pipeline:tabs.overview')}</TabTitleText>}
+            title={overviewTabTitle}
             tabContentId={`tabContent${"overview"}`}
           />
           {isPipelineTabEnabled("action") && (
             <Tab
               eventKey={"action"}
-              title={<TabTitleText>{t('pipeline:tabs.action')}</TabTitleText>}
+              title={actionTabTitle}
               tabContentId={`tabContent${"action"}`}
+              isDisabled={pipeline?.status === "FAILED"} 
             />
           )}
           {isPipelineTabEnabled("monitoring") && (
             <Tab
               eventKey={"monitoring"}
-              title={<TabTitleText>{t('pipeline:tabs.monitoring')}</TabTitleText>}
+              title={monitoringTabTitle}
               tabContentId={`tabContent${"monitoring"}`}
+              isDisabled={pipeline?.status === "FAILED"} 
             />
           )}
           {isPipelineTabEnabled("logs") && (
             <Tab
               eventKey={"logs"}
-              title={<TabTitleText>{t('pipeline:tabs.log')}</TabTitleText>}
+              title={logsTabTitle}
               tabContentId={`tabContent${"logs"}`}
             />
           )}
           <Tab
             eventKey={"edit"}
-            title={<TabTitleText>{t('pipeline:tabs.edit')}</TabTitleText>}
+            title={editTabTitle}
             tabContentId={`tabContent${"edit"}`}
           />
 

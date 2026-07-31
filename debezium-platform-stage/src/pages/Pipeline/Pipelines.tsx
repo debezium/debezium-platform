@@ -13,6 +13,7 @@ import {
   EmptyStateVariant,
   Form,
   FormGroup,
+  Icon,
   Modal,
   ModalBody,
   ModalFooter,
@@ -28,7 +29,7 @@ import {
   ToolbarItem,
   Tooltip,
 } from "@patternfly/react-core";
-import { PlusIcon, SearchIcon } from "@patternfly/react-icons";
+import { PlusIcon, RhUiErrorFillIcon, SearchIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import {
   Connection,
@@ -39,6 +40,9 @@ import {
   fetchFile,
   Source,
   TransformData,
+  PipelineStatus,
+  editPut,
+  buildPipelineRestartPayload,
 } from "../../apis/apis";
 import {
   generatePropertiesContent,
@@ -76,6 +80,7 @@ export type DeleteInstance = {
 export type ActionData = {
   id: number;
   name: string;
+  status?: PipelineStatus
 };
 
 const Pipelines: React.FunctionComponent = () => {
@@ -105,9 +110,14 @@ const Pipelines: React.FunctionComponent = () => {
     data: pipelinesList = [],
     error: pipelinesError,
     isLoading: pipelinesLoading,
+    refetch: refetchPipelines,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
     () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
+  );
+
+  const [restartingPipelineId, setRestartingPipelineId] = useState<number | null>(
+    null
   );
 
   // Compute filtered results based on search query
@@ -310,7 +320,7 @@ const Pipelines: React.FunctionComponent = () => {
     navigateTo(`/pipeline/${id}/logs`);
   };
 
-   const onActionHandler = (id: number, _name: string) => {
+  const onActionHandler = (id: number, _name: string) => {
     navigateTo(`/pipeline/${id}/action`);
   };
 
@@ -335,6 +345,35 @@ const Pipelines: React.FunctionComponent = () => {
     void exportServerConfig(pipeline);
   };
 
+  const onRestartHandler = async (pipeline: Pipeline) => {
+    setRestartingPipelineId(pipeline.id);
+    const response = await editPut(
+      `${API_URL}/api/pipelines/${pipeline.id}`,
+      buildPipelineRestartPayload(pipeline)
+    );
+    setRestartingPipelineId(null);
+
+    if (response.error) {
+      addNotification(
+        "danger",
+        t("statusMessage:restart.failedTitle"),
+        t("statusMessage:restart.failedDescription", {
+          val: `${t("pipeline")} ${pipeline.name}: ${response.error}`,
+        })
+      );
+      return;
+    }
+
+    addNotification(
+      "success",
+      t("statusMessage:restart.successTitle"),
+      t("statusMessage:restart.successDescription", {
+        val: `${t("pipeline")} ${pipeline.name}`,
+      })
+    );
+    void refetchPipelines();
+  };
+
   const rowActions = (actionData: ActionData): IAction[] => [
     {
       title: t("pipeline:userActions.overview"),
@@ -343,10 +382,12 @@ const Pipelines: React.FunctionComponent = () => {
     {
       title: t("pipeline:userActions.actions"),
       onClick: () => onActionHandler(actionData.id, actionData.name),
+      isDisabled: actionData.status === "FAILED"
     },
-     {
+    {
       title: t("pipeline:userActions.monitoring"),
       onClick: () => onMonitoringHandler(actionData.id, actionData.name),
+      isDisabled: actionData.status === "FAILED"
     },
     {
       title: t("pipeline:userActions.logs"),
@@ -451,7 +492,7 @@ const Pipelines: React.FunctionComponent = () => {
                           <ToolbarGroup align={{ default: "alignEnd" }}>
                             <ToolbarItem>
                               <Content component={ContentVariants.small}>
-                                                 {searchQuery.length > 0
+                                {searchQuery.length > 0
                                   ? `${searchResult.length} ${t("of")} ${pipelinesList.length} ${t("items")}`
                                   : `${searchResult.length} ${t("items")}`}
                               </Content>
@@ -465,6 +506,8 @@ const Pipelines: React.FunctionComponent = () => {
                             <Th key={0}>{t("name")}</Th>
                             <Th key={1}>{t("source")}</Th>
                             <Th key={2}>{t("destination")}</Th>
+                            <Th key={3}>{t("status")}</Th>
+                            <Th key={4} screenReaderText="restart" />
                             <Th key={5} screenReaderText={t("actions")} />
                           </Tr>
                         </Thead>
@@ -479,7 +522,7 @@ const Pipelines: React.FunctionComponent = () => {
                               : pipelinesList
                             ).map((instance: Pipeline) => (
                               <Tr key={instance.id}>
-                                <Td dataLabel={t("name")}>
+                                <Td dataLabel={t("name")} style={{ lineHeight: "35px" }}>
                                   <Tooltip content={
                                     <div>
                                       View pipeline details for <b>{instance.name}</b><br />
@@ -498,11 +541,38 @@ const Pipelines: React.FunctionComponent = () => {
                                 <DestinationField
                                   pipelineDestination={instance.destination}
                                 />
-                                <Td dataLabel={t("actions")} isActionCell>
+
+                                <Td style={{ lineHeight: "35px" }}>
+                                  {instance.status === "FAILED" &&
+                                    <Tooltip aria="none" aria-live="polite" exitDelay={100} flipBehavior="flip" content={instance.errorMessage
+                                    }>
+                                      <p style={{ cursor: "pointer" }}>
+                                        <Icon status="danger" isInline>
+                                          <RhUiErrorFillIcon />
+                                        </Icon>{" "}{" "}
+                                        Failed
+                                      </p>
+                                    </Tooltip>}
+                                </Td>
+                                <Td modifier="fitContent" hasAction style={{ alignContent: "center" }}>
+                                  {instance.status === "FAILED" && (
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      isLoading={restartingPipelineId === instance.id}
+                                      isDisabled={restartingPipelineId === instance.id}
+                                      onClick={() => void onRestartHandler(instance)}
+                                    >
+                                      {t("pipeline:userActions.restart")}
+                                    </Button>
+                                  )}
+                                </Td>
+                                <Td dataLabel={t("actions")} isActionCell style={{ alignContent: "center" }}>
                                   <ActionsColumn
                                     items={rowActions({
                                       id: instance.id,
                                       name: instance.name,
+                                      status: instance.status
                                     })}
                                   />
                                 </Td>

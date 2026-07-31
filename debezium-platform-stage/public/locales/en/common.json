@@ -93,6 +93,7 @@
   "smartEditorButton": "Create using smart editor",
   "smartEditorButtonTooltip": " Use raw configuration to create a new {{val}} connector using smart editor.",
   "source": "Sources",
+  "status": "Status",
   "submit": "Submit",
   "system": "System",
   "systemPreference": "Follow system preference",

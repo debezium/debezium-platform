@@ -48,6 +48,7 @@
         "overview": "Overview",
         "logs": "View logs",
         "download": "Download logs",
+        "restart": "Restart",
         "exportServerConfig": "Export server config",
         "exportServerConfigError": "An unexpected error occurred while generating the server config.",
         "monitoring": "Monitoring",

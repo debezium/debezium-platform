@@ -139,11 +139,15 @@ export type Connection = {
   id: number;
 };
 
+export type PipelineStatus = "FAILED";
+
 export type Pipeline = {
   name: string;
   id: number;
+  errorMessage: string
   source: PipelineSource;
   destination: PipelineDestination;
+  status: PipelineStatus;
   description?: string;
   transforms: Transform[];
   logLevel: string;
@@ -167,6 +171,25 @@ export type PipelineUpdatePayload = {
   logLevel: string;
   logLevels: Record<string, string>;
 };
+
+/** Full pipeline payload used to re-trigger a pipeline via PUT (e.g. restart). */
+export const buildPipelineRestartPayload = (
+  pipeline: Pipeline
+): PipelinePayload => ({
+  name: pipeline.name,
+  description: pipeline.description,
+  source: {
+    id: pipeline.source.id,
+    name: pipeline.source.name,
+  },
+  destination: {
+    id: pipeline.destination.id,
+    name: pipeline.destination.name,
+  },
+  transforms: pipeline.transforms.map(({ id, name }) => ({ id, name })),
+  logLevel: pipeline.logLevel,
+  logLevels: pipeline.logLevels ?? {},
+});
 
 
 export type DestinationApiResponse = Destination[];

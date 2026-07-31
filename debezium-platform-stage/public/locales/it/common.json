@@ -93,6 +93,7 @@
   "smartEditorButton": "Crea tramite editor intelligente",
   "smartEditorButtonTooltip": " Usa la configurazione grezza per creare un nuovo connettore {{val}} utilizzando l'editor intelligente.",
   "source": "Origine",
+  "status": "Stato",
   "submit": "Invia",
   "system": "Sistema",
   "systemPreference": "Segui le preferenze di sistema",

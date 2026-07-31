@@ -11,6 +11,12 @@
         "successTitle": "{{val}} creation successful.",
         "successDescription": "{{val}} created successfully."
     },
+    "restart": {
+        "failedTitle": "Restart failed",
+        "successTitle": "Restart successful",
+        "failedDescription": "Failed to restart {{val}}",
+        "successDescription": "{{val}} restart triggered successfully."
+    },
     "download": {
         "failedTitle": "Download Failed",
         "failedDescription": "Failed to download logs for {{val}}",
