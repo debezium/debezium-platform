@@ -99,7 +99,8 @@ public class AlertEvaluationEngine {
         for (AlertStateEntity orphanedState : stateByPipeline.values()) {
             if (orphanedState.getState() == AlertStateValue.PENDING
                     || orphanedState.getState() == AlertStateValue.FIRING) {
-                stateManager.resolve(rule, orphanedState, now);
+                LOGGER.debugv("Pipeline ''{0}'' returned no data for rule ''{1}'' (state={2}), keeping last state",
+                        orphanedState.getPipelineId(), rule.getName(), orphanedState.getState());
             }
         }
     }
