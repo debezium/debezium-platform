@@ -42,9 +42,10 @@ import io.quarkus.scheduler.Scheduled;
  *
  * <p>Uses Java NIO {@link WatchService} to detect file changes, with a
  * 2-second debounce to coalesce rapid edits. A {@link Scheduled} periodic
- * fallback runs every 5 minutes to catch events that {@code WatchService}
- * may miss on NFS mounts and Kubernetes ConfigMap volumes (which use an
- * atomic symlink-swap rather than {@code ENTRY_MODIFY} events).
+ * fallback re-reads the config at a configurable interval (default: 5 minutes)
+ * to catch events that {@code WatchService} may miss on NFS mounts and
+ * Kubernetes ConfigMap volumes (which use an atomic symlink-swap rather
+ * than {@code ENTRY_MODIFY} events).
  *
  * <p>This bean is active in both operator and host deployment modes. The
  * {@code platform.deployment.mode} runtime guard at the start of each
@@ -195,10 +196,11 @@ public class SshConfigWatcherService {
      * Periodic fallback reconciliation. Catches events that {@link WatchService}
      * may miss on NFS mounts or Kubernetes ConfigMap volumes.
      *
-     * <p>The {@code delayed = "5m"} prevents a race condition with the initial
-     * reconciliation that runs in {@link #onStart}.
+     * <p>The {@code delayed} value prevents a race condition with the initial
+     * reconciliation that runs in {@link #onStart}. Both interval and delay
+     * are controlled by {@code platform.host.reconciliation-interval} (default: 5m).
      */
-    @Scheduled(every = "30s", delayed = "30s")
+    @Scheduled(every = "${platform.host.reconciliation-interval:5m}", delayed = "${platform.host.reconciliation-interval:5m}")
     void scheduledReconciliation() {
         if (!isHostMode()) {
             return;

@@ -24,6 +24,7 @@ import io.smallrye.config.WithName;
  *   platform.host.ansible-timeout-minutes=30
  *   platform.host.executor-pool-size=4
  *   platform.host.shutdown-timeout-seconds=5
+ *   platform.host.reconciliation-interval=5m
  * </pre>
  */
 @ConfigMapping(prefix = "platform.host")
@@ -51,4 +52,14 @@ public interface HostConfigGroup {
     @WithName("shutdown-timeout-seconds")
     @WithDefault("5")
     long shutdownTimeoutSeconds();
+
+    /**
+     * Interval between periodic SSH config reconciliations.
+     * The WatchService handles real-time events; this fallback catches
+     * events missed on NFS mounts and Kubernetes ConfigMap volumes.
+     * Accepts Quarkus duration format, e.g. {@code 5m}, {@code 30s}.
+     */
+    @WithName("reconciliation-interval")
+    @WithDefault("5m")
+    String reconciliationInterval();
 }
