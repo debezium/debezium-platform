@@ -27,6 +27,10 @@
         "description": "Modifica i dettagli della connessione {{val}} utilizzando il modulo sottostante.",
         "saveChanges": "Salva modifiche"
     },
+    "form": {
+        "descriptionField": "Descrizione",
+        "descriptionFieldHelperText": "Aggiungi una breve descrizione di questa connessione o del suo utilizzo."
+    },
     "link":{
         "selectConnection": "Seleziona una connessione",
         "connectionFieldLabel": "Connessione a {{val}}",

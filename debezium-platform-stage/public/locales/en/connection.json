@@ -27,6 +27,10 @@
         "description": "Edit the {{val}} connector details using the below form.",
         "saveChanges": "Save changes"
     },
+    "form": {
+        "descriptionField": "Description",
+        "descriptionFieldHelperText": "Add a one liner to describe this connection or what it is used for."
+    },
     "link":{
         "selectConnection": "Select a connection",
         "connectionFieldLabel": "Connection to the {{val}}",

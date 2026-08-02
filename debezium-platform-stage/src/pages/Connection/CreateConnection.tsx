@@ -103,6 +103,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                 return !conns.some(c => c.name === value);
             }
         ),
+        description: yup.string().notRequired(),
         ...buildNestedConnectionYupFields(selectedSchemaProperties)
     }).required() as yup.ObjectSchema<ConnectionFormValues>;
 
@@ -218,7 +219,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     };
 
     const buildConnectionPayloadOrNull = (data: ConnectionFormValues): ConnectionPayload | null => {
-        const { name } = data;
+        const { name, description } = data;
         const schemaPropertyKeys = selectedSchemaProperties?.properties
             ? Object.keys(selectedSchemaProperties.properties)
             : [];
@@ -241,11 +242,13 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
             ? ({
                 type: selectedSchema?.type.toUpperCase() || extractConnectorType(connectionId || "").toUpperCase(),
                 config: mergedConfig,
+                description: (description as string) ?? "",
                 name: name as string,
             } as ConnectionPayload)
             : {
                 type: extractConnectorType(connectionId || "").toUpperCase(),
                 config: validation.additionalFlat,
+                description: (description as string) ?? "",
                 name: name as string,
             };
     };
@@ -338,6 +341,25 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                         </HelperText>
                                     </FormHelperText>)}
 
+                            </FormGroup>
+
+                            <FormGroup
+                                label={t("connection:form.descriptionField")}
+                                fieldId={"connection-description"}
+                            >
+                                <Controller
+                                    name={"description"}
+                                    control={control}
+                                    defaultValue={""}
+                                    render={({ field }) => <TextInput id="connection-description" {...field} />}
+                                />
+                                <FormHelperText>
+                                    <HelperText>
+                                        <HelperTextItem>
+                                            {t("connection:form.descriptionFieldHelperText")}
+                                        </HelperTextItem>
+                                    </HelperText>
+                                </FormHelperText>
                             </FormGroup>
 
 

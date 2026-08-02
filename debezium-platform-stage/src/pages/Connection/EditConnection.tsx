@@ -116,6 +116,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                 return !conns.some(c => c.name === value);
             }
         ),
+        description: yup.string().notRequired(),
         ...buildNestedConnectionYupFields(selectedSchema?.schema)
     }).required() as yup.ObjectSchema<ConnectionFormValues>;
 
@@ -123,6 +124,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
         {
             defaultValues: {
                 name: connection?.name || "",
+                description: connection?.description || "",
                 ...(connection?.config
                     ? flatConnectionConfigToRhfShape(connection.config as Record<string, unknown>)
                     : {}),
@@ -160,6 +162,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                     });
                     reset({
                         name: response.data?.name || "",
+                        description: response.data?.description || "",
                         ...flatConnectionConfigToRhfShape(formFields),
                     });
                     // Assign the remaining properties to setConfigProperties
@@ -173,6 +176,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
                     reset({
                         name: response.data?.name || "",
+                        description: response.data?.description || "",
                     });
                     setConfigPropertiesFromApi(response.data?.config as ConnectionAdditionalConfig ?? {});
                 }
@@ -323,7 +327,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
     };
 
     const buildConnectionPayloadOrNull = (data: ConnectionFormValues): ConnectionPayload | null => {
-        const { name } = data;
+        const { name, description } = data;
         const schemaPropertyKeys = selectedSchema?.schema?.properties
             ? Object.keys(selectedSchema.schema.properties)
             : [];
@@ -346,11 +350,13 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
             ? ({
                   type: selectedSchema?.type.toUpperCase() || connection?.type.toUpperCase() || "",
                   config: mergedConfig,
+                  description: (description as string) ?? "",
                   name: name as string,
               } as ConnectionPayload)
             : {
                   type: connection?.type.toUpperCase() || "",
                   config: validation.additionalFlat,
+                  description: (description as string) ?? "",
                   name: name as string,
               };
     };
@@ -456,6 +462,26 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
                                         </HelperText>
                                     </FormHelperText>)}
 
+                            </FormGroup>
+
+                            <FormGroup
+                                label={t("connection:form.descriptionField")}
+                                fieldId={"connection-description"}
+                            >
+                                <Controller
+                                    name={"description"}
+                                    control={control}
+                                    defaultValue={""}
+                                    render={({ field }) => viewMode ? <ReviewValueSpan raw={field.value} /> : <TextInput id="connection-description" {...field} />}
+                                />
+                                {!viewMode && (
+                                    <FormHelperText>
+                                        <HelperText>
+                                            <HelperTextItem>
+                                                {t("connection:form.descriptionFieldHelperText")}
+                                            </HelperTextItem>
+                                        </HelperText>
+                                    </FormHelperText>)}
                             </FormGroup>
 
 
