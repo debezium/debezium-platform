@@ -52,7 +52,7 @@ public class EmailNotifier implements Notifier {
         String body = buildEmailBody(notification);
 
         try {
-            Mail mail = Mail.withText(recipients.get(0), subject, body);
+            Mail mail = Mail.withText(recipients.getFirst(), subject, body);
             for (int i = 1; i < recipients.size(); i++) {
                 mail.addTo(recipients.get(i));
             }
