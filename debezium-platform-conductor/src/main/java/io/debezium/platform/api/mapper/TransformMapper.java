@@ -28,7 +28,18 @@ public abstract class TransformMapper extends BaseMapper {
 
     public abstract NamedRef vaultToRef(VaultReference ref);
 
-    public abstract PredicateDto predicateToDto(Predicate predicate);
+    /**
+     * The predicate is an {@code @Embeddable} on {@code TransformEntity}, so it always materialises
+     * even when no predicate was configured, leaving every field unset. Treat that as "no predicate"
+     * rather than reporting it as one, matching how the operator mapper decides whether a transform
+     * has a predicate.
+     */
+    public PredicateDto predicateToDto(Predicate predicate) {
+        if (predicate == null || predicate.getType() == null) {
+            return null;
+        }
+        return new PredicateDto(predicate.getType(), predicate.getConfig(), predicate.isNegate());
+    }
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "vaults", ignore = true)

@@ -8,6 +8,8 @@ package io.debezium.platform.api.dto;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 public record TransformResponse(
         Long id,
         String name,
@@ -16,5 +18,5 @@ public record TransformResponse(
         String schema,
         Set<NamedRef> vaults,
         Map<String, Object> config,
-        PredicateDto predicate) {
+        @JsonInclude(JsonInclude.Include.NON_NULL) PredicateDto predicate) {
 }
