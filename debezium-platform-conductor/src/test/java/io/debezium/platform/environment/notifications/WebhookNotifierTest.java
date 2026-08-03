@@ -6,8 +6,11 @@
 package io.debezium.platform.environment.notifications;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
@@ -17,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.debezium.platform.config.AlertingConfigGroup;
 import io.debezium.platform.data.model.AlertStateValue;
 import io.debezium.platform.data.model.ChannelType;
 import io.debezium.platform.data.model.NotificationChannelEntity;
@@ -32,16 +36,24 @@ class WebhookNotifierTest {
     MockWebServer mockServer;
     WebhookNotifier notifier;
     ObjectMapper objectMapper;
+    AlertingConfigGroup.WebhookConfigGroup webhookConfig;
 
     @BeforeEach
     void setUp() throws IOException {
         mockServer = new MockWebServer();
         mockServer.start();
         objectMapper = new ObjectMapper();
-        notifier = new WebhookNotifier(objectMapper);
-        notifier.maxAttempts = 1;
-        notifier.connectTimeout = java.time.Duration.ofSeconds(5);
-        notifier.readTimeout = java.time.Duration.ofSeconds(10);
+
+        webhookConfig = mock(AlertingConfigGroup.WebhookConfigGroup.class);
+        when(webhookConfig.maxAttempts()).thenReturn(1);
+        when(webhookConfig.connectTimeout()).thenReturn(Duration.ofSeconds(5));
+        when(webhookConfig.readTimeout()).thenReturn(Duration.ofSeconds(10));
+        when(webhookConfig.allowPrivateNetworks()).thenReturn(true);
+
+        AlertingConfigGroup alertingConfig = mock(AlertingConfigGroup.class);
+        when(alertingConfig.webhook()).thenReturn(webhookConfig);
+
+        notifier = new WebhookNotifier(alertingConfig, objectMapper);
         notifier.init();
     }
 
@@ -118,7 +130,7 @@ class WebhookNotifierTest {
 
     @Test
     void sendServerErrorExhaustsRetries() {
-        notifier.maxAttempts = 2;
+        when(webhookConfig.maxAttempts()).thenReturn(2);
 
         mockServer.enqueue(new MockResponse().setResponseCode(500));
         mockServer.enqueue(new MockResponse().setResponseCode(500));
@@ -132,7 +144,7 @@ class WebhookNotifierTest {
 
     @Test
     void sendServerErrorThenSuccessOnRetry() {
-        notifier.maxAttempts = 2;
+        when(webhookConfig.maxAttempts()).thenReturn(2);
 
         mockServer.enqueue(new MockResponse().setResponseCode(500));
         mockServer.enqueue(new MockResponse().setResponseCode(200));
@@ -141,6 +153,66 @@ class WebhookNotifierTest {
 
         assertThat(result.success()).isTrue();
         assertThat(mockServer.getRequestCount()).isEqualTo(2);
+    }
+
+    @Test
+    void sendRejectsLoopbackAddress() {
+        when(webhookConfig.allowPrivateNetworks()).thenReturn(false);
+
+        NotificationResult result = notifier.send(createNotification(), createChannel("http://127.0.0.1/webhook"));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).contains("non-public address");
+    }
+
+    @Test
+    void sendRejectsSiteLocalAddress() {
+        when(webhookConfig.allowPrivateNetworks()).thenReturn(false);
+
+        NotificationResult result = notifier.send(createNotification(), createChannel("http://10.0.0.1/webhook"));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).contains("non-public address");
+    }
+
+    @Test
+    void sendRejectsLinkLocalAddress() {
+        when(webhookConfig.allowPrivateNetworks()).thenReturn(false);
+
+        NotificationResult result = notifier.send(createNotification(), createChannel("http://169.254.1.1/webhook"));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).contains("non-public address");
+    }
+
+    @Test
+    void sendAllowsPrivateWhenConfigured() {
+        when(webhookConfig.allowPrivateNetworks()).thenReturn(true);
+        mockServer.enqueue(new MockResponse().setResponseCode(200));
+
+        NotificationResult result = notifier.send(createNotification(), createChannel(mockServer.url("/webhook").toString()));
+
+        assertThat(result.success()).isTrue();
+    }
+
+    @Test
+    void sendRejectsUnresolvableHost() {
+        when(webhookConfig.allowPrivateNetworks()).thenReturn(false);
+
+        NotificationResult result = notifier.send(createNotification(), createChannel("http://this-host-does-not-exist.invalid/webhook"));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).contains("Cannot resolve webhook host");
+    }
+
+    @Test
+    void sendRejectsUrlWithNoHost() {
+        when(webhookConfig.allowPrivateNetworks()).thenReturn(false);
+
+        NotificationResult result = notifier.send(createNotification(), createChannel("not-a-url"));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).contains("no host");
     }
 
     private AlertNotification createNotification() {

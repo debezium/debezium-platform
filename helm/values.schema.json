@@ -504,6 +504,11 @@
                 "webhook": {
                     "type": "object",
                     "properties": {
+                        "allowPrivateNetworks": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "Allow webhook URLs to resolve to private, loopback, or link-local IP addresses. When false (default), SSRF protection blocks requests to non-public addresses"
+                        },
                         "maxAttempts": {
                             "type": "integer",
                             "default": 3,

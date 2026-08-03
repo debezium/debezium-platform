@@ -130,6 +130,8 @@ spec:
               value: {{ .Values.alerting.history.retention | quote }}
             - name: ALERTING_HISTORY_CLEANUP_INTERVAL
               value: {{ .Values.alerting.history.cleanup.interval | quote }}
+            - name: ALERTING_WEBHOOK_ALLOW_PRIVATE_NETWORKS
+              value: {{ .Values.alerting.webhook.allowPrivateNetworks | quote }}
             - name: ALERTING_WEBHOOK_MAX_ATTEMPTS
               value: {{ .Values.alerting.webhook.maxAttempts | quote }}
             - name: ALERTING_WEBHOOK_CONNECT_TIMEOUT

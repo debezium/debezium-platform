@@ -141,6 +141,7 @@ The following operators must be installed in the cluster **before** deploying th
 | alerting.evaluation.interval               | How often the alert evaluation engine runs. Accepts duration strings (e.g. `30s`, `60s`, `5m`).                                                                                        | 60s                                        |
 | alerting.history.retention                 | How long resolved alert events are kept before cleanup                                                                                                                                  | 30d                                        |
 | alerting.history.cleanup.interval          | How often the history cleanup job runs                                                                                                                                                  | 24h                                        |
+| alerting.webhook.allowPrivateNetworks      | Allow webhook URLs to resolve to private/loopback/link-local IPs (SSRF protection)                                                                                                      | false                                      |
 | alerting.webhook.maxAttempts               | Maximum number of delivery attempts for webhook notifications                                                                                                                           | 3                                          |
 | alerting.webhook.connectTimeout            | Connection timeout for webhook HTTP calls (ISO 8601 duration)                                                                                                                           | 5S                                         |
 | alerting.webhook.readTimeout               | Read timeout for webhook HTTP calls (ISO 8601 duration)                                                                                                                                 | 10S                                        |
@@ -191,6 +192,14 @@ alerting:
     maxAttempts: 5
     connectTimeout: "10S"
     readTimeout: "30S"
+```
+
+**Security (SSRF protection):** By default, webhook URLs that resolve to private (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), loopback (`127.0.0.0/8`), or link-local (`169.254.0.0/16`) addresses are blocked. This prevents user-supplied URLs from probing internal cluster services. If you need to send webhooks to internal endpoints (e.g., an in-cluster Slack relay), set:
+
+```yaml
+alerting:
+  webhook:
+    allowPrivateNetworks: true
 ```
 
 ## Descriptor OCI Artifacts

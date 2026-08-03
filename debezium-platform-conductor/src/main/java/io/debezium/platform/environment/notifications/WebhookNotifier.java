@@ -5,23 +5,24 @@
  */
 package io.debezium.platform.environment.notifications;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.MediaType;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.debezium.platform.config.AlertingConfigGroup;
 import io.debezium.platform.data.model.ChannelType;
 import io.debezium.platform.data.model.NotificationChannelEntity;
 
@@ -37,26 +38,19 @@ public class WebhookNotifier implements Notifier {
     private static final String STATUS_RESOLVED = "resolved";
     private static final long[] RETRY_DELAYS_MS = { 1000, 5000, 30000 };
 
-    @ConfigProperty(name = "alerting.webhook.max-attempts", defaultValue = "3")
-    int maxAttempts;
-
-    @ConfigProperty(name = "alerting.webhook.connect-timeout", defaultValue = "5S")
-    Duration connectTimeout;
-
-    @ConfigProperty(name = "alerting.webhook.read-timeout", defaultValue = "10S")
-    Duration readTimeout;
-
-    private HttpClient httpClient;
+    private final AlertingConfigGroup.WebhookConfigGroup webhookConfig;
     private final ObjectMapper objectMapper;
+    private HttpClient httpClient;
 
-    public WebhookNotifier(ObjectMapper objectMapper) {
+    public WebhookNotifier(AlertingConfigGroup alertingConfig, ObjectMapper objectMapper) {
+        this.webhookConfig = alertingConfig.webhook();
         this.objectMapper = objectMapper;
     }
 
     @PostConstruct
     void init() {
         httpClient = HttpClient.newBuilder()
-                .connectTimeout(connectTimeout)
+                .connectTimeout(webhookConfig.connectTimeout())
                 .build();
     }
 
@@ -73,6 +67,11 @@ public class WebhookNotifier implements Notifier {
         String method = (String) config.getOrDefault(CONFIG_METHOD, DEFAULT_METHOD);
         Map<String, String> headers = (Map<String, String>) config.getOrDefault(CONFIG_HEADERS, Map.of());
 
+        NotificationResult ssrfCheck = validateUrl(url);
+        if (ssrfCheck != null) {
+            return ssrfCheck;
+        }
+
         String payload;
         try {
             payload = buildPayload(notification);
@@ -81,11 +80,12 @@ public class WebhookNotifier implements Notifier {
             return new NotificationResult(false, "Failed to serialize payload: " + e.getMessage());
         }
 
+        int maxAttempts = webhookConfig.maxAttempts();
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
             try {
                 HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                         .uri(URI.create(url))
-                        .timeout(readTimeout)
+                        .timeout(webhookConfig.readTimeout())
                         .header(CONTENT_TYPE_HEADER, MediaType.APPLICATION_JSON)
                         .method(method, HttpRequest.BodyPublishers.ofString(payload));
 
@@ -118,6 +118,29 @@ public class WebhookNotifier implements Notifier {
             }
         }
         return new NotificationResult(false, "All " + maxAttempts + " retry attempts exhausted");
+    }
+
+    NotificationResult validateUrl(String url) {
+        try {
+            String host = URI.create(url).getHost();
+            if (host == null) {
+                return new NotificationResult(false, "Invalid webhook URL: no host");
+            }
+            if (!webhookConfig.allowPrivateNetworks()) {
+                InetAddress[] addresses = InetAddress.getAllByName(host);
+                for (InetAddress addr : addresses) {
+                    if (addr.isLoopbackAddress() || addr.isSiteLocalAddress()
+                            || addr.isLinkLocalAddress() || addr.isAnyLocalAddress()) {
+                        return new NotificationResult(false,
+                                "Webhook URL resolves to non-public address: " + addr.getHostAddress());
+                    }
+                }
+            }
+        }
+        catch (UnknownHostException e) {
+            return new NotificationResult(false, "Cannot resolve webhook host: " + e.getMessage());
+        }
+        return null;
     }
 
     private String buildPayload(AlertNotification notification) throws JsonProcessingException {

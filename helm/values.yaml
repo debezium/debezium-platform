@@ -136,6 +136,7 @@ alerting:
     cleanup:
       interval: "24h"
   webhook:
+    allowPrivateNetworks: false
     maxAttempts: 3
     connectTimeout: "5S"
     readTimeout: "10S"
