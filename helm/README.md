@@ -136,6 +136,62 @@ The following operators must be installed in the cluster **before** deploying th
 | monitoring.prometheus.serviceMonitor.enabled | Create a ServiceMonitor for automatic Prometheus scraping. Requires the Prometheus Operator to be installed (see Prerequisites).                                                      | true                                       |
 | monitoring.prometheus.serviceMonitor.scrapeInterval | Prometheus scrape interval                                                                                                                                                            | 15s                                        |
 | monitoring.prometheus.serviceMonitor.labels | Labels for Prometheus Operator ServiceMonitor discovery                                                                                                                               | {prometheus: kube-prometheus}              |
+| monitoring.prometheus.serviceMonitor.scrapeInterval | Prometheus scrape interval                                                                                                                                                    | 15s                                        |
+| monitoring.prometheus.serviceMonitor.labels | Labels for Prometheus Operator ServiceMonitor discovery                                                                                                                                | {prometheus: kube-prometheus}              |
+| alerting.evaluation.interval               | How often the alert evaluation engine runs. Accepts duration strings (e.g. `30s`, `60s`, `5m`).                                                                                        | 60s                                        |
+| alerting.history.retention                 | How long resolved alert events are kept before cleanup                                                                                                                                  | 30d                                        |
+| alerting.history.cleanup.interval          | How often the history cleanup job runs                                                                                                                                                  | 24h                                        |
+| alerting.webhook.maxAttempts               | Maximum number of delivery attempts for webhook notifications                                                                                                                           | 3                                          |
+| alerting.webhook.connectTimeout            | Connection timeout for webhook HTTP calls (ISO 8601 duration)                                                                                                                           | 5S                                         |
+| alerting.webhook.readTimeout               | Read timeout for webhook HTTP calls (ISO 8601 duration)                                                                                                                                 | 10S                                        |
+| alerting.email.host                        | SMTP server hostname                                                                                                                                                                    | ""                                         |
+| alerting.email.port                        | SMTP server port                                                                                                                                                                        | 587                                        |
+| alerting.email.from                        | Sender email address for alert notifications                                                                                                                                            | ""                                         |
+| alerting.email.startTls                    | STARTTLS mode (`DISABLED`, `OPTIONAL`, `REQUIRED`)                                                                                                                                      | REQUIRED                                   |
+| alerting.email.auth.existingSecret         | Name of an existing K8s Secret containing `username` and `password` keys for SMTP authentication                                                                                        | ""                                         |
+
+## Alerting
+
+The platform includes a built-in alerting engine that evaluates rules against Prometheus metrics and sends notifications via webhook or email channels. The evaluation loop runs on the configured interval and is a no-op when no rules exist, so no toggle is needed.
+
+Alert rules and notification channels (webhook, email) are managed from the UI. The Helm values configure the infrastructure that supports them: evaluation timing, history retention, webhook retry policy, and SMTP server settings for email delivery.
+
+### Email Notifications
+
+To enable email notifications, configure the SMTP server settings. Email channels are created and enabled from the UI; the Helm values provide the underlying transport configuration.
+
+```yaml
+alerting:
+  email:
+    host: smtp.example.com
+    port: 587
+    from: alerts@example.com
+    startTls: REQUIRED
+    auth:
+      existingSecret: smtp-credentials
+```
+
+The `existingSecret` must be a Kubernetes Secret with `username` and `password` keys:
+
+```shell
+kubectl create secret generic smtp-credentials \
+  --from-literal=username=myuser \
+  --from-literal=password=mypassword
+```
+
+If no SMTP host is configured, email channels will report a clear error when tested or triggered from the UI.
+
+### Webhook Notifications
+
+Webhook channels are configured entirely from the UI (URL, headers, etc.). The Helm values control retry and timeout behavior:
+
+```yaml
+alerting:
+  webhook:
+    maxAttempts: 5
+    connectTimeout: "10S"
+    readTimeout: "30S"
+```
 
 ## Descriptor OCI Artifacts
 

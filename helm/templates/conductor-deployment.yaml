@@ -124,6 +124,38 @@ spec:
               value: {{ .Values.conductor.oidc.audience | quote }}
 {{- end }}
 {{- end }}
+            - name: ALERTING_EVALUATION_INTERVAL
+              value: {{ .Values.alerting.evaluation.interval | quote }}
+            - name: ALERTING_HISTORY_RETENTION
+              value: {{ .Values.alerting.history.retention | quote }}
+            - name: ALERTING_HISTORY_CLEANUP_INTERVAL
+              value: {{ .Values.alerting.history.cleanup.interval | quote }}
+            - name: ALERTING_WEBHOOK_MAX_ATTEMPTS
+              value: {{ .Values.alerting.webhook.maxAttempts | quote }}
+            - name: ALERTING_WEBHOOK_CONNECT_TIMEOUT
+              value: {{ .Values.alerting.webhook.connectTimeout | quote }}
+            - name: ALERTING_WEBHOOK_READ_TIMEOUT
+              value: {{ .Values.alerting.webhook.readTimeout | quote }}
+            - name: QUARKUS_MAILER_HOST
+              value: {{ .Values.alerting.email.host | quote }}
+            - name: QUARKUS_MAILER_PORT
+              value: {{ .Values.alerting.email.port | quote }}
+            - name: QUARKUS_MAILER_FROM
+              value: {{ .Values.alerting.email.from | quote }}
+            - name: QUARKUS_MAILER_START_TLS
+              value: {{ .Values.alerting.email.startTls | quote }}
+{{- if .Values.alerting.email.auth.existingSecret }}
+            - name: QUARKUS_MAILER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.alerting.email.auth.existingSecret }}
+                  key: username
+            - name: QUARKUS_MAILER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.alerting.email.auth.existingSecret }}
+                  key: password
+{{- end }}
 {{ include "debezium-platform.offsetConfig" . | indent 12 }}
 {{ include "debezium-platform.schemaHistoryConfig" . | indent 12 }}
 {{- range .Values.env }}

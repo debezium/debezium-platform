@@ -467,6 +467,97 @@
                 }
             }
         },
+        "alerting": {
+            "type": "object",
+            "description": "Alerting configuration for evaluation engine, notifications, and email",
+            "properties": {
+                "evaluation": {
+                    "type": "object",
+                    "properties": {
+                        "interval": {
+                            "type": "string",
+                            "default": "60s",
+                            "description": "How often the alert evaluation engine runs. Accepts duration strings (e.g. 30s, 60s, 5m)"
+                        }
+                    }
+                },
+                "history": {
+                    "type": "object",
+                    "properties": {
+                        "retention": {
+                            "type": "string",
+                            "default": "30d",
+                            "description": "How long resolved alert events are kept before cleanup"
+                        },
+                        "cleanup": {
+                            "type": "object",
+                            "properties": {
+                                "interval": {
+                                    "type": "string",
+                                    "default": "24h",
+                                    "description": "How often the history cleanup job runs"
+                                }
+                            }
+                        }
+                    }
+                },
+                "webhook": {
+                    "type": "object",
+                    "properties": {
+                        "maxAttempts": {
+                            "type": "integer",
+                            "default": 3,
+                            "description": "Maximum number of delivery attempts for webhook notifications"
+                        },
+                        "connectTimeout": {
+                            "type": "string",
+                            "default": "5S",
+                            "description": "Connection timeout for webhook HTTP calls (ISO 8601 duration)"
+                        },
+                        "readTimeout": {
+                            "type": "string",
+                            "default": "10S",
+                            "description": "Read timeout for webhook HTTP calls (ISO 8601 duration)"
+                        }
+                    }
+                },
+                "email": {
+                    "type": "object",
+                    "properties": {
+                        "host": {
+                            "type": "string",
+                            "default": "",
+                            "description": "SMTP server hostname"
+                        },
+                        "port": {
+                            "type": "integer",
+                            "default": 587,
+                            "description": "SMTP server port"
+                        },
+                        "from": {
+                            "type": "string",
+                            "default": "",
+                            "description": "Sender email address for alert notifications"
+                        },
+                        "startTls": {
+                            "type": "string",
+                            "default": "REQUIRED",
+                            "description": "STARTTLS mode (DISABLED, OPTIONAL, REQUIRED)"
+                        },
+                        "auth": {
+                            "type": "object",
+                            "properties": {
+                                "existingSecret": {
+                                    "type": "string",
+                                    "default": "",
+                                    "description": "Name of an existing K8s Secret containing 'username' and 'password' keys for SMTP authentication"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "ingress": {
           "type": "object",
           "properties": {

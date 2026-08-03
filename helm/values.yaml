@@ -128,4 +128,22 @@ monitoring:
       scrapeInterval: 15s
       labels:
         prometheus: kube-prometheus
+alerting:
+  evaluation:
+    interval: "60s"
+  history:
+    retention: "30d"
+    cleanup:
+      interval: "24h"
+  webhook:
+    maxAttempts: 3
+    connectTimeout: "5S"
+    readTimeout: "10S"
+  email:
+    host: ""
+    port: 587
+    from: ""
+    startTls: "REQUIRED"
+    auth:
+      existingSecret: ""
 env: []
