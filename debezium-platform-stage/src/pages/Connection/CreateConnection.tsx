@@ -1,5 +1,5 @@
 import PageHeader from "@components/PageHeader";
-import { ActionList, ActionListGroup, ActionListItem, Alert, Button, Card, CardBody, Content, Form, FormAlert, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, FormHelperText, HelperText, HelperTextItem, InputGroup, InputGroupItem, PageSection, Popover, TextInput } from "@patternfly/react-core";
+import { ActionList, ActionListGroup, ActionListItem, Alert, Button, Card, CardBody, Content, Form, FormAlert, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, FormHelperText, HelperText, HelperTextItem, InputGroup, InputGroupItem, PageSection, Popover, Skeleton, TextInput } from "@patternfly/react-core";
 import * as React from "react";
 import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
@@ -61,7 +61,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     const [properties, setProperties] = useState<Map<string, AdditionalPropertyRow>>(() => new Map([["key0", createEmptyAdditionalPropertyRow()]]));
     const [keyCount, setKeyCount] = React.useState<number>(1);
 
-    const { data: connectionsSchema = [] } = useQuery<ConnectionsSchema[], Error>("connectionsSchema", () =>
+    const { data: connectionsSchema = [], isLoading: isSchemaLoading } = useQuery<ConnectionsSchema[], Error>("connectionsSchema", () =>
         fetchData<ConnectionsSchema[]>(`${API_URL}/api/connections/schemas`)
     );
 
@@ -303,6 +303,17 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
 
                 <Card className="custom-card-body">
                     <CardBody isFilled>
+                        {isSchemaLoading ? (
+                            <div>
+                                <Skeleton fontSize="2xl" width="40%" />
+                                <br />
+                                <Skeleton fontSize="md" width="60%" />
+                                <br />
+                                <Skeleton fontSize="md" width="80%" />
+                                <br />
+                                <Skeleton fontSize="md" width="50%" />
+                            </div>
+                        ) : (
                         <Form id="create-connection-form" onSubmit={handleSubmit(handleSaveFromForm)} isWidthLimited>
                             {!_.isEmpty(errors) && (
                                 <FormAlert>
@@ -512,6 +523,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                 </>
                             </FormFieldGroup>
                         </Form>
+                        )}
                     </CardBody>
                 </Card>
 
