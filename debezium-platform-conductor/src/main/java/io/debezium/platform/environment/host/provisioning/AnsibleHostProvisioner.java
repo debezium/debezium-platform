@@ -167,14 +167,7 @@ public class AnsibleHostProvisioner implements HostProvisioner {
             process = launchProcess(command);
 
             AnsibleOutputDrainer drainer = new AnsibleOutputDrainer(process, tokenToRedact,
-                    line -> {
-                        if (isProgressLine(line)) {
-                            logger.infov("ansible | {0}", line);
-                        }
-                        else {
-                            logger.debugv("ansible | {0}", line);
-                        }
-                    });
+                    this::logAnsibleOutputLine);
             Thread drainerThread = new Thread(drainer, "ansible-output-drainer");
             drainerThread.setDaemon(true);
             drainerThread.start();
@@ -299,6 +292,22 @@ public class AnsibleHostProvisioner implements HostProvisioner {
             Files.copy(is, tempFile, StandardCopyOption.REPLACE_EXISTING);
         }
         return tempFile.toAbsolutePath().toString();
+    }
+
+    /**
+     * Logs a single line of Ansible output at the appropriate level.
+     * Progress-relevant lines (task headers, play recap, fatal errors)
+     * are logged at INFO so operators can track provisioning progress.
+     * Everything else (timestamps, warnings, per-host results) goes
+     * to DEBUG to keep the console clean.
+     */
+    private void logAnsibleOutputLine(String line) {
+        if (isProgressLine(line)) {
+            logger.infov("ansible | {0}", line);
+        }
+        else {
+            logger.debugv("ansible | {0}", line);
+        }
     }
 
     /**
