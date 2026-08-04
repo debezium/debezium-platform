@@ -41,6 +41,7 @@
   "error": "Errore",
   "expandAll": "Espandi tutto",
   "failedToLoad": "Caricamento non riuscito",
+  "failed": "Fallito",
   "findByName": "Cerca per nome",
   "form": {
     "addFieldButton": "Aggiungi proprietà",

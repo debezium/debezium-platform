@@ -172,26 +172,6 @@ export type PipelineUpdatePayload = {
   logLevels: Record<string, string>;
 };
 
-/** Full pipeline payload used to re-trigger a pipeline via PUT (e.g. restart). */
-export const buildPipelineRestartPayload = (
-  pipeline: Pipeline
-): PipelinePayload => ({
-  name: pipeline.name,
-  description: pipeline.description,
-  source: {
-    id: pipeline.source.id,
-    name: pipeline.source.name,
-  },
-  destination: {
-    id: pipeline.destination.id,
-    name: pipeline.destination.name,
-  },
-  transforms: pipeline.transforms.map(({ id, name }) => ({ id, name })),
-  logLevel: pipeline.logLevel,
-  logLevels: pipeline.logLevels ?? {},
-});
-
-
 export type DestinationApiResponse = Destination[];
 
 export type SourceConfig = {

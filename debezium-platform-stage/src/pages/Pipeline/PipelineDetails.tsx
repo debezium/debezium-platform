@@ -13,14 +13,14 @@ import {
   TabTitleText,
 } from "@patternfly/react-core";
 import { useNavigate, useParams } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  buildPipelineRestartPayload,
   editPut,
   fetchDataTypeTwo,
   Pipeline,
 } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
+import { buildPipelineRestartPayload } from "@utils/pipelineUtils";
 
 import "./PipelineDetails.css";
 import PipelineLog from "./PipelineLog";
@@ -53,25 +53,27 @@ const PipelineDetails: React.FunctionComponent = () => {
   });
 
   const [pipeline, setPipeline] = useState<Pipeline>();
-
   const [isFetchLoading, setIsFetchLoading] = useState<boolean>(true);
   const [isRestarting, setIsRestarting] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
+  const [fetchedPipelineId, setFetchedPipelineId] = useState(pipelineId);
+  const [syncedDetailsTab, setSyncedDetailsTab] = useState(detailsTab);
 
-  const prevDetailsTabRef = React.useRef(detailsTab);
-
-  React.useEffect(() => {
-    if (prevDetailsTabRef.current !== detailsTab && detailsTab) {
-      prevDetailsTabRef.current = detailsTab;
-
-      if (validTabs.includes(detailsTab)) {
-        setActiveTabKey(detailsTab);
-      }
+  if (detailsTab !== syncedDetailsTab) {
+    setSyncedDetailsTab(detailsTab);
+    if (detailsTab && validTabs.includes(detailsTab)) {
+      setActiveTabKey(detailsTab);
     }
-  }, [detailsTab, validTabs]);
+  }
 
-  React.useEffect(() => {
+  if (pipelineId !== fetchedPipelineId) {
+    setFetchedPipelineId(pipelineId);
+    setIsFetchLoading(true);
+    setPipeline(undefined);
+    setError(null);
+  }
+
+  useEffect(() => {
     if (
       detailsTab &&
       pipelineId &&
@@ -81,28 +83,45 @@ const PipelineDetails: React.FunctionComponent = () => {
     }
   }, [detailsTab, pipelineId, navigate]);
 
-  const fetchPipeline = useCallback(async (showLoading = true) => {
-    if (showLoading) {
-      setIsFetchLoading(true);
-    }
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPipeline = async () => {
+      const response = await fetchDataTypeTwo<Pipeline>(
+        `${API_URL}/api/pipelines/${pipelineId}`
+      );
+
+      if (cancelled) {
+        return;
+      }
+
+      if (response.error) {
+        setError(response.error);
+      } else {
+        setPipeline(response.data as Pipeline);
+      }
+      setIsFetchLoading(false);
+    };
+
+    void loadPipeline();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pipelineId]);
+
+  const refreshPipeline = async () => {
     const response = await fetchDataTypeTwo<Pipeline>(
       `${API_URL}/api/pipelines/${pipelineId}`
     );
 
     if (response.error) {
       setError(response.error);
-    } else {
-      setPipeline(response.data as Pipeline);
+      return;
     }
 
-    if (showLoading) {
-      setIsFetchLoading(false);
-    }
-  }, [pipelineId]);
-
-  useEffect(() => {
-    void fetchPipeline();
-  }, [fetchPipeline]);
+    setPipeline(response.data as Pipeline);
+  };
 
   const onRestartHandler = async () => {
     if (!pipeline) {
@@ -134,7 +153,7 @@ const PipelineDetails: React.FunctionComponent = () => {
         val: `${t("pipeline")} ${pipeline.name}`,
       })
     );
-    void fetchPipeline(false);
+    void refreshPipeline();
   };
 
   // Update local active tab first so the accent can animate, then sync the URL 
@@ -185,7 +204,7 @@ const PipelineDetails: React.FunctionComponent = () => {
       <PageHeader
         title={pipeline?.name}
         subtitle={pipeline?.description}
-        label={<Label className="pf-v5-u-align-content-center" status={LabelStatus.danger}>Failed</Label>}
+        label={<Label className="pf-v5-u-align-content-center" status={LabelStatus.danger}>  {t("failed")}</Label>}
         actionMenu={
           pipeline?.status === "FAILED" ? (
             <Button
@@ -208,7 +227,13 @@ const PipelineDetails: React.FunctionComponent = () => {
             paddingInlineEnd: "var(--pf-v6-c-page__main-section--PaddingInlineEnd)",
           }}
         >
-          <Alert variant="danger" isInline isPlain title={pipeline.errorMessage} />
+          <Alert
+            isExpandable
+            variant="danger"
+            title={t("pipeline:pipelineFailureMsg")}
+          >
+            <p>{pipeline.errorMessage}</p>
+          </Alert>
         </PageSection>
       )}
       <PageSection type="tabs" isWidthLimited>
@@ -228,7 +253,7 @@ const PipelineDetails: React.FunctionComponent = () => {
               eventKey={"action"}
               title={actionTabTitle}
               tabContentId={`tabContent${"action"}`}
-              isDisabled={pipeline?.status === "FAILED"} 
+              isDisabled={pipeline?.status === "FAILED"}
             />
           )}
           {isPipelineTabEnabled("monitoring") && (
@@ -236,7 +261,7 @@ const PipelineDetails: React.FunctionComponent = () => {
               eventKey={"monitoring"}
               title={monitoringTabTitle}
               tabContentId={`tabContent${"monitoring"}`}
-              isDisabled={pipeline?.status === "FAILED"} 
+              isDisabled={pipeline?.status === "FAILED"}
             />
           )}
           {isPipelineTabEnabled("logs") && (

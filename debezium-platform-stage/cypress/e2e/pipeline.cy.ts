@@ -435,6 +435,107 @@ describe('Pipeline Management', () => {
       cy.contains('View logs').click();
       cy.url({ timeout: 30000 }).should('match', /\/pipeline\/\d+\/logs/);
     });
+
+    it('should show FAILED status cell with danger icon and link in pipeline list', () => {
+      // Seed a pipeline via API then stub the list response to mark it FAILED
+      const pipelineName = `cypress-failed-status-${Date.now()}`;
+      createPipelineViaApi(pipelineName);
+
+      cy.intercept('GET', /\/api\/pipelines\/?$/, (req) => {
+        req.continue((res) => {
+          const pipelines = Array.isArray(res.body) ? res.body as Record<string, unknown>[] : [];
+          const idx = pipelines.findIndex((p) => p['name'] === pipelineName);
+          if (idx !== -1) {
+            pipelines[idx] = { ...pipelines[idx], status: 'FAILED', errorMessage: 'Simulated failure' };
+          }
+          res.body = pipelines;
+        });
+      }).as('getPipelinesWithFailed');
+
+      cy.visitWithTourDisabled('/pipeline');
+      cy.wait('@getPipelinesWithFailed');
+
+      cy.get(`${PIPELINE_TABLE} tbody tr`)
+        .contains('tr', pipelineName)
+        .within(() => {
+          // Danger icon should be present in the status cell
+          cy.get('[class*="danger"], [data-ouia-component-type="PF6/Icon"], svg').should('exist');
+          // The "Failed" link button must exist in the DOM (PF table cells use overflow:hidden
+          // which clips child content, so we assert existence rather than visibility)
+          cy.contains('button', 'Failed').should('exist');
+        });
+    });
+
+    it('should navigate to pipeline detail when clicking the FAILED status link', () => {
+      const pipelineName = `cypress-failed-nav-${Date.now()}`;
+      createPipelineViaApi(pipelineName);
+
+      cy.intercept('GET', /\/api\/pipelines\/?$/, (req) => {
+        req.continue((res) => {
+          const pipelines = Array.isArray(res.body) ? res.body as Record<string, unknown>[] : [];
+          const idx = pipelines.findIndex((p) => p['name'] === pipelineName);
+          if (idx !== -1) {
+            pipelines[idx] = { ...pipelines[idx], status: 'FAILED', errorMessage: 'Simulated failure' };
+          }
+          res.body = pipelines;
+        });
+      }).as('getPipelinesFailedNav');
+
+      cy.visitWithTourDisabled('/pipeline');
+      cy.wait('@getPipelinesFailedNav');
+
+      cy.get(`${PIPELINE_TABLE} tbody tr`)
+        .contains('tr', pipelineName)
+        .contains('button', 'Failed')
+        .click();
+
+      cy.url({ timeout: 30000 }).should('match', /\/pipeline\/\d+\/overview/);
+    });
+
+    it('should display expandable error alert on detail page when pipeline has an errorMessage', () => {
+      // ResizeObserver notifications fired by PF layout are benign browser noise — ignore them
+      cy.on('uncaught:exception', (err) => {
+        if (err.message.includes('ResizeObserver')) return false;
+      });
+
+      const pipelineName = `cypress-failed-detail-${Date.now()}`;
+      createPipelineViaApi(pipelineName);
+
+      // Navigate to the list to find the created pipeline id
+      cy.visitWithTourDisabled('/pipeline');
+      cy.get(`${PIPELINE_TABLE} tbody tr`, { timeout: 30000 }).contains('button', pipelineName).click();
+      cy.url({ timeout: 30000 }).should('match', /\/pipeline\/(\d+)\/overview/);
+
+      cy.url().then((url) => {
+        const match = url.match(/\/pipeline\/(\d+)\/overview/);
+        const pipelineId = match?.[1];
+        expect(pipelineId).to.be.a("string");
+
+        // Stub the single pipeline GET to inject an errorMessage
+        cy.intercept('GET', new RegExp(`/api/pipelines/${pipelineId}$`), (req) => {
+          req.continue((res) => {
+            res.body = {
+              ...(res.body as Record<string, unknown>),
+              status: 'FAILED',
+              errorMessage: 'Connection timeout to source database',
+            };
+          });
+        }).as('getPipelineDetail');
+
+        cy.visit(`/pipeline/${pipelineId}/overview`);
+        cy.wait('@getPipelineDetail');
+
+        // The expandable danger alert should be present
+        cy.get('.pf-v6-c-alert.pf-m-danger, [class*="pf-v6-c-alert"][class*="pf-m-danger"]', { timeout: 10000 })
+          .should('be.visible');
+
+        // The alert body is initially collapsed — click the toggle to expand it
+        cy.get('.pf-v6-c-alert.pf-m-danger .pf-v6-c-alert__toggle button, [class*="pf-v6-c-alert"][class*="pf-m-danger"] button[aria-expanded]')
+          .first()
+          .click();
+        cy.contains('Connection timeout to source database').should('be.visible');
+      });
+    });
   });
 
   describe('Delete pipeline', () => {

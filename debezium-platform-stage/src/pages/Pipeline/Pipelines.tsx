@@ -42,12 +42,12 @@ import {
   TransformData,
   PipelineStatus,
   editPut,
-  buildPipelineRestartPayload,
 } from "../../apis/apis";
 import {
   generatePropertiesContent,
   triggerPropertiesDownload,
 } from "../../utils/generateServerConfig";
+import { buildPipelineRestartPayload } from "@utils/pipelineUtils";
 import {
   Table,
   Thead,
@@ -544,15 +544,19 @@ const Pipelines: React.FunctionComponent = () => {
 
                                 <Td style={{ lineHeight: "35px" }}>
                                   {instance.status === "FAILED" &&
-                                    <Tooltip aria="none" aria-live="polite" exitDelay={100} flipBehavior="flip" content={instance.errorMessage
-                                    }>
+                                    
                                       <p style={{ cursor: "pointer" }}>
                                         <Icon status="danger" isInline>
                                           <RhUiErrorFillIcon />
-                                        </Icon>{" "}{" "}
-                                        Failed
+                                        </Icon>{" "}
+                                        <Tooltip aria="none" aria-live="polite" exitDelay={100} flipBehavior="flip" content={t("pipeline:pipelineFailureMsg")}>
+                                        <Button variant="link" isInline onClick={onPipelineClick(instance.id)} >
+                                          {t("failed")}
+                                        </Button>
+                                        </Tooltip>
+
                                       </p>
-                                    </Tooltip>}
+                                    }
                                 </Td>
                                 <Td modifier="fitContent" hasAction style={{ alignContent: "center" }}>
                                   {instance.status === "FAILED" && (

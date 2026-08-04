@@ -41,6 +41,7 @@
   "error": "Error",
   "expandAll": "Expand all",
   "failedToLoad": "Failed to load",
+  "failed": "Failed",
   "findByName": "Find by name",
   "form": {
     "addFieldButton": "Add property",

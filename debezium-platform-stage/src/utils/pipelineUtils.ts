@@ -1,4 +1,4 @@
-import { Pipeline } from "../apis/apis";
+import { Pipeline, PipelinePayload } from "../apis/apis";
 
 export const getActivePipelineCount = (
   pipelineList: Pipeline[],
@@ -14,3 +14,21 @@ export const getActivePipelineCount = (
     return pipelineList.filter((pipeline) => pipeline[type].id === id).length;
   }
 };
+
+export const buildPipelineRestartPayload = (
+  pipeline: Pipeline
+): PipelinePayload => ({
+  name: pipeline.name,
+  description: pipeline.description,
+  source: {
+    id: pipeline.source.id,
+    name: pipeline.source.name,
+  },
+  destination: {
+    id: pipeline.destination.id,
+    name: pipeline.destination.name,
+  },
+  transforms: pipeline.transforms.map(({ id, name }) => ({ id, name })),
+  logLevel: pipeline.logLevel,
+  logLevels: pipeline.logLevels ?? {},
+});
