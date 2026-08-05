@@ -32,7 +32,7 @@ import io.debezium.platform.api.dto.PagedAlertEventResponse;
 import io.debezium.platform.data.model.Severity;
 import io.debezium.platform.domain.AlertEventService;
 
-@Tag(name = "alert-events")
+@Tag(name = "Alerting")
 @OpenAPIDefinition(info = @Info(title = "Alert Event API", description = "Read-only operations over Alert Events and Status", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
 @Path("/alerts")
 public class AlertEventResource {
