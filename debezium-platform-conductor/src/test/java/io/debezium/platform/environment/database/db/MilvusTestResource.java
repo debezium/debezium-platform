@@ -33,7 +33,7 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
  */
 public class MilvusTestResource implements QuarkusTestResourceLifecycleManager {
 
-    private static final String MILVUS_IMAGE = "milvusdb/milvus:v2.6.4";
+    private static final String MILVUS_IMAGE = "mirror.gcr.io/milvusdb/milvus:v2.6.4";
     private static final int MILVUS_GRPC_PORT = 19530;
     private static final int MILVUS_HTTP_PORT = 9091;
     private static final Duration MILVUS_STARTUP_TIMEOUT = Duration.ofMinutes(10);
