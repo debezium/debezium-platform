@@ -36,7 +36,7 @@
     "@patternfly/react-tokens": "^6.6.0",
     "@patternfly/react-topology": "^6.6.0",
     "@tanstack/react-virtual": "^3.13.23",
-    "@types/lodash": "^4.17.23",
+    "@types/lodash": "^4.17.24",
     "@xyflow/react": "^12.11.0",
     "ajv": "^8.20.0",
     "axios": "^1.16.0",
