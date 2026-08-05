@@ -38,7 +38,7 @@ import io.debezium.platform.api.mapper.NotificationChannelMapper;
 import io.debezium.platform.domain.NotificationChannelService;
 import io.debezium.platform.error.NotFoundException;
 
-@Tag(name = "notification-channels")
+@Tag(name = "Alerting")
 @OpenAPIDefinition(info = @Info(title = "Notification Channel API", description = "CRUD operations over Notification Channel resource", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
 @Path("/alerts/channels")
 public class NotificationChannelResource {

@@ -23,9 +23,9 @@ public record AlertRuleRequest(
         @NotEmpty String panelId,
         @NotNull Operator operator,
         @NotNull Double threshold,
-        @Schema(description = "ISO-8601 duration for how long the condition must hold before firing. Default: PT0S (immediate). Max: PT1H", example = "PT5M") Duration forDuration,
+        @Schema(description = "ISO-8601 duration for how long the condition must hold before firing. Default: PT0S (immediate). Max: PT1H", examples = "PT5M") Duration forDuration,
         ReduceFunction reduceFunction,
-        @Schema(description = "ISO-8601 duration for the evaluation window used with reduce functions other than LAST. Default: PT5M. Range: PT1M to PT1H", example = "PT5M") Duration evaluationWindow,
+        @Schema(description = "ISO-8601 duration for the evaluation window used with reduce functions other than LAST. Default: PT5M. Range: PT1M to PT1H", examples = "PT5M") Duration evaluationWindow,
         Severity severity,
         Boolean enabled,
         List<Long> channelIds) {

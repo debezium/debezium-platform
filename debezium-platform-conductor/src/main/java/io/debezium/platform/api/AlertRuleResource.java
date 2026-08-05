@@ -38,7 +38,7 @@ import io.debezium.platform.api.mapper.AlertRuleMapper;
 import io.debezium.platform.domain.AlertRuleService;
 import io.debezium.platform.error.NotFoundException;
 
-@Tag(name = "alert-rules")
+@Tag(name = "Alerting")
 @OpenAPIDefinition(info = @Info(title = "Alert Rule API", description = "CRUD operations over Alert Rule resource", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
 @Path("/alerts/rules")
 public class AlertRuleResource {
