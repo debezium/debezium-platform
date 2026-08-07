@@ -24,7 +24,7 @@ public class PrometheusTestResource implements QuarkusTestResourceLifecycleManag
     private static final int PROMETHEUS_PORT = 9090;
 
     private GenericContainer<?> prometheus;
-    private DebeziumMetricsEndpoint metricsEndpoint;
+    protected DebeziumMetricsEndpoint metricsEndpoint;
 
     @Override
     public Map<String, String> start() {
