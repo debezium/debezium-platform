@@ -53,7 +53,7 @@ describe("SchemaGroupSection", () => {
       />,
     );
 
-    expect(screen.getByRole("switch", { name: "metrics.enabled" })).toBeChecked();
+    expect(screen.getByRole("switch", { name: "Metrics.enabled" })).toBeChecked();
   });
 
   it("renders visible fields sorted by groupOrder", () => {
@@ -71,8 +71,8 @@ describe("SchemaGroupSection", () => {
     );
 
     const inputs = screen.getAllByRole("textbox");
-    expect(inputs[0]).toHaveAccessibleName("first");
-    expect(inputs[1]).toHaveAccessibleName("second");
+    expect(inputs[0]).toHaveAccessibleName("First");
+    expect(inputs[1]).toHaveAccessibleName("Second");
 
     fireEvent.change(inputs[0], { target: { value: "z" } });
     expect(onChange).toHaveBeenCalledWith("first", "z");
