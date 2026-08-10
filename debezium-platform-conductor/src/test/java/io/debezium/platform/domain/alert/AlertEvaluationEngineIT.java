@@ -50,7 +50,7 @@ class AlertEvaluationEngineIT {
     static Long immediateRuleId;
     static Long pendingRuleId;
 
-    @ConfigProperty(name = "test.metrics-endpoint.port")
+    @ConfigProperty(name = "test.metrics-endpoint.port", defaultValue = "0")
     int metricsPort;
 
     @Inject
