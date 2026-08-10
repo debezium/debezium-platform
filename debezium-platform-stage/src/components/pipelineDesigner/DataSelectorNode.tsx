@@ -1,7 +1,7 @@
 import { Card, CardBody, Stack, StackItem } from "@patternfly/react-core";
 import { Handle, Position } from "@xyflow/react";
 import "./DataNode.css";
-import { DataSinkIcon, DataSourceIcon } from "@patternfly/react-icons";
+import { RhUiDataSinkIcon, RhUiDataSourceIcon } from "@patternfly/react-icons";
 import { useData } from "../../appLayout/AppContext";
 import { AppColors, AppStrings } from "@utils/constants";
 
@@ -69,13 +69,13 @@ const DataSelectorNode: React.FC<DataSelectorNodeProps> = ({ data }) => {
                       <div
                         className={darkMode ? "connectorImageWrapperDark" : "connectorImageWrapperLight"}
                       >
-                        <DataSourceIcon style={{ fontSize: "15px" }} />
+                        <RhUiDataSourceIcon style={{ fontSize: "15px" }} />
                       </div>
                     ) : (
                       <div
                         className={darkMode ? "connectorImageWrapperDark" : "connectorImageWrapperLight"}
                       >
-                        <DataSinkIcon style={{ fontSize: 15 }} />
+                        <RhUiDataSinkIcon style={{ fontSize: 15 }} />
                       </div>
                     )}
                   </div>

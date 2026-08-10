@@ -14,7 +14,7 @@ import {
   ToolbarGroup,
   ToolbarItem,
 } from "@patternfly/react-core";
-import { DataSinkIcon, PlusIcon } from "@patternfly/react-icons";
+import { RhUiDataSinkIcon, PlusIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import EmptyStatus from "../../components/EmptyStatus";
 import { Destination, fetchData } from "../../apis/apis";
@@ -174,7 +174,7 @@ const Destinations: React.FunctionComponent = () => {
                           <ToolbarGroup align={{ default: "alignEnd" }}>
                             <ToolbarItem>
                               <Content component={ContentVariants.small}>
-                                 {searchQuery.length > 0
+                                {searchQuery.length > 0
                                   ? `${searchResult.length} ${t("of")} ${destinationsList.length} ${t("items")}`
                                   : `${searchResult.length} ${t("items")}`}
                               </Content>
@@ -183,8 +183,8 @@ const Destinations: React.FunctionComponent = () => {
                         </ToolbarContent>
                       </Toolbar>
                       <div data-tour="destination-table">
-                      <SourceSinkTable
-                        data={searchResult}
+                        <SourceSinkTable
+                          data={searchResult}
                           tableType="destination"
                           onClear={onClear}
                         />
@@ -197,7 +197,7 @@ const Destinations: React.FunctionComponent = () => {
                   heading={t("emptyState.title", { val: t("destination:destination") })}
                   primaryMessage={t("emptyState.description", { val: t("destination:destination") })}
                   secondaryMessage=""
-                  icon={DataSinkIcon as React.ComponentType<unknown>}
+                  icon={RhUiDataSinkIcon as React.ComponentType<unknown>}
                   primaryAction={
                     <Button
                       variant="primary"

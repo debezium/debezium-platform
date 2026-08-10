@@ -39,6 +39,7 @@ import { TrashIcon } from "@patternfly/react-icons";
 import { ReactFlowProvider } from "@xyflow/react";
 import TrademarkMessage from "@components/TrademarkMessage";
 import { useTranslation } from "react-i18next";
+import { PageHeader } from "@patternfly/react-component-groups";
 
 // Define Jotai atoms
 export const selectedSourceAtom = atom<Source | undefined>(undefined);
@@ -219,14 +220,10 @@ const PipelineDesigner: React.FunctionComponent = () => {
         <DrawerContent panelContent={panelContent}>
           <DrawerContentBody>
             <PageSection className="pipeline_designer">
-              <PageSection isWidthLimited style={{ gap: 0 }}>
-                <Content component="h1">
-                  {t('pipeline:pipelinePage.designerTitle')}
-                </Content>
-                <Content component="p">
-                  {t('pipeline:pipelinePage.designerDescription')}
-                </Content>
-              </PageSection>
+                <PageHeader
+           title={t('pipeline:pipelinePage.designerTitle')}
+          subtitle={t('pipeline:pipelinePage.designerDescription')}
+        />
               <PageSection isFilled>
                 <Card isFullHeight>
                   <CardBody isFilled style={{ padding: "15px" }}>

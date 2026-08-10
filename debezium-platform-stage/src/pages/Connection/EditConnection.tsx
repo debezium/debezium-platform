@@ -1,5 +1,5 @@
 
-import { ActionList, ActionListGroup, ActionListItem, Alert, Button, Card, CardBody, Content, Form, FormAlert, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, FormHelperText, HelperText, HelperTextItem, PageSection, Popover, TextInput } from "@patternfly/react-core";
+import { ActionList, ActionListGroup, ActionListItem, Alert, Button, Card, CardBody, Content, Form, FormAlert, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, FormHelperText, HelperText, HelperTextItem, Icon, PageSection, Popover, TextInput } from "@patternfly/react-core";
 import * as React from "react";
 import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
@@ -21,7 +21,7 @@ import {
 } from "@utils/additionalConfigProperties";
 import { getConnectorTypeName } from "@utils/helpers";
 import { AdditionalPropertiesRows } from "@components/AdditionalPropertiesRows";
-import { ExclamationCircleIcon, PencilAltIcon, PlusIcon } from "@patternfly/react-icons";
+import { ExclamationCircleIcon, PencilAltIcon, PlusIcon, RhUiInfrastructureIcon } from "@patternfly/react-icons";
 import { useEffect, useState } from "react";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
@@ -348,17 +348,17 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
         return selectedSchema
             ? ({
-                  type: selectedSchema?.type.toUpperCase() || connection?.type.toUpperCase() || "",
-                  config: mergedConfig,
-                  description: (description as string) ?? "",
-                  name: name as string,
-              } as ConnectionPayload)
+                type: selectedSchema?.type.toUpperCase() || connection?.type.toUpperCase() || "",
+                config: mergedConfig,
+                description: (description as string) ?? "",
+                name: name as string,
+            } as ConnectionPayload)
             : {
-                  type: connection?.type.toUpperCase() || "",
-                  config: validation.additionalFlat,
-                  description: (description as string) ?? "",
-                  name: name as string,
-              };
+                type: connection?.type.toUpperCase() || "",
+                config: validation.additionalFlat,
+                description: (description as string) ?? "",
+                name: name as string,
+            };
     };
 
     const handleValidateFromForm = (data: ConnectionFormValues) => {
@@ -399,7 +399,10 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
 
                 <PageHeader
                     title={connection?.name || t("destination:edit.title")}
-                    subtitle={`${getConnectorTypeName(connection?.type.toLowerCase() || "")} connection.`}
+                    subtitle={connection?.description}
+                    icon={<Icon size="2xl" className="custom-header_icon" >
+                        <RhUiInfrastructureIcon />
+                    </Icon>}
                     actionMenu={
                         <Button variant="secondary" ouiaId="Primary" icon={<PencilAltIcon />}
                             onClick={() => { setViewMode(false); }}>
@@ -411,6 +414,9 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
             ) : (
                 <PageHeader
                     title={t("connection:edit.title")}
+                    icon={<Icon size="2xl" className="custom-header_icon" >
+                        <RhUiInfrastructureIcon />
+                    </Icon>}
                     subtitle={t("connection:edit.description", { val: getConnectorTypeName(connection?.type.toLowerCase() || "") })}
                 />
             )}

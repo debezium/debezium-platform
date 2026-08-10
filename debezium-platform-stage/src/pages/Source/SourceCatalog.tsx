@@ -29,6 +29,7 @@ import { fetchData } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { Catalog, CatalogApiResponse } from "../../apis/types";
 import CatalogSkeleton from "@components/CatalogSkeleton";
+import { PageHeader } from "@patternfly/react-component-groups";
 
 const useSourceCatalogTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
@@ -129,11 +130,11 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
 
   return (
     <>
+      <PageHeader
+        title={t('source:catalog.title')}
+        subtitle={t('source:catalog.description')}
+      />
       <PageSection isWidthLimited>
-        <Content component="h1">{t('source:catalog.title')}</Content>
-        <Content component="p">
-          {t('source:catalog.description')}
-        </Content>
         <Toolbar
           id="toolbar-sticky"
           inset={{ default: "insetNone" }}
@@ -174,7 +175,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
               <Tooltip
                 content={
                   <div>
-                    {t("smartEditorButtonTooltip", {val: "source"})}
+                    {t("smartEditorButtonTooltip", { val: "source" })}
                   </div>
                 }
               >
@@ -184,9 +185,9 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
             <ToolbarGroup align={{ default: "alignEnd" }}>
               <ToolbarItem>
                 <Content component={ContentVariants.small}>
-                     {searchQuery.length > 0
-                                  ? `${searchResult.length} ${t("of")} ${sourceCatalog.length} ${t("items")}`
-                                  : `${searchResult.length} ${t("items")}`}
+                  {searchQuery.length > 0
+                    ? `${searchResult.length} ${t("of")} ${sourceCatalog.length} ${t("items")}`
+                    : `${searchResult.length} ${t("items")}`}
                 </Content>
               </ToolbarItem>
             </ToolbarGroup>

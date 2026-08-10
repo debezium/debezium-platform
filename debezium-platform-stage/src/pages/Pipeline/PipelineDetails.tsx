@@ -3,6 +3,7 @@ import * as React from "react";
 import {
   Alert,
   Button,
+  Icon,
   Label,
   LabelStatus,
   PageSection,
@@ -35,6 +36,7 @@ import {
 } from "@utils/featureFlag";
 import { PageHeader } from "@patternfly/react-component-groups";
 import { useNotification } from "../../appLayout/AppNotificationContext";
+import { RhUiPathIcon } from "@patternfly/react-icons";
 
 const PipelineDetails: React.FunctionComponent = () => {
   const { pipelineId, detailsTab } = useParams<{
@@ -205,6 +207,9 @@ const PipelineDetails: React.FunctionComponent = () => {
         title={pipeline?.name}
         subtitle={pipeline?.description}
         label={<Label className="pf-v5-u-align-content-center" status={LabelStatus.danger}>  {t("failed")}</Label>}
+        icon={<Icon size="2xl" className="custom-header_icon" isInProgress={pipeline === undefined} >
+          <RhUiPathIcon />
+        </Icon>}
         actionMenu={
           pipeline?.status === "FAILED" ? (
             <Button

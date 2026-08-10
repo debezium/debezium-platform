@@ -17,6 +17,14 @@
     min-height: 300px !important;
 }
 
+.custom-header_icon .pf-v6-svg{
+    padding: 3px;
+        /* border: 2px solid; */
+    border: 2px solid #0F62FE;
+        /* border: 2px solid #EF0000; */
+    border-radius: 15px;
+}
+
 
 .connectorImageWrapperDark {
     display: inline-flex;

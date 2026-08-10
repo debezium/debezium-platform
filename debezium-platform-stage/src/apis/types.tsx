@@ -70,6 +70,7 @@ export interface CatalogApiResponse {
   components: {
     converter: CatalogComponentEntry[];
     "custom-converter": CatalogComponentEntry[];
+    predicate: CatalogComponentEntry[];
     "server-sink": CatalogComponentEntry[];
     "sink-connector": CatalogComponentEntry[];
     "source-connector": CatalogComponentEntry[];

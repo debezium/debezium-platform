@@ -6,10 +6,11 @@ import {
   Alert,
   Button,
   ButtonType,
+  Icon,
   PageSection,
   Skeleton,
 } from "@patternfly/react-core";
-import { PencilAltIcon } from "@patternfly/react-icons";
+import { PencilAltIcon, RhUiDataSinkIcon } from "@patternfly/react-icons";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -25,7 +26,6 @@ import { PageHeader } from "@patternfly/react-component-groups";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "react-query";
 import { ConnectorSchema } from "../../apis/types";
-import { getConnectorTypeName } from "../../utils/helpers";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
 } from "@components/CreateSchemaForm";
@@ -152,11 +152,11 @@ const EditDestination: React.FunctionComponent = () => {
         "danger",
         t("statusMessage:edit.failedTitle", { defaultValue: "Update failed" }),
         form?.getLastValidationFailureBody() ??
-          t("destination:form.validationFailedGeneric", { defaultValue: "Please fill all required fields." })
+        t("destination:form.validationFailedGeneric", { defaultValue: "Please fill all required fields." })
       );
       return;
     }
-    setPendingSave({ values: {}, setError: () => {} });
+    setPendingSave({ values: {}, setError: () => { } });
     setIsWarningOpen(true);
   };
 
@@ -248,7 +248,11 @@ const EditDestination: React.FunctionComponent = () => {
       {viewMode ? (
         <PageHeader
           title={destination?.name || t("destination:edit.title")}
-          subtitle={`${getConnectorTypeName(destination?.type || "")} destination connector.`}
+          icon={<Icon size="2xl" className="custom-header_icon" isInProgress={destination === undefined} >
+            <RhUiDataSinkIcon />
+          </Icon>}
+
+          subtitle={destination?.description}
           actionMenu={
             <Button
               variant="secondary"
@@ -262,12 +266,11 @@ const EditDestination: React.FunctionComponent = () => {
         />
       ) : (
         <PageHeader
-          title={
-            <>
-              {t("edit")} <i>{destination?.name}</i>
-            </>
-          }
+          title={t("destination:edit.title")}
           subtitle={t("destination:edit.description")}
+          icon={<Icon size="2xl" className="custom-header_icon" isInProgress={destination === undefined} >
+            <RhUiDataSinkIcon />
+          </Icon>}
         />
       )}
 

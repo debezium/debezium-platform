@@ -11,6 +11,7 @@ import { CatalogGrid } from "@components/CatalogGrid";
 import { useQuery } from "react-query";
 import { fetchData } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
+import { PageHeader } from "@patternfly/react-component-groups";
 
 export interface IConnectionsCatalogProps {
   sampleProp?: string;
@@ -65,7 +66,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
 
   const searchResult = React.useMemo(() => {
     let catalogData: Catalog[] = [];
-    
+
     if (connectionsTypeSelected === 'Source') {
       catalogData = sourceCatalog;
     } else if (connectionsTypeSelected === 'Destination') {
@@ -76,7 +77,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
 
     let filtered = catalogData;
     if (searchQuery.length > 0) {
-      filtered = _.filter(catalogData, (o) => 
+      filtered = _.filter(catalogData, (o) =>
         o.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
@@ -125,11 +126,11 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
 
   return (
     <>
+      <PageHeader
+        title={t("connection:catalog.title")}
+        subtitle={t("connection:catalog.description")}
+      />
       <PageSection isWidthLimited>
-        <Content component="h1">{t("connection:catalog.title")}</Content>
-        <Content component="p">
-          {t("connection:catalog.description")}
-        </Content>
         <Toolbar
           id="toolbar-sticky"
           inset={{ default: "insetNone" }}
@@ -209,8 +210,8 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
               <ToolbarItem>
                 <Content component={ContentVariants.small}>
                   {searchQuery.length > 0
-                                  ? `${searchResult.length} ${t("of")} ${sourceCatalog.length + destinationCatalog.length } ${t("items")}`
-                                  : `${searchResult.length} ${t("items")}`}
+                    ? `${searchResult.length} ${t("of")} ${sourceCatalog.length + destinationCatalog.length} ${t("items")}`
+                    : `${searchResult.length} ${t("items")}`}
                 </Content>
               </ToolbarItem>
             </ToolbarGroup>

@@ -72,3 +72,7 @@
 .connector-schema-review__code-key {
   font-size: var(--pf-v5-global--FontSize--sm);
 }
+
+.transformClassRow {
+    padding-bottom: 10px;
+}

@@ -1,4 +1,3 @@
-import PageHeader from "@components/PageHeader";
 import { ActionList, ActionListGroup, ActionListItem, Alert, Button, Card, CardBody, Content, Form, FormAlert, FormFieldGroup, FormFieldGroupHeader, FormGroup, FormGroupLabelHelp, FormHelperText, HelperText, HelperTextItem, InputGroup, InputGroupItem, PageSection, Popover, Skeleton, TextInput } from "@patternfly/react-core";
 import * as React from "react";
 import _, { } from "lodash";
@@ -27,6 +26,7 @@ import * as yup from "yup";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
+import { PageHeader } from "@patternfly/react-component-groups";
 
 export interface ICreateConnectionProps {
     selectedConnectionType?: "source" | "destination";
@@ -290,7 +290,8 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
             {!selectedConnectionId && (
                 <PageHeader
                     title={t("connection:create.title")}
-                    description={t("connection:create.description")}
+                    subtitle={t("connection:create.description")}
+
                 />
             )}
 
@@ -314,215 +315,215 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                 <Skeleton fontSize="md" width="50%" />
                             </div>
                         ) : (
-                        <Form id="create-connection-form" onSubmit={handleSubmit(handleSaveFromForm)} isWidthLimited>
-                            {!_.isEmpty(errors) && (
-                                <FormAlert>
-                                    <Alert variant="danger" title={t("common:form.error.title")} aria-live="polite" isInline />
-                                </FormAlert>
-                            )}
-                            <FormGroup
-                                label={`${t("connection:create.connectionType", { val: _.capitalize(connectionType) })}`}
-                                fieldId={`connection-type-field`}
-                            >
-                                <>
-                                    <ConnectorImage connectorType={selectedSchema?.type.toLowerCase() || connectionId || ""} size={35} />
-                                    <Content component="p">
-                                        {getConnectorTypeName(selectedSchema?.type.toLowerCase() || connectionId || "")}
-                                    </Content>
-                                </>
-                            </FormGroup>
-                            <FormGroup
+                            <Form id="create-connection-form" onSubmit={handleSubmit(handleSaveFromForm)} isWidthLimited>
+                                {!_.isEmpty(errors) && (
+                                    <FormAlert>
+                                        <Alert variant="danger" title={t("common:form.error.title")} aria-live="polite" isInline />
+                                    </FormAlert>
+                                )}
+                                <FormGroup
+                                    label={`${t("connection:create.connectionType", { val: _.capitalize(connectionType) })}`}
+                                    fieldId={`connection-type-field`}
+                                >
+                                    <>
+                                        <ConnectorImage connectorType={selectedSchema?.type.toLowerCase() || connectionId || ""} size={35} />
+                                        <Content component="p">
+                                            {getConnectorTypeName(selectedSchema?.type.toLowerCase() || connectionId || "")}
+                                        </Content>
+                                    </>
+                                </FormGroup>
+                                <FormGroup
 
-                                label={t("name")}
-                                fieldId={"connection-name"}
-                                isRequired
-                            >
-                                <Controller
-                                    name={"name"}
-                                    control={control}
-                                    rules={{ required: true }}
-                                    render={({ field }) => <TextInput id="connection-name" {...field} validated={errors.name ? "error" : "default"} />}
-                                />
-                                {errors.name && (
+                                    label={t("name")}
+                                    fieldId={"connection-name"}
+                                    isRequired
+                                >
+                                    <Controller
+                                        name={"name"}
+                                        control={control}
+                                        rules={{ required: true }}
+                                        render={({ field }) => <TextInput id="connection-name" {...field} validated={errors.name ? "error" : "default"} />}
+                                    />
+                                    {errors.name && (
+                                        <FormHelperText>
+                                            <HelperText>
+                                                <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
+                                                    {t("common:form.error.required", { val: t("name") })}
+                                                </HelperTextItem>
+                                            </HelperText>
+                                        </FormHelperText>)}
+
+                                </FormGroup>
+
+                                <FormGroup
+                                    label={t("connection:form.descriptionField")}
+                                    fieldId={"connection-description"}
+                                >
+                                    <Controller
+                                        name={"description"}
+                                        control={control}
+                                        defaultValue={""}
+                                        render={({ field }) => <TextInput id="connection-description" {...field} />}
+                                    />
                                     <FormHelperText>
                                         <HelperText>
-                                            <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
-                                                {t("common:form.error.required", { val: t("name") })}
+                                            <HelperTextItem>
+                                                {t("connection:form.descriptionFieldHelperText")}
                                             </HelperTextItem>
                                         </HelperText>
-                                    </FormHelperText>)}
-
-                            </FormGroup>
-
-                            <FormGroup
-                                label={t("connection:form.descriptionField")}
-                                fieldId={"connection-description"}
-                            >
-                                <Controller
-                                    name={"description"}
-                                    control={control}
-                                    defaultValue={""}
-                                    render={({ field }) => <TextInput id="connection-description" {...field} />}
-                                />
-                                <FormHelperText>
-                                    <HelperText>
-                                        <HelperTextItem>
-                                            {t("connection:form.descriptionFieldHelperText")}
-                                        </HelperTextItem>
-                                    </HelperText>
-                                </FormHelperText>
-                            </FormGroup>
+                                    </FormHelperText>
+                                </FormGroup>
 
 
-                            {selectedSchemaProperties &&
-                                (
-                                    <FormFieldGroup
-                                        header={
-                                            <FormFieldGroupHeader
-                                                titleText={{
-                                                    text: <span style={{ fontWeight: 500 }}>{selectedSchemaProperties.description}</span>,
-                                                    id: `field-group-${connectionId}-schema-id`,
-                                                }}
-                                                titleDescription={t("connection:create.subHeading")}
+                                {selectedSchemaProperties &&
+                                    (
+                                        <FormFieldGroup
+                                            header={
+                                                <FormFieldGroupHeader
+                                                    titleText={{
+                                                        text: <span style={{ fontWeight: 500 }}>{selectedSchemaProperties.description}</span>,
+                                                        id: `field-group-${connectionId}-schema-id`,
+                                                    }}
+                                                    titleDescription={t("connection:create.subHeading")}
 
-                                            />
-                                        }
-                                    >{
-                                            Object.entries(selectedSchemaProperties.properties).map(([propertyName, propertySchema]) => (
-                                                <FormGroup
-                                                    key={propertyName}
-                                                    label={_.capitalize(propertySchema.title)}
-                                                    fieldId={propertyName}
-                                                    isRequired={selectedSchemaProperties.required.includes(propertyName)}
-                                                    labelHelp={
-                                                        <Popover
+                                                />
+                                            }
+                                        >{
+                                                Object.entries(selectedSchemaProperties.properties).map(([propertyName, propertySchema]) => (
+                                                    <FormGroup
+                                                        key={propertyName}
+                                                        label={_.capitalize(propertySchema.title)}
+                                                        fieldId={propertyName}
+                                                        isRequired={selectedSchemaProperties.required.includes(propertyName)}
+                                                        labelHelp={
+                                                            <Popover
 
 
-                                                            bodyContent={
-                                                                <div>
-                                                                    {propertySchema.title}
-                                                                </div>
-                                                            }
-                                                        >
-                                                            <FormGroupLabelHelp aria-label={propertySchema.title} />
-                                                        </Popover>
-                                                    }
-                                                >
-                                                    {propertySchema.type === "string" && propertySchema.title.toLowerCase().includes("password") && <Controller
-                                                        name={propertyName}
-                                                        rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
-                                                        control={control}
-                                                        render={({ field }) => (
-                                                            <InputGroup>
-                                                                <InputGroupItem isFill>
-                                                                    <TextInput
-                                                                        id={propertyName}
-                                                                        type={passwordVisible[propertyName] ? "text" : "password"}
-                                                                        {...field}
-                                                                        validated={_.get(errors, propertyName) ? "error" : "default"}
-                                                                    />
-                                                                </InputGroupItem>
-                                                                <InputGroupItem>
-                                                                    <Button
-                                                                        variant="control"
-                                                                        onClick={() => togglePasswordVisibility(propertyName)}
-                                                                        aria-label={passwordVisible[propertyName] ? "Hide password" : "Show password"}
-                                                                    >
-                                                                        {passwordVisible[propertyName] ? <EyeSlashIcon /> : <EyeIcon />}
-                                                                    </Button>
-                                                                </InputGroupItem>
-                                                            </InputGroup>
-                                                        )}
-                                                    />}
-                                                    {propertySchema.type === "string" && !propertySchema.title.toLowerCase().includes("password") && <Controller
-                                                        name={propertyName}
-                                                        rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
-                                                        control={control}
-                                                        render={({ field }) => <TextInput id={propertyName}  {...field} validated={_.get(errors, propertyName) ? "error" : "default"} />}
-                                                    />}
-                                                    {propertySchema.type === "list" && <Controller
-                                                        name={propertyName}
-                                                        rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
-                                                        control={control}
-                                                        render={({ field }) => <TextInput id={propertyName}  {...field} validated={_.get(errors, propertyName) ? "error" : "default"} />}
-                                                    />}
-                                                    {propertySchema.type === "integer" && <Controller
-                                                        name={propertyName}
-                                                        control={control}
-                                                        rules={{
-                                                            required: selectedSchemaProperties.required.includes(propertyName)
-                                                        }}
-                                                        render={({ field }) => (
-                                                            <TextInput
-                                                                id={propertyName}
-                                                                type="number"
-                                                                {...field}
-                                                                validated={_.get(errors, propertyName) ? "error" : "default"}
-                                                                onChange={(_e, value) => field.onChange(value === '' ? '' : Number(value))}
-                                                            />
-                                                        )}
-                                                    />}
+                                                                bodyContent={
+                                                                    <div>
+                                                                        {propertySchema.title}
+                                                                    </div>
+                                                                }
+                                                            >
+                                                                <FormGroupLabelHelp aria-label={propertySchema.title} />
+                                                            </Popover>
+                                                        }
+                                                    >
+                                                        {propertySchema.type === "string" && propertySchema.title.toLowerCase().includes("password") && <Controller
+                                                            name={propertyName}
+                                                            rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
+                                                            control={control}
+                                                            render={({ field }) => (
+                                                                <InputGroup>
+                                                                    <InputGroupItem isFill>
+                                                                        <TextInput
+                                                                            id={propertyName}
+                                                                            type={passwordVisible[propertyName] ? "text" : "password"}
+                                                                            {...field}
+                                                                            validated={_.get(errors, propertyName) ? "error" : "default"}
+                                                                        />
+                                                                    </InputGroupItem>
+                                                                    <InputGroupItem>
+                                                                        <Button
+                                                                            variant="control"
+                                                                            onClick={() => togglePasswordVisibility(propertyName)}
+                                                                            aria-label={passwordVisible[propertyName] ? "Hide password" : "Show password"}
+                                                                        >
+                                                                            {passwordVisible[propertyName] ? <EyeSlashIcon /> : <EyeIcon />}
+                                                                        </Button>
+                                                                    </InputGroupItem>
+                                                                </InputGroup>
+                                                            )}
+                                                        />}
+                                                        {propertySchema.type === "string" && !propertySchema.title.toLowerCase().includes("password") && <Controller
+                                                            name={propertyName}
+                                                            rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
+                                                            control={control}
+                                                            render={({ field }) => <TextInput id={propertyName}  {...field} validated={_.get(errors, propertyName) ? "error" : "default"} />}
+                                                        />}
+                                                        {propertySchema.type === "list" && <Controller
+                                                            name={propertyName}
+                                                            rules={{ required: selectedSchemaProperties.required.includes(propertyName) }}
+                                                            control={control}
+                                                            render={({ field }) => <TextInput id={propertyName}  {...field} validated={_.get(errors, propertyName) ? "error" : "default"} />}
+                                                        />}
+                                                        {propertySchema.type === "integer" && <Controller
+                                                            name={propertyName}
+                                                            control={control}
+                                                            rules={{
+                                                                required: selectedSchemaProperties.required.includes(propertyName)
+                                                            }}
+                                                            render={({ field }) => (
+                                                                <TextInput
+                                                                    id={propertyName}
+                                                                    type="number"
+                                                                    {...field}
+                                                                    validated={_.get(errors, propertyName) ? "error" : "default"}
+                                                                    onChange={(_e, value) => field.onChange(value === '' ? '' : Number(value))}
+                                                                />
+                                                            )}
+                                                        />}
 
-                                                    {_.get(errors, propertyName) && (
-                                                        <FormHelperText>
+                                                        {_.get(errors, propertyName) && (
+                                                            <FormHelperText>
+                                                                <HelperText>
+                                                                    <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
+                                                                        {t("common:form.error.required", { val: _.capitalize(propertyName) })}
+                                                                    </HelperTextItem>
+                                                                </HelperText>
+                                                            </FormHelperText>)}
+
+                                                        {propertySchema.type === "integer" && (<FormHelperText>
                                                             <HelperText>
-                                                                <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
-                                                                    {t("common:form.error.required", { val: _.capitalize(propertyName) })}
+                                                                <HelperTextItem variant="default">
+                                                                    {t("common:form.error.numerical", { val: _.capitalize(propertyName) })}
                                                                 </HelperTextItem>
                                                             </HelperText>
                                                         </FormHelperText>)}
 
-                                                    {propertySchema.type === "integer" && (<FormHelperText>
-                                                        <HelperText>
-                                                            <HelperTextItem variant="default">
-                                                                {t("common:form.error.numerical", { val: _.capitalize(propertyName) })}
-                                                            </HelperTextItem>
-                                                        </HelperText>
-                                                    </FormHelperText>)}
-
-                                                </FormGroup>
-                                            ))}
-                                    </FormFieldGroup>
-                                )}
+                                                    </FormGroup>
+                                                ))}
+                                        </FormFieldGroup>
+                                    )}
 
 
-                            <FormFieldGroup
-                                header={
-                                    <FormFieldGroupHeader
-                                        titleText={{
-                                            text: <span style={{ fontWeight: 500 }}>{selectedSchemaProperties ? `Additional properties` : `Configuration properties`}</span>,
-                                            id: `field-group-${connectionId}-properties-id`,
-                                        }}
-                                        titleDescription={t("form.subHeading.description")}
-                                        actions={
+                                <FormFieldGroup
+                                    header={
+                                        <FormFieldGroupHeader
+                                            titleText={{
+                                                text: <span style={{ fontWeight: 500 }}>{selectedSchemaProperties ? `Additional properties` : `Configuration properties`}</span>,
+                                                id: `field-group-${connectionId}-properties-id`,
+                                            }}
+                                            titleDescription={t("form.subHeading.description")}
+                                            actions={
 
-                                            <>
-                                                <Button
-                                                    variant="secondary"
-                                                    icon={<PlusIcon />}
-                                                    onClick={handleAddProperty}
-                                                >
-                                                    {t("form.addFieldButton")}
-                                                </Button>
-                                            </>
+                                                <>
+                                                    <Button
+                                                        variant="secondary"
+                                                        icon={<PlusIcon />}
+                                                        onClick={handleAddProperty}
+                                                    >
+                                                        {t("form.addFieldButton")}
+                                                    </Button>
+                                                </>
 
-                                        }
-                                    />
-                                }
-                            >
-                                <>
-                                    <AdditionalPropertiesRows
-                                        fieldIdPrefix={`${connectionType ?? connectionId ?? "connection"}-config-props`}
-                                        properties={properties}
-                                        rowIdsWithErrors={additionalPropertyErrors?.rowIdsWithErrors ?? new Set()}
-                                        rowErrorCodes={additionalPropertyErrors?.rowErrorCodes ?? new Map()}
-                                        onDeleteRow={handleDeleteProperty}
-                                        onPatchRow={handlePatchProperty}
-                                        onValueKindChange={handleValueKindChange}
-                                    />
-                                </>
-                            </FormFieldGroup>
-                        </Form>
+                                            }
+                                        />
+                                    }
+                                >
+                                    <>
+                                        <AdditionalPropertiesRows
+                                            fieldIdPrefix={`${connectionType ?? connectionId ?? "connection"}-config-props`}
+                                            properties={properties}
+                                            rowIdsWithErrors={additionalPropertyErrors?.rowIdsWithErrors ?? new Set()}
+                                            rowErrorCodes={additionalPropertyErrors?.rowErrorCodes ?? new Map()}
+                                            onDeleteRow={handleDeleteProperty}
+                                            onPatchRow={handlePatchProperty}
+                                            onValueKindChange={handleValueKindChange}
+                                        />
+                                    </>
+                                </FormFieldGroup>
+                            </Form>
                         )}
                     </CardBody>
                 </Card>

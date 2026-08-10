@@ -14,7 +14,6 @@ import { useRef, useState } from "react";
 import { createPost, Payload, Source } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
-import PageHeader from "@components/PageHeader";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
 import { fetchData } from "../../apis/apis";
@@ -22,6 +21,7 @@ import { ConnectorSchema } from "../../apis/types";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
 } from "@components/CreateSchemaForm";
+import { PageHeader } from "@patternfly/react-component-groups";
 
 interface CreateSourceProps {
   modelLoaded?: boolean;
@@ -148,7 +148,8 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
       {!modelLoaded && (
         <PageHeader
           title={t("source:create.title")}
-          description={t("source:create.description")}
+          subtitle={t("source:create.description")}
+
         />
       )}
 

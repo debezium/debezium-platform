@@ -9,23 +9,49 @@
     "title": "Crea trasformazione",
     "description": "Aggiungi una trasformazione. Prima che i messaggi vengano inviati al sink, possono passare attraverso una sequenza di trasformazioni."
   },
-  "form": {
-    "classField": "Classe della trasformazione",
-    "classFieldHelper": "Il nome della classe Java che implementa la trasformazione",
-    "nameField": "Nome della trasformazione",
-    "descriptionField": "Descrizione",
-    "subsectionTitle": "Proprietà di configurazione della trasformazione",
-    "subsectionDescription": "Inserisci il nome della trasformazione per abilitare le proprietà di configurazione.",
-    "subsectionDisabledDescription": "Proprietà di configurazione passate alla trasformazione con nome {{val}}",
-    "predicateTypeField": "Tipo di predicato",
-    "predicateTypeFieldHelper": "Il nome della classe Java che implementa il predicato",
-    "negateField": "Negare il predicato",
-    "negateFieldDescription": "Impostando questa opzione su True, il predicato verrà applicato solo ai record che **non** corrispondono alla condizione definita"
-  },
-  "predicates": {
-    "title": "Predicati",
-    "description": "Le trasformazioni vengono applicate solo ai record che soddisfano la condizione specificata dal predicato. Imposta 'negare' su 'true' per invertire questo comportamento."
-  },
+    "form": {
+        "classField": "Classe della trasformazione",
+        "classFieldHelper": "Il nome della classe Java che implementa la trasformazione",
+        "classPlaceholder": "Seleziona una trasformazione",
+        "classRequired": "La classe della trasformazione è obbligatoria",
+        "variantField": "Variante",
+        "variantFieldHelper": "Seleziona la variante di implementazione per questa trasformazione.",
+        "nameField": "Nome della trasformazione",
+        "nameRequired": "Il nome della trasformazione è obbligatorio.",
+        "nameExists": "Esiste già una trasformazione con nome '{{name}}'",
+        "descriptionField": "Descrizione",
+        "subsectionTitle": "Proprietà di configurazione della trasformazione",
+        "subsectionDescription": "Configura le proprietà per la trasformazione selezionata.",
+        "subsectionDisabledDescription": "Proprietà di configurazione passate alla trasformazione con nome {{val}}",
+        "selectClassFirst": "Seleziona una classe di trasformazione per configurarne le proprietà.",
+        "schemaLoadFailed": "Impossibile caricare lo schema di configurazione della trasformazione",
+        "predicateSchemaLoadFailed": "Impossibile caricare lo schema di configurazione del predicato",
+        "predicateTypeField": "Tipo di predicato",
+        "predicateTypeFieldHelper": "Il nome della classe Java che implementa il predicato",
+        "predicatePlaceholder": "Seleziona un predicato (facoltativo)",
+        "noPredicates": "Nessun predicato disponibile",
+        "negateField": "Negare il predicato",
+        "negateFieldDescription": "Impostando questa opzione su True, il predicato verrà applicato solo ai record che **non** corrispondono alla condizione definita",
+        "validationFailedGeneric": "Compila tutti i campi obbligatori.",
+        "validationFailedInOneSection": "Correggi gli errori in {{section}}.",
+        "validationFailedInMultipleSections": "Correggi gli errori in: {{list}}."
+    },
+    "jumplinks": {
+        "label": "Sezioni del modulo",
+        "essentials": "Elementi essenziali della trasformazione",
+        "configuration": "Configurazione della trasformazione",
+        "predicate": "Predicato"
+    },
+    "predicates": {
+        "title": "Predicati",
+        "description": "Le trasformazioni vengono applicate solo ai record che soddisfano la condizione specificata dal predicato. Imposta 'negare' su 'true' per invertire questo comportamento."
+    },
+    "review": {
+        "configured": "Configurato",
+        "default": "Predefinito",
+        "noVisibleFields": "Nessun campo si applica alla configurazione corrente.",
+        "noPredicate": "Nessun predicato configurato."
+    },
   "edit": {
     "title": "Modifica trasformazione",
     "description": "Modifica una trasformazione. Prima che i messaggi vengano inviati al sink, possono passare attraverso una sequenza di trasformazioni."
@@ -40,6 +66,6 @@
     "description": "Seleziona una trasformazione già configurata dall'elenco sottostante",
     "createTitle": "Crea una trasformazione",
     "createDescription": "Crea una nuova trasformazione per la tua pipeline di dati.",
-    "formDescription": "Compila il modulo sottostante o utilizza l'editor intelligente per creare una trasformazione. Se hai già un file di configurazione, puoi creare una trasformazione caricandolo nell'editor intelligente."
+    "formDescription": "Compila il modulo sottostante per creare una trasformazione."
   }
 }

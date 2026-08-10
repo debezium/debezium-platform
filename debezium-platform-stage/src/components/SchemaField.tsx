@@ -13,6 +13,7 @@ import {
 } from "@patternfly/react-core";
 import { ExclamationCircleIcon } from "@patternfly/react-icons";
 import { SchemaProperty } from "../apis/types";
+import { capitalizeLabel } from "@utils/helpers";
 import "./SchemaField.css";
 
 interface SchemaFieldProps {
@@ -39,6 +40,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
 }) => {
   const enumValues = getEnumValues(property);
   const fieldId = `schema-field-${property.name}`;
+  const displayLabel = capitalizeLabel(property.display.label);
 
   const renderField = () => {
     if (enumValues && enumValues.length > 0) {
@@ -47,7 +49,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
           id={fieldId}
           value={value}
           onChange={(_e, val) => onChange(property.name, val)}
-          aria-label={property.display.label}
+          aria-label={displayLabel}
           validated={error ? "error" : "default"}
           isDisabled={readOnly}
         >
@@ -70,7 +72,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
           onChange={(_e, checked) =>
             onChange(property.name, String(checked))
           }
-          aria-label={property.display.label}
+          aria-label={displayLabel}
           isDisabled={readOnly}
         />
       );
@@ -83,7 +85,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
           type="number"
           value={value}
           onChange={(_e, val) => onChange(property.name, val)}
-          aria-label={property.display.label}
+          aria-label={displayLabel}
           validated={error ? "error" : "default"}
           readOnly={!!readOnly}
           readOnlyVariant={readOnly ? "plain" : undefined}
@@ -97,7 +99,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
         type="text"
         value={value}
         onChange={(_e, val) => onChange(property.name, val)}
-        aria-label={property.display.label}
+        aria-label={displayLabel}
         validated={error ? "error" : "default"}
         readOnly={!!readOnly}
         readOnlyVariant={readOnly ? "plain" : undefined}
@@ -107,13 +109,13 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
 
   const fieldLabel = isDependant ? (
     <>
-      {property.display.label}
+      {displayLabel}
       <Label isCompact color="teal" className="schema-field__conditional-badge">
       Connector adapter: logminner
       </Label>
     </>
   ) : (
-    property.display.label
+    displayLabel
   );
 
   return (
@@ -126,7 +128,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({
           property.display.description ? (
             <Popover bodyContent={property.display.description}>
               <FormGroupLabelHelp
-                aria-label={`More info for ${property.display.label}`}
+                aria-label={`More info for ${displayLabel}`}
               />
             </Popover>
           ) : undefined

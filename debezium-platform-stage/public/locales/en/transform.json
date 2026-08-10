@@ -13,20 +13,45 @@
     "form": {
         "classField": "Transform class",
         "classFieldHelper": "The name of Java class implementing the transformation",
+        "classPlaceholder": "Select a transform",
+        "classRequired": "Transform class is required",
+        "variantField": "Variant",
+        "variantFieldHelper": "Select the implementation flavor for this transform.",
         "nameField": "Transform name",
+        "nameRequired": "Transform name is required.",
+        "nameExists": "Transform with name '{{name}}' already exists",
         "descriptionField": "Description",
         "subsectionTitle": "Transform configuration properties",
-        "subsectionDescription": "Enter transform name to enable configuration properties.",
+        "subsectionDescription": "Configure properties for the selected transform.",
         "subsectionDisabledDescription": "Configuration properties passed to the transformation with name {{val}}",
+        "selectClassFirst": "Select a transform class to configure its properties.",
+        "schemaLoadFailed": "Failed to load transform configuration schema",
+        "predicateSchemaLoadFailed": "Failed to load predicate configuration schema",
         "predicateTypeField": "Predicate type",
         "predicateTypeFieldHelper": "The name of Java class implementing the predicate",
+        "predicatePlaceholder": "Select a predicate (optional)",
+        "noPredicates": "No predicates available",
         "negateField": "Negate predicate",
-        "negateFieldDescription": "Setting this option to True applies the predicate only to records that do not match the defined predicate condition"
-        
+        "negateFieldDescription": "Setting this option to True applies the predicate only to records that do not match the defined predicate condition",
+        "validationFailedGeneric": "Please fill all required fields.",
+        "validationFailedInOneSection": "Please fix errors in {{section}}.",
+        "validationFailedInMultipleSections": "Please fix errors in: {{list}}."
+    },
+    "jumplinks": {
+        "label": "Form sections",
+        "essentials": "Transform Essentials",
+        "configuration": "Transform Configuration",
+        "predicate": "Predicate"
     },
     "predicates": {
         "title": "Predicates",
         "description": "Transformations are applied only to records that meet the condition specified by the predicate. Set 'negate' to 'true' to reverse this behavior."
+    },
+    "review": {
+        "configured": "Configured",
+        "default": "Default",
+        "noVisibleFields": "No fields apply for the current configuration.",
+        "noPredicate": "No predicate configured."
     },
     "edit": {
         "title": "Edit transform",
@@ -42,6 +67,6 @@
         "description": "Select a already configured transform from the list below",
         "createTitle": "Create a transform",
         "createDescription": "Create a new transform for your data pipeline.",
-        "formDescription": "Fill out the below form or use the smart editor to create a transform. If you already have a configuration file, you can create a transform by uploading it in the smart editor."
+        "formDescription": "Fill out the form below to create a transform."
     }
 }

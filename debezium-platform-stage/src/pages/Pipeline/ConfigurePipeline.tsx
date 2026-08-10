@@ -58,7 +58,6 @@ import {
   Transform,
 } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
-import PageHeader from "@components/PageHeader";
 import { useAtom } from "jotai";
 import { selectedTransformAtom } from "./PipelineDesigner";
 import { useNotification } from "@appContext/AppNotificationContext";
@@ -72,6 +71,7 @@ import {
   getPipelineSchemaValidationError,
   getPipelineNameValidationError,
 } from "@utils/pipelineNameValidation";
+import { PageHeader } from "@patternfly/react-component-groups";
 
 const ajv = new Ajv();
 
@@ -446,10 +446,10 @@ const ConfigurePipeline: React.FunctionComponent = () => {
 
   return (
     <>
-      <PageHeader
-        title={t('pipeline:form.title')}
-        description={t('pipeline:form.description')}
-      />
+       <PageHeader
+                 title={t('pipeline:form.title')}
+                subtitle={t('pipeline:form.description')}
+              />
       <PageSection className={style.createConnector_toolbar}>
         <Toolbar id="create-editor-toggle" >
           <ToolbarContent>

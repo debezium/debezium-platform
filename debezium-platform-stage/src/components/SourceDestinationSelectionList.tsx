@@ -6,7 +6,7 @@ import {
   Flex,
   FlexItem,
 } from "@patternfly/react-core";
-import { DataSinkIcon, DataSourceIcon } from "@patternfly/react-icons";
+import { RhUiDataSinkIcon, RhUiDataSourceIcon } from "@patternfly/react-icons";
 import { Table, Thead, Tr, Th, Tbody, Td } from "@patternfly/react-table";
 import React from "react";
 import {
@@ -86,7 +86,7 @@ const SourceDestinationSelectionList: React.FunctionComponent<
         <EmptyState
           headingLevel="h2"
           titleText={t("emptyState.title", { val: tableType })}
-          icon={tableType === "source" ? DataSourceIcon : DataSinkIcon}
+          icon={tableType === "source" ? RhUiDataSourceIcon : RhUiDataSinkIcon}
           variant={EmptyStateVariant.lg}
         >
           <EmptyStateBody>

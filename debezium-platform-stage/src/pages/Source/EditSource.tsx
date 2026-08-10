@@ -6,10 +6,11 @@ import {
   Alert,
   Button,
   ButtonType,
+  Icon,
   PageSection,
   Skeleton,
 } from "@patternfly/react-core";
-import { PencilAltIcon } from "@patternfly/react-icons";
+import { PencilAltIcon, RhUiDataSourceIcon } from "@patternfly/react-icons";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -25,7 +26,6 @@ import { PageHeader } from "@patternfly/react-component-groups";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "react-query";
 import { ConnectorSchema } from "../../apis/types";
-import { getConnectorTypeName } from "../../utils/helpers";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
 } from "@components/CreateSchemaForm";
@@ -152,11 +152,11 @@ const EditSource: React.FunctionComponent = () => {
         "danger",
         t("statusMessage:edit.failedTitle", { defaultValue: "Update failed" }),
         form?.getLastValidationFailureBody() ??
-          t("source:form.validationFailedGeneric", { defaultValue: "Please fill all required fields." })
+        t("source:form.validationFailedGeneric", { defaultValue: "Please fill all required fields." })
       );
       return;
     }
-    setPendingSave({ values: {}, setError: () => {} });
+    setPendingSave({ values: {}, setError: () => { } });
     setIsWarningOpen(true);
   };
 
@@ -247,7 +247,12 @@ const EditSource: React.FunctionComponent = () => {
       {viewMode ? (
         <PageHeader
           title={source?.name || t("source:edit.title")}
-          subtitle={`${getConnectorTypeName(source?.type || "")} source connector.`}
+          //  icon={source ? <ConnectorImage connectorType={source?.type || ""}/> : <Spinner aria-label="Loading ..." />}
+          icon={<Icon size="2xl" className="custom-header_icon" isInProgress={source === undefined} >
+            <RhUiDataSourceIcon />
+          </Icon>}
+
+          subtitle={source?.description}
           actionMenu={
             <Button
               variant="secondary"
@@ -261,12 +266,12 @@ const EditSource: React.FunctionComponent = () => {
         />
       ) : (
         <PageHeader
-          title={
-            <>
-              {t("edit")} <i>{source?.name}</i>
-            </>
-          }
+          title={t("source:edit.title")}
           subtitle={t("source:edit.description")}
+          icon={<Icon size="2xl" className="custom-header_icon" isInProgress={source === undefined} >
+            <RhUiDataSourceIcon />
+          </Icon>}
+        // icon={source ? <ConnectorImage connectorType={source?.type || ""}/> : <Spinner aria-label="Loading ..." />}
         />
       )}
 

@@ -176,3 +176,8 @@ export const getConnectorTypeName = (connectorType: string) => {
 
   return name;
 };
+
+export const capitalizeLabel = (label: string): string => {
+  if (!label) return label;
+  return label.charAt(0).toUpperCase() + label.slice(1);
+};

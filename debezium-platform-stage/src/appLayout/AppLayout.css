@@ -19,7 +19,7 @@ margin-left: auto;
 }
 
 :where(.pf-v6-theme-glass) .custom-app-page .pf-v6-c-page__drawer {
-    margin-inline-start: 45px;
+    margin-inline-start: 35px;
 }
 
 .pf-v6-c-drawer__body > .pf-v6-c-page {

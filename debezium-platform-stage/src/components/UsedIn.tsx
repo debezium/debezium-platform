@@ -1,6 +1,6 @@
 import { Button, Label, Popover } from "@patternfly/react-core"
-import { DataSinkIcon, DataSourceIcon } from "@patternfly/react-icons"
-import { MigrationIcon as PipelineIcon } from "@patternfly/react-icons";
+import { RhUiDataSinkIcon, RhUiDataSourceIcon } from "@patternfly/react-icons"
+import { RhUiPathIcon as PipelineIcon } from "@patternfly/react-icons";
 import { t } from "i18next"
 import { FC, Fragment } from "react"
 import { useNavigate } from "react-router-dom"
@@ -39,7 +39,7 @@ export const getActivePipelineCount = (
 const UsedIn: FC<IUsedInProps> = ({ resourceList, resourceType, instance, requestedPageType }) => {
     const navigate = useNavigate();
     const activeCount = requestedPageType === "connection" ? getActiveConnectionCount(resourceList as Source[] | Destination[], instance.id) : getActivePipelineCount(resourceList as Pipeline[], instance.id, requestedPageType as "source" | "destination" | "transform");
-    const icon = resourceType === "source" ? <DataSourceIcon /> : resourceType === "destination" ? <DataSinkIcon /> : <PipelineIcon />;
+    const icon = resourceType === "source" ? <RhUiDataSourceIcon /> : resourceType === "destination" ? <RhUiDataSinkIcon /> : <PipelineIcon />;
     const labelColor = activeCount === 0 ? "grey" : "blue";
     const label = (
         <Label isDisabled={activeCount === 0} icon={icon} color={labelColor}>

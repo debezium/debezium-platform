@@ -1,12 +1,12 @@
 import React from "react";
 import { AppBranding } from "./utils/constants";
 import {
-  DataProcessorIcon,
-  DataSinkIcon,
-  DataSourceIcon,
-  InfrastructureIcon,
+  RhUiDataProcessorIcon,
+  RhUiDataSinkIcon,
+  RhUiDataSourceIcon,
+  RhUiInfrastructureIcon,
 } from "@patternfly/react-icons";
-import { MigrationIcon as PipelineIcon } from "@patternfly/react-icons";
+import { RhUiPathIcon as PipelineIcon } from "@patternfly/react-icons";
 import { ServiceCatalogIcon as VaultIcon } from "@patternfly/react-icons";
 import {
   CreateSource,
@@ -65,7 +65,7 @@ const routes: AppRouteConfig[] = [
   {
     component: Pipelines,
     label: "Pipelines",
-    icon: <PipelineIcon style={{ outline: "none" }} />,
+    icon: <PipelineIcon />,
     path: "/pipeline",
     navSection: "pipeline",
     title: `${AppBranding} | Pipeline`,
@@ -91,7 +91,7 @@ const routes: AppRouteConfig[] = [
   {
     component: Sources,
     label: "Sources",
-    icon: <DataSourceIcon style={{ outline: "none" }} />,
+    icon: <RhUiDataSourceIcon />,
     path: "/source",
     navSection: "source",
     title: `${AppBranding} | Source`,
@@ -123,7 +123,7 @@ const routes: AppRouteConfig[] = [
   {
     component: Transforms,
     label: "Transforms",
-    icon: <DataProcessorIcon style={{ outline: "none" }} />,
+    icon: <RhUiDataProcessorIcon style={{ outline: "none" }} />,
     path: "/transform",
     navSection: "transform",
     title: `${AppBranding} | Transform`,
@@ -138,7 +138,7 @@ const routes: AppRouteConfig[] = [
   {
     component: Destinations,
     label: "Destinations",
-    icon: <DataSinkIcon style={{ outline: "none" }} />,
+    icon: <RhUiDataSinkIcon style={{ outline: "none" }} />,
     title: `${AppBranding} | Destination`,
     path: "/destination",
     navSection: "destination",
@@ -164,7 +164,7 @@ const routes: AppRouteConfig[] = [
   {
     component: Connections,
     label: "Connections",
-    icon: <InfrastructureIcon style={{ outline: "none" }} />,
+    icon: <RhUiInfrastructureIcon/>,
     title: `${AppBranding} | Connections`,
     path: "/connections",
     navSection: "connections",

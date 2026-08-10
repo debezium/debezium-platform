@@ -75,3 +75,13 @@
 .additional-properties-row .pf-v6-c-form__group {
   margin-bottom: 0;
 }
+
+.transform-variant-radios {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pf-v6-c-menu.pf-m-scrollable .pf-v6-c-menu__content {
+  overscroll-behavior: contain;
+}
