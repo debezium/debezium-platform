@@ -62,4 +62,47 @@ public interface HostConfigGroup {
     @WithName("reconciliation-interval")
     @WithDefault("5m")
     String reconciliationInterval();
+
+    /**
+     * Starting port number for pipeline deployment port allocation.
+     * Each new pipeline on a host gets {@code MAX(existing ports) + 1},
+     * starting from this base when the host has no existing deployments.
+     */
+    @WithName("base-port")
+    @WithDefault("9000")
+    int basePort();
+
+    /**
+     * Prefix for Docker container names on remote hosts.
+     * The full container name is {@code <prefix><pipeline-id>}.
+     */
+    @WithName("container-name-prefix")
+    @WithDefault("debezium-pipeline-")
+    String containerNamePrefix();
+
+    /**
+     * Base directory on the remote host where pipeline configuration
+     * files are stored. Each pipeline gets a subdirectory named by
+     * its pipeline ID.
+     */
+    @WithName("config-base-path")
+    @WithDefault("/opt/debezium/configs")
+    String configBasePath();
+
+    /**
+     * Docker image for the Debezium Server container.
+     * Defaults to the same image the provisioning playbook pre-pulls
+     * (see {@code ansible/host-setup.yml}, task "Pre-pull Debezium Server Docker image").
+     */
+    @WithName("debezium-server-image")
+    @WithDefault("quay.io/debezium/server:latest")
+    String debeziumServerImage();
+
+    /**
+     * Interval between status poll cycles for deployed containers.
+     * Accepts Quarkus duration format, e.g. {@code 30s}, {@code 1m}.
+     */
+    @WithName("status-poll-interval")
+    @WithDefault("30s")
+    String statusPollInterval();
 }

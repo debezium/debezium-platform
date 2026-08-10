@@ -19,7 +19,11 @@ public class HostModeTestProfile implements QuarkusTestProfile {
     public Map<String, String> getConfigOverrides() {
         return Map.of(
                 "platform.deployment.mode", "host",
-                "quarkus.oras.devservices.base-port", "25001");
+                "conductor.watcher.enabled", "false",
+                "conductor.descriptors.volume-source", "true",
+                "quarkus.oras.devservices.base-port", "25010",
+                "quarkus.arc.exclude-types",
+                "io.debezium.platform.environment.watcher.config.WatcherConfig,io.debezium.platform.environment.watcher.ConductorEnvironmentWatcher");
     }
 
     @Override

@@ -31,6 +31,7 @@ create table host_deployment (
     server_port integer not null,
     deployment_status varchar(255) not null,
     config_hash varchar(255) not null,
+    deployed_at timestamp(6) with time zone not null,
     primary key (id)
 );
 

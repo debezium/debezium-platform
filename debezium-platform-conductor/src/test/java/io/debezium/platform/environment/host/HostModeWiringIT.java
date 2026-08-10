@@ -47,4 +47,12 @@ public class HostModeWiringIT {
                 .as("Host mode vaults() should return HostVaultController")
                 .isInstanceOf(HostVaultController.class);
     }
+
+    @Test
+    public void shouldProvideHostPipelineController() {
+        var controller = environmentController.get();
+        assertThat(controller.pipelines())
+                .as("Host mode pipelines() should return HostPipelineController")
+                .isInstanceOf(HostPipelineController.class);
+    }
 }

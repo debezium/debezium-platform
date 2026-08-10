@@ -1,0 +1,243 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
+package io.debezium.platform.environment.host;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+
+import org.jboss.logging.Logger;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.debezium.platform.data.model.DeploymentStatus;
+import io.debezium.platform.data.model.HostDeploymentEntity;
+import io.debezium.platform.data.model.HostStatusEntity;
+import io.debezium.platform.data.model.PipelineEntity;
+import io.debezium.platform.domain.HostDeploymentService;
+import io.debezium.platform.environment.host.config.HostConfigGroup;
+import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner;
+import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner.CommandResult;
+
+/**
+ * Unit tests for {@link HostDeploymentStatusPoller}.
+ *
+ * <p>Verifies all state transition scenarios:
+ * <ul>
+ *   <li>{@code DEPLOYING → RUNNING} when container is confirmed running</li>
+ *   <li>{@code DEPLOYING → FAILED} when container is not running after deploy</li>
+ *   <li>{@code RUNNING → FAILED} when container stopped unexpectedly</li>
+ *   <li>{@code RUNNING → CONFIG_DRIFT} when config hash mismatch detected</li>
+ *   <li>No status change when container is running and config hash matches</li>
+ *   <li>Poller skips in operator mode (deployment-mode guard)</li>
+ *   <li>Poller skips when no active deployments exist</li>
+ * </ul>
+ */
+class HostDeploymentStatusPollerTest {
+
+    private HostDeploymentService deploymentService;
+    private AnsibleCommandRunner ansibleRunner;
+    private HostDeploymentStatusPoller poller;
+
+    @BeforeEach
+    void setUp() {
+        Logger logger = Logger.getLogger(HostDeploymentStatusPollerTest.class);
+        deploymentService = mock(HostDeploymentService.class);
+        ansibleRunner = mock(AnsibleCommandRunner.class);
+
+        HostConfigGroup hostConfig = mock(HostConfigGroup.class);
+        when(hostConfig.configBasePath()).thenReturn("/opt/debezium/configs");
+
+        // Host mode — poller should be active
+        poller = new HostDeploymentStatusPoller(logger, deploymentService, ansibleRunner, hostConfig, "host");
+    }
+
+    @Test
+    void transitionsDeployingToRunningWhenContainerRunning() {
+        HostDeploymentEntity deployment = createDeployment(1L, DeploymentStatus.DEPLOYING, "container-1", "host-1");
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+        when(ansibleRunner.runShellCommand(eq("host-1"), any()))
+                .thenReturn(new CommandResult.Success("true"));
+
+        poller.pollDeploymentStatus();
+
+        verify(deploymentService).updateStatus(1L, DeploymentStatus.RUNNING);
+    }
+
+    @Test
+    void transitionsDeployingToFailedWhenContainerNotRunningAfterGracePeriod() {
+        HostDeploymentEntity deployment = createDeployment(2L, DeploymentStatus.DEPLOYING, "container-2", "host-1");
+        deployment.setDeployedAt(java.time.Instant.now().minus(java.time.Duration.ofMinutes(10)));
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+        when(ansibleRunner.runShellCommand(eq("host-1"), any()))
+                .thenReturn(new CommandResult.Success("false"));
+
+        poller.pollDeploymentStatus();
+
+        verify(deploymentService).updateStatus(2L, DeploymentStatus.FAILED);
+    }
+
+    @Test
+    void skipsFailedTransitionWhenWithinGracePeriod() {
+        HostDeploymentEntity deployment = createDeployment(8L, DeploymentStatus.DEPLOYING, "container-8", "host-1");
+        deployment.setDeployedAt(java.time.Instant.now().minus(java.time.Duration.ofMinutes(1)));
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+        when(ansibleRunner.runShellCommand(eq("host-1"), any()))
+                .thenReturn(new CommandResult.Success("false"));
+
+        poller.pollDeploymentStatus();
+
+        // Should NOT mark FAILED — within 5-minute grace period
+        verify(deploymentService, never()).updateStatus(eq(8L), any());
+    }
+
+    @Test
+    void transitionsRunningToFailedWhenContainerStoppedUnexpectedly() {
+        HostDeploymentEntity deployment = createDeployment(3L, DeploymentStatus.RUNNING, "container-3", "host-2");
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+        when(ansibleRunner.runShellCommand(eq("host-2"), any()))
+                .thenReturn(new CommandResult.Failure("No such container"));
+
+        poller.pollDeploymentStatus();
+
+        verify(deploymentService).updateStatus(3L, DeploymentStatus.FAILED);
+    }
+
+    @Test
+    void transitionsRunningToConfigDriftWhenHashMismatch() {
+        HostDeploymentEntity deployment = createDeployment(4L, DeploymentStatus.RUNNING, "container-4", "host-3");
+        deployment.setConfigHash("expected-hash-abc");
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+
+        // First call: docker inspect → running
+        // Second call: sha256sum → different hash
+        when(ansibleRunner.runShellCommand(eq("host-3"), any()))
+                .thenReturn(new CommandResult.Success("true"))
+                .thenReturn(new CommandResult.Success("different-hash-xyz"));
+
+        poller.pollDeploymentStatus();
+
+        verify(deploymentService).updateStatus(4L, DeploymentStatus.CONFIG_DRIFT);
+    }
+
+    @Test
+    void noStatusChangeWhenContainerRunningAndHashMatches() {
+        HostDeploymentEntity deployment = createDeployment(5L, DeploymentStatus.RUNNING, "container-5", "host-4");
+        deployment.setConfigHash("matching-hash");
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+
+        // First call: docker inspect → running
+        // Second call: sha256sum → matching hash
+        when(ansibleRunner.runShellCommand(eq("host-4"), any()))
+                .thenReturn(new CommandResult.Success("true"))
+                .thenReturn(new CommandResult.Success("matching-hash"));
+
+        poller.pollDeploymentStatus();
+
+        // No status update should happen
+        verify(deploymentService, never()).updateStatus(eq(5L), any());
+    }
+
+    @Test
+    void skipsPollingInOperatorMode() {
+        Logger logger = Logger.getLogger(HostDeploymentStatusPollerTest.class);
+        HostDeploymentStatusPoller operatorPoller = new HostDeploymentStatusPoller(
+                logger, deploymentService, ansibleRunner, mock(HostConfigGroup.class), "operator");
+
+        operatorPoller.pollDeploymentStatus();
+
+        // Should not even query for deployments
+        verify(deploymentService, never()).findByStatuses(any());
+    }
+
+    @Test
+    void skipsPollingWhenNoActiveDeployments() {
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of());
+
+        poller.pollDeploymentStatus();
+
+        // Should not call Ansible
+        verify(ansibleRunner, never()).runShellCommand(anyString(), anyString());
+    }
+
+    @Test
+    void handlesExceptionDuringInspectGracefully() {
+        HostDeploymentEntity deployment = createDeployment(6L, DeploymentStatus.RUNNING, "container-6", "host-5");
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+
+        // Ansible throws an unexpected exception
+        when(ansibleRunner.runShellCommand(eq("host-5"), any()))
+                .thenThrow(new RuntimeException("Network error"));
+
+        // Should NOT throw — should log and skip
+        poller.pollDeploymentStatus();
+
+        // Should not update status (error is logged, not propagated)
+        verify(deploymentService, never()).updateStatus(anyLong(), any());
+    }
+
+    @Test
+    void skipsConfigDriftWhenHashCommandFails() {
+        HostDeploymentEntity deployment = createDeployment(7L, DeploymentStatus.RUNNING, "container-7", "host-6");
+        deployment.setConfigHash("expected-hash");
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+
+        // First call: docker inspect → running
+        // Second call: sha256sum → Failure (e.g., file not found)
+        when(ansibleRunner.runShellCommand(eq("host-6"), any()))
+                .thenReturn(new CommandResult.Success("true"))
+                .thenReturn(new CommandResult.Failure("No such file or directory"));
+
+        poller.pollDeploymentStatus();
+
+        // No status update — sha256sum failure is silently skipped (only logged at debug)
+        verify(deploymentService, never()).updateStatus(eq(7L), any());
+    }
+
+    private HostDeploymentEntity createDeployment(Long id, DeploymentStatus status,
+                                                  String containerName, String sshAlias) {
+        HostStatusEntity host = new HostStatusEntity();
+        host.setSshAlias(sshAlias);
+
+        PipelineEntity pipeline = new PipelineEntity();
+        pipeline.setId(id);
+
+        HostDeploymentEntity deployment = new HostDeploymentEntity();
+        deployment.setId(id);
+        deployment.setDeploymentStatus(status);
+        deployment.setContainerName(containerName);
+        deployment.setHostStatus(host);
+        deployment.setPipeline(pipeline);
+        deployment.setConfigHash("default-hash");
+        deployment.setDeployedAt(java.time.Instant.now().minus(java.time.Duration.ofMinutes(10)));
+
+        return deployment;
+    }
+}
