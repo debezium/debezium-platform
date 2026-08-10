@@ -25,6 +25,9 @@ public class OAuth2AuthHandler implements PulsarAuthHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2AuthHandler.class);
 
+    /** Format as per the Pulsar doc -> data:application/json;base64,WaVf/RB7ZAW7pMG3rhxnL3zC2QFqyyLaKl5W6JwWdhw= */
+    private static final String PRIVATE_KEY_PREFIX = "data:application/json;base64,";
+
     /**
      * Configures the provided {@link PulsarAdminBuilder} with the authentication settings
      * required by this handler.
@@ -75,10 +78,17 @@ public class OAuth2AuthHandler implements PulsarAuthHandler {
         String privateKey = config.get("oauth2PrivateKey").toString();
         byte[] privateKeyBytes = null;
 
+        // indexOf returns -1 when the prefix is absent, and -1 + prefix.length() is a valid offset,
+        // so without this check the key is silently truncated by 28 characters instead of rejected.
+        int prefixIndex = privateKey.indexOf(PRIVATE_KEY_PREFIX);
+        if (prefixIndex < 0) {
+            LOGGER.warn("OAuth2 private key is not a data URI; expected it to contain '{}'", PRIVATE_KEY_PREFIX);
+            throw new IllegalArgumentException(
+                    "OAuth2 Private Key must be a data URI of the form '" + PRIVATE_KEY_PREFIX + "<base64-encoded JSON credentials>'");
+        }
+
         try {
-            // Format as per the Pulsar doc -> data:application/json;base64,WaVf/RB7ZAW7pMG3rhxnL3zC2QFqyyLaKl5W6JwWdhw=
-            String prefix = "data:application/json;base64,";
-            String extracted = privateKey.substring(privateKey.indexOf(prefix) + prefix.length());
+            String extracted = privateKey.substring(prefixIndex + PRIVATE_KEY_PREFIX.length());
             privateKeyBytes = Base64.getDecoder().decode(extracted);
         }
         catch (IllegalArgumentException e) {
