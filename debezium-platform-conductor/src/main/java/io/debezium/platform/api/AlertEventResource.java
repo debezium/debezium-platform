@@ -16,10 +16,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 
-import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
 import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.info.Contact;
-import org.eclipse.microprofile.openapi.annotations.info.Info;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -33,7 +30,6 @@ import io.debezium.platform.data.model.Severity;
 import io.debezium.platform.domain.AlertEventService;
 
 @Tag(name = "Alerting")
-@OpenAPIDefinition(info = @Info(title = "Alert Event API", description = "Read-only operations over Alert Events and Status", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
 @Path("/alerts")
 public class AlertEventResource {
 

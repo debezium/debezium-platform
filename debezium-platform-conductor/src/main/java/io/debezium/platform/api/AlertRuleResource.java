@@ -21,11 +21,8 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
-import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
-import org.eclipse.microprofile.openapi.annotations.info.Contact;
-import org.eclipse.microprofile.openapi.annotations.info.Info;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -39,7 +36,6 @@ import io.debezium.platform.domain.AlertRuleService;
 import io.debezium.platform.error.NotFoundException;
 
 @Tag(name = "Alerting")
-@OpenAPIDefinition(info = @Info(title = "Alert Rule API", description = "CRUD operations over Alert Rule resource", version = "0.1.0", contact = @Contact(name = "Debezium", url = "https://github.com/debezium/debezium")))
 @Path("/alerts/rules")
 public class AlertRuleResource {
 
