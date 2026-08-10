@@ -50,7 +50,10 @@ public class PipelineConsumer extends AbstractEventConsumer<PipelineFlat> {
         logger.info(">>> payload:  \n" + payload);
         var pipelines = environment.pipelines();
 
-        payload.ifPresentOrElse(pipelines::deploy, () -> pipelines.undeploy(id));
+        payload.ifPresentOrElse(p -> {
+            pipelineService.updateStatus(id, PipelineStatus.DEPLOYING, null);
+            pipelines.deploy(p);
+        }, () -> pipelines.undeploy(id));
     }
 
     @Override
