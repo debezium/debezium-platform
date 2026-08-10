@@ -5,17 +5,21 @@
  */
 package io.debezium.platform.environment.connection;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import io.debezium.platform.environment.connection.destination.KafkaConnectionValidator;
+import io.debezium.platform.environment.connection.source.DatabaseConnectionValidator;
 import io.quarkus.test.junit.QuarkusTestProfile;
 
 public class CustomTestProfile implements QuarkusTestProfile {
 
     @Override
     public Map<String, String> getConfigOverrides() {
-        return Collections.emptyMap();
+        // Exclude production validators to avoid duplicate @Named key conflict
+        // with their test alternatives during the Qute build processor bean scan
+        return Map.of("quarkus.arc.exclude-types",
+                KafkaConnectionValidator.class.getName() + "," + DatabaseConnectionValidator.class.getName());
     }
 
     @Override
