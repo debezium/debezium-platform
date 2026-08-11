@@ -168,6 +168,18 @@
             <!-- Storages -->
             <dependency>
                 <groupId>io.debezium</groupId>
+                <artifactId>debezium-storage-api</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-storage-common</artifactId>
+                <version>${version.debezium}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.debezium</groupId>
                 <artifactId>debezium-storage-configmap</artifactId>
                 <version>${version.debezium}</version>
                 <exclusions>
@@ -336,6 +348,16 @@
         </dependency>
 
         <!-- Storages  -->
+        <dependency>
+            <groupId>io.debezium</groupId>
+            <artifactId>debezium-storage-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.debezium</groupId>
+            <artifactId>debezium-storage-common</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>io.debezium</groupId>
             <artifactId>debezium-storage-configmap</artifactId>
