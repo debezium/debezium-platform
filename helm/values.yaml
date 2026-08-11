@@ -80,6 +80,17 @@ debezium-operator:
   enabled: true
 pipeline:
   labels: {}
+  health:
+    liveness:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 3
+    readiness:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 3
 monitoring:
   otel:
     enabled: false

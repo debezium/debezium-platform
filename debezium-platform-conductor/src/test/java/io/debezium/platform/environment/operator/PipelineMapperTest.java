@@ -60,6 +60,15 @@ public class PipelineMapperTest {
         when(pipelineConfigGroup.monitoring().otel().jmxIntervalMs()).thenReturn(1000);
         when(pipelineConfigGroup.monitoring().otel().metricExportIntervalMs()).thenReturn(5000);
 
+        when(pipelineConfigGroup.health().liveness().initialDelaySeconds()).thenReturn(30);
+        when(pipelineConfigGroup.health().liveness().periodSeconds()).thenReturn(10);
+        when(pipelineConfigGroup.health().liveness().timeoutSeconds()).thenReturn(10);
+        when(pipelineConfigGroup.health().liveness().failureThreshold()).thenReturn(3);
+        when(pipelineConfigGroup.health().readiness().initialDelaySeconds()).thenReturn(10);
+        when(pipelineConfigGroup.health().readiness().periodSeconds()).thenReturn(10);
+        when(pipelineConfigGroup.health().readiness().timeoutSeconds()).thenReturn(10);
+        when(pipelineConfigGroup.health().readiness().failureThreshold()).thenReturn(3);
+
         pipelineMapper = createMapper();
     }
 

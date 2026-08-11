@@ -26,4 +26,6 @@ public interface PipelineConfigGroup {
     Map<String, String> labels();
 
     MonitoringConfigGroup monitoring();
+
+    HealthProbesConfigGroup health();
 }
