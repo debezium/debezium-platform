@@ -5,7 +5,7 @@ metadata:
 rules:
   - apiGroups: ["debezium.io"]
     resources: ["debeziumservers"]
-    verbs: ["patch", "create", "delete", "list", "deletecollection"]
+    verbs: ["get", "patch", "create", "delete", "list", "watch", "deletecollection"]
   - apiGroups: [ "" ]
     resources: [ "configmaps" ]
     resourceNames: [ {{ include "debezium-platform.offsetConfigMapName" . | quote }} ]

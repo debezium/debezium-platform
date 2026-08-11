@@ -54,11 +54,11 @@ class OperatorPipelineStatusWatcherTest {
     }
 
     @Test
-    @DisplayName("Should fire STOPPED when Stopped condition is True")
+    @DisplayName("Should fire STOPPED when Ready=True and Running=False")
     void reconcileFiresStoppedEvent() {
         var ds = debeziumServer(42L, List.of(
-                new Condition("Stopped", Condition.TRUE, null),
-                new Condition("Running", Condition.FALSE, null)));
+                new Condition("Ready", Condition.TRUE, null),
+                new Condition("Running", Condition.FALSE, "Server is stopped")));
 
         watcher.reconcile(ds);
 
@@ -96,11 +96,11 @@ class OperatorPipelineStatusWatcherTest {
     }
 
     @Test
-    @DisplayName("Stopped=True takes precedence over Running=False")
-    void reconcileStoppedTakesPrecedenceOverFailed() {
+    @DisplayName("Ready=True + Running=False maps to STOPPED, not FAILED")
+    void reconcileStoppedNotFailed() {
         var ds = debeziumServer(42L, List.of(
-                new Condition("Stopped", Condition.TRUE, null),
-                new Condition("Running", Condition.FALSE, null)));
+                new Condition("Ready", Condition.TRUE, null),
+                new Condition("Running", Condition.FALSE, "Server is stopped")));
 
         watcher.reconcile(ds);
 
@@ -232,6 +232,38 @@ class OperatorPipelineStatusWatcherTest {
         verify(statusChangedEvent).fire(eventCaptor.capture());
         assertThat(eventCaptor.getValue().status()).isEqualTo(PipelineStatus.FAILED);
         assertThat(eventCaptor.getValue().message()).isEqualTo("Connector task failed");
+    }
+
+    @Test
+    @DisplayName("Should fire FAILED on update when transitioning from RUNNING to Ready=False without Running condition")
+    void reconcileOnUpdateFiresFailedOnCrashLoopBackOff() {
+        var oldDs = debeziumServer(7L, List.of(
+                new Condition("Ready", Condition.TRUE, null),
+                new Condition("Running", Condition.TRUE, null)));
+
+        var newDs = debeziumServer(7L, List.of(
+                new Condition("Ready", Condition.FALSE, "Server database-migration is being deployed")));
+
+        watcher.reconcile(oldDs, newDs);
+
+        verify(statusChangedEvent).fire(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().pipelineId()).isEqualTo(7L);
+        assertThat(eventCaptor.getValue().status()).isEqualTo(PipelineStatus.FAILED);
+        assertThat(eventCaptor.getValue().message()).isEqualTo("Pipeline failed unexpectedly. Check the server pod logs for details.");
+    }
+
+    @Test
+    @DisplayName("Should not fire FAILED when Ready=False is initial deployment, not a transition from RUNNING")
+    void reconcileOnUpdateNoFailedForInitialDeployment() {
+        var oldDs = debeziumServer(7L, List.of(
+                new Condition("Ready", Condition.FALSE, "Server is being deployed")));
+
+        var newDs = debeziumServer(7L, List.of(
+                new Condition("Ready", Condition.FALSE, "Server is being deployed")));
+
+        watcher.reconcile(oldDs, newDs);
+
+        verify(statusChangedEvent, never()).fire(any());
     }
 
     @Test

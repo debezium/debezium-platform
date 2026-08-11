@@ -35,13 +35,17 @@ import io.quarkus.runtime.StartupEvent;
  * {@link Instance} for the {@link KubernetesClient} so the actual client is never
  * resolved in host mode.</p>
  *
- * <p>Condition-to-status mapping:
+ * <p>Condition-to-status mapping (matches the operator's {@code ServerRunningCondition}
+ * / {@code ServerStoppedCondition} model where both use type {@code Running}):
  * <ul>
- *   <li>{@code Stopped = True} → {@link PipelineStatus#STOPPED}</li>
- *   <li>{@code Ready = True} → {@link PipelineStatus#RUNNING} (readiness probe passes,
- *       meaning the connector is actively polling)</li>
- *   <li>{@code Running = False} (and not stopped) → {@link PipelineStatus#FAILED}</li>
- *   <li>Otherwise (e.g. Running but not yet Ready) → no event (stay in current state)</li>
+ *   <li>{@code Ready = True} and {@code Running = False} → {@link PipelineStatus#STOPPED}</li>
+ *   <li>{@code Ready = True} (and Running is not False) → {@link PipelineStatus#RUNNING}</li>
+ *   <li>{@code Ready = False} and {@code Running = False} → {@link PipelineStatus#FAILED}
+ *       (explicit failure reported by the operator)</li>
+ *   <li>Transition from {@code RUNNING} to {@code Ready = False} (without Running condition)
+ *       → {@link PipelineStatus#FAILED} (detects CrashLoopBackOff; fallback for operator
+ *       versions that do not set {@code Running = False} on failure)</li>
+ *   <li>Otherwise (e.g. deployment in progress) → no event (stay in current state)</li>
  * </ul>
  */
 @ApplicationScoped
@@ -52,7 +56,7 @@ public class OperatorPipelineStatusWatcher {
     private static final String OPERATOR_DEPLOYMENT_MODE = "operator";
     private static final String CONDITION_READY = "Ready";
     private static final String CONDITION_RUNNING = "Running";
-    private static final String CONDITION_STOPPED = "Stopped";
+    private static final String TRANSITION_FAILED_MESSAGE = "Pipeline failed unexpectedly. Check the pipeline logs for details.";
 
     private final Instance<KubernetesClient> kubernetesClient;
     private final Event<DebeziumServerStatusChanged> statusChangedEvent;
@@ -73,32 +77,40 @@ public class OperatorPipelineStatusWatcher {
             LOGGER.debug("Skipping pipeline status watcher: deployment mode is '{}'", deploymentMode);
             return;
         }
-
-        LOGGER.info("Starting DebeziumServer CR status watcher");
-        var client = kubernetesClient.get();
-        informer = client.resources(DebeziumServer.class)
-                .inform(new ResourceEventHandler<>() {
-                    @Override
-                    public void onAdd(DebeziumServer obj) {
-                        reconcile(obj);
-                    }
-
-                    @Override
-                    public void onUpdate(DebeziumServer oldObj, DebeziumServer newObj) {
-                        reconcile(oldObj, newObj);
-                    }
-
-                    @Override
-                    public void onDelete(DebeziumServer obj, boolean deletedFinalStateUnknown) {
-                        // no-op: deletion is handled by the undeploy flow
-                    }
-                });
+        startInformer();
     }
 
     void onStop(@Observes ShutdownEvent event) {
         if (informer != null) {
             LOGGER.info("Stopping DebeziumServer CR status watcher");
             informer.close();
+        }
+    }
+
+    private void startInformer() {
+        try {
+            var client = kubernetesClient.get();
+            informer = client.resources(DebeziumServer.class)
+                    .inform(new ResourceEventHandler<>() {
+                        @Override
+                        public void onAdd(DebeziumServer obj) {
+                            reconcile(obj);
+                        }
+
+                        @Override
+                        public void onUpdate(DebeziumServer oldObj, DebeziumServer newObj) {
+                            reconcile(oldObj, newObj);
+                        }
+
+                        @Override
+                        public void onDelete(DebeziumServer obj, boolean deletedFinalStateUnknown) {
+                            // no-op: deletion is handled by the undeploy flow
+                        }
+                    });
+            LOGGER.info("DebeziumServer CR status watcher started successfully");
+        }
+        catch (Exception e) {
+            LOGGER.warn("Unable to start DebeziumServer CR status watcher: {}", e.getMessage());
         }
     }
 
@@ -112,14 +124,28 @@ public class OperatorPipelineStatusWatcher {
 
     void reconcile(DebeziumServer oldDs, DebeziumServer newDs) {
         var oldStatus = mapConditionsToStatus(oldDs);
-        var newStatus = mapConditionsToStatus(newDs);
+        var resolvedStatus = mapConditionsToStatus(newDs);
 
-        if (newStatus.isPresent() && !newStatus.equals(oldStatus)) {
+        // The operator never sets Running=False; when a pod crashes (CrashLoopBackOff),
+        // Ready simply flips back to False. Detect this by checking the transition:
+        // previously RUNNING + now Ready=False (without Running condition) = FAILED.
+        var failedViaTransition = false;
+        if (resolvedStatus.isEmpty()
+                && oldStatus.filter(s -> s == PipelineStatus.RUNNING).isPresent()
+                && hasCondition(newDs, CONDITION_READY, Condition.FALSE)) {
+            resolvedStatus = Optional.of(PipelineStatus.FAILED);
+            failedViaTransition = true;
+        }
+
+        if (resolvedStatus.isPresent() && !resolvedStatus.equals(oldStatus)) {
+            var status = resolvedStatus.get();
+            var message = failedViaTransition
+                    ? TRANSITION_FAILED_MESSAGE
+                    : extractErrorMessage(newDs, status);
             extractPipelineId(newDs).ifPresent(pipelineId -> {
-                var message = extractErrorMessage(newDs, newStatus.get());
                 LOGGER.info("Pipeline {} status changed from {} to {}", pipelineId,
-                        oldStatus.orElse(null), newStatus.get());
-                statusChangedEvent.fire(new DebeziumServerStatusChanged(pipelineId, newStatus.get(), message));
+                        oldStatus.orElse(null), status);
+                statusChangedEvent.fire(new DebeziumServerStatusChanged(pipelineId, status, message));
             });
         }
     }
@@ -137,13 +163,12 @@ public class OperatorPipelineStatusWatcher {
         var conditionMap = conditions.stream()
                 .collect(Collectors.toMap(Condition::getType, c -> c));
 
-        var stopped = conditionMap.get(CONDITION_STOPPED);
-        if (stopped != null && Condition.TRUE.equals(stopped.getStatus())) {
-            return Optional.of(PipelineStatus.STOPPED);
-        }
-
         var ready = conditionMap.get(CONDITION_READY);
         if (ready != null && Condition.TRUE.equals(ready.getStatus())) {
+            var running = conditionMap.get(CONDITION_RUNNING);
+            if (running != null && Condition.FALSE.equals(running.getStatus())) {
+                return Optional.of(PipelineStatus.STOPPED);
+            }
             return Optional.of(PipelineStatus.RUNNING);
         }
 
@@ -188,6 +213,15 @@ public class OperatorPipelineStatusWatcher {
                 .filter(m -> m != null && !m.isBlank())
                 .findFirst()
                 .orElse(null);
+    }
+
+    private boolean hasCondition(DebeziumServer ds, String type, String status) {
+        var serverStatus = ds.getStatus();
+        if (serverStatus == null || serverStatus.getConditions() == null) {
+            return false;
+        }
+        return serverStatus.getConditions().stream()
+                .anyMatch(c -> type.equals(c.getType()) && status.equals(c.getStatus()));
     }
 
     private boolean isOperatorMode() {
