@@ -6,7 +6,6 @@
 package io.debezium.platform.domain;
 
 import static jakarta.transaction.Transactional.TxType.REQUIRES_NEW;
-import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
 import java.time.Instant;
 import java.util.List;
@@ -130,7 +129,7 @@ public class HostDeploymentService {
     /**
      * Finds the active deployment for a given pipeline.
      */
-    @Transactional(SUPPORTS)
+    @Transactional(REQUIRES_NEW)
     public Optional<HostDeploymentEntity> findByPipelineId(Long pipelineId) {
         return em.createQuery(
                 "SELECT d FROM host_deployment d WHERE d.pipeline.id = :pipelineId",
@@ -143,7 +142,7 @@ public class HostDeploymentService {
     /**
      * Finds the active deployment for a given pipeline, failing loudly if absent.
      */
-    @Transactional(SUPPORTS)
+    @Transactional(REQUIRES_NEW)
     public HostDeploymentEntity requireByPipelineId(Long pipelineId) {
         return findByPipelineId(pipelineId)
                 .orElseThrow(() -> new DebeziumException(
@@ -189,7 +188,7 @@ public class HostDeploymentService {
     /**
      * Returns all deployments with a given status.
      */
-    @Transactional(SUPPORTS)
+    @Transactional(REQUIRES_NEW)
     public List<HostDeploymentEntity> findByStatus(DeploymentStatus status) {
         return em.createQuery(
                 "SELECT d FROM host_deployment d WHERE d.deploymentStatus = :status",
@@ -201,7 +200,7 @@ public class HostDeploymentService {
     /**
      * Returns all deployments matching any of the given statuses.
      */
-    @Transactional(SUPPORTS)
+    @Transactional(REQUIRES_NEW)
     public List<HostDeploymentEntity> findByStatuses(DeploymentStatus... statuses) {
         return em.createQuery(
                 "SELECT d FROM host_deployment d WHERE d.deploymentStatus IN :statuses",

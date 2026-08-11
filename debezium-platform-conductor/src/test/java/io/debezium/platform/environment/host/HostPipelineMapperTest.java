@@ -92,6 +92,17 @@ class HostPipelineMapperTest {
     }
 
     @Test
+    void mapProducesFormatDefaults() {
+        PipelineFlat pipeline = buildMinimalPipeline();
+
+        HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
+
+        assertThat(result.propertiesContent())
+                .contains("debezium.format.key=json")
+                .contains("debezium.format.value=json");
+    }
+
+    @Test
     void mapProducesSourceConnectionConfigWithDatabasePrefix() {
         PipelineFlat pipeline = buildMinimalPipeline();
 

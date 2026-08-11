@@ -30,6 +30,8 @@ import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner;
 import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner.CommandResult;
 import io.debezium.platform.environment.logs.LogReader;
 import io.debezium.util.Threads;
+import io.quarkus.arc.Arc;
+import io.quarkus.arc.ManagedContext;
 import io.quarkus.runtime.ShutdownEvent;
 
 /**
@@ -56,7 +58,7 @@ import io.quarkus.runtime.ShutdownEvent;
 @Dependent
 public class HostPipelineController implements PipelineController {
 
-    private static final String DOCKER_RUN_FORMAT = "docker run -d --name %s -p %d:8080 -v %s:/debezium/conf/application.properties %s";
+    private static final String DOCKER_RUN_FORMAT = "docker run -d --name %s -p %d:8080 -v %s:/debezium/config/application.properties %s";
     private static final String DOCKER_RM_FORMAT = "docker rm -f %s";
     private static final String DOCKER_STOP_FORMAT = "docker stop %s";
     private static final String DOCKER_START_FORMAT = "docker start %s";
@@ -101,22 +103,22 @@ public class HostPipelineController implements PipelineController {
 
     @Override
     public void deploy(PipelineFlat pipeline) {
-        deployExecutor.submit(() -> executeDeploy(pipeline));
+        deployExecutor.submit(() -> runWithRequestContext(() -> executeDeploy(pipeline)));
     }
 
     @Override
     public void undeploy(Long pipelineId) {
-        deployExecutor.submit(() -> executeUndeploy(pipelineId));
+        deployExecutor.submit(() -> runWithRequestContext(() -> executeUndeploy(pipelineId)));
     }
 
     @Override
     public void stop(Long pipelineId) {
-        deployExecutor.submit(() -> executeStop(pipelineId));
+        deployExecutor.submit(() -> runWithRequestContext(() -> executeStop(pipelineId)));
     }
 
     @Override
     public void start(Long pipelineId) {
-        deployExecutor.submit(() -> executeStart(pipelineId));
+        deployExecutor.submit(() -> runWithRequestContext(() -> executeStart(pipelineId)));
     }
 
     @Override
@@ -169,6 +171,10 @@ public class HostPipelineController implements PipelineController {
                 failDeployment(pipelineId, "Failed to copy config: " + failure.output());
                 return;
             }
+
+            // Remove any leftover container with the same name (idempotent — docker rm -f
+            // returns 0 even if the container does not exist, so we ignore the result)
+            ansibleRunner.runShellCommand(sshAlias, String.format(DOCKER_RM_FORMAT, containerName));
 
             String dockerCommand = String.format(DOCKER_RUN_FORMAT,
                     containerName, port, configPath, hostConfig.debeziumServerImage());
@@ -260,6 +266,28 @@ public class HostPipelineController implements PipelineController {
         deploymentService.findByPipelineId(pipelineId)
                 .ifPresent(deployment -> deploymentService.updateStatus(deployment.getId(), DeploymentStatus.FAILED));
         logger.errorv("Deployment failed for pipeline {0}: {1}", pipelineId, reason);
+    }
+
+    /**
+     * Activates a CDI request context for the duration of the given task.
+     *
+     * <p>The thread pool used by this controller is a plain Java
+     * {@link ExecutorService} (created via {@code Threads.newFixedThreadPool}).
+     * Plain threads do not carry a CDI request context, which means
+     * {@code @RequestScoped} beans (like the JPA {@code EntityManager})
+     * are unavailable. This helper manually activates and terminates
+     * the context so that {@code @Transactional} service methods work
+     * correctly on the pool threads.
+     */
+    private void runWithRequestContext(Runnable task) {
+        ManagedContext requestContext = Arc.container().requestContext();
+        requestContext.activate();
+        try {
+            task.run();
+        }
+        finally {
+            requestContext.terminate();
+        }
     }
 
     /**

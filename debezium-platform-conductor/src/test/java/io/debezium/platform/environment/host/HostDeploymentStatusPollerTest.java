@@ -221,6 +221,55 @@ class HostDeploymentStatusPollerTest {
         verify(deploymentService, never()).updateStatus(eq(7L), any());
     }
 
+    @Test
+    void handlesNoisyAnsibleOutputForConfigHash() {
+        // Reproduces the exact output Ansible returns on test-host:
+        // Warnings + metadata + the actual hash on the last line
+        HostDeploymentEntity deployment = createDeployment(9L, DeploymentStatus.RUNNING, "container-9", "host-7");
+        deployment.setConfigHash("e1272390382212e4164631eaa80eb72ced68c390887220163f90211cca1c3129");
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+
+        String noisyOutput = "[WARNING]: Host 'test-host' is using the discovered Python interpreter "
+                + "at '/usr/bin/python3.14', but future installation of another Python interpreter "
+                + "could cause a different interpreter to be discovered.\n"
+                + "test-host | CHANGED | rc=0 >>\n"
+                + "e1272390382212e4164631eaa80eb72ced68c390887220163f90211cca1c3129\n";
+
+        // First call: docker inspect → running
+        // Second call: sha256sum → noisy but hash matches
+        when(ansibleRunner.runShellCommand(eq("host-7"), any()))
+                .thenReturn(new CommandResult.Success("true"))
+                .thenReturn(new CommandResult.Success(noisyOutput));
+
+        poller.pollDeploymentStatus();
+
+        // Should NOT mark CONFIG_DRIFT — hash is the same after extracting the last line
+        verify(deploymentService, never()).updateStatus(eq(9L), eq(DeploymentStatus.CONFIG_DRIFT));
+    }
+
+    @Test
+    void handlesNoisyAnsibleOutputForDockerInspect() {
+        // Verifies docker inspect also works when Ansible wraps output with warnings
+        HostDeploymentEntity deployment = createDeployment(10L, DeploymentStatus.DEPLOYING, "container-10", "host-8");
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+
+        String noisyInspect = "[WARNING]: Host 'test-host' is using the discovered Python interpreter.\n"
+                + "test-host | CHANGED | rc=0 >>\n"
+                + "true\n";
+
+        when(ansibleRunner.runShellCommand(eq("host-8"), any()))
+                .thenReturn(new CommandResult.Success(noisyInspect));
+
+        poller.pollDeploymentStatus();
+
+        // Should transition DEPLOYING → RUNNING even with noisy output
+        verify(deploymentService).updateStatus(10L, DeploymentStatus.RUNNING);
+    }
+
     private HostDeploymentEntity createDeployment(Long id, DeploymentStatus status,
                                                   String containerName, String sshAlias) {
         HostStatusEntity host = new HostStatusEntity();

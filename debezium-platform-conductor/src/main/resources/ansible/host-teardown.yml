@@ -14,6 +14,9 @@
   become: true
   gather_facts: false
 
+  vars:
+    ansible_become_timeout: 60
+
   tasks:
     # Instead of using ignore_errors: true (which swallows ALL failures
     # including SSH drops and permission errors), we first check if the

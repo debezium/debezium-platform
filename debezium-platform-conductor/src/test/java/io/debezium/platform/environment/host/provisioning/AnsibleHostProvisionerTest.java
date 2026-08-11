@@ -75,7 +75,7 @@ class AnsibleHostProvisionerTest {
         assertThat(command.get(4)).isEqualTo("--ssh-extra-args");
         assertThat(command.get(5)).isEqualTo("-F /etc/ssh/test-config");
         assertThat(command.get(6)).isEqualTo("--extra-vars");
-        assertThat(command.get(7)).isEqualTo("agent_token=test-token-abc");
+        assertThat(command.get(7)).isEqualTo("agent_token=test-token-abc ansible_become_timeout=60");
     }
 
     @Test

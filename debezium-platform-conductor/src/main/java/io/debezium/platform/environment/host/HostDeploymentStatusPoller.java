@@ -47,7 +47,7 @@ import io.quarkus.scheduler.Scheduled;
 @ApplicationScoped
 public class HostDeploymentStatusPoller {
 
-    private static final String DOCKER_INSPECT_FORMAT = "docker inspect --format '{{.State.Running}}' %s";
+    private static final String DOCKER_INSPECT_FORMAT = "docker inspect --format '{%% raw %%}{{.State.Running}}{%% endraw %%}' %s";
     private static final String CONTAINER_RUNNING_VALUE = "true";
 
     /**
@@ -152,7 +152,7 @@ public class HostDeploymentStatusPoller {
         CommandResult result = ansibleRunner.runShellCommand(sshAlias, inspectCommand);
 
         return switch (result) {
-            case CommandResult.Success success -> success.output().trim().contains(CONTAINER_RUNNING_VALUE);
+            case CommandResult.Success success -> extractLastLine(success.output()).equalsIgnoreCase(CONTAINER_RUNNING_VALUE);
             case CommandResult.Failure ignored -> false;
         };
     }
@@ -165,7 +165,7 @@ public class HostDeploymentStatusPoller {
         CommandResult result = ansibleRunner.runShellCommand(sshAlias, hashCommand);
 
         if (result instanceof CommandResult.Success success) {
-            String remoteHash = success.output().trim();
+            String remoteHash = extractLastLine(success.output());
             String expectedHash = deployment.getConfigHash();
 
             if (!remoteHash.equals(expectedHash)) {
@@ -179,6 +179,34 @@ public class HostDeploymentStatusPoller {
             logger.debugv("Could not read config hash for deployment {0} on {1}, skipping drift check",
                     deployment.getId(), sshAlias);
         }
+    }
+
+    /**
+     * Extracts the last non-blank line from Ansible ad-hoc output.
+     *
+     * <p>Ansible ad-hoc commands wrap the remote command's stdout in metadata:
+     * <pre>
+     * [WARNING]: Host 'test-host' is using the discovered Python interpreter...
+     * test-host | CHANGED | rc=0 >>
+     * e1272390382212e4164631eaa80eb72ced68c390887220163f90211cca1c3129
+     * </pre>
+     * The actual command output (in this case the sha256 hash) is always on
+     * the last non-blank line. This method strips all the noise and returns
+     * only that value.
+     */
+    private static String extractLastLine(String output) {
+        if (output == null || output.isBlank()) {
+            return "";
+        }
+        String[] lines = output.trim().split("\\R");
+        // Walk backwards to find the first non-blank line
+        for (int i = lines.length - 1; i >= 0; i--) {
+            String line = lines[i].trim();
+            if (!line.isEmpty()) {
+                return line;
+            }
+        }
+        return "";
     }
 
     private boolean isHostMode() {

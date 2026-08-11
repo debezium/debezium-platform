@@ -200,7 +200,7 @@ public class SshConfigWatcherService {
      * reconciliation that runs in {@link #onStart}. Both interval and delay
      * are controlled by {@code platform.host.reconciliation-interval} (default: 5m).
      */
-    @Scheduled(every = "${platform.host.reconciliation-interval:5m}", delayed = "${platform.host.reconciliation-interval:5m}")
+    @Scheduled(every = "${platform.host.reconciliation-interval:30s}", delayed = "${platform.host.reconciliation-interval:30s}")
     void scheduledReconciliation() {
         if (!isHostMode()) {
             return;

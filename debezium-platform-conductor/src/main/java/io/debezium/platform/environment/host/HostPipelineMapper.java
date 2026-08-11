@@ -136,6 +136,7 @@ public class HostPipelineMapper {
 
         addSourceProperties(pipeline, properties);
         addSinkProperties(pipeline, properties);
+        addFormatProperties(pipeline, properties);
         addTransformProperties(pipeline, properties);
         addOffsetStorageProperties(pipeline, properties);
         addSchemaHistoryProperties(pipeline, properties);
@@ -169,6 +170,11 @@ public class HostPipelineMapper {
         properties.put(SOURCE_PREFIX + NOTIFICATION_ENABLED_CHANNELS_KEY, DEFAULT_NOTIFICATION_CHANNELS);
     }
 
+    // ── Format defaults ──
+    private static final String FORMAT_KEY_KEY = "debezium.format.key";
+    private static final String FORMAT_VALUE_KEY = "debezium.format.value";
+    private static final String DEFAULT_FORMAT = "json";
+
     private void addSinkProperties(PipelineFlat pipeline, TreeMap<String, String> properties) {
         var sink = pipeline.getDestination();
         String sinkType = resolveSinkType(sink.getType());
@@ -184,6 +190,11 @@ public class HostPipelineMapper {
         }
 
         sink.getConfig().forEach((key, value) -> properties.put(SINK_PREFIX + sinkType + "." + key, String.valueOf(value)));
+    }
+
+    private void addFormatProperties(PipelineFlat pipeline, TreeMap<String, String> properties) {
+        properties.putIfAbsent(FORMAT_KEY_KEY, DEFAULT_FORMAT);
+        properties.putIfAbsent(FORMAT_VALUE_KEY, DEFAULT_FORMAT);
     }
 
     private void addTransformProperties(PipelineFlat pipeline, TreeMap<String, String> properties) {

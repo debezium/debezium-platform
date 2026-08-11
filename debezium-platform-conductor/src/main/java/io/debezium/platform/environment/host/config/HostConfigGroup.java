@@ -60,7 +60,7 @@ public interface HostConfigGroup {
      * Accepts Quarkus duration format, e.g. {@code 5m}, {@code 30s}.
      */
     @WithName("reconciliation-interval")
-    @WithDefault("5m")
+    @WithDefault("30s")
     String reconciliationInterval();
 
     /**

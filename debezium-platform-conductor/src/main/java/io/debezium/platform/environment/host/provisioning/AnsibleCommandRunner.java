@@ -186,9 +186,10 @@ public class AnsibleCommandRunner {
      * Package-visible to allow test overrides.
      */
     Process launchProcess(List<String> command) throws IOException {
-        return new ProcessBuilder(command)
-                .redirectErrorStream(true)
-                .start();
+        ProcessBuilder builder = new ProcessBuilder(command)
+                .redirectErrorStream(true);
+        builder.environment().put("ANSIBLE_BECOME_TIMEOUT", "60");
+        return builder.start();
     }
 
     /**
