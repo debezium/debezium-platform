@@ -14,12 +14,17 @@ import {
   Form,
   FormGroup,
   Icon,
+  MenuToggle,
+  MenuToggleElement,
   Modal,
   ModalBody,
   ModalFooter,
   ModalHeader,
   PageSection,
   SearchInput,
+  Select,
+  SelectList,
+  SelectOption,
   Spinner,
   TextInput,
   ToggleGroup,
@@ -29,7 +34,7 @@ import {
   ToolbarItem,
   Tooltip,
 } from "@patternfly/react-core";
-import { PlusIcon, RhUiErrorFillIcon, SearchIcon } from "@patternfly/react-icons";
+import { FilterIcon, PlusIcon, RhUiErrorFillIcon, SearchIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import {
   Connection,
@@ -104,7 +109,23 @@ const Pipelines: React.FunctionComponent = () => {
   const [deleteInstanceName, setDeleteInstanceName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
+  type FilterField = "name" | "source" | "destination";
+
+  const FILTER_OPTIONS: { value: FilterField; label: string }[] = [
+    { value: "name", label: "Name" },
+    { value: "source", label: "Source" },
+    { value: "destination", label: "Destination" },
+  ];
+
+  const getFilterValue = (pipeline: Pipeline, field: FilterField): string => {
+    if (field === "source") return pipeline.source.name;
+    if (field === "destination") return pipeline.destination.name;
+    return pipeline.name;
+  };
+
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filterField, setFilterField] = useState<FilterField>("name");
+  const [isFilterSelectOpen, setIsFilterSelectOpen] = useState<boolean>(false);
 
   const {
     data: pipelinesList = [],
@@ -120,19 +141,30 @@ const Pipelines: React.FunctionComponent = () => {
     null
   );
 
-  // Compute filtered results based on search query
+  // Compute filtered results based on search query and filter field
   const searchResult = React.useMemo(() => {
     if (searchQuery.length === 0) {
       return pipelinesList;
     }
     return _.filter(pipelinesList, (o) =>
-      o.name.toLowerCase().includes(searchQuery.toLowerCase())
+      getFilterValue(o, filterField).toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery, pipelinesList]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, filterField, pipelinesList]);
 
   const onClear = () => {
     onSearch?.("");
   };
+
+  const onFilterFieldSelect = React.useCallback(
+    (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
+      setFilterField((value as FilterField) ?? "name");
+      setIsFilterSelectOpen(false);
+      onClear();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   const logAction = (): ReactNode => {
     return isLogLoading ? (
@@ -464,15 +496,44 @@ const Pipelines: React.FunctionComponent = () => {
                         isSticky
                       >
                         <ToolbarContent>
-                          <ToolbarItem>
-                            <SearchInput
-                              aria-label="Items example search input"
-                              placeholder={t("findByName")}
-                              value={searchQuery}
-                              onChange={(_event, value) => onSearch(value)}
-                              onClear={onClear}
-                            />
-                          </ToolbarItem>
+                          <ToolbarGroup variant="filter-group">
+                            <ToolbarItem>
+                              <Select
+                                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                  <MenuToggle
+                                    ref={toggleRef}
+                                    icon={<FilterIcon />}
+                                    onClick={() => setIsFilterSelectOpen((prev) => !prev)}
+                                    isExpanded={isFilterSelectOpen}
+                                    style={{ width: "140px" } as React.CSSProperties}
+                                  >
+                                    {FILTER_OPTIONS.find((o) => o.value === filterField)?.label ?? "Name"}
+                                  </MenuToggle>
+                                )}
+                                onSelect={onFilterFieldSelect}
+                                onOpenChange={setIsFilterSelectOpen}
+                                selected={filterField}
+                                isOpen={isFilterSelectOpen}
+                              >
+                                <SelectList>
+                                  {FILTER_OPTIONS.map((option) => (
+                                    <SelectOption key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectOption>
+                                  ))}
+                                </SelectList>
+                              </Select>
+                            </ToolbarItem>
+                            <ToolbarItem>
+                              <SearchInput
+                                aria-label={`Search pipelines by ${filterField}`}
+                                placeholder={`Find by ${filterField}...`}
+                                value={searchQuery}
+                                onChange={(_event, value) => onSearch(value)}
+                                onClear={onClear}
+                              />
+                            </ToolbarItem>
+                          </ToolbarGroup>
                           <ToolbarItem>
                             <ToggleGroup aria-label="Icon variant toggle group">
                               <Button
@@ -494,7 +555,7 @@ const Pipelines: React.FunctionComponent = () => {
                               <Content component={ContentVariants.small}>
                                 {searchQuery.length > 0
                                   ? `${searchResult.length} ${t("of")} ${pipelinesList.length} ${t("items")}`
-                                  : `${searchResult.length} ${t("items")}`}
+                                  : `${pipelinesList.length} ${t("items")}`}
                               </Content>
                             </ToolbarItem>
                           </ToolbarGroup>
@@ -513,14 +574,8 @@ const Pipelines: React.FunctionComponent = () => {
                         </Thead>
 
                         <Tbody>
-                          {(searchQuery.length > 0
-                            ? searchResult
-                            : pipelinesList
-                          ).length > 0 ? (
-                            (searchQuery.length > 0
-                              ? searchResult
-                              : pipelinesList
-                            ).map((instance: Pipeline) => (
+                          {searchResult.length > 0 ? (
+                            searchResult.map((instance: Pipeline) => (
                               <Tr key={instance.id}>
                                 <Td dataLabel={t("name")} style={{ lineHeight: "35px" }}>
                                   <Tooltip content={

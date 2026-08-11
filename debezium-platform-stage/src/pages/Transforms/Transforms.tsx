@@ -13,12 +13,17 @@ import {
   EmptyStateVariant,
   Form,
   FormGroup,
+  MenuToggle,
+  MenuToggleElement,
   Modal,
   ModalBody,
   ModalFooter,
   ModalHeader,
   PageSection,
   SearchInput,
+  Select,
+  SelectList,
+  SelectOption,
   Spinner,
   TextInput,
   ToggleGroup,
@@ -29,6 +34,7 @@ import {
 } from "@patternfly/react-core";
 import {
   DataProcessorIcon,
+  FilterIcon,
   PlusIcon,
   SearchIcon,
 } from "@patternfly/react-icons";
@@ -80,7 +86,16 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
   });
   const [deleteInstanceName, setDeleteInstanceName] = useState<string>("");
 
+  type FilterField = "name" | "type";
+
+  const FILTER_OPTIONS: { value: FilterField; label: string }[] = [
+    { value: "name", label: "Name" },
+    { value: "type", label: "Type" },
+  ];
+
   const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [filterField, setFilterField] = React.useState<FilterField>("name");
+  const [isFilterSelectOpen, setIsFilterSelectOpen] = React.useState<boolean>(false);
 
   const {
     data: pipelineList = [],
@@ -100,19 +115,29 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
     () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
   );
 
-  // Compute filtered results based on search query
+  // Compute filtered results based on search query and filter field
   const searchResult = React.useMemo(() => {
     if (searchQuery.length === 0) {
       return transformsList;
     }
     return _.filter(transformsList, (o) =>
-      o.name.toLowerCase().includes(searchQuery.toLowerCase())
+      o[filterField].toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery, transformsList]);
+  }, [searchQuery, filterField, transformsList]);
 
   const onClear = () => {
     onSearch?.("");
   };
+
+  const onFilterFieldSelect = React.useCallback(
+    (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
+      setFilterField((value as FilterField) ?? "name");
+      setIsFilterSelectOpen(false);
+      onClear();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   const { mutate: deleteData } = useDeleteData({
     onSuccess: () => {
@@ -231,15 +256,44 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                           isSticky
                         >
                           <ToolbarContent>
-                            <ToolbarItem>
-                              <SearchInput
-                                aria-label="Items example search input"
-                                placeholder={t("findByName")}
-                                value={searchQuery}
-                                onChange={(_event, value) => onSearch(value)}
-                                onClear={onClear}
-                              />
-                            </ToolbarItem>
+                            <ToolbarGroup variant="filter-group">
+                              <ToolbarItem>
+                                <Select
+                                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                    <MenuToggle
+                                      ref={toggleRef}
+                                      icon={<FilterIcon />}
+                                      onClick={() => setIsFilterSelectOpen((prev) => !prev)}
+                                      isExpanded={isFilterSelectOpen}
+                                      style={{ width: "120px" } as React.CSSProperties}
+                                    >
+                                      {FILTER_OPTIONS.find((o) => o.value === filterField)?.label ?? "Name"}
+                                    </MenuToggle>
+                                  )}
+                                  onSelect={onFilterFieldSelect}
+                                  onOpenChange={setIsFilterSelectOpen}
+                                  selected={filterField}
+                                  isOpen={isFilterSelectOpen}
+                                >
+                                  <SelectList>
+                                    {FILTER_OPTIONS.map((option) => (
+                                      <SelectOption key={option.value} value={option.value}>
+                                        {option.label}
+                                      </SelectOption>
+                                    ))}
+                                  </SelectList>
+                                </Select>
+                              </ToolbarItem>
+                              <ToolbarItem>
+                                <SearchInput
+                                  aria-label={`Search transforms by ${filterField}`}
+                                  placeholder={`Find by ${filterField}...`}
+                                  value={searchQuery}
+                                  onChange={(_event, value) => onSearch(value)}
+                                  onClear={onClear}
+                                />
+                              </ToolbarItem>
+                            </ToolbarGroup>
                             <ToolbarItem>
                               <ToggleGroup aria-label="Icon variant toggle group">
                                 <Button
@@ -258,9 +312,9 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                             <ToolbarGroup align={{ default: "alignEnd" }}>
                               <ToolbarItem>
                                 <Content component={ContentVariants.small}>
-                                   {searchQuery.length > 0
-                                  ? `${searchResult.length} ${t("of")} ${transformsList.length} ${t("items")}`
-                                  : `${searchResult.length} ${t("items")}`}
+                                  {searchQuery.length > 0
+                                    ? `${searchResult.length} ${t("of")} ${transformsList.length} ${t("items")}`
+                                    : `${transformsList.length} ${t("items")}`}
                                 </Content>
                               </ToolbarItem>
                             </ToolbarGroup>
@@ -276,14 +330,8 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                           </Thead>
 
                           <Tbody>
-                            {(searchQuery.length > 0
-                              ? searchResult
-                              : transformsList
-                            ).length > 0 ? (
-                              (searchQuery.length > 0
-                                ? searchResult
-                                : transformsList
-                              ).map((instance: TransformData) => (
+                            {searchResult.length > 0 ? (
+                              searchResult.map((instance: TransformData) => (
                                 <Tr key={instance.id}>
                                   <Td dataLabel={t("name")}>
                                     <Button

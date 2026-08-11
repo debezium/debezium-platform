@@ -964,6 +964,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
 
       <Modal
         isOpen={isSourceModalOpen}
+        variant="large"
         onClose={handleSourceModalToggle}
         aria-labelledby="modal-source-body-with-description"
         aria-describedby="modal-source-body-with-description"
@@ -981,6 +982,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
       </Modal>
       <Modal
         isOpen={isTransformModalOpen}
+        variant="large"
         onClose={() => setIsTransformModalOpen(false)}
         aria-labelledby="modal-transform-body-with-description"
         aria-describedby="modal-transform-body-with-description"
@@ -997,6 +999,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
       </Modal>
       <Modal
         isOpen={isDestinationModalOpen}
+        variant="large"
         onClose={handleDestinationModalToggle}
         aria-labelledby="modal-with-description-title"
         aria-describedby="modal-box-body-destination-with-description"

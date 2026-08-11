@@ -5,10 +5,8 @@ import {
   ActionListItem,
   Button,
   ButtonType,
-  Icon,
   PageSection,
 } from "@patternfly/react-core";
-import { RhUiDataProcessorIcon } from "@patternfly/react-icons";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPost, fetchData, TransformData, TransformPayload } from "src/apis";
@@ -74,11 +72,6 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
         <PageHeader
           title={t("transform:create.title")}
           subtitle={t("transform:create.description")}
-          icon={
-            <Icon size="2xl" className="custom-header_icon">
-              <RhUiDataProcessorIcon />
-            </Icon>
-          }
         />
       )}
 
@@ -90,6 +83,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
           ref={formRef}
           onSubmit={createNewTransform}
           existingNames={existingNames}
+          {...(modelLoaded ? { defaultLayoutMode: "tabs" as const } : {})}
         />
       </PageSection>
 

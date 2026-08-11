@@ -124,7 +124,7 @@ const PipelineDestinationModel: React.FC<PipelineDestinationModelProps> = ({
       <Divider style={{ marginTop: "10px" }} />
       {isCreateChecked === id2 &&
         (selectedDestination === "" ? (
-          <Content component="p">
+          <Content component="p" className="model-table_toolbar">
             <b>
               Select the type of destination you want to connect from the list
               below, once you select a connector you can configure it using form
@@ -132,7 +132,7 @@ const PipelineDestinationModel: React.FC<PipelineDestinationModelProps> = ({
             </b>
           </Content>
         ) : (
-          <Content component="p">
+          <Content component="p" className="model-table_toolbar">
             <b>
               Fill out the below form or use the smart editor to setup a new
               destination connector. If you already have a configuration file,
@@ -170,7 +170,7 @@ const PipelineDestinationModel: React.FC<PipelineDestinationModelProps> = ({
             onCardSelect={selectDestination}
             catalogType="destination"
             isAddButtonVisible={false}
-            displayType={"grid"}
+            displayType={"list"}
             searchResult={destinationCatalog}
           />
         )

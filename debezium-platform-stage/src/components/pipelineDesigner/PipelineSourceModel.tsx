@@ -123,7 +123,7 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
       <Divider style={{ marginTop: "10px" }} />
       {isCreateChecked === id2 &&
         (selectedSource === "" ? (
-          <Content component="p">
+          <Content component="p" className="model-table_toolbar">
             <b>
               Choose a connector type below. You will configure it using the
               schema-driven form (same as the Sources page), including
@@ -131,7 +131,7 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
             </b>
           </Content>
         ) : (
-          <Content component="p">
+          <Content component="p" className="model-table_toolbar">
             <b>
               Complete the form to create this source. It is saved when you
               submit and is then selected for your pipeline.
@@ -167,7 +167,7 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
             onCardSelect={selectSource}
             catalogType="source"
             isAddButtonVisible={false}
-            displayType={"grid"}
+            displayType={"list"}
             searchResult={sourceCatalog}
           />
         )

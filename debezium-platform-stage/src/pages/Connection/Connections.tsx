@@ -33,12 +33,10 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
   const navigateTo = (url: string) => {
     navigate(url);
   };
-  // const { darkMode } = useData();
-  const connectionsType = ['All', 'Source', 'Destination'];
 
+  const connectionsType = ['All connections', 'Source', 'Destination'];
   const [connectionsTypeIsExpanded, setConnectionsTypeIsExpanded] = useState(false);
   const [connectionsTypeSelected, setConnectionsTypeSelected] = useState('');
-  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const onConnectionsTypeToggle = () => {
     setConnectionsTypeIsExpanded(!connectionsTypeIsExpanded);
@@ -51,6 +49,26 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     setConnectionsTypeSelected(selection ? String(selection) : "");
     setConnectionsTypeIsExpanded(false);
   };
+
+  type FilterField = "name" | "type";
+  const FILTER_OPTIONS: { value: FilterField; label: string }[] = [
+    { value: "name", label: "Name" },
+    { value: "type", label: "Type" },
+  ];
+  const [filterField, setFilterField] = useState<FilterField>("name");
+  const [isFilterSelectOpen, setIsFilterSelectOpen] = useState(false);
+
+  const onFilterFieldSelect = React.useCallback(
+    (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
+      setFilterField((value as FilterField) ?? "name");
+      setIsFilterSelectOpen(false);
+      onClear();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const {
     data: sourceList = [],
@@ -115,7 +133,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     let result = withRole;
     if (searchQuery.length > 0) {
       result = result.filter((o) =>
-        o.name.toLowerCase().includes(searchQuery.toLowerCase())
+        o[filterField].toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
     if (connectionsTypeSelected === 'Source') {
@@ -127,7 +145,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     }
 
     return result;
-  }, [connectionsTypeSelected, connectionsList, searchQuery, catalog]);
+  }, [connectionsTypeSelected, connectionsList, searchQuery, filterField, catalog]);
 
   const onClear = () => {
     onSearch?.("");
@@ -204,29 +222,54 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                         <ToolbarContent>
                           <ToolbarGroup variant="filter-group">
                             <ToolbarItem>
-                              <SearchInput
-                                aria-label="Items example search input"
-                                value={searchQuery}
-                                placeholder={t("findByName")}
-                                onChange={(_event, value) => onSearch(value)}
-                                onClear={onClear}
-                              />
-                            </ToolbarItem>
-                            <ToolbarItem>
                               <Select
                                 toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                                   <MenuToggle
                                     ref={toggleRef}
                                     icon={<FilterIcon />}
+                                    onClick={() => setIsFilterSelectOpen((prev) => !prev)}
+                                    isExpanded={isFilterSelectOpen}
+                                    style={{ width: "120px" } as React.CSSProperties}
+                                  >
+                                    {FILTER_OPTIONS.find((o) => o.value === filterField)?.label ?? "Name"}
+                                  </MenuToggle>
+                                )}
+                                onSelect={onFilterFieldSelect}
+                                onOpenChange={setIsFilterSelectOpen}
+                                selected={filterField}
+                                isOpen={isFilterSelectOpen}
+                              >
+                                <SelectList>
+                                  {FILTER_OPTIONS.map((option) => (
+                                    <SelectOption key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectOption>
+                                  ))}
+                                </SelectList>
+                              </Select>
+                            </ToolbarItem>
+                            <ToolbarItem>
+                              <SearchInput
+                                aria-label={`Search connections by ${filterField}`}
+                                placeholder={`Find by ${filterField}...`}
+                                value={searchQuery}
+                                onChange={(_event, value) => onSearch(value)}
+                                onClear={onClear}
+                              />
+                            </ToolbarItem>
+                            
+                          </ToolbarGroup>
+                          <ToolbarGroup>
+                                <ToolbarItem>
+                              <Select
+                                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                  <MenuToggle
+                                    ref={toggleRef}
                                     onClick={() => onConnectionsTypeToggle()}
                                     isExpanded={connectionsTypeIsExpanded}
-                                    style={
-                                      {
-                                        width: '150px'
-                                      } as React.CSSProperties
-                                    }
+                                    style={{ width: "160px" } as React.CSSProperties}
                                   >
-                                    {connectionsTypeSelected || 'Type'}
+                                    {connectionsTypeSelected || "All connections"}
                                   </MenuToggle>
                                 )}
                                 onSelect={onConnectionsTypeSelect}
@@ -242,7 +285,6 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                                   ))}
                                 </SelectList>
                               </Select>
-
                             </ToolbarItem>
                           </ToolbarGroup>
                           <ToolbarItem>
@@ -264,9 +306,9 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                           <ToolbarGroup align={{ default: "alignEnd" }}>
                             <ToolbarItem>
                               <Content component={ContentVariants.small}>
-                                                 {searchQuery.length > 0
+                                {searchQuery.length > 0 || connectionsTypeSelected
                                   ? `${searchResult.length} ${t("of")} ${connectionsList.length} ${t("items")}`
-                                  : `${searchResult.length} ${t("items")}`}
+                                  : `${connectionsList.length} ${t("items")}`}
                               </Content>
                             </ToolbarItem>
                           </ToolbarGroup>

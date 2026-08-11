@@ -1,13 +1,26 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
+  Bullseye,
+  Button,
+  Content,
+  ContentVariants,
   EmptyState,
   EmptyStateBody,
+  EmptyStateFooter,
   EmptyStateVariant,
-  Label,
+  MenuToggle,
+  MenuToggleElement,
+  SearchInput,
+  Select,
+  SelectList,
+  SelectOption,
+  Toolbar,
+  ToolbarContent,
+  ToolbarGroup,
+  ToolbarItem,
 } from "@patternfly/react-core";
-import { DataProcessorIcon, TagIcon } from "@patternfly/react-icons";
+import { DataProcessorIcon, FilterIcon, SearchIcon } from "@patternfly/react-icons";
 import { Table, Thead, Tr, Th, Tbody, Td } from "@patternfly/react-table";
-import React from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Pipeline,
   TransformApiResponse,
@@ -17,7 +30,15 @@ import {
 import { API_URL } from "../utils/constants";
 import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useTranslation } from "react-i18next";
-import { getActivePipelineCount } from "@utils/pipelineUtils";
+import UsedIn from "./UsedIn";
+import { debounce } from "lodash";
+
+type FilterField = "name" | "type";
+
+const FILTER_OPTIONS: { value: FilterField; label: string }[] = [
+  { value: "name", label: "Name" },
+  { value: "type", label: "Type" },
+];
 
 interface ITransformSelectionListProps {
   data: TransformApiResponse;
@@ -28,6 +49,7 @@ const TransformSelectionList: React.FunctionComponent<
   ITransformSelectionListProps
 > = ({ data, onSelection }) => {
   const { t } = useTranslation();
+
   const {
     data: pipelineList = [],
     error: _pipelineError,
@@ -37,54 +59,173 @@ const TransformSelectionList: React.FunctionComponent<
     () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
   );
 
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [debouncedQuery, setDebouncedQuery] = useState<string>("");
+  const [filterField, setFilterField] = useState<FilterField>("name");
+  const [isSelectOpen, setIsSelectOpen] = useState<boolean>(false);
+
+  const debouncedSet = useRef(
+    debounce((value: string) => setDebouncedQuery(value), 300)
+  ).current;
+
+  useEffect(() => () => debouncedSet.cancel(), [debouncedSet]);
+
+  const onSearchChange = useCallback(
+    (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+      setSearchInput(value);
+      debouncedSet(value);
+    },
+    [debouncedSet]
+  );
+
+  const onSearchClear = useCallback(() => {
+    setSearchInput("");
+    setDebouncedQuery("");
+  }, []);
+
+  const onFilterSelect = useCallback(
+    (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
+      setFilterField((value as FilterField) ?? "name");
+      setIsSelectOpen(false);
+      // Clear search when switching fields so stale results don't persist
+      setSearchInput("");
+      setDebouncedQuery("");
+    },
+    []
+  );
+
+  const filteredData = useMemo(() => {
+    if (!debouncedQuery) return data;
+    const q = debouncedQuery.toLowerCase();
+    return data.filter((instance) =>
+      instance[filterField].toLowerCase().includes(q)
+    );
+  }, [data, debouncedQuery, filterField]);
+
+  const selectedLabel =
+    FILTER_OPTIONS.find((o) => o.value === filterField)?.label ?? "Name";
+
+  if (data.length === 0) {
+    return (
+      <EmptyState
+        headingLevel="h2"
+        titleText={t("emptyState.title", { val: "Transform" })}
+        icon={DataProcessorIcon}
+        variant={EmptyStateVariant.lg}
+      >
+        <EmptyStateBody>
+          {t("emptyState.shortDescription", { val: "Transform" })}
+        </EmptyStateBody>
+      </EmptyState>
+    );
+  }
+
   return (
     <>
-      {data.length > 0 ? (
-        <Table aria-label={`transform table`}>
-          <Thead>
+      <Toolbar id="transform-selection-toolbar" className="model-table_toolbar">
+        <ToolbarContent>
+          <ToolbarGroup variant="filter-group">
+            <ToolbarItem>
+              <Select
+                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                  <MenuToggle
+                    ref={toggleRef}
+                    icon={<FilterIcon />}
+                    onClick={() => setIsSelectOpen((prev) => !prev)}
+                    isExpanded={isSelectOpen}
+                    style={{ width: "120px" } as React.CSSProperties}
+                  >
+                    {selectedLabel}
+                  </MenuToggle>
+                )}
+                onSelect={onFilterSelect}
+                onOpenChange={setIsSelectOpen}
+                selected={filterField}
+                isOpen={isSelectOpen}
+              >
+                <SelectList>
+                  {FILTER_OPTIONS.map((option) => (
+                    <SelectOption key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectOption>
+                  ))}
+                </SelectList>
+              </Select>
+            </ToolbarItem>
+            <ToolbarItem>
+              <SearchInput
+                aria-label={`Search transforms by ${selectedLabel}`}
+                placeholder={`Find by ${selectedLabel.toLowerCase()}...`}
+                value={searchInput}
+                onChange={onSearchChange}
+                onClear={onSearchClear}
+              />
+            </ToolbarItem>
+          </ToolbarGroup>
+          <ToolbarGroup align={{ default: "alignEnd" }}>
+            <ToolbarItem>
+              <Content component={ContentVariants.small}>
+                {debouncedQuery
+                  ? `${filteredData.length} ${t("of")} ${data.length} ${t("items")}`
+                  : `${data.length} ${t("items")}`}
+              </Content>
+            </ToolbarItem>
+          </ToolbarGroup>
+        </ToolbarContent>
+      </Toolbar>
+
+      <Table aria-label="transform table" variant="compact">
+        <Thead>
+          <Tr>
+            <Th key={0}>{t("name")}</Th>
+            <Th key={1}>{t("type")}</Th>
+            <Th key={2}>{t("active")}</Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {filteredData.length > 0 ? (
+            filteredData.map((instance) => (
+              <Tr
+                key={instance.id}
+                onRowClick={() => onSelection([instance])}
+                isSelectable
+                isClickable
+              >
+                <Td dataLabel={t("name")}>{instance.name}</Td>
+                <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
+                  {instance.type}
+                </Td>
+                <Td dataLabel={t("active")}>
+                  <UsedIn
+                    resourceList={pipelineList}
+                    resourceType={"pipeline"}
+                    requestedPageType={"transform"}
+                    instance={instance}
+                  />
+                </Td>
+              </Tr>
+            ))
+          ) : (
             <Tr>
-              <Th key={0}>{t('name')}</Th>
-              <Th key={1}>{t('type')}</Th>
-              <Th key={2}>{t('active')}</Th>
+              <Td colSpan={3}>
+                <Bullseye>
+                  <EmptyState
+                    headingLevel="h2"
+                    titleText={t("search.title", { val: t("transform:transform") })}
+                    icon={SearchIcon}
+                    variant={EmptyStateVariant.sm}
+                  >
+                    <EmptyStateBody>
+                      {t("search.description")}
+                    </EmptyStateBody>
+                    <EmptyStateFooter><Button variant="link" onClick={onSearchClear}>Clear search</Button></EmptyStateFooter>
+                  </EmptyState>
+                </Bullseye>
+              </Td>
             </Tr>
-          </Thead>
-          <Tbody>
-            {data.length > 0 &&
-              data.map((instance) => (
-                <Tr
-                  key={instance.id}
-                  onRowClick={() => onSelection([instance])}
-                  isSelectable
-                  isClickable
-                >
-                  <Td dataLabel={t('name')}>{instance.name}</Td>
-                  <Td dataLabel={t('type')} style={{ paddingLeft: "0px" }}>
-                    {instance.type}
-                  </Td>
-                  <Td dataLabel={t('active')}>
-                    <Label icon={<TagIcon />} color="blue">
-                      {getActivePipelineCount(
-                        pipelineList,
-                        instance.id
-                      )}
-                    </Label>
-                  </Td>
-                </Tr>
-              ))}
-          </Tbody>
-        </Table>
-      ) : (
-        <EmptyState
-          headingLevel="h2"
-          titleText={t('emptyState.title', { val: "Transform" })}
-          icon={DataProcessorIcon}
-          variant={EmptyStateVariant.lg}
-        >
-          <EmptyStateBody>
-            {t('emptyState.shortDescription', { val: "Transform" })}
-          </EmptyStateBody>
-        </EmptyState>
-      )}
+          )}
+        </Tbody>
+      </Table>
     </>
   );
 };

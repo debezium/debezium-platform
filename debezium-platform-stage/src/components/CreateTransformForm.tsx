@@ -9,9 +9,13 @@ import React, {
 import {
   Alert,
   Button,
+  Card,
+  CardBody,
   Checkbox,
   Content,
   Form,
+  FormFieldGroup,
+  FormFieldGroupHeader,
   FormGroup,
   FormGroupLabelHelp,
   FormHelperText,
@@ -28,13 +32,20 @@ import {
   SelectList,
   SelectOption,
   Skeleton,
+  Tab,
+  Tabs,
+  TabTitleText,
   TextInput,
   TextInputGroup,
   TextInputGroupMain,
   TextInputGroupUtilities,
+  ToggleGroup,
+  ToggleGroupItem,
 } from "@patternfly/react-core";
 import {
   ExclamationCircleIcon,
+  ListIcon,
+  ThLargeIcon,
   TimesIcon,
 } from "@patternfly/react-icons";
 import type { TFunction } from "i18next";
@@ -83,6 +94,7 @@ export interface CreateTransformFormHandle {
 interface CreateTransformFormProps {
   onSubmit: (payload: TransformPayload) => void;
   initialTransform?: TransformData;
+  defaultLayoutMode?: "jumplinks" | "tabs";
   existingNames?: string[];
 }
 
@@ -136,6 +148,7 @@ const CreateTransformForm = React.forwardRef<
     {
       onSubmit,
       initialTransform,
+      defaultLayoutMode = "jumplinks",
       existingNames,
     },
     ref
@@ -147,6 +160,10 @@ const CreateTransformForm = React.forwardRef<
     const initialPredicateValuesRef = useRef<Record<string, string>>({});
     const lastValidationFailureBodyRef = useRef("");
 
+    const [layoutMode, setLayoutMode] = useState<"jumplinks" | "tabs">(
+      defaultLayoutMode
+    );
+    const [activeTabKey, setActiveTabKey] = useState(0);
     const [activeSection, setActiveSection] = useState("transform-essentials");
     const activeSectionRef = useRef(activeSection);
 
@@ -449,6 +466,8 @@ const CreateTransformForm = React.forwardRef<
     }, [t]);
 
     useEffect(() => {
+      if (layoutMode !== "jumplinks") return;
+
       const sectionIds = allSections.map((s) => s.id);
       const elements = sectionIds
         .map((id) => document.getElementById(id))
@@ -471,7 +490,7 @@ const CreateTransformForm = React.forwardRef<
       );
       for (const el of elements) observer.observe(el);
       return () => observer.disconnect();
-    }, [allSections, selectedEntry, selectedPredicateEntry]);
+    }, [layoutMode, allSections, selectedEntry, selectedPredicateEntry]);
 
     const filteredUniqueNames = useMemo(() => {
       if (!transformFilter) return uniqueNames;
@@ -638,7 +657,7 @@ const CreateTransformForm = React.forwardRef<
               ? "transform-class-select"
               : "transform-name"
             : null;
-        if (target) {
+        if (target && layoutMode === "jumplinks") {
           requestAnimationFrame(() =>
             requestAnimationFrame(() => scrollIntoViewById(target))
           );
@@ -659,6 +678,7 @@ const CreateTransformForm = React.forwardRef<
       predicateSchema,
       effectivePredicateValues,
       predicateAllDependants,
+      layoutMode,
       t,
     ]);
 
@@ -1395,7 +1415,97 @@ const CreateTransformForm = React.forwardRef<
       </div>
     );
 
-    return renderJumpLinksLayout();
+    const renderTabsLayout = () => (
+      <div className="tabs-layout" style={{ maxWidth: "900px", margin: "0 auto" }}>
+        <Card className="custom-card-body">
+          <CardBody isFilled>
+            {renderEssentials()}
+            <div style={{ marginTop: "1.5rem" }}>
+              <FormFieldGroup
+                header={
+                  <FormFieldGroupHeader
+                    titleText={{
+                      text: (
+                        <span style={{ fontWeight: 500 }}>
+                          {t("transform:form.subsectionTitle")}
+                        </span>
+                      ),
+                      id: "field-group-transform-config-id",
+                    }}
+                    titleDescription={t("transform:form.subsectionDescription", {
+                      defaultValue:
+                        "Configure properties for the selected transform.",
+                    })}
+                  />
+                }
+              >
+                <Tabs
+                  activeKey={activeTabKey}
+                  onSelect={(_e, key) => setActiveTabKey(key as number)}
+                  aria-label="Transform configuration tabs"
+                >
+                  <Tab
+                    eventKey={0}
+                    title={
+                      <TabTitleText>
+                        {t("transform:jumplinks.configuration", {
+                          defaultValue: "Transform Configuration",
+                        })}
+                      </TabTitleText>
+                    }
+                  >
+                    <div style={{ paddingTop: "1rem" }}>
+                      {renderConfiguration()}
+                    </div>
+                  </Tab>
+                  <Tab
+                    eventKey={1}
+                    title={
+                      <TabTitleText>
+                        {t("transform:jumplinks.predicate", {
+                          defaultValue: "Predicate",
+                        })}
+                      </TabTitleText>
+                    }
+                  >
+                    <div style={{ paddingTop: "1rem" }}>{renderPredicate()}</div>
+                  </Tab>
+                </Tabs>
+              </FormFieldGroup>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+    );
+
+    return (
+      <>
+        <div className="schema-form-layout-toggle">
+          <ToggleGroup aria-label="Switch between jump links and tabs layout">
+            <ToggleGroupItem
+              icon={<ThLargeIcon />}
+              text="Jump Links"
+              aria-label="Jump links layout"
+              buttonId="jumplinks-layout"
+              isSelected={layoutMode === "jumplinks"}
+              onChange={() => setLayoutMode("jumplinks")}
+            />
+            <ToggleGroupItem
+              icon={<ListIcon />}
+              text="Tabs"
+              aria-label="Tabs layout"
+              buttonId="tabs-layout"
+              isSelected={layoutMode === "tabs"}
+              onChange={() => setLayoutMode("tabs")}
+            />
+          </ToggleGroup>
+        </div>
+
+        {layoutMode === "jumplinks"
+          ? renderJumpLinksLayout()
+          : renderTabsLayout()}
+      </>
+    );
   }
 );
 

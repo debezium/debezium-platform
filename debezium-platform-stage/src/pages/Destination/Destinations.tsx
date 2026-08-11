@@ -5,8 +5,13 @@ import {
   Content,
   ContentVariants,
   EmptyState,
+  MenuToggle,
+  MenuToggleElement,
   PageSection,
   SearchInput,
+  Select,
+  SelectList,
+  SelectOption,
   Spinner,
   ToggleGroup,
   Toolbar,
@@ -14,7 +19,7 @@ import {
   ToolbarGroup,
   ToolbarItem,
 } from "@patternfly/react-core";
-import { RhUiDataSinkIcon, PlusIcon } from "@patternfly/react-icons";
+import { RhUiDataSinkIcon, FilterIcon, PlusIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import EmptyStatus from "../../components/EmptyStatus";
 import { Destination, fetchData } from "../../apis/apis";
@@ -57,7 +62,16 @@ const Destinations: React.FunctionComponent = () => {
     navigate(url);
   };
 
+  type FilterField = "name" | "type";
+
+  const FILTER_OPTIONS: { value: FilterField; label: string }[] = [
+    { value: "name", label: "Name" },
+    { value: "type", label: "Type" },
+  ];
+
   const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [filterField, setFilterField] = React.useState<FilterField>("name");
+  const [isFilterSelectOpen, setIsFilterSelectOpen] = React.useState<boolean>(false);
 
   const {
     data: destinationsList = [],
@@ -68,19 +82,28 @@ const Destinations: React.FunctionComponent = () => {
     () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
   );
 
-  // Compute filtered results based on search query
   const searchResult = React.useMemo(() => {
     if (searchQuery.length === 0) {
       return destinationsList;
     }
     return _.filter(destinationsList, (o) =>
-      o.name.toLowerCase().includes(searchQuery.toLowerCase())
+      o[filterField].toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery, destinationsList]);
+  }, [searchQuery, filterField, destinationsList]);
 
   const onClear = () => {
     onSearch?.("");
   };
+
+  const onFilterFieldSelect = React.useCallback(
+    (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
+      setFilterField((value as FilterField) ?? "name");
+      setIsFilterSelectOpen(false);
+      onClear();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   // Debounce the search query state update
   const debouncedSetSearchQuery = React.useMemo(
@@ -146,15 +169,44 @@ const Destinations: React.FunctionComponent = () => {
                         isSticky
                       >
                         <ToolbarContent>
-                          <ToolbarItem>
-                            <SearchInput
-                              aria-label="Items example search input"
-                              value={searchQuery}
-                              placeholder={t("findByName")}
-                              onChange={(_event, value) => onSearch(value)}
-                              onClear={onClear}
-                            />
-                          </ToolbarItem>
+                          <ToolbarGroup variant="filter-group">
+                            <ToolbarItem>
+                              <Select
+                                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                  <MenuToggle
+                                    ref={toggleRef}
+                                    icon={<FilterIcon />}
+                                    onClick={() => setIsFilterSelectOpen((prev) => !prev)}
+                                    isExpanded={isFilterSelectOpen}
+                                    style={{ width: "120px" } as React.CSSProperties}
+                                  >
+                                    {FILTER_OPTIONS.find((o) => o.value === filterField)?.label ?? "Name"}
+                                  </MenuToggle>
+                                )}
+                                onSelect={onFilterFieldSelect}
+                                onOpenChange={setIsFilterSelectOpen}
+                                selected={filterField}
+                                isOpen={isFilterSelectOpen}
+                              >
+                                <SelectList>
+                                  {FILTER_OPTIONS.map((option) => (
+                                    <SelectOption key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectOption>
+                                  ))}
+                                </SelectList>
+                              </Select>
+                            </ToolbarItem>
+                            <ToolbarItem>
+                              <SearchInput
+                                aria-label={`Search destinations by ${filterField}`}
+                                placeholder={`Find by ${filterField}...`}
+                                value={searchQuery}
+                                onChange={(_event, value) => onSearch(value)}
+                                onClear={onClear}
+                              />
+                            </ToolbarItem>
+                          </ToolbarGroup>
                           <ToolbarItem>
                             <ToggleGroup aria-label="Icon variant toggle group">
                               <Button
@@ -176,7 +228,7 @@ const Destinations: React.FunctionComponent = () => {
                               <Content component={ContentVariants.small}>
                                 {searchQuery.length > 0
                                   ? `${searchResult.length} ${t("of")} ${destinationsList.length} ${t("items")}`
-                                  : `${searchResult.length} ${t("items")}`}
+                                  : `${destinationsList.length} ${t("items")}`}
                               </Content>
                             </ToolbarItem>
                           </ToolbarGroup>
