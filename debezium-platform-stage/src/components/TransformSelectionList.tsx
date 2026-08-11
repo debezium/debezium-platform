@@ -17,10 +17,11 @@ import {
   ToolbarContent,
   ToolbarGroup,
   ToolbarItem,
+  Tooltip,
 } from "@patternfly/react-core";
 import { DataProcessorIcon, FilterIcon, SearchIcon } from "@patternfly/react-icons";
 import { Table, Thead, Tr, Th, Tbody, Td } from "@patternfly/react-table";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Pipeline,
   TransformApiResponse,
@@ -32,6 +33,10 @@ import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useTranslation } from "react-i18next";
 import UsedIn from "./UsedIn";
 import { debounce } from "lodash";
+import {
+  getConnectorFamily,
+  isTransformCompatibleWithSource,
+} from "../utils/transformCatalog";
 
 type FilterField = "name" | "type";
 
@@ -43,18 +48,15 @@ const FILTER_OPTIONS: { value: FilterField; label: string }[] = [
 interface ITransformSelectionListProps {
   data: TransformApiResponse;
   onSelection: (selection: TransformData[]) => void;
+  sourceType?: string;
 }
 
 const TransformSelectionList: React.FunctionComponent<
   ITransformSelectionListProps
-> = ({ data, onSelection }) => {
+> = ({ data, onSelection, sourceType }) => {
   const { t } = useTranslation();
 
-  const {
-    data: pipelineList = [],
-    error: _pipelineError,
-    isLoading: _isPipelineLoading,
-  } = useResourceQuery<Pipeline[], Error>(
+  const { data: pipelineList = [] } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
     () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
   );
@@ -64,18 +66,21 @@ const TransformSelectionList: React.FunctionComponent<
   const [filterField, setFilterField] = useState<FilterField>("name");
   const [isSelectOpen, setIsSelectOpen] = useState<boolean>(false);
 
-  const debouncedSet = useRef(
-    debounce((value: string) => setDebouncedQuery(value), 300)
-  ).current;
+  const debouncedSetSearchQuery = useMemo(
+    () => debounce((value: string) => setDebouncedQuery(value), 300),
+    []
+  );
 
-  useEffect(() => () => debouncedSet.cancel(), [debouncedSet]);
+  useEffect(() => {
+    return () => debouncedSetSearchQuery.cancel();
+  }, [debouncedSetSearchQuery]);
 
   const onSearchChange = useCallback(
     (_event: React.FormEvent<HTMLInputElement>, value: string) => {
       setSearchInput(value);
-      debouncedSet(value);
+      debouncedSetSearchQuery(value);
     },
-    [debouncedSet]
+    [debouncedSetSearchQuery]
   );
 
   const onSearchClear = useCallback(() => {
@@ -184,27 +189,54 @@ const TransformSelectionList: React.FunctionComponent<
         </Thead>
         <Tbody>
           {filteredData.length > 0 ? (
-            filteredData.map((instance) => (
-              <Tr
-                key={instance.id}
-                onRowClick={() => onSelection([instance])}
-                isSelectable
-                isClickable
-              >
-                <Td dataLabel={t("name")}>{instance.name}</Td>
-                <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
-                  {instance.type}
-                </Td>
-                <Td dataLabel={t("active")}>
-                  <UsedIn
-                    resourceList={pipelineList}
-                    resourceType={"pipeline"}
-                    requestedPageType={"transform"}
-                    instance={instance}
-                  />
-                </Td>
-              </Tr>
-            ))
+            filteredData.map((instance) => {
+              const compatible = isTransformCompatibleWithSource(
+                instance.type,
+                sourceType
+              );
+              const family = getConnectorFamily(instance.type);
+              return (
+                <Tr
+                  key={instance.id}
+                  onRowClick={
+                    compatible ? () => onSelection([instance]) : undefined
+                  }
+                  isSelectable={compatible}
+                  isClickable={compatible}
+                  style={
+                    compatible
+                      ? undefined
+                      : { opacity: 0.55, cursor: "not-allowed" }
+                  }
+                >
+                  <Td dataLabel={t("name")}>
+                    {compatible ? (
+                      instance.name
+                    ) : (
+                      <Tooltip
+                        content={t(
+                          "transform:transformModal.incompatibleWithSource",
+                          { family: family ?? "connector" }
+                        )}
+                      >
+                        <span>{instance.name}</span>
+                      </Tooltip>
+                    )}
+                  </Td>
+                  <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
+                    {instance.type}
+                  </Td>
+                  <Td dataLabel={t("active")}>
+                    <UsedIn
+                      resourceList={pipelineList}
+                      resourceType={"pipeline"}
+                      requestedPageType={"transform"}
+                      instance={instance}
+                    />
+                  </Td>
+                </Tr>
+              );
+            })
           ) : (
             <Tr>
               <Td colSpan={3}>

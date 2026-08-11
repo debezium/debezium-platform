@@ -45,6 +45,7 @@
         "transformFailedMessage": "Failed to create the \"{{name}}\" transform: {{error}}"
     },
     "dbzServerTooltip": "Optionally you can upload the Debezium server configuration to directly create a pipeline.",
+    "selectSourceFirst": "Select a source first",
     "userActions": {
         "overview": "Overview",
         "logs": "View logs",

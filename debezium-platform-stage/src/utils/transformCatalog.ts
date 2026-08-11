@@ -1,6 +1,11 @@
 import type { CatalogComponentEntry, SchemaProperty } from "../apis/types";
 
-export type TransformCatalogGroupId = "ai" | "debezium" | "kafkaConnect";
+export type TransformCatalogGroupId =
+  | "ai"
+  | "debeziumSmt"
+  | "connectorSpecific"
+  | "kafkaConnect"
+  | "other";
 
 export type TransformCatalogGroup = {
   id: TransformCatalogGroupId;
@@ -9,8 +14,10 @@ export type TransformCatalogGroup = {
 
 export const TRANSFORM_CATALOG_GROUPS: TransformCatalogGroup[] = [
   { id: "ai", label: "AI" },
-  { id: "debezium", label: "Debezium" },
+  { id: "debeziumSmt", label: "Debezium SMT" },
+  { id: "connectorSpecific", label: "Connector-specific" },
   { id: "kafkaConnect", label: "Kafka Connect Based" },
+  { id: "other", label: "Other" },
 ];
 
 const VARIANT_LABELS: Record<string, string> = {
@@ -27,10 +34,54 @@ export function getTransformCatalogGroupId(
   if (entry.class.startsWith("io.debezium.ai.")) {
     return "ai";
   }
+  if (entry.class.startsWith("io.debezium.transforms.")) {
+    return "debeziumSmt";
+  }
+  if (entry.class.startsWith("io.debezium.connector.")) {
+    return "connectorSpecific";
+  }
   if (entry.class.startsWith("org.apache.kafka.connect.transforms")) {
     return "kafkaConnect";
   }
-  return "debezium";
+  return "other";
+}
+
+const CONNECTOR_CLASS_PREFIX = "io.debezium.connector.";
+
+export function getConnectorFamily(
+  classOrType: string
+): string | undefined {
+  if (!classOrType.startsWith(CONNECTOR_CLASS_PREFIX)) {
+    return undefined;
+  }
+  const family = classOrType
+    .slice(CONNECTOR_CLASS_PREFIX.length)
+    .split(".")[0];
+  return family || undefined;
+}
+
+export function isConnectorSpecificTransform(classOrType: string): boolean {
+  return classOrType.startsWith(CONNECTOR_CLASS_PREFIX);
+}
+
+export function isTransformCompatibleWithSource(
+  transformType: string,
+  sourceType: string | undefined
+): boolean {
+  if (!sourceType) return true;
+  if (!isConnectorSpecificTransform(transformType)) return true;
+  return getConnectorFamily(transformType) === getConnectorFamily(sourceType);
+}
+
+export function isCatalogTransformNameCompatible(
+  entries: CatalogComponentEntry[],
+  name: string,
+  sourceType: string | undefined
+): boolean {
+  if (!sourceType) return true;
+  const entry = entries.find((e) => e.name === name);
+  if (!entry) return true;
+  return isTransformCompatibleWithSource(entry.class, sourceType);
 }
 
 export function getVariantSuffix(entry: CatalogComponentEntry): string {

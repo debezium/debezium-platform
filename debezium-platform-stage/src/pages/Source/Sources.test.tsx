@@ -130,7 +130,7 @@ describe("Sources", () => {
 
   it("filters Sources based on search input", async () => {
     render(<Sources />);
-    const searchInput = screen.getByPlaceholderText("Find by name");
+    const searchInput = screen.getByPlaceholderText(/find by name/i);
     fireEvent.change(searchInput, { target: { value: "source" } });
     await waitFor(() => {
       expect(screen.getByText("test-source-mongo")).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe("Sources", () => {
 
   it("filters sources for unknown search input and clears search", async () => {
     render(<Sources />);
-    const searchInput = screen.getByPlaceholderText("Find by name");
+    const searchInput = screen.getByPlaceholderText(/find by name/i);
     fireEvent.change(searchInput, { target: { value: "xxx" } });
     await waitFor(() => {
       expect(screen.getByText("0 of 2 Items")).toBeInTheDocument();

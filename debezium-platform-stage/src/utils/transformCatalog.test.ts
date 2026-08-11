@@ -1,12 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
   descriptorPath,
+  getConnectorFamily,
   getTransformCatalogGroupId,
   getUniqueCatalogNames,
   getUniqueTransformNames,
   getVariantLabel,
   getVariantSuffix,
   getVariantsForName,
+  isCatalogTransformNameCompatible,
+  isTransformCompatibleWithSource,
   pickDefaultVariant,
 } from "./transformCatalog";
 import type { CatalogComponentEntry } from "../apis/types";
@@ -51,7 +54,7 @@ describe("transformCatalog", () => {
       ).toBe("kafkaConnect");
     });
 
-    it("groups remaining debezium classes under debezium", () => {
+    it("groups core debezium transforms under debeziumSmt", () => {
       expect(
         getTransformCatalogGroupId(
           entry({
@@ -59,7 +62,18 @@ describe("transformCatalog", () => {
             name: "io.debezium.transforms.ExtractNewRecordState",
           })
         )
-      ).toBe("debezium");
+      ).toBe("debeziumSmt");
+      expect(
+        getTransformCatalogGroupId(
+          entry({
+            class: "io.debezium.transforms.outbox.EventRouter",
+            name: "io.debezium.transforms.outbox.EventRouter",
+          })
+        )
+      ).toBe("debeziumSmt");
+    });
+
+    it("groups connector package transforms under connectorSpecific", () => {
       expect(
         getTransformCatalogGroupId(
           entry({
@@ -67,7 +81,115 @@ describe("transformCatalog", () => {
             name: "io.debezium.connector.jdbc.transforms.FieldNameTransformation",
           })
         )
-      ).toBe("debezium");
+      ).toBe("connectorSpecific");
+    });
+
+    it("groups unmatched classes under other", () => {
+      expect(
+        getTransformCatalogGroupId(
+          entry({
+            class: "io.debezium.something.CustomTransform",
+            name: "io.debezium.something.CustomTransform",
+          })
+        )
+      ).toBe("other");
+      expect(
+        getTransformCatalogGroupId(
+          entry({
+            class: "com.example.MyTransform",
+            name: "com.example.MyTransform",
+          })
+        )
+      ).toBe("other");
+    });
+  });
+
+  describe("source compatibility", () => {
+    const postgresSource = "io.debezium.connector.postgresql.PostgresConnector";
+    const mysqlSource = "io.debezium.connector.mysql.MySqlConnector";
+    const mariadbSource = "io.debezium.connector.mariadb.MariaDbConnector";
+
+    it("extracts connector family", () => {
+      expect(getConnectorFamily(postgresSource)).toBe("postgresql");
+      expect(
+        getConnectorFamily(
+          "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState"
+        )
+      ).toBe("mongodb");
+      expect(getConnectorFamily("io.debezium.transforms.Filter")).toBeUndefined();
+    });
+
+    it("allows non-connector transforms for any source", () => {
+      expect(
+        isTransformCompatibleWithSource(
+          "io.debezium.transforms.Filter",
+          postgresSource
+        )
+      ).toBe(true);
+      expect(
+        isTransformCompatibleWithSource(
+          "org.apache.kafka.connect.transforms.Filter",
+          mysqlSource
+        )
+      ).toBe(true);
+    });
+
+    it("allows matching connector-specific transforms only", () => {
+      expect(
+        isTransformCompatibleWithSource(
+          "io.debezium.connector.postgresql.transforms.TimescaleDb",
+          postgresSource
+        )
+      ).toBe(true);
+      expect(
+        isTransformCompatibleWithSource(
+          "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+          postgresSource
+        )
+      ).toBe(false);
+    });
+
+    it("treats mysql and mariadb as distinct", () => {
+      expect(
+        isTransformCompatibleWithSource(
+          "io.debezium.connector.mysql.transforms.ReadToInsertEvent",
+          mysqlSource
+        )
+      ).toBe(true);
+      expect(
+        isTransformCompatibleWithSource(
+          "io.debezium.connector.mysql.transforms.ReadToInsertEvent",
+          mariadbSource
+        )
+      ).toBe(false);
+    });
+
+    it("allows all transforms when sourceType is omitted", () => {
+      expect(
+        isTransformCompatibleWithSource(
+          "io.debezium.connector.jdbc.transforms.FieldNameTransformation",
+          undefined
+        )
+      ).toBe(true);
+    });
+
+    it("resolves catalog name compatibility from entry class", () => {
+      const entries = [
+        entry({
+          class: "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+          name: "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+        }),
+      ];
+      expect(
+        isCatalogTransformNameCompatible(
+          entries,
+          entries[0].name,
+          postgresSource
+        )
+      ).toBe(false);
+      expect(
+        isCatalogTransformNameCompatible(entries, entries[0].name, undefined)
+      ).toBe(true);
     });
   });
 

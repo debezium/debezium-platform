@@ -120,8 +120,9 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
   }, [isSourceModalOpen]);
 
   const handleTransformModalToggle = useCallback(() => {
+    if (!selectedSource) return;
     setIsTransformModalOpen(true);
-  }, []);
+  }, [selectedSource]);
 
   const handleDestinationModalToggle = useCallback(() => {
     setIsDestinationModalOpen(!isDestinationModalOpen);
@@ -129,15 +130,35 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
 
   const cardButton = useCallback(
     (buttonText: string): JSX.Element => {
+      if (buttonText === "Transform") {
+        const transformBtn = (
+          <Button
+            variant="link"
+            // isDisabled={!selectedSource}
+            onClick={handleTransformModalToggle}
+            style={{ paddingRight: 5, paddingLeft: 5, fontSize: ".8em" }}
+            icon={<PlusIcon />}
+            size="sm"
+          >
+            {buttonText}
+          </Button>
+        );
+        if (!selectedSource) {
+          return (
+            <Tooltip content={t("pipeline:selectSourceFirst")}>
+              <span>{transformBtn}</span>
+            </Tooltip>
+          );
+        }
+        return transformBtn;
+      }
       return (
         <Button
           variant="link"
           onClick={
             buttonText === "Source"
               ? handleSourceModalToggle
-              : buttonText === "Destination"
-                ? handleDestinationModalToggle
-                : handleTransformModalToggle
+              : handleDestinationModalToggle
           }
           style={{ paddingRight: 5, paddingLeft: 5, fontSize: ".8em" }}
           icon={<PlusIcon />}
@@ -151,20 +172,31 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
       handleSourceModalToggle,
       handleDestinationModalToggle,
       handleTransformModalToggle,
+      selectedSource,
+      t,
     ]
   );
 
   const cardButtonTransform = useCallback((): JSX.Element => {
-    return (
+    const btn = (
       <Button
         variant="link"
+        // isDisabled={!selectedSource}
         onClick={handleTransformModalToggle}
         style={{ padding: "5px 9px" }}
         icon={<PlusIcon />}
         size="sm"
       />
     );
-  }, [handleTransformModalToggle]);
+    if (!selectedSource) {
+      return (
+        <Tooltip content={t("pipeline:selectSourceFirst")}>
+          <span>{btn}</span>
+        </Tooltip>
+      );
+    }
+    return btn;
+  }, [handleTransformModalToggle, selectedSource, t]);
 
   const addTransformNode = useMemo(() => {
     return {
@@ -198,6 +230,31 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
       draggable: false,
     };
   }, [cardButton]);
+
+  // Keep transform action buttons in sync when source selection enables/disables them.
+  useEffect(() => {
+    setNodes((prevNodes: any[]) => {
+      let changed = false;
+      const next = prevNodes.map((node) => {
+        if (node.id === "transform_selector") {
+          changed = true;
+          return {
+            ...node,
+            data: { ...node.data, action: cardButton("Transform") },
+          };
+        }
+        if (node.id === "add_transform") {
+          changed = true;
+          return {
+            ...node,
+            data: { ...node.data, action: cardButtonTransform() },
+          };
+        }
+        return node;
+      });
+      return changed ? next : prevNodes;
+    });
+  }, [cardButton, cardButtonTransform]);
 
   const dataSelectorSourceNode = useMemo(() => {
     return {
@@ -294,6 +351,16 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
       };
       updateSelectedSource(source);
 
+      // Changing source clears all selected transforms (connector-family compatibility).
+      const sourceChanged =
+        !selectedSource ||
+        selectedSource.id !== source.id ||
+        selectedSource.type !== source.type;
+      if (sourceChanged && selectedTransform.length > 0) {
+        updateSelectedTransform([]);
+        setIsTransformModalOpen(false);
+      }
+
       setNodes((prevNodes: any) => {
         return [
           ...prevNodes.filter((node: any) => node.id !== "source"),
@@ -303,7 +370,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
 
       setIsSourceModalOpen(false);
     },
-    [updateSelectedSource]
+    [updateSelectedSource, updateSelectedTransform, selectedTransform.length, selectedSource]
   );
 
   const onDestinationSelection = useCallback(
@@ -499,6 +566,15 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
           updatedDefaultDestinationNode,
         ];
       });
+      setEdges([
+        {
+          id: "complete-flow-path",
+          source: "source",
+          target: "destination",
+          type: "unifiedCustomEdge",
+          data: { throughNodeNo: 0 },
+        },
+      ]);
       return;
     } else if (filteredTransformLinkNode.length < transformLinkNodes.length) {
       updatedTransformLinkNodes = filteredTransformLinkNode.map(
@@ -994,7 +1070,10 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
           description="Select a source to be used in pipeline from the list of already configured source listed below or configure a new source by selecting create a new source radio card."
         />
         <ModalBody tabIndex={0} id="modal-transform-body-with-description">
-          <PipelineTransformModel onTransformSelection={handleAddTransform} />
+          <PipelineTransformModel
+            onTransformSelection={handleAddTransform}
+            sourceType={selectedSource?.type}
+          />
         </ModalBody>
       </Modal>
       <Modal

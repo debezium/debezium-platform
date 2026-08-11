@@ -84,7 +84,7 @@ describe("Pipelines", () => {
   it("filters pipelines based on search input", async () => {
     render(<Pipelines />);
 
-    const searchInput = screen.getByPlaceholderText("Find by name");
+    const searchInput = screen.getByPlaceholderText(/find by name/i);
     fireEvent.change(searchInput, { target: { value: "test" } });
 
     await waitFor(() => {

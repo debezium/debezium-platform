@@ -574,7 +574,10 @@ const PipelineEditFlow: React.FC<PipelineEditFlowProps> = ({
           description="Select a source to be used in pipeline from the list of already configured source listed below or configure a new source by selecting create a new source radio card."
         />
         <ModalBody tabIndex={0} id="modal-transform-body-with-description">
-          <PipelineTransformModel onTransformSelection={handleAddTransform} />
+          <PipelineTransformModel
+            onTransformSelection={handleAddTransform}
+            sourceType={sourceType}
+          />
         </ModalBody>
       </Modal>
     </>

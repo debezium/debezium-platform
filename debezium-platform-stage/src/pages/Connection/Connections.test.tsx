@@ -127,7 +127,7 @@ describe("Connections", () => {
   it("filters connections by debounced search", async () => {
     mockQueriesLoaded(connectionsMock);
     render(<Connections />);
-    const searchInput = screen.getByPlaceholderText("Find by name");
+    const searchInput = screen.getByPlaceholderText(/find by name/i);
     fireEvent.change(searchInput, { target: { value: "kinesis" } });
     await waitFor(
       () => {
@@ -141,7 +141,7 @@ describe("Connections", () => {
   it("shows no-results search state then clears search", async () => {
     mockQueriesLoaded(connectionsMock);
     render(<Connections />);
-    const searchInput = screen.getByPlaceholderText("Find by name");
+    const searchInput = screen.getByPlaceholderText(/find by name/i);
     fireEvent.change(searchInput, { target: { value: "zzz" } });
     await waitFor(
       () => {

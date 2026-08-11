@@ -76,10 +76,12 @@ import {
   buildGroupedSchemaProperties,
   descriptorPath,
   findEntryByClass,
+  getConnectorFamily,
   getUniqueTransformNames,
   getUniqueCatalogNames,
   getVariantLabel,
   getVariantsForName,
+  isCatalogTransformNameCompatible,
   pickDefaultVariant,
   TRANSFORM_CATALOG_GROUPS,
 } from "@utils/transformCatalog";
@@ -96,6 +98,7 @@ interface CreateTransformFormProps {
   initialTransform?: TransformData;
   defaultLayoutMode?: "jumplinks" | "tabs";
   existingNames?: string[];
+  sourceType?: string;
 }
 
 function scrollIntoViewById(elementId: string) {
@@ -150,6 +153,7 @@ const CreateTransformForm = React.forwardRef<
       initialTransform,
       defaultLayoutMode = "jumplinks",
       existingNames,
+      sourceType,
     },
     ref
   ) => {
@@ -521,6 +525,11 @@ const CreateTransformForm = React.forwardRef<
     }, [uniquePredicateNames, predicateFilter, predicates]);
 
     const selectTransformName = (name: string) => {
+      if (
+        !isCatalogTransformNameCompatible(transformations, name, sourceType)
+      ) {
+        return;
+      }
       const nextVariants = getVariantsForName(transformations, name);
       const next = pickDefaultVariant(nextVariants);
       setSelectedName(name);
@@ -923,11 +932,34 @@ const CreateTransformForm = React.forwardRef<
                   if (items.length === 0) return null;
                   return (
                     <SelectGroup key={group.id} label={group.label}>
-                      {items.map((item) => (
-                        <SelectOption key={item.name} value={item.name}>
-                          {item.name}
-                        </SelectOption>
-                      ))}
+                      {items.map((item) => {
+                        const compatible = isCatalogTransformNameCompatible(
+                          transformations,
+                          item.name,
+                          sourceType
+                        );
+                        const family = getConnectorFamily(
+                          transformations.find((e) => e.name === item.name)
+                            ?.class ?? ""
+                        );
+                        return (
+                          <SelectOption
+                            key={item.name}
+                            value={item.name}
+                            isDisabled={!compatible}
+                            description={
+                              compatible
+                                ? undefined
+                                : t(
+                                    "transform:transformModal.incompatibleWithSource",
+                                    { family: family ?? "connector" }
+                                  )
+                            }
+                          >
+                            {item.name}
+                          </SelectOption>
+                        );
+                      })}
                     </SelectGroup>
                   );
                 })

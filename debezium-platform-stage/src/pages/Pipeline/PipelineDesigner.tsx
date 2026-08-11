@@ -103,10 +103,12 @@ const PipelineDesigner: React.FunctionComponent = () => {
     setItems((prevItems) => prevItems.filter((item) => item.id !== id));
   }, []);
 
-  // Initialize items when selectedTransform changes
+  // Sync drawer items when selectedTransform changes
   React.useEffect(() => {
     if (selectedTransform.length > 0) {
       setItems(getItems(selectedTransform, handleTempDelete));
+    } else {
+      setItems([]);
     }
   }, [selectedTransform, handleTempDelete]);
 
@@ -144,6 +146,10 @@ const PipelineDesigner: React.FunctionComponent = () => {
 
   const updateSelectedTransform = React.useCallback(
     (transforms: Transform[]) => {
+      if (transforms.length === 0) {
+        setSelectedTransform([]);
+        return;
+      }
       setSelectedTransform((prevTransforms) => [...prevTransforms, ...transforms]);
     },
     [setSelectedTransform]

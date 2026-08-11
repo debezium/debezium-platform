@@ -19,10 +19,12 @@ import { useTranslation } from "react-i18next";
 
 type PipelineTransformModelProps = {
   onTransformSelection: (transform: TransformData[]) => void;
+  sourceType?: string;
 };
 
 const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
   onTransformSelection,
+  sourceType,
 }) => {
   const { t } = useTranslation();
   const id1 = "pipeline-transform-select";
@@ -107,11 +109,13 @@ const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
         <TransformSelectionList
           data={transformList}
           onSelection={onTransformSelection}
+          sourceType={sourceType}
         />
       ) : (
         <CreateTransforms
           modelLoaded={true}
           onSelection={onTransformSelection}
+          sourceType={sourceType}
         />
       )}
     </>

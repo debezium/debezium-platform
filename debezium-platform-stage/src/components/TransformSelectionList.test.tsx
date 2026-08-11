@@ -135,4 +135,44 @@ describe("TransformSelectionList", () => {
       expect(screen.getByText(/1 of 2 items/i)).toBeInTheDocument();
     });
   });
+
+  it("disables connector-specific rows that do not match the selected source", () => {
+    const onSelection = vi.fn();
+    const rows = [
+      makeRow({
+        id: 1,
+        name: "pg-smt",
+        type: "io.debezium.connector.postgresql.transforms.TimescaleDb",
+      }),
+      makeRow({
+        id: 2,
+        name: "mongo-smt",
+        type: "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+      }),
+      makeRow({
+        id: 3,
+        name: "generic-smt",
+        type: "io.debezium.transforms.Filter",
+      }),
+    ];
+
+    render(
+      <TransformSelectionList
+        data={rows}
+        onSelection={onSelection}
+        sourceType="io.debezium.connector.postgresql.PostgresConnector"
+      />
+    );
+
+    const rowsEls = screen.getAllByRole("row");
+    // header + 3 data rows
+    fireEvent.click(rowsEls[2]); // mongo — incompatible
+    expect(onSelection).not.toHaveBeenCalled();
+
+    fireEvent.click(rowsEls[1]); // postgres — compatible
+    expect(onSelection).toHaveBeenCalledWith([rows[0]]);
+
+    fireEvent.click(rowsEls[3]); // generic — always compatible
+    expect(onSelection).toHaveBeenCalledWith([rows[2]]);
+  });
 });

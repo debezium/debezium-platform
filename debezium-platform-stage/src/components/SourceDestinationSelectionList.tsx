@@ -27,7 +27,7 @@ import {
   SearchIcon,
 } from "@patternfly/react-icons";
 import { Table, Thead, Tr, Th, Tbody, Td } from "@patternfly/react-table";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Destination,
   DestinationApiResponse,
@@ -62,11 +62,7 @@ const SourceDestinationSelectionList: React.FunctionComponent<
 > = ({ tableType, data, onSelection }) => {
   const { t } = useTranslation();
 
-  const {
-    data: pipelineList = [],
-    error: _pipelineError,
-    isLoading: _isPipelineLoading,
-  } = useResourceQuery<Pipeline[], Error>(
+  const { data: pipelineList = [] } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
     () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
   );
@@ -76,18 +72,21 @@ const SourceDestinationSelectionList: React.FunctionComponent<
   const [filterField, setFilterField] = useState<FilterField>("name");
   const [isSelectOpen, setIsSelectOpen] = useState<boolean>(false);
 
-  const debouncedSet = useRef(
-    debounce((value: string) => setDebouncedQuery(value), 300)
-  ).current;
+  const debouncedSetSearchQuery = useMemo(
+    () => debounce((value: string) => setDebouncedQuery(value), 300),
+    []
+  );
 
-  useEffect(() => () => debouncedSet.cancel(), [debouncedSet]);
+  useEffect(() => {
+    return () => debouncedSetSearchQuery.cancel();
+  }, [debouncedSetSearchQuery]);
 
   const onSearchChange = useCallback(
     (_event: React.FormEvent<HTMLInputElement>, value: string) => {
       setSearchInput(value);
-      debouncedSet(value);
+      debouncedSetSearchQuery(value);
     },
-    [debouncedSet]
+    [debouncedSetSearchQuery]
   );
 
   const onSearchClear = useCallback(() => {

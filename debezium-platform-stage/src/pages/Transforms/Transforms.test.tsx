@@ -129,7 +129,7 @@ describe("Transforms", () => {
 
   it("filters transform based on search input", async () => {
     render(<Transforms />);
-    const searchInput = screen.getByPlaceholderText("Find by name");
+    const searchInput = screen.getByPlaceholderText(/find by name/i);
     fireEvent.change(searchInput, { target: { value: "filter" } });
     await waitFor(() => {
       expect(screen.getByText("filter-transform")).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe("Transforms", () => {
 
   it("filters transform for unknown search input and clears search", async () => {
     render(<Transforms />);
-    const searchInput = screen.getByPlaceholderText("Find by name");
+    const searchInput = screen.getByPlaceholderText(/find by name/i);
     fireEvent.change(searchInput, { target: { value: "xxx" } });
     await waitFor(() => {
       expect(screen.getByText("0 of 7 Items")).toBeInTheDocument();

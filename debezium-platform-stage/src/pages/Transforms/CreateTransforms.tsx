@@ -22,11 +22,13 @@ import CreateTransformForm, {
 export interface ICreateTransformsProps {
   modelLoaded?: boolean;
   onSelection?: (selection: TransformData[]) => void;
+  sourceType?: string;
 }
 
 const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
   modelLoaded,
   onSelection,
+  sourceType,
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -83,6 +85,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
           ref={formRef}
           onSubmit={createNewTransform}
           existingNames={existingNames}
+          sourceType={sourceType}
           {...(modelLoaded ? { defaultLayoutMode: "tabs" as const } : {})}
         />
       </PageSection>

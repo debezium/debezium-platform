@@ -45,6 +45,7 @@
     "transformFailedMessage": "Impossibile creare la trasformazione \"{{name}}\": {{error}}"
   },
   "dbzServerTooltip": "Puoi anche caricare la configurazione del server DBZ per creare direttamente una pipeline.",
+  "selectSourceFirst": "Seleziona prima una sorgente",
   "userActions": {
     "overview": "Panoramica",
     "logs": "Visualizza log",

@@ -67,6 +67,7 @@
         "description": "Select a already configured transform from the list below",
         "createTitle": "Create a transform",
         "createDescription": "Create a new transform for your data pipeline.",
-        "formDescription": "Fill out the form below to create a transform."
+        "formDescription": "Fill out the form below to create a transform.",
+        "incompatibleWithSource": "Compatible only with {{family}} sources"
     }
 }
