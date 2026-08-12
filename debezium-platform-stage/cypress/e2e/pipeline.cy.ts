@@ -4,18 +4,38 @@
  * Create flow uses the UI designer (source/destination modals → configure → submit).
  */
 describe('Pipeline Management', () => {
+  // Run-scoped suffix guarantees fresh, non-colliding seed data on every CI run
+  // (the backend persists across runs, so fixed names would accumulate duplicates
+  // and cause the wrong row to be clicked in the UI — Cypress `.contains()` matches
+  // substrings, so a stale "cypress-pipeline-source-alt" row would also satisfy a
+  // search for "cypress-pipeline-source").
+  const RUN_ID = Date.now();
   const TEST_POSTGRES_CONNECTION_NAME = 'test-postgres-connection';
   const TEST_KAFKA_CONNECTION_NAME = 'test-kafka-connection';
-  const CYPRESS_PIPELINE_SOURCE_NAME = 'cypress-pipeline-source';
-  const CYPRESS_PIPELINE_SOURCE_ALT_NAME = 'cypress-pipeline-source-alt';
-  const CYPRESS_PIPELINE_DESTINATION_NAME = 'cypress-pipeline-destination';
-  const CYPRESS_TRANSFORM_NAME = 'cypress-pipeline-transform';
+  const CYPRESS_PIPELINE_SOURCE_NAME = `cypress-pipeline-source-${RUN_ID}`;
+  const CYPRESS_PIPELINE_SOURCE_ALT_NAME = `cypress-pipeline-source-alt-${RUN_ID}`;
+  const CYPRESS_PIPELINE_DESTINATION_NAME = `cypress-pipeline-destination-${RUN_ID}`;
+  const CYPRESS_TRANSFORM_NAME = `cypress-pipeline-transform-${RUN_ID}`;
 
   const PIPELINE_TABLE = 'table[aria-label="Pipeline Table"]';
   const LIST_SEARCH = 'input[placeholder^="Find by name"]';
   const SOURCE_TABLE = 'table[aria-label="source table"]';
   const DESTINATION_TABLE = 'table[aria-label="destination table"]';
   const TRANSFORM_MODAL_TABLE = 'table[aria-label="transform table"]';
+
+  /** Escapes regex metacharacters so a name can be used in an exact-match RegExp. */
+  const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  /**
+   * Clicks the row whose name cell text is *exactly* `name` — avoids Cypress
+   * `.contains()` substring matches (e.g. "source" matching "source-alt") which
+   * previously caused the wrong row to be selected.
+   */
+  const selectRowByExactName = (tableSelector: string, name: string) => {
+    cy.get(tableSelector, { timeout: 30000 })
+      .contains('td', new RegExp(`^${escapeRegExp(name)}$`))
+      .click();
+  };
 
   let seedSourceId: number;
   let seedDestinationId: number;
@@ -341,9 +361,7 @@ describe('Pipeline Management', () => {
       .contains('button', 'Source')
       .click();
     cy.get('#modal-source-body-with-description', { timeout: 30000 }).should('be.visible');
-    cy.get(SOURCE_TABLE, { timeout: 30000 })
-      .contains('tr', CYPRESS_PIPELINE_SOURCE_NAME)
-      .click();
+    selectRowByExactName(SOURCE_TABLE, CYPRESS_PIPELINE_SOURCE_NAME);
   };
 
   const selectDestinationInDesigner = () => {
@@ -353,9 +371,7 @@ describe('Pipeline Management', () => {
     cy.get('#modal-box-body-destination-with-description', { timeout: 30000 }).should(
       'be.visible'
     );
-    cy.get(DESTINATION_TABLE, { timeout: 30000 })
-      .contains('tr', CYPRESS_PIPELINE_DESTINATION_NAME)
-      .click();
+    selectRowByExactName(DESTINATION_TABLE, CYPRESS_PIPELINE_DESTINATION_NAME);
   };
 
   const openTransformModalInDesigner = () => {
@@ -367,16 +383,14 @@ describe('Pipeline Management', () => {
   };
 
   const selectSeededTransformInModal = () => {
-    cy.get(TRANSFORM_MODAL_TABLE, { timeout: 30000 })
-      .contains('tr', CYPRESS_TRANSFORM_NAME)
-      .click();
+    selectRowByExactName(TRANSFORM_MODAL_TABLE, CYPRESS_TRANSFORM_NAME);
     cy.get('#modal-transform-body-with-description').should('not.exist');
   };
 
   const changeSourceInDesigner = (sourceName: string) => {
     cy.get('.editDataNodeSource', { timeout: 30000 }).click({ force: true });
     cy.get('#modal-source-body-with-description', { timeout: 30000 }).should('be.visible');
-    cy.get(SOURCE_TABLE, { timeout: 30000 }).contains('tr', sourceName).click();
+    selectRowByExactName(SOURCE_TABLE, sourceName);
   };
 
   const openConfigureFromDesigner = () => {
