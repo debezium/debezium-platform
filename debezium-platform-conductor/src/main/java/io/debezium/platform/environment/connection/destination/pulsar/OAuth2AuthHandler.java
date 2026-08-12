@@ -78,17 +78,17 @@ public class OAuth2AuthHandler implements PulsarAuthHandler {
         String privateKey = config.get("oauth2PrivateKey").toString();
         byte[] privateKeyBytes = null;
 
-        // indexOf returns -1 when the prefix is absent, and -1 + prefix.length() is a valid offset,
-        // so without this check the key is silently truncated by 28 characters instead of rejected.
-        int prefixIndex = privateKey.indexOf(PRIVATE_KEY_PREFIX);
-        if (prefixIndex < 0) {
-            LOGGER.warn("OAuth2 private key is not a data URI; expected it to contain '{}'", PRIVATE_KEY_PREFIX);
+        // The key has to START with the prefix, not merely contain it: anything pasted in front of
+        // it would otherwise pass validation here and only fail later when the Pulsar client builds
+        // its URI. Without any check at all the key is silently truncated by 28 characters.
+        if (!privateKey.startsWith(PRIVATE_KEY_PREFIX)) {
+            LOGGER.warn("OAuth2 private key is not a data URI; expected it to start with '{}'", PRIVATE_KEY_PREFIX);
             throw new IllegalArgumentException(
                     "OAuth2 Private Key must be a data URI of the form '" + PRIVATE_KEY_PREFIX + "<base64-encoded JSON credentials>'");
         }
 
         try {
-            String extracted = privateKey.substring(prefixIndex + PRIVATE_KEY_PREFIX.length());
+            String extracted = privateKey.substring(PRIVATE_KEY_PREFIX.length());
             privateKeyBytes = Base64.getDecoder().decode(extracted);
         }
         catch (IllegalArgumentException e) {
@@ -110,6 +110,5 @@ public class OAuth2AuthHandler implements PulsarAuthHandler {
             throw new IllegalArgumentException("OAuth2 Private Key JSON must contain both 'client_id' and 'client_secret' fields");
         }
 
-        String issuerUrl = config.get("oauth2IssuerUrl").toString();
     }
 }

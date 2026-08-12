@@ -57,6 +57,16 @@ public class OAuth2AuthHandlerTest {
     }
 
     @Test
+    @DisplayName("Should reject a data URI with anything pasted in front of the prefix")
+    void shouldRejectPrivateKeyWithTextBeforeThePrefix() {
+        // A contains-check would accept this and let it through to the Pulsar client, which then
+        // fails while building its URI. The prefix has to be at position 0.
+        String prefixedWithJunk = "junk" + PREFIX + base64(CREDENTIALS);
+
+        assertThrows(IllegalArgumentException.class, () -> handler.validate(config(prefixedWithJunk)));
+    }
+
+    @Test
     @DisplayName("Should reject a private key shorter than the data URI prefix with IllegalArgumentException")
     void shouldRejectPrivateKeyShorterThanPrefix() {
         assertThrows(IllegalArgumentException.class, () -> handler.validate(config("abc")));
