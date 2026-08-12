@@ -162,7 +162,7 @@ describe('Transform Management', () => {
       cy.get(`${TRANSFORM_CLASS_INPUT} input`).click({ force: true });
       cy.get('#transform-class-listbox', { timeout: 30000 }).should('be.visible');
       cy.get('#transform-class-listbox').contains('Debezium SMT').should('exist');
-      cy.get('#transform-class-listbox').contains('Kafka Connect Based').should('exist');
+      cy.get('#transform-class-listbox').contains('Kafka Connect SMT').should('exist');
     });
 
     it('should toggle between jump links and tabs layout', () => {

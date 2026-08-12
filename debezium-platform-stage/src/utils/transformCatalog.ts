@@ -16,7 +16,7 @@ export const TRANSFORM_CATALOG_GROUPS: TransformCatalogGroup[] = [
   { id: "ai", label: "AI" },
   { id: "debeziumSmt", label: "Debezium SMT" },
   { id: "connectorSpecific", label: "Connector-specific" },
-  { id: "kafkaConnect", label: "Kafka Connect Based" },
+  { id: "kafkaConnect", label: "Kafka Connect SMT" },
   { id: "other", label: "Other" },
 ];
 
