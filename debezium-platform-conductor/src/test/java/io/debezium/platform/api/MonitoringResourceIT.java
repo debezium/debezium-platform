@@ -24,6 +24,7 @@ import jakarta.inject.Singleton;
 
 import org.junit.jupiter.api.Test;
 
+import io.debezium.doc.FixFor;
 import io.debezium.platform.environment.monitoring.PrometheusTestResource;
 import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.testing.exporter.InMemoryMetricExporter;
@@ -63,6 +64,7 @@ class MonitoringResourceIT {
     }
 
     @Test
+    @FixFor("debezium/dbz#2410")
     void queryPanelReturnsDataFromPrometheus() {
         Instant now = Instant.now();
         String start = now.minus(5, ChronoUnit.MINUTES).toString();
@@ -160,6 +162,7 @@ class MonitoringResourceIT {
     }
 
     @Test
+    @FixFor("debezium/dbz#2410")
     void queryPanelUsesDefaultStepWhenOmitted() {
         Instant now = Instant.now();
 

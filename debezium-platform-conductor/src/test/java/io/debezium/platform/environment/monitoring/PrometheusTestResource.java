@@ -5,9 +5,16 @@
  */
 package io.debezium.platform.environment.monitoring;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
 
+import org.awaitility.Awaitility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.Testcontainers;
@@ -22,6 +29,7 @@ public class PrometheusTestResource implements QuarkusTestResourceLifecycleManag
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrometheusTestResource.class);
     private static final int PROMETHEUS_PORT = 9090;
+    private static final String PIPELINE_NAME = "test-pipeline";
 
     private GenericContainer<?> prometheus;
     private DebeziumMetricsEndpoint metricsEndpoint;
@@ -29,7 +37,7 @@ public class PrometheusTestResource implements QuarkusTestResourceLifecycleManag
     @Override
     public Map<String, String> start() {
         try {
-            metricsEndpoint = DebeziumMetricsEndpoint.start("test-pipeline");
+            metricsEndpoint = DebeziumMetricsEndpoint.start(PIPELINE_NAME);
         }
         catch (Exception e) {
             throw new RuntimeException("Failed to start metrics endpoint", e);
@@ -53,14 +61,41 @@ public class PrometheusTestResource implements QuarkusTestResourceLifecycleManag
         String prometheusUrl = "http://localhost:" + prometheus.getMappedPort(PROMETHEUS_PORT);
         LOGGER.info("Prometheus test container started at {}", prometheusUrl);
 
-        try {
-            Thread.sleep(3000);
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        awaitPrometheusHasScrapedData(prometheusUrl);
 
         return Map.of("quarkus.rest-client.prometheus-api.url", prometheusUrl);
+    }
+
+    /**
+     * Blocks until Prometheus has scraped enough Debezium metrics for the monitoring panel queries to
+     * return data. The {@code streaming-event-count} panel evaluates {@code rate(...[5m])}, which needs at
+     * least two scraped samples before it yields any series, so a fixed sleep after container start is
+     * inherently racy under CI load. Polling the same rate expression removes that race.
+     */
+    private static void awaitPrometheusHasScrapedData(String prometheusUrl) {
+        HttpClient client = HttpClient.newHttpClient();
+        String query = "rate(debezium_event_count_total{service_name=\"" + PIPELINE_NAME
+                + "\",debezium_context=\"streaming\"}[5m])";
+        String queryUrl = prometheusUrl + "/api/v1/query?query="
+                + URLEncoder.encode(query, StandardCharsets.UTF_8);
+
+        Awaitility.await("Prometheus to scrape and expose Debezium metrics")
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(500))
+                .ignoreExceptions()
+                .until(() -> {
+                    HttpRequest request = HttpRequest.newBuilder()
+                            .uri(URI.create(queryUrl))
+                            .GET()
+                            .build();
+                    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                    String body = response.body();
+                    return response.statusCode() == 200
+                            && body.contains("\"status\":\"success\"")
+                            && !body.contains("\"result\":[]");
+                });
+
+        LOGGER.info("Prometheus has scraped Debezium metrics; monitoring tests can proceed");
     }
 
     @Override
