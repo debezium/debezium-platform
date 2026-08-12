@@ -7,14 +7,18 @@ describe('Pipeline Management', () => {
   const TEST_POSTGRES_CONNECTION_NAME = 'test-postgres-connection';
   const TEST_KAFKA_CONNECTION_NAME = 'test-kafka-connection';
   const CYPRESS_PIPELINE_SOURCE_NAME = 'cypress-pipeline-source';
+  const CYPRESS_PIPELINE_SOURCE_ALT_NAME = 'cypress-pipeline-source-alt';
   const CYPRESS_PIPELINE_DESTINATION_NAME = 'cypress-pipeline-destination';
+  const CYPRESS_TRANSFORM_NAME = 'cypress-pipeline-transform';
 
   const PIPELINE_TABLE = 'table[aria-label="Pipeline Table"]';
-  const LIST_SEARCH = 'input[placeholder="Find by name"]';
+  const LIST_SEARCH = 'input[placeholder^="Find by name"]';
   const SOURCE_TABLE = 'table[aria-label="source table"]';
   const DESTINATION_TABLE = 'table[aria-label="destination table"]';
+  const TRANSFORM_MODAL_TABLE = 'table[aria-label="transform table"]';
 
   let seedSourceId: number;
+  let seedSourceAltId: number;
   let seedDestinationId: number;
 
   const apiUrl = () => Cypress.env('apiUrl');
@@ -48,6 +52,26 @@ describe('Pipeline Management', () => {
   };
 
   const ensureCypressPipelineSource = () => {
+    ensurePipelineSourceNamed(CYPRESS_PIPELINE_SOURCE_NAME, 'cypress.pipeline', (id) => {
+      seedSourceId = id;
+    });
+  };
+
+  const ensureCypressPipelineSourceAlt = () => {
+    ensurePipelineSourceNamed(
+      CYPRESS_PIPELINE_SOURCE_ALT_NAME,
+      'cypress.pipeline.alt',
+      (id) => {
+        seedSourceAltId = id;
+      }
+    );
+  };
+
+  const ensurePipelineSourceNamed = (
+    sourceName: string,
+    topicPrefix: string,
+    onId: (id: number) => void
+  ) => {
     cy.request({
       method: 'GET',
       url: `${apiUrl()}/api/connections`,
@@ -67,9 +91,9 @@ describe('Pipeline Management', () => {
         const sources = Array.isArray(srcResponse.body)
           ? (srcResponse.body as { id?: number; name?: string }[])
           : [];
-        const existing = sources.find((s) => s.name === CYPRESS_PIPELINE_SOURCE_NAME);
+        const existing = sources.find((s) => s.name === sourceName);
         if (existing?.id) {
-          seedSourceId = existing.id;
+          onId(existing.id);
           return;
         }
 
@@ -78,25 +102,25 @@ describe('Pipeline Management', () => {
           url: `${apiUrl()}/api/sources`,
           failOnStatusCode: false,
           body: {
-            name: CYPRESS_PIPELINE_SOURCE_NAME,
-            description: 'Cypress pipeline E2E source',
+            name: sourceName,
+            description: `Cypress pipeline E2E source (${sourceName})`,
             type: 'io.debezium.connector.postgresql.PostgresConnector',
             schema: 'dummy',
             vaults: [],
             connection: { id: postgresConn!.id },
             config: {
-              'topic.prefix': 'cypress.pipeline',
+              'topic.prefix': topicPrefix,
               'schema.include.list': 'inventory',
             },
           },
         }).then((createResponse) => {
           expect(
             [200, 201, 202, 409],
-            `source seed status for "${CYPRESS_PIPELINE_SOURCE_NAME}"`
+            `source seed status for "${sourceName}"`
           ).to.include(createResponse.status);
           const created = createResponse.body as { id?: number };
           if (created?.id) {
-            seedSourceId = created.id;
+            onId(created.id);
             return;
           }
           cy.request({
@@ -107,11 +131,45 @@ describe('Pipeline Management', () => {
             const list = Array.isArray(reload.body)
               ? (reload.body as { id?: number; name?: string }[])
               : [];
-            const found = list.find((s) => s.name === CYPRESS_PIPELINE_SOURCE_NAME);
+            const found = list.find((s) => s.name === sourceName);
             void expect(found?.id).to.exist;
-            seedSourceId = found!.id!;
+            onId(found!.id!);
           });
         });
+      });
+    });
+  };
+
+  const ensureCypressTransform = () => {
+    cy.request({
+      method: 'GET',
+      url: `${apiUrl()}/api/transforms`,
+      failOnStatusCode: false,
+    }).then((response) => {
+      const transforms = Array.isArray(response.body)
+        ? (response.body as { id?: number; name?: string }[])
+        : [];
+      if (transforms.some((t) => t.name === CYPRESS_TRANSFORM_NAME)) {
+        return;
+      }
+
+      cy.request({
+        method: 'POST',
+        url: `${apiUrl()}/api/transforms`,
+        failOnStatusCode: false,
+        body: {
+          name: CYPRESS_TRANSFORM_NAME,
+          description: 'Cypress pipeline E2E transform',
+          type: 'io.debezium.transforms.ExtractNewRecordState',
+          schema: 'dummy',
+          vaults: [],
+          config: {},
+        },
+      }).then((createResponse) => {
+        expect(
+          [200, 201, 202, 409],
+          `transform seed status for "${CYPRESS_TRANSFORM_NAME}"`
+        ).to.include(createResponse.status);
       });
     });
   };
@@ -208,9 +266,12 @@ describe('Pipeline Management', () => {
       },
     });
     ensureCypressPipelineSource();
+    ensureCypressPipelineSourceAlt();
     ensureCypressPipelineDestination();
+    ensureCypressTransform();
     cy.then(() => {
       expect(seedSourceId, 'seed source id').to.be.a('number');
+      expect(seedSourceAltId, 'seed alt source id').to.be.a('number');
       expect(seedDestinationId, 'seed destination id').to.be.a('number');
     });
   });
@@ -245,6 +306,27 @@ describe('Pipeline Management', () => {
     cy.get(DESTINATION_TABLE, { timeout: 30000 })
       .contains('tr', CYPRESS_PIPELINE_DESTINATION_NAME)
       .click();
+  };
+
+  const openTransformModalInDesigner = () => {
+    cy.get('.pipeline_designer', { timeout: 30000 })
+      .contains('button', 'Transform')
+      .should('not.be.disabled')
+      .click();
+    cy.get('#modal-transform-body-with-description', { timeout: 30000 }).should('be.visible');
+  };
+
+  const selectSeededTransformInModal = () => {
+    cy.get(TRANSFORM_MODAL_TABLE, { timeout: 30000 })
+      .contains('tr', CYPRESS_TRANSFORM_NAME)
+      .click();
+    cy.get('#modal-transform-body-with-description').should('not.exist');
+  };
+
+  const changeSourceInDesigner = (sourceName: string) => {
+    cy.get('.editDataNodeSource', { timeout: 30000 }).click({ force: true });
+    cy.get('#modal-source-body-with-description', { timeout: 30000 }).should('be.visible');
+    cy.get(SOURCE_TABLE, { timeout: 30000 }).contains('tr', sourceName).click();
   };
 
   const openConfigureFromDesigner = () => {
@@ -373,6 +455,53 @@ describe('Pipeline Management', () => {
       cy.get('#pipeline-name').should('be.visible');
       cy.get('#log-level').should('exist');
       cy.contains('button', 'Create pipeline').should('be.visible');
+    });
+
+    it('should keep transform selection disabled until a source is selected', () => {
+      cy.get('.pipeline_designer', { timeout: 30000 })
+        .contains('button', 'Transform')
+        .should('be.disabled');
+    });
+
+    it('should enable transform selection after source is chosen', () => {
+      selectSourceInDesigner();
+      cy.get('.pipeline_designer')
+        .contains('button', 'Transform')
+        .should('not.be.disabled');
+    });
+
+    it('should open transform modal after source is selected', () => {
+      selectSourceInDesigner();
+      openTransformModalInDesigner();
+      cy.get('#modal-transform-body-with-description', { timeout: 30000 }).should(
+        'be.visible'
+      );
+      cy.get('#select-existing-transform').should('exist');
+      cy.get(TRANSFORM_MODAL_TABLE).should('exist');
+    });
+
+    it('should add a transform from the selection list', () => {
+      selectSourceInDesigner();
+      openTransformModalInDesigner();
+      selectSeededTransformInModal();
+      cy.get('.react-flow__node[data-id="transform_group"]', { timeout: 30000 }).should(
+        'exist'
+      );
+      cy.get('.pipeline_designer').should('contain', CYPRESS_TRANSFORM_NAME);
+    });
+
+    it('should clear transforms when the source is changed', () => {
+      selectSourceInDesigner();
+      openTransformModalInDesigner();
+      selectSeededTransformInModal();
+      cy.get('.react-flow__node[data-id="transform_group"]', { timeout: 30000 }).should(
+        'exist'
+      );
+      changeSourceInDesigner(CYPRESS_PIPELINE_SOURCE_ALT_NAME);
+      cy.get('.react-flow__node[data-id="transform_group"]').should('not.exist');
+      cy.get('.react-flow__node[data-id="transform_selector"]', { timeout: 30000 }).should(
+        'exist'
+      );
     });
   });
 

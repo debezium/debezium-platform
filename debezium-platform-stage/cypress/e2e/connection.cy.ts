@@ -17,7 +17,7 @@ describe('Connection Management', () => {
   const GRID_VIEW = '[aria-label="Grid view"]';
   const LIST_VIEW = '[aria-label="List view"]';
   const CONNECTION_TABLE = 'table[aria-label="connection table"]';
-  const LIST_SEARCH = 'input[placeholder="Find by name"]';
+  const LIST_SEARCH = 'input[placeholder^="Find by name"]';
 
   const POSTGRES_CONFIG = {
     hostname: 'postgresql',

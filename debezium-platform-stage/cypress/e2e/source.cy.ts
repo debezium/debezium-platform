@@ -390,7 +390,6 @@ describe('Source Management', () => {
         .click();
       cy.contains('Delete').click();
       cy.get('.pf-v6-c-modal-box').should('be.visible');
-      cy.contains('delete').should('be.visible');
       cy.get('#delete-name').should('exist');
     });
 

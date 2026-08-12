@@ -14,7 +14,7 @@ describe('Destination Management', () => {
   const GRID_VIEW = '[aria-label="grid"]';
   const LIST_VIEW = '[aria-label="list"]';
   const DESTINATION_TABLE = 'table[aria-label="destination table"]';
-  const LIST_SEARCH = 'input[placeholder="Find by name"]';
+  const LIST_SEARCH = 'input[placeholder^="Find by name"]';
 
   beforeEach(() => {
     cy.waitForBackend();

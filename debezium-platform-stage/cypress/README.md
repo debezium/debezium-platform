@@ -89,6 +89,7 @@ cypress/
 ├── e2e/                    # Test files
 │   ├── smoke.cy.ts        # Basic smoke tests
 │   ├── pipeline.cy.ts     # Pipeline list, designer, create, details, delete
+│   ├── transform.cy.ts    # Transform list, catalog create form, delete
 ├── fixtures/              # Test data
 ├── support/               # Custom commands and configuration
 │   ├── commands.ts        # Custom Cypress commands
@@ -99,7 +100,9 @@ cypress/
 
 ## Pipeline E2E
 
-`pipeline.cy.ts` self-seeds `test-postgres-connection`, `test-kafka-connection`, and fixed Cypress source/destination names via the API in `before()` — it does not depend on other spec files running first.
+`pipeline.cy.ts` self-seeds `test-postgres-connection`, `test-kafka-connection`, fixed Cypress source/destination/transform names, and an alternate source via the API in `before()` — it does not depend on other spec files running first. Designer tests cover transform gating (source required), selection from the modal list, and clearing transforms when the source changes.
+
+`transform.cy.ts` exercises the catalog-driven create form (grouped class dropdown, jump links/tabs) and list search using `Find by name...` placeholders.
 
 ## Writing Tests
 
