@@ -134,7 +134,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         const transformBtn = (
           <Button
             variant="link"
-            // isDisabled={!selectedSource}
+            isDisabled={!selectedSource}
             onClick={handleTransformModalToggle}
             style={{ paddingRight: 5, paddingLeft: 5, fontSize: ".8em" }}
             icon={<PlusIcon />}
@@ -181,7 +181,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
     const btn = (
       <Button
         variant="link"
-        // isDisabled={!selectedSource}
+        isDisabled={!selectedSource}
         onClick={handleTransformModalToggle}
         style={{ padding: "5px 9px" }}
         icon={<PlusIcon />}
@@ -356,21 +356,53 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         !selectedSource ||
         selectedSource.id !== source.id ||
         selectedSource.type !== source.type;
-      if (sourceChanged && selectedTransform.length > 0) {
+      const clearingTransforms = sourceChanged && selectedTransform.length > 0;
+      if (clearingTransforms) {
         updateSelectedTransform([]);
         setIsTransformModalOpen(false);
       }
 
-      setNodes((prevNodes: any) => {
-        return [
-          ...prevNodes.filter((node: any) => node.id !== "source"),
-          selectedSourceNode,
-        ];
-      });
+      if (clearingTransforms) {
+        setNodes((prevNodes: any) => {
+          const destinationNode = prevNodes.find(
+            (node: any) => node.id === "destination"
+          );
+          const updatedDestination = destinationNode
+            ? { ...destinationNode, position: { x: 480, y: 78 } }
+            : undefined;
+          return [
+            selectedSourceNode,
+            transformSelectorNode,
+            ...(updatedDestination ? [updatedDestination] : []),
+          ];
+        });
+        setEdges([
+          {
+            id: "complete-flow-path",
+            source: "source",
+            target: "destination",
+            type: "unifiedCustomEdge",
+            data: { throughNodeNo: 0 },
+          },
+        ]);
+      } else {
+        setNodes((prevNodes: any) => {
+          return [
+            ...prevNodes.filter((node: any) => node.id !== "source"),
+            selectedSourceNode,
+          ];
+        });
+      }
 
       setIsSourceModalOpen(false);
     },
-    [updateSelectedSource, updateSelectedTransform, selectedTransform.length, selectedSource]
+    [
+      updateSelectedSource,
+      updateSelectedTransform,
+      selectedTransform.length,
+      selectedSource,
+      transformSelectorNode,
+    ]
   );
 
   const onDestinationSelection = useCallback(

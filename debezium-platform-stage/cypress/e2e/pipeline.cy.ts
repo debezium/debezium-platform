@@ -18,10 +18,65 @@ describe('Pipeline Management', () => {
   const TRANSFORM_MODAL_TABLE = 'table[aria-label="transform table"]';
 
   let seedSourceId: number;
-  let seedSourceAltId: number;
   let seedDestinationId: number;
 
   const apiUrl = () => Cypress.env('apiUrl');
+
+  const resolveSeedIdsFromApi = () => {
+    cy.request({
+      method: 'GET',
+      url: `${apiUrl()}/api/sources`,
+      failOnStatusCode: false,
+    }).then((res) => {
+      const sources = Array.isArray(res.body)
+        ? (res.body as { id?: number; name?: string }[])
+        : [];
+      const primary = sources.find((s) => s.name === CYPRESS_PIPELINE_SOURCE_NAME);
+      const alt = sources.find((s) => s.name === CYPRESS_PIPELINE_SOURCE_ALT_NAME);
+      void expect(primary?.id, `source "${CYPRESS_PIPELINE_SOURCE_NAME}"`).to.exist;
+      void expect(alt?.id, `source "${CYPRESS_PIPELINE_SOURCE_ALT_NAME}"`).to.exist;
+      seedSourceId = primary!.id!;
+    });
+    cy.request({
+      method: 'GET',
+      url: `${apiUrl()}/api/destinations`,
+      failOnStatusCode: false,
+    }).then((res) => {
+      const destinations = Array.isArray(res.body)
+        ? (res.body as { id?: number; name?: string }[])
+        : [];
+      const dest = destinations.find((d) => d.name === CYPRESS_PIPELINE_DESTINATION_NAME);
+      void expect(dest?.id, `destination "${CYPRESS_PIPELINE_DESTINATION_NAME}"`).to.exist;
+      seedDestinationId = dest!.id!;
+    });
+  };
+
+  const assertConfigureUrlMatchesSeededSelections = () => {
+    cy.request({
+      method: 'GET',
+      url: `${apiUrl()}/api/sources`,
+      failOnStatusCode: false,
+    }).then((res) => {
+      const sources = Array.isArray(res.body)
+        ? (res.body as { id?: number; name?: string }[])
+        : [];
+      const source = sources.find((s) => s.name === CYPRESS_PIPELINE_SOURCE_NAME);
+      void expect(source?.id).to.exist;
+      cy.url().should('include', `sourceId=${source!.id}`);
+    });
+    cy.request({
+      method: 'GET',
+      url: `${apiUrl()}/api/destinations`,
+      failOnStatusCode: false,
+    }).then((res) => {
+      const destinations = Array.isArray(res.body)
+        ? (res.body as { id?: number; name?: string }[])
+        : [];
+      const dest = destinations.find((d) => d.name === CYPRESS_PIPELINE_DESTINATION_NAME);
+      void expect(dest?.id).to.exist;
+      cy.url().should('include', `destinationId=${dest!.id}`);
+    });
+  };
 
   const ensureConnection = (
     name: string,
@@ -61,9 +116,7 @@ describe('Pipeline Management', () => {
     ensurePipelineSourceNamed(
       CYPRESS_PIPELINE_SOURCE_ALT_NAME,
       'cypress.pipeline.alt',
-      (id) => {
-        seedSourceAltId = id;
-      }
+      () => undefined
     );
   };
 
@@ -269,15 +322,12 @@ describe('Pipeline Management', () => {
     ensureCypressPipelineSourceAlt();
     ensureCypressPipelineDestination();
     ensureCypressTransform();
-    cy.then(() => {
-      expect(seedSourceId, 'seed source id').to.be.a('number');
-      expect(seedSourceAltId, 'seed alt source id').to.be.a('number');
-      expect(seedDestinationId, 'seed destination id').to.be.a('number');
-    });
+    resolveSeedIdsFromApi();
   });
 
   beforeEach(() => {
     cy.waitForBackend();
+    resolveSeedIdsFromApi();
   });
 
   const openDesignerFromList = () => {
@@ -334,8 +384,7 @@ describe('Pipeline Management', () => {
       .should('not.be.disabled')
       .click();
     cy.url({ timeout: 30000 }).should('match', /\/pipeline\/pipeline_designer\/create_pipeline/);
-    cy.url().should('include', `sourceId=${seedSourceId}`);
-    cy.url().should('include', `destinationId=${seedDestinationId}`);
+    assertConfigureUrlMatchesSeededSelections();
   };
 
   const fillMinimalConfigureForm = (pipelineName: string) => {
