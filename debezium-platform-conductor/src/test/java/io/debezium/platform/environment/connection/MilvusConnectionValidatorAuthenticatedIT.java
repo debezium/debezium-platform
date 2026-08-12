@@ -28,22 +28,22 @@ import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.destination.MilvusConnectionValidator;
-import io.debezium.platform.environment.database.db.MilvusTestResource;
+import io.debezium.platform.environment.database.db.MilvusTestResourceAuthenticated;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 
 /**
- * Integration tests for {@link MilvusConnectionValidator} without authentication.
+ * Integration tests for {@link MilvusConnectionValidator} with authentication enabled.
  * <p>
- * These tests use a real Milvus container (via Testcontainers) to verify
- * connection validation against an actual Milvus instance without authentication.
- * Authenticated scenarios are covered by {@link MilvusConnectionValidatorAuthenticatedIT}.
+ * These tests use a real Milvus container (via Testcontainers) with authorization
+ * enabled to verify connection validation for username/password and token based
+ * authentication, including rejection of invalid credentials.
  * </p>
  *
  */
 @QuarkusTest
-@QuarkusTestResource(value = MilvusTestResource.class, restrictToAnnotatedClass = true)
-class MilvusConnectionValidatorIT {
+@QuarkusTestResource(value = MilvusTestResourceAuthenticated.class, restrictToAnnotatedClass = true)
+class MilvusConnectionValidatorAuthenticatedIT {
 
     @BeforeAll
     static void checkDockerAvailable() {
@@ -72,89 +72,82 @@ class MilvusConnectionValidatorIT {
                 });
     }
 
-    @Test
-    @DisplayName("Should successfully connect to Milvus without authentication")
-    void shouldConnectWithoutAuth() {
-        GenericContainer<?> container = MilvusTestResource.getContainer();
+    private static String containerUri() {
+        GenericContainer<?> container = MilvusTestResourceAuthenticated.getContainer();
 
         awaitPortOpen(container, 19530);
 
-        String uri = String.format("grpc://%s:%d",
+        return String.format("grpc://%s:%d",
                 container.getHost(),
                 container.getMappedPort(19530));
-
-        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
-                "uri", uri));
-
-        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
-
-        assertTrue(result.valid(), "Connection validation should succeed");
-        assertThat(result.message()).doesNotContainIgnoringCase("error", "fail", "invalid");
     }
 
     @Test
-    @DisplayName("Should successfully connect with database parameter")
-    void shouldConnectWithDatabase() {
-        GenericContainer<?> container = MilvusTestResource.getContainer();
-
-        awaitPortOpen(container, 19530);
-
-        String uri = String.format("grpc://%s:%d",
-                container.getHost(),
-                container.getMappedPort(19530));
-
+    @DisplayName("Should successfully connect with username and password authentication")
+    void shouldConnectWithUsernamePassword() {
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
-                "uri", uri,
-                "database", "default"));
+                "uri", containerUri(),
+                "username", MilvusTestResourceAuthenticated.USERNAME,
+                "password", MilvusTestResourceAuthenticated.PASSWORD));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
-        assertTrue(result.valid(), "Connection validation with database should succeed");
-        assertThat(result.message()).doesNotContainIgnoringCase("error", "fail", "invalid");
+        assertTrue(result.valid(), "Connection validation with username and password should succeed");
+        assertThat(result.message()).doesNotContainIgnoringCase("error", "fail", "invalid", "authentication");
     }
 
     @Test
-    @DisplayName("Should fail with invalid host")
-    void shouldFailWithInvalidHost() {
+    @DisplayName("Should successfully connect with token authentication")
+    void shouldConnectWithTokenAuth() {
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
-                "uri", "grpc://invalid-host-12345:19530"));
+                "uri", containerUri(),
+                "token", MilvusTestResourceAuthenticated.USERNAME + ":" + MilvusTestResourceAuthenticated.PASSWORD));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
-        assertFalse(result.valid(), "Connection validation should fail");
-        assertThat(result.message()).containsAnyOf("connect", "UNAVAILABLE", "unreachable", "timeout");
+        assertTrue(result.valid(), "Connection validation with token authentication should succeed");
+        assertThat(result.message()).doesNotContainIgnoringCase("error", "fail", "invalid", "authentication");
     }
 
     @Test
-    @DisplayName("Should fail with invalid port")
-    void shouldFailWithInvalidPort() {
-        GenericContainer<?> container = MilvusTestResource.getContainer();
-
-        awaitPortOpen(container, 19530);
-
-        String uri = String.format("grpc://%s:%d",
-                container.getHost(),
-                99999); // Invalid port
-
+    @DisplayName("Should fail with invalid username and password")
+    void shouldFailWithInvalidCredentials() {
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
-                "uri", uri));
+                "uri", containerUri(),
+                "username", MilvusTestResourceAuthenticated.USERNAME,
+                "password", "wrongpassword"));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
-        assertFalse(result.valid(), "Connection validation should fail");
-        assertThat(result.message()).containsAnyOf("connect", "refused", "UNAVAILABLE");
+        assertFalse(result.valid(), "Connection validation with invalid credentials should fail");
+        assertThat(result.message()).containsIgnoringCase("auth");
     }
 
     @Test
-    @DisplayName("Should handle timeout gracefully")
-    void shouldHandleTimeout() {
-        // Use a non-routable IP address to simulate timeout
+    @DisplayName("Should fail with invalid token")
+    void shouldFailWithInvalidToken() {
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
-                "uri", "grpc://10.255.255.1:19530"));
+                "uri", containerUri(),
+                "token", MilvusTestResourceAuthenticated.USERNAME + ":invalidtoken"));
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
-        assertFalse(result.valid(), "Connection validation should fail");
-        assertThat(result.message()).containsAnyOf("timeout", "connect", "Connection timeout");
+        assertFalse(result.valid(), "Connection validation with invalid token should fail");
+        assertThat(result.message()).containsIgnoringCase("auth");
+    }
+
+    @Test
+    @DisplayName("Should successfully connect with all parameters including authentication")
+    void shouldConnectWithAllParams() {
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
+                "uri", containerUri(),
+                "database", "default",
+                "username", MilvusTestResourceAuthenticated.USERNAME,
+                "password", MilvusTestResourceAuthenticated.PASSWORD));
+
+        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
+
+        assertTrue(result.valid(), "Connection validation with all parameters should succeed");
+        assertThat(result.message()).doesNotContainIgnoringCase("error", "fail", "invalid", "authentication");
     }
 }
