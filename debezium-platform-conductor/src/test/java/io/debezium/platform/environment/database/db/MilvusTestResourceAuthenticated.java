@@ -16,23 +16,27 @@ import org.testcontainers.utility.DockerImageName;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
 /**
- * Test resource for Milvus vector database using Testcontainers.
+ * Test resource for Milvus vector database using Testcontainers WITH authentication.
  *
- * <p>This class provides a containerized Milvus instance WITHOUT authentication
+ * <p>This class provides a containerized Milvus instance WITH authorization enabled
  * for integration testing. It manages the lifecycle of a Docker container running
- * Milvus server in standalone mode, making it suitable for testing basic
- * connection validation scenarios.</p>
+ * Milvus server in standalone mode, making it suitable for testing authenticated
+ * connection validation scenarios (username/password and token based).</p>
  *
  * <p>The Milvus instance is configured with:
  * <ul>
  *   <li>Default port 19530 mapped to a random host port</li>
- *   <li>No authentication required</li>
+ *   <li>Authorization enabled ({@code common.security.authorizationEnabled=true})</li>
+ *   <li>Default root credentials ({@code root}/{@code Milvus})</li>
  *   <li>Standalone mode (single-node deployment)</li>
  * </ul>
  * </p>
  *
  */
-public class MilvusTestResource implements QuarkusTestResourceLifecycleManager {
+public class MilvusTestResourceAuthenticated implements QuarkusTestResourceLifecycleManager {
+
+    public static final String USERNAME = "root";
+    public static final String PASSWORD = "Milvus";
 
     private static final String MILVUS_IMAGE = "mirror.gcr.io/milvusdb/milvus:v2.6.4";
     private static final int MILVUS_GRPC_PORT = 19530;
@@ -51,6 +55,7 @@ public class MilvusTestResource implements QuarkusTestResourceLifecycleManager {
                 .withExposedPorts(MILVUS_GRPC_PORT, MILVUS_HTTP_PORT)
                 .withCommand("milvus", "run", "standalone")
                 .withEnv("DEPLOY_MODE", "STANDALONE")
+                .withEnv("COMMON_SECURITY_AUTHORIZATIONENABLED", "true")
                 .withEnv("ETCD_USE_EMBED", "true")
                 .withEnv("ETCD_DATA_DIR", "/var/lib/milvus/etcd")
                 .withEnv("ETCD_CONFIG_PATH", EMBED_ETCD_CONFIG_PATH)
