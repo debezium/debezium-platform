@@ -38,7 +38,8 @@ create table host_deployment (
 alter table if exists host_deployment
     add constraint FK_host_deployment_pipeline
     foreign key (pipeline_id)
-    references pipeline;
+    references pipeline
+    on delete cascade;
 
 alter table if exists host_deployment
     add constraint FK_host_deployment_host_status

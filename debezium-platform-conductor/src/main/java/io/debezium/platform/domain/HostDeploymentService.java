@@ -210,6 +210,18 @@ public class HostDeploymentService {
     }
 
     /**
+     * Returns all READY hosts without pessimistic locking.
+     */
+    @Transactional(REQUIRES_NEW)
+    public List<HostStatusEntity> findReadyHosts() {
+        return em.createQuery(
+                "SELECT h FROM host_status h WHERE h.provisioningStatus = :status ORDER BY h.id ASC",
+                HostStatusEntity.class)
+                .setParameter("status", ProvisioningStatus.READY)
+                .getResultList();
+    }
+
+    /**
      * Locks all READY hosts sorted by ID. Sorting prevents ABBA deadlocks
      * when concurrent transactions lock the same set of rows.
      */

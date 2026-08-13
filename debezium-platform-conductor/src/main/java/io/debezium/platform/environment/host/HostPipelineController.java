@@ -21,6 +21,7 @@ import org.jboss.logging.Logger;
 import io.debezium.DebeziumException;
 import io.debezium.platform.data.model.DeploymentStatus;
 import io.debezium.platform.data.model.HostDeploymentEntity;
+import io.debezium.platform.data.model.HostStatusEntity;
 import io.debezium.platform.domain.HostDeploymentService;
 import io.debezium.platform.domain.Signal;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
@@ -143,6 +144,20 @@ public class HostPipelineController implements PipelineController {
         logger.infov("Starting deployment for pipeline {0} ({1})", pipelineId, pipeline.getName());
 
         try {
+            // ── Cleanup any existing deployment (idempotent redeploy) ──
+            deploymentService.findByPipelineId(pipelineId).ifPresent(existing -> {
+                logger.infov("Found existing deployment for pipeline {0} (status={1}), cleaning up before redeploy",
+                        pipelineId, existing.getDeploymentStatus());
+                if (existing.getHostStatus() != null && existing.getHostStatus().getSshAlias() != null
+                        && existing.getContainerName() != null) {
+                    String oldSshAlias = existing.getHostStatus().getSshAlias();
+                    String oldContainerName = existing.getContainerName();
+                    // Force-remove old container (idempotent — docker rm -f returns 0 even if absent)
+                    ansibleRunner.runShellCommand(oldSshAlias, String.format(DOCKER_RM_FORMAT, oldContainerName));
+                }
+                deploymentService.deleteDeployment(existing.getId());
+            });
+
             HostPipelineMapper.MappedConfig mappedConfig = pipelineMapper.map(pipeline);
 
             HostDeploymentService.HostAllocation allocation = deploymentService.allocateHostAndPort();
@@ -198,27 +213,33 @@ public class HostPipelineController implements PipelineController {
     private void executeUndeploy(Long pipelineId) {
         logger.infov("Starting undeploy for pipeline {0}", pipelineId);
 
+        String containerName = hostConfig.containerNamePrefix() + pipelineId;
         HostDeploymentEntity deployment = deploymentService.findByPipelineId(pipelineId).orElse(null);
-        if (deployment == null) {
-            logger.warnv("No active deployment found for pipeline {0}, skipping undeploy", pipelineId);
-            return;
+
+        if (deployment != null) {
+            String sshAlias = deployment.getHostStatus().getSshAlias();
+            String dockerCommand = String.format(DOCKER_RM_FORMAT, containerName);
+            CommandResult result = ansibleRunner.runShellCommand(sshAlias, dockerCommand);
+
+            if (result instanceof CommandResult.Failure failure) {
+                logger.warnv("docker rm -f failed for {0} on {1}: {2} — proceeding with DB cleanup",
+                        containerName, sshAlias, failure.output());
+            }
+
+            // Hard-delete the deployment record (frees UNIQUE constraint + port)
+            deploymentService.deleteDeployment(deployment.getId());
+            logger.infov("Pipeline {0} undeployed from host {1}", pipelineId, sshAlias);
         }
-
-        String sshAlias = deployment.getHostStatus().getSshAlias();
-        String containerName = deployment.getContainerName();
-
-        // Force-remove the container
-        String dockerCommand = String.format(DOCKER_RM_FORMAT, containerName);
-        CommandResult result = ansibleRunner.runShellCommand(sshAlias, dockerCommand);
-
-        if (result instanceof CommandResult.Failure failure) {
-            logger.warnv("docker rm -f failed for {0} on {1}: {2} — proceeding with DB cleanup",
-                    containerName, sshAlias, failure.output());
+        else {
+            // Deployment DB record was already removed by ON DELETE CASCADE when pipeline row was deleted.
+            // Force-remove container on all READY hosts (idempotent — docker rm -f returns 0 if absent).
+            logger.infov("Deployment DB record already removed by CASCADE for pipeline {0}, cleaning up container {1} on hosts",
+                    pipelineId, containerName);
+            String dockerCommand = String.format(DOCKER_RM_FORMAT, containerName);
+            for (HostStatusEntity host : deploymentService.findReadyHosts()) {
+                ansibleRunner.runShellCommand(host.getSshAlias(), dockerCommand);
+            }
         }
-
-        // Hard-delete the deployment record (frees UNIQUE constraint + port)
-        deploymentService.deleteDeployment(deployment.getId());
-        logger.infov("Pipeline {0} undeployed from host {1}", pipelineId, sshAlias);
     }
 
     private void executeStop(Long pipelineId) {
@@ -280,13 +301,19 @@ public class HostPipelineController implements PipelineController {
      * correctly on the pool threads.
      */
     private void runWithRequestContext(Runnable task) {
-        ManagedContext requestContext = Arc.container().requestContext();
-        requestContext.activate();
-        try {
-            task.run();
+        var container = Arc.container();
+        if (container != null && container.requestContext() != null) {
+            ManagedContext requestContext = container.requestContext();
+            requestContext.activate();
+            try {
+                task.run();
+            }
+            finally {
+                requestContext.terminate();
+            }
         }
-        finally {
-            requestContext.terminate();
+        else {
+            task.run();
         }
     }
 

@@ -85,6 +85,8 @@ class HostPipelineControllerTest {
         when(hostConfig.configBasePath()).thenReturn("/opt/debezium/configs");
         when(hostConfig.debeziumServerImage()).thenReturn("quay.io/debezium/server:latest");
 
+        when(deploymentService.findByPipelineId(anyLong())).thenReturn(Optional.empty());
+
         controller = new HostPipelineController(logger, pipelineMapper, deploymentService, ansibleRunner, hostConfig);
     }
 
@@ -464,6 +466,61 @@ class HostPipelineControllerTest {
         assertThat(latch.await(ASYNC_WAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
         // deleteDeployment MUST still be called despite docker rm failure
         verify(deploymentService).deleteDeployment(1000L);
+    }
+
+    @Test
+    void undeployCleansUpContainerOnReadyHostsWhenDeploymentEntityAlreadyDeletedByCascade() throws Exception {
+        when(deploymentService.findByPipelineId(55L)).thenReturn(Optional.empty());
+
+        HostStatusEntity host = new HostStatusEntity();
+        host.setSshAlias("host-ready-1");
+        when(deploymentService.findReadyHosts()).thenReturn(List.of(host));
+
+        CountDownLatch latch = new CountDownLatch(1);
+        when(ansibleRunner.runShellCommand(eq("host-ready-1"), eq("docker rm -f debezium-pipeline-55"))).thenAnswer(inv -> {
+            latch.countDown();
+            return new CommandResult.Success("ok");
+        });
+
+        controller.undeploy(55L);
+
+        assertThat(latch.await(ASYNC_WAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
+        verify(ansibleRunner).runShellCommand("host-ready-1", "docker rm -f debezium-pipeline-55");
+    }
+
+    @Test
+    void deployCleansUpExistingDeploymentBeforeRedeploy() throws Exception {
+        PipelineFlat pipeline = buildMinimalPipeline(1L);
+
+        HostDeploymentEntity existingDeployment = createMockDeployment(99L, "debezium-pipeline-1", "host-1");
+        existingDeployment.setDeploymentStatus(DeploymentStatus.FAILED);
+        when(deploymentService.findByPipelineId(1L)).thenReturn(Optional.of(existingDeployment));
+
+        when(pipelineMapper.map(pipeline)).thenReturn(
+                new HostPipelineMapper.MappedConfig("key=value", "hash123"));
+
+        HostStatusEntity host = new HostStatusEntity();
+        host.setId(10L);
+        host.setSshAlias("host-1");
+        when(deploymentService.allocateHostAndPort()).thenReturn(
+                new HostDeploymentService.HostAllocation(host, 9000));
+
+        when(ansibleRunner.createDirectory(anyString(), anyString())).thenReturn(new CommandResult.Success("ok"));
+        when(ansibleRunner.copyContent(anyString(), anyString(), anyString())).thenReturn(new CommandResult.Success("ok"));
+        when(ansibleRunner.runShellCommand(anyString(), anyString())).thenReturn(new CommandResult.Success("ok"));
+
+        CountDownLatch latch = new CountDownLatch(1);
+        when(deploymentService.createDeployment(eq(1L), eq(10L), eq("debezium-pipeline-1"), anyString(), eq(9000), eq("hash123")))
+                .thenAnswer(inv -> {
+                    latch.countDown();
+                    return createMockDeployment(100L, "debezium-pipeline-1", "host-1");
+                });
+
+        controller.deploy(pipeline);
+
+        assertThat(latch.await(ASYNC_WAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
+        verify(deploymentService).deleteDeployment(99L);
+        verify(deploymentService).createDeployment(eq(1L), eq(10L), eq("debezium-pipeline-1"), anyString(), eq(9000), eq("hash123"));
     }
 
     // ── Helpers ──

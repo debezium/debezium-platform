@@ -16,6 +16,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 /**
  * Links a pipeline to a specific host deployment (one active deployment per pipeline).
  *
@@ -36,6 +39,7 @@ public class HostDeploymentEntity {
     private Long id;
 
     @ManyToOne
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "pipeline_id", unique = true, nullable = false)
     private PipelineEntity pipeline;
 

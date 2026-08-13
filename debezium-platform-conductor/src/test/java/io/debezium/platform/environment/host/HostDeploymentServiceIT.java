@@ -66,6 +66,9 @@ public class HostDeploymentServiceIT {
     /** Second pipeline ID seeded in setUp(). */
     private static Long seededPipeline2Id;
 
+    /** Third pipeline ID seeded in setUp(). */
+    private static Long seededPipeline3Id;
+
     /** Host status ID seeded in setUp(). */
     private static Long seededHostId;
 
@@ -100,7 +103,7 @@ public class HostDeploymentServiceIT {
         host2.setLastCheckedAt(Instant.now());
         em.persist(host2);
 
-        // Create two pipelines
+        // Create three pipelines
         PipelineEntity pipeline1 = new PipelineEntity();
         pipeline1.setName("it-pipeline-1");
         em.persist(pipeline1);
@@ -109,12 +112,17 @@ public class HostDeploymentServiceIT {
         pipeline2.setName("it-pipeline-2");
         em.persist(pipeline2);
 
+        PipelineEntity pipeline3 = new PipelineEntity();
+        pipeline3.setName("it-pipeline-3");
+        em.persist(pipeline3);
+
         em.flush();
 
         seededHostId = host1.getId();
         seededHost2Id = host2.getId();
         seededPipelineId = pipeline1.getId();
         seededPipeline2Id = pipeline2.getId();
+        seededPipeline3Id = pipeline3.getId();
     }
 
     @Test
@@ -320,5 +328,44 @@ public class HostDeploymentServiceIT {
         assertThat(afterFailed.get().getDeployedAt())
                 .as("deployedAt must NOT change when transitioning to FAILED")
                 .isEqualTo(deployedAtBeforeTransition);
+    }
+
+    @Test
+    @Order(14)
+    public void shouldFindReadyHosts() {
+        List<HostStatusEntity> readyHosts = deploymentService.findReadyHosts();
+
+        assertThat(readyHosts)
+                .as("Should find all READY hosts")
+                .hasSizeGreaterThanOrEqualTo(2);
+        assertThat(readyHosts)
+                .extracting(HostStatusEntity::getProvisioningStatus)
+                .containsOnly(ProvisioningStatus.READY);
+    }
+
+    @Test
+    @Order(15)
+    @Transactional
+    public void shouldCascadeDeleteHostDeploymentOnPipelineDelete() {
+        // Create deployment for seededPipeline3Id (already persisted and committed during seedTestData)
+        HostDeploymentEntity deployment = deploymentService.createDeployment(
+                seededPipeline3Id, seededHostId,
+                "debezium-pipeline-" + seededPipeline3Id,
+                "quay.io/debezium/server:latest",
+                9099, "cascadehash");
+
+        Long deploymentId = deployment.getId();
+
+        // Delete the pipeline entity directly — database ON DELETE CASCADE must remove host_deployment row without FK error
+        PipelineEntity pipeline = em.find(PipelineEntity.class, seededPipeline3Id);
+        assertThat(pipeline).isNotNull();
+        em.remove(pipeline);
+        em.flush();
+        em.clear();
+
+        var deletedDeployment = em.find(HostDeploymentEntity.class, deploymentId);
+        assertThat(deletedDeployment)
+                .as("HostDeploymentEntity must be automatically deleted by database ON DELETE CASCADE")
+                .isNull();
     }
 }
