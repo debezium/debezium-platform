@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 
+import jakarta.enterprise.event.Event;
 import jakarta.persistence.EntityManager;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +39,7 @@ class AlertStateManagerTest {
     EntityManager em;
 
     @Mock
-    NotificationDispatcher dispatcher;
+    Event<AlertNotificationReady> notificationEvent;
 
     @Mock
     AlertTransitionEvaluator transitionEvaluator;
@@ -50,7 +51,7 @@ class AlertStateManagerTest {
 
     @BeforeEach
     void setUp() {
-        stateManager = new AlertStateManager(em, dispatcher, transitionEvaluator);
+        stateManager = new AlertStateManager(em, notificationEvent, transitionEvaluator);
         rule = createRule("test-rule", Operator.GREATER_THAN, 100.0, "PT0S");
         now = Instant.parse("2026-07-30T10:00:00Z");
     }
@@ -67,7 +68,7 @@ class AlertStateManagerTest {
         assertThat(captor.getValue().getState()).isEqualTo(AlertStateValue.OK);
         assertThat(captor.getValue().getValue()).isEqualTo(150.0);
         assertThat(captor.getValue().getLastEvaluatedAt()).isEqualTo(now);
-        verify(dispatcher, never()).dispatch(any(), any());
+        verify(notificationEvent, never()).fire(any());
     }
 
     @Test
@@ -109,7 +110,7 @@ class AlertStateManagerTest {
         assertThat(event.getSeverity()).isEqualTo(Severity.WARNING);
         assertThat(event.getFiredAt()).isEqualTo(now);
 
-        verify(dispatcher).dispatch(eq(rule), any(AlertEventEntity.class));
+        verify(notificationEvent).fire(any(AlertNotificationReady.class));
     }
 
     @Test
@@ -118,6 +119,8 @@ class AlertStateManagerTest {
         state.setId(1L);
         AlertEventEntity activeEvent = new AlertEventEntity();
         activeEvent.setId(1L);
+        activeEvent.setValue(150.0);
+        activeEvent.setThreshold(100.0);
         state.setActiveEvent(activeEvent);
 
         when(transitionEvaluator.evaluate(any(), eq(false), any(), any(), any()))
@@ -129,7 +132,7 @@ class AlertStateManagerTest {
         assertThat(state.getState()).isEqualTo(AlertStateValue.OK);
         assertThat(state.getFiredAt()).isNull();
         assertThat(state.getActiveEvent()).isNull();
-        verify(dispatcher).dispatch(rule, activeEvent);
+        verify(notificationEvent).fire(any(AlertNotificationReady.class));
     }
 
     @Test
@@ -137,6 +140,8 @@ class AlertStateManagerTest {
         AlertStateEntity state = createState(AlertStateValue.FIRING, "pipeline-1");
         AlertEventEntity event = new AlertEventEntity();
         event.setId(1L);
+        event.setValue(150.0);
+        event.setThreshold(100.0);
         state.setActiveEvent(event);
 
         stateManager.resolve(rule, state, now);
@@ -146,7 +151,7 @@ class AlertStateManagerTest {
         assertThat(state.getFiredAt()).isNull();
         assertThat(state.getPendingSince()).isNull();
         assertThat(state.getActiveEvent()).isNull();
-        verify(dispatcher).dispatch(rule, event);
+        verify(notificationEvent).fire(any(AlertNotificationReady.class));
     }
 
     @Test
@@ -156,7 +161,7 @@ class AlertStateManagerTest {
         stateManager.resolve(rule, state, now);
 
         assertThat(state.getState()).isEqualTo(AlertStateValue.OK);
-        verify(dispatcher, never()).dispatch(any(), any());
+        verify(notificationEvent, never()).fire(any());
     }
 
     @Test

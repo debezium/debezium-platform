@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
@@ -26,13 +27,13 @@ public class AlertStateManager {
     private static final Logger LOGGER = Logger.getLogger(AlertStateManager.class);
 
     private final EntityManager em;
-    private final NotificationDispatcher dispatcher;
+    private final Event<AlertNotificationReady> notificationEvent;
     private final AlertTransitionEvaluator transitionEvaluator;
 
-    public AlertStateManager(EntityManager em, NotificationDispatcher dispatcher,
+    public AlertStateManager(EntityManager em, Event<AlertNotificationReady> notificationEvent,
                              AlertTransitionEvaluator transitionEvaluator) {
         this.em = em;
-        this.dispatcher = dispatcher;
+        this.notificationEvent = notificationEvent;
         this.transitionEvaluator = transitionEvaluator;
     }
 
@@ -70,7 +71,7 @@ public class AlertStateManager {
         if (event != null) {
             event.setResolvedAt(now);
             em.merge(event);
-            dispatcher.dispatch(rule, event);
+            notificationEvent.fire(AlertNotificationReady.from(rule, event));
         }
 
         state.setState(AlertStateValue.OK);
@@ -118,7 +119,7 @@ public class AlertStateManager {
         state.setActiveEvent(event);
         em.merge(state);
 
-        dispatcher.dispatch(rule, event);
+        notificationEvent.fire(AlertNotificationReady.from(rule, event));
     }
 
     private String formatMessage(AlertRuleEntity rule, AlertStateEntity state) {
