@@ -79,6 +79,7 @@ class WebhookNotifierTest {
         assertThat(body).contains("\"version\":\"1\"");
         assertThat(body).contains("\"status\":\"firing\"");
         assertThat(body).contains("\"ruleName\":\"test-rule\"");
+        assertThat(body).contains("\"resolvedAt\":null");
     }
 
     @Test
@@ -96,6 +97,7 @@ class WebhookNotifierTest {
         RecordedRequest request = mockServer.takeRequest();
         String body = request.getBody().readUtf8();
         assertThat(body).contains("\"status\":\"resolved\"");
+        assertThat(body).contains("\"resolvedAt\":\"2026-07-30T10:05:00Z\"");
     }
 
     @Test
