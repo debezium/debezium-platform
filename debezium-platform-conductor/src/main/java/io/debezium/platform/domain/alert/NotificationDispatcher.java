@@ -6,18 +6,17 @@
 package io.debezium.platform.domain.alert;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.Instance;
 
 import org.jboss.logging.Logger;
 
-import io.debezium.platform.data.model.AlertEventEntity;
-import io.debezium.platform.data.model.AlertRuleEntity;
-import io.debezium.platform.data.model.AlertStateValue;
 import io.debezium.platform.data.model.ChannelType;
 import io.debezium.platform.data.model.NotificationChannelEntity;
-import io.debezium.platform.environment.notifications.AlertNotification;
 import io.debezium.platform.environment.notifications.NotificationResult;
 import io.debezium.platform.environment.notifications.Notifier;
+import io.vertx.core.Vertx;
 
 @ApplicationScoped
 public class NotificationDispatcher {
@@ -27,19 +26,35 @@ public class NotificationDispatcher {
     private static final String STATE_RESOLVED = "RESOLVED";
 
     private final Instance<Notifier> notifiers;
+    private final Vertx vertx;
 
-    public NotificationDispatcher(Instance<Notifier> notifiers) {
+    public NotificationDispatcher(Instance<Notifier> notifiers, Vertx vertx) {
         this.notifiers = notifiers;
+        this.vertx = vertx;
     }
 
-    public void dispatch(AlertRuleEntity rule, AlertEventEntity event) {
-        String state = event.getResolvedAt() == null ? STATE_FIRED : STATE_RESOLVED;
+    /**
+     * Delivers the notification after the alert transition has committed, offloaded to a worker thread
+     * so a slow or unresponsive endpoint (webhook retries can block for tens of seconds) cannot block
+     * the transaction-completion / alert evaluation thread.
+     */
+    void onNotificationReady(@Observes(during = TransactionPhase.AFTER_SUCCESS) AlertNotificationReady ready) {
+        if (ready.channels().isEmpty()) {
+            return;
+        }
+        String state = ready.notification().resolvedAt() == null ? STATE_FIRED : STATE_RESOLVED;
         LOGGER.infov("Alert {0} for rule ''{1}'' on pipeline ''{2}'' (severity={3})",
-                state, rule.getName(), event.getPipelineId(), event.getSeverity());
+                state, ready.notification().ruleName(), ready.notification().pipelineId(),
+                ready.notification().severity());
 
-        AlertNotification notification = toNotification(rule, event);
+        vertx.executeBlocking(() -> {
+            deliver(ready);
+            return null;
+        }, false);
+    }
 
-        for (NotificationChannelEntity channel : rule.getChannels()) {
+    void deliver(AlertNotificationReady ready) {
+        for (NotificationChannelEntity channel : ready.channels()) {
             if (!channel.isEnabled()) {
                 continue;
             }
@@ -49,7 +64,7 @@ public class NotificationDispatcher {
                 continue;
             }
             try {
-                NotificationResult result = notifier.send(notification, channel);
+                NotificationResult result = notifier.send(ready.notification(), channel);
                 if (!result.success()) {
                     LOGGER.warnv("Notification failed for channel ''{0}'': {1}", channel.getName(), result.message());
                 }
@@ -65,21 +80,5 @@ public class NotificationDispatcher {
                 .filter(n -> n.type() == type)
                 .findFirst()
                 .orElse(null);
-    }
-
-    private AlertNotification toNotification(AlertRuleEntity rule, AlertEventEntity event) {
-        AlertStateValue state = event.getResolvedAt() == null ? AlertStateValue.FIRING : AlertStateValue.OK;
-        return new AlertNotification(
-                rule.getName(),
-                event.getPipelineId(),
-                event.getPipelineName(),
-                state,
-                event.getSeverity(),
-                event.getValue(),
-                event.getThreshold(),
-                rule.getOperator(),
-                event.getMessage(),
-                event.getFiredAt(),
-                event.getResolvedAt());
     }
 }
