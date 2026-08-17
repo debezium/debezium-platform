@@ -5,6 +5,7 @@
  */
 package io.debezium.platform.domain.alert;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -107,8 +108,37 @@ public class AlertEvaluationEngine {
 
     String buildAlertQuery(String panelQuery, ReduceFunction reduce, String evaluationWindow) {
         String global = removeServiceNameFilter(panelQuery);
-        String reduced = reduce.wrapQuery(global, evaluationWindow);
+        String reduced = reduce.wrapQuery(global, toPrometheusDuration(evaluationWindow));
         return aggregateByPipeline(reduced);
+    }
+
+    /**
+     * Converts an ISO-8601 duration (e.g. {@code PT5M}) into the Prometheus duration format
+     * (e.g. {@code 5m}) expected inside PromQL range/subquery selectors.
+     */
+    static String toPrometheusDuration(String isoDuration) {
+        if (isoDuration == null) {
+            return null;
+        }
+        long seconds = Duration.parse(isoDuration).getSeconds();
+        if (seconds <= 0) {
+            return "0s";
+        }
+        StringBuilder result = new StringBuilder();
+        long hours = seconds / 3600;
+        if (hours > 0) {
+            result.append(hours).append('h');
+            seconds %= 3600;
+        }
+        long minutes = seconds / 60;
+        if (minutes > 0) {
+            result.append(minutes).append('m');
+            seconds %= 60;
+        }
+        if (seconds > 0) {
+            result.append(seconds).append('s');
+        }
+        return result.toString();
     }
 
     String removeServiceNameFilter(String panelQuery) {

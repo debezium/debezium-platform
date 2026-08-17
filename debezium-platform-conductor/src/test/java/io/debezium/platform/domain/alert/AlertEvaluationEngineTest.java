@@ -76,14 +76,39 @@ class AlertEvaluationEngineTest {
 
     @Test
     void buildAlertQueryWithLastReduceFunction() {
-        String result = engine.buildAlertQuery(PANEL_QUERY, ReduceFunction.LAST, "5m");
+        String result = engine.buildAlertQuery(PANEL_QUERY, ReduceFunction.LAST, "PT5M");
         assertThat(result).isEqualTo("sum by (service_name) (rate(debezium_event_count_total{}[5m]))");
     }
 
     @Test
     void buildAlertQueryWithAvgReduceFunction() {
-        String result = engine.buildAlertQuery(PANEL_QUERY, ReduceFunction.AVG, "10m");
+        String result = engine.buildAlertQuery(PANEL_QUERY, ReduceFunction.AVG, "PT10M");
         assertThat(result).isEqualTo("sum by (service_name) (avg_over_time((rate(debezium_event_count_total{}[5m]))[10m:]))");
+    }
+
+    @Test
+    void toPrometheusDurationConvertsMinutes() {
+        assertThat(AlertEvaluationEngine.toPrometheusDuration("PT5M")).isEqualTo("5m");
+    }
+
+    @Test
+    void toPrometheusDurationConvertsHours() {
+        assertThat(AlertEvaluationEngine.toPrometheusDuration("PT1H")).isEqualTo("1h");
+    }
+
+    @Test
+    void toPrometheusDurationConvertsCompoundDuration() {
+        assertThat(AlertEvaluationEngine.toPrometheusDuration("PT1H30M15S")).isEqualTo("1h30m15s");
+    }
+
+    @Test
+    void toPrometheusDurationConvertsSeconds() {
+        assertThat(AlertEvaluationEngine.toPrometheusDuration("PT30S")).isEqualTo("30s");
+    }
+
+    @Test
+    void toPrometheusDurationHandlesNull() {
+        assertThat(AlertEvaluationEngine.toPrometheusDuration(null)).isNull();
     }
 
     @Test
@@ -221,7 +246,7 @@ class AlertEvaluationEngineTest {
         rule.setOperator(operator);
         rule.setThreshold(threshold);
         rule.setReduceFunction(ReduceFunction.LAST);
-        rule.setEvaluationWindow("5m");
+        rule.setEvaluationWindow("PT5M");
         rule.setForDuration("PT0S");
         rule.setSeverity(Severity.WARNING);
         rule.setEnabled(true);

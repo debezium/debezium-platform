@@ -36,6 +36,7 @@ public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule
     public AlertRule create(@Valid AlertRule view) {
         validatePanelExists(view.getPanelId());
         validateForDuration(view.getForDuration());
+        validateEvaluationWindow(view.getEvaluationWindow());
         return super.create(view);
     }
 
@@ -43,6 +44,7 @@ public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule
     public AlertRule update(@Valid AlertRule view) {
         validatePanelExists(view.getPanelId());
         validateForDuration(view.getForDuration());
+        validateEvaluationWindow(view.getEvaluationWindow());
         return super.update(view);
     }
 
@@ -81,6 +83,19 @@ public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule
         }
         if (duration.compareTo(Duration.ofHours(1)) > 0) {
             throw new BadRequestException("forDuration must not exceed PT1H (1 hour)");
+        }
+    }
+
+    private void validateEvaluationWindow(String evaluationWindow) {
+        if (evaluationWindow == null) {
+            return;
+        }
+        Duration duration = Duration.parse(evaluationWindow);
+        if (duration.compareTo(Duration.ofMinutes(1)) < 0) {
+            throw new BadRequestException("evaluationWindow must be at least PT1M (1 minute)");
+        }
+        if (duration.compareTo(Duration.ofHours(1)) > 0) {
+            throw new BadRequestException("evaluationWindow must not exceed PT1H (1 hour)");
         }
     }
 }

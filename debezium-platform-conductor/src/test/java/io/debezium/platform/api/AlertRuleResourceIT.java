@@ -272,6 +272,42 @@ class AlertRuleResourceIT {
     }
 
     @Test
+    @Order(12)
+    void createRuleEvaluationWindowTooSmall() {
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.ofEntries(
+                        Map.entry("name", "rule-window-too-small"),
+                        Map.entry("panelId", "streaming-event-count"),
+                        Map.entry("operator", "GREATER_THAN"),
+                        Map.entry("threshold", 100.0),
+                        Map.entry("forDuration", "PT0S"),
+                        Map.entry("reduceFunction", "AVG"),
+                        Map.entry("evaluationWindow", "PT30S")))
+                .when().post(RULES_PATH)
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    @Order(13)
+    void createRuleEvaluationWindowTooLarge() {
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.ofEntries(
+                        Map.entry("name", "rule-window-too-large"),
+                        Map.entry("panelId", "streaming-event-count"),
+                        Map.entry("operator", "GREATER_THAN"),
+                        Map.entry("threshold", 100.0),
+                        Map.entry("forDuration", "PT0S"),
+                        Map.entry("reduceFunction", "AVG"),
+                        Map.entry("evaluationWindow", "PT2H")))
+                .when().post(RULES_PATH)
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
     @Order(96)
     void deleteRuleWithChannels() {
         given()
