@@ -8,6 +8,5 @@ package io.debezium.platform.data.model;
 public enum AlertStateValue {
     OK,
     PENDING,
-    FIRING,
-    RESOLVED
+    FIRING
 }
