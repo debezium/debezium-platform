@@ -11,6 +11,7 @@ import java.net.UnknownHostException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
@@ -144,21 +145,26 @@ public class WebhookNotifier implements Notifier {
     }
 
     private String buildPayload(AlertNotification notification) throws JsonProcessingException {
-        String status = notification.resolvedAt() == null ? STATUS_FIRING : STATUS_RESOLVED;
+        boolean resolved = notification.resolvedAt() != null;
+        String status = resolved ? STATUS_RESOLVED : STATUS_FIRING;
+
+        // LinkedHashMap (not Map.of) so the key order is stable and resolvedAt can carry a null value while firing.
+        Map<String, Object> alert = new LinkedHashMap<>();
+        alert.put("ruleName", notification.ruleName());
+        alert.put("severity", notification.severity().name());
+        alert.put("pipelineId", notification.pipelineId());
+        alert.put("pipelineName", notification.pipelineName() != null ? notification.pipelineName() : notification.pipelineId());
+        alert.put("value", notification.value());
+        alert.put("threshold", notification.threshold());
+        alert.put("operator", notification.operator().name());
+        alert.put("message", notification.message());
+        alert.put("firedAt", notification.firedAt().toString());
+        alert.put("resolvedAt", resolved ? notification.resolvedAt().toString() : null);
 
         Map<String, Object> payload = Map.of(
                 "version", PAYLOAD_VERSION,
                 "status", status,
-                "alert", Map.of(
-                        "ruleName", notification.ruleName(),
-                        "severity", notification.severity().name(),
-                        "pipelineId", notification.pipelineId(),
-                        "pipelineName", notification.pipelineName() != null ? notification.pipelineName() : notification.pipelineId(),
-                        "value", notification.value(),
-                        "threshold", notification.threshold(),
-                        "operator", notification.operator().name(),
-                        "message", notification.message(),
-                        "firedAt", notification.firedAt().toString()));
+                "alert", alert);
 
         return objectMapper.writeValueAsString(payload);
     }
