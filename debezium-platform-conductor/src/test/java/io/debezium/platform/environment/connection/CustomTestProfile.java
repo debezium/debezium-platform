@@ -8,6 +8,7 @@ package io.debezium.platform.environment.connection;
 import java.util.Map;
 import java.util.Set;
 
+import io.debezium.platform.environment.connection.destination.AzureEventHubsConnectionValidator;
 import io.debezium.platform.environment.connection.destination.KafkaConnectionValidator;
 import io.debezium.platform.environment.connection.source.DatabaseConnectionValidator;
 import io.quarkus.test.junit.QuarkusTestProfile;
@@ -19,7 +20,8 @@ public class CustomTestProfile implements QuarkusTestProfile {
         // Exclude production validators to avoid duplicate @Named key conflict
         // with their test alternatives during the Qute build processor bean scan
         return Map.of("quarkus.arc.exclude-types",
-                KafkaConnectionValidator.class.getName() + "," + DatabaseConnectionValidator.class.getName());
+                KafkaConnectionValidator.class.getName() + "," + DatabaseConnectionValidator.class.getName() + ","
+                        + AzureEventHubsConnectionValidator.class.getName());
     }
 
     @Override
