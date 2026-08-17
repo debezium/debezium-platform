@@ -206,7 +206,7 @@ const PipelineDetails: React.FunctionComponent = () => {
       <PageHeader
         title={pipeline?.name}
         subtitle={pipeline?.description}
-        label={<Label className="pf-v5-u-align-content-center" status={LabelStatus.danger}>  {t("failed")}</Label>}
+        label={pipeline?.status === "FAILED" ? <Label className="pf-v5-u-align-content-center" status={LabelStatus.danger}>  {t("failed")}</Label> : ""}
         icon={<Icon size="2xl" className="custom-header_icon" isInProgress={pipeline === undefined} >
           <RhUiPathIcon />
         </Icon>}
