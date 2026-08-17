@@ -21,7 +21,6 @@ public class AlertTransitionEvaluator {
             case OK -> evaluateOk(conditionMet, forDuration, now);
             case PENDING -> evaluatePending(conditionMet, forDuration, pendingSince, now);
             case FIRING -> evaluateFiring(conditionMet);
-            default -> new StateTransition(currentState, StateTransition.Action.NONE, null, null);
         };
     }
 

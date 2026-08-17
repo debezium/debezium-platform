@@ -168,7 +168,6 @@ components:
       - OK
       - PENDING
       - FIRING
-      - RESOLVED
     AlertStatusResponse:
       type: object
       properties:

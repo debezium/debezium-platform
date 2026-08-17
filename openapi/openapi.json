@@ -219,7 +219,7 @@
       },
       "AlertStateValue" : {
         "type" : "string",
-        "enum" : [ "OK", "PENDING", "FIRING", "RESOLVED" ]
+        "enum" : [ "OK", "PENDING", "FIRING" ]
       },
       "AlertStatusResponse" : {
         "type" : "object",
