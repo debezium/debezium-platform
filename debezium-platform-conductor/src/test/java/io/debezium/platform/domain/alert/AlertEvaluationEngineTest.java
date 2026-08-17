@@ -238,6 +238,48 @@ class AlertEvaluationEngineTest {
                 org.mockito.ArgumentMatchers.any());
     }
 
+    @Test
+    void evaluateAllResolvesActiveStatesWhenPanelRemoved() {
+        AlertRuleEntity rule = createRule("test-rule", "event-count", Operator.GREATER_THAN, 100.0);
+        when(ruleService.findAllEnabled()).thenReturn(List.of(rule));
+
+        when(panelConfigLoader.loadPanels()).thenReturn(List.of());
+
+        var firingState = new io.debezium.platform.data.model.AlertStateEntity();
+        firingState.setRule(rule);
+        firingState.setPipelineId("pipeline-1");
+        firingState.setState(AlertStateValue.FIRING);
+        when(stateManager.findByRuleId(rule.getId())).thenReturn(List.of(firingState));
+
+        engine.evaluateAll();
+
+        org.mockito.Mockito.verify(stateManager).resolve(
+                org.mockito.ArgumentMatchers.eq(rule),
+                org.mockito.ArgumentMatchers.eq(firingState),
+                org.mockito.ArgumentMatchers.any(Instant.class));
+    }
+
+    @Test
+    void evaluateAllDoesNotResolveOkStatesWhenPanelRemoved() {
+        AlertRuleEntity rule = createRule("test-rule", "event-count", Operator.GREATER_THAN, 100.0);
+        when(ruleService.findAllEnabled()).thenReturn(List.of(rule));
+
+        when(panelConfigLoader.loadPanels()).thenReturn(List.of());
+
+        var okState = new io.debezium.platform.data.model.AlertStateEntity();
+        okState.setRule(rule);
+        okState.setPipelineId("pipeline-1");
+        okState.setState(AlertStateValue.OK);
+        when(stateManager.findByRuleId(rule.getId())).thenReturn(List.of(okState));
+
+        engine.evaluateAll();
+
+        org.mockito.Mockito.verify(stateManager, org.mockito.Mockito.never()).resolve(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any());
+    }
+
     private AlertRuleEntity createRule(String name, String panelId, Operator operator, double threshold) {
         AlertRuleEntity rule = new AlertRuleEntity();
         rule.setId(1L);

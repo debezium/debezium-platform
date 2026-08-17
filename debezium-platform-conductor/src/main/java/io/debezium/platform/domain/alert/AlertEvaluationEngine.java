@@ -79,7 +79,8 @@ public class AlertEvaluationEngine {
                 .orElse(null);
 
         if (panel == null) {
-            LOGGER.warnv("Panel ''{0}'' not found for rule ''{1}'', skipping", rule.getPanelId(), rule.getName());
+            LOGGER.warnv("Panel ''{0}'' not found for rule ''{1}'', resolving active alerts", rule.getPanelId(), rule.getName());
+            resolveOrphanedStates(rule, now);
             return;
         }
 
@@ -102,6 +103,19 @@ public class AlertEvaluationEngine {
                     || orphanedState.getState() == AlertStateValue.FIRING) {
                 LOGGER.debugv("Pipeline ''{0}'' returned no data for rule ''{1}'' (state={2}), keeping last state",
                         orphanedState.getPipelineId(), rule.getName(), orphanedState.getState());
+            }
+        }
+    }
+
+    /**
+     * Resolves any active (non-OK) states for a rule whose panel no longer exists. Unlike a pipeline
+     * that transiently stops returning data, a removed panel means the rule can never be evaluated
+     * again, so its pending/firing alerts are resolved rather than left stale.
+     */
+    private void resolveOrphanedStates(AlertRuleEntity rule, Instant now) {
+        for (AlertStateEntity state : stateManager.findByRuleId(rule.getId())) {
+            if (state.getState() != AlertStateValue.OK) {
+                stateManager.resolve(rule, state, now);
             }
         }
     }
