@@ -154,7 +154,7 @@ tests:
           content:
             apiGroups: ["debezium.io"]
             resources: ["debeziumservers"]
-            verbs: ["patch", "create", "delete", "list", "deletecollection"]
+            verbs: ["get", "patch", "create", "delete", "list", "watch", "deletecollection"]
           count: 1
       - contains:
           path: rules
