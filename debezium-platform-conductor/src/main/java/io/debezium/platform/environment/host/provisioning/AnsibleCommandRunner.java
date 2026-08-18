@@ -93,15 +93,39 @@ public class AnsibleCommandRunner {
      * Runs an Ansible ad-hoc command using the {@code copy} module
      * to upload content to a file on the remote host.
      *
+     * <p>Content is written to a local temp file and uploaded via
+     * {@code src=} to avoid single-quote injection issues with the
+     * {@code content=} argument. The temp file is deleted after copy.
+     *
      * @param sshAlias the target host SSH alias
      * @param content  the file content to upload
      * @param destPath the absolute path on the remote host
      * @return the command result
      */
     public CommandResult copyContent(String sshAlias, String content, String destPath) {
-        String copyArgs = "content='" + content + "' dest=" + destPath + " mode=0644";
-        List<String> command = buildAdHocCommand(sshAlias, "copy", copyArgs);
-        return executeCommand(command);
+        java.nio.file.Path tempFile = null;
+        try {
+            tempFile = java.nio.file.Files.createTempFile("debezium-config-", ".properties");
+            java.nio.file.Files.writeString(tempFile, content, StandardCharsets.UTF_8);
+
+            String copyArgs = "src=" + tempFile.toAbsolutePath() + " dest=" + destPath + " mode=0644";
+            List<String> command = buildAdHocCommand(sshAlias, "copy", copyArgs);
+            return executeCommand(command);
+        }
+        catch (IOException e) {
+            logger.errorv(e, "Failed to create temp file for Ansible copy");
+            return new CommandResult.Failure("Failed to create temp file: " + e.getMessage());
+        }
+        finally {
+            if (tempFile != null) {
+                try {
+                    java.nio.file.Files.deleteIfExists(tempFile);
+                }
+                catch (IOException e) {
+                    logger.warnv("Failed to delete temp file {0}: {1}", tempFile, e.getMessage());
+                }
+            }
+        }
     }
 
     /**

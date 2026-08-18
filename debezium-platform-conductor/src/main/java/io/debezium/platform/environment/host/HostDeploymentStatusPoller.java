@@ -159,7 +159,7 @@ public class HostDeploymentStatusPoller {
 
     private void checkConfigDrift(HostDeploymentEntity deployment, String sshAlias) {
         String configPath = String.format(CONFIG_PATH_FORMAT,
-                hostConfig.configBasePath(), deployment.getPipeline().getId());
+                hostConfig.configBasePath(), deployment.getContainerName());
         String hashCommand = String.format(HASH_COMMAND_FORMAT, configPath);
 
         CommandResult result = ansibleRunner.runShellCommand(sshAlias, hashCommand);

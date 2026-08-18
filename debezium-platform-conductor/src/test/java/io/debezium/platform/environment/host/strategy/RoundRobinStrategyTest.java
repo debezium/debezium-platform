@@ -7,10 +7,19 @@ package io.debezium.platform.environment.host.strategy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.debezium.DebeziumException;
@@ -21,7 +30,14 @@ import io.debezium.platform.data.model.HostStatusEntity;
  */
 class RoundRobinStrategyTest {
 
-    private final RoundRobinStrategy strategy = new RoundRobinStrategy();
+    private EntityManager em;
+    private RoundRobinStrategy strategy;
+
+    @BeforeEach
+    void setUp() {
+        em = mock(EntityManager.class);
+        strategy = new RoundRobinStrategy(em);
+    }
 
     @Test
     void selectReturnsLeastLoadedHost() {
@@ -30,11 +46,9 @@ class RoundRobinStrategyTest {
         HostStatusEntity host3 = createHost(3L, "server-3");
 
         // host1 has 3 pipelines, host2 has 1, host3 has 2
-        Map<Long, Long> loadMap = Map.of(1L, 3L, 2L, 1L, 3L, 2L);
+        stubDeploymentCounts(Map.of(1L, 3L, 2L, 1L, 3L, 2L));
 
-        HostStatusEntity selected = strategy.select(
-                List.of(host1, host2, host3),
-                loadMap::get);
+        HostStatusEntity selected = strategy.select(List.of(host1, host2, host3));
 
         assertThat(selected.getId()).isEqualTo(2L);
     }
@@ -45,18 +59,16 @@ class RoundRobinStrategyTest {
         HostStatusEntity host2 = createHost(2L, "server-2");
 
         // Both have 0 deployments — should pick host1 (lower ID)
-        Map<Long, Long> loadMap = Map.of(1L, 0L, 2L, 0L);
+        stubDeploymentCounts(Map.of(1L, 0L, 2L, 0L));
 
-        HostStatusEntity selected = strategy.select(
-                List.of(host1, host2),
-                loadMap::get);
+        HostStatusEntity selected = strategy.select(List.of(host1, host2));
 
         assertThat(selected.getId()).isEqualTo(1L);
     }
 
     @Test
     void selectThrowsWhenNoHostsAvailable() {
-        assertThatThrownBy(() -> strategy.select(List.of(), id -> 0L))
+        assertThatThrownBy(() -> strategy.select(List.of()))
                 .isInstanceOf(DebeziumException.class)
                 .hasMessageContaining("No READY hosts available");
     }
@@ -64,11 +76,25 @@ class RoundRobinStrategyTest {
     @Test
     void selectHandlesSingleHost() {
         HostStatusEntity host = createHost(1L, "server-1");
-        Map<Long, Long> loadMap = Map.of(1L, 5L);
+        stubDeploymentCounts(Map.of(1L, 5L));
 
-        HostStatusEntity selected = strategy.select(List.of(host), loadMap::get);
+        HostStatusEntity selected = strategy.select(List.of(host));
 
         assertThat(selected.getId()).isEqualTo(1L);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void stubDeploymentCounts(Map<Long, Long> counts) {
+        when(em.createQuery(anyString(), eq(Long.class))).thenAnswer(inv -> {
+            TypedQuery<Long> query = mock(TypedQuery.class);
+            final Long[] currentHostId = new Long[1];
+            when(query.setParameter(eq("hostId"), any())).thenAnswer(paramInv -> {
+                currentHostId[0] = paramInv.getArgument(1, Long.class);
+                return query;
+            });
+            when(query.getSingleResult()).thenAnswer(resInv -> counts.getOrDefault(currentHostId[0], 0L));
+            return query;
+        });
     }
 
     private static HostStatusEntity createHost(Long id, String alias) {

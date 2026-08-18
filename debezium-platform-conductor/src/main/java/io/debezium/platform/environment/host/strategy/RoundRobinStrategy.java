@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.EntityManager;
 
 import io.debezium.DebeziumException;
 import io.debezium.platform.data.model.HostStatusEntity;
@@ -20,14 +21,25 @@ import io.debezium.platform.data.model.HostStatusEntity;
  * When multiple hosts have the same load, the host with the lowest ID
  * is chosen (deterministic tie-breaking).
  *
+ * <p>Deployment counts are queried live from the database to ensure
+ * accuracy under concurrent writes. The {@link EntityManager} is
+ * injected directly to avoid a circular dependency with
+ * {@code HostDeploymentService} (which depends on {@code DeployStrategy}).
+ *
  * <p>Fails loudly if no ready hosts are available — never silently
  * returns a default or null, per Mario's "Fail Loud, Never Guess" rule.
  */
 @ApplicationScoped
 public class RoundRobinStrategy implements DeployStrategy {
 
+    private final EntityManager em;
+
+    public RoundRobinStrategy(EntityManager em) {
+        this.em = em;
+    }
+
     @Override
-    public HostStatusEntity select(List<HostStatusEntity> readyHosts, LoadCounter loadCounter) {
+    public HostStatusEntity select(List<HostStatusEntity> readyHosts) {
         if (readyHosts.isEmpty()) {
             throw new DebeziumException(
                     "No READY hosts available for pipeline deployment. "
@@ -35,8 +47,20 @@ public class RoundRobinStrategy implements DeployStrategy {
         }
 
         return readyHosts.stream()
-                .min(Comparator.comparingLong((HostStatusEntity host) -> loadCounter.countDeployments(host.getId()))
+                .min(Comparator.comparingLong((HostStatusEntity host) -> countDeployments(host.getId()))
                         .thenComparingLong(HostStatusEntity::getId))
                 .orElseThrow(() -> new DebeziumException("No READY hosts available for pipeline deployment."));
+    }
+
+    /**
+     * Live COUNT query for deployments on a given host.
+     * Kept internal to this strategy — other strategies may not need load counts.
+     */
+    private long countDeployments(Long hostStatusId) {
+        return em.createQuery(
+                "SELECT COUNT(d) FROM host_deployment d WHERE d.hostStatus.id = :hostId",
+                Long.class)
+                .setParameter("hostId", hostStatusId)
+                .getSingleResult();
     }
 }

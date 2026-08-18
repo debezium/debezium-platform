@@ -99,6 +99,19 @@ public interface HostConfigGroup {
     String debeziumServerImage();
 
     /**
+     * Base directory on the remote host where pipeline offset and
+     * schema history data files are stored. Each pipeline gets a
+     * subdirectory named by its container name.
+     *
+     * <p>This directory is bind-mounted into the container as
+     * {@code /debezium/data}, enabling file-based offset storage
+     * to survive container restarts and redeployments.
+     */
+    @WithName("data-base-path")
+    @WithDefault("/opt/debezium/data")
+    String dataBasePath();
+
+    /**
      * Interval between status poll cycles for deployed containers.
      * Accepts Quarkus duration format, e.g. {@code 30s}, {@code 1m}.
      */

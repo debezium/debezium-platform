@@ -82,7 +82,7 @@ public class HostDeploymentService {
     public HostAllocation allocateHostAndPort() {
         List<HostStatusEntity> readyHosts = lockAllReadyHosts();
 
-        HostStatusEntity selectedHost = deployStrategy.select(readyHosts, this::countDeploymentsForHost);
+        HostStatusEntity selectedHost = deployStrategy.select(readyHosts);
 
         int allocatedPort = allocatePort(selectedHost.getId());
 
@@ -232,17 +232,6 @@ public class HostDeploymentService {
                 .setParameter("status", ProvisioningStatus.READY)
                 .setLockMode(LockModeType.PESSIMISTIC_WRITE)
                 .getResultList();
-    }
-
-    /**
-     * Live COUNT query for deployments on a given host (not a stale column).
-     */
-    private long countDeploymentsForHost(Long hostStatusId) {
-        return em.createQuery(
-                "SELECT COUNT(d) FROM host_deployment d WHERE d.hostStatus.id = :hostId",
-                Long.class)
-                .setParameter("hostId", hostStatusId)
-                .getSingleResult();
     }
 
     /**

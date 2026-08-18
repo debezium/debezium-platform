@@ -13,9 +13,8 @@ import io.debezium.platform.data.model.HostStatusEntity;
  * Strategy for selecting a target host during pipeline deployment.
  *
  * <p>Implementations receive the list of {@code READY} hosts (already
- * locked with {@code PESSIMISTIC_WRITE}) and a function to query the
- * live deployment count for each host. The strategy returns the selected
- * host, or empty if no host is available.
+ * locked with {@code PESSIMISTIC_WRITE}) and return the selected
+ * host, or throw if no host is available.
  *
  * <p>The default implementation is {@link RoundRobinStrategy}.
  * Future alternatives (affinity-based, resource-based, labeled scheduling)
@@ -28,18 +27,8 @@ public interface DeployStrategy {
      *
      * @param readyHosts  all hosts with {@code READY} status, sorted by ID,
      *                    locked with {@code PESSIMISTIC_WRITE}
-     * @param loadCounter function that returns the number of active
-     *                    deployments for a given host ID
      * @return the selected host entity
      * @throws io.debezium.DebeziumException if no hosts are available
      */
-    HostStatusEntity select(List<HostStatusEntity> readyHosts, LoadCounter loadCounter);
-
-    /**
-     * Functional interface for querying the live deployment count per host.
-     */
-    @FunctionalInterface
-    interface LoadCounter {
-        long countDeployments(Long hostStatusId);
-    }
+    HostStatusEntity select(List<HostStatusEntity> readyHosts);
 }

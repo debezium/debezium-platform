@@ -208,14 +208,6 @@ quarkus:
         type: io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore
         config:
           jdbc:
-            # Host-mode: JdbcOffsetBackingStore reads 'jdbc.connection.url' internally.
-            # Must point to a Postgres reachable from the remote Docker container.
-            # Override via HOST_OFFSET_JDBC_URL env var when the VM IP changes.
-            connection:
-              url: ${HOST_OFFSET_JDBC_URL:jdbc:postgresql://192.168.252.23:5432/testdb?loggerLevel=OFF}
-              user: ${HOST_OFFSET_JDBC_USERNAME:debezium}
-              password: ${HOST_OFFSET_JDBC_PASSWORD:dbz}
-            # Operator-mode (K8s): kept for backward compatibility with the CRD builder.
             url: jdbc:postgresql://postgresql:5432/debezium?loggerLevel=OFF
             user: debezium
             password: debezium
@@ -227,12 +219,6 @@ quarkus:
         internal: io.debezium.storage.jdbc.history.JdbcSchemaHistory
         config:
           jdbc:
-            # Host-mode: same reachable Postgres for schema history storage.
-            connection:
-              url: ${HOST_SCHEMA_HISTORY_JDBC_URL:jdbc:postgresql://192.168.252.23:5432/testdb?loggerLevel=OFF}
-              user: ${HOST_SCHEMA_HISTORY_JDBC_USERNAME:debezium}
-              password: ${HOST_SCHEMA_HISTORY_JDBC_PASSWORD:dbz}
-            # Operator-mode (K8s): kept for backward compatibility with the CRD builder.
             url: jdbc:postgresql://postgresql:5432/debezium?loggerLevel=OFF
             user: debezium
             password: debezium

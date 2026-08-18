@@ -16,226 +16,111 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.debezium.platform.config.OffsetConfigGroup;
-import io.debezium.platform.config.OffsetStorageConfigGroup;
-import io.debezium.platform.config.PipelineConfigGroup;
-import io.debezium.platform.config.SchemaHistoryConfigGroup;
-import io.debezium.platform.data.model.ConnectionEntity;
-import io.debezium.platform.domain.views.Connection;
+import io.debezium.operator.api.config.ConfigMapping;
+import io.debezium.operator.api.model.DebeziumServer;
 import io.debezium.platform.domain.views.flat.DestinationFlat;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.domain.views.flat.SourceFlat;
-import io.debezium.platform.environment.operator.configuration.TableNameResolver;
+import io.debezium.platform.environment.operator.PipelineMapper;
 
 /**
  * Unit tests for {@link HostPipelineMapper}.
  *
- * <p>Plain JUnit 5 tests with no {@code @QuarkusTest}. The
- * {@link PipelineConfigGroup} and {@link PipelineFlat} are mocked
- * directly. This verifies:
+ * <p>Plain JUnit 5 tests with no {@code @QuarkusTest}. The operator's
+ * {@link PipelineMapper} is mocked to return a known configuration map.
+ *
+ * <p>This verifies:
  * <ul>
- *   <li>Source connector class mapping</li>
- *   <li>Source connection config with prefix resolution</li>
- *   <li>Sink type resolution (FQCN to short name)</li>
- *   <li>Offset and schema history config embedding</li>
+ *   <li>Offset storage is overridden from JDBC to file-based</li>
+ *   <li>Schema history is overridden from JDBC to file-based</li>
+ *   <li>Original properties from operator mapper are preserved</li>
  *   <li>Deterministic key ordering (TreeMap)</li>
  *   <li>SHA-256 hash stability</li>
- *   <li>Signal and notification channel defaults</li>
  * </ul>
  */
 class HostPipelineMapperTest {
 
-    private PipelineConfigGroup pipelineConfigGroup;
-    private TableNameResolver tableNameResolver;
+    private PipelineMapper operatorMapper;
     private HostPipelineMapper mapper;
 
     @BeforeEach
     void setUp() {
-        pipelineConfigGroup = mock(PipelineConfigGroup.class);
-        tableNameResolver = new TableNameResolver();
-
-        // Wire offset storage config
-        OffsetStorageConfigGroup offsetStorage = mock(OffsetStorageConfigGroup.class);
-        when(offsetStorage.type()).thenReturn("io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore");
-        when(offsetStorage.config()).thenReturn(Map.of(
-                "jdbc.connection.url", "jdbc:postgresql://localhost:5432/debezium",
-                "jdbc.connection.user", "debezium",
-                "jdbc.connection.password", "debezium",
-                "jdbc.offset.table.name", "@{pipeline_name}_offset"));
-
-        OffsetConfigGroup offsetConfig = mock(OffsetConfigGroup.class);
-        when(offsetConfig.storage()).thenReturn(offsetStorage);
-        when(pipelineConfigGroup.offset()).thenReturn(offsetConfig);
-
-        // Wire schema history config
-        SchemaHistoryConfigGroup schemaConfig = mock(SchemaHistoryConfigGroup.class);
-        when(schemaConfig.internal()).thenReturn("io.debezium.storage.jdbc.history.JdbcSchemaHistory");
-        when(schemaConfig.config()).thenReturn(Map.of(
-                "jdbc.connection.url", "jdbc:postgresql://localhost:5432/debezium",
-                "jdbc.connection.user", "debezium",
-                "jdbc.connection.password", "debezium",
-                "jdbc.schema.history.table.name", "@{pipeline_name}_schema_history"));
-
-        when(pipelineConfigGroup.schema()).thenReturn(schemaConfig);
-
-        mapper = new HostPipelineMapper(pipelineConfigGroup, tableNameResolver);
+        operatorMapper = mock(PipelineMapper.class);
+        mapper = new HostPipelineMapper(operatorMapper);
     }
 
     @Test
-    void mapProducesSourceConnectorClass() {
+    void mapOverridesOffsetStorageToFileBased() {
         PipelineFlat pipeline = buildMinimalPipeline();
+        stubOperatorMapper(pipeline, Map.of(
+                "debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector",
+                "debezium.source.offset.storage", "io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore",
+                "debezium.source.offset.storage.jdbc.connection.url", "jdbc:postgresql://localhost:5432/debezium",
+                "debezium.source.offset.storage.jdbc.connection.user", "debezium",
+                "debezium.source.offset.storage.jdbc.offset.table.name", "test_pipeline_offset",
+                "debezium.sink.type", "kafka"));
 
         HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
 
         assertThat(result.propertiesContent())
-                .contains("debezium.source.connector.class=io.debezium.connector.postgresql.PostgresConnector");
+                .contains("debezium.source.offset.storage=org.apache.kafka.connect.storage.FileOffsetBackingStore")
+                .contains("debezium.source.offset.storage.file.filename=/debezium/data/offsets.dat")
+                // JDBC offset properties must be removed
+                .doesNotContain("JdbcOffsetBackingStore")
+                .doesNotContain("jdbc.connection.url")
+                .doesNotContain("jdbc.offset.table.name");
     }
 
     @Test
-    void mapProducesFormatDefaults() {
+    void mapOverridesSchemaHistoryToFileBased() {
         PipelineFlat pipeline = buildMinimalPipeline();
+        stubOperatorMapper(pipeline, Map.of(
+                "debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector",
+                "debezium.source.schema.history.internal", "io.debezium.storage.jdbc.history.JdbcSchemaHistory",
+                "debezium.source.schema.history.internal.jdbc.connection.url", "jdbc:postgresql://localhost:5432/debezium",
+                "debezium.source.schema.history.internal.jdbc.schema.history.table.name", "test_pipeline_schema_history",
+                "debezium.sink.type", "kafka"));
 
         HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
 
         assertThat(result.propertiesContent())
+                .contains("debezium.source.schema.history.internal=io.debezium.storage.file.history.FileSchemaHistory")
+                .contains("debezium.source.schema.history.internal.file.filename=/debezium/data/schema-history.dat")
+                // JDBC schema history properties must be removed
+                .doesNotContain("JdbcSchemaHistory")
+                .doesNotContain("jdbc.schema.history.table.name");
+    }
+
+    @Test
+    void mapPreservesNonOverriddenProperties() {
+        PipelineFlat pipeline = buildMinimalPipeline();
+        stubOperatorMapper(pipeline, Map.of(
+                "debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector",
+                "debezium.source.database.hostname", "db.example.com",
+                "debezium.source.database.port", "5432",
+                "debezium.sink.type", "kafka",
+                "debezium.sink.kafka.producer.bootstrap.servers", "kafka:9092",
+                "debezium.format.key", "json",
+                "debezium.format.value", "json"));
+
+        HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
+
+        assertThat(result.propertiesContent())
+                .contains("debezium.source.connector.class=io.debezium.connector.postgresql.PostgresConnector")
+                .contains("debezium.source.database.hostname=db.example.com")
+                .contains("debezium.source.database.port=5432")
+                .contains("debezium.sink.type=kafka")
+                .contains("debezium.sink.kafka.producer.bootstrap.servers=kafka:9092")
                 .contains("debezium.format.key=json")
                 .contains("debezium.format.value=json");
     }
 
     @Test
-    void mapProducesSourceConnectionConfigWithDatabasePrefix() {
-        PipelineFlat pipeline = buildMinimalPipeline();
-
-        HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
-
-        assertThat(result.propertiesContent())
-                .contains("debezium.source.database.hostname=db.example.com")
-                .contains("debezium.source.database.port=5432");
-    }
-
-    @Test
-    void mapResolvesSinkFqcnToShortName() {
-        PipelineFlat pipeline = buildMinimalPipeline();
-
-        HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
-
-        assertThat(result.propertiesContent())
-                .contains("debezium.sink.type=kafka");
-    }
-
-    @Test
-    void mapProducesSinkConnectionConfigWithProducerPrefix() {
-        PipelineFlat pipeline = buildMinimalPipeline();
-
-        HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
-
-        assertThat(result.propertiesContent())
-                .contains("debezium.sink.kafka.producer.bootstrap.servers=kafka:9092");
-    }
-
-    @Test
-    void mapIncludesOffsetStorageConfig() {
-        PipelineFlat pipeline = buildMinimalPipeline();
-
-        HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
-
-        assertThat(result.propertiesContent())
-                .contains("debezium.source.offset.storage=io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore")
-                .contains("debezium.source.offset.storage.jdbc.connection.url=jdbc:postgresql://localhost:5432/debezium");
-    }
-
-    @Test
-    void mapResolvesTableNamePlaceholders() {
-        PipelineFlat pipeline = buildMinimalPipeline();
-
-        HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
-
-        // @{pipeline_name} should be resolved to the pipeline name "test-pipeline"
-        assertThat(result.propertiesContent())
-                .contains("debezium.source.offset.storage.jdbc.offset.table.name=test_pipeline_offset");
-    }
-
-    @Test
-    void mapIncludesSchemaHistoryConfig() {
-        PipelineFlat pipeline = buildMinimalPipeline();
-
-        HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
-
-        assertThat(result.propertiesContent())
-                .contains("debezium.source.schema.history.internal=io.debezium.storage.jdbc.history.JdbcSchemaHistory")
-                .contains("debezium.source.schema.history.internal.jdbc.connection.url=jdbc:postgresql://localhost:5432/debezium");
-    }
-
-    @Test
-    void mapIncludesSignalAndNotificationDefaults() {
-        PipelineFlat pipeline = buildMinimalPipeline();
-
-        HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
-
-        assertThat(result.propertiesContent())
-                .contains("debezium.source.signal.enabled.channels=source,in-process")
-                .contains("debezium.source.notification.enabled.channels=log");
-    }
-
-    @Test
-    void mapDefaultsOverrideUserSignalConfig() {
-        // Build a pipeline where the user explicitly sets a custom signal channel
-        Connection sourceConnection = mock(Connection.class);
-        when(sourceConnection.getType()).thenReturn(ConnectionEntity.Type.POSTGRESQL);
-        when(sourceConnection.getConfig()).thenReturn(Map.of(
-                "hostname", "db.example.com",
-                "port", 5432));
-
-        SourceFlat source = mock(SourceFlat.class);
-        when(source.getType()).thenReturn("io.debezium.connector.postgresql.PostgresConnector");
-        when(source.getConnection()).thenReturn(sourceConnection);
-        // User tries to override the signal channels
-        when(source.getConfig()).thenReturn(Map.of(
-                "signal.enabled.channels", "source,in-process,jmx",
-                "notification.enabled.channels", "jmx"));
-
-        Connection sinkConnection = mock(Connection.class);
-        when(sinkConnection.getType()).thenReturn(ConnectionEntity.Type.KAFKA);
-        when(sinkConnection.getConfig()).thenReturn(Map.of("bootstrap.servers", "kafka:9092"));
-
-        DestinationFlat destination = mock(DestinationFlat.class);
-        when(destination.getType()).thenReturn("io.debezium.server.kafka.KafkaChangeConsumer");
-        when(destination.getConnection()).thenReturn(sinkConnection);
-        when(destination.getConfig()).thenReturn(Collections.emptyMap());
-
-        PipelineFlat pipeline = mock(PipelineFlat.class);
-        when(pipeline.getId()).thenReturn(99L);
-        when(pipeline.getName()).thenReturn("override-test");
-        when(pipeline.getSource()).thenReturn(source);
-        when(pipeline.getDestination()).thenReturn(destination);
-        when(pipeline.getTransforms()).thenReturn(List.of());
-        when(pipeline.getDefaultLogLevel()).thenReturn("INFO");
-        when(pipeline.getLogLevels()).thenReturn(Collections.emptyMap());
-
-        HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
-
-        // Platform defaults must ALWAYS win — user cannot override these
-        assertThat(result.propertiesContent())
-                .contains("debezium.source.signal.enabled.channels=source,in-process")
-                .contains("debezium.source.notification.enabled.channels=log")
-                .doesNotContain("jmx");
-    }
-
-    @Test
-    void mapIncludesQuarkusLogging() {
-        PipelineFlat pipeline = buildMinimalPipeline();
-
-        HostPipelineMapper.MappedConfig result = mapper.map(pipeline);
-
-        assertThat(result.propertiesContent())
-                .contains("quarkus.log.level=INFO")
-                .contains("quarkus.log.min-level=TRACE")
-                .contains("quarkus.log.console.json=false");
-    }
-
-    @Test
     void mapProducesDeterministicOutput() {
         PipelineFlat pipeline = buildMinimalPipeline();
+        stubOperatorMapper(pipeline, Map.of(
+                "debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector",
+                "debezium.sink.type", "kafka"));
 
         HostPipelineMapper.MappedConfig first = mapper.map(pipeline);
         HostPipelineMapper.MappedConfig second = mapper.map(pipeline);
@@ -246,34 +131,15 @@ class HostPipelineMapperTest {
     @Test
     void mapProducesStableHash() {
         PipelineFlat pipeline = buildMinimalPipeline();
+        stubOperatorMapper(pipeline, Map.of(
+                "debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector",
+                "debezium.sink.type", "kafka"));
 
         HostPipelineMapper.MappedConfig first = mapper.map(pipeline);
         HostPipelineMapper.MappedConfig second = mapper.map(pipeline);
 
         assertThat(first.configHash()).isEqualTo(second.configHash());
         assertThat(first.configHash()).hasSize(64); // SHA-256 = 32 bytes = 64 hex chars
-    }
-
-    @Test
-    void resolveSinkTypeHandlesKnownOverrides() {
-        assertThat(HostPipelineMapper.resolveSinkType(
-                "io.debezium.server.pubsub.PubSubLiteChangeConsumer")).isEqualTo("pubsublite");
-        assertThat(HostPipelineMapper.resolveSinkType(
-                "io.debezium.server.nats.jetstream.NatsJetStreamChangeConsumer")).isEqualTo("nats-jetstream");
-    }
-
-    @Test
-    void resolveSinkTypeHandlesStandardFqcn() {
-        assertThat(HostPipelineMapper.resolveSinkType(
-                "io.debezium.server.kafka.KafkaChangeConsumer")).isEqualTo("kafka");
-        assertThat(HostPipelineMapper.resolveSinkType(
-                "io.debezium.server.kinesis.KinesisChangeConsumer")).isEqualTo("kinesis");
-    }
-
-    @Test
-    void resolveSinkTypePassesThroughShortNames() {
-        assertThat(HostPipelineMapper.resolveSinkType("kafka")).isEqualTo("kafka");
-        assertThat(HostPipelineMapper.resolveSinkType(null)).isNull();
     }
 
     @Test
@@ -286,38 +152,26 @@ class HostPipelineMapperTest {
         assertThat(hash1).hasSize(64);
     }
 
-    // ── Helper: build a minimal PipelineFlat mock ──
+    // ── Helpers ──
+
+    @SuppressWarnings("unchecked")
+    private void stubOperatorMapper(PipelineFlat pipeline, Map<String, String> configMap) {
+        DebeziumServer debeziumServer = mock(DebeziumServer.class);
+        ConfigMapping<DebeziumServer> configMapping = mock(ConfigMapping.class);
+        when(configMapping.getAsMapSimple()).thenReturn(configMap);
+        when(debeziumServer.asConfiguration()).thenReturn(configMapping);
+        when(operatorMapper.map(pipeline)).thenReturn(debeziumServer);
+    }
 
     private PipelineFlat buildMinimalPipeline() {
-        // Source connection
-        Connection sourceConnection = mock(Connection.class);
-        when(sourceConnection.getType()).thenReturn(ConnectionEntity.Type.POSTGRESQL);
-        when(sourceConnection.getConfig()).thenReturn(Map.of(
-                "hostname", "db.example.com",
-                "port", 5432,
-                "username", "admin",
-                "password", "secret",
-                "database", "mydb"));
-
-        // Source
         SourceFlat source = mock(SourceFlat.class);
         when(source.getType()).thenReturn("io.debezium.connector.postgresql.PostgresConnector");
-        when(source.getConnection()).thenReturn(sourceConnection);
-        when(source.getConfig()).thenReturn(Map.of("topic.prefix", "test-topic"));
+        when(source.getConfig()).thenReturn(Collections.emptyMap());
 
-        // Sink connection
-        Connection sinkConnection = mock(Connection.class);
-        when(sinkConnection.getType()).thenReturn(ConnectionEntity.Type.KAFKA);
-        when(sinkConnection.getConfig()).thenReturn(Map.of(
-                "bootstrap.servers", "kafka:9092"));
-
-        // Sink
         DestinationFlat destination = mock(DestinationFlat.class);
         when(destination.getType()).thenReturn("io.debezium.server.kafka.KafkaChangeConsumer");
-        when(destination.getConnection()).thenReturn(sinkConnection);
         when(destination.getConfig()).thenReturn(Collections.emptyMap());
 
-        // Pipeline
         PipelineFlat pipeline = mock(PipelineFlat.class);
         when(pipeline.getId()).thenReturn(1L);
         when(pipeline.getName()).thenReturn("test-pipeline");
