@@ -249,7 +249,7 @@ class OperatorPipelineStatusWatcherTest {
         verify(statusChangedEvent).fire(eventCaptor.capture());
         assertThat(eventCaptor.getValue().pipelineId()).isEqualTo(7L);
         assertThat(eventCaptor.getValue().status()).isEqualTo(PipelineStatus.FAILED);
-        assertThat(eventCaptor.getValue().message()).isEqualTo("Pipeline failed unexpectedly. Check the server pod logs for details.");
+        assertThat(eventCaptor.getValue().message()).isEqualTo("Pipeline failed unexpectedly. Check the pipeline logs for details.");
     }
 
     @Test
