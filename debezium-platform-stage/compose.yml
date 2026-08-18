@@ -1,6 +1,6 @@
 services:
   conductor:
-    image: quay.io/debezium/platform-conductor:nightly
+    image: quay.io/mvitale/platform-conductor:alerting
     pull_policy: always
     user: "0"
     depends_on:

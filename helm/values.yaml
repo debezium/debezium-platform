@@ -10,7 +10,7 @@ stage:
   image: quay.io/debezium/platform-stage:nightly
   imagePullPolicy: IfNotPresent
 conductor:
-  image: quay.io/debezium/platform-conductor:nightly
+  image: quay.io/mvitale/platform-conductor:alerting
   imagePullPolicy: IfNotPresent
   offset:
     existingConfigMap: ""

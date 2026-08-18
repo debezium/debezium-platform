@@ -1,5 +1,5 @@
 import { screen } from "@testing-library/react";
-import AppBreadcrumb from "./AppBreadcrumb";
+import AppBreadcrumb, { getBreadcrumbTrail } from "./AppBreadcrumb";
 import { expect, test, vi } from "vitest";
 import { render } from "../__test__/unit/test-utils";
 
@@ -55,4 +55,14 @@ test("does not render monitoring breadcrumb when tab is disabled", () => {
   render(<AppBreadcrumb />, { initialEntries: ["/pipeline/123/monitoring"] });
 
   expect(screen.queryByText("Monitoring")).not.toBeInTheDocument();
+});
+
+test("getBreadcrumbTrail returns an empty trail for routes with no breadcrumb", () => {
+  expect(getBreadcrumbTrail("/alerts/rules")).toEqual([]);
+});
+
+test("renders nothing (no breadcrumb landmark at all) for routes with no breadcrumb", () => {
+  render(<AppBreadcrumb />, { initialEntries: ["/alerts/rules"] });
+
+  expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
 });

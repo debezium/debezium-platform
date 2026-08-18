@@ -29,6 +29,7 @@ import { fetchData } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { Catalog, CatalogApiResponse } from "../../apis/types";
 import CatalogSkeleton from "@components/CatalogSkeleton";
+import { PageHeader } from "@patternfly/react-component-groups";
 
 const useDestinationCatalogTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
@@ -131,11 +132,11 @@ const DestinationCatalog: React.FunctionComponent<ISinkProps> = () => {
 
   return (
     <>
-      <PageSection isWidthLimited>
-        <Content component="h1">{t("destination:catalog.title")}</Content>
-        <Content component="p">
-          {t("destination:catalog.description")}
-        </Content>
+      <PageHeader
+            title={t("destination:catalog.title")}
+            subtitle={t("destination:catalog.description")}
+          />
+      <PageSection isWidthLimited style={{paddingTop: "0px"}}>
         <Toolbar
           id="toolbar-sticky"
           inset={{ default: "insetNone" }}

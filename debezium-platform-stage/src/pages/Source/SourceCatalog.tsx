@@ -134,7 +134,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
         title={t('source:catalog.title')}
         subtitle={t('source:catalog.description')}
       />
-      <PageSection isWidthLimited>
+      <PageSection isWidthLimited style={{paddingTop: "0px"}}>
         <Toolbar
           id="toolbar-sticky"
           inset={{ default: "insetNone" }}

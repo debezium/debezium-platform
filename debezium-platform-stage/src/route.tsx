@@ -5,6 +5,7 @@ import {
   RhUiDataSinkIcon,
   RhUiDataSourceIcon,
   RhUiInfrastructureIcon,
+  RhUiNotificationIcon,
 } from "@patternfly/react-icons";
 import { RhUiPathIcon as PipelineIcon } from "@patternfly/react-icons";
 import { ServiceCatalogIcon as VaultIcon } from "@patternfly/react-icons";
@@ -28,13 +29,14 @@ import {
 } from "./pages/Pipeline";
 import { Transforms } from "./pages/Transforms";
 import { Vaults } from "./pages/Vault";
+import { Alerts } from "./pages/Alerts";
 import { CreateTransforms } from "./pages/Transforms/CreateTransforms";
 import { EditTransforms } from "./pages/Transforms/EditTransforms";
 import { Connections } from "./pages/Connection/Connections";
 import { CreateConnection } from "./pages/Connection/CreateConnection";
 import { ConnectionsCatalog } from "./pages/Connection/ConnectionsCatalog";
 import { EditConnection } from "./pages/Connection/EditConnection";
-import { FeatureFlag } from "./utils/featureFlag";
+import { FeatureFlag, isRouteNavVisible } from "./utils/featureFlag";
 
 export interface IAppRoute {
   label?: string; // Excluding the label will exclude the route from the nav sidebar in AppLayout
@@ -50,10 +52,28 @@ export interface IAppRoute {
 
 export interface IAppRouteGroup {
   label: string;
+  icon?: React.ReactElement;
   routes: IAppRoute[];
 }
 
 export type AppRouteConfig = IAppRoute | IAppRouteGroup;
+
+
+export const isRouteGroup = (route: AppRouteConfig): route is IAppRouteGroup =>
+  Array.isArray((route as IAppRouteGroup).routes);
+
+// A leaf route is only worth navigating to if it has a label and isn't feature-hidden.
+export const isNavRouteVisible = (route: IAppRoute): boolean =>
+  !!route.label && isRouteNavVisible(route.featureFlag);
+
+export const findRouteGroupForPath = (
+  pathname: string
+): IAppRouteGroup | undefined =>
+  routes.find(
+    (route): route is IAppRouteGroup =>
+      isRouteGroup(route) &&
+      route.routes.some((child) => pathname.includes(child.navSection))
+  );
 
 const routes: AppRouteConfig[] = [
   {
@@ -187,6 +207,45 @@ const routes: AppRouteConfig[] = [
     path: "/connections/:connectionId",
     navSection: "connections",
     title: `${AppBranding} | Connections`,
+  },
+  {
+    // Intentionally no `label`: this is a hidden fallback so a bare "/alerts" URL still
+    // renders a component (defaults to the Rules tab). The nav-visible entry point is the
+    // "Alerts" IAppRouteGroup below - giving this route a label would show a duplicate item.
+    component: Alerts,
+    path: "/alerts",
+    navSection: "alerts",
+    title: `${AppBranding} | Alerts`,
+  },
+  {
+    label: "Alerts",
+    icon: <RhUiNotificationIcon style={{ outline: "none" }} />,
+    routes: [
+            {
+        component: Alerts,
+        label: "Events",
+        path: "/alerts/history",
+        navSection: "alerts",
+        title: `${AppBranding} | Alert events`,
+        featureFlag: "Alerts",
+      },
+      {
+        component: Alerts,
+        label: "Rules",
+        path: "/alerts/rules",
+        navSection: "alerts",
+        title: `${AppBranding} | Alert rules`,
+        featureFlag: "Alerts",
+      },
+      {
+        component: Alerts,
+        label: "Channels",
+        path: "/alerts/channels",
+        navSection: "alerts",
+        title: `${AppBranding} | Alert channels`,
+        featureFlag: "Alerts",
+      },
+    ],
   },
   {
     component: Vaults,
