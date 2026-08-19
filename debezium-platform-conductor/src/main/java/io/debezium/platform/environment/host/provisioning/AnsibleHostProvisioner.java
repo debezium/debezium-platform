@@ -122,12 +122,12 @@ public class AnsibleHostProvisioner implements HostProvisioner {
     List<String> buildProvisionCommand(String sshAlias, String agentToken) {
         String playbook = resolvePlaybookPath(hostConfig.ansiblePlaybookPath(), SETUP_RESOURCE);
         String adHocInventory = sshAlias + AD_HOC_INVENTORY_SUFFIX;
-        String tokenVar = AGENT_TOKEN_VAR_PREFIX + agentToken;
+        String extraVars = AGENT_TOKEN_VAR_PREFIX + agentToken + " ansible_become_timeout=60";
         String sshArgs = SSH_CONFIG_FLAG + " " + resolveSshConfigPath();
         return List.of(ANSIBLE_PLAYBOOK_BINARY, playbook,
                 INVENTORY_FLAG, adHocInventory,
                 SSH_EXTRA_ARGS_FLAG, sshArgs,
-                EXTRA_VARS_FLAG, tokenVar);
+                EXTRA_VARS_FLAG, extraVars);
     }
 
     /**
@@ -215,6 +215,7 @@ public class AnsibleHostProvisioner implements HostProvisioner {
     Process launchProcess(List<String> command) throws IOException {
         ProcessBuilder builder = new ProcessBuilder(command)
                 .redirectErrorStream(true);
+        builder.environment().put("ANSIBLE_BECOME_TIMEOUT", "60");
         builder.environment().put("ANSIBLE_CALLBACKS_ENABLED",
                 "ansible.posix.profile_tasks,ansible.posix.timer");
         return builder.start();

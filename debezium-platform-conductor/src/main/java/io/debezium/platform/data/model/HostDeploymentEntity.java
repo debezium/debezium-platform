@@ -5,6 +5,8 @@
  */
 package io.debezium.platform.data.model;
 
+import java.time.Instant;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,6 +15,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 /**
  * Links a pipeline to a specific host deployment (one active deployment per pipeline).
@@ -34,6 +39,7 @@ public class HostDeploymentEntity {
     private Long id;
 
     @ManyToOne
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "pipeline_id", unique = true, nullable = false)
     private PipelineEntity pipeline;
 
@@ -56,6 +62,9 @@ public class HostDeploymentEntity {
 
     @Column(name = "config_hash", nullable = false)
     private String configHash;
+
+    @Column(name = "deployed_at", nullable = false)
+    private Instant deployedAt;
 
     public Long getId() {
         return id;
@@ -119,5 +128,13 @@ public class HostDeploymentEntity {
 
     public void setConfigHash(String configHash) {
         this.configHash = configHash;
+    }
+
+    public Instant getDeployedAt() {
+        return deployedAt;
+    }
+
+    public void setDeployedAt(Instant deployedAt) {
+        this.deployedAt = deployedAt;
     }
 }

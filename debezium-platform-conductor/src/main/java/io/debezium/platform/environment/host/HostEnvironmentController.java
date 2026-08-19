@@ -38,19 +38,21 @@ import io.quarkus.arc.lookup.LookupIfProperty;
 public class HostEnvironmentController implements EnvironmentController {
 
     private final Logger logger;
+    private final HostPipelineController pipelineController;
     private final HostVaultController vaultController;
 
-    public HostEnvironmentController(Logger logger, HostVaultController vaultController) {
+    public HostEnvironmentController(Logger logger,
+                                     HostPipelineController pipelineController,
+                                     HostVaultController vaultController) {
         this.logger = logger;
+        this.pipelineController = pipelineController;
         this.vaultController = vaultController;
         logger.info("Host deployment mode activated");
     }
 
     @Override
     public PipelineController pipelines() {
-        // TODO: Replace with HostPipelineController
-        throw new UnsupportedOperationException(
-                "Host pipeline controller not yet implemented");
+        return pipelineController;
     }
 
     @Override

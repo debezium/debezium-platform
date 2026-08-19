@@ -14,6 +14,9 @@
   # gather_facts: false because the target host may not have Python yet.
   gather_facts: false
 
+  vars:
+    ansible_become_timeout: 60
+
   tasks:
     # Ansible's own modules (including the 'setup' module that gathers facts)
     # require Python on the target host. Minimal server images often ship
