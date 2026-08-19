@@ -116,7 +116,7 @@ public class OperatorPipelineStatusWatcher {
 
     Optional<DebeziumServerStatusChanged> reconcile(DebeziumServer ds) {
         return extractPipelineId(ds).flatMap(pipelineId -> mapConditionsToStatus(ds).map(status -> {
-            var message = extractErrorMessage(ds, status);
+            var message = extractErrorMessage(ds, status).orElse(null);
             LOGGER.debug("Pipeline {} status: {}", pipelineId, status);
             return new DebeziumServerStatusChanged(pipelineId, status, message);
         }));
@@ -144,7 +144,7 @@ public class OperatorPipelineStatusWatcher {
         var status = resolvedStatus.get();
         var message = failedViaTransition
                 ? TRANSITION_FAILED_MESSAGE
-                : extractErrorMessage(newDs, status);
+                : extractErrorMessage(newDs, status).orElse(null);
         return extractPipelineId(newDs).map(pipelineId -> {
             LOGGER.info("Pipeline {} status changed from {} to {}", pipelineId,
                     oldStatus.orElse(null), status);
@@ -200,21 +200,20 @@ public class OperatorPipelineStatusWatcher {
         }
     }
 
-    private String extractErrorMessage(DebeziumServer ds, PipelineStatus status) {
+    private Optional<String> extractErrorMessage(DebeziumServer ds, PipelineStatus status) {
         if (status != PipelineStatus.FAILED) {
-            return null;
+            return Optional.empty();
         }
         var conditions = ds.getStatus().getConditions();
         if (conditions == null) {
-            return null;
+            return Optional.empty();
         }
         return conditions.stream()
                 .filter(c -> CONDITION_READY.equals(c.getType()) || CONDITION_RUNNING.equals(c.getType()))
                 .filter(c -> Condition.FALSE.equals(c.getStatus()))
                 .map(Condition::getMessage)
                 .filter(m -> m != null && !m.isBlank())
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     private boolean hasCondition(DebeziumServer ds, String type, String status) {
