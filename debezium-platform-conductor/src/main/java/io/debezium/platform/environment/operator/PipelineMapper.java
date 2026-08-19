@@ -35,6 +35,10 @@ import io.debezium.operator.api.model.runtime.Runtime;
 import io.debezium.operator.api.model.runtime.RuntimeApiBuilder;
 import io.debezium.operator.api.model.runtime.RuntimeBuilder;
 import io.debezium.operator.api.model.runtime.metrics.Metrics;
+import io.debezium.operator.api.model.runtime.templates.ContainerTemplate;
+import io.debezium.operator.api.model.runtime.templates.Probe;
+import io.debezium.operator.api.model.runtime.templates.Probes;
+import io.debezium.operator.api.model.runtime.templates.Templates;
 import io.debezium.operator.api.model.source.Offset;
 import io.debezium.operator.api.model.source.OffsetBuilder;
 import io.debezium.operator.api.model.source.SchemaHistory;
@@ -154,9 +158,34 @@ public class PipelineMapper {
     }
 
     private Runtime createRuntime() {
+        var healthConfig = pipelineConfigGroup.health();
+
+        var livenessProbe = new Probe();
+        livenessProbe.setInitialDelaySeconds(healthConfig.liveness().initialDelaySeconds());
+        livenessProbe.setPeriodSeconds(healthConfig.liveness().periodSeconds());
+        livenessProbe.setTimeoutSeconds(healthConfig.liveness().timeoutSeconds());
+        livenessProbe.setFailureThreshold(healthConfig.liveness().failureThreshold());
+
+        var readinessProbe = new Probe();
+        readinessProbe.setInitialDelaySeconds(healthConfig.readiness().initialDelaySeconds());
+        readinessProbe.setPeriodSeconds(healthConfig.readiness().periodSeconds());
+        readinessProbe.setTimeoutSeconds(healthConfig.readiness().timeoutSeconds());
+        readinessProbe.setFailureThreshold(healthConfig.readiness().failureThreshold());
+
+        var probes = new Probes();
+        probes.setLiveness(livenessProbe);
+        probes.setReadiness(readinessProbe);
+
+        var container = new ContainerTemplate();
+        container.setProbes(probes);
+
+        var templates = new Templates();
+        templates.setContainer(container);
+
         return new RuntimeBuilder()
                 .withApi(new RuntimeApiBuilder().withEnabled().build())
                 .withMetrics(metrics)
+                .withTemplates(templates)
                 .build();
     }
 

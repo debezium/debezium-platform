@@ -250,6 +250,72 @@
                     },
                     "default": {},
                     "description": "Map of labels to apply to DebeziumServer custom resources created by pipelines"
+                },
+                "health": {
+                    "type": "object",
+                    "description": "Health probe configuration for Debezium Server pods created by pipelines",
+                    "properties": {
+                        "liveness": {
+                            "type": "object",
+                            "description": "Liveness probe settings for Debezium Server pods",
+                            "properties": {
+                                "initialDelaySeconds": {
+                                    "type": "integer",
+                                    "default": 30,
+                                    "minimum": 0,
+                                    "description": "Seconds before the first liveness probe"
+                                },
+                                "periodSeconds": {
+                                    "type": "integer",
+                                    "default": 10,
+                                    "minimum": 1,
+                                    "description": "Interval between liveness probes"
+                                },
+                                "timeoutSeconds": {
+                                    "type": "integer",
+                                    "default": 10,
+                                    "minimum": 1,
+                                    "description": "Timeout for each liveness probe"
+                                },
+                                "failureThreshold": {
+                                    "type": "integer",
+                                    "default": 3,
+                                    "minimum": 1,
+                                    "description": "Consecutive failures before the container is restarted"
+                                }
+                            }
+                        },
+                        "readiness": {
+                            "type": "object",
+                            "description": "Readiness probe settings for Debezium Server pods",
+                            "properties": {
+                                "initialDelaySeconds": {
+                                    "type": "integer",
+                                    "default": 10,
+                                    "minimum": 0,
+                                    "description": "Seconds before the first readiness probe"
+                                },
+                                "periodSeconds": {
+                                    "type": "integer",
+                                    "default": 10,
+                                    "minimum": 1,
+                                    "description": "Interval between readiness probes"
+                                },
+                                "timeoutSeconds": {
+                                    "type": "integer",
+                                    "default": 10,
+                                    "minimum": 1,
+                                    "description": "Timeout for each readiness probe"
+                                },
+                                "failureThreshold": {
+                                    "type": "integer",
+                                    "default": 3,
+                                    "minimum": 1,
+                                    "description": "Consecutive failures before the container is marked unready"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },

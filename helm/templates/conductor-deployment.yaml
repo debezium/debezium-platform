@@ -71,6 +71,22 @@ spec:
             - name: PIPELINE_SERVER_IMAGE
               value: {{ .Values.server.image }}
 {{- end }}
+            - name: PIPELINE_HEALTH_LIVENESS_INITIAL_DELAY_SECONDS
+              value: {{ .Values.pipeline.health.liveness.initialDelaySeconds | quote }}
+            - name: PIPELINE_HEALTH_LIVENESS_PERIOD_SECONDS
+              value: {{ .Values.pipeline.health.liveness.periodSeconds | quote }}
+            - name: PIPELINE_HEALTH_LIVENESS_TIMEOUT_SECONDS
+              value: {{ .Values.pipeline.health.liveness.timeoutSeconds | quote }}
+            - name: PIPELINE_HEALTH_LIVENESS_FAILURE_THRESHOLD
+              value: {{ .Values.pipeline.health.liveness.failureThreshold | quote }}
+            - name: PIPELINE_HEALTH_READINESS_INITIAL_DELAY_SECONDS
+              value: {{ .Values.pipeline.health.readiness.initialDelaySeconds | quote }}
+            - name: PIPELINE_HEALTH_READINESS_PERIOD_SECONDS
+              value: {{ .Values.pipeline.health.readiness.periodSeconds | quote }}
+            - name: PIPELINE_HEALTH_READINESS_TIMEOUT_SECONDS
+              value: {{ .Values.pipeline.health.readiness.timeoutSeconds | quote }}
+            - name: PIPELINE_HEALTH_READINESS_FAILURE_THRESHOLD
+              value: {{ .Values.pipeline.health.readiness.failureThreshold | quote }}
 {{- if .Values.monitoring.otel.enabled }}
             - name: PIPELINE_MONITORING_OTEL_ENABLED
               value: "true"
