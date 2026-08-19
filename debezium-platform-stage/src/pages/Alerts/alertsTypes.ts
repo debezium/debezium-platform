@@ -1,7 +1,8 @@
-// Types mirror the REST contracts documented in DDD-57 (Alerting for Debezium Platform).
-// The backend for these endpoints does not exist yet - this file is the "contract" the
-// mock data layer and forms are built against so swapping in real `fetch` calls later
-// (see src/apis/apis.tsx) should not require changing any UI component.
+// Types mirror the Conductor alerting REST contracts (`/api/alerts/*`).
+// `forDuration` and `evaluationWindow` are durations in seconds on the wire
+// (Jackson serializes `java.time.Duration` as a fractional-second number).
+// The form still uses ISO-8601 option values (`PT5M`); convert at the API boundary
+// with `isoDurationToSeconds` / `secondsToIsoDuration`.
 
 export type AlertOperator =
   | "GREATER_THAN"
@@ -23,23 +24,42 @@ export interface NotificationChannelRef {
   type: NotificationChannelType;
 }
 
+/** Response body of `GET/POST/PUT /api/alerts/rules`. */
 export interface AlertRule {
   id: number;
   name: string;
-  description?: string;
+  description?: string | null;
   panelId: string;
   panelTitle: string;
-  panelUnit: string;
   operator: AlertOperator;
   threshold: number;
-  forDuration: string;
+  /** Duration in seconds. */
+  forDuration: number;
   reduceFunction: ReduceFunction;
-  evaluationWindow: string;
+  /** Duration in seconds. Ignored by the backend when `reduceFunction` is `LAST`. */
+  evaluationWindow: number;
   severity: AlertSeverity;
   enabled: boolean;
   channels: NotificationChannelRef[];
   createdAt: string;
   updatedAt: string;
+}
+
+/** Create/update request body of `POST/PUT /api/alerts/rules`. */
+export interface AlertRuleRequest {
+  name: string;
+  description?: string;
+  panelId: string;
+  operator: AlertOperator;
+  threshold: number;
+  /** Duration in seconds. */
+  forDuration: number;
+  reduceFunction: ReduceFunction;
+  /** Duration in seconds. */
+  evaluationWindow: number;
+  severity: AlertSeverity;
+  enabled: boolean;
+  channelIds: number[];
 }
 
 export interface EmailChannelConfig {
@@ -65,7 +85,7 @@ export interface NotificationChannel {
   updatedAt: string;
 }
 
-export type AlertEventStatus = "firing" | "resolved";
+export type AlertEventStatus = "FIRING" | "RESOLVED";
 
 export interface AlertEvent {
   id: number;
@@ -82,6 +102,38 @@ export interface AlertEvent {
   resolvedAt: string | null;
   durationSeconds: number;
   createdAt: string;
+}
+
+// ---- GET /api/alerts/events (paginated) ----
+
+export interface PagedAlertEventResponse {
+  events: AlertEvent[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+// ---- GET /api/alerts/status ----
+
+export type ActiveAlertState = "FIRING" | "PENDING";
+
+export interface ActiveAlert {
+  ruleId: number;
+  ruleName: string;
+  pipelineId: string;
+  state: ActiveAlertState;
+  severity: AlertSeverity;
+  value: number;
+  threshold: number;
+  since: string;
+}
+
+export interface AlertStatusResponse {
+  totalFiring: number;
+  totalPending: number;
+  firingBySeverity: Record<AlertSeverity, number>;
+  activeAlerts: ActiveAlert[];
 }
 
 // ---- Static, frontend-owned option lists (per DDD-57: "not provided by a platform API endpoint") ----
@@ -123,17 +175,39 @@ export const EVALUATION_WINDOW_OPTIONS: { value: string; label: string }[] = [
   { value: "PT1H", label: "1 hour" },
 ];
 
-export const SEVERITY_OPTIONS: { value: AlertSeverity; label: string }[] = [
-  { value: "CRITICAL", label: "Critical" },
-  { value: "WARNING", label: "Warning" },
-  { value: "INFO", label: "Info" },
-];
+export const SEVERITY_OPTIONS: AlertSeverity[] =  ["CRITICAL", "WARNING", "INFO"];
+
+const ISO_DURATION_PATTERN = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/;
+
+/** Convert a frontend ISO-8601 duration option (`PT5M`) to seconds for the API. */
+export const isoDurationToSeconds = (iso: string): number => {
+  const match = iso.match(ISO_DURATION_PATTERN);
+  if (!match) return 0;
+  const hours = Number(match[1] ?? 0);
+  const minutes = Number(match[2] ?? 0);
+  const seconds = Number(match[3] ?? 0);
+  return hours * 3600 + minutes * 60 + seconds;
+};
+
+/** Convert API duration-in-seconds back to an ISO-8601 string for the form selects. */
+export const secondsToIsoDuration = (seconds: number): string => {
+  const total = Math.round(seconds);
+  if (total === 0) return "PT0S";
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+  let iso = "PT";
+  if (hours) iso += `${hours}H`;
+  if (minutes) iso += `${minutes}M`;
+  if (secs) iso += `${secs}S`;
+  return iso;
+};
 
 export const DATE_RANGE_PRESETS = [
-  "Last hour",
+  "Last 6 hours",
+  "Last 12 hours",
   "Last 24 hours",
-  "Last 7 days",
-  "Last 30 days",
+  "Custom",
 ] as const;
 
 export type DateRangePreset = (typeof DATE_RANGE_PRESETS)[number];

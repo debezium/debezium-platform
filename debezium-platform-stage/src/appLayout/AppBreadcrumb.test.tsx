@@ -66,3 +66,17 @@ test("renders nothing (no breadcrumb landmark at all) for routes with no breadcr
 
   expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
 });
+
+test("renders create alert rule breadcrumb", () => {
+  render(<AppBreadcrumb />, { initialEntries: ["/alerts/rules/create_rule"] });
+
+  expect(screen.getByText("Alert rules")).toHaveAttribute("href", "/alerts/rules");
+  expect(screen.getByText("Create rule")).toBeInTheDocument();
+});
+
+test("renders edit alert rule breadcrumb", () => {
+  render(<AppBreadcrumb />, { initialEntries: ["/alerts/rules/14"] });
+
+  expect(screen.getByText("Alert rules")).toHaveAttribute("href", "/alerts/rules");
+  expect(screen.getByText("Edit rule")).toBeInTheDocument();
+});

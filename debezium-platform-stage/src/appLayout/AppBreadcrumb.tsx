@@ -60,6 +60,18 @@ export const getBreadcrumbTrail = (route: string): BreadcrumbTrailItem[] => {
         { url: "/connections", label: "Connections" },
         { url: "#", label: "Edit connection" },
       ];
+    case route.includes("/alerts/rules/create_rule"):
+      return [
+         { url: "/alerts/history", label: "Alerts" },
+        { url: "/alerts/rules", label: "Rules" },
+        { url: "#", label: "Create rule" },
+      ];
+    case route.match(/^\/alerts\/rules\/[^/]+$/) !== null:
+      return [
+         { url: "/alerts/history", label: "Alerts" },
+        { url: "/alerts/rules", label: "Rules" },
+        { url: "#", label: "Edit rule" },
+      ];
     case route === "/pipeline/pipeline_designer":
       return [
         { url: "/pipeline", label: "Pipeline" },

@@ -1,11 +1,11 @@
 // Hardcoded, in-memory seed data for the Alerting POC.
 //
-// The Conductor backend for /api/alerts/* (DDD-57) does not exist yet, so this feature
-// is exercised entirely with local React state seeded from the fixtures below. Shapes
-// mirror the request/response bodies documented in DDD-57 so this file can be deleted
-// once the real endpoints land, without needing to touch the page/form components.
+// Channels don't have their Conductor backend (/api/alerts/channels) wired up
+// yet, so that page is still exercised with local React state seeded from the
+// fixtures below. Rules and History talk to the real /api/alerts/rules|events|status
+// endpoints.
 
-import { AlertEvent, AlertRule, NotificationChannel } from "./alertsTypes";
+import { NotificationChannel } from "./alertsTypes";
 
 export const initialChannels: NotificationChannel[] = [
   {
@@ -32,132 +32,5 @@ export const initialChannels: NotificationChannel[] = [
     enabled: true,
     createdAt: "2026-07-20T09:05:00Z",
     updatedAt: "2026-07-20T09:05:00Z",
-  },
-];
-
-export const initialRules: AlertRule[] = [
-  {
-    id: 1,
-    name: "high-source-lag",
-    description: "Alert when source lag is too high",
-    panelId: "source-lag",
-    panelTitle: "Source Lag",
-    panelUnit: "s",
-    operator: "GREATER_THAN",
-    threshold: 10,
-    forDuration: "PT5M",
-    reduceFunction: "LAST",
-    evaluationWindow: "PT5M",
-    severity: "CRITICAL",
-    enabled: true,
-    channels: [
-      { id: 1, name: "ops-email", type: "EMAIL" },
-      { id: 2, name: "slack-webhook", type: "WEBHOOK" },
-    ],
-    createdAt: "2026-07-21T10:00:00Z",
-    updatedAt: "2026-07-21T10:00:00Z",
-  },
-  {
-    id: 2,
-    name: "queue-pressure",
-    description: "Alert when queue utilization stays high",
-    panelId: "queue-utilization",
-    panelTitle: "Queue Utilization",
-    panelUnit: "%",
-    operator: "GREATER_THAN",
-    threshold: 85,
-    forDuration: "PT2M",
-    reduceFunction: "AVG",
-    evaluationWindow: "PT5M",
-    severity: "WARNING",
-    enabled: true,
-    channels: [{ id: 1, name: "ops-email", type: "EMAIL" }],
-    createdAt: "2026-07-21T10:10:00Z",
-    updatedAt: "2026-07-21T10:10:00Z",
-  },
-  {
-    id: 3,
-    name: "no-events",
-    description: "Alert when a pipeline stops producing events",
-    panelId: "time-since-last-event",
-    panelTitle: "Time Since Last Event",
-    panelUnit: "s",
-    operator: "GREATER_THAN",
-    threshold: 300,
-    forDuration: "PT5M",
-    reduceFunction: "LAST",
-    evaluationWindow: "PT5M",
-    severity: "INFO",
-    enabled: false,
-    channels: [],
-    createdAt: "2026-07-21T10:20:00Z",
-    updatedAt: "2026-07-21T10:20:00Z",
-  },
-];
-
-export const initialEvents: AlertEvent[] = [
-  {
-    id: 42,
-    ruleId: 1,
-    ruleName: "high-source-lag",
-    pipelineId: "inventory-pipeline",
-    pipelineName: "inventory-pipeline",
-    status: "firing",
-    value: 15.2,
-    threshold: 10,
-    severity: "CRITICAL",
-    message: "Source lag (15.2s) exceeded threshold (10.0s)",
-    firedAt: "2026-07-21T18:00:12Z",
-    resolvedAt: null,
-    durationSeconds: 2520,
-    createdAt: "2026-07-21T18:00:12Z",
-  },
-  {
-    id: 41,
-    ruleId: 2,
-    ruleName: "queue-pressure",
-    pipelineId: "orders-pipeline",
-    pipelineName: "orders-pipeline",
-    status: "resolved",
-    value: 88,
-    threshold: 85,
-    severity: "WARNING",
-    message: "Queue utilization (88%) exceeded threshold (85%)",
-    firedAt: "2026-07-21T16:00:00Z",
-    resolvedAt: "2026-07-21T16:10:00Z",
-    durationSeconds: 600,
-    createdAt: "2026-07-21T16:00:00Z",
-  },
-  {
-    id: 40,
-    ruleId: 2,
-    ruleName: "queue-pressure",
-    pipelineId: "payments-pipeline",
-    pipelineName: "payments-pipeline",
-    status: "resolved",
-    value: 91,
-    threshold: 85,
-    severity: "WARNING",
-    message: "Queue utilization (91%) exceeded threshold (85%)",
-    firedAt: "2026-07-21T14:30:00Z",
-    resolvedAt: "2026-07-21T14:35:00Z",
-    durationSeconds: 300,
-    createdAt: "2026-07-21T14:30:00Z",
-  },
-  {
-    id: 39,
-    ruleId: 1,
-    ruleName: "high-source-lag",
-    pipelineId: "inventory-pipeline",
-    pipelineName: "inventory-pipeline",
-    status: "resolved",
-    value: 12.4,
-    threshold: 10,
-    severity: "CRITICAL",
-    message: "Source lag (12.4s) exceeded threshold (10.0s)",
-    firedAt: "2026-07-21T14:30:00Z",
-    resolvedAt: "2026-07-21T14:35:00Z",
-    durationSeconds: 300,
-    createdAt: "2026-07-21T14:30:00Z",
   },
 ];

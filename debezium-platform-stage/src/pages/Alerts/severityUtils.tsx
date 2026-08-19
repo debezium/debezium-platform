@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Label, LabelStatus } from "@patternfly/react-core";
+import { Label, LabelColor, LabelStatus } from "@patternfly/react-core";
 import {
   RhUiSeverityCriticalFillIcon,
   RhUiSeverityModerateFillIcon,
@@ -12,7 +12,10 @@ import {
   OPERATOR_OPTIONS,
   ReduceFunction,
   REDUCE_FUNCTION_OPTIONS,
+  secondsToIsoDuration,
 } from "./alertsTypes";
+import { Severity, SeverityType } from "@patternfly/react-component-groups";
+import { capitalize } from "lodash";
 
 // PatternFly Status and Severity pattern: severity must differ in both color
 // AND icon shape, not color alone, so color-blind users can still tell them apart.
@@ -38,7 +41,24 @@ const SEVERITY_META: Record<
   },
 };
 
+const SEVERITY_ICON: Record<
+  AlertSeverity,
+  { label: SeverityType }
+> = {
+  CRITICAL: {
+    label: "critical",
+  },
+  WARNING: {
+    label: "moderate",
+  },
+  INFO: {
+    label: "none",
+  },
+};
+
 export const getSeverityMeta = (severity: AlertSeverity) => SEVERITY_META[severity];
+
+export const getSeverityIcon = (severity: AlertSeverity) => SEVERITY_ICON[severity];
 
 export const SeverityLabel: React.FC<{ severity: AlertSeverity; isCompact?: boolean }> = ({
   severity,
@@ -46,9 +66,23 @@ export const SeverityLabel: React.FC<{ severity: AlertSeverity; isCompact?: bool
 }) => {
   const meta = getSeverityMeta(severity);
   return (
-    <Label status={meta.status} icon={meta.icon} isCompact={isCompact}>
+   meta.status === "info" ?  <Label color={LabelColor.blue} icon={meta.icon} isCompact={isCompact}>
+      {meta.label}
+    </Label> :  meta.status === "warning" ? <Label  color={LabelColor.yellow} icon={meta.icon} isCompact={isCompact}>
+      {meta.label}
+    </Label> : <Label  color={LabelColor.red} icon={meta.icon} isCompact={isCompact}>
       {meta.label}
     </Label>
+  );
+};
+
+export const SeverityIcon: React.FC<{ severity: AlertSeverity; isCompact?: boolean }> = ({
+  severity,
+  isCompact,
+}) => {
+  const meta = getSeverityIcon(severity);
+  return (
+    isCompact ? <Severity severity={meta.label} label=""/>  : <Severity severity={meta.label} label={capitalize(severity)} />
   );
 };
 
@@ -67,20 +101,19 @@ export const getDurationShortLabel = (duration: string) =>
 export const getDurationLabel = (duration: string) =>
   FOR_DURATION_OPTIONS.find((o) => o.value === duration)?.label ?? duration;
 
-/** Formats a rule's condition, e.g. "last > 10s for 5m". */
+/** Formats a rule's condition, e.g. "last > 10 for 5m". */
 export const formatCondition = (rule: {
   reduceFunction: ReduceFunction;
   operator: AlertOperator;
   threshold: number;
-  panelUnit: string;
-  forDuration: string;
+  forDuration: number;
 }) => {
   const reduce = getReduceLabel(rule.reduceFunction);
   const symbol = getOperatorSymbol(rule.operator);
-  const forLabel = getDurationShortLabel(rule.forDuration);
-  const unit = rule.panelUnit ? rule.panelUnit : "";
-  const forSuffix = rule.forDuration === "PT0S" ? "" : ` for ${forLabel}`;
-  return `${reduce} ${symbol} ${rule.threshold}${unit}${forSuffix}`;
+  const isoDuration = secondsToIsoDuration(rule.forDuration);
+  const forLabel = getDurationShortLabel(isoDuration);
+  const forSuffix = rule.forDuration === 0 ? "" : ` for ${forLabel}`;
+  return `${reduce} ${symbol} ${rule.threshold}${forSuffix}`;
 };
 
 export const formatDurationSeconds = (totalSeconds: number, ongoing: boolean) => {

@@ -51,7 +51,7 @@ test("expands the Alerts nav group and reveals its sub-navigation on click", asy
 
   await userEvent.click(screen.getByRole("button", { name: /alerts/i }));
 
-  ["Rules", "Channels", "History"].forEach((text) => {
+  ["Rules", "Channels", "Events"].forEach((text) => {
     expect(screen.getByRole("link", { name: text })).toBeInTheDocument();
   });
 });
@@ -63,11 +63,11 @@ test("only highlights the current Alerts sub-item, not its siblings", () => {
 
   const rulesLink = screen.getByRole("link", { name: "Rules" });
   const channelsLink = screen.getByRole("link", { name: "Channels" });
-  const historyLink = screen.getByRole("link", { name: "History" });
+  const eventsLink = screen.getByRole("link", { name: "Events" });
 
   expect(rulesLink).not.toHaveClass("pf-m-current");
   expect(channelsLink).toHaveClass("pf-m-current");
-  expect(historyLink).not.toHaveClass("pf-m-current");
+  expect(eventsLink).not.toHaveClass("pf-m-current");
 });
 
 test("renders the side navigation Collapsed", () => {

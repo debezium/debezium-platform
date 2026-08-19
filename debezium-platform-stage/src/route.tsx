@@ -29,7 +29,7 @@ import {
 } from "./pages/Pipeline";
 import { Transforms } from "./pages/Transforms";
 import { Vaults } from "./pages/Vault";
-import { Alerts } from "./pages/Alerts";
+import { Alerts, CreateAlertRule, EditAlertRule } from "./pages/Alerts";
 import { CreateTransforms } from "./pages/Transforms/CreateTransforms";
 import { EditTransforms } from "./pages/Transforms/EditTransforms";
 import { Connections } from "./pages/Connection/Connections";
@@ -246,6 +246,20 @@ const routes: AppRouteConfig[] = [
         featureFlag: "Alerts",
       },
     ],
+  },
+  {
+    component: CreateAlertRule,
+    path: "/alerts/rules/create_rule",
+    navSection: "alerts",
+    title: `${AppBranding} | Create alert rule`,
+    featureFlag: "Alerts",
+  },
+  {
+    component: EditAlertRule,
+    path: "/alerts/rules/:ruleId",
+    navSection: "alerts",
+    title: `${AppBranding} | Alert rule`,
+    featureFlag: "Alerts",
   },
   {
     component: Vaults,

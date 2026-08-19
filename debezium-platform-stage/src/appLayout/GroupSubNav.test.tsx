@@ -47,7 +47,15 @@ describe("GroupSubNav", () => {
     const channelsLink = screen.getByRole("link", { name: "Channels" });
     expect(channelsLink).toHaveClass("pf-m-current");
     expect(screen.getByRole("link", { name: "Rules" })).not.toHaveClass("pf-m-current");
-    expect(screen.getByRole("link", { name: "History" })).not.toHaveClass("pf-m-current");
+    expect(screen.getByRole("link", { name: "Events" })).not.toHaveClass("pf-m-current");
+  });
+
+  it("keeps the Rules subnav item current on create and edit rule pages", () => {
+    mockUseData(true);
+    render(<GroupSubNav />, { initialEntries: ["/alerts/rules/create_rule"] });
+
+    expect(screen.getByRole("link", { name: "Rules" })).toHaveClass("pf-m-current");
+    expect(screen.getByRole("link", { name: "Channels" })).not.toHaveClass("pf-m-current");
   });
 });
 
@@ -79,7 +87,7 @@ describe("useActiveGroupSubNav", () => {
 
     expect(result.current?.group.label).toBe("Alerts");
     expect(result.current?.routes.map((route) => route.label)).toEqual(
-      expect.arrayContaining(["Rules", "Channels", "History"])
+      expect.arrayContaining(["Rules", "Channels", "Events"])
     );
   });
 });
