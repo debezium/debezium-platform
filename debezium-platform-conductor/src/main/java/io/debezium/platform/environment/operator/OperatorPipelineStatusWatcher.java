@@ -94,12 +94,12 @@ public class OperatorPipelineStatusWatcher {
                     .inform(new ResourceEventHandler<>() {
                         @Override
                         public void onAdd(DebeziumServer obj) {
-                            reconcile(obj);
+                            reconcile(obj).ifPresent(statusChangedEvent::fire);
                         }
 
                         @Override
                         public void onUpdate(DebeziumServer oldObj, DebeziumServer newObj) {
-                            reconcile(oldObj, newObj);
+                            reconcile(oldObj, newObj).ifPresent(statusChangedEvent::fire);
                         }
 
                         @Override
@@ -114,15 +114,15 @@ public class OperatorPipelineStatusWatcher {
         }
     }
 
-    void reconcile(DebeziumServer ds) {
-        extractPipelineId(ds).ifPresent(pipelineId -> mapConditionsToStatus(ds).ifPresent(status -> {
+    Optional<DebeziumServerStatusChanged> reconcile(DebeziumServer ds) {
+        return extractPipelineId(ds).flatMap(pipelineId -> mapConditionsToStatus(ds).map(status -> {
             var message = extractErrorMessage(ds, status);
             LOGGER.debug("Pipeline {} status: {}", pipelineId, status);
-            statusChangedEvent.fire(new DebeziumServerStatusChanged(pipelineId, status, message));
+            return new DebeziumServerStatusChanged(pipelineId, status, message);
         }));
     }
 
-    void reconcile(DebeziumServer oldDs, DebeziumServer newDs) {
+    Optional<DebeziumServerStatusChanged> reconcile(DebeziumServer oldDs, DebeziumServer newDs) {
         var oldStatus = mapConditionsToStatus(oldDs);
         var resolvedStatus = mapConditionsToStatus(newDs);
 
@@ -137,17 +137,19 @@ public class OperatorPipelineStatusWatcher {
             failedViaTransition = true;
         }
 
-        if (resolvedStatus.isPresent() && !resolvedStatus.equals(oldStatus)) {
-            var status = resolvedStatus.get();
-            var message = failedViaTransition
-                    ? TRANSITION_FAILED_MESSAGE
-                    : extractErrorMessage(newDs, status);
-            extractPipelineId(newDs).ifPresent(pipelineId -> {
-                LOGGER.info("Pipeline {} status changed from {} to {}", pipelineId,
-                        oldStatus.orElse(null), status);
-                statusChangedEvent.fire(new DebeziumServerStatusChanged(pipelineId, status, message));
-            });
+        if (resolvedStatus.isEmpty() || resolvedStatus.equals(oldStatus)) {
+            return Optional.empty();
         }
+
+        var status = resolvedStatus.get();
+        var message = failedViaTransition
+                ? TRANSITION_FAILED_MESSAGE
+                : extractErrorMessage(newDs, status);
+        return extractPipelineId(newDs).map(pipelineId -> {
+            LOGGER.info("Pipeline {} status changed from {} to {}", pipelineId,
+                    oldStatus.orElse(null), status);
+            return new DebeziumServerStatusChanged(pipelineId, status, message);
+        });
     }
 
     private Optional<PipelineStatus> mapConditionsToStatus(DebeziumServer ds) {

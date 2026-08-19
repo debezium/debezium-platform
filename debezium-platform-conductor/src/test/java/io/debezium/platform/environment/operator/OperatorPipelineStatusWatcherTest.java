@@ -7,9 +7,6 @@ package io.debezium.platform.environment.operator;
 
 import static io.debezium.platform.environment.operator.OperatorPipelineController.LABEL_DBZ_CONDUCTOR_ID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 import java.util.List;
 import java.util.Map;
@@ -21,8 +18,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -43,9 +38,6 @@ class OperatorPipelineStatusWatcherTest {
     @Mock
     Event<DebeziumServerStatusChanged> statusChangedEvent;
 
-    @Captor
-    ArgumentCaptor<DebeziumServerStatusChanged> eventCaptor;
-
     OperatorPipelineStatusWatcher watcher;
 
     @BeforeEach
@@ -54,45 +46,45 @@ class OperatorPipelineStatusWatcherTest {
     }
 
     @Test
-    @DisplayName("Should fire STOPPED when Ready=True and Running=False")
-    void reconcileFiresStoppedEvent() {
+    @DisplayName("Should resolve STOPPED when Ready=True and Running=False")
+    void reconcileResolvesStopped() {
         var ds = debeziumServer(42L, List.of(
                 new Condition("Ready", Condition.TRUE, null),
                 new Condition("Running", Condition.FALSE, "Server is stopped")));
 
-        watcher.reconcile(ds);
+        var result = watcher.reconcile(ds);
 
-        verify(statusChangedEvent).fire(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().pipelineId()).isEqualTo(42L);
-        assertThat(eventCaptor.getValue().status()).isEqualTo(PipelineStatus.STOPPED);
+        assertThat(result).isPresent();
+        assertThat(result.get().pipelineId()).isEqualTo(42L);
+        assertThat(result.get().status()).isEqualTo(PipelineStatus.STOPPED);
     }
 
     @Test
-    @DisplayName("Should fire RUNNING when Ready condition is True")
-    void reconcileFiresRunningEvent() {
+    @DisplayName("Should resolve RUNNING when Ready condition is True")
+    void reconcileResolvesRunning() {
         var ds = debeziumServer(42L, List.of(
                 new Condition("Ready", Condition.TRUE, null),
                 new Condition("Running", Condition.TRUE, null)));
 
-        watcher.reconcile(ds);
+        var result = watcher.reconcile(ds);
 
-        verify(statusChangedEvent).fire(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().status()).isEqualTo(PipelineStatus.RUNNING);
-        assertThat(eventCaptor.getValue().message()).isNull();
+        assertThat(result).isPresent();
+        assertThat(result.get().status()).isEqualTo(PipelineStatus.RUNNING);
+        assertThat(result.get().message()).isNull();
     }
 
     @Test
-    @DisplayName("Should fire FAILED with error message when Running is False and not stopped")
-    void reconcileFiresFailedEventWithErrorMessage() {
+    @DisplayName("Should resolve FAILED with error message when Running is False and not stopped")
+    void reconcileResolvesFailedWithErrorMessage() {
         var ds = debeziumServer(42L, List.of(
                 new Condition("Running", Condition.FALSE, "Engine crashed"),
                 new Condition("Ready", Condition.FALSE, "Not ready")));
 
-        watcher.reconcile(ds);
+        var result = watcher.reconcile(ds);
 
-        verify(statusChangedEvent).fire(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().status()).isEqualTo(PipelineStatus.FAILED);
-        assertThat(eventCaptor.getValue().message()).isEqualTo("Engine crashed");
+        assertThat(result).isPresent();
+        assertThat(result.get().status()).isEqualTo(PipelineStatus.FAILED);
+        assertThat(result.get().message()).isEqualTo("Engine crashed");
     }
 
     @Test
@@ -102,47 +94,41 @@ class OperatorPipelineStatusWatcherTest {
                 new Condition("Ready", Condition.TRUE, null),
                 new Condition("Running", Condition.FALSE, "Server is stopped")));
 
-        watcher.reconcile(ds);
+        var result = watcher.reconcile(ds);
 
-        verify(statusChangedEvent).fire(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().status()).isEqualTo(PipelineStatus.STOPPED);
+        assertThat(result).isPresent();
+        assertThat(result.get().status()).isEqualTo(PipelineStatus.STOPPED);
     }
 
     @Test
-    @DisplayName("Should not fire event when Running=True but not yet Ready")
-    void reconcileNoEventWhenRunningButNotReady() {
+    @DisplayName("Should resolve nothing when Running=True but not yet Ready")
+    void reconcileEmptyWhenRunningButNotReady() {
         var ds = debeziumServer(42L, List.of(
                 new Condition("Running", Condition.TRUE, null),
                 new Condition("Ready", Condition.FALSE, null)));
 
-        watcher.reconcile(ds);
-
-        verify(statusChangedEvent, never()).fire(any());
+        assertThat(watcher.reconcile(ds)).isEmpty();
     }
 
     @Test
-    @DisplayName("Should not fire event when status is null")
-    void reconcileNoEventWhenStatusNull() {
+    @DisplayName("Should resolve nothing when status is null")
+    void reconcileEmptyWhenStatusNull() {
         var ds = debeziumServer(42L, null);
 
-        watcher.reconcile(ds);
-
-        verify(statusChangedEvent, never()).fire(any());
+        assertThat(watcher.reconcile(ds)).isEmpty();
     }
 
     @Test
-    @DisplayName("Should not fire event when conditions list is empty")
-    void reconcileNoEventWhenConditionsEmpty() {
+    @DisplayName("Should resolve nothing when conditions list is empty")
+    void reconcileEmptyWhenConditionsEmpty() {
         var ds = debeziumServer(42L, List.of());
 
-        watcher.reconcile(ds);
-
-        verify(statusChangedEvent, never()).fire(any());
+        assertThat(watcher.reconcile(ds)).isEmpty();
     }
 
     @Test
-    @DisplayName("Should not fire event when pipeline id label is missing")
-    void reconcileNoEventWithoutLabel() {
+    @DisplayName("Should resolve nothing when pipeline id label is missing")
+    void reconcileEmptyWithoutLabel() {
         var ds = new DebeziumServer();
         ds.setMetadata(new ObjectMeta());
         ds.getMetadata().setLabels(Map.of());
@@ -150,28 +136,24 @@ class OperatorPipelineStatusWatcherTest {
         status.setConditions(List.of(new Condition("Ready", Condition.TRUE, null)));
         ds.setStatus(status);
 
-        watcher.reconcile(ds);
-
-        verify(statusChangedEvent, never()).fire(any());
+        assertThat(watcher.reconcile(ds)).isEmpty();
     }
 
     @Test
-    @DisplayName("Should not fire event when labels map is null")
-    void reconcileNoEventWhenLabelsNull() {
+    @DisplayName("Should resolve nothing when labels map is null")
+    void reconcileEmptyWhenLabelsNull() {
         var ds = new DebeziumServer();
         ds.setMetadata(new ObjectMeta());
         var status = new DebeziumServerStatus();
         status.setConditions(List.of(new Condition("Ready", Condition.TRUE, null)));
         ds.setStatus(status);
 
-        watcher.reconcile(ds);
-
-        verify(statusChangedEvent, never()).fire(any());
+        assertThat(watcher.reconcile(ds)).isEmpty();
     }
 
     @Test
-    @DisplayName("Should not fire event when conductor-id label is not a number")
-    void reconcileNoEventWhenLabelNotNumeric() {
+    @DisplayName("Should resolve nothing when conductor-id label is not a number")
+    void reconcileEmptyWhenLabelNotNumeric() {
         var ds = new DebeziumServer();
         ds.setMetadata(new ObjectMeta());
         ds.getMetadata().setLabels(Map.of(LABEL_DBZ_CONDUCTOR_ID, "not-a-number"));
@@ -179,14 +161,12 @@ class OperatorPipelineStatusWatcherTest {
         status.setConditions(List.of(new Condition("Ready", Condition.TRUE, null)));
         ds.setStatus(status);
 
-        watcher.reconcile(ds);
-
-        verify(statusChangedEvent, never()).fire(any());
+        assertThat(watcher.reconcile(ds)).isEmpty();
     }
 
     @Test
-    @DisplayName("Should fire event on update when status changes")
-    void reconcileOnUpdateFiresEventOnStatusChange() {
+    @DisplayName("Should resolve event on update when status changes")
+    void reconcileOnUpdateResolvesEventOnStatusChange() {
         var oldDs = debeziumServer(7L, List.of(
                 new Condition("Running", Condition.TRUE, null),
                 new Condition("Ready", Condition.FALSE, null)));
@@ -195,16 +175,16 @@ class OperatorPipelineStatusWatcherTest {
                 new Condition("Running", Condition.TRUE, null),
                 new Condition("Ready", Condition.TRUE, null)));
 
-        watcher.reconcile(oldDs, newDs);
+        var result = watcher.reconcile(oldDs, newDs);
 
-        verify(statusChangedEvent).fire(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().pipelineId()).isEqualTo(7L);
-        assertThat(eventCaptor.getValue().status()).isEqualTo(PipelineStatus.RUNNING);
+        assertThat(result).isPresent();
+        assertThat(result.get().pipelineId()).isEqualTo(7L);
+        assertThat(result.get().status()).isEqualTo(PipelineStatus.RUNNING);
     }
 
     @Test
-    @DisplayName("Should not fire event on update when status unchanged")
-    void reconcileOnUpdateNoEventWhenStatusUnchanged() {
+    @DisplayName("Should resolve nothing on update when status unchanged")
+    void reconcileOnUpdateEmptyWhenStatusUnchanged() {
         var conditions = List.of(
                 new Condition("Ready", Condition.TRUE, null),
                 new Condition("Running", Condition.TRUE, null));
@@ -212,9 +192,7 @@ class OperatorPipelineStatusWatcherTest {
         var oldDs = debeziumServer(7L, conditions);
         var newDs = debeziumServer(7L, conditions);
 
-        watcher.reconcile(oldDs, newDs);
-
-        verify(statusChangedEvent, never()).fire(any());
+        assertThat(watcher.reconcile(oldDs, newDs)).isEmpty();
     }
 
     @Test
@@ -227,16 +205,16 @@ class OperatorPipelineStatusWatcherTest {
                 new Condition("Running", Condition.FALSE, "Connector task failed"),
                 new Condition("Ready", Condition.FALSE, "Not ready")));
 
-        watcher.reconcile(oldDs, newDs);
+        var result = watcher.reconcile(oldDs, newDs);
 
-        verify(statusChangedEvent).fire(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().status()).isEqualTo(PipelineStatus.FAILED);
-        assertThat(eventCaptor.getValue().message()).isEqualTo("Connector task failed");
+        assertThat(result).isPresent();
+        assertThat(result.get().status()).isEqualTo(PipelineStatus.FAILED);
+        assertThat(result.get().message()).isEqualTo("Connector task failed");
     }
 
     @Test
-    @DisplayName("Should fire FAILED on update when transitioning from RUNNING to Ready=False without Running condition")
-    void reconcileOnUpdateFiresFailedOnCrashLoopBackOff() {
+    @DisplayName("Should resolve FAILED on update when transitioning from RUNNING to Ready=False without Running condition")
+    void reconcileOnUpdateResolvesFailedOnCrashLoopBackOff() {
         var oldDs = debeziumServer(7L, List.of(
                 new Condition("Ready", Condition.TRUE, null),
                 new Condition("Running", Condition.TRUE, null)));
@@ -244,16 +222,16 @@ class OperatorPipelineStatusWatcherTest {
         var newDs = debeziumServer(7L, List.of(
                 new Condition("Ready", Condition.FALSE, "Server database-migration is being deployed")));
 
-        watcher.reconcile(oldDs, newDs);
+        var result = watcher.reconcile(oldDs, newDs);
 
-        verify(statusChangedEvent).fire(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().pipelineId()).isEqualTo(7L);
-        assertThat(eventCaptor.getValue().status()).isEqualTo(PipelineStatus.FAILED);
-        assertThat(eventCaptor.getValue().message()).isEqualTo("Pipeline failed unexpectedly. Check the pipeline logs for details.");
+        assertThat(result).isPresent();
+        assertThat(result.get().pipelineId()).isEqualTo(7L);
+        assertThat(result.get().status()).isEqualTo(PipelineStatus.FAILED);
+        assertThat(result.get().message()).isEqualTo("Pipeline failed unexpectedly. Check the pipeline logs for details.");
     }
 
     @Test
-    @DisplayName("Should not fire FAILED when Ready=False is initial deployment, not a transition from RUNNING")
+    @DisplayName("Should resolve nothing when Ready=False is initial deployment, not a transition from RUNNING")
     void reconcileOnUpdateNoFailedForInitialDeployment() {
         var oldDs = debeziumServer(7L, List.of(
                 new Condition("Ready", Condition.FALSE, "Server is being deployed")));
@@ -261,9 +239,7 @@ class OperatorPipelineStatusWatcherTest {
         var newDs = debeziumServer(7L, List.of(
                 new Condition("Ready", Condition.FALSE, "Server is being deployed")));
 
-        watcher.reconcile(oldDs, newDs);
-
-        verify(statusChangedEvent, never()).fire(any());
+        assertThat(watcher.reconcile(oldDs, newDs)).isEmpty();
     }
 
     @Test
@@ -276,10 +252,10 @@ class OperatorPipelineStatusWatcherTest {
                 new Condition("Ready", Condition.TRUE, null),
                 new Condition("Running", Condition.TRUE, null)));
 
-        watcher.reconcile(oldDs, newDs);
+        var result = watcher.reconcile(oldDs, newDs);
 
-        verify(statusChangedEvent).fire(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().message()).isNull();
+        assertThat(result).isPresent();
+        assertThat(result.get().message()).isNull();
     }
 
     private static DebeziumServer debeziumServer(Long pipelineId, List<Condition> conditions) {
