@@ -71,9 +71,16 @@ import {
   datetimeLocalToISO,
   isoToDatetimeLocal,
 } from "../../utils/timeRangeUtils";
+import {
+  ALERT_EVENT_COLUMNS,
+  AlertEventColumnId,
+  DEFAULT_ALERT_EVENT_COLUMN_IDS,
+} from "./alertEventColumns";
+import AlertEventsColumnModal from "./AlertEventsColumnModal";
+import { SingleSelectFilter } from "./alertsFilters";
 import "./AlertEvents.css"
 
-type EntityFilterMode = "pipeline" | "rule";
+type EntityFilterMode = "pipeline" | "rule" | "severity" | "status";
 
 const getDefaultCustomRange = () => {
   const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
@@ -89,6 +96,7 @@ interface MultiSelectFilterProps<T extends string> {
   selected: T[];
   onChange: (next: T[]) => void;
   getLabel?: (value: T) => string;
+  showToolbarItem?: boolean;
 }
 
 function MultiSelectFilter<T extends string>({
@@ -97,6 +105,7 @@ function MultiSelectFilter<T extends string>({
   selected,
   onChange,
   getLabel = (value) => value,
+  showToolbarItem = true,
 }: MultiSelectFilterProps<T>) {
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -121,7 +130,7 @@ function MultiSelectFilter<T extends string>({
       ref={toggleRef}
       onClick={onToggleClick}
       isExpanded={isOpen}
-      className="filter_toggle"
+      className="filter_select"
     >
       {label}
       {selected.length > 0 && <Badge className="filter_toggle_badge" isRead>{selected.length}</Badge>}
@@ -137,6 +146,7 @@ function MultiSelectFilter<T extends string>({
       }}
       deleteLabelGroup={() => onChange([])}
       categoryName={label}
+      showToolbarItem={showToolbarItem}
     >
       <Select
         role="menu"
@@ -155,74 +165,6 @@ function MultiSelectFilter<T extends string>({
               value={option}
               isSelected={selected.includes(option)}
             >
-              {getLabel(option)}
-            </SelectOption>
-          ))}
-        </SelectList>
-      </Select>
-    </ToolbarFilter>
-  );
-}
-
-interface SingleSelectFilterProps<T extends string> {
-  label: string;
-  options: T[];
-  selected: T | undefined;
-  onChange: (next: T | undefined) => void;
-  getLabel?: (value: T) => string;
-}
-
-function SingleSelectFilter<T extends string>({
-  label,
-  options,
-  selected,
-  onChange,
-  getLabel = (value) => value,
-}: SingleSelectFilterProps<T>) {
-  const [isOpen, setIsOpen] = React.useState(false);
-
-  const onToggleClick = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const onSelect = (
-    _event: React.MouseEvent<Element, MouseEvent> | undefined,
-    value: string | number | undefined
-  ) => {
-    onChange(value as T);
-    setIsOpen(false);
-  };
-
-  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
-    <MenuToggle
-      ref={toggleRef}
-      onClick={onToggleClick}
-      isExpanded={isOpen}
-      className="filter_toggle"
-    >
-      {label}
-    </MenuToggle>
-  );
-
-  return (
-    <ToolbarFilter
-      labels={selected ? [{ key: selected, node: getLabel(selected) }] : []}
-      deleteLabel={() => onChange(undefined)}
-      deleteLabelGroup={() => onChange(undefined)}
-      categoryName={label}
-    >
-      <Select
-        id={`${label.toLowerCase()}-select`}
-        isOpen={isOpen}
-        selected={selected}
-        onSelect={onSelect}
-        onOpenChange={(nextOpen: boolean) => setIsOpen(nextOpen)}
-        toggle={toggle}
-        shouldFocusToggleOnSelect
-      >
-        <SelectList>
-          {options.map((option) => (
-            <SelectOption key={option} value={option} isSelected={selected === option}>
               {getLabel(option)}
             </SelectOption>
           ))}
@@ -315,7 +257,7 @@ function TypeaheadMultiSelectFilter<T extends string | number>({
               inputRef.current?.focus();
             }}
             isExpanded={isOpen}
-            style={{ width: "220px" }}
+            style={{ width: "250px" }}
           // badge={selected.length > 0 ? <Badge isRead>{selected.length}</Badge> : undefined}
           >
             <TextInputGroup isPlain>
@@ -328,7 +270,7 @@ function TypeaheadMultiSelectFilter<T extends string | number>({
                   if (!isOpen) setIsOpen(true);
                 }}
                 autoComplete="off"
-                placeholder={`Filter by ${label.toLowerCase()}...`}
+                placeholder={`Filter by ${label.toLowerCase()}`}
                 role="combobox"
                 isExpanded={isOpen}
               />
@@ -391,12 +333,14 @@ const AlertEvents: React.FC = () => {
   const [appliedCustomFrom, setAppliedCustomFrom] = React.useState(defaultCustomRange.from);
   const [appliedCustomTo, setAppliedCustomTo] = React.useState(defaultCustomRange.to);
 
-  const [entityFilterMode, setEntityFilterMode] = React.useState<EntityFilterMode>("pipeline");
+  const [entityFilterMode, setEntityFilterMode] = React.useState<EntityFilterMode>("severity");
   const [pipelineFilter, setPipelineFilter] = React.useState<string[]>([]);
   const [ruleFilter, setRuleFilter] = React.useState<number[]>([]);
   const [isFilterFieldSelectOpen, setIsFilterFieldSelectOpen] = React.useState(false);
 
   const FILTER_FIELD_OPTIONS: { value: EntityFilterMode; label: string }[] = [
+      { value: "severity", label: "Severity" },
+      { value: "status", label: "Status" },
     { value: "pipeline", label: "Pipeline" },
     { value: "rule", label: "Rule" },
   ];
@@ -410,6 +354,14 @@ const AlertEvents: React.FC = () => {
   );
 
   const [expandedIds, setExpandedIds] = React.useState<Set<number>>(new Set());
+  const [isColumnModalOpen, setIsColumnModalOpen] = React.useState(false);
+  const [visibleColumnIds, setVisibleColumnIds] = React.useState<Set<AlertEventColumnId>>(
+    () => new Set(DEFAULT_ALERT_EVENT_COLUMN_IDS)
+  );
+  const visibleColumns = React.useMemo(
+    () => ALERT_EVENT_COLUMNS.filter((column) => visibleColumnIds.has(column.id)),
+    [visibleColumnIds]
+  );
   // `page` is 1-indexed (PatternFly's Pagination convention); converted to the API's
   // 0-indexed convention (default 0) when building queryParams below.
   const [page, setPage] = React.useState(1);
@@ -561,6 +513,51 @@ const AlertEvents: React.FC = () => {
         ? "alerts-row--warning"
         : undefined;
 
+  const renderEventCell = (columnId: AlertEventColumnId, event: AlertEvent) => {
+    switch (columnId) {
+      case "severity":
+        return <SeverityIcon severity={event.severity} />;
+      case "rule":
+        return (
+          <Button
+            variant="link"
+            isInline
+            onClick={() => navigate(`/alerts/rules/${event.ruleId}?state=view`)}
+          >
+            {event.ruleName}
+          </Button>
+        );
+      case "pipeline":
+        return (
+          <Button
+            variant="link"
+            isInline
+            onClick={() => navigate(`/pipeline/${event.pipelineId}/monitoring`)}
+          >
+            {event.pipelineName}
+          </Button>
+        );
+      case "status":
+        return event.status === "FIRING" ? (
+          <Label color={LabelColor.red}>Firing</Label>
+        ) : (
+          <Label color={LabelColor.green}>Resolved</Label>
+        );
+      case "value":
+        return event.value;
+      case "threshold":
+        return event.threshold;
+      case "firedAt":
+        return formatDateTime(event.firedAt);
+      case "resolvedAt":
+        return formatDateTime(event.resolvedAt);
+      case "createdAt":
+        return formatDateTime(event.createdAt);
+      case "duration":
+        return formatDurationSeconds(event.durationSeconds, event.status === "FIRING");
+    }
+  };
+
   return (
     <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
       <PageHeader
@@ -605,6 +602,21 @@ const AlertEvents: React.FC = () => {
                   </Select>
                 </ToolbarItem>
                 <ToolbarItem>
+                  <MultiSelectFilter
+                    label="Filter by severity"
+                    options={["CRITICAL", "WARNING", "INFO"] as AlertSeverity[]}
+                    selected={severityFilter}
+                    onChange={setSeverityFilter}
+                     showToolbarItem={entityFilterMode === "severity"}
+                  />
+                  <SingleSelectFilter
+                    label="Filter by status"
+                    options={["FIRING", "RESOLVED"] as AlertEventStatus[]}
+                    selected={statusFilter}
+                    onChange={setStatusFilter}
+                    getLabel={(v) => (v === "FIRING" ? "Firing" : "Resolved")}
+                        showToolbarItem={entityFilterMode === "status"}
+                  />
                   <TypeaheadMultiSelectFilter
                     label="Pipeline"
                     options={pipelineOptions}
@@ -624,7 +636,7 @@ const AlertEvents: React.FC = () => {
                 </ToolbarItem>
               </ToolbarGroup>
 
-              <ToolbarGroup variant="filter-group">
+              {/* <ToolbarGroup variant="filter-group">
                 <ToolbarItem>
                   <MultiSelectFilter
                     label="Severity"
@@ -642,7 +654,7 @@ const AlertEvents: React.FC = () => {
                     getLabel={(v) => (v === "FIRING" ? "Firing" : "Resolved")}
                   />
                 </ToolbarItem>
-              </ToolbarGroup>
+              </ToolbarGroup> */}
               <ToolbarGroup variant="filter-group">
                 <ToolbarItem>
                   <Select
@@ -657,6 +669,7 @@ const AlertEvents: React.FC = () => {
                         onClick={() => setIsDateOpen((prev) => !prev)}
                         isExpanded={isDateOpen}
                         icon={<OutlinedClockIcon />}
+                        className="filter_toggle"
                       >
                         {datePreset}
                       </MenuToggle>
@@ -707,6 +720,11 @@ const AlertEvents: React.FC = () => {
               </ToolbarGroup>
 
 
+              <ToolbarItem>
+                <Button variant="link" onClick={() => setIsColumnModalOpen(true)}>
+                  Manage columns
+                </Button>
+              </ToolbarItem>
               <ToolbarItem align={{ default: "alignEnd" }}>
                 <Pagination
                   itemCount={totalElements}
@@ -742,12 +760,9 @@ const AlertEvents: React.FC = () => {
                 <Thead>
                   <Tr>
                     <Th screenReaderText="Expand" />
-                    <Th>Severity</Th>
-                    <Th>Rule</Th>
-                    <Th>Pipeline</Th>
-                    <Th>Status</Th>
-                    <Th>Fired at</Th>
-                    <Th>Duration</Th>
+                    {visibleColumns.map((column) => (
+                      <Th key={column.id}>{column.label}</Th>
+                    ))}
                   </Tr>
                 </Thead>
                 {events.map((event, rowIndex) => {
@@ -762,43 +777,16 @@ const AlertEvents: React.FC = () => {
                             onToggle: () => toggleExpanded(event.id),
                           }}
                         />
-                        <Td dataLabel="Severity">
-                          <SeverityIcon severity={event.severity} />
-                        </Td>
-                        <Td dataLabel="Rule"
-                        >
-                            <Button
-                            variant="link"
-                            isInline
-                            onClick={() => navigate(`/alerts/rules/${event.ruleId}?state=view`)}
-                          >
-                          {event.ruleName}
-                          </Button></Td>
-                        <Td dataLabel="Pipeline">
-                          <Button
-                            variant="link"
-                            isInline
-                            onClick={() => navigate(`/pipeline/${event.pipelineId}/monitoring`)}
-                          >
-                            {event.pipelineName}
-                          </Button>
-                        </Td>
-                        <Td dataLabel="Status">
-                          {event.status === "FIRING" ? <Label color={LabelColor.red} href="#filled" >
-                            Firing
-                          </Label> : <Label color={LabelColor.green} href="#filled"  >
-                            Resolved
-                          </Label>}
-                        </Td>
-                        <Td dataLabel="Fired at">{formatDateTime(event.firedAt)}</Td>
-                        <Td dataLabel="Duration">
-                          {formatDurationSeconds(event.durationSeconds, event.status === "FIRING")}
-                        </Td>
+                        {visibleColumns.map((column) => (
+                          <Td key={column.id} dataLabel={column.label}>
+                            {renderEventCell(column.id, event)}
+                          </Td>
+                        ))}
                       </Tr>
                       {isExpanded && (
                         <Tr isExpanded={isExpanded}>
                           <Td></Td>
-                          <Td colSpan={7} >
+                          <Td colSpan={visibleColumns.length}>
                             <ExpandableRowContent>
                               <dl className="alerts-detail-panel">
                                 <dt>Severity</dt>
@@ -865,6 +853,17 @@ const AlertEvents: React.FC = () => {
           )}
         </Card>
       </PageSection>
+      {isColumnModalOpen && (
+        <AlertEventsColumnModal
+          isOpen={isColumnModalOpen}
+          visibleColumnIds={visibleColumnIds}
+          onClose={() => setIsColumnModalOpen(false)}
+          onSave={(columnIds) => {
+            setVisibleColumnIds(new Set(columnIds));
+            setIsColumnModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };

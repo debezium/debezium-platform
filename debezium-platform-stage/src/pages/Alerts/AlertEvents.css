@@ -2,6 +2,10 @@
     width: 150px;
 }
 
+.filter_select{
+    width: 170px;
+}
+
 .filter_toggle_badge{
     margin-left: 5px;
 }

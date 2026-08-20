@@ -64,7 +64,8 @@ export interface AlertRuleRequest {
 
 export interface EmailChannelConfig {
   recipients: string[];
-  subjectTemplate?: string;
+  /** Optional prefix prepended to the alert email subject. */
+  subjectPrefix?: string;
 }
 
 export interface WebhookChannelConfig {
@@ -75,6 +76,7 @@ export interface WebhookChannelConfig {
 
 export type NotificationChannelConfig = EmailChannelConfig | WebhookChannelConfig;
 
+/** Response body of `GET/POST/PUT /api/alerts/channels`. */
 export interface NotificationChannel {
   id: number;
   name: string;
@@ -83,6 +85,20 @@ export interface NotificationChannel {
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Create/update request body of `POST/PUT /api/alerts/channels`. */
+export interface NotificationChannelRequest {
+  name: string;
+  type: NotificationChannelType;
+  config: NotificationChannelConfig;
+  enabled: boolean;
+}
+
+/** Response body of `POST /api/alerts/channels/{id}/test`. */
+export interface AlertChannelTestResponse {
+  success: boolean;
+  message: string;
 }
 
 export type AlertEventStatus = "FIRING" | "RESOLVED";

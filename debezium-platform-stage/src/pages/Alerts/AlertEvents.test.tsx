@@ -315,4 +315,121 @@ describe("AlertHistory", () => {
       expect(screen.getByPlaceholderText("Filter by pipeline...")).toBeInTheDocument();
     });
   });
+
+  describe("column management", () => {
+    const dataColumnHeaders = () =>
+      screen
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent?.trim())
+        .filter((name) => name && name !== "Expand");
+
+    it("shows the default columns and hides the optional ones", async () => {
+      render(<AlertHistory />);
+      await screen.findByText("high-source-lag");
+
+      expect(dataColumnHeaders()).toEqual([
+        "Severity",
+        "Rule",
+        "Pipeline",
+        "Status",
+        "Fired at",
+        "Duration",
+      ]);
+      expect(screen.queryByRole("columnheader", { name: "Value" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("columnheader", { name: "Threshold" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("columnheader", { name: "Resolved at" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("columnheader", { name: "Created at" })).not.toBeInTheDocument();
+    });
+
+    it("preselects currently visible columns when the modal opens", async () => {
+      render(<AlertHistory />);
+      await screen.findByText("high-source-lag");
+
+      await userEvent.click(screen.getByRole("button", { name: "Manage columns" }));
+      const dialog = await screen.findByRole("dialog");
+
+      expect(within(dialog).getByRole("checkbox", { name: "Severity" })).toBeChecked();
+      expect(within(dialog).getByRole("checkbox", { name: "Rule" })).toBeChecked();
+      expect(within(dialog).getByRole("checkbox", { name: "Pipeline" })).toBeChecked();
+      expect(within(dialog).getByRole("checkbox", { name: "Status" })).toBeChecked();
+      expect(within(dialog).getByRole("checkbox", { name: "Fired at" })).toBeChecked();
+      expect(within(dialog).getByRole("checkbox", { name: "Duration" })).toBeChecked();
+      expect(within(dialog).getByRole("checkbox", { name: "Value" })).not.toBeChecked();
+      expect(within(dialog).getByRole("checkbox", { name: "Threshold" })).not.toBeChecked();
+      expect(within(dialog).getByRole("checkbox", { name: "Resolved at" })).not.toBeChecked();
+      expect(within(dialog).getByRole("checkbox", { name: "Created at" })).not.toBeChecked();
+    });
+
+    it("toggles a column checkbox in the modal", async () => {
+      render(<AlertHistory />);
+      await screen.findByText("high-source-lag");
+
+      await userEvent.click(screen.getByRole("button", { name: "Manage columns" }));
+      const dialog = await screen.findByRole("dialog");
+      const valueCheckbox = within(dialog).getByRole("checkbox", { name: "Value" });
+
+      expect(valueCheckbox).not.toBeChecked();
+      await userEvent.click(valueCheckbox);
+      expect(valueCheckbox).toBeChecked();
+      await userEvent.click(valueCheckbox);
+      expect(valueCheckbox).not.toBeChecked();
+    });
+
+    it("adds a selected column after saving the manage-columns modal", async () => {
+      render(<AlertHistory />);
+      await screen.findByText("high-source-lag");
+
+      await userEvent.click(screen.getByRole("button", { name: "Manage columns" }));
+      const dialog = await screen.findByRole("dialog");
+      await userEvent.click(within(dialog).getByRole("checkbox", { name: "Value" }));
+      await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+
+      expect(await screen.findByRole("columnheader", { name: "Value" })).toBeInTheDocument();
+      expect(screen.getByText("1500")).toBeInTheDocument();
+      expect(dataColumnHeaders()).toEqual([
+        "Severity",
+        "Rule",
+        "Pipeline",
+        "Status",
+        "Value",
+        "Fired at",
+        "Duration",
+      ]);
+    });
+
+    it("shows every column in canonical order after Select all", async () => {
+      render(<AlertHistory />);
+      await screen.findByText("high-source-lag");
+
+      await userEvent.click(screen.getByRole("button", { name: "Manage columns" }));
+      const dialog = await screen.findByRole("dialog");
+      await userEvent.click(within(dialog).getByRole("button", { name: "Select all" }));
+      await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+
+      expect(dataColumnHeaders()).toEqual([
+        "Severity",
+        "Rule",
+        "Pipeline",
+        "Status",
+        "Value",
+        "Threshold",
+        "Fired at",
+        "Resolved at",
+        "Created at",
+        "Duration",
+      ]);
+    });
+
+    it("does not apply column changes when the modal is cancelled", async () => {
+      render(<AlertHistory />);
+      await screen.findByText("high-source-lag");
+
+      await userEvent.click(screen.getByRole("button", { name: "Manage columns" }));
+      const dialog = await screen.findByRole("dialog");
+      await userEvent.click(within(dialog).getByRole("checkbox", { name: "Value" }));
+      await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+      expect(screen.queryByRole("columnheader", { name: "Value" })).not.toBeInTheDocument();
+    });
+  });
 });

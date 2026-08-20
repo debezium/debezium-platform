@@ -1,12 +1,14 @@
 import { API_URL } from "../utils/constants";
 import { ApiResponse, deleteData, fetchData } from "./apis";
 import {
+  AlertChannelTestResponse,
   AlertEventStatus,
   AlertRule,
   AlertRuleRequest,
   AlertSeverity,
   AlertStatusResponse,
   NotificationChannel,
+  NotificationChannelRequest,
   PagedAlertEventResponse,
 } from "../pages/Alerts/alertsTypes";
 
@@ -107,6 +109,40 @@ export const fetchAlertRules = (): Promise<AlertRule[]> =>
 
 export const fetchAlertChannels = (): Promise<NotificationChannel[]> =>
   fetchData<NotificationChannel[]>(`${API_URL}/api/alerts/channels`);
+
+export const createAlertChannel = (
+  payload: NotificationChannelRequest
+): Promise<ApiResponse<NotificationChannel>> =>
+  sendJson<NotificationChannel>(
+    `${API_URL}/api/alerts/channels`,
+    "POST",
+    payload,
+    "Failed to create notification channel"
+  );
+
+export const updateAlertChannel = (
+  id: number,
+  payload: NotificationChannelRequest
+): Promise<ApiResponse<NotificationChannel>> =>
+  sendJson<NotificationChannel>(
+    `${API_URL}/api/alerts/channels/${id}`,
+    "PUT",
+    payload,
+    "Failed to update notification channel"
+  );
+
+export const deleteAlertChannel = (id: number): Promise<void> =>
+  deleteData(`${API_URL}/api/alerts/channels/${id}`);
+
+export const testAlertChannel = (
+  id: number
+): Promise<ApiResponse<AlertChannelTestResponse>> =>
+  sendJson<AlertChannelTestResponse>(
+    `${API_URL}/api/alerts/channels/${id}/test`,
+    "POST",
+    {},
+    "Failed to send test notification"
+  );
 
 export const createAlertRule = (
   payload: AlertRuleRequest

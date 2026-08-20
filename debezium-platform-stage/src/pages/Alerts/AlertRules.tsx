@@ -196,13 +196,15 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
   };
 
   const rowActions = (rule: AlertRule): IAction[] => [
-    { title: "Edit", onClick: () => openEditPage(rule) },
+    
     {
       title: rule.enabled ? "Disable" : "Enable",
       onClick: () => {
         void toggleEnabled(rule);
       },
     },
+    { isSeparator: true },
+    { title: "Edit", onClick: () => openEditPage(rule) },
     { title: "Delete", onClick: () => requestDelete(rule) },
   ];
 
@@ -290,7 +292,7 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
                   </ToolbarGroup>
                   <ToolbarItem>
                     <Button variant="primary" icon={<PlusIcon />} onClick={openCreatePage}>
-                      Create rule
+                      Add rule
                     </Button>
                   </ToolbarItem>
                   <ToolbarItem align={{ default: "alignEnd" }}>
@@ -307,9 +309,10 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
                 <Thead>
                   <Tr>
                     <Th>Name</Th>
+                      <Th sort={getSortParams(SEVERITY_COLUMN_INDEX)}>Severity</Th>
                     <Th>Metric</Th>
                     <Th>Condition</Th>
-                    <Th sort={getSortParams(SEVERITY_COLUMN_INDEX)}>Severity</Th>
+                  
                     <Th>Status</Th>
                     <Th screenReaderText="Actions" />
                   </Tr>
@@ -329,11 +332,12 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
                             {rule.name}
                           </Button>
                         </Td>
-                        <Td dataLabel="Metric">{rule.panelTitle}</Td>
-                        <Td dataLabel="Condition">{formatCondition(rule)}</Td>
-                        <Td dataLabel="Severity">
+                            <Td dataLabel="Severity">
                           <SeverityIcon severity={rule.severity} />
                         </Td>
+                        <Td dataLabel="Metric">{rule.panelTitle}</Td>
+                        <Td dataLabel="Condition">{formatCondition(rule)}</Td>
+                    
                         <Td dataLabel="Status">
                           <Switch
                             id={`rule-enabled-${rule.id}`}

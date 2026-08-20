@@ -22,6 +22,7 @@ import { MinusCircleIcon, PlusIcon, TrashIcon } from "@patternfly/react-icons";
 import {
   EmailChannelConfig,
   NotificationChannel,
+  NotificationChannelRequest,
   NotificationChannelType,
   WebhookChannelConfig,
 } from "./alertsTypes";
@@ -30,8 +31,9 @@ interface AlertChannelFormModalProps {
   isOpen: boolean;
   channel?: NotificationChannel;
   existingChannels: NotificationChannel[];
+  isSaving?: boolean;
   onClose: () => void;
-  onSave: (channel: NotificationChannel) => void;
+  onSave: (payload: NotificationChannelRequest) => void;
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,6 +42,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
   isOpen,
   channel,
   existingChannels,
+  isSaving = false,
   onClose,
   onSave,
 }) => {
@@ -55,9 +58,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
   const [recipients, setRecipients] = React.useState<string[]>(
     emailConfig?.recipients?.length ? emailConfig.recipients : [""]
   );
-  const [subjectTemplate, setSubjectTemplate] = React.useState(
-    emailConfig?.subjectTemplate ?? "Debezium Alert: {{rule_name}} - {{severity}}"
-  );
+  const [subjectPrefix, setSubjectPrefix] = React.useState(emailConfig?.subjectPrefix ?? "");
 
   const [url, setUrl] = React.useState(webhookConfig?.url ?? "");
   const [method, setMethod] = React.useState<"POST" | "PUT">(webhookConfig?.method ?? "POST");
@@ -99,12 +100,14 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
     setHeaders((prev) => prev.map((h, i) => (i === index ? { ...h, [field]: value } : h)));
 
   const handleSubmit = () => {
-    if (!canSubmit) return;
-    const nowIso = new Date().toISOString();
+    if (!canSubmit || isSaving) return;
 
     const config: EmailChannelConfig | WebhookChannelConfig =
       type === "EMAIL"
-        ? { recipients: validRecipients, subjectTemplate: subjectTemplate.trim() || undefined }
+        ? {
+            recipients: validRecipients,
+            subjectPrefix: subjectPrefix.trim() || undefined,
+          }
         : {
             url: url.trim(),
             method,
@@ -115,17 +118,12 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
               : undefined,
           };
 
-    const savedChannel: NotificationChannel = {
-      id: channel?.id ?? Date.now(),
+    onSave({
       name: name.trim(),
       type,
       config,
       enabled: channel?.enabled ?? true,
-      createdAt: channel?.createdAt ?? nowIso,
-      updatedAt: nowIso,
-    };
-
-    onSave(savedChannel);
+    });
   };
 
   return (
@@ -140,7 +138,12 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
         labelId="alert-channel-modal-title"
       />
       <ModalBody>
-        <Form>
+        <Form
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleSubmit();
+          }}
+        >
           <FormGroup label="Name" isRequired fieldId="channel-name">
             <TextInput
               id="channel-name"
@@ -148,6 +151,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
               onChange={(_e, value) => setName(value)}
               validated={isNameDuplicate ? "error" : "default"}
               placeholder="ops-email"
+              isDisabled={isSaving}
             />
             {isNameDuplicate && (
               <HelperText>
@@ -164,7 +168,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
               name="channel-type"
               label="Email"
               isChecked={type === "EMAIL"}
-              isDisabled={isEdit}
+              isDisabled={isEdit || isSaving}
               onChange={() => setType("EMAIL")}
             />
             <Radio
@@ -172,7 +176,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
               name="channel-type"
               label="Webhook"
               isChecked={type === "WEBHOOK"}
-              isDisabled={isEdit}
+              isDisabled={isEdit || isSaving}
               onChange={() => setType("WEBHOOK")}
             />
           </FormGroup>
@@ -188,6 +192,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
                       value={recipient}
                       onChange={(_e, value) => updateRecipient(index, value)}
                       placeholder="ops@example.com"
+                      isDisabled={isSaving}
                       validated={
                         recipient.trim() && !EMAIL_PATTERN.test(recipient.trim())
                           ? "error"
@@ -198,26 +203,33 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
                       variant="plain"
                       aria-label="Remove recipient"
                       icon={<MinusCircleIcon />}
-                      isDisabled={recipients.length === 1}
+                      isDisabled={recipients.length === 1 || isSaving}
                       onClick={() => removeRecipient(index)}
                     />
                   </div>
                 ))}
-                <Button variant="link" isInline icon={<PlusIcon />} onClick={addRecipient}>
+                <Button
+                  variant="link"
+                  isInline
+                  icon={<PlusIcon />}
+                  isDisabled={isSaving}
+                  onClick={addRecipient}
+                >
                   Add recipient
                 </Button>
               </FormGroup>
 
-              <FormGroup label="Subject template" fieldId="channel-subject">
+              <FormGroup label="Subject prefix" fieldId="channel-subject-prefix">
                 <TextInput
-                  id="channel-subject"
-                  value={subjectTemplate}
-                  onChange={(_e, value) => setSubjectTemplate(value)}
+                  id="channel-subject-prefix"
+                  value={subjectPrefix}
+                  onChange={(_e, value) => setSubjectPrefix(value)}
+                  placeholder="[Debezium]"
+                  isDisabled={isSaving}
                 />
                 <HelperText>
                   <HelperTextItem>
-                    Supports <code>{"{{rule_name}}"}</code> and <code>{"{{severity}}"}</code>{" "}
-                    placeholders.
+                    Optional prefix added to the start of the alert email subject.
                   </HelperTextItem>
                 </HelperText>
               </FormGroup>
@@ -231,6 +243,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
                   onChange={(_e, value) => setUrl(value)}
                   placeholder="https://hooks.slack.com/services/..."
                   validated={!isUrlValid ? "error" : "default"}
+                  isDisabled={isSaving}
                 />
                 <HelperText>
                   <HelperTextItem variant={!isUrlValid ? "error" : "default"}>
@@ -255,6 +268,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
                       ref={toggleRef}
                       onClick={() => setIsMethodOpen((prev) => !prev)}
                       isExpanded={isMethodOpen}
+                      isDisabled={isSaving}
                       style={{ width: "160px" }}
                     >
                       {method}
@@ -276,6 +290,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
                       value={header.key}
                       onChange={(_e, value) => updateHeader(index, "key", value)}
                       placeholder="Authorization"
+                      isDisabled={isSaving}
                       style={{ width: "220px" }}
                     />
                     <TextInput
@@ -283,16 +298,24 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
                       value={header.value}
                       onChange={(_e, value) => updateHeader(index, "value", value)}
                       placeholder="Bearer token"
+                      isDisabled={isSaving}
                     />
                     <Button
                       variant="plain"
                       aria-label="Remove header"
                       icon={<TrashIcon />}
+                      isDisabled={isSaving}
                       onClick={() => removeHeader(index)}
                     />
                   </div>
                 ))}
-                <Button variant="link" isInline icon={<PlusIcon />} onClick={addHeader}>
+                <Button
+                  variant="link"
+                  isInline
+                  icon={<PlusIcon />}
+                  isDisabled={isSaving}
+                  onClick={addHeader}
+                >
                   Add header
                 </Button>
                 <HelperText>
@@ -304,10 +327,15 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
         </Form>
       </ModalBody>
       <ModalFooter>
-        <Button variant="primary" isDisabled={!canSubmit} onClick={handleSubmit}>
+        <Button
+          variant="primary"
+          isDisabled={!canSubmit || isSaving}
+          isLoading={isSaving}
+          onClick={handleSubmit}
+        >
           {isEdit ? "Save changes" : "Create channel"}
         </Button>
-        <Button variant="link" onClick={onClose}>
+        <Button variant="link" isDisabled={isSaving} onClick={onClose}>
           Cancel
         </Button>
       </ModalFooter>
