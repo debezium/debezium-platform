@@ -13,6 +13,7 @@ import jakarta.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
+import io.debezium.platform.data.dto.PrometheusInstantQueryResponse;
 import io.debezium.platform.data.dto.PrometheusQueryRangeResponse;
 
 @Path("/api/v1")
@@ -27,4 +28,11 @@ public interface PrometheusClient {
                                             @QueryParam("start") String start,
                                             @QueryParam("end") String end,
                                             @QueryParam("step") String step);
+
+    @GET
+    @Path("/query")
+    @Produces(MediaType.APPLICATION_JSON)
+    PrometheusInstantQueryResponse query(
+                                         @QueryParam("query") String query,
+                                         @QueryParam("time") String time);
 }
