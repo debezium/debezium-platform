@@ -333,7 +333,7 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
                           </Button>
                         </Td>
                             <Td dataLabel="Severity">
-                          <SeverityIcon severity={rule.severity} />
+                          <SeverityLabel severity={rule.severity} />
                         </Td>
                         <Td dataLabel="Metric">{rule.panelTitle}</Td>
                         <Td dataLabel="Condition">{formatCondition(rule)}</Td>

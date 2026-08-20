@@ -516,7 +516,7 @@ const AlertEvents: React.FC = () => {
   const renderEventCell = (columnId: AlertEventColumnId, event: AlertEvent) => {
     switch (columnId) {
       case "severity":
-        return <SeverityIcon severity={event.severity} />;
+        return <SeverityLabel severity={event.severity} />;
       case "rule":
         return (
           <Button

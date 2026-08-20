@@ -1,9 +1,9 @@
 import * as React from "react";
 import { Label, LabelColor, LabelStatus } from "@patternfly/react-core";
 import {
-  RhUiSeverityCriticalFillIcon,
-  RhUiSeverityModerateFillIcon,
-  RhUiSeverityNoneFillIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  InfoCircleIcon,
 } from "@patternfly/react-icons";
 import {
   AlertOperator,
@@ -17,27 +17,27 @@ import {
 import { Severity, SeverityType } from "@patternfly/react-component-groups";
 import { capitalize } from "lodash";
 
-// PatternFly Status and Severity pattern: severity must differ in both color
-// AND icon shape, not color alone, so color-blind users can still tell them apart.
-// https://www.patternfly.org/patterns/status-and-severity
 const SEVERITY_META: Record<
   AlertSeverity,
-  { status: LabelStatus; icon: React.ReactElement; label: string }
+  { status: LabelStatus; icon: React.ReactElement; label: string, color: LabelColor }
 > = {
   CRITICAL: {
     status: LabelStatus.danger,
-    icon: <RhUiSeverityCriticalFillIcon />,
+    icon: <ExclamationCircleIcon />,
     label: "Critical",
+    color: LabelColor.red
   },
   WARNING: {
     status: LabelStatus.warning,
-    icon: <RhUiSeverityModerateFillIcon />,
+    icon: <ExclamationTriangleIcon />,
     label: "Warning",
+    color: LabelColor.yellow
   },
   INFO: {
     status: LabelStatus.info,
-    icon: <RhUiSeverityNoneFillIcon />,
+    icon: <InfoCircleIcon />,
     label: "Info",
+    color: LabelColor.blue
   },
 };
 
@@ -66,11 +66,10 @@ export const SeverityLabel: React.FC<{ severity: AlertSeverity; isCompact?: bool
 }) => {
   const meta = getSeverityMeta(severity);
   return (
-   meta.status === "info" ?  <Label color={LabelColor.blue} icon={meta.icon} isCompact={isCompact}>
-      {meta.label}
-    </Label> :  meta.status === "warning" ? <Label  color={LabelColor.yellow} icon={meta.icon} isCompact={isCompact}>
-      {meta.label}
-    </Label> : <Label  color={LabelColor.red} icon={meta.icon} isCompact={isCompact}>
+   <Label  
+  //  color={meta.color}
+  status={meta.status}
+    icon={meta.icon} isCompact={isCompact}>
       {meta.label}
     </Label>
   );

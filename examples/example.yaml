@@ -5,16 +5,17 @@ database:
 ingress:
   className: nginx
 
-monitoring:
-  otel:
-    enabled: true
-    collector:
-      image: "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.152.0"
-      replicas: 1
-  prometheus:
-    url: "http://kube-prometheus-stack-prometheus:9090"
-    serviceMonitor:
-      enabled: true
-      scrapeInterval: 15s
-      labels:
-        prometheus: kube-prometheus
+# For monitoring: Uncomment the following section and update the details if needed
+# monitoring:
+#   otel:
+#     enabled: true
+#     collector:
+#       image: "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.152.0"
+#       replicas: 1
+#   prometheus:
+#     url: "http://kube-prometheus-stack-prometheus:9090"
+#     serviceMonitor:
+#       enabled: true
+#       scrapeInterval: 15s
+#       labels:
+#         prometheus: kube-prometheus
