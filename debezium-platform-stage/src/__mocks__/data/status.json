@@ -1,0 +1,171 @@
+{
+  "totalFiring": 14,
+  "totalPending": 2,
+  "firingBySeverity": {
+    "WARNING": 5,
+    "CRITICAL": 6,
+    "INFO": 3
+  },
+  "activeAlerts": [
+    {
+      "ruleId": 30,
+      "ruleName": "snapshot-duration-too-long",
+      "pipelineId": "test-pipeline",
+      "state": "FIRING",
+      "severity": "WARNING",
+      "value": 4877.799,
+      "threshold": 3600.0,
+      "since": "2026-08-17T15:51:00.000Z"
+    },
+    {
+      "ruleId": 18,
+      "ruleName": "no-events-flowing",
+      "pipelineId": "test-pipeline",
+      "state": "FIRING",
+      "severity": "WARNING",
+      "value": 338.801,
+      "threshold": 300.0,
+      "since": "2026-08-17T14:26:00.000Z"
+    },
+    {
+      "ruleId": 28,
+      "ruleName": "connection-down",
+      "pipelineId": "orders-cdc",
+      "state": "FIRING",
+      "severity": "CRITICAL",
+      "value": 0.7902,
+      "threshold": 1.0,
+      "since": "2026-08-17T10:25:00.000Z"
+    },
+    {
+      "ruleId": 23,
+      "ruleName": "event-rate-spike",
+      "pipelineId": "audit-log-cdc",
+      "state": "FIRING",
+      "severity": "INFO",
+      "value": 1024.27,
+      "threshold": 1000.0,
+      "since": "2026-08-17T01:59:00.000Z"
+    },
+    {
+      "ruleId": 15,
+      "ruleName": "source-lag-warning",
+      "pipelineId": "payments-stream",
+      "state": "FIRING",
+      "severity": "WARNING",
+      "value": 33.286,
+      "threshold": 30.0,
+      "since": "2026-08-16T17:48:00.000Z"
+    },
+    {
+      "ruleId": 20,
+      "ruleName": "committed-transactions-dropped",
+      "pipelineId": "inventory-sync",
+      "state": "FIRING",
+      "severity": "INFO",
+      "value": 0.0008,
+      "threshold": 0.001,
+      "since": "2026-08-14T19:57:00.000Z"
+    },
+    {
+      "ruleId": 20,
+      "ruleName": "committed-transactions-dropped",
+      "pipelineId": "audit-log-cdc",
+      "state": "FIRING",
+      "severity": "INFO",
+      "value": 0.0002,
+      "threshold": 0.001,
+      "since": "2026-08-14T11:02:00.000Z"
+    },
+    {
+      "ruleId": 28,
+      "ruleName": "connection-down",
+      "pipelineId": "orders-cdc",
+      "state": "FIRING",
+      "severity": "CRITICAL",
+      "value": 0.3658,
+      "threshold": 1.0,
+      "since": "2026-08-12T20:29:00.000Z"
+    },
+    {
+      "ruleId": 28,
+      "ruleName": "connection-down",
+      "pipelineId": "test-pipeline",
+      "state": "FIRING",
+      "severity": "CRITICAL",
+      "value": 0.5391,
+      "threshold": 1.0,
+      "since": "2026-08-12T18:30:00.000Z"
+    },
+    {
+      "ruleId": 17,
+      "ruleName": "queue-nearly-full",
+      "pipelineId": "analytics-export",
+      "state": "FIRING",
+      "severity": "WARNING",
+      "value": 84.85,
+      "threshold": 80.0,
+      "since": "2026-08-12T04:41:00.000Z"
+    },
+    {
+      "ruleId": 14,
+      "ruleName": "high-error-rate",
+      "pipelineId": "analytics-export",
+      "state": "FIRING",
+      "severity": "CRITICAL",
+      "value": 2.639,
+      "threshold": 0.0,
+      "since": "2026-08-12T01:48:00.000Z"
+    },
+    {
+      "ruleId": 14,
+      "ruleName": "high-error-rate",
+      "pipelineId": "payments-stream",
+      "state": "FIRING",
+      "severity": "CRITICAL",
+      "value": 4.136,
+      "threshold": 0.0,
+      "since": "2026-08-12T01:39:00.000Z"
+    },
+    {
+      "ruleId": 21,
+      "ruleName": "excessive-filtered-events",
+      "pipelineId": "users-replication",
+      "state": "FIRING",
+      "severity": "WARNING",
+      "value": 130.689,
+      "threshold": 100.0,
+      "since": "2026-08-11T15:14:00.000Z"
+    },
+    {
+      "ruleId": 22,
+      "ruleName": "queue-size-critical",
+      "pipelineId": "audit-log-cdc",
+      "state": "FIRING",
+      "severity": "CRITICAL",
+      "value": 96.39,
+      "threshold": 90.0,
+      "since": "2026-08-11T09:38:00.000Z"
+    },
+    {
+      "ruleId": 20,
+      "ruleName": "committed-transactions-dropped",
+      "pipelineId": "inventory-sync",
+      "state": "PENDING",
+      "severity": "INFO",
+      "value": 0.0004,
+      "threshold": 0.001,
+      "since": "2026-08-18T07:59:05.000Z"
+    },
+    {
+      "ruleId": 23,
+      "ruleName": "event-rate-spike",
+      "pipelineId": "analytics-export",
+      "state": "PENDING",
+      "severity": "INFO",
+      "value": 1362.937,
+      "threshold": 1000.0,
+      "since": "2026-08-18T07:59:31.000Z"
+    }
+  ]
+}

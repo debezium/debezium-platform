@@ -5,7 +5,7 @@ import {
   Button,
   Icon,
   Label,
-  LabelStatus,
+  LabelColor,
   PageSection,
   Tab,
   TabContent,
@@ -36,7 +36,7 @@ import {
 } from "@utils/featureFlag";
 import { PageHeader } from "@patternfly/react-component-groups";
 import { useNotification } from "../../appLayout/AppNotificationContext";
-import { RhUiPathIcon } from "@patternfly/react-icons";
+import { InfoAltIcon, RhUiPathIcon } from "@patternfly/react-icons";
 
 const PipelineDetails: React.FunctionComponent = () => {
   const { pipelineId, detailsTab } = useParams<{
@@ -206,7 +206,10 @@ const PipelineDetails: React.FunctionComponent = () => {
       <PageHeader
         title={pipeline?.name}
         subtitle={pipeline?.description}
-        label={pipeline?.status === "FAILED" ? <Label className="pf-v5-u-align-content-center" status={LabelStatus.danger}>  {t("failed")}</Label> : ""}
+        label={pipeline?.status === "FAILED" ?   <Label color={LabelColor.red}>
+                                               {t("failed")}
+                                          
+                                              </Label> : ""}
         icon={<Icon size="2xl" className="custom-header_icon" isInProgress={pipeline === undefined} >
           <RhUiPathIcon />
         </Icon>}
@@ -234,6 +237,7 @@ const PipelineDetails: React.FunctionComponent = () => {
         >
           <Alert
             isExpandable
+            customIcon={<InfoAltIcon />}
             variant="danger"
             title={t("pipeline:pipelineFailureMsg")}
           >

@@ -3,9 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { NotFound } from "./pages/NotFound/NotFound";
 import { useDocumentTitle } from "./utils/useDocumentTitle";
 import { AppBranding } from "./utils/constants";
-import { IAppRoute, IAppRouteGroup, routes } from "./route";
-
-export type AppRouteConfig = IAppRoute | IAppRouteGroup;
+import { IAppRoute, isRouteGroup, routes } from "./route";
 
 const PageWithTitle = ({
   title,
@@ -19,9 +17,15 @@ const PageWithTitle = ({
   return <Component />;
 };
 
+// Route groups (nested sidebar sections) don't carry their own path/component,
+// so flatten them into their leaf routes before registering <Route> elements.
+const flattenedRoutes: IAppRoute[] = routes.flatMap((route) =>
+  isRouteGroup(route) ? route.routes : [route]
+);
+
 const AppRoutes = (): React.ReactElement => (
   <Routes>
-    {(routes as IAppRoute[]).map((route, index) => (
+    {flattenedRoutes.map((route, index) => (
       <Route
         key={route.label || index}
         path={route.path}

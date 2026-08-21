@@ -4,10 +4,11 @@ import {
   Page,
 } from "@patternfly/react-core";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import AppBreadcrumb from "./AppBreadcrumb";
+import AppBreadcrumb, { getBreadcrumbTrail } from "./AppBreadcrumb";
 import "./AppLayout.css";
 import AppHeader from "./AppHeader";
 import AppSideNavigation from "./AppSideNavigation";
+import GroupSubNav, { useActiveGroupSubNav } from "./GroupSubNav";
 import { useLocation } from "react-router-dom";
 import { useData } from "./AppContext";
 import { useNotification } from "./AppNotificationContext";
@@ -49,6 +50,8 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
 
   const { updateNavigationCollapsed } = useData();
 
+  const activeGroupSubNav = useActiveGroupSubNav();
+  const hasBreadcrumb = getBreadcrumbTrail(location.pathname).length > 0;
 
   const setSelectedSource = useSetAtom(selectedSourceAtom);
   const setSelectedDestination = useSetAtom(selectedDestinationAtom);
@@ -132,11 +135,9 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
         sidebar={<AppSideNavigation isSidebarOpen={sidebarOpen} />}
         isManagedSidebar
         isContentFilled
-        breadcrumb={
-          location.pathname.split("/").length <= 2 ? undefined : (
-            <AppBreadcrumb />
-          )
-        }
+        horizontalSubnav={activeGroupSubNav ? <GroupSubNav /> : undefined}
+        isHorizontalSubnavWidthLimited
+        breadcrumb={hasBreadcrumb ? <AppBreadcrumb /> : undefined}
         groupProps={{
           stickyOnBreakpoint: { default: "top" },
         }}
