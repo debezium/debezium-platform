@@ -102,11 +102,11 @@ describe("AlertRules", () => {
     expect(screen.getByText("last < 1")).toBeInTheDocument();
   });
 
-  it("navigates to the create page when Create rule is clicked", async () => {
+  it("navigates to the create page when Add rule is clicked", async () => {
     render(<AlertRules firingRuleIds={new Set()} />);
     await screen.findByRole("button", { name: "high-error-rate" });
 
-    await userEvent.click(screen.getByRole("button", { name: "Create rule" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add rule" }));
 
     expect(mockNavigate).toHaveBeenCalledWith("/alerts/rules/create_rule");
   });

@@ -628,7 +628,7 @@ describe('Pipeline Management', () => {
       cy.url({ timeout: 30000 }).should('match', /\/pipeline\/\d+\/logs/);
     });
 
-    it('should show FAILED status cell with danger icon and link in pipeline list', () => {
+    it('should show FAILED status cell with a Failed label and link in pipeline list', () => {
       // Seed a pipeline via API then stub the list response to mark it FAILED
       const pipelineName = `cypress-failed-status-${Date.now()}`;
       createPipelineViaApi(pipelineName);
@@ -650,11 +650,10 @@ describe('Pipeline Management', () => {
       cy.get(`${PIPELINE_TABLE} tbody tr`)
         .contains('tr', pipelineName)
         .within(() => {
-          // Danger icon should be present in the status cell
-          cy.get('[class*="danger"], [data-ouia-component-type="PF6/Icon"], svg').should('exist');
           // The "Failed" link button must exist in the DOM (PF table cells use overflow:hidden
           // which clips child content, so we assert existence rather than visibility)
           cy.contains('button', 'Failed').should('exist');
+          cy.get('.pf-v6-c-label').should('exist');
         });
     });
 

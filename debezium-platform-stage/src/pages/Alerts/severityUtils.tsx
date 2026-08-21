@@ -1,5 +1,6 @@
 import * as React from "react";
-import { Label, LabelColor, LabelStatus } from "@patternfly/react-core";
+import "./AlertEvents.css";
+import { Icon, Label, LabelColor, LabelStatus } from "@patternfly/react-core";
 import {
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
@@ -14,8 +15,6 @@ import {
   REDUCE_FUNCTION_OPTIONS,
   secondsToIsoDuration,
 } from "./alertsTypes";
-import { Severity, SeverityType } from "@patternfly/react-component-groups";
-import { capitalize } from "lodash";
 
 const SEVERITY_META: Record<
   AlertSeverity,
@@ -41,24 +40,7 @@ const SEVERITY_META: Record<
   },
 };
 
-const SEVERITY_ICON: Record<
-  AlertSeverity,
-  { label: SeverityType }
-> = {
-  CRITICAL: {
-    label: "critical",
-  },
-  WARNING: {
-    label: "moderate",
-  },
-  INFO: {
-    label: "none",
-  },
-};
-
 export const getSeverityMeta = (severity: AlertSeverity) => SEVERITY_META[severity];
-
-export const getSeverityIcon = (severity: AlertSeverity) => SEVERITY_ICON[severity];
 
 export const SeverityLabel: React.FC<{ severity: AlertSeverity; isCompact?: boolean }> = ({
   severity,
@@ -77,11 +59,15 @@ export const SeverityLabel: React.FC<{ severity: AlertSeverity; isCompact?: bool
 
 export const SeverityIcon: React.FC<{ severity: AlertSeverity; isCompact?: boolean }> = ({
   severity,
-  isCompact,
 }) => {
-  const meta = getSeverityIcon(severity);
+  const meta = getSeverityMeta(severity);
   return (
-    isCompact ? <Severity severity={meta.label} label=""/>  : <Severity severity={meta.label} label={capitalize(severity)} />
+    <span className="severity-icon-cell">
+      <Icon status={meta.status as LabelStatus} isInline>
+        {meta.icon}
+      </Icon>
+      {meta.label}
+    </span>
   );
 };
 

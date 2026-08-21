@@ -257,7 +257,7 @@ function TypeaheadMultiSelectFilter<T extends string | number>({
               inputRef.current?.focus();
             }}
             isExpanded={isOpen}
-            style={{ width: "250px" }}
+            className="alert-events-filter-toggle"
           // badge={selected.length > 0 ? <Badge isRead>{selected.length}</Badge> : undefined}
           >
             <TextInputGroup isPlain>
@@ -274,7 +274,7 @@ function TypeaheadMultiSelectFilter<T extends string | number>({
                 role="combobox"
                 isExpanded={isOpen}
               />
-              {selected.length > 0 && <Badge style={{ height: "20px", lineHeight: "20px", top: "10px" }} isRead>{selected.length}</Badge>}
+              {selected.length > 0 && <Badge className="alert-events-badge" isRead>{selected.length}</Badge>}
               {filterText && (
                 <TextInputGroupUtilities>
                   <Button
@@ -516,7 +516,7 @@ const AlertEvents: React.FC = () => {
   const renderEventCell = (columnId: AlertEventColumnId, event: AlertEvent) => {
     switch (columnId) {
       case "severity":
-        return <SeverityLabel severity={event.severity} />;
+        return <SeverityIcon severity={event.severity} />;
       case "rule":
         return (
           <Button
@@ -559,7 +559,7 @@ const AlertEvents: React.FC = () => {
   };
 
   return (
-    <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
+    <div className="alert-events-wrapper">
       <PageHeader
         title="Alert events"
         description="Every fire/resolve cycle recorded as an incident, newest first."
