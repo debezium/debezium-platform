@@ -55,7 +55,7 @@ import {
 } from "../../apis/alerts";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { AlertRule, AlertSeverity } from "./alertsTypes";
-import { formatCondition, SeverityIcon, SeverityLabel } from "./severityUtils";
+import { formatCondition, SeverityIcon } from "./severityUtils";
 
 interface AlertRulesProps {
   firingRuleIds: Set<number>;
@@ -333,7 +333,7 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
                           </Button>
                         </Td>
                             <Td dataLabel="Severity">
-                          <SeverityLabel severity={rule.severity} />
+                          <SeverityIcon severity={rule.severity} />
                         </Td>
                         <Td dataLabel="Metric">{rule.panelTitle}</Td>
                         <Td dataLabel="Condition">{formatCondition(rule)}</Td>

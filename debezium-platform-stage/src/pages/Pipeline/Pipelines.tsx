@@ -11,9 +11,12 @@ import {
   EmptyStateBody,
   EmptyStateFooter,
   EmptyStateVariant,
+  Flex,
+  FlexItem,
   Form,
   FormGroup,
-  Icon,
+  Label,
+  LabelColor,
   MenuToggle,
   MenuToggleElement,
   Modal,
@@ -34,7 +37,7 @@ import {
   ToolbarItem,
   Tooltip,
 } from "@patternfly/react-core";
-import { FilterIcon, PlusIcon, RhUiErrorFillIcon, SearchIcon } from "@patternfly/react-icons";
+import { FilterIcon, PlusIcon, SearchIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import {
   Connection,
@@ -597,21 +600,30 @@ const Pipelines: React.FunctionComponent = () => {
                                   pipelineDestination={instance.destination}
                                 />
 
-                                <Td style={{ lineHeight: "35px" }}>
-                                  {instance.status === "FAILED" &&
-                                    
-                                      <p style={{ cursor: "pointer" }}>
-                                        <Icon status="danger" isInline>
-                                          <RhUiErrorFillIcon />
-                                        </Icon>{" "}
-                                        <Tooltip aria="none" aria-live="polite" exitDelay={100} flipBehavior="flip" content={t("pipeline:pipelineFailureMsg")}>
-                                        <Button variant="link" isInline onClick={onPipelineClick(instance.id)} >
-                                          {t("failed")}
-                                        </Button>
+                                <Td dataLabel={t("status")} style={{ alignContent: "center", verticalAlign: "middle" }}>
+                                  {instance.status === "FAILED" && (
+                                    <Flex alignItems={{ default: "alignItemsCenter" }}>
+                                      <FlexItem>
+                                        <Tooltip
+                                          aria="none"
+                                          aria-live="polite"
+                                          exitDelay={100}
+                                          flipBehavior="flip"
+                                          content={t("pipeline:pipelineFailureMsg")}
+                                        >
+                                          <Label color={LabelColor.red}>
+                                            <Button
+                                              variant="link"
+                                              isInline
+                                              onClick={onPipelineClick(instance.id)}
+                                            >
+                                              {t("failed")}
+                                            </Button>
+                                          </Label>
                                         </Tooltip>
-
-                                      </p>
-                                    }
+                                      </FlexItem>
+                                    </Flex>
+                                  )}
                                 </Td>
                                 <Td modifier="fitContent" hasAction style={{ alignContent: "center" }}>
                                   {instance.status === "FAILED" && (

@@ -75,6 +75,12 @@ const lastRequestedUrl = (substring: string) => {
   return new URL(match);
 };
 
+const switchFilterField = async (from: string, to: string) => {
+  await userEvent.click(screen.getByRole("button", { name: from }));
+  const listbox = await screen.findByRole("listbox");
+  await userEvent.click(within(listbox).getByText(to));
+};
+
 describe("AlertHistory", () => {
   beforeEach(() => {
     eventsResponse = singlePageResponse();
@@ -89,7 +95,7 @@ describe("AlertHistory", () => {
 
     expect(await screen.findByText("high-source-lag")).toBeInTheDocument();
     expect(screen.getByText("Payments Stream")).toBeInTheDocument();
-    expect(screen.getByText("1 incident")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Loading alert history")).not.toBeInTheDocument();
   });
 
   it("requests page 0 and size 20 by default", async () => {
@@ -121,7 +127,7 @@ describe("AlertHistory", () => {
     render(<AlertHistory />);
     await screen.findByText("high-source-lag");
 
-    await userEvent.click(screen.getByRole("button", { name: "Severity" }));
+    await userEvent.click(screen.getByRole("button", { name: "Filter by severity" }));
     const menu = await screen.findByRole("menu");
     await userEvent.click(within(menu).getByText("CRITICAL"));
     await userEvent.click(within(menu).getByText("WARNING"));
@@ -138,7 +144,8 @@ describe("AlertHistory", () => {
     render(<AlertHistory />);
     await screen.findByText("high-source-lag");
 
-    await userEvent.click(screen.getByRole("button", { name: "Status" }));
+    await switchFilterField("Severity", "Status");
+    await userEvent.click(screen.getByRole("button", { name: "Filter by status" }));
     const listbox = await screen.findByRole("listbox");
     await userEvent.click(within(listbox).getByText("Firing"));
 
@@ -146,7 +153,7 @@ describe("AlertHistory", () => {
       expect(lastRequestedUrl("/api/alerts/events").searchParams.getAll("status")).toEqual(["FIRING"]);
     });
 
-    await userEvent.click(screen.getByRole("button", { name: "Status" }));
+    await userEvent.click(screen.getByRole("button", { name: "Filter by status" }));
     const nextListbox = await screen.findByRole("listbox");
     await userEvent.click(within(nextListbox).getByText("Resolved"));
 
@@ -204,11 +211,20 @@ describe("AlertHistory", () => {
   });
 
   describe("Pipeline/Rule entity filter", () => {
-    it("defaults to Pipeline mode and fetches the pipeline list without fetching rules", async () => {
+    it("defaults to Severity mode and fetches the pipeline list only after switching to Pipeline", async () => {
       render(<AlertHistory />);
       await screen.findByText("high-source-lag");
 
-      expect(screen.getByRole("button", { name: "Pipeline" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Severity" })).toBeInTheDocument();
+      expect(
+        vi.mocked(fetchData).mock.calls.some(([url]) => (url as string).includes("/api/pipelines"))
+      ).toBe(false);
+      expect(
+        vi.mocked(fetchData).mock.calls.some(([url]) => (url as string).includes("/api/alerts/rules"))
+      ).toBe(false);
+
+      await switchFilterField("Severity", "Pipeline");
+
       await waitFor(() => {
         expect(
           vi.mocked(fetchData).mock.calls.some(([url]) => (url as string).includes("/api/pipelines"))
@@ -222,8 +238,9 @@ describe("AlertHistory", () => {
     it("supports typeahead filtering and sends the selected pipeline name as pipelineId", async () => {
       render(<AlertHistory />);
       await screen.findByText("high-source-lag");
+      await switchFilterField("Severity", "Pipeline");
 
-      const input = screen.getByPlaceholderText("Filter by pipeline...");
+      const input = await screen.findByPlaceholderText("Filter by pipeline");
       await userEvent.click(input);
       await userEvent.type(input, "orders");
 
@@ -242,9 +259,7 @@ describe("AlertHistory", () => {
       render(<AlertHistory />);
       await screen.findByText("high-source-lag");
 
-      await userEvent.click(screen.getByRole("button", { name: "Pipeline" }));
-      const fieldListbox = await screen.findByRole("listbox");
-      await userEvent.click(within(fieldListbox).getByText("Rule"));
+      await switchFilterField("Severity", "Rule");
 
       await waitFor(() => {
         expect(
@@ -252,7 +267,7 @@ describe("AlertHistory", () => {
         ).toBe(true);
       });
 
-      const input = await screen.findByPlaceholderText("Filter by rule...");
+      const input = await screen.findByPlaceholderText("Filter by rule");
       await userEvent.click(input);
       const listbox = await screen.findByRole("listbox");
       await userEvent.click(within(listbox).getByText("snapshot-stalled"));
@@ -265,8 +280,9 @@ describe("AlertHistory", () => {
     it("retains pipeline and rule selections when toggling, and only drops them when the user clears", async () => {
       render(<AlertHistory />);
       await screen.findByText("high-source-lag");
+      await switchFilterField("Severity", "Pipeline");
 
-      const pipelineInput = screen.getByPlaceholderText("Filter by pipeline...");
+      const pipelineInput = await screen.findByPlaceholderText("Filter by pipeline");
       await userEvent.click(pipelineInput);
       const pipelineListbox = await screen.findByRole("listbox");
       await userEvent.click(within(pipelineListbox).getByText("payments-stream"));
@@ -291,7 +307,7 @@ describe("AlertHistory", () => {
         expect(url.searchParams.getAll("ruleId")).toEqual([]);
       });
 
-      const ruleInput = await screen.findByPlaceholderText("Filter by rule...");
+      const ruleInput = await screen.findByPlaceholderText("Filter by rule");
       await userEvent.click(ruleInput);
       const ruleListbox = await screen.findByRole("listbox");
       await userEvent.click(within(ruleListbox).getByText("snapshot-stalled"));
@@ -312,7 +328,7 @@ describe("AlertHistory", () => {
         expect(url.searchParams.getAll("pipelineId")).toEqual(["payments-stream"]);
         expect(url.searchParams.getAll("ruleId")).toEqual(["2"]);
       });
-      expect(screen.getByPlaceholderText("Filter by pipeline...")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Filter by pipeline")).toBeInTheDocument();
     });
   });
 

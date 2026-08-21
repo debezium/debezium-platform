@@ -1,11 +1,22 @@
-.filter_toggle{
-    width: 150px;
+.alert-events-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-.filter_select{
-    width: 170px;
+.alert-events-filter-toggle {
+  width: 250px;
 }
 
-.filter_toggle_badge{
-    margin-left: 5px;
+.alert-events-badge {
+  height: 20px;
+  line-height: 20px;
+  top: 10px;
+}
+
+.severity-icon-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
