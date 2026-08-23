@@ -23,7 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.debezium.DebeziumException;
-import io.debezium.platform.data.model.HostStatusEntity;
+import io.debezium.platform.domain.Host;
 
 /**
  * Unit tests for {@link RoundRobinStrategy}.
@@ -41,29 +41,29 @@ class RoundRobinStrategyTest {
 
     @Test
     void selectReturnsLeastLoadedHost() {
-        HostStatusEntity host1 = createHost(1L, "server-1");
-        HostStatusEntity host2 = createHost(2L, "server-2");
-        HostStatusEntity host3 = createHost(3L, "server-3");
+        Host host1 = new Host(1L, "server-1");
+        Host host2 = new Host(2L, "server-2");
+        Host host3 = new Host(3L, "server-3");
 
         // host1 has 3 pipelines, host2 has 1, host3 has 2
         stubDeploymentCounts(Map.of(1L, 3L, 2L, 1L, 3L, 2L));
 
-        HostStatusEntity selected = strategy.select(List.of(host1, host2, host3));
+        Host selected = strategy.select(List.of(host1, host2, host3));
 
-        assertThat(selected.getId()).isEqualTo(2L);
+        assertThat(selected.id()).isEqualTo(2L);
     }
 
     @Test
     void selectBreaksTiesByLowestId() {
-        HostStatusEntity host1 = createHost(1L, "server-1");
-        HostStatusEntity host2 = createHost(2L, "server-2");
+        Host host1 = new Host(1L, "server-1");
+        Host host2 = new Host(2L, "server-2");
 
         // Both have 0 deployments — should pick host1 (lower ID)
         stubDeploymentCounts(Map.of(1L, 0L, 2L, 0L));
 
-        HostStatusEntity selected = strategy.select(List.of(host1, host2));
+        Host selected = strategy.select(List.of(host1, host2));
 
-        assertThat(selected.getId()).isEqualTo(1L);
+        assertThat(selected.id()).isEqualTo(1L);
     }
 
     @Test
@@ -75,12 +75,12 @@ class RoundRobinStrategyTest {
 
     @Test
     void selectHandlesSingleHost() {
-        HostStatusEntity host = createHost(1L, "server-1");
+        Host host = new Host(1L, "server-1");
         stubDeploymentCounts(Map.of(1L, 5L));
 
-        HostStatusEntity selected = strategy.select(List.of(host));
+        Host selected = strategy.select(List.of(host));
 
-        assertThat(selected.getId()).isEqualTo(1L);
+        assertThat(selected.id()).isEqualTo(1L);
     }
 
     @SuppressWarnings("unchecked")
@@ -95,12 +95,5 @@ class RoundRobinStrategyTest {
             when(query.getSingleResult()).thenAnswer(resInv -> counts.getOrDefault(currentHostId[0], 0L));
             return query;
         });
-    }
-
-    private static HostStatusEntity createHost(Long id, String alias) {
-        HostStatusEntity host = new HostStatusEntity();
-        host.setId(id);
-        host.setSshAlias(alias);
-        return host;
     }
 }

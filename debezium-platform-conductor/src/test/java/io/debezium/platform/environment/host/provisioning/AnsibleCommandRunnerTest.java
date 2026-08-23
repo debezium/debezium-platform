@@ -24,7 +24,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.debezium.platform.environment.host.config.HostConfigGroup;
-import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner.CommandResult;
 
 /**
  * Unit tests for {@link AnsibleCommandRunner}.
@@ -89,7 +88,7 @@ class AnsibleCommandRunnerTest {
 
         assertThat(result).isInstanceOf(CommandResult.Failure.class);
         CommandResult.Failure failure = (CommandResult.Failure) result;
-        assertThat(failure.output()).contains("Failed to start Ansible process");
+        assertThat(failure.output()).contains("Failed to execute Ansible command");
     }
 
     @Test
