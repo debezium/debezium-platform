@@ -12,7 +12,7 @@ import org.jboss.logging.Logger;
 import io.debezium.DebeziumException;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner;
-import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner.CommandResult;
+import io.debezium.platform.environment.host.provisioning.CommandResult;
 
 /**
  * Ansible-based implementation of {@link HostContainerRuntime}.
@@ -53,34 +53,11 @@ public class AnsibleContainerRuntime implements HostContainerRuntime {
         String configPath = configDir + PATH_SEPARATOR + CONFIG_FILE_NAME;
         String dataDir = hostConfig.dataBasePath() + PATH_SEPARATOR + containerName;
 
-        // 1. Create config directory
-        CommandResult mkdirResult = ansibleRunner.createDirectory(host, configDir);
-        if (mkdirResult instanceof CommandResult.Failure failure) {
-            throw new DebeziumException("Failed to create config directory on " + host + ": " + failure.output());
-        }
-
-        // 2. Create data directory (for file-based offset/schema history persistence)
-        CommandResult dataDirResult = ansibleRunner.createDirectory(host, dataDir);
-        if (dataDirResult instanceof CommandResult.Failure failure) {
-            throw new DebeziumException("Failed to create data directory on " + host + ": " + failure.output());
-        }
-
-        // 3. Copy application.properties config
-        CommandResult copyResult = ansibleRunner.copyContent(host, configContent, configPath);
-        if (copyResult instanceof CommandResult.Failure failure) {
-            throw new DebeziumException("Failed to copy config to " + host + ": " + failure.output());
-        }
-
-        // 4. Remove any leftover container with the same name (idempotent)
-        ansibleRunner.runShellCommand(host, String.format(DOCKER_RM_FORMAT, containerName));
-
-        // 5. Run the Debezium Server container with config and data volume mounts
-        String dockerCommand = String.format(DOCKER_RUN_FORMAT,
-                containerName, port, configPath, dataDir, image);
-        CommandResult runResult = ansibleRunner.runShellCommand(host, dockerCommand);
-        if (runResult instanceof CommandResult.Failure failure) {
-            throw new DebeziumException("Docker run failed on " + host + ": " + failure.output());
-        }
+        createConfigDirectory(host, configDir);
+        createDataDirectory(host, dataDir);
+        uploadConfiguration(host, configContent, configPath);
+        removeStaleContainer(host, containerName);
+        startContainer(host, containerName, port, configPath, dataDir, image);
 
         logger.infov("Container {0} started on {1}, port {2}", containerName, host, port);
     }
@@ -121,5 +98,42 @@ public class AnsibleContainerRuntime implements HostContainerRuntime {
             case CommandResult.Success success -> success.output();
             case CommandResult.Failure failure -> "[Log retrieval failed: " + failure.output() + "]";
         };
+    }
+
+    // ── Self-documenting deploy steps ──
+
+    private void createConfigDirectory(String host, String configDir) {
+        CommandResult result = ansibleRunner.createDirectory(host, configDir);
+        if (result instanceof CommandResult.Failure failure) {
+            throw new DebeziumException("Failed to create config directory on " + host + ": " + failure.output());
+        }
+    }
+
+    private void createDataDirectory(String host, String dataDir) {
+        CommandResult result = ansibleRunner.createDirectory(host, dataDir);
+        if (result instanceof CommandResult.Failure failure) {
+            throw new DebeziumException("Failed to create data directory on " + host + ": " + failure.output());
+        }
+    }
+
+    private void uploadConfiguration(String host, String configContent, String configPath) {
+        CommandResult result = ansibleRunner.copyContent(host, configContent, configPath);
+        if (result instanceof CommandResult.Failure failure) {
+            throw new DebeziumException("Failed to copy config to " + host + ": " + failure.output());
+        }
+    }
+
+    private void removeStaleContainer(String host, String containerName) {
+        ansibleRunner.runShellCommand(host, String.format(DOCKER_RM_FORMAT, containerName));
+    }
+
+    private void startContainer(String host, String containerName, int port,
+                                String configPath, String dataDir, String image) {
+        String dockerCommand = String.format(DOCKER_RUN_FORMAT,
+                containerName, port, configPath, dataDir, image);
+        CommandResult result = ansibleRunner.runShellCommand(host, dockerCommand);
+        if (result instanceof CommandResult.Failure failure) {
+            throw new DebeziumException("Docker run failed on " + host + ": " + failure.output());
+        }
     }
 }

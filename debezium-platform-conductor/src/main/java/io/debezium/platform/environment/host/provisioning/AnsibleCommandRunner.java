@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -31,10 +32,16 @@ import io.debezium.platform.environment.host.config.HostConfigGroup;
  *   <li>{@code ansible <host> -m shell -a "docker inspect ..."}</li>
  * </ul>
  *
+ * <p>Each command is represented by an {@link AnsibleCommand} object
+ * (Command pattern). The runner acts as the <em>invoker</em> — it builds
+ * the process, executes it, captures output, and handles timeouts. The
+ * command objects know only their module and arguments.
+ *
  * <p>Output is captured synchronously (ad-hoc commands are fast, unlike
  * playbooks) with a configurable timeout. The merged stdout+stderr
  * approach prevents pipe-buffer deadlocks.
  *
+ * @see AnsibleCommand
  * @see AnsibleHostProvisioner
  */
 @ApplicationScoped
@@ -67,35 +74,19 @@ public class AnsibleCommandRunner {
     }
 
     /**
-     * Sealed result type for ad-hoc command execution.
-     */
-    public sealed interface CommandResult {
-        record Success(String output) implements CommandResult {
-        }
-
-        record Failure(String output) implements CommandResult {
-        }
-    }
-
-    /**
      * Runs an Ansible ad-hoc command using the {@code shell} module.
      *
-     * @param sshAlias    the target host SSH alias
+     * @param sshAlias     the target host SSH alias
      * @param shellCommand the shell command to execute on the remote host
      * @return the command result with captured output
      */
     public CommandResult runShellCommand(String sshAlias, String shellCommand) {
-        List<String> command = buildAdHocCommand(sshAlias, "shell", shellCommand);
-        return executeCommand(command);
+        return execute(sshAlias, new ShellCommand(shellCommand));
     }
 
     /**
      * Runs an Ansible ad-hoc command using the {@code copy} module
      * to upload content to a file on the remote host.
-     *
-     * <p>Content is written to a local temp file and uploaded via
-     * {@code src=} to avoid single-quote injection issues with the
-     * {@code content=} argument. The temp file is deleted after copy.
      *
      * @param sshAlias the target host SSH alias
      * @param content  the file content to upload
@@ -103,29 +94,7 @@ public class AnsibleCommandRunner {
      * @return the command result
      */
     public CommandResult copyContent(String sshAlias, String content, String destPath) {
-        java.nio.file.Path tempFile = null;
-        try {
-            tempFile = java.nio.file.Files.createTempFile("debezium-config-", ".properties");
-            java.nio.file.Files.writeString(tempFile, content, StandardCharsets.UTF_8);
-
-            String copyArgs = "src=" + tempFile.toAbsolutePath() + " dest=" + destPath + " mode=0644";
-            List<String> command = buildAdHocCommand(sshAlias, "copy", copyArgs);
-            return executeCommand(command);
-        }
-        catch (IOException e) {
-            logger.errorv(e, "Failed to create temp file for Ansible copy");
-            return new CommandResult.Failure("Failed to create temp file: " + e.getMessage());
-        }
-        finally {
-            if (tempFile != null) {
-                try {
-                    java.nio.file.Files.deleteIfExists(tempFile);
-                }
-                catch (IOException e) {
-                    logger.warnv("Failed to delete temp file {0}: {1}", tempFile, e.getMessage());
-                }
-            }
-        }
+        return execute(sshAlias, new CopyCommand(content, destPath));
     }
 
     /**
@@ -137,9 +106,67 @@ public class AnsibleCommandRunner {
      * @return the command result
      */
     public CommandResult createDirectory(String sshAlias, String dirPath) {
-        String fileArgs = "path=" + dirPath + " state=directory mode=0755";
-        List<String> command = buildAdHocCommand(sshAlias, "file", fileArgs);
-        return executeCommand(command);
+        return execute(sshAlias, new FileCommand(dirPath));
+    }
+
+    /**
+     * Executes an {@link AnsibleCommand} on the given host.
+     *
+     * <p>This is the single execution path for all ad-hoc commands.
+     * It builds the process arguments, launches the process, waits for
+     * completion (with timeout), and captures output. If the command
+     * created a temp file (e.g. {@link CopyCommand}), it is cleaned
+     * up in the {@code finally} block.
+     *
+     * @param sshAlias the target host SSH alias
+     * @param command  the command to execute
+     * @return the command result with captured output
+     */
+    CommandResult execute(String sshAlias, AnsibleCommand command) {
+        Process process = null;
+        try {
+            String moduleArgs = command.buildArgs();
+            List<String> processArgs = buildAdHocCommand(sshAlias, command.module(), moduleArgs);
+
+            logger.debugv("Executing Ansible ad-hoc command: {0}", processArgs);
+
+            process = launchProcess(processArgs);
+
+            boolean finished = process.waitFor(AD_HOC_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+            String output = captureOutput(process);
+
+            if (!finished) {
+                process.destroyForcibly();
+                logger.errorv("Ansible ad-hoc command timed out: {0}", processArgs);
+                return new CommandResult.Failure("Ansible ad-hoc command timed out after "
+                        + AD_HOC_TIMEOUT_MINUTES + " minutes\n" + output);
+            }
+
+            int exitCode = process.exitValue();
+
+            if (exitCode == SUCCESS_EXIT_CODE) {
+                logger.debugv("Ansible ad-hoc command succeeded");
+                return new CommandResult.Success(output);
+            }
+
+            logger.warnv("Ansible ad-hoc command failed with exit code {0}: {1}",
+                    exitCode, output);
+            return new CommandResult.Failure(output);
+        }
+        catch (IOException e) {
+            logger.errorv(e, "Failed to execute Ansible ad-hoc command");
+            return new CommandResult.Failure("Failed to execute Ansible command: " + e.getMessage());
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            if (process != null) {
+                process.destroyForcibly();
+            }
+            return new CommandResult.Failure("Ansible execution interrupted");
+        }
+        finally {
+            cleanupTempFile(command.tempFile());
+        }
     }
 
     private List<String> buildAdHocCommand(String sshAlias, String module, String moduleArgs) {
@@ -164,48 +191,6 @@ public class AnsibleCommandRunner {
         return resolvedSshConfigPath;
     }
 
-    private CommandResult executeCommand(List<String> command) {
-        Process process = null;
-        try {
-            logger.debugv("Executing Ansible ad-hoc command: {0}", command);
-
-            process = launchProcess(command);
-
-            boolean finished = process.waitFor(AD_HOC_TIMEOUT_MINUTES, TimeUnit.MINUTES);
-            String output = captureOutput(process);
-
-            if (!finished) {
-                process.destroyForcibly();
-                String timeoutMessage = "Ansible ad-hoc command timed out after "
-                        + AD_HOC_TIMEOUT_MINUTES + " minutes\n" + output;
-                logger.errorv("Ansible ad-hoc command timed out: {0}", command);
-                return new CommandResult.Failure(timeoutMessage);
-            }
-
-            int exitCode = process.exitValue();
-
-            if (exitCode == SUCCESS_EXIT_CODE) {
-                logger.debugv("Ansible ad-hoc command succeeded");
-                return new CommandResult.Success(output);
-            }
-
-            logger.warnv("Ansible ad-hoc command failed with exit code {0}: {1}",
-                    exitCode, output);
-            return new CommandResult.Failure(output);
-        }
-        catch (IOException e) {
-            logger.errorv(e, "Failed to start Ansible ad-hoc process");
-            return new CommandResult.Failure("Failed to start Ansible process: " + e.getMessage());
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            if (process != null) {
-                process.destroyForcibly();
-            }
-            return new CommandResult.Failure("Ansible execution interrupted");
-        }
-    }
-
     /**
      * Package-visible to allow test overrides.
      */
@@ -227,6 +212,20 @@ public class AnsibleCommandRunner {
         }
         catch (IOException e) {
             return "[Error reading process output: " + e.getMessage() + "]";
+        }
+    }
+
+    /**
+     * Cleans up a temp file created by a command, if any.
+     */
+    private void cleanupTempFile(Path tempFile) {
+        if (tempFile != null) {
+            try {
+                Files.deleteIfExists(tempFile);
+            }
+            catch (IOException e) {
+                logger.warnv(e, "Failed to delete temp file {0}", tempFile);
+            }
         }
     }
 }
