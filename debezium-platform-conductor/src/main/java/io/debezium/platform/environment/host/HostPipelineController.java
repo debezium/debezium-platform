@@ -19,7 +19,9 @@ import jakarta.enterprise.event.Observes;
 import org.jboss.logging.Logger;
 
 import io.debezium.platform.data.model.DeploymentStatus;
-import io.debezium.platform.data.model.HostDeploymentEntity;
+import io.debezium.platform.domain.Deployment;
+import io.debezium.platform.domain.DeploymentRequest;
+import io.debezium.platform.domain.HostAllocation;
 import io.debezium.platform.domain.HostDeploymentService;
 import io.debezium.platform.domain.Signal;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
@@ -135,26 +137,25 @@ public class HostPipelineController implements PipelineController {
             // ── Cleanup any existing deployment (idempotent redeploy) ──
             deploymentService.findByPipelineId(pipelineId).ifPresent(existing -> {
                 logger.infov("Found existing deployment for pipeline {0} (status={1}), cleaning up before redeploy",
-                        pipelineId, existing.getDeploymentStatus());
-                if (existing.getHostStatus() != null && existing.getHostStatus().getSshAlias() != null
-                        && existing.getContainerName() != null) {
-                    containerRuntime.undeploy(existing.getHostStatus().getSshAlias(), existing.getContainerName());
+                        pipelineId, existing.status());
+                if (existing.sshAlias() != null && existing.containerName() != null) {
+                    containerRuntime.undeploy(existing.sshAlias(), existing.containerName());
                 }
-                deploymentService.deleteDeployment(existing.getId());
+                deploymentService.deleteDeployment(existing.id());
             });
 
             HostPipelineMapper.MappedConfig mappedConfig = pipelineMapper.map(pipeline);
 
-            HostDeploymentService.HostAllocation allocation = deploymentService.allocateHostAndPort();
-            String sshAlias = allocation.hostStatus().getSshAlias();
+            HostAllocation allocation = deploymentService.allocateHostAndPort();
+            String sshAlias = allocation.host().sshAlias();
             int port = allocation.allocatedPort();
 
             String containerName = pipeline.getName();
 
             deploymentService.createDeployment(
-                    pipelineId, allocation.hostStatus().getId(),
-                    containerName, hostConfig.debeziumServerImage(),
-                    port, mappedConfig.configHash());
+                    pipelineId, allocation.host().id(),
+                    new DeploymentRequest(containerName, hostConfig.debeziumServerImage(),
+                            port, mappedConfig.configHash()));
 
             // Delegate all infrastructure work to the container runtime
             containerRuntime.deploy(sshAlias, containerName, port,
@@ -172,15 +173,15 @@ public class HostPipelineController implements PipelineController {
     private void executeUndeploy(Long pipelineId) {
         logger.infov("Starting undeploy for pipeline {0}", pipelineId);
 
-        HostDeploymentEntity deployment = deploymentService.findByPipelineId(pipelineId).orElse(null);
+        Deployment deployment = deploymentService.findByPipelineId(pipelineId).orElse(null);
 
         if (deployment != null) {
-            String sshAlias = deployment.getHostStatus().getSshAlias();
-            String containerName = deployment.getContainerName();
+            String sshAlias = deployment.sshAlias();
+            String containerName = deployment.containerName();
             containerRuntime.undeploy(sshAlias, containerName);
 
             // Hard-delete the deployment record (frees UNIQUE constraint + port)
-            deploymentService.deleteDeployment(deployment.getId());
+            deploymentService.deleteDeployment(deployment.id());
             logger.infov("Pipeline {0} undeployed from host {1}", pipelineId, sshAlias);
         }
         else {
@@ -194,33 +195,33 @@ public class HostPipelineController implements PipelineController {
     private void executeStop(Long pipelineId) {
         logger.infov("Stopping pipeline {0}", pipelineId);
 
-        HostDeploymentEntity deployment = deploymentService.requireByPipelineId(pipelineId);
-        String sshAlias = deployment.getHostStatus().getSshAlias();
-        String containerName = deployment.getContainerName();
+        Deployment deployment = deploymentService.requireByPipelineId(pipelineId);
+        String sshAlias = deployment.sshAlias();
+        String containerName = deployment.containerName();
 
         containerRuntime.stop(sshAlias, containerName);
 
-        deploymentService.updateStatus(deployment.getId(), DeploymentStatus.STOPPED);
+        deploymentService.updateStatus(deployment.id(), DeploymentStatus.STOPPED);
         logger.infov("Pipeline {0} stopped on host {1}", pipelineId, sshAlias);
     }
 
     private void executeStart(Long pipelineId) {
         logger.infov("Starting pipeline {0}", pipelineId);
 
-        HostDeploymentEntity deployment = deploymentService.requireByPipelineId(pipelineId);
-        String sshAlias = deployment.getHostStatus().getSshAlias();
-        String containerName = deployment.getContainerName();
+        Deployment deployment = deploymentService.requireByPipelineId(pipelineId);
+        String sshAlias = deployment.sshAlias();
+        String containerName = deployment.containerName();
 
         containerRuntime.start(sshAlias, containerName);
 
         // Poller will promote DEPLOYING → RUNNING once it detects the container running
-        deploymentService.updateStatus(deployment.getId(), DeploymentStatus.DEPLOYING);
+        deploymentService.updateStatus(deployment.id(), DeploymentStatus.DEPLOYING);
         logger.infov("Pipeline {0} start initiated on host {1}", pipelineId, sshAlias);
     }
 
     private void failDeployment(Long pipelineId, String reason) {
         deploymentService.findByPipelineId(pipelineId)
-                .ifPresent(deployment -> deploymentService.updateStatus(deployment.getId(), DeploymentStatus.FAILED));
+                .ifPresent(deployment -> deploymentService.updateStatus(deployment.id(), DeploymentStatus.FAILED));
         logger.errorv("Deployment failed for pipeline {0}: {1}", pipelineId, reason);
     }
 
@@ -267,9 +268,9 @@ public class HostPipelineController implements PipelineController {
 
         @Override
         public String readAll() {
-            HostDeploymentEntity deployment = deploymentService.requireByPipelineId(pipelineId);
-            String sshAlias = deployment.getHostStatus().getSshAlias();
-            String containerName = deployment.getContainerName();
+            Deployment deployment = deploymentService.requireByPipelineId(pipelineId);
+            String sshAlias = deployment.sshAlias();
+            String containerName = deployment.containerName();
             return containerRuntime.logs(sshAlias, containerName);
         }
 

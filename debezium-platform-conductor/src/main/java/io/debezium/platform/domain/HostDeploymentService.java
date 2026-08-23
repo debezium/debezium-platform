@@ -40,11 +40,23 @@ import io.debezium.platform.environment.host.strategy.DeployStrategy;
  * selected host, starting from the configurable base port when no
  * deployments exist. Uses a live query (not a stale column) to prevent
  * port collision under concurrent writes.
+ *
+ * <p><strong>Domain boundary:</strong> All public methods return domain
+ * classes ({@link Deployment}, {@link Host}, {@link HostAllocation})
+ * instead of JPA entities. This prevents persistence-layer details from
+ * leaking into controllers and pollers.
  */
 @ApplicationScoped
 public class HostDeploymentService {
 
     private static final Logger logger = Logger.getLogger(HostDeploymentService.class);
+
+    // ── JPQL query constants ──
+    private static final String FIND_BY_PIPELINE_JPQL = "SELECT d FROM host_deployment d WHERE d.pipeline.id = :pipelineId";
+    private static final String FIND_BY_STATUS_JPQL = "SELECT d FROM host_deployment d WHERE d.deploymentStatus = :status";
+    private static final String FIND_BY_STATUSES_JPQL = "SELECT d FROM host_deployment d WHERE d.deploymentStatus IN :statuses";
+    private static final String FIND_READY_HOSTS_JPQL = "SELECT h FROM host_status h WHERE h.provisioningStatus = :status ORDER BY h.id ASC";
+    private static final String MAX_PORT_JPQL = "SELECT MAX(d.serverPort) FROM host_deployment d WHERE d.hostStatus.id = :hostId";
 
     private final EntityManager em;
     private final DeployStrategy deployStrategy;
@@ -56,15 +68,6 @@ public class HostDeploymentService {
         this.em = em;
         this.deployStrategy = deployStrategy;
         this.hostConfig = hostConfig;
-    }
-
-    /**
-     * Result of host selection and port allocation.
-     *
-     * @param hostStatus    the locked and selected host entity
-     * @param allocatedPort the unique port assigned for this deployment
-     */
-    public record HostAllocation(HostStatusEntity hostStatus, int allocatedPort) {
     }
 
     /**
@@ -80,14 +83,18 @@ public class HostDeploymentService {
      */
     @Transactional(REQUIRES_NEW)
     public HostAllocation allocateHostAndPort() {
-        List<HostStatusEntity> readyHosts = lockAllReadyHosts();
+        List<HostStatusEntity> readyEntities = lockAllReadyHosts();
 
-        HostStatusEntity selectedHost = deployStrategy.select(readyHosts);
+        List<Host> readyHosts = readyEntities.stream()
+                .map(Host::from)
+                .toList();
 
-        int allocatedPort = allocatePort(selectedHost.getId());
+        Host selectedHost = deployStrategy.select(readyHosts);
+
+        int allocatedPort = allocatePort(selectedHost.id());
 
         logger.infov("Selected host {0} (id={1}) with port {2}",
-                selectedHost.getSshAlias(), selectedHost.getId(), allocatedPort);
+                selectedHost.sshAlias(), selectedHost.id(), allocatedPort);
 
         return new HostAllocation(selectedHost, allocatedPort);
     }
@@ -97,53 +104,44 @@ public class HostDeploymentService {
      * the selected host. Runs in its own transaction so the deployment
      * record is immediately visible.
      *
-     * @param pipelineId    the pipeline being deployed
-     * @param hostStatusId  the selected host
-     * @param containerName the Docker container name
-     * @param imageVersion  the Debezium Server image version
-     * @param serverPort    the allocated port
-     * @param configHash    SHA-256 hash of the deployed config
-     * @return the persisted deployment entity
+     * @param pipelineId   the pipeline being deployed
+     * @param hostStatusId the selected host
+     * @param request      the deployment details (container name, image, port, config hash)
      */
     @Transactional(REQUIRES_NEW)
-    public HostDeploymentEntity createDeployment(Long pipelineId, Long hostStatusId,
-                                                 String containerName, String imageVersion,
-                                                 int serverPort, String configHash) {
+    public void createDeployment(Long pipelineId, Long hostStatusId, DeploymentRequest request) {
         HostDeploymentEntity deployment = new HostDeploymentEntity();
         deployment.setPipeline(em.getReference(PipelineEntity.class, pipelineId));
         deployment.setHostStatus(em.getReference(HostStatusEntity.class, hostStatusId));
-        deployment.setContainerName(containerName);
-        deployment.setImageVersion(imageVersion);
-        deployment.setServerPort(serverPort);
+        deployment.setContainerName(request.containerName());
+        deployment.setImageVersion(request.imageVersion());
+        deployment.setServerPort(request.serverPort());
         deployment.setDeploymentStatus(DeploymentStatus.DEPLOYING);
-        deployment.setConfigHash(configHash);
+        deployment.setConfigHash(request.configHash());
         deployment.setDeployedAt(Instant.now());
 
         em.persist(deployment);
         logger.infov("Created deployment record for pipeline {0} on host {1}, port {2}",
-                pipelineId, hostStatusId, serverPort);
-
-        return deployment;
+                pipelineId, hostStatusId, request.serverPort());
     }
 
     /**
      * Finds the active deployment for a given pipeline.
      */
     @Transactional(REQUIRES_NEW)
-    public Optional<HostDeploymentEntity> findByPipelineId(Long pipelineId) {
-        return em.createQuery(
-                "SELECT d FROM host_deployment d WHERE d.pipeline.id = :pipelineId",
-                HostDeploymentEntity.class)
+    public Optional<Deployment> findByPipelineId(Long pipelineId) {
+        return em.createQuery(FIND_BY_PIPELINE_JPQL, HostDeploymentEntity.class)
                 .setParameter("pipelineId", pipelineId)
                 .getResultStream()
-                .findFirst();
+                .findFirst()
+                .map(Deployment::from);
     }
 
     /**
      * Finds the active deployment for a given pipeline, failing loudly if absent.
      */
     @Transactional(REQUIRES_NEW)
-    public HostDeploymentEntity requireByPipelineId(Long pipelineId) {
+    public Deployment requireByPipelineId(Long pipelineId) {
         return findByPipelineId(pipelineId)
                 .orElseThrow(() -> new DebeziumException(
                         "No active deployment found for pipeline id=" + pipelineId));
@@ -189,46 +187,48 @@ public class HostDeploymentService {
      * Returns all deployments with a given status.
      */
     @Transactional(REQUIRES_NEW)
-    public List<HostDeploymentEntity> findByStatus(DeploymentStatus status) {
-        return em.createQuery(
-                "SELECT d FROM host_deployment d WHERE d.deploymentStatus = :status",
-                HostDeploymentEntity.class)
+    public List<Deployment> findByStatus(DeploymentStatus status) {
+        return em.createQuery(FIND_BY_STATUS_JPQL, HostDeploymentEntity.class)
                 .setParameter("status", status)
-                .getResultList();
+                .getResultStream()
+                .map(Deployment::from)
+                .toList();
     }
 
     /**
      * Returns all deployments matching any of the given statuses.
      */
     @Transactional(REQUIRES_NEW)
-    public List<HostDeploymentEntity> findByStatuses(DeploymentStatus... statuses) {
-        return em.createQuery(
-                "SELECT d FROM host_deployment d WHERE d.deploymentStatus IN :statuses",
-                HostDeploymentEntity.class)
+    public List<Deployment> findByStatuses(DeploymentStatus... statuses) {
+        return em.createQuery(FIND_BY_STATUSES_JPQL, HostDeploymentEntity.class)
                 .setParameter("statuses", List.of(statuses))
-                .getResultList();
+                .getResultStream()
+                .map(Deployment::from)
+                .toList();
     }
 
     /**
      * Returns all READY hosts without pessimistic locking.
      */
     @Transactional(REQUIRES_NEW)
-    public List<HostStatusEntity> findReadyHosts() {
-        return em.createQuery(
-                "SELECT h FROM host_status h WHERE h.provisioningStatus = :status ORDER BY h.id ASC",
-                HostStatusEntity.class)
+    public List<Host> findReadyHosts() {
+        return em.createQuery(FIND_READY_HOSTS_JPQL, HostStatusEntity.class)
                 .setParameter("status", ProvisioningStatus.READY)
-                .getResultList();
+                .getResultStream()
+                .map(Host::from)
+                .toList();
     }
 
     /**
      * Locks all READY hosts sorted by ID. Sorting prevents ABBA deadlocks
      * when concurrent transactions lock the same set of rows.
+     *
+     * <p>Returns JPA entities intentionally — pessimistic locking requires
+     * the real managed entity. Domain mapping happens at the public boundary
+     * in {@link #allocateHostAndPort()}.
      */
     private List<HostStatusEntity> lockAllReadyHosts() {
-        return em.createQuery(
-                "SELECT h FROM host_status h WHERE h.provisioningStatus = :status ORDER BY h.id ASC",
-                HostStatusEntity.class)
+        return em.createQuery(FIND_READY_HOSTS_JPQL, HostStatusEntity.class)
                 .setParameter("status", ProvisioningStatus.READY)
                 .setLockMode(LockModeType.PESSIMISTIC_WRITE)
                 .getResultList();
@@ -239,9 +239,7 @@ public class HostDeploymentService {
      * {@code MAX(serverPort)+1}, starting from base port when empty.
      */
     private int allocatePort(Long hostStatusId) {
-        Integer maxPort = em.createQuery(
-                "SELECT MAX(d.serverPort) FROM host_deployment d WHERE d.hostStatus.id = :hostId",
-                Integer.class)
+        Integer maxPort = em.createQuery(MAX_PORT_JPQL, Integer.class)
                 .setParameter("hostId", hostStatusId)
                 .getSingleResult();
 

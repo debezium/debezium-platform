@@ -15,11 +15,11 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import io.debezium.platform.data.model.DeploymentStatus;
-import io.debezium.platform.data.model.HostDeploymentEntity;
+import io.debezium.platform.domain.Deployment;
 import io.debezium.platform.domain.HostDeploymentService;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner;
-import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner.CommandResult;
+import io.debezium.platform.environment.host.provisioning.CommandResult;
 import io.quarkus.scheduler.Scheduled;
 
 /**
@@ -89,7 +89,7 @@ public class HostDeploymentStatusPoller {
             return;
         }
 
-        List<HostDeploymentEntity> activeDeployments = deploymentService.findByStatuses(
+        List<Deployment> activeDeployments = deploymentService.findByStatuses(
                 DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING);
 
         if (activeDeployments.isEmpty()) {
@@ -101,15 +101,15 @@ public class HostDeploymentStatusPoller {
         activeDeployments.forEach(this::checkDeployment);
     }
 
-    private void checkDeployment(HostDeploymentEntity deployment) {
-        String sshAlias = deployment.getHostStatus().getSshAlias();
-        String containerName = deployment.getContainerName();
-        Long deploymentId = deployment.getId();
+    private void checkDeployment(Deployment deployment) {
+        String sshAlias = deployment.sshAlias();
+        String containerName = deployment.containerName();
+        Long deploymentId = deployment.id();
 
         try {
             boolean containerRunning = inspectContainerRunning(sshAlias, containerName);
 
-            DeploymentStatus currentStatus = deployment.getDeploymentStatus();
+            DeploymentStatus currentStatus = deployment.status();
 
             if (containerRunning && currentStatus == DeploymentStatus.DEPLOYING) {
                 deploymentService.updateStatus(deploymentId, DeploymentStatus.RUNNING);
@@ -117,7 +117,7 @@ public class HostDeploymentStatusPoller {
             }
 
             if (!containerRunning && currentStatus == DeploymentStatus.DEPLOYING) {
-                Instant deployedAt = deployment.getDeployedAt();
+                Instant deployedAt = deployment.deployedAt();
                 if (deployedAt != null && Duration.between(deployedAt, Instant.now()).compareTo(DEPLOY_GRACE_PERIOD) < 0) {
                     logger.debugv("Container {0} on {1} is not running yet, but still within grace period — skipping",
                             containerName, sshAlias);
@@ -157,27 +157,27 @@ public class HostDeploymentStatusPoller {
         };
     }
 
-    private void checkConfigDrift(HostDeploymentEntity deployment, String sshAlias) {
+    private void checkConfigDrift(Deployment deployment, String sshAlias) {
         String configPath = String.format(CONFIG_PATH_FORMAT,
-                hostConfig.configBasePath(), deployment.getContainerName());
+                hostConfig.configBasePath(), deployment.containerName());
         String hashCommand = String.format(HASH_COMMAND_FORMAT, configPath);
 
         CommandResult result = ansibleRunner.runShellCommand(sshAlias, hashCommand);
 
         if (result instanceof CommandResult.Success success) {
             String remoteHash = extractLastLine(success.output());
-            String expectedHash = deployment.getConfigHash();
+            String expectedHash = deployment.configHash();
 
             if (!remoteHash.equals(expectedHash)) {
                 logger.warnv("Config drift detected for deployment {0} on {1}: "
                         + "expected hash={2}, remote hash={3}",
-                        deployment.getId(), sshAlias, expectedHash, remoteHash);
-                deploymentService.updateStatus(deployment.getId(), DeploymentStatus.CONFIG_DRIFT);
+                        deployment.id(), sshAlias, expectedHash, remoteHash);
+                deploymentService.updateStatus(deployment.id(), DeploymentStatus.CONFIG_DRIFT);
             }
         }
         else {
             logger.debugv("Could not read config hash for deployment {0} on {1}, skipping drift check",
-                    deployment.getId(), sshAlias);
+                    deployment.id(), sshAlias);
         }
     }
 

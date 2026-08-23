@@ -7,14 +7,18 @@ package io.debezium.platform.environment.host.strategy;
 
 import java.util.List;
 
-import io.debezium.platform.data.model.HostStatusEntity;
+import io.debezium.platform.domain.Host;
 
 /**
  * Strategy for selecting a target host during pipeline deployment.
  *
  * <p>Implementations receive the list of {@code READY} hosts (already
- * locked with {@code PESSIMISTIC_WRITE}) and return the selected
- * host, or throw if no host is available.
+ * locked with {@code PESSIMISTIC_WRITE} and mapped to domain objects)
+ * and return the selected host, or throw if no host is available.
+ *
+ * <p>The interface operates on {@link Host} domain classes instead of
+ * JPA entities so that strategy implementations have no dependency on
+ * the persistence layer.
  *
  * <p>The default implementation is {@link RoundRobinStrategy}.
  * Future alternatives (affinity-based, resource-based, labeled scheduling)
@@ -23,12 +27,11 @@ import io.debezium.platform.data.model.HostStatusEntity;
 public interface DeployStrategy {
 
     /**
-     * Selects a host from the given list of locked, ready hosts.
+     * Selects a host from the given list of ready hosts.
      *
-     * @param readyHosts  all hosts with {@code READY} status, sorted by ID,
-     *                    locked with {@code PESSIMISTIC_WRITE}
-     * @return the selected host entity
+     * @param readyHosts  all hosts with {@code READY} status, sorted by ID
+     * @return the selected host
      * @throws io.debezium.DebeziumException if no hosts are available
      */
-    HostStatusEntity select(List<HostStatusEntity> readyHosts);
+    Host select(List<Host> readyHosts);
 }
