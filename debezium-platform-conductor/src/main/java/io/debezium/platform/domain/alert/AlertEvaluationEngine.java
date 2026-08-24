@@ -51,7 +51,7 @@ public class AlertEvaluationEngine {
 
     @Scheduled(every = "${alerting.evaluation.interval:60s}", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     void evaluateAll() {
-        List<AlertRuleEntity> rules = ruleService.findAllEnabled();
+        List<AlertRuleEntity> rules = ruleService.findAllEnabledWithChannels();
 
         if (rules.isEmpty()) {
             return;

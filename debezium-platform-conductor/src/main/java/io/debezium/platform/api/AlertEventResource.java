@@ -52,7 +52,7 @@ public class AlertEventResource {
                                @QueryParam("ruleId") Long ruleId,
                                @QueryParam("from") Instant from,
                                @QueryParam("to") Instant to,
-                               @QueryParam("page") @DefaultValue("0") @Min(1) int page,
+                               @QueryParam("page") @DefaultValue("0") @Min(0) int page,
                                @QueryParam("size") @DefaultValue("20") @Min(1) int size) {
         var result = alertEventService.listEvents(severity, status, pipelineId, ruleId, from, to, page, size);
         return Response.ok(result).build();

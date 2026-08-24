@@ -175,7 +175,7 @@ class AlertEvaluationEngineTest {
 
     @Test
     void evaluateAllSkipsWhenNoRules() {
-        when(ruleService.findAllEnabled()).thenReturn(List.of());
+        when(ruleService.findAllEnabledWithChannels()).thenReturn(List.of());
 
         engine.evaluateAll();
     }
@@ -183,7 +183,7 @@ class AlertEvaluationEngineTest {
     @Test
     void evaluateAllEvaluatesEnabledRules() {
         AlertRuleEntity rule = createRule("test-rule", "event-count", Operator.GREATER_THAN, 100.0);
-        when(ruleService.findAllEnabled()).thenReturn(List.of(rule));
+        when(ruleService.findAllEnabledWithChannels()).thenReturn(List.of(rule));
 
         PanelConfig panel = new PanelConfig("event-count", "Event Count", null, "streaming", PANEL_QUERY, "events/s", null);
         when(panelConfigLoader.loadPanels()).thenReturn(List.of(panel));
@@ -214,7 +214,7 @@ class AlertEvaluationEngineTest {
     @Test
     void evaluateAllKeepsFiringStateWhenPipelineDisappears() {
         AlertRuleEntity rule = createRule("test-rule", "event-count", Operator.GREATER_THAN, 100.0);
-        when(ruleService.findAllEnabled()).thenReturn(List.of(rule));
+        when(ruleService.findAllEnabledWithChannels()).thenReturn(List.of(rule));
 
         PanelConfig panel = new PanelConfig("event-count", "Event Count", null, "streaming", PANEL_QUERY, "events/s", null);
         when(panelConfigLoader.loadPanels()).thenReturn(List.of(panel));
@@ -241,7 +241,7 @@ class AlertEvaluationEngineTest {
     @Test
     void evaluateAllResolvesActiveStatesWhenPanelRemoved() {
         AlertRuleEntity rule = createRule("test-rule", "event-count", Operator.GREATER_THAN, 100.0);
-        when(ruleService.findAllEnabled()).thenReturn(List.of(rule));
+        when(ruleService.findAllEnabledWithChannels()).thenReturn(List.of(rule));
 
         when(panelConfigLoader.loadPanels()).thenReturn(List.of());
 
@@ -262,7 +262,7 @@ class AlertEvaluationEngineTest {
     @Test
     void evaluateAllDoesNotResolveOkStatesWhenPanelRemoved() {
         AlertRuleEntity rule = createRule("test-rule", "event-count", Operator.GREATER_THAN, 100.0);
-        when(ruleService.findAllEnabled()).thenReturn(List.of(rule));
+        when(ruleService.findAllEnabledWithChannels()).thenReturn(List.of(rule));
 
         when(panelConfigLoader.loadPanels()).thenReturn(List.of());
 

@@ -343,7 +343,7 @@ class AlertEventResourceIT {
     @Order(13)
     void wrongPageSizeShouldReturnError() {
         given()
-                .queryParam("page", 0)
+                .queryParam("page", -1)
                 .queryParam("size", 0)
                 .when().get(EVENTS_PATH)
                 .then()
@@ -352,7 +352,7 @@ class AlertEventResourceIT {
                 .body("violations", containsInAnyOrder(
                         allOf(
                                 hasEntry("field", "listEvents.page"),
-                                hasEntry("message", "must be greater than or equal to 1")),
+                                hasEntry("message", "must be greater than or equal to 0")),
                         allOf(
                                 hasEntry("field", "listEvents.size"),
                                 hasEntry("message", "must be greater than or equal to 1"))));

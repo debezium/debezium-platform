@@ -90,7 +90,9 @@ public class AlertStateManager {
 
         switch (transition.action()) {
             case FIRE -> {
-                em.persist(state);
+                if (state.getId() == null) {
+                    em.persist(state);
+                }
                 fireAlert(rule, state, now);
             }
             case RESOLVE -> resolve(rule, state, now);

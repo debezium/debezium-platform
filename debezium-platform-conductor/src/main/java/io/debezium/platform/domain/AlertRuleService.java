@@ -73,6 +73,13 @@ public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule
                 .getResultList();
     }
 
+    public List<AlertRuleEntity> findAllEnabledWithChannels() {
+        return em.createQuery(
+                "SELECT DISTINCT r FROM alert_rule r LEFT JOIN FETCH r.channels WHERE r.enabled = true",
+                AlertRuleEntity.class)
+                .getResultList();
+    }
+
     private void validateForDuration(String forDuration) {
         if (forDuration == null) {
             return;
