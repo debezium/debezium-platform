@@ -29,6 +29,7 @@ import io.debezium.platform.api.dto.AlertStatusResponse;
 import io.debezium.platform.api.dto.PagedAlertEventResponse;
 import io.debezium.platform.data.model.Severity;
 import io.debezium.platform.domain.AlertEventService;
+import io.debezium.platform.domain.AlertStateService;
 
 @Tag(name = "Alerting")
 @Path("/alerts")
@@ -36,10 +37,13 @@ public class AlertEventResource {
 
     Logger logger;
     AlertEventService alertEventService;
+    AlertStateService alertStateService;
 
-    public AlertEventResource(Logger logger, AlertEventService alertEventService) {
+    public AlertEventResource(Logger logger, AlertEventService alertEventService,
+                              AlertStateService alertStateService) {
         this.logger = logger;
         this.alertEventService = alertEventService;
+        this.alertStateService = alertStateService;
     }
 
     @Operation(summary = "Returns paginated alert events")
@@ -63,7 +67,7 @@ public class AlertEventResource {
     @GET
     @Path("/events/{id}")
     public Response getEventById(@PathParam("id") Long id) {
-        return alertEventService.findById(id)
+        return alertEventService.findEventById(id)
                 .map(dto -> Response.ok(dto).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
@@ -73,7 +77,7 @@ public class AlertEventResource {
     @GET
     @Path("/status")
     public Response getStatus() {
-        var result = alertEventService.getStatus();
+        var result = alertStateService.getStatus();
         return Response.ok(result).build();
     }
 }

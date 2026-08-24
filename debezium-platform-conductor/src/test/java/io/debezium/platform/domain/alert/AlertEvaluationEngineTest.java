@@ -26,6 +26,7 @@ import io.debezium.platform.data.model.Operator;
 import io.debezium.platform.data.model.ReduceFunction;
 import io.debezium.platform.data.model.Severity;
 import io.debezium.platform.domain.AlertRuleService;
+import io.debezium.platform.domain.AlertStateService;
 import io.debezium.platform.domain.PanelConfigLoader;
 import io.debezium.platform.environment.actions.client.PrometheusClient;
 
@@ -44,7 +45,7 @@ class AlertEvaluationEngineTest {
     PrometheusClient prometheusClient;
 
     @Mock
-    AlertStateManager stateManager;
+    AlertStateService stateManager;
 
     AlertEvaluationEngine engine;
 

@@ -3,11 +3,16 @@
  *
  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.debezium.platform.domain.alert;
+package io.debezium.platform.domain;
+
+import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -16,35 +21,53 @@ import jakarta.transaction.Transactional;
 
 import org.jboss.logging.Logger;
 
+import com.blazebit.persistence.CriteriaBuilderFactory;
+import com.blazebit.persistence.view.EntityViewManager;
+
+import io.debezium.platform.api.dto.AlertStatusResponse;
+import io.debezium.platform.api.dto.AlertStatusResponse.ActiveAlertResponse;
 import io.debezium.platform.data.model.AlertEventEntity;
 import io.debezium.platform.data.model.AlertRuleEntity;
 import io.debezium.platform.data.model.AlertStateEntity;
 import io.debezium.platform.data.model.AlertStateValue;
+import io.debezium.platform.data.model.Severity;
+import io.debezium.platform.domain.alert.AlertNotificationReady;
+import io.debezium.platform.domain.alert.AlertTransitionEvaluator;
+import io.debezium.platform.domain.alert.StateTransition;
+import io.debezium.platform.domain.views.AlertState;
+import io.debezium.platform.domain.views.refs.AlertStateReference;
 
 @ApplicationScoped
-public class AlertStateManager {
+public class AlertStateService extends AbstractService<AlertStateEntity, AlertState, AlertStateReference> {
 
-    private static final Logger LOGGER = Logger.getLogger(AlertStateManager.class);
+    private static final Logger LOGGER = Logger.getLogger(AlertStateService.class);
 
-    private final EntityManager em;
     private final Event<AlertNotificationReady> notificationEvent;
     private final AlertTransitionEvaluator transitionEvaluator;
+    private final AlertEventService alertEventService;
 
-    public AlertStateManager(EntityManager em, Event<AlertNotificationReady> notificationEvent,
-                             AlertTransitionEvaluator transitionEvaluator) {
-        this.em = em;
+    public AlertStateService(EntityManager em, CriteriaBuilderFactory cbf, EntityViewManager evm,
+                             Event<AlertNotificationReady> notificationEvent,
+                             AlertTransitionEvaluator transitionEvaluator,
+                             AlertEventService alertEventService) {
+        super(AlertStateEntity.class, AlertState.class, AlertStateReference.class, em, cbf, evm);
         this.notificationEvent = notificationEvent;
         this.transitionEvaluator = transitionEvaluator;
+        this.alertEventService = alertEventService;
     }
 
-    @Transactional
     public List<AlertStateEntity> findByRuleId(Long ruleId) {
         return em.createNamedQuery(AlertStateEntity.FIND_BY_RULE_ID, AlertStateEntity.class)
                 .setParameter("ruleId", ruleId)
                 .getResultList();
     }
 
-    @Transactional
+    public List<AlertStateEntity> findActive() {
+        return em.createNamedQuery(AlertStateEntity.FIND_ACTIVE, AlertStateEntity.class)
+                .setParameter("states", List.of(AlertStateValue.FIRING, AlertStateValue.PENDING))
+                .getResultList();
+    }
+
     public void evaluate(AlertRuleEntity rule, String pipelineId, double value,
                          AlertStateEntity state, Instant now) {
         boolean conditionMet = rule.getOperator().evaluate(value, rule.getThreshold());
@@ -66,12 +89,10 @@ public class AlertStateManager {
         applyTransition(rule, state, transition, now);
     }
 
-    @Transactional
     public void resolve(AlertRuleEntity rule, AlertStateEntity state, Instant now) {
         AlertEventEntity event = state.getActiveEvent();
         if (event != null) {
-            event.setResolvedAt(now);
-            em.merge(event);
+            alertEventService.resolveEvent(event, now);
             notificationEvent.fire(AlertNotificationReady.from(rule, event));
         }
 
@@ -80,6 +101,43 @@ public class AlertStateManager {
         state.setPendingSince(null);
         state.setActiveEvent(null);
         em.merge(state);
+    }
+
+    @Transactional(SUPPORTS)
+    public AlertStatusResponse getStatus() {
+        List<AlertStateEntity> activeStates = findActive();
+
+        int totalFiring = 0;
+        int totalPending = 0;
+        Map<Severity, Integer> firingBySeverity = new EnumMap<>(Severity.class);
+        List<ActiveAlertResponse> activeAlerts = new ArrayList<>();
+
+        for (AlertStateEntity state : activeStates) {
+            if (state.getState() == AlertStateValue.FIRING) {
+                totalFiring++;
+                Severity sev = state.getRule().getSeverity();
+                firingBySeverity.merge(sev, 1, Integer::sum);
+            }
+            else {
+                totalPending++;
+            }
+
+            Instant since = state.getState() == AlertStateValue.FIRING
+                    ? state.getFiredAt()
+                    : state.getPendingSince();
+
+            activeAlerts.add(new ActiveAlertResponse(
+                    state.getRule().getId(),
+                    state.getRule().getName(),
+                    state.getPipelineId(),
+                    state.getState(),
+                    state.getRule().getSeverity(),
+                    state.getValue() != null ? state.getValue() : 0.0,
+                    state.getRule().getThreshold(),
+                    since));
+        }
+
+        return new AlertStatusResponse(totalFiring, totalPending, firingBySeverity, activeAlerts);
     }
 
     private void applyTransition(AlertRuleEntity rule, AlertStateEntity state,
@@ -108,16 +166,8 @@ public class AlertStateManager {
     }
 
     private void fireAlert(AlertRuleEntity rule, AlertStateEntity state, Instant now) {
-        AlertEventEntity event = new AlertEventEntity();
-        event.setRule(rule);
-        event.setRuleName(rule.getName());
-        event.setPipelineId(state.getPipelineId());
-        event.setValue(state.getValue());
-        event.setThreshold(rule.getThreshold());
-        event.setSeverity(rule.getSeverity());
-        event.setFiredAt(now);
-        event.setMessage(formatMessage(rule, state));
-        em.persist(event);
+        AlertEventEntity event = alertEventService.createFiringEvent(
+                rule, state.getPipelineId(), state.getValue(), formatMessage(rule, state), now);
 
         state.setActiveEvent(event);
         em.merge(state);

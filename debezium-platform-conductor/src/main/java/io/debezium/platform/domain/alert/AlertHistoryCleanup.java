@@ -8,13 +8,11 @@ package io.debezium.platform.domain.alert;
 import java.time.Instant;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 
 import org.jboss.logging.Logger;
 
 import io.debezium.platform.config.AlertingConfigGroup;
-import io.debezium.platform.data.model.AlertEventEntity;
+import io.debezium.platform.domain.AlertEventService;
 import io.quarkus.scheduler.Scheduled;
 
 @ApplicationScoped
@@ -23,20 +21,17 @@ public class AlertHistoryCleanup {
     private static final Logger LOGGER = Logger.getLogger(AlertHistoryCleanup.class);
 
     private final AlertingConfigGroup.HistoryConfigGroup historyConfig;
-    private final EntityManager em;
+    private final AlertEventService alertEventService;
 
-    public AlertHistoryCleanup(AlertingConfigGroup alertingConfig, EntityManager em) {
+    public AlertHistoryCleanup(AlertingConfigGroup alertingConfig, AlertEventService alertEventService) {
         this.historyConfig = alertingConfig.history();
-        this.em = em;
+        this.alertEventService = alertEventService;
     }
 
     @Scheduled(every = "${alerting.history.cleanup.interval:24h}", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
-    @Transactional
     void cleanup() {
         Instant cutoff = Instant.now().minus(historyConfig.retention());
-        int deleted = em.createNamedQuery(AlertEventEntity.DELETE_RESOLVED_OLDER_THAN)
-                .setParameter("cutoff", cutoff)
-                .executeUpdate();
+        int deleted = alertEventService.deleteResolvedOlderThan(cutoff);
         if (deleted > 0) {
             LOGGER.infov("Cleaned up {0} resolved alert event(s) older than {1}", deleted, cutoff);
         }

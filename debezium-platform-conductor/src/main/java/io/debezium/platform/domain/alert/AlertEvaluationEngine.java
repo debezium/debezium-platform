@@ -25,6 +25,7 @@ import io.debezium.platform.data.model.AlertStateEntity;
 import io.debezium.platform.data.model.AlertStateValue;
 import io.debezium.platform.data.model.ReduceFunction;
 import io.debezium.platform.domain.AlertRuleService;
+import io.debezium.platform.domain.AlertStateService;
 import io.debezium.platform.domain.PanelConfigLoader;
 import io.debezium.platform.environment.actions.client.PrometheusClient;
 import io.quarkus.scheduler.Scheduled;
@@ -37,12 +38,12 @@ public class AlertEvaluationEngine {
     private final AlertRuleService ruleService;
     private final PanelConfigLoader panelConfigLoader;
     private final PrometheusClient prometheusClient;
-    private final AlertStateManager stateManager;
+    private final AlertStateService stateManager;
 
     public AlertEvaluationEngine(AlertRuleService ruleService,
                                  PanelConfigLoader panelConfigLoader,
                                  @RestClient PrometheusClient prometheusClient,
-                                 AlertStateManager stateManager) {
+                                 AlertStateService stateManager) {
         this.ruleService = ruleService;
         this.panelConfigLoader = panelConfigLoader;
         this.prometheusClient = prometheusClient;

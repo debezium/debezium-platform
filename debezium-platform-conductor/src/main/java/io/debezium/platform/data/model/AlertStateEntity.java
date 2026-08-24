@@ -22,9 +22,11 @@ import jakarta.persistence.UniqueConstraint;
 @Entity(name = "alert_state")
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = { "rule_id", "pipeline_id" }))
 @NamedQuery(name = AlertStateEntity.FIND_BY_RULE_ID, query = "SELECT s FROM alert_state s WHERE s.rule.id = :ruleId")
+@NamedQuery(name = AlertStateEntity.FIND_ACTIVE, query = "SELECT s FROM alert_state s WHERE s.state IN (:states)")
 public class AlertStateEntity {
 
     public static final String FIND_BY_RULE_ID = "AlertState.findByRuleId";
+    public static final String FIND_ACTIVE = "AlertState.findActive";
 
     @Id
     @GeneratedValue
