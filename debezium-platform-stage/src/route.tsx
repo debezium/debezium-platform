@@ -36,7 +36,7 @@ import { Connections } from "./pages/Connection/Connections";
 import { CreateConnection } from "./pages/Connection/CreateConnection";
 import { ConnectionsCatalog } from "./pages/Connection/ConnectionsCatalog";
 import { EditConnection } from "./pages/Connection/EditConnection";
-import { FeatureFlag, isRouteNavVisible } from "./utils/featureFlag";
+import { FeatureFlag, isFeatureAccessible, isRouteNavVisible } from "./utils/featureFlag";
 
 export interface IAppRoute {
   label?: string; // Excluding the label will exclude the route from the nav sidebar in AppLayout
@@ -62,9 +62,12 @@ export type AppRouteConfig = IAppRoute | IAppRouteGroup;
 export const isRouteGroup = (route: AppRouteConfig): route is IAppRouteGroup =>
   Array.isArray((route as IAppRouteGroup).routes);
 
-// A leaf route is only worth navigating to if it has a label and isn't feature-hidden.
+// A leaf route is only worth navigating to if it has a label and isn't stripped by feature flags.
 export const isNavRouteVisible = (route: IAppRoute): boolean =>
   !!route.label && isRouteNavVisible(route.featureFlag);
+
+export const isRouteAccessible = (route: IAppRoute): boolean =>
+  isFeatureAccessible(route.featureFlag);
 
 export const findRouteGroupForPath = (
   pathname: string
@@ -139,6 +142,7 @@ const routes: AppRouteConfig[] = [
     path: "/transform/create_transform",
     navSection: "transform",
     title: `${AppBranding} | Transform`,
+    featureFlag: "Transforms",
   },
   {
     component: Transforms,
@@ -154,6 +158,7 @@ const routes: AppRouteConfig[] = [
     path: "/transform/:transformId",
     navSection: "transform",
     title: `${AppBranding} | Transform`,
+    featureFlag: "Transforms",
   },
   {
     component: Destinations,
@@ -195,18 +200,21 @@ const routes: AppRouteConfig[] = [
     path: "/connections/catalog",
     navSection: "connections",
     title: `${AppBranding} | Connections`,
+    featureFlag: "Connection",
   },
   {
     component: CreateConnection,
     path: "/connections/create_connection/:connectionId?",
     navSection: "connections",
     title: `${AppBranding} | Connections`,
+    featureFlag: "Connection",
   },
   {
     component: EditConnection,
     path: "/connections/:connectionId",
     navSection: "connections",
     title: `${AppBranding} | Connections`,
+    featureFlag: "Connection",
   },
   {
     // Intentionally no `label`: this is a hidden fallback so a bare "/alerts" URL still
@@ -216,6 +224,7 @@ const routes: AppRouteConfig[] = [
     path: "/alerts",
     navSection: "alerts",
     title: `${AppBranding} | Alerts`,
+    featureFlag: "Alerts",
   },
   {
     label: "Alerts",

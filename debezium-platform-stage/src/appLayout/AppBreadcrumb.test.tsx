@@ -11,10 +11,11 @@ vi.mock("@utils/featureFlag", async () => {
   return {
     ...actual,
     getPipelineDetailsRoutePattern: vi.fn(actual.getPipelineDetailsRoutePattern),
+    isFeatureAccessible: vi.fn(actual.isFeatureAccessible),
   };
 });
 
-import { getPipelineDetailsRoutePattern } from "@utils/featureFlag";
+import { getPipelineDetailsRoutePattern, isFeatureAccessible } from "@utils/featureFlag";
 
 test("render the Breadcrumb component", () => {
   const testPath = "/source/catalog";
@@ -67,7 +68,16 @@ test("renders nothing (no breadcrumb landmark at all) for routes with no breadcr
   expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
 });
 
+test("hides alert rule breadcrumbs when the Alerts feature is not accessible", () => {
+  vi.mocked(isFeatureAccessible).mockReturnValue(false);
+
+  expect(getBreadcrumbTrail("/alerts/rules/create_rule")).toEqual([]);
+  render(<AppBreadcrumb />, { initialEntries: ["/alerts/rules/create_rule"] });
+  expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+});
+
 test("renders create alert rule breadcrumb", () => {
+  vi.mocked(isFeatureAccessible).mockReturnValue(true);
   render(<AppBreadcrumb />, { initialEntries: ["/alerts/rules/create_rule"] });
 
   expect(screen.getByText("Alerts")).toHaveAttribute("href", "/alerts/history");
@@ -76,6 +86,7 @@ test("renders create alert rule breadcrumb", () => {
 });
 
 test("renders edit alert rule breadcrumb", () => {
+  vi.mocked(isFeatureAccessible).mockReturnValue(true);
   render(<AppBreadcrumb />, { initialEntries: ["/alerts/rules/14"] });
 
   expect(screen.getByText("Alerts")).toHaveAttribute("href", "/alerts/history");

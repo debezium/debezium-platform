@@ -1,12 +1,11 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AppSideNavigation from "./AppSideNavigation";
-import { expect, test, vi } from "vitest";
+import { expect, test, vi, afterEach } from "vitest";
 import { render } from "../__test__/unit/test-utils";
+import { featureFlagUi } from "@utils/featureFlag";
 
-// Partial mock of the AppContext module
 vi.mock("./AppContext", async () => {
-  // Import the actual module
   const originalModule = await vi.importActual("./AppContext");
 
   return {
@@ -18,6 +17,10 @@ vi.mock("./AppContext", async () => {
       updateNavigationCollapsed: vi.fn(),
     }),
   };
+});
+
+afterEach(() => {
+  featureFlagUi.hideDisabledFeaturesFromNav = false;
 });
 
 test("renders the side navigation Expanded", () => {
@@ -82,12 +85,17 @@ test("renders the side navigation Collapsed", () => {
 test("shows the group label as a tooltip on the collapsed Alerts icon", async () => {
   const { container } = render(<AppSideNavigation isSidebarOpen={false} />);
 
-  // The collapsed rail has no visible text, so the group's `label` (e.g. "Alerts")
-  // must still be reachable via a tooltip on its icon link. The icon links to the
-  // group's first visible child route, so target it by href rather than accessible name.
   const alertsIcon = container.querySelector('a[href="/alerts/history"] svg');
   expect(alertsIcon).not.toBeNull();
   await userEvent.hover(alertsIcon as Element);
 
   expect(await screen.findByText("Alerts")).toBeInTheDocument();
+});
+
+test("omits disabled coming-soon items when hideDisabledFeaturesFromNav is true", () => {
+  featureFlagUi.hideDisabledFeaturesFromNav = true;
+  render(<AppSideNavigation isSidebarOpen={true} />);
+
+  expect(screen.queryByRole("link", { name: "Vaults" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /alerts/i })).toBeInTheDocument();
 });

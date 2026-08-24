@@ -33,6 +33,7 @@ import PageHeader from "@components/PageHeader";
 import { useTranslation } from "react-i18next";
 import PageTour from "../../components/PageTour";
 import { Step } from "react-joyride";
+import { isRouteNavVisible } from "@utils/featureFlag";
 
 export interface ISourceProps {
   sampleProp?: string;
@@ -272,12 +273,14 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                       >
                         {t('transform')}
                       </Button>
-                      <Button
-                        variant="link"
-                        onClick={() => navigateTo("/vaults")}
-                      >
-                        {t('vaults')}
-                      </Button>
+                      {isRouteNavVisible("Vault") && (
+                        <Button
+                          variant="link"
+                          onClick={() => navigateTo("/vaults")}
+                        >
+                          {t('vaults')}
+                        </Button>
+                      )}
                     </>
                   }
                 />

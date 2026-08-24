@@ -33,6 +33,7 @@ import PageHeader from "@components/PageHeader";
 import { useTranslation } from "react-i18next";
 import PageTour from "../../components/PageTour";
 import { Step } from "react-joyride";
+import { isRouteNavVisible } from "@utils/featureFlag";
 
 const useDestinationPageTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
@@ -276,12 +277,14 @@ const Destinations: React.FunctionComponent = () => {
                       >
                         {t("transform")}
                       </Button>
-                      <Button
-                        variant="link"
-                        onClick={() => navigateTo("/vaults")}
-                      >
-                        {t("vaults")}
-                      </Button>
+                      {isRouteNavVisible("Vault") && (
+                        <Button
+                          variant="link"
+                          onClick={() => navigateTo("/vaults")}
+                        >
+                          {t("vaults")}
+                        </Button>
+                      )}
                     </>
                   }
                 />

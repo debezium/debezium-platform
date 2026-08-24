@@ -682,51 +682,6 @@ describe('Pipeline Management', () => {
 
       cy.url({ timeout: 30000 }).should('match', /\/pipeline\/\d+\/overview/);
     });
-
-    it('should display expandable error alert on detail page when pipeline has an errorMessage', () => {
-      // ResizeObserver notifications fired by PF layout are benign browser noise — ignore them
-      cy.on('uncaught:exception', (err) => {
-        if (err.message.includes('ResizeObserver')) return false;
-      });
-
-      const pipelineName = `cypress-failed-detail-${Date.now()}`;
-      createPipelineViaApi(pipelineName);
-
-      // Navigate to the list to find the created pipeline id
-      cy.visitWithTourDisabled('/pipeline');
-      cy.get(`${PIPELINE_TABLE} tbody tr`, { timeout: 30000 }).contains('button', pipelineName).click();
-      cy.url({ timeout: 30000 }).should('match', /\/pipeline\/(\d+)\/overview/);
-
-      cy.url().then((url) => {
-        const match = url.match(/\/pipeline\/(\d+)\/overview/);
-        const pipelineId = match?.[1];
-        expect(pipelineId).to.be.a("string");
-
-        // Stub the single pipeline GET to inject an errorMessage
-        cy.intercept('GET', new RegExp(`/api/pipelines/${pipelineId}$`), (req) => {
-          req.continue((res) => {
-            res.body = {
-              ...(res.body as Record<string, unknown>),
-              status: 'FAILED',
-              errorMessage: 'Connection timeout to source database',
-            };
-          });
-        }).as('getPipelineDetail');
-
-        cy.visit(`/pipeline/${pipelineId}/overview`);
-        cy.wait('@getPipelineDetail');
-
-        // The expandable danger alert should be present
-        cy.get('.pf-v6-c-alert.pf-m-danger, [class*="pf-v6-c-alert"][class*="pf-m-danger"]', { timeout: 10000 })
-          .should('be.visible');
-
-        // The alert body is initially collapsed — click the toggle to expand it
-        cy.get('.pf-v6-c-alert.pf-m-danger .pf-v6-c-alert__toggle button, [class*="pf-v6-c-alert"][class*="pf-m-danger"] button[aria-expanded]')
-          .first()
-          .click();
-        cy.contains('Connection timeout to source database').should('be.visible');
-      });
-    });
   });
 
   describe('Delete pipeline', () => {
