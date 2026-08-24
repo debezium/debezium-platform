@@ -106,9 +106,14 @@ runs:
           echo "cache_key=maven-debezium-platform-conductor-${CORE_HASH}-${OPERATOR_HASH}-${DB2_HASH}-${INFORMIX_HASH}-${QUARKUS_HASH}" >> "$GITHUB_OUTPUT"
         fi
 
+    # Restore only.  The cache is written by the "Save Maven cache" step at the end of
+    # this action, and only when this action runs in this repository's own CI.  When it
+    # is driven by debezium/debezium (which supplies maven-cache-key) the dependencies
+    # come from that repository's cache and nothing is written back, so the platform
+    # build does not consume debezium/debezium's cache quota.
     - name: Restore Maven cache
       id: cache-check
-      uses: actions/cache@v5
+      uses: actions/cache/restore@v5
       with:
         path: ~/.m2/repository
         # Try to restore in order:
@@ -186,3 +191,14 @@ runs:
           -DskipITs \
           -Dformat.skip=true \
           -Dcheckstyle.skip=true
+
+    # Only this repository's own CI writes the cache.  An empty maven-cache-key means no
+    # external caller supplied a repository to borrow dependencies from, which is the same
+    # signal already used to decide whether to check out and build debezium core above.
+    # Skipping the save on an exact hit matches what actions/cache did implicitly.
+    - name: Save Maven cache
+      if: ${{ inputs.maven-cache-key == '' && steps.cache-check.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@v5
+      with:
+        path: ~/.m2/repository
+        key: ${{ steps.set-composite-cache-key.outputs.cache_key }}
