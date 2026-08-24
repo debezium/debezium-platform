@@ -213,14 +213,14 @@ class OperatorPipelineStatusWatcherTest {
     }
 
     @Test
-    @DisplayName("Should resolve FAILED on update when transitioning from RUNNING to Ready=False without Running condition")
+    @DisplayName("Should resolve FAILED on update when transitioning from RUNNING to Ready=False without Running condition (same generation = crash)")
     void reconcileOnUpdateResolvesFailedOnCrashLoopBackOff() {
         var oldDs = debeziumServer(7L, List.of(
                 new Condition("Ready", Condition.TRUE, null),
-                new Condition("Running", Condition.TRUE, null)));
+                new Condition("Running", Condition.TRUE, null)), 1L);
 
         var newDs = debeziumServer(7L, List.of(
-                new Condition("Ready", Condition.FALSE, "Server database-migration is being deployed")));
+                new Condition("Ready", Condition.FALSE, "Pod restarting")), 1L);
 
         var result = watcher.reconcile(oldDs, newDs);
 
@@ -243,6 +243,19 @@ class OperatorPipelineStatusWatcherTest {
     }
 
     @Test
+    @DisplayName("Should not resolve FAILED on ordinary redeploy (RUNNING -> Ready=False with bumped generation)")
+    void reconcileOnUpdateNoFalseFailedOnRedeploy() {
+        var oldDs = debeziumServer(7L, List.of(
+                new Condition("Ready", Condition.TRUE, null),
+                new Condition("Running", Condition.TRUE, null)), 1L);
+
+        var newDs = debeziumServer(7L, List.of(
+                new Condition("Ready", Condition.FALSE, "Server database-migration deployment in progress")), 2L);
+
+        assertThat(watcher.reconcile(oldDs, newDs)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Should not include error message on update when status is not FAILED")
     void reconcileOnUpdateNoErrorMessageWhenNotFailed() {
         var oldDs = debeziumServer(7L, List.of(
@@ -259,9 +272,16 @@ class OperatorPipelineStatusWatcherTest {
     }
 
     private static DebeziumServer debeziumServer(Long pipelineId, List<Condition> conditions) {
+        return debeziumServer(pipelineId, conditions, null);
+    }
+
+    private static DebeziumServer debeziumServer(Long pipelineId, List<Condition> conditions, Long generation) {
         var ds = new DebeziumServer();
         var metadata = new ObjectMeta();
         metadata.setLabels(Map.of(LABEL_DBZ_CONDUCTOR_ID, String.valueOf(pipelineId)));
+        if (generation != null) {
+            metadata.setGeneration(generation);
+        }
         ds.setMetadata(metadata);
         if (conditions != null) {
             var status = new DebeziumServerStatus();

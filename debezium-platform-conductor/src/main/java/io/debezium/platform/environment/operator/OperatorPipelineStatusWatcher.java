@@ -110,7 +110,7 @@ public class OperatorPipelineStatusWatcher {
             LOGGER.info("DebeziumServer CR status watcher started successfully");
         }
         catch (Exception e) {
-            LOGGER.warn("Unable to start DebeziumServer CR status watcher: {}", e.getMessage());
+            LOGGER.warn("Unable to start DebeziumServer CR status watcher: {}", e.getMessage(), e);
         }
     }
 
@@ -129,10 +129,12 @@ public class OperatorPipelineStatusWatcher {
         // The operator never sets Running=False; when a pod crashes (CrashLoopBackOff),
         // Ready simply flips back to False. Detect this by checking the transition:
         // previously RUNNING + now Ready=False (without Running condition) = FAILED.
+        // A generation bump means the spec was edited (redeploy), not a crash.
         var failedViaTransition = false;
         if (resolvedStatus.isEmpty()
                 && oldStatus.filter(s -> s == PipelineStatus.RUNNING).isPresent()
-                && hasCondition(newDs, CONDITION_READY, Condition.FALSE)) {
+                && hasCondition(newDs, CONDITION_READY, Condition.FALSE)
+                && !hasGenerationChanged(oldDs, newDs)) {
             resolvedStatus = Optional.of(PipelineStatus.FAILED);
             failedViaTransition = true;
         }
@@ -223,6 +225,15 @@ public class OperatorPipelineStatusWatcher {
         }
         return serverStatus.getConditions().stream()
                 .anyMatch(c -> type.equals(c.getType()) && status.equals(c.getStatus()));
+    }
+
+    private boolean hasGenerationChanged(DebeziumServer oldDs, DebeziumServer newDs) {
+        var oldGen = oldDs.getMetadata().getGeneration();
+        var newGen = newDs.getMetadata().getGeneration();
+        if (oldGen == null || newGen == null) {
+            return false;
+        }
+        return !oldGen.equals(newGen);
     }
 
     private boolean isOperatorMode() {
