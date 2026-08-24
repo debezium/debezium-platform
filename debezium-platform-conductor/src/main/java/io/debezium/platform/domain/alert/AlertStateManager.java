@@ -37,6 +37,7 @@ public class AlertStateManager {
         this.transitionEvaluator = transitionEvaluator;
     }
 
+    @Transactional
     public List<AlertStateEntity> findByRuleId(Long ruleId) {
         return em.createNamedQuery(AlertStateEntity.FIND_BY_RULE_ID, AlertStateEntity.class)
                 .setParameter("ruleId", ruleId)

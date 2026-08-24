@@ -14,7 +14,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.transaction.Transactional;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
@@ -51,7 +50,6 @@ public class AlertEvaluationEngine {
     }
 
     @Scheduled(every = "${alerting.evaluation.interval:60s}", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
-    @Transactional
     void evaluateAll() {
         List<AlertRuleEntity> rules = ruleService.findAllEnabled();
 
