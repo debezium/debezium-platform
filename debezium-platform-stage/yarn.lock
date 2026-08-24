@@ -5776,10 +5776,10 @@ react-floater@^0.9.5-4:
     is-lite "^1.2.1"
     tree-changes-hook "^0.11.2"
 
-react-hook-form@^7.76.0:
-  version "7.77.0"
-  resolved "https://registry.npmjs.org/react-hook-form/-/react-hook-form-7.77.0.tgz"
-  integrity sha512-Sslh9YDYc0GDlWT/lxasnIduNo4v3yyvqRGvmGKUre5AFjDs/HV9/OafHGD8d+sB2yoL4UIL9L8X9i0WlZZebg==
+react-hook-form@^7.86.0:
+  version "7.86.0"
+  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.86.0.tgz#848a238acf20634a4193d9cee1d7e0a16cc1e126"
+  integrity sha512-4kbWJrh5jPZt1+YqVcXcGKffGcXV/XVbozknLh0Yjh0KhpoAkus21TAQhzRYqNwFkkObmnSvRlZZ3GT+ehoIrA==
 
 react-i18next@^17.0.8:
   version "17.0.8"
