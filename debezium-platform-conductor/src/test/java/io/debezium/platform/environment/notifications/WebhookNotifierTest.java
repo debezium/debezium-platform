@@ -69,7 +69,7 @@ class WebhookNotifierTest {
         NotificationResult result = notifier.send(createNotification(), createChannel(mockServer.url("/webhook").toString()));
 
         assertThat(result.success()).isTrue();
-        assertThat(result.message()).isEqualTo("HTTP 200");
+        assertThat(result.message()).isEqualTo("Webhook delivered successfully");
 
         RecordedRequest request = mockServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");

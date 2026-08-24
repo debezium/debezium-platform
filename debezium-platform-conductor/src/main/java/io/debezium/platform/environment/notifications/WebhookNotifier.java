@@ -15,7 +15,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -84,17 +83,16 @@ public class WebhookNotifier implements Notifier {
         }
 
         int maxAttempts = webhookConfig.maxAttempts();
-        // RetryingRunnable performs `retries + 1` calls, so retries = maxAttempts - 1 keeps the total attempt count.
-        AtomicReference<NotificationResult> result = new AtomicReference<>();
         try {
+            // RetryingRunnable performs `retries + 1` calls, so retries = maxAttempts - 1 keeps the total attempt count.
             RetryingRunnable.builder()
                     .retries(Math.max(0, maxAttempts - 1))
-                    .doRun(() -> result.set(deliver(url, method, headers, payload)))
+                    .doRun(() -> deliver(url, method, headers, payload))
                     .delayStrategy(DelayStrategy.exponential(RETRY_INITIAL_DELAY, RETRY_MAX_DELAY))
                     .retriableExceptions(WebhookDeliveryException.class)
                     .build()
                     .run();
-            return result.get();
+            return new NotificationResult(true, "Webhook delivered successfully");
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -108,12 +106,7 @@ public class WebhookNotifier implements Notifier {
         }
     }
 
-    /**
-     * Performs a single webhook delivery attempt. Returns a successful result on a 2xx response; throws
-     * {@link WebhookDeliveryException} on a non-2xx response or an I/O error so that {@link RetryingRunnable}
-     * can retry. {@link InterruptedException} is propagated so retries stop promptly.
-     */
-    private NotificationResult deliver(String url, String method, Map<String, String> headers, String payload)
+    private void deliver(String url, String method, Map<String, String> headers, String payload)
             throws InterruptedException {
         try {
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
@@ -127,10 +120,9 @@ public class WebhookNotifier implements Notifier {
             HttpResponse<String> response = httpClient.send(requestBuilder.build(),
                     HttpResponse.BodyHandlers.ofString());
 
-            if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                return new NotificationResult(true, "HTTP " + response.statusCode());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new WebhookDeliveryException("HTTP " + response.statusCode());
             }
-            throw new WebhookDeliveryException("HTTP " + response.statusCode());
         }
         catch (IOException e) {
             throw new WebhookDeliveryException(e.getMessage(), e);
