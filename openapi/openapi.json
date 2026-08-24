@@ -1161,6 +1161,7 @@
           "schema" : {
             "type" : "integer",
             "format" : "int32",
+            "minimum" : 1,
             "default" : 0
           }
         }, {
@@ -1188,6 +1189,7 @@
           "schema" : {
             "type" : "integer",
             "format" : "int32",
+            "minimum" : 1,
             "default" : 20
           }
         }, {

@@ -9,6 +9,7 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import java.time.Instant;
 
+import jakarta.validation.constraints.Min;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -51,8 +52,8 @@ public class AlertEventResource {
                                @QueryParam("ruleId") Long ruleId,
                                @QueryParam("from") Instant from,
                                @QueryParam("to") Instant to,
-                               @QueryParam("page") @DefaultValue("0") int page,
-                               @QueryParam("size") @DefaultValue("20") int size) {
+                               @QueryParam("page") @DefaultValue("0") @Min(1) int page,
+                               @QueryParam("size") @DefaultValue("20") @Min(1) int size) {
         var result = alertEventService.listEvents(severity, status, pipelineId, ruleId, from, to, page, size);
         return Response.ok(result).build();
     }

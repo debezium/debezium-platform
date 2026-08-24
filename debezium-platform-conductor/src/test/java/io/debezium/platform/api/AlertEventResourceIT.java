@@ -6,7 +6,10 @@
 package io.debezium.platform.api;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -18,6 +21,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.UserTransaction;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -333,6 +337,25 @@ class AlertEventResourceIT {
                 .body("totalPending", is(1))
                 .body("firingBySeverity.WARNING", is(1))
                 .body("activeAlerts", hasSize(2));
+    }
+
+    @Test
+    @Order(13)
+    void wrongPageSizeShouldReturnError() {
+        given()
+                .queryParam("page", 0)
+                .queryParam("size", 0)
+                .when().get(EVENTS_PATH)
+                .then()
+                .statusCode(400)
+                .body("title", CoreMatchers.is("Constraint Violation"))
+                .body("violations", containsInAnyOrder(
+                        allOf(
+                                hasEntry("field", "listEvents.page"),
+                                hasEntry("message", "must be greater than or equal to 1")),
+                        allOf(
+                                hasEntry("field", "listEvents.size"),
+                                hasEntry("message", "must be greater than or equal to 1"))));
     }
 
     @Test

@@ -886,6 +886,7 @@ paths:
         schema:
           type: integer
           format: int32
+          minimum: 1
           default: 0
       - name: pipelineId
         in: query
@@ -905,6 +906,7 @@ paths:
         schema:
           type: integer
           format: int32
+          minimum: 1
           default: 20
       - name: status
         in: query

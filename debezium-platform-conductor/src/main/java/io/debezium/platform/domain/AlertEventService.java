@@ -41,7 +41,6 @@ public class AlertEventService {
 
     public PagedAlertEventResponse listEvents(Severity severity, String status, String pipelineId,
                                               Long ruleId, Instant from, Instant to, int page, int size) {
-        size = Math.min(size, 100);
 
         var where = new ArrayList<String>();
         if (severity != null) {
