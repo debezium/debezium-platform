@@ -63,4 +63,11 @@ class OperatorTest {
         assertThat(Operator.LESS_THAN.evaluate(-5.0, -3.0)).isTrue();
         assertThat(Operator.GREATER_THAN.evaluate(-3.0, -5.0)).isTrue();
     }
+
+    @Test
+    void testNaNValues() {
+        assertThat(Operator.LESS_THAN.evaluate(Double.NaN, -3.0)).isFalse();
+        assertThat(Operator.GREATER_THAN.evaluate(Double.NaN, 5.0)).isFalse();
+        assertThat(Operator.EQUAL.evaluate(Double.NaN, 10.0)).isFalse();
+    }
 }
