@@ -5,20 +5,21 @@
  */
 package io.debezium.platform.environment.notifications;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.MediaType;
-
-import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,18 +27,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.debezium.platform.config.AlertingConfigGroup;
 import io.debezium.platform.data.model.ChannelType;
 import io.debezium.platform.data.model.NotificationChannelEntity;
+import io.debezium.util.DelayStrategy;
+import io.debezium.util.RetryingRunnable;
 
 @ApplicationScoped
 public class WebhookNotifier implements Notifier {
-
-    private static final Logger LOGGER = Logger.getLogger(WebhookNotifier.class);
 
     private static final String DEFAULT_METHOD = "POST";
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
     private static final String PAYLOAD_VERSION = "1";
     private static final String STATUS_FIRING = "firing";
     private static final String STATUS_RESOLVED = "resolved";
-    private static final long[] RETRY_DELAYS_MS = { 1000, 5000, 30000 };
+    private static final Duration RETRY_INITIAL_DELAY = Duration.ofSeconds(1);
+    private static final Duration RETRY_MAX_DELAY = Duration.ofSeconds(30);
 
     private final AlertingConfigGroup.WebhookConfigGroup webhookConfig;
     private final ObjectMapper objectMapper;
@@ -82,43 +84,57 @@ public class WebhookNotifier implements Notifier {
         }
 
         int maxAttempts = webhookConfig.maxAttempts();
-        for (int attempt = 0; attempt < maxAttempts; attempt++) {
-            try {
-                HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .timeout(webhookConfig.readTimeout())
-                        .header(CONTENT_TYPE_HEADER, MediaType.APPLICATION_JSON)
-                        .method(method, HttpRequest.BodyPublishers.ofString(payload));
-
-                headers.forEach(requestBuilder::header);
-
-                HttpResponse<String> response = httpClient.send(requestBuilder.build(),
-                        HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                    return new NotificationResult(true, "HTTP " + response.statusCode());
-                }
-                LOGGER.warnv("Webhook returned HTTP {0} (attempt {1}/{2})", response.statusCode(), attempt + 1, maxAttempts);
-            }
-            catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return new NotificationResult(false, "Interrupted during webhook delivery");
-            }
-            catch (Exception e) {
-                LOGGER.warnv("Webhook failed (attempt {0}/{1}): {2}", attempt + 1, maxAttempts, e.getMessage());
-            }
-
-            if (attempt < maxAttempts - 1) {
-                try {
-                    Thread.sleep(RETRY_DELAYS_MS[attempt]);
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return new NotificationResult(false, "Interrupted during retry backoff");
-                }
-            }
+        // RetryingRunnable performs `retries + 1` calls, so retries = maxAttempts - 1 keeps the total attempt count.
+        AtomicReference<NotificationResult> result = new AtomicReference<>();
+        try {
+            RetryingRunnable.builder()
+                    .retries(Math.max(0, maxAttempts - 1))
+                    .doRun(() -> result.set(deliver(url, method, headers, payload)))
+                    .delayStrategy(DelayStrategy.exponential(RETRY_INITIAL_DELAY, RETRY_MAX_DELAY))
+                    .retriableExceptions(WebhookDeliveryException.class)
+                    .build()
+                    .run();
+            return result.get();
         }
-        return new NotificationResult(false, "All " + maxAttempts + " retry attempts exhausted");
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new NotificationResult(false, "Interrupted during webhook delivery");
+        }
+        catch (WebhookDeliveryException e) {
+            return new NotificationResult(false, "All " + maxAttempts + " retry attempts exhausted (last error: " + e.getMessage() + ")");
+        }
+        catch (Exception e) {
+            return new NotificationResult(false, "Webhook delivery failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Performs a single webhook delivery attempt. Returns a successful result on a 2xx response; throws
+     * {@link WebhookDeliveryException} on a non-2xx response or an I/O error so that {@link RetryingRunnable}
+     * can retry. {@link InterruptedException} is propagated so retries stop promptly.
+     */
+    private NotificationResult deliver(String url, String method, Map<String, String> headers, String payload)
+            throws InterruptedException {
+        try {
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(webhookConfig.readTimeout())
+                    .header(CONTENT_TYPE_HEADER, MediaType.APPLICATION_JSON)
+                    .method(method, HttpRequest.BodyPublishers.ofString(payload));
+
+            headers.forEach(requestBuilder::header);
+
+            HttpResponse<String> response = httpClient.send(requestBuilder.build(),
+                    HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                return new NotificationResult(true, "HTTP " + response.statusCode());
+            }
+            throw new WebhookDeliveryException("HTTP " + response.statusCode());
+        }
+        catch (IOException e) {
+            throw new WebhookDeliveryException(e.getMessage(), e);
+        }
     }
 
     NotificationResult validateUrl(String url) {
@@ -168,4 +184,5 @@ public class WebhookNotifier implements Notifier {
 
         return objectMapper.writeValueAsString(payload);
     }
+
 }
