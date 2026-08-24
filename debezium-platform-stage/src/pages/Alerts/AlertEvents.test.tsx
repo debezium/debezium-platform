@@ -140,6 +140,16 @@ describe("AlertHistory", () => {
     });
   });
 
+  it("requests status=FIRING when the URL includes status=FIRING", async () => {
+    render(<AlertHistory />, { initialEntries: ["/alerts/history?status=FIRING"] });
+
+    await screen.findByText("high-source-lag");
+
+    expect(lastRequestedUrl("/api/alerts/events").searchParams.getAll("status")).toEqual([
+      "FIRING",
+    ]);
+  });
+
   it("sends a single status= query param and replaces it when another status is selected", async () => {
     render(<AlertHistory />);
     await screen.findByText("high-source-lag");

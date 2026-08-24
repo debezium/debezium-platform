@@ -24,6 +24,7 @@ import {
   ToolbarContent,
   ToolbarGroup,
   ToolbarItem,
+  Tooltip,
 } from "@patternfly/react-core";
 import {
   ActionsColumn,
@@ -59,6 +60,8 @@ import AlertChannelFormModal from "./AlertChannelFormModal";
 import { SingleSelectFilter } from "./alertsFilters";
 import "./AlertEvents.css";
 
+const WEBHOOK_URL_DISPLAY_MAX = 42;
+
 const describeChannel = (channel: NotificationChannel): string => {
   if (channel.type === "EMAIL") {
     const config = channel.config as EmailChannelConfig;
@@ -67,7 +70,42 @@ const describeChannel = (channel: NotificationChannel): string => {
   }
   const config = channel.config as WebhookChannelConfig;
   if (!config.url) return "-";
-  return config.url.length > 42 ? `${config.url.slice(0, 42)}...` : config.url;
+  return config.url.length > WEBHOOK_URL_DISPLAY_MAX
+    ? `${config.url.slice(0, WEBHOOK_URL_DISPLAY_MAX)}...`
+    : config.url;
+};
+
+const ChannelDetails: React.FC<{ channel: NotificationChannel }> = ({ channel }) => {
+  const summary = describeChannel(channel);
+  let tooltip: React.ReactNode | undefined;
+
+  if (channel.type === "EMAIL") {
+    const recipients = (channel.config as EmailChannelConfig).recipients ?? [];
+    if (recipients.length > 1) {
+      tooltip = (
+        <div>
+          {recipients.map((email) => (
+            <div key={email}>{email}</div>
+          ))}
+        </div>
+      );
+    }
+  } else {
+    const url = (channel.config as WebhookChannelConfig).url ?? "";
+    if (url.length > WEBHOOK_URL_DISPLAY_MAX) {
+      tooltip = url;
+    }
+  }
+
+  if (!tooltip) {
+    return <>{summary}</>;
+  }
+
+  return (
+    <Tooltip content={tooltip}>
+      <span tabIndex={0}>{summary}</span>
+    </Tooltip>
+  );
 };
 
 const AlertChannels: React.FC = () => {
@@ -320,7 +358,9 @@ const AlertChannels: React.FC = () => {
                       <Td dataLabel="Type">
                         {channel.type === "EMAIL" ? "Email" : "Webhook"}
                       </Td>
-                      <Td dataLabel="Details">{describeChannel(channel)}</Td>
+                      <Td dataLabel="Details">
+                        <ChannelDetails channel={channel} />
+                      </Td>
                       <Td dataLabel="Status">
                         <Switch
                           id={`channel-enabled-${channel.id}`}

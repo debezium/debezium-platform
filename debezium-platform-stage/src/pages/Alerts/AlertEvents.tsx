@@ -45,7 +45,7 @@ import {
   OutlinedClockIcon,
   TimesIcon,
 } from "@patternfly/react-icons";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import PageHeader from "@components/PageHeader";
 import { fetchData, Pipeline } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
@@ -81,6 +81,9 @@ import { SingleSelectFilter } from "./alertsFilters";
 import "./AlertEvents.css"
 
 type EntityFilterMode = "pipeline" | "rule" | "severity" | "status";
+
+const parseStatusQueryParam = (value: string | null): AlertEventStatus | undefined =>
+  value === "FIRING" || value === "RESOLVED" ? value : undefined;
 
 const getDefaultCustomRange = () => {
   const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
@@ -322,9 +325,12 @@ function TypeaheadMultiSelectFilter<T extends string | number>({
 
 const AlertEvents: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const statusParam = searchParams.get("status");
+  const statusFromUrl = parseStatusQueryParam(statusParam);
 
   const [severityFilter, setSeverityFilter] = React.useState<AlertSeverity[]>([]);
-  const [statusFilter, setStatusFilter] = React.useState<AlertEventStatus | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = React.useState<AlertEventStatus | undefined>(statusFromUrl);
   const [datePreset, setDatePreset] = React.useState<DateRangePreset | "All time">("All time");
   const [isDateOpen, setIsDateOpen] = React.useState(false);
   const defaultCustomRange = React.useMemo(() => getDefaultCustomRange(), []);
@@ -333,10 +339,21 @@ const AlertEvents: React.FC = () => {
   const [appliedCustomFrom, setAppliedCustomFrom] = React.useState(defaultCustomRange.from);
   const [appliedCustomTo, setAppliedCustomTo] = React.useState(defaultCustomRange.to);
 
-  const [entityFilterMode, setEntityFilterMode] = React.useState<EntityFilterMode>("severity");
+  const [entityFilterMode, setEntityFilterMode] = React.useState<EntityFilterMode>(
+    statusFromUrl ? "status" : "severity"
+  );
   const [pipelineFilter, setPipelineFilter] = React.useState<string[]>([]);
   const [ruleFilter, setRuleFilter] = React.useState<number[]>([]);
   const [isFilterFieldSelectOpen, setIsFilterFieldSelectOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const next = parseStatusQueryParam(statusParam);
+    if (next === undefined) {
+      return;
+    }
+    setStatusFilter(next);
+    setEntityFilterMode("status");
+  }, [statusParam]);
 
   const FILTER_FIELD_OPTIONS: { value: EntityFilterMode; label: string }[] = [
       { value: "severity", label: "Severity" },

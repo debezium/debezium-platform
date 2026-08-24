@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useLocation } from "react-router-dom";
 import { FeatureGate } from "@components/FeatureGate";
-import { fetchAlertStatus } from "../../apis/alerts";
+import { ALERT_STATUS_QUERY_KEY, fetchAlertStatus } from "../../apis/alerts";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { AlertStatusResponse } from "./alertsTypes";
 import AlertRules from "./AlertRules";
@@ -25,7 +25,7 @@ const Alerts: React.FunctionComponent = () => {
   const activeTab = getActiveTab(location.pathname);
 
   const { data: alertStatus } = useResourceQuery<AlertStatusResponse, Error>(
-    ["alertStatus"],
+    ALERT_STATUS_QUERY_KEY,
     fetchAlertStatus
   );
 

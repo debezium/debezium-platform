@@ -57,8 +57,28 @@ describe("AlertChannels", () => {
     expect(await screen.findByRole("button", { name: "Platform Ops Email" })).toBeInTheDocument();
     expect(screen.getByText("Email")).toBeInTheDocument();
     expect(screen.getByText("ops@example.com (+1)")).toBeInTheDocument();
+    await userEvent.hover(screen.getByText("ops@example.com (+1)"));
+    expect(await screen.findByText("oncall@example.com")).toBeInTheDocument();
     expect(screen.getByRole("switch", { name: "Enable Platform Ops Email" })).toBeChecked();
     expect(screen.getByText("1 items")).toBeInTheDocument();
+  });
+
+  it("shows the full webhook URL in a tooltip when the details column is truncated", async () => {
+    const url = "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXX";
+    vi.mocked(fetchAlertChannels).mockResolvedValue([
+      sampleChannel({
+        id: 5,
+        name: "Slack #cdc-alerts",
+        type: "WEBHOOK",
+        config: { url, method: "POST" },
+      }),
+    ]);
+
+    render(<AlertChannels />);
+
+    const truncated = await screen.findByText(`${url.slice(0, 42)}...`);
+    await userEvent.hover(truncated);
+    expect(await screen.findByText(url)).toBeInTheDocument();
   });
 
   it("shows the empty state when the API returns no channels", async () => {

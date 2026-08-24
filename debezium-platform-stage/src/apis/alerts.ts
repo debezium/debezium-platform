@@ -17,6 +17,7 @@ export const DEFAULT_ALERT_EVENTS_PAGE_SIZE = 20;
 
 export const ALERT_RULES_QUERY_KEY = ["alertRules"] as const;
 export const ALERT_CHANNELS_QUERY_KEY = ["alertChannels"] as const;
+export const ALERT_STATUS_QUERY_KEY = ["alertStatus"] as const;
 
 export interface AlertEventsQueryParams {
   /** Defaults to 0 */
@@ -27,7 +28,6 @@ export interface AlertEventsQueryParams {
   status?: AlertEventStatus[];
   pipelineId?: string[];
   ruleId?: number[];
-  /** ISO-8601 timestamps. */
   from?: string;
   to?: string;
 }
