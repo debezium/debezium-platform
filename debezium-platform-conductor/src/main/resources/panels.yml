@@ -135,3 +135,13 @@ panels:
     visualization:
       type: donut-utilization
       suggestedStep: 15s
+
+  - id: snapshot-event-count
+    title: "Snapshot Event Count Rate"
+    description: "Rate of snapshot change data capture events per second"
+    category: snapshot
+    query: 'rate(debezium_event_count_total{service_name="{{pipeline_id}}",debezium_context="snapshot",debezium_event_type="read"}[5m])'
+    unit: events/s
+    visualization:
+      type: area
+      suggestedStep: 15s
