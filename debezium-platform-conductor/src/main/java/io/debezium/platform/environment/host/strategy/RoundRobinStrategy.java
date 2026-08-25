@@ -12,7 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 
 import io.debezium.DebeziumException;
-import io.debezium.platform.domain.Host;
+import io.debezium.platform.domain.views.refs.HostStatusReference;
 
 /**
  * Least-loaded round-robin host selection strategy.
@@ -41,7 +41,7 @@ public class RoundRobinStrategy implements DeployStrategy {
     }
 
     @Override
-    public Host select(List<Host> readyHosts) {
+    public HostStatusReference select(List<HostStatusReference> readyHosts) {
         if (readyHosts.isEmpty()) {
             throw new DebeziumException(
                     "No READY hosts available for pipeline deployment. "
@@ -49,8 +49,8 @@ public class RoundRobinStrategy implements DeployStrategy {
         }
 
         return readyHosts.stream()
-                .min(Comparator.comparingLong((Host host) -> countDeployments(host.id()))
-                        .thenComparingLong(Host::id))
+                .min(Comparator.comparingLong((HostStatusReference host) -> countDeployments(host.getId()))
+                        .thenComparingLong(HostStatusReference::getId))
                 .orElseThrow(() -> new DebeziumException("No READY hosts available for pipeline deployment."));
     }
 

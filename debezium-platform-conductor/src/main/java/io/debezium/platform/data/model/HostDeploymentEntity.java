@@ -15,6 +15,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -38,7 +39,7 @@ public class HostDeploymentEntity {
     @GeneratedValue
     private Long id;
 
-    @ManyToOne
+    @OneToOne
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "pipeline_id", unique = true, nullable = false)
     private PipelineEntity pipeline;

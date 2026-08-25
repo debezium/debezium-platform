@@ -23,8 +23,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.debezium.platform.data.model.DeploymentStatus;
-import io.debezium.platform.domain.Deployment;
 import io.debezium.platform.domain.HostDeploymentService;
+import io.debezium.platform.domain.views.HostDeployment;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner;
 import io.debezium.platform.environment.host.provisioning.CommandResult;
@@ -64,7 +64,7 @@ class HostDeploymentStatusPollerTest {
 
     @Test
     void transitionsDeployingToRunningWhenContainerRunning() {
-        Deployment deployment = createDeployment(1L, DeploymentStatus.DEPLOYING, "container-1", "host-1");
+        HostDeployment deployment = mockDeployment(1L, DeploymentStatus.DEPLOYING, "container-1", "host-1");
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
@@ -78,7 +78,7 @@ class HostDeploymentStatusPollerTest {
 
     @Test
     void transitionsDeployingToFailedWhenContainerNotRunningAfterGracePeriod() {
-        Deployment deployment = createDeployment(2L, DeploymentStatus.DEPLOYING, "container-2", "host-1",
+        HostDeployment deployment = mockDeployment(2L, DeploymentStatus.DEPLOYING, "container-2", "host-1",
                 "default-hash", Instant.now().minus(Duration.ofMinutes(10)));
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
@@ -93,7 +93,7 @@ class HostDeploymentStatusPollerTest {
 
     @Test
     void skipsFailedTransitionWhenWithinGracePeriod() {
-        Deployment deployment = createDeployment(8L, DeploymentStatus.DEPLOYING, "container-8", "host-1",
+        HostDeployment deployment = mockDeployment(8L, DeploymentStatus.DEPLOYING, "container-8", "host-1",
                 "default-hash", Instant.now().minus(Duration.ofMinutes(1)));
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
@@ -109,7 +109,7 @@ class HostDeploymentStatusPollerTest {
 
     @Test
     void transitionsRunningToFailedWhenContainerStoppedUnexpectedly() {
-        Deployment deployment = createDeployment(3L, DeploymentStatus.RUNNING, "container-3", "host-2");
+        HostDeployment deployment = mockDeployment(3L, DeploymentStatus.RUNNING, "container-3", "host-2");
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
@@ -123,7 +123,7 @@ class HostDeploymentStatusPollerTest {
 
     @Test
     void transitionsRunningToConfigDriftWhenHashMismatch() {
-        Deployment deployment = createDeployment(4L, DeploymentStatus.RUNNING, "container-4", "host-3",
+        HostDeployment deployment = mockDeployment(4L, DeploymentStatus.RUNNING, "container-4", "host-3",
                 "expected-hash-abc", Instant.now().minus(Duration.ofMinutes(10)));
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
@@ -142,7 +142,7 @@ class HostDeploymentStatusPollerTest {
 
     @Test
     void noStatusChangeWhenContainerRunningAndHashMatches() {
-        Deployment deployment = createDeployment(5L, DeploymentStatus.RUNNING, "container-5", "host-4",
+        HostDeployment deployment = mockDeployment(5L, DeploymentStatus.RUNNING, "container-5", "host-4",
                 "matching-hash", Instant.now().minus(Duration.ofMinutes(10)));
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
@@ -185,7 +185,7 @@ class HostDeploymentStatusPollerTest {
 
     @Test
     void handlesExceptionDuringInspectGracefully() {
-        Deployment deployment = createDeployment(6L, DeploymentStatus.RUNNING, "container-6", "host-5");
+        HostDeployment deployment = mockDeployment(6L, DeploymentStatus.RUNNING, "container-6", "host-5");
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
@@ -203,7 +203,7 @@ class HostDeploymentStatusPollerTest {
 
     @Test
     void skipsConfigDriftWhenHashCommandFails() {
-        Deployment deployment = createDeployment(7L, DeploymentStatus.RUNNING, "container-7", "host-6",
+        HostDeployment deployment = mockDeployment(7L, DeploymentStatus.RUNNING, "container-7", "host-6",
                 "expected-hash", Instant.now().minus(Duration.ofMinutes(10)));
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
@@ -225,7 +225,7 @@ class HostDeploymentStatusPollerTest {
     void handlesNoisyAnsibleOutputForConfigHash() {
         // Reproduces the exact output Ansible returns on test-host:
         // Warnings + metadata + the actual hash on the last line
-        Deployment deployment = createDeployment(9L, DeploymentStatus.RUNNING, "container-9", "host-7",
+        HostDeployment deployment = mockDeployment(9L, DeploymentStatus.RUNNING, "container-9", "host-7",
                 "e1272390382212e4164631eaa80eb72ced68c390887220163f90211cca1c3129",
                 Instant.now().minus(Duration.ofMinutes(10)));
 
@@ -253,7 +253,7 @@ class HostDeploymentStatusPollerTest {
     @Test
     void handlesNoisyAnsibleOutputForDockerInspect() {
         // Verifies docker inspect also works when Ansible wraps output with warnings
-        Deployment deployment = createDeployment(10L, DeploymentStatus.DEPLOYING, "container-10", "host-8");
+        HostDeployment deployment = mockDeployment(10L, DeploymentStatus.DEPLOYING, "container-10", "host-8");
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
@@ -273,15 +273,23 @@ class HostDeploymentStatusPollerTest {
 
     // ── Helper ──
 
-    private Deployment createDeployment(Long id, DeploymentStatus status,
-                                        String containerName, String sshAlias) {
-        return createDeployment(id, status, containerName, sshAlias,
+    private HostDeployment mockDeployment(Long id, DeploymentStatus status,
+                                          String containerName, String sshAlias) {
+        return mockDeployment(id, status, containerName, sshAlias,
                 "default-hash", Instant.now().minus(Duration.ofMinutes(10)));
     }
 
-    private Deployment createDeployment(Long id, DeploymentStatus status,
-                                        String containerName, String sshAlias,
-                                        String configHash, Instant deployedAt) {
-        return new Deployment(id, id, containerName, sshAlias, status, configHash, deployedAt);
+    private HostDeployment mockDeployment(Long id, DeploymentStatus status,
+                                          String containerName, String sshAlias,
+                                          String configHash, Instant deployedAt) {
+        HostDeployment deployment = mock(HostDeployment.class);
+        when(deployment.getId()).thenReturn(id);
+        when(deployment.getPipelineId()).thenReturn(id);
+        when(deployment.getContainerName()).thenReturn(containerName);
+        when(deployment.getSshAlias()).thenReturn(sshAlias);
+        when(deployment.getDeploymentStatus()).thenReturn(status);
+        when(deployment.getConfigHash()).thenReturn(configHash);
+        when(deployment.getDeployedAt()).thenReturn(deployedAt);
+        return deployment;
     }
 }

@@ -6,8 +6,10 @@
 package io.debezium.platform.domain;
 
 import static jakarta.transaction.Transactional.TxType.REQUIRES_NEW;
+import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,17 +20,29 @@ import jakarta.transaction.Transactional;
 
 import org.jboss.logging.Logger;
 
+import com.blazebit.persistence.CriteriaBuilderFactory;
+import com.blazebit.persistence.view.EntityViewManager;
+import com.blazebit.persistence.view.EntityViewSetting;
+
 import io.debezium.DebeziumException;
 import io.debezium.platform.data.model.DeploymentStatus;
 import io.debezium.platform.data.model.HostDeploymentEntity;
 import io.debezium.platform.data.model.HostStatusEntity;
 import io.debezium.platform.data.model.PipelineEntity;
 import io.debezium.platform.data.model.ProvisioningStatus;
+import io.debezium.platform.domain.views.HostDeployment;
+import io.debezium.platform.domain.views.refs.HostDeploymentReference;
+import io.debezium.platform.domain.views.refs.HostStatusReference;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.debezium.platform.environment.host.strategy.DeployStrategy;
 
 /**
  * Concurrency-safe host selection, port allocation, and deployment CRUD.
+ *
+ * <p><strong>Extends {@link AbstractService}</strong> to inherit standard
+ * CRUD operations and the Blaze-Persistence entity view infrastructure,
+ * consistent with all other domain services in the platform
+ * (e.g. {@link HostStatusService}, {@code PipelineService}).
  *
  * <p><strong>Locking strategy:</strong> All {@code READY} hosts are locked
  * with {@code PESSIMISTIC_WRITE} sorted by ID (deadlock prevention) before
@@ -41,31 +55,28 @@ import io.debezium.platform.environment.host.strategy.DeployStrategy;
  * deployments exist. Uses a live query (not a stale column) to prevent
  * port collision under concurrent writes.
  *
- * <p><strong>Domain boundary:</strong> All public methods return domain
- * classes ({@link Deployment}, {@link Host}, {@link HostAllocation})
- * instead of JPA entities. This prevents persistence-layer details from
- * leaking into controllers and pollers.
+ * <p><strong>Domain boundary:</strong> All public methods return
+ * Blaze-Persistence entity views ({@link HostDeployment},
+ * {@link HostStatusReference}) instead of JPA entities.
  */
 @ApplicationScoped
-public class HostDeploymentService {
+public class HostDeploymentService extends AbstractService<HostDeploymentEntity, HostDeployment, HostDeploymentReference> {
 
     private static final Logger logger = Logger.getLogger(HostDeploymentService.class);
 
-    // ── JPQL query constants ──
-    private static final String FIND_BY_PIPELINE_JPQL = "SELECT d FROM host_deployment d WHERE d.pipeline.id = :pipelineId";
-    private static final String FIND_BY_STATUS_JPQL = "SELECT d FROM host_deployment d WHERE d.deploymentStatus = :status";
-    private static final String FIND_BY_STATUSES_JPQL = "SELECT d FROM host_deployment d WHERE d.deploymentStatus IN :statuses";
+    // ── JPQL constants for queries that require features Blaze CriteriaBuilder does not support ──
     private static final String FIND_READY_HOSTS_JPQL = "SELECT h FROM host_status h WHERE h.provisioningStatus = :status ORDER BY h.id ASC";
     private static final String MAX_PORT_JPQL = "SELECT MAX(d.serverPort) FROM host_deployment d WHERE d.hostStatus.id = :hostId";
 
-    private final EntityManager em;
     private final DeployStrategy deployStrategy;
     private final HostConfigGroup hostConfig;
 
     public HostDeploymentService(EntityManager em,
+                                 CriteriaBuilderFactory cbf,
+                                 EntityViewManager evm,
                                  DeployStrategy deployStrategy,
                                  HostConfigGroup hostConfig) {
-        this.em = em;
+        super(HostDeploymentEntity.class, HostDeployment.class, HostDeploymentReference.class, em, cbf, evm);
         this.deployStrategy = deployStrategy;
         this.hostConfig = hostConfig;
     }
@@ -85,16 +96,16 @@ public class HostDeploymentService {
     public HostAllocation allocateHostAndPort() {
         List<HostStatusEntity> readyEntities = lockAllReadyHosts();
 
-        List<Host> readyHosts = readyEntities.stream()
-                .map(Host::from)
+        List<HostStatusReference> readyHosts = readyEntities.stream()
+                .map(entity -> evm.find(em, HostStatusReference.class, entity.getId()))
                 .toList();
 
-        Host selectedHost = deployStrategy.select(readyHosts);
+        HostStatusReference selectedHost = deployStrategy.select(readyHosts);
 
-        int allocatedPort = allocatePort(selectedHost.id());
+        int allocatedPort = allocatePort(selectedHost.getId());
 
         logger.infov("Selected host {0} (id={1}) with port {2}",
-                selectedHost.sshAlias(), selectedHost.id(), allocatedPort);
+                selectedHost.getSshAlias(), selectedHost.getId(), allocatedPort);
 
         return new HostAllocation(selectedHost, allocatedPort);
     }
@@ -128,20 +139,21 @@ public class HostDeploymentService {
     /**
      * Finds the active deployment for a given pipeline.
      */
-    @Transactional(REQUIRES_NEW)
-    public Optional<Deployment> findByPipelineId(Long pipelineId) {
-        return em.createQuery(FIND_BY_PIPELINE_JPQL, HostDeploymentEntity.class)
-                .setParameter("pipelineId", pipelineId)
-                .getResultStream()
-                .findFirst()
-                .map(Deployment::from);
+    @Transactional(SUPPORTS)
+    public Optional<HostDeployment> findByPipelineId(Long pipelineId) {
+        return evm.applySetting(
+                EntityViewSetting.create(HostDeployment.class),
+                cb().where("pipeline.id").eq(pipelineId))
+                .getResultList()
+                .stream()
+                .findFirst();
     }
 
     /**
      * Finds the active deployment for a given pipeline, failing loudly if absent.
      */
-    @Transactional(REQUIRES_NEW)
-    public Deployment requireByPipelineId(Long pipelineId) {
+    @Transactional(SUPPORTS)
+    public HostDeployment requireByPipelineId(Long pipelineId) {
         return findByPipelineId(pipelineId)
                 .orElseThrow(() -> new DebeziumException(
                         "No active deployment found for pipeline id=" + pipelineId));
@@ -186,37 +198,34 @@ public class HostDeploymentService {
     /**
      * Returns all deployments with a given status.
      */
-    @Transactional(REQUIRES_NEW)
-    public List<Deployment> findByStatus(DeploymentStatus status) {
-        return em.createQuery(FIND_BY_STATUS_JPQL, HostDeploymentEntity.class)
-                .setParameter("status", status)
-                .getResultStream()
-                .map(Deployment::from)
-                .toList();
+    @Transactional(SUPPORTS)
+    public List<HostDeployment> findByStatus(DeploymentStatus status) {
+        return evm.applySetting(
+                EntityViewSetting.create(HostDeployment.class),
+                cb().where("deploymentStatus").eq(status))
+                .getResultList();
     }
 
     /**
      * Returns all deployments matching any of the given statuses.
      */
-    @Transactional(REQUIRES_NEW)
-    public List<Deployment> findByStatuses(DeploymentStatus... statuses) {
-        return em.createQuery(FIND_BY_STATUSES_JPQL, HostDeploymentEntity.class)
-                .setParameter("statuses", List.of(statuses))
-                .getResultStream()
-                .map(Deployment::from)
-                .toList();
+    @Transactional(SUPPORTS)
+    public List<HostDeployment> findByStatuses(DeploymentStatus... statuses) {
+        return evm.applySetting(
+                EntityViewSetting.create(HostDeployment.class),
+                cb().where("deploymentStatus").in(Arrays.asList(statuses)))
+                .getResultList();
     }
 
     /**
      * Returns all READY hosts without pessimistic locking.
      */
-    @Transactional(REQUIRES_NEW)
-    public List<Host> findReadyHosts() {
-        return em.createQuery(FIND_READY_HOSTS_JPQL, HostStatusEntity.class)
-                .setParameter("status", ProvisioningStatus.READY)
-                .getResultStream()
-                .map(Host::from)
-                .toList();
+    @Transactional(SUPPORTS)
+    public List<HostStatusReference> findReadyHosts() {
+        return evm.applySetting(
+                EntityViewSetting.create(HostStatusReference.class),
+                cbf.create(em, HostStatusEntity.class).where("provisioningStatus").eq(ProvisioningStatus.READY))
+                .getResultList();
     }
 
     /**
@@ -224,7 +233,7 @@ public class HostDeploymentService {
      * when concurrent transactions lock the same set of rows.
      *
      * <p>Returns JPA entities intentionally — pessimistic locking requires
-     * the real managed entity. Domain mapping happens at the public boundary
+     * the real managed entity. View mapping happens at the public boundary
      * in {@link #allocateHostAndPort()}.
      */
     private List<HostStatusEntity> lockAllReadyHosts() {

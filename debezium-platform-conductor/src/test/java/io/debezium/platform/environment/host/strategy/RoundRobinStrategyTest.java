@@ -23,7 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.debezium.DebeziumException;
-import io.debezium.platform.domain.Host;
+import io.debezium.platform.domain.views.refs.HostStatusReference;
 
 /**
  * Unit tests for {@link RoundRobinStrategy}.
@@ -41,29 +41,29 @@ class RoundRobinStrategyTest {
 
     @Test
     void selectReturnsLeastLoadedHost() {
-        Host host1 = new Host(1L, "server-1");
-        Host host2 = new Host(2L, "server-2");
-        Host host3 = new Host(3L, "server-3");
+        HostStatusReference host1 = mockHost(1L, "server-1");
+        HostStatusReference host2 = mockHost(2L, "server-2");
+        HostStatusReference host3 = mockHost(3L, "server-3");
 
         // host1 has 3 pipelines, host2 has 1, host3 has 2
         stubDeploymentCounts(Map.of(1L, 3L, 2L, 1L, 3L, 2L));
 
-        Host selected = strategy.select(List.of(host1, host2, host3));
+        HostStatusReference selected = strategy.select(List.of(host1, host2, host3));
 
-        assertThat(selected.id()).isEqualTo(2L);
+        assertThat(selected.getId()).isEqualTo(2L);
     }
 
     @Test
     void selectBreaksTiesByLowestId() {
-        Host host1 = new Host(1L, "server-1");
-        Host host2 = new Host(2L, "server-2");
+        HostStatusReference host1 = mockHost(1L, "server-1");
+        HostStatusReference host2 = mockHost(2L, "server-2");
 
         // Both have 0 deployments — should pick host1 (lower ID)
         stubDeploymentCounts(Map.of(1L, 0L, 2L, 0L));
 
-        Host selected = strategy.select(List.of(host1, host2));
+        HostStatusReference selected = strategy.select(List.of(host1, host2));
 
-        assertThat(selected.id()).isEqualTo(1L);
+        assertThat(selected.getId()).isEqualTo(1L);
     }
 
     @Test
@@ -75,12 +75,19 @@ class RoundRobinStrategyTest {
 
     @Test
     void selectHandlesSingleHost() {
-        Host host = new Host(1L, "server-1");
+        HostStatusReference host = mockHost(1L, "server-1");
         stubDeploymentCounts(Map.of(1L, 5L));
 
-        Host selected = strategy.select(List.of(host));
+        HostStatusReference selected = strategy.select(List.of(host));
 
-        assertThat(selected.id()).isEqualTo(1L);
+        assertThat(selected.getId()).isEqualTo(1L);
+    }
+
+    private HostStatusReference mockHost(Long id, String sshAlias) {
+        HostStatusReference host = mock(HostStatusReference.class);
+        when(host.getId()).thenReturn(id);
+        when(host.getSshAlias()).thenReturn(sshAlias);
+        return host;
     }
 
     @SuppressWarnings("unchecked")

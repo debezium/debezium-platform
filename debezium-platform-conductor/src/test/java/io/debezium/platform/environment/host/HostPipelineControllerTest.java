@@ -32,15 +32,15 @@ import org.junit.jupiter.api.Test;
 
 import io.debezium.DebeziumException;
 import io.debezium.platform.data.model.DeploymentStatus;
-import io.debezium.platform.domain.Deployment;
 import io.debezium.platform.domain.DeploymentRequest;
-import io.debezium.platform.domain.Host;
 import io.debezium.platform.domain.HostAllocation;
 import io.debezium.platform.domain.HostDeploymentService;
 import io.debezium.platform.domain.Signal;
+import io.debezium.platform.domain.views.HostDeployment;
 import io.debezium.platform.domain.views.flat.DestinationFlat;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.domain.views.flat.SourceFlat;
+import io.debezium.platform.domain.views.refs.HostStatusReference;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 
 /**
@@ -100,7 +100,7 @@ class HostPipelineControllerTest {
         when(pipelineMapper.map(pipeline)).thenReturn(
                 new HostPipelineMapper.MappedConfig("debezium.source.connector.class=test", "hash123"));
 
-        Host host = new Host(10L, "test-host");
+        HostStatusReference host = mockHost(10L, "test-host");
         when(deploymentService.allocateHostAndPort()).thenReturn(
                 new HostAllocation(host, 9000));
 
@@ -128,7 +128,7 @@ class HostPipelineControllerTest {
         when(pipelineMapper.map(pipeline)).thenReturn(
                 new HostPipelineMapper.MappedConfig("content", "hash456"));
 
-        Host host = new Host(10L, "test-host");
+        HostStatusReference host = mockHost(10L, "test-host");
         when(deploymentService.allocateHostAndPort()).thenReturn(
                 new HostAllocation(host, 9001));
 
@@ -137,9 +137,9 @@ class HostPipelineControllerTest {
         doThrow(new DebeziumException("Failed to create config directory"))
                 .when(containerRuntime).deploy(anyString(), anyString(), eq(9001), anyString(), anyString());
 
-        Deployment deploymentDomain = new Deployment(101L, 2L, "test-pipeline-2", "test-host",
+        HostDeployment deploymentView = mockDeployment(101L, "test-pipeline-2", "test-host",
                 DeploymentStatus.DEPLOYING, "hash456", Instant.now());
-        when(deploymentService.findByPipelineId(2L)).thenReturn(Optional.of(deploymentDomain));
+        when(deploymentService.findByPipelineId(2L)).thenReturn(Optional.of(deploymentView));
         doAnswer(inv -> {
             latch.countDown();
             return null;
@@ -153,7 +153,7 @@ class HostPipelineControllerTest {
 
     @Test
     void undeployDelegatesToRuntimeAndDeletesRecord() throws Exception {
-        Deployment deployment = createMockDeployment(200L, "my-pipeline", "host-1");
+        HostDeployment deployment = mockDeployment(200L, "my-pipeline", "host-1");
         when(deploymentService.findByPipelineId(5L)).thenReturn(Optional.of(deployment));
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -186,7 +186,7 @@ class HostPipelineControllerTest {
 
     @Test
     void stopDelegatesToRuntimeAndMarksStatus() throws Exception {
-        Deployment deployment = createMockDeployment(300L, "my-pipeline", "host-2");
+        HostDeployment deployment = mockDeployment(300L, "my-pipeline", "host-2");
 
         when(deploymentService.requireByPipelineId(10L)).thenReturn(deployment);
 
@@ -205,7 +205,7 @@ class HostPipelineControllerTest {
 
     @Test
     void startDelegatesToRuntimeAndMarksDeploying() throws Exception {
-        Deployment deployment = createMockDeployment(400L, "my-pipeline", "host-3");
+        HostDeployment deployment = mockDeployment(400L, "my-pipeline", "host-3");
 
         when(deploymentService.requireByPipelineId(15L)).thenReturn(deployment);
 
@@ -239,7 +239,7 @@ class HostPipelineControllerTest {
         when(pipelineMapper.map(pipeline)).thenReturn(
                 new HostPipelineMapper.MappedConfig("content", "hash"));
 
-        Host host = new Host(10L, "test-host");
+        HostStatusReference host = mockHost(10L, "test-host");
         when(deploymentService.allocateHostAndPort()).thenReturn(
                 new HostAllocation(host, 9050));
 
@@ -259,7 +259,7 @@ class HostPipelineControllerTest {
 
     @Test
     void logReaderReturnsNonNull() {
-        Deployment deployment = createMockDeployment(600L, "my-pipeline", "host-4");
+        HostDeployment deployment = mockDeployment(600L, "my-pipeline", "host-4");
         when(deploymentService.requireByPipelineId(20L)).thenReturn(deployment);
 
         var logReader = controller.logReader(20L);
@@ -274,9 +274,9 @@ class HostPipelineControllerTest {
         when(pipelineMapper.map(pipeline)).thenThrow(new RuntimeException("Unexpected NullPointer"));
 
         CountDownLatch latch = new CountDownLatch(1);
-        Deployment deploymentDomain = new Deployment(700L, 70L, "test-pipeline-70", "test-host",
+        HostDeployment deploymentView = mockDeployment(700L, "test-pipeline-70", "test-host",
                 DeploymentStatus.DEPLOYING, "hash", Instant.now());
-        when(deploymentService.findByPipelineId(70L)).thenReturn(Optional.of(deploymentDomain));
+        when(deploymentService.findByPipelineId(70L)).thenReturn(Optional.of(deploymentView));
         doAnswer(inv -> {
             latch.countDown();
             return null;
@@ -290,7 +290,7 @@ class HostPipelineControllerTest {
 
     @Test
     void stopDoesNotUpdateStatusWhenRuntimeFails() throws Exception {
-        Deployment deployment = createMockDeployment(800L, "my-pipeline", "host-5");
+        HostDeployment deployment = mockDeployment(800L, "my-pipeline", "host-5");
         when(deploymentService.requireByPipelineId(80L)).thenReturn(deployment);
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -308,7 +308,7 @@ class HostPipelineControllerTest {
 
     @Test
     void startDoesNotUpdateStatusWhenRuntimeFails() throws Exception {
-        Deployment deployment = createMockDeployment(900L, "my-pipeline", "host-6");
+        HostDeployment deployment = mockDeployment(900L, "my-pipeline", "host-6");
         when(deploymentService.requireByPipelineId(90L)).thenReturn(deployment);
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -328,14 +328,14 @@ class HostPipelineControllerTest {
     void deployCleansUpExistingDeploymentBeforeRedeploy() throws Exception {
         PipelineFlat pipeline = buildMinimalPipeline(1L);
 
-        Deployment existingDeployment = new Deployment(99L, 1L, "test-pipeline-1", "host-1",
+        HostDeployment existingDeployment = mockDeployment(99L, "test-pipeline-1", "host-1",
                 DeploymentStatus.FAILED, "oldhash", Instant.now());
         when(deploymentService.findByPipelineId(1L)).thenReturn(Optional.of(existingDeployment));
 
         when(pipelineMapper.map(pipeline)).thenReturn(
                 new HostPipelineMapper.MappedConfig("key=value", "hash123"));
 
-        Host host = new Host(10L, "host-1");
+        HostStatusReference host = mockHost(10L, "host-1");
         when(deploymentService.allocateHostAndPort()).thenReturn(
                 new HostAllocation(host, 9000));
 
@@ -379,8 +379,27 @@ class HostPipelineControllerTest {
         return pipeline;
     }
 
-    private Deployment createMockDeployment(Long deploymentId, String containerName, String sshAlias) {
-        return new Deployment(deploymentId, 1L, containerName, sshAlias,
+    private HostStatusReference mockHost(Long id, String sshAlias) {
+        HostStatusReference host = mock(HostStatusReference.class);
+        when(host.getId()).thenReturn(id);
+        when(host.getSshAlias()).thenReturn(sshAlias);
+        return host;
+    }
+
+    private HostDeployment mockDeployment(Long deploymentId, String containerName, String sshAlias) {
+        return mockDeployment(deploymentId, containerName, sshAlias,
                 DeploymentStatus.RUNNING, "hash", Instant.now());
+    }
+
+    private HostDeployment mockDeployment(Long deploymentId, String containerName, String sshAlias,
+                                          DeploymentStatus status, String configHash, Instant deployedAt) {
+        HostDeployment deployment = mock(HostDeployment.class);
+        when(deployment.getId()).thenReturn(deploymentId);
+        when(deployment.getContainerName()).thenReturn(containerName);
+        when(deployment.getSshAlias()).thenReturn(sshAlias);
+        when(deployment.getDeploymentStatus()).thenReturn(status);
+        when(deployment.getConfigHash()).thenReturn(configHash);
+        when(deployment.getDeployedAt()).thenReturn(deployedAt);
+        return deployment;
     }
 }

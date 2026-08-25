@@ -27,11 +27,11 @@ import io.debezium.platform.data.model.HostDeploymentEntity;
 import io.debezium.platform.data.model.HostStatusEntity;
 import io.debezium.platform.data.model.PipelineEntity;
 import io.debezium.platform.data.model.ProvisioningStatus;
-import io.debezium.platform.domain.Deployment;
 import io.debezium.platform.domain.DeploymentRequest;
-import io.debezium.platform.domain.Host;
 import io.debezium.platform.domain.HostAllocation;
 import io.debezium.platform.domain.HostDeploymentService;
+import io.debezium.platform.domain.views.HostDeployment;
+import io.debezium.platform.domain.views.refs.HostStatusReference;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
@@ -151,15 +151,15 @@ public class HostDeploymentServiceIT {
                         9000, "abc123hash"));
 
         // Query back to verify
-        Deployment deployment = deploymentService.requireByPipelineId(seededPipelineId);
+        HostDeployment deployment = deploymentService.requireByPipelineId(seededPipelineId);
 
-        assertThat(deployment.id()).isNotNull();
-        assertThat(deployment.containerName()).isEqualTo("debezium-pipeline-" + seededPipelineId);
-        assertThat(deployment.status()).isEqualTo(DeploymentStatus.DEPLOYING);
-        assertThat(deployment.configHash()).isEqualTo("abc123hash");
-        assertThat(deployment.deployedAt()).isNotNull();
+        assertThat(deployment.getId()).isNotNull();
+        assertThat(deployment.getContainerName()).isEqualTo("debezium-pipeline-" + seededPipelineId);
+        assertThat(deployment.getDeploymentStatus()).isEqualTo(DeploymentStatus.DEPLOYING);
+        assertThat(deployment.getConfigHash()).isEqualTo("abc123hash");
+        assertThat(deployment.getDeployedAt()).isNotNull();
 
-        createdDeploymentId = deployment.id();
+        createdDeploymentId = deployment.getId();
     }
 
     @Test
@@ -170,7 +170,7 @@ public class HostDeploymentServiceIT {
         assertThat(deployment)
                 .as("Should find the deployment created in the previous test")
                 .isPresent();
-        assertThat(deployment.get().containerName())
+        assertThat(deployment.get().getContainerName())
                 .isEqualTo("debezium-pipeline-" + seededPipelineId);
     }
 
@@ -195,13 +195,13 @@ public class HostDeploymentServiceIT {
     @Test
     @Order(6)
     public void shouldFindDeploymentsByStatus() {
-        List<Deployment> deployments = deploymentService.findByStatus(DeploymentStatus.DEPLOYING);
+        List<HostDeployment> deployments = deploymentService.findByStatus(DeploymentStatus.DEPLOYING);
 
         assertThat(deployments)
                 .as("Should find the DEPLOYING deployment")
                 .hasSizeGreaterThanOrEqualTo(1);
         assertThat(deployments)
-                .extracting(Deployment::status)
+                .extracting(HostDeployment::getDeploymentStatus)
                 .containsOnly(DeploymentStatus.DEPLOYING);
     }
 
@@ -212,7 +212,7 @@ public class HostDeploymentServiceIT {
 
         var deployment = deploymentService.findByPipelineId(seededPipelineId);
         assertThat(deployment).isPresent();
-        assertThat(deployment.get().status()).isEqualTo(DeploymentStatus.RUNNING);
+        assertThat(deployment.get().getDeploymentStatus()).isEqualTo(DeploymentStatus.RUNNING);
     }
 
     @Test
@@ -226,7 +226,7 @@ public class HostDeploymentServiceIT {
                         "quay.io/debezium/server:latest",
                         9001, "def456hash"));
 
-        List<Deployment> results = deploymentService.findByStatuses(
+        List<HostDeployment> results = deploymentService.findByStatuses(
                 DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING);
 
         assertThat(results)
@@ -275,8 +275,8 @@ public class HostDeploymentServiceIT {
         var deployment = deploymentService.findByPipelineId(seededPipeline2Id);
         assertThat(deployment).isPresent();
 
-        Instant originalDeployedAt = deployment.get().deployedAt();
-        Long deploymentId = deployment.get().id();
+        Instant originalDeployedAt = deployment.get().getDeployedAt();
+        Long deploymentId = deployment.get().getId();
 
         // Simulate the full lifecycle: DEPLOYING → RUNNING → STOPPED → DEPLOYING (restart)
         deploymentService.updateStatus(deploymentId, DeploymentStatus.RUNNING);
@@ -289,10 +289,10 @@ public class HostDeploymentServiceIT {
         // Re-read from database
         var updated = deploymentService.findByPipelineId(seededPipeline2Id);
         assertThat(updated).isPresent();
-        assertThat(updated.get().deployedAt())
+        assertThat(updated.get().getDeployedAt())
                 .as("deployedAt must be refreshed when transitioning back to DEPLOYING (restart scenario)")
                 .isAfter(originalDeployedAt);
-        assertThat(updated.get().status()).isEqualTo(DeploymentStatus.DEPLOYING);
+        assertThat(updated.get().getDeploymentStatus()).isEqualTo(DeploymentStatus.DEPLOYING);
     }
 
     @Test
@@ -302,8 +302,8 @@ public class HostDeploymentServiceIT {
         var deployment = deploymentService.findByPipelineId(seededPipeline2Id);
         assertThat(deployment).isPresent();
 
-        Instant deployedAtBeforeTransition = deployment.get().deployedAt();
-        Long deploymentId = deployment.get().id();
+        Instant deployedAtBeforeTransition = deployment.get().getDeployedAt();
+        Long deploymentId = deployment.get().getId();
 
         // Transition to RUNNING — should NOT touch deployedAt
         deploymentService.updateStatus(deploymentId, DeploymentStatus.RUNNING);
@@ -311,7 +311,7 @@ public class HostDeploymentServiceIT {
 
         var afterRunning = deploymentService.findByPipelineId(seededPipeline2Id);
         assertThat(afterRunning).isPresent();
-        assertThat(afterRunning.get().deployedAt())
+        assertThat(afterRunning.get().getDeployedAt())
                 .as("deployedAt must NOT change when transitioning to RUNNING")
                 .isEqualTo(deployedAtBeforeTransition);
 
@@ -321,7 +321,7 @@ public class HostDeploymentServiceIT {
 
         var afterStopped = deploymentService.findByPipelineId(seededPipeline2Id);
         assertThat(afterStopped).isPresent();
-        assertThat(afterStopped.get().deployedAt())
+        assertThat(afterStopped.get().getDeployedAt())
                 .as("deployedAt must NOT change when transitioning to STOPPED")
                 .isEqualTo(deployedAtBeforeTransition);
 
@@ -331,7 +331,7 @@ public class HostDeploymentServiceIT {
 
         var afterFailed = deploymentService.findByPipelineId(seededPipeline2Id);
         assertThat(afterFailed).isPresent();
-        assertThat(afterFailed.get().deployedAt())
+        assertThat(afterFailed.get().getDeployedAt())
                 .as("deployedAt must NOT change when transitioning to FAILED")
                 .isEqualTo(deployedAtBeforeTransition);
     }
@@ -339,7 +339,7 @@ public class HostDeploymentServiceIT {
     @Test
     @Order(14)
     public void shouldFindReadyHosts() {
-        List<Host> readyHosts = deploymentService.findReadyHosts();
+        List<HostStatusReference> readyHosts = deploymentService.findReadyHosts();
 
         assertThat(readyHosts)
                 .as("Should find all READY hosts")
@@ -359,8 +359,8 @@ public class HostDeploymentServiceIT {
                         9099, "cascadehash"));
 
         // Query back to get the deployment ID
-        Deployment deployment = deploymentService.requireByPipelineId(seededPipeline3Id);
-        Long deploymentId = deployment.id();
+        HostDeployment deployment = deploymentService.requireByPipelineId(seededPipeline3Id);
+        Long deploymentId = deployment.getId();
 
         // Delete the pipeline entity directly — database ON DELETE CASCADE must remove host_deployment row without FK error
         PipelineEntity pipeline = em.find(PipelineEntity.class, seededPipeline3Id);
