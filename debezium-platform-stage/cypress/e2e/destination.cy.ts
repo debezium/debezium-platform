@@ -183,7 +183,7 @@ describe('Destination Management', () => {
     it('should open smart editor from catalog when no connector is chosen', () => {
       cy.get('[data-tour="destination-catalog-smart-editor"]').click({ force: true });
       cy.url().should('match', /\/destination\/create_destination\/?$/);
-      cy.contains('No connector selected').should('be.visible');
+      cy.get('.smartEditor').should('be.visible');
     });
 
     it('should load catalog from GET /api/catalog', () => {

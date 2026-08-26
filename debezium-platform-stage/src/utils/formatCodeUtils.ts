@@ -30,27 +30,36 @@ export function formatCode(connectorType: "source" | "destination", formatType: 
             const match = trimmed.match(/^\s*([a-zA-Z0-9._-]+)\s*=\s*(.*)$/);
             if (match) {
                 const key = match[1];
-                const value = match[2];
+                const value = match[2].trim();
                 if (connectorType === "source") {
                     if (key === "debezium.source.connector.class") {
                         connectorClass = value;
                     } else if (key.startsWith("debezium.source.")) {
                         config[key.replace("debezium.source.", "")] = value;
+                    } else if (key === "name" || key === "description") {
+                        config[key] = value;
                     }
                 } else {
                     if (key === "debezium.sink.type") {
                         connectorClass = value;
                     } else if (key.startsWith("debezium.sink.")) {
                         config[key.replace("debezium.sink.", "")] = value;
+                    } else if (key === "name" || key === "description") {
+                        config[key] = value;
                     }
                 }
 
             }
         }
 
+        const name = config.name || "";
+        const description = config.description || "";
+        delete config.name;
+        delete config.description;
+
         formattedCode = {
-            name: "",
-            description: "",
+            name,
+            description,
             type: connectorClass,
             schema: "schema123",
             vaults: [],
@@ -58,6 +67,59 @@ export function formatCode(connectorType: "source" | "destination", formatType: 
         };
     }
     return formattedCode;
+}
+
+export function detectAndParseFormat(
+    codeText: string,
+    connectorType: "source" | "destination"
+): Payload {
+    if (!codeText || !codeText.trim()) {
+        throw new Error("Configuration code is empty");
+    }
+
+    const trimmed = codeText.trim();
+
+    // 1. Check if input is JSON
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                // Check if it's Kafka Connect JSON format (has a config object containing connector.class or debezium.sink.type)
+                if (
+                    parsed.config &&
+                    typeof parsed.config === "object" &&
+                    (parsed.config["connector.class"] || parsed.config["debezium.sink.type"])
+                ) {
+                    return formatCode(connectorType, "kafka-connect", parsed);
+                }
+
+                // Otherwise, treat as Platform JSON payload format
+                return {
+                    name: parsed.name || "",
+                    description: parsed.description || "",
+                    type: parsed.type || "",
+                    schema: parsed.schema || "schema123",
+                    vaults: parsed.vaults || [],
+                    config: parsed.config || {},
+                };
+            }
+        } catch (e: unknown) {
+            throw new Error(`JSON syntax error: ${(e as Error).message || "Invalid JSON"}`);
+        }
+    }
+
+    // 2. Treat as Debezium Server Properties File (key=value lines)
+    const lines = trimmed.split(/\r?\n/);
+    const hasPropertyLine = lines.some((line) => {
+        const t = line.trim();
+        return t && !t.startsWith("#") && t.includes("=");
+    });
+
+    if (hasPropertyLine) {
+        return formatCode(connectorType, "properties-file", trimmed);
+    }
+
+    throw new Error("Unable to auto-detect format. Please provide valid JSON or Properties format.");
 }
 
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractTransformsAndPredicates, formatCode } from "./formatCodeUtils";
+import { extractTransformsAndPredicates, formatCode, detectAndParseFormat } from "./formatCodeUtils";
 import type { Payload } from "src/apis";
 
 describe("formatCode", () => {
@@ -28,18 +28,71 @@ describe("formatCode", () => {
 # header
 debezium.source.connector.class = io.debezium.connector.mysql.MySqlConnector
 debezium.source.database.hostname = localhost
+debezium.source.name = my-postgres-source
+debezium.source.description = My postgres source
 `;
     const out = formatCode("source", "properties-file", raw);
     expect(out.type).toBe("io.debezium.connector.mysql.MySqlConnector");
+    expect(out.name).toBe("my-postgres-source");
+    expect(out.description).toBe("My postgres source");
     expect(out.config).toEqual({ "database.hostname": "localhost" });
   });
 
   it("parses properties-file for destination", () => {
     const raw = `debezium.sink.type = kafka
-debezium.sink.topics = orders`;
+debezium.sink.topics = orders
+debezium.sink.name = my-dest
+debezium.sink.description = My dest`;
     const out = formatCode("destination", "properties-file", raw);
     expect(out.type).toBe("kafka");
+    expect(out.name).toBe("my-dest");
+    expect(out.description).toBe("My dest");
     expect(out.config).toEqual({ topics: "orders" });
+  });
+});
+
+describe("detectAndParseFormat", () => {
+  it("auto-detects Kafka Connect JSON format", () => {
+    const raw = JSON.stringify({
+      name: "kafka-src",
+      config: {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "database.hostname": "localhost",
+      },
+    });
+    const out = detectAndParseFormat(raw, "source");
+    expect(out.name).toBe("kafka-src");
+    expect(out.type).toBe("io.debezium.connector.postgresql.PostgresConnector");
+    expect(out.config).toEqual({ "database.hostname": "localhost" });
+  });
+
+  it("auto-detects Platform JSON format", () => {
+    const raw = JSON.stringify({
+      name: "plat-src",
+      type: "io.debezium.connector.mysql.MySqlConnector",
+      config: { "database.port": "3306" },
+    });
+    const out = detectAndParseFormat(raw, "source");
+    expect(out.name).toBe("plat-src");
+    expect(out.type).toBe("io.debezium.connector.mysql.MySqlConnector");
+    expect(out.config).toEqual({ "database.port": "3306" });
+  });
+
+  it("auto-detects Debezium Server Properties format", () => {
+    const raw = `
+debezium.source.connector.class=io.debezium.connector.mysql.MySqlConnector
+debezium.source.name=prop-src
+debezium.source.database.hostname=dbhost
+`;
+    const out = detectAndParseFormat(raw, "source");
+    expect(out.name).toBe("prop-src");
+    expect(out.type).toBe("io.debezium.connector.mysql.MySqlConnector");
+    expect(out.config).toEqual({ "database.hostname": "dbhost" });
+  });
+
+  it("throws error when code is empty or invalid format", () => {
+    expect(() => detectAndParseFormat("", "source")).toThrow("Configuration code is empty");
+    expect(() => detectAndParseFormat("invalid text without equals", "source")).toThrow();
   });
 });
 
