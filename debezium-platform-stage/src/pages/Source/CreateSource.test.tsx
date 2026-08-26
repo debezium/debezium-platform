@@ -47,19 +47,16 @@ describe("CreateSource", () => {
     } as any);
   });
 
-  it("shows inline warning when no connector is selected", () => {
+  it("renders smart editor when no connector is selected", () => {
     vi.mocked(useQuery).mockReturnValue({
       data: undefined,
       error: null,
       isLoading: false,
     } as any);
 
-    render(<CreateSource />);
+    const { container } = render(<CreateSource />);
 
-    expect(screen.getByText("No connector selected")).toBeInTheDocument();
-    expect(
-      screen.getByText("Please select a connector from the catalog first."),
-    ).toBeInTheDocument();
+    expect(container.querySelector(".smartEditor")).toBeInTheDocument();
   });
 
   it("shows schema error alert when catalog schema fails to load", () => {
