@@ -26,6 +26,7 @@ import statusMessageEN from "../../../public/locales/en/statusMessage.json";
 import vaultEN from "../../../public/locales/en/vault.json";
 import connectionEN from "../../../public/locales/en/connection.json";
 import tourEN from "../../../public/locales/en/tour.json";
+import alertEN from "../../../public/locales/en/alert.json";
 
 i18n.use(initReactI18next).init({
   lng: "en",
@@ -41,6 +42,7 @@ i18n.use(initReactI18next).init({
       vault: vaultEN,
       connection: connectionEN,
       tour: tourEN,
+      alert: alertEN,
     },
   },
 });

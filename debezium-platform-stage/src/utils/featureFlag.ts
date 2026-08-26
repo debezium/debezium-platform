@@ -9,7 +9,7 @@ export const featureConfig = {
   Vault: { enabled: false, mode: "comingSoon" },
   Connection: { enabled: true, mode: "comingSoon" },
   Transforms: { enabled: true, mode: "comingSoon" },
-  Alerts: { enabled: false, mode: "comingSoon" },
+  Alerts: { enabled: true, mode: "comingSoon" },
   PipelineMonitoring: { enabled: true, mode: "hidden" },
   PipelineAction: { enabled: true, mode: "hidden" },
   PipelineLogs: { enabled: true, mode: "hidden" },
@@ -19,12 +19,14 @@ export type FeatureFlag = keyof typeof featureConfig;
 
 /**
  * UI policy for disabled features.
- * - `false` (default): coming-soon features stay in the sidebar and remain reachable, with the coming-soon overlay.
+ * - `false`: coming-soon features stay in the sidebar and remain reachable, with the coming-soon overlay.
  * - `true`: disabled features are omitted from the sidebar and their routes 404.
  */
 export const featureFlagUi = {
   hideDisabledFeaturesFromNav: true,
 };
+
+export const featureFlags = Object.keys(featureConfig) as FeatureFlag[];
 
 export const PIPELINE_TAB_FEATURE_FLAGS = {
   action: "PipelineAction",
@@ -97,3 +99,19 @@ export const getPipelineDetailsRoutePattern = (): RegExp => {
   const enabledTabs = getEnabledPipelineTabs().join("|");
   return new RegExp(`^\\/pipeline\\/[^/]+\\/(${enabledTabs})$`);
 };
+
+export type FeaturePageAccess = "enabled" | "comingSoon" | "unavailable";
+
+/** How a feature should appear in the UI given the current flag config and nav policy. */
+export const getFeaturePageAccess = (flag: FeatureFlag): FeaturePageAccess => {
+  if (isFeatureEnabled(flag)) {
+    return "enabled";
+  }
+  if (isFeatureAccessible(flag) && isFeatureComingSoon(flag)) {
+    return "comingSoon";
+  }
+  return "unavailable";
+};
+
+export const getComingSoonFlags = (): FeatureFlag[] =>
+  featureFlags.filter(isFeatureComingSoon);

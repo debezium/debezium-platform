@@ -1,9 +1,11 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import { NotFound } from "./pages/NotFound/NotFound";
+import { useTranslation } from "react-i18next"; 
 import { useDocumentTitle } from "./utils/useDocumentTitle";
 import { AppBranding } from "./utils/constants";
 import { IAppRoute, isRouteAccessible, isRouteGroup, routes } from "./route";
+
 
 const PageWithTitle = ({
   title,
@@ -24,7 +26,9 @@ const getFlattenedRoutes = (): IAppRoute[] =>
     .flatMap((route) => (isRouteGroup(route) ? route.routes : [route]))
     .filter(isRouteAccessible);
 
-const AppRoutes = (): React.ReactElement => (
+const AppRoutes = (): React.ReactElement => {
+   const { t } = useTranslation(); 
+  return (
   <Routes>
     {getFlattenedRoutes().map((route, index) => (
       <Route
@@ -39,12 +43,12 @@ const AppRoutes = (): React.ReactElement => (
       path="*"
       element={
         <PageWithTitle
-          title={`${AppBranding} | 404 Page Not Found`}
+          title={`${AppBranding} | ${t("notFound")}`}
           component={NotFound}
         />
       }
     />
   </Routes>
-);
+)};
 
 export { AppRoutes };

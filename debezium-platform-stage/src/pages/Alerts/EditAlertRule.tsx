@@ -16,7 +16,7 @@ import {
   Spinner,
 } from "@patternfly/react-core";
 import { PageHeader } from "@patternfly/react-component-groups";
-import { ExclamationCircleIcon, PencilAltIcon, RhUiNotificationIcon } from "@patternfly/react-icons";
+import { ExclamationCircleIcon, PencilAltIcon, RhUiNotificationIcon, RhUiTaskIcon } from "@patternfly/react-icons";
 import * as React from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "react-query";
@@ -128,7 +128,7 @@ const EditAlertRule: React.FunctionComponent = () => {
           subtitle={rule.description || undefined}
           icon={
             <Icon size="2xl" className="custom-header_icon">
-              <RhUiNotificationIcon />
+              <RhUiTaskIcon  />
             </Icon>
           }
           actionMenu={

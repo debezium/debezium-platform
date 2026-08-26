@@ -79,6 +79,7 @@ import {
 import AlertEventsColumnModal from "./AlertEventsColumnModal";
 import { SingleSelectFilter } from "./alertsFilters";
 import "./AlertEvents.css"
+import { useTranslation } from "react-i18next";
 
 type EntityFilterMode = "pipeline" | "rule" | "severity" | "status";
 
@@ -325,6 +326,7 @@ function TypeaheadMultiSelectFilter<T extends string | number>({
 
 const AlertEvents: React.FC = () => {
   const navigate = useNavigate();
+   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const statusParam = searchParams.get("status");
   const statusFromUrl = parseStatusQueryParam(statusParam);
@@ -728,7 +730,7 @@ const AlertEvents: React.FC = () => {
                         onClick={handleApplyCustomRange}
                         isDisabled={!isCustomRangeValid}
                       >
-                        Apply
+                        {t("Apply")}
                       </Button>
                     </ToolbarItem>
 
@@ -852,17 +854,17 @@ const AlertEvents: React.FC = () => {
             <Bullseye>
               <EmptyState
                 variant={EmptyStateVariant.sm}
-                titleText="No incidents match these filters"
+                titleText={t("alert:event.emptyHeading")}
                 headingLevel="h2"
                 icon={HistoryIcon}
               >
                 <EmptyStateBody>
                   {hasActiveFilters ? (
                     <Button variant="link" onClick={clearAllFilters}>
-                      Clear all filters
+                     {t("clearAllFilter")}
                     </Button>
                   ) : (
-                    "No incidents have been recorded yet."
+                    t("alert:event.emptyDescription")
                   )}
                 </EmptyStateBody>
               </EmptyState>

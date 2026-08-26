@@ -3,6 +3,12 @@
  * Self-seeds connections, source, and destination via API (no cross-spec ordering).
  * Create flow uses the UI designer (source/destination modals → configure → submit).
  */
+import {
+  getEnabledPipelineTabs,
+  isPipelineTabEnabled,
+  PIPELINE_TAB_LABELS,
+} from '../support/featureFlags';
+
 describe('Pipeline Management', () => {
   // Run-scoped suffix guarantees fresh, non-colliding seed data on every CI run
   // (the backend persists across runs, so fixed names would accumulate duplicates
@@ -608,15 +614,24 @@ describe('Pipeline Management', () => {
       cy.visitWithTourDisabled('/pipeline');
       cy.get(`${PIPELINE_TABLE} tbody tr`).contains('button', pipelineName).click();
       cy.url().should('match', /\/pipeline\/\d+\/overview/);
-      cy.contains('Overview').should('be.visible');
-      cy.contains('Actions').should('be.visible');
-      // Monitoring is disabled via feature-flags
-      // cy.contains('Monitoring').should('be.visible');
-      cy.contains('Logs').should('be.visible');
-      cy.contains('Edit').should('be.visible');
+
+      const enabledTabs = getEnabledPipelineTabs();
+      (Object.keys(PIPELINE_TAB_LABELS) as Array<keyof typeof PIPELINE_TAB_LABELS>).forEach(
+        (tab) => {
+          const label = PIPELINE_TAB_LABELS[tab];
+          if (enabledTabs.includes(tab)) {
+            cy.contains(label).should('be.visible');
+          } else {
+            cy.contains('.pf-v6-c-tabs', label).should('not.exist');
+          }
+        }
+      );
     });
 
-    it('should navigate to logs tab from row actions', () => {
+    it('should navigate to logs tab from row actions', function () {
+      if (!isPipelineTabEnabled('logs')) {
+        this.skip();
+      }
       const pipelineName = `cypress-logs-${Date.now()}`;
       createPipelineViaApi(pipelineName);
       cy.visitWithTourDisabled('/pipeline');
@@ -650,10 +665,9 @@ describe('Pipeline Management', () => {
       cy.get(`${PIPELINE_TABLE} tbody tr`)
         .contains('tr', pipelineName)
         .within(() => {
-          // The "Failed" link button must exist in the DOM (PF table cells use overflow:hidden
+          // The Failed status is a clickable PatternFly Label (table cells use overflow:hidden
           // which clips child content, so we assert existence rather than visibility)
-          cy.contains('button', 'Failed').should('exist');
-          cy.get('.pf-v6-c-label').should('exist');
+          cy.contains('.pf-v6-c-label', 'Failed').should('exist');
         });
     });
 
@@ -677,7 +691,7 @@ describe('Pipeline Management', () => {
 
       cy.get(`${PIPELINE_TABLE} tbody tr`)
         .contains('tr', pipelineName)
-        .contains('button', 'Failed')
+        .contains('.pf-v6-c-label', 'Failed')
         .click();
 
       cy.url({ timeout: 30000 }).should('match', /\/pipeline\/\d+\/overview/);

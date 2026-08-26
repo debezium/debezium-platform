@@ -32,7 +32,23 @@
         "debeziumServerFormatMsg": "Questo sembra essere un file .properties per il server Debezium, utilizzare Formato automatico per trasformarlo nel formato supportato dalla piattaforma Debezium.",
         "connectorNameRequired": "Il nome del connettore è obbligatorio.",
         "connectorTypeRequired": "Il tipo di connettore è obbligatorio.",
+        "connectionRequired": "La connessione è obbligatoria.",
         "sourceNameRequired": "Il nome della sorgente è obbligatorio.",
         "autoFormat": "Formato automatico"
+    },
+    "alerts":{
+        "channel":{
+            "uniqueChannelNameError": "Esiste già un canale con questo nome."
+        }
+    },
+    "apis": {
+        "failedToCreate": "Creazione di {{val}} non riuscita",
+        "failedToUpdate": "Aggiornamento di {{val}} non riuscito",
+        "failedToTest": "Invio della notifica di prova non riuscito",
+        "failedToEnable": "Abilitazione di {{val}} non riuscita",
+        "failedToDisable": "Disabilitazione di {{val}} non riuscita",
+        "uniqueResourceNameError": "Esiste già un {{val}} con questo nome.",
+        "connectionErrorTitle": "Caricamento di {{val}} non riuscito",
+        "connectionErrorDescription": "Controlla la connessione e riprova."
     }
 }

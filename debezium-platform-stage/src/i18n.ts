@@ -10,7 +10,7 @@ i18next
   .init({
     fallbackLng: 'en',
     supportedLngs: ['en', 'it'],
-    ns: ['common', 'pipeline', 'source', 'destination', 'transform', 'statusMessage', 'vault', 'connection', 'tour'],
+    ns: ['common', 'pipeline', 'source', 'destination', 'transform', 'statusMessage', 'vault', 'connection', 'tour', 'alert'],
     defaultNS: 'common',
     load: 'all', // Ensures all namespaces are loaded
     detection: {

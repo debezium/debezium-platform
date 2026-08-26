@@ -86,8 +86,8 @@ describe("AlertChannels", () => {
 
     render(<AlertChannels />);
 
-    expect(await screen.findByText("No notification channels yet")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Create channel" })).toBeInTheDocument();
+    expect(await screen.findByText("No notification channels")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add channel" })).toBeInTheDocument();
   });
 
   it("shows an error state when the channels request fails", async () => {
@@ -102,7 +102,7 @@ describe("AlertChannels", () => {
     vi.mocked(fetchAlertChannels).mockResolvedValue([]);
 
     render(<AlertChannels />);
-    await userEvent.click(await screen.findByRole("button", { name: "Create channel" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Add channel" }));
 
     expect(await screen.findByText("Create notification channel")).toBeInTheDocument();
   });
@@ -162,7 +162,7 @@ describe("AlertChannels", () => {
     const nameInput = within(dialog).getByRole("textbox", { name: /name/i });
     await userEvent.clear(nameInput);
     await userEvent.type(nameInput, "Platform Ops Email Updated");
-    await userEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save channel" }));
 
     await waitFor(() => {
       expect(updateAlertChannel).toHaveBeenCalledWith(

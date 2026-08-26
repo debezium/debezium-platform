@@ -263,6 +263,12 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                     <>
                       <Button
                         variant="link"
+                        onClick={() => navigateTo("/connections")}
+                      >
+                        {t('connection')}
+                      </Button>
+                      <Button
+                        variant="link"
                         onClick={() => navigateTo("/destination")}
                       >
                         {t('destination')}

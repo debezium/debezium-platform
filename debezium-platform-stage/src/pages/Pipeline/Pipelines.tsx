@@ -78,7 +78,7 @@ import { PipelineEmpty } from "./PipelineEmpty";
 import { useDeleteData } from "src/apis";
 import PageHeader from "@components/PageHeader";
 import "./Pipelines.css";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 export type DeleteInstance = {
   id: number;
@@ -152,7 +152,7 @@ const Pipelines: React.FunctionComponent = () => {
     return _.filter(pipelinesList, (o) =>
       getFilterValue(o, filterField).toLowerCase().includes(searchQuery.toLowerCase())
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, filterField, pipelinesList]);
 
   const onClear = () => {
@@ -611,14 +611,11 @@ const Pipelines: React.FunctionComponent = () => {
                                           flipBehavior="flip"
                                           content={t("pipeline:pipelineFailureMsg")}
                                         >
-                                          <Label color={LabelColor.red}>
-                                            <Button
-                                              variant="link"
-                                              isInline
-                                              onClick={onPipelineClick(instance.id)}
-                                            >
-                                              {t("failed")}
-                                            </Button>
+                                          <Label
+                                            color={LabelColor.red}
+                                            onClick={onPipelineClick(instance.id)}
+                                          >
+                                            {t("failed")}
                                           </Label>
                                         </Tooltip>
                                       </FlexItem>
@@ -702,10 +699,15 @@ const Pipelines: React.FunctionComponent = () => {
           >
             <ModalHeader
               title={
-                <p>
-                  Enter <i>"{`${deleteInstance.name}`}"</i> to delete pipeline
-                </p>
+
+
+                <Trans
+                  i18nKey="deleteModel.heading"
+                  values={{ val: `"${deleteInstance.name}"`, val2: "pipeline" }}
+                  components={[<span />, <i />]}
+                />
               }
+              description={t("deleteModel.description", {val: "pipeline"})}
               titleIconVariant="warning"
               labelId="delete-modal-title"
             />
@@ -731,7 +733,7 @@ const Pipelines: React.FunctionComponent = () => {
             <ModalFooter>
               <Button
                 key="confirm"
-                variant="primary"
+                variant="danger"
                 onClick={() => handleDelete(deleteInstance.id)}
                 isDisabled={deleteInstanceName !== deleteInstance.name}
                 isLoading={isLoading}

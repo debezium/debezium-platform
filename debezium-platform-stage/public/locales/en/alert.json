@@ -1,0 +1,39 @@
+{
+    "channel": {
+        "title": "Notification Channels",
+        "titleDescription": "Named, reusable delivery targets for alert rules. One channel can serve multiple rules, and a rule can notify through multiple channels.",
+        "name": "Name",
+        "type": "Type",
+        "details": "Details",
+        "status": "Status",
+        "allType": "All type",
+        "enable": "Enable",
+        "disable": "Disable",
+        "test": "Test",
+        "recipients": "Recipients",
+        "subjectPrefix": "Subject prefix",
+        "subjectPrefixHelper": "Optional prefix added to the start of the alert email subject.",
+        "urlHelper": "Integrates with Slack, PagerDuty, OpsGenie, Teams, etc.",
+        "headerHelper": "Use headers for authentication tokens.",
+        "deleteWarning": "Rules using this channel will keep evaluating, but will stop notifying through it. Type the channel name to confirm.",
+        "emptyHeading": "No notification channels",
+        "emptyDescription": "Alerts always appear in the platform UI. Add an email or webhook channel to also notify your team externally.",
+        "emptyFilterTitle": "No matching channel is present.",
+        "emptyFilterDescription": "Clear the type filter and try again."
+    },
+    "rule": {
+        "emptyHeading": "No alert rule",
+        "emptyDescription": "Create a rule to get notified when a pipeline metric breaches a threshold. Just pick a monitoring panel, a comparison, and a value."
+    },
+     "event": {
+        "emptyHeading": "No alert event",
+        "emptyDescription": "No incidents have been recorded yet."
+    },
+    "buttons": {
+        "addResource": "Add {{val}}",
+        "createResource": "Create {{val}}",
+        "saveResource": "Save {{val}}",
+        "filterBy": "Filter by {{val}}"
+    },
+    "deleteResource": "Delete {{val}}" 
+}

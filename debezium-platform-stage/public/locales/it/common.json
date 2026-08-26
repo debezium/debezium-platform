@@ -9,6 +9,8 @@
   "backToCatalog": "Torna al catalogo",
   "cancel": "Annulla",
   "clear": "Cancella",
+  "clearFilter": "Cancella filtro",
+  "clearAllFilter": "Cancella tutti i filtri",
   "collapseAll": "Chiudi tutto",
   "comingSoon": "In arrivo",
   "confirm": "Conferma",
@@ -23,7 +25,8 @@
   "deleteModel": {
     "cancel": "Annulla",
     "confirm": "Elimina",
-    "description": "Inserisci '{{val}}' per eliminare",
+    "description": "Digita il nome di {{val}} per confermare.",
+    "heading": "Elimina {{val2}} <1>{{val}}</1> ",
     "title": "Finestra modale di eliminazione"
   },
   "description": "Descrizione",
@@ -37,6 +40,7 @@
     "title": "Nessun {{val}} disponibile"
   },
   "enabled": "Abilitato",
+  "configurationHeading": "Configurazione {{val}}",
   "enterValue": "inserisci un valore",
   "error": "Errore",
   "expandAll": "Espandi tutto",
@@ -63,6 +67,7 @@
       "title": "Proprietà di configurazione"
     }
   },
+  "notFound": "404 Pagina non trovata",
   "formEditor": "Editor modulo",
   "goTo": "Vai a {{val}}",
   "glassMode": "Modalità vetro",
@@ -103,6 +108,7 @@
   "transforms": "Trasformazioni",
   "trademarkWarning": "Tutti i loghi e i marchi sono di proprietà dei rispettivi titolari",
   "type": "Tipo",
+  "usedIn": "Utilizzato in",
   "documentation": "Documentazione",
   "replayTour": "Ripeti il Tour Guidato",
   "vaults": "Vault",
@@ -121,5 +127,32 @@
       "dataTableDescription": "Seleziona il {{val}} da sincronizzare",
       "dataTableTitle": "{{val}} database"
     }
+  },
+  "navigation":{
+    "source": "Origini",
+    "destination": "Destinazioni",
+    "pipeline": "Pipeline",
+    "transform": "Trasformazioni",
+    "connection": "Connessioni",
+    "alert": "Avvisi",
+    "event": "Eventi",
+    "rule": "Regole",
+    "channel": "Canali"
+  },
+  "breadcrumb":{
+    "pipeline": "Pipeline",
+    "pipelineDesigner": "Designer della pipeline",
+    "createResource": "Crea {{val}}",
+    "overview": "Panoramica",
+    "action": "Azione",
+    "monitoring": "Monitoraggio",
+    "editResource": "Modifica {{val}}",
+    "log": "Log",
+    "source": "Origine",
+    "catalog": "Catalogo",
+    "destination": "Destinazione",
+    "connection": "Connessione",
+    "alert": "Avviso",
+    "rule": "Regola"
   }
 }

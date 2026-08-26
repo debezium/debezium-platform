@@ -35,5 +35,20 @@
         "connectionRequired": "Connection is required.",
         "sourceNameRequired": "Source name is required.",
         "autoFormat": "Auto format"
+    },
+    "alerts":{
+        "channel":{
+            "uniqueChannelNameError": "A channel with this name already exists."
+        }
+    },
+    "apis": {
+        "failedToCreate": "Failed to create {{val}}",
+        "failedToUpdate": "Failed to update {{val}}",
+        "failedToTest": "Failed to send test notification",
+        "failedToEnable": "Failed to enable {{val}}",
+        "failedToDisable": "Failed to disable {{val}}",
+        "uniqueResourceNameError": "A {{val}} with this name already exists.",
+        "connectionErrorTitle": "Failed to load {{val}}",
+        "connectionErrorDescription": "Check your connection and try again."
     }
 }

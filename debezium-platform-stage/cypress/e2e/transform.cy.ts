@@ -1,7 +1,10 @@
 /**
  * Transform E2E — catalog-driven create form, list, search, delete.
  */
+import { skipIfFeatureUnavailable } from '../support/featureFlags';
+
 describe('Transform Management', () => {
+  skipIfFeatureUnavailable('Transforms');
   const TRANSFORM_TABLE = 'table[aria-label="Transform Table"]';
   const LIST_SEARCH = 'input[placeholder^="Find by name"]';
   const TRANSFORM_CLASS_INPUT = '#transform-class-input';

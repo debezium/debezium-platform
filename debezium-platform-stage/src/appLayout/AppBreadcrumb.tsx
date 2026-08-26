@@ -1,4 +1,5 @@
 import { FC } from "react";
+import i18next from "../i18n";
 import { Breadcrumb, BreadcrumbItem } from "@patternfly/react-core";
 import { useLocation, useNavigate, NavigateFunction } from "react-router-dom";
 import { getPipelineDetailsRoutePattern, isFeatureAccessible } from "@utils/featureFlag";
@@ -14,104 +15,104 @@ export const getBreadcrumbTrail = (route: string): BreadcrumbTrailItem[] => {
   switch (true) {
     case route.match("/source/catalog") !== null:
       return [
-        { url: "/source", label: "Source" },
-        { url: "#", label: "Catalog" },
+        { url: "/source", label: i18next.t("breadcrumb.source")   },
+        { url: "#", label: i18next.t("breadcrumb.catalog") },
       ];
     case route.includes("/source/create_source"):
       return [
-        { url: "/source", label: "Source" },
-        { url: "/source/catalog", label: "Catalog" },
-        { url: "#", label: "Create source" },
+        { url: "/source", label: i18next.t("breadcrumb.source") },
+        { url: "/source/catalog", label: i18next.t("breadcrumb.catalog") },
+        { url: "#", label: i18next.t("breadcrumb.createResource", { val : "source"}) },
       ];
     case route.match(/^\/source\/[^/]+$/) !== null && !route.includes("/create_source"):
       return [
-        { url: "/source", label: "Source" },
-        { url: "#", label: "Edit source" },
+        { url: "/source", label: i18next.t("breadcrumb.source") },
+        { url: "#", label: i18next.t("breadcrumb.editResource", { val : "source"}) },
       ];
     case route === "/destination/catalog":
       return [
-        { url: "/destination", label: "Destination" },
-        { url: "#", label: "Catalog" },
+        { url: "/destination", label: i18next.t("breadcrumb.destination") },
+        { url: "#", label: i18next.t("breadcrumb.catalog") },
       ];
     case route.includes("/destination/create_destination"):
       return [
-        { url: "/destination", label: "Destination" },
-        { url: "/destination/catalog", label: "Catalog" },
-        { url: "#", label: "Create destination" },
+        { url: "/destination", label: i18next.t("breadcrumb.destination") },
+        { url: "/destination/catalog", label: i18next.t("breadcrumb.catalog") },
+        { url: "#", label: i18next.t("breadcrumb.createResource", { val : "destination"}) },
       ];
     case route.match(/^\/destination\/[^/]+$/) !== null && !route.includes("/create_destination"):
       return [
-        { url: "/destination", label: "Destination" },
-        { url: "#", label: "Edit destination" },
+        { url: "/destination", label: i18next.t("breadcrumb.destination") },
+        { url: "#", label: i18next.t("breadcrumb.editResource", { val : "destination"}) },
       ];
     case route === "/connections/catalog":
       return [
-        { url: "/connections", label: "Connections" },
-        { url: "#", label: "Catalog" },
+        { url: "/connections", label: i18next.t("breadcrumb.connection") },
+        { url: "#", label: i18next.t("breadcrumb.catalog") },
       ];
     case route.includes("/connections/create_connection"):
       return [
-        { url: "/connections", label: "Connections" },
-        { url: "/connections/catalog", label: "Catalog" },
-        { url: "#", label: "Create connection" },
+        { url: "/connections", label: i18next.t("breadcrumb.connection") },
+        { url: "/connections/catalog", label: i18next.t("breadcrumb.catalog") },
+        { url: "#", label: i18next.t("breadcrumb.createResource", { val : "connection"}) },
       ];
     case route.match(/^\/connections\/[^/]+$/) !== null && !route.includes("/create_connection"):
       return [
-        { url: "/connections", label: "Connections" },
-        { url: "#", label: "Edit connection" },
+        { url: "/connections", label: i18next.t("breadcrumb.connection") },
+        { url: "#", label: i18next.t("breadcrumb.editResource", { val : "connection"}) },
       ];
     case isFeatureAccessible("Alerts") && route.includes("/alerts/rules/create_rule"):
       return [
-         { url: "/alerts/history", label: "Alerts" },
-        { url: "/alerts/rules", label: "Rules" },
-        { url: "#", label: "Create rule" },
+         { url: "/alerts/history", label: i18next.t("breadcrumb.alert") },
+        { url: "/alerts/rules", label:  i18next.t("breadcrumb.rule")  },
+        { url: "#", label: i18next.t("breadcrumb.createResource", { val : "rule"}) },
       ];
     case isFeatureAccessible("Alerts") && route.match(/^\/alerts\/rules\/[^/]+$/) !== null:
       return [
-         { url: "/alerts/history", label: "Alerts" },
-        { url: "/alerts/rules", label: "Rules" },
-        { url: "#", label: "Edit rule" },
+         { url: "/alerts/history", label:  i18next.t("breadcrumb.alert")  },
+        { url: "/alerts/rules", label:  i18next.t("breadcrumb.rule")  },
+        { url: "#", label: i18next.t("breadcrumb.editResource", { val : "rule"}) },
       ];
     case route === "/pipeline/pipeline_designer":
       return [
-        { url: "/pipeline", label: "Pipeline" },
-        { url: "#", label: "Pipeline designer" },
+        { url: "/pipeline", label: i18next.t("breadcrumb.pipeline")  },
+        { url: "#", label: i18next.t("breadcrumb.pipelineDesigner") },
       ];
     case route === "/pipeline/pipeline_designer/create_pipeline":
       return [
-        { url: "/pipeline", label: "Pipeline" },
-        { url: "/pipeline/pipeline_designer", label: "Pipeline designer" },
-        { url: "#", label: "Create pipeline" },
+        { url: "/pipeline", label: i18next.t("breadcrumb.pipeline") },
+        { url: "/pipeline/pipeline_designer", label: i18next.t("breadcrumb.pipelineDesigner") },
+        { url: "#", label: i18next.t("breadcrumb.createResource", { val : "pipeline"}) },
       ];
     case route === "/pipeline/pipeline_designer/destination":
       return [
-        { url: "/pipeline", label: "Pipeline" },
-        { url: "/pipeline/pipeline_designer", label: "Pipeline designer" },
-        { url: "#", label: "Create pipeline" },
+        { url: "/pipeline", label: i18next.t("breadcrumb.pipeline")  },
+        { url: "/pipeline/pipeline_designer", label: i18next.t("breadcrumb.pipelineDesigner") },
+        { url: "#", label: i18next.t("breadcrumb.createResource", { val : "pipeline"})},
       ];
     case route.includes("/pipeline/pipeline_designer/destination/new_destination"):
       return [
-        { url: "/pipeline", label: "Pipeline" },
-        { url: "/pipeline/pipeline_designer", label: "Pipeline designer" },
-        { url: "#", label: "Create pipeline" },
+        { url: "/pipeline", label: i18next.t("breadcrumb.pipeline")  },
+        { url: "/pipeline/pipeline_designer", label: i18next.t("breadcrumb.pipelineDesigner") },
+        { url: "#", label: i18next.t("breadcrumb.createResource", { val : "pipeline"}) },
       ];
     case route.match("/pipeline/pipeline_edit/[^/]+") !== null:
       return [
-        { url: "/pipeline", label: "Pipeline" },
+        { url: "/pipeline", label: i18next.t("breadcrumb.pipeline") },
         { url: "#", label: "indra-ui-test" },
         { url: "#", label: "Edit" },
       ];
     case route.match(pipelineDetailsPattern) !== null: {
       const detailsTab = route.split("/").pop() || "overview";
       const tabLabels: Record<string, string> = {
-        overview: "Overview",
-        logs: "Pipeline logs",
-        edit: "Edit pipeline",
-        action: "Pipeline actions",
-        monitoring: "Monitoring",
+        overview: i18next.t("breadcrumb.overview"),
+        logs: i18next.t("breadcrumb.log"),
+        edit:  i18next.t("breadcrumb.editResource", { val : "pipeline"}),
+        action: i18next.t("breadcrumb.action"),
+        monitoring: i18next.t("breadcrumb.monitoring"),
       };
       return [
-        { url: "/pipeline", label: "Pipeline" },
+        { url: "/pipeline", label: i18next.t("breadcrumb.pipeline") },
         { url: "#", label: tabLabels[detailsTab] ?? "Overview" },
       ];
     }

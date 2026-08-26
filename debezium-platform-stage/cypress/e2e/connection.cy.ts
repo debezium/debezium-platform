@@ -3,7 +3,10 @@
  * Typed connections require Validate before Create/Save when a schema is present.
  * Validate is stubbed in UI tests so a live Postgres/Kafka instance is not required.
  */
+import { skipIfFeatureUnavailable } from '../support/featureFlags';
+
 describe('Connection Management', () => {
+  skipIfFeatureUnavailable('Connection');
   const CYPRESS_SEED_POSTGRES_NAME = 'cypress-seed-postgres-connection';
   const POSTGRES_CATALOG_CARD_TOUR =
     'catalog-card-io.debezium.connector.postgresql.PostgresConnector';

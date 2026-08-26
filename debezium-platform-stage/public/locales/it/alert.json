@@ -1,0 +1,39 @@
+{
+    "channel": {
+        "title": "Canali di notifica",
+        "titleDescription": "Destinazioni di recapito denominate e riutilizzabili per le regole di avviso. Un canale può servire più regole e una regola può notificare tramite più canali.",
+        "name": "Nome",
+        "type": "Tipo",
+        "details": "Dettagli",
+        "status": "Stato",
+        "allType": "Tutti i tipi",
+        "enable": "Abilita",
+        "disable": "Disabilita",
+        "test": "Test",
+        "recipients": "Destinatari",
+        "subjectPrefix": "Prefisso oggetto",
+        "subjectPrefixHelper": "Prefisso facoltativo aggiunto all'inizio dell'oggetto dell'email di avviso.",
+        "urlHelper": "Si integra con Slack, PagerDuty, OpsGenie, Teams, ecc.",
+        "headerHelper": "Usa le intestazioni per i token di autenticazione.",
+        "deleteWarning": "Le regole che utilizzano questo canale continueranno a essere valutate, ma smetteranno di notificare tramite di esso. Digita il nome del canale per confermare.",
+        "emptyHeading": "Nessun canale di notifica",
+        "emptyDescription": "Gli avvisi vengono sempre visualizzati nell'interfaccia della piattaforma. Aggiungi un canale email o webhook per notificare anche il team esternamente.",
+        "emptyFilterTitle": "Nessun canale corrispondente presente.",
+        "emptyFilterDescription": "Cancella il filtro del tipo e riprova."
+    },
+    "rule": {
+        "emptyHeading": "Nessuna regola di avviso",
+        "emptyDescription": "Crea una regola per ricevere una notifica quando una metrica della pipeline supera una soglia. Basta scegliere un pannello di monitoraggio, un confronto e un valore."
+    },
+    "event": {
+        "emptyHeading": "Nessun evento di avviso",
+        "emptyDescription": "Nessun incidente è stato ancora registrato."
+    },
+    "buttons": {
+        "addResource": "Aggiungi {{val}}",
+        "createResource": "Crea {{val}}",
+        "saveResource": "Salva {{val}}",
+        "filterBy": "Filtra per {{val}}"
+    },
+    "deleteResource": "Elimina {{val}}"
+}

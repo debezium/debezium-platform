@@ -2,7 +2,10 @@ import { describe, expect, it, afterEach } from "vitest";
 import {
   featureConfig,
   featureFlagUi,
+  featureFlags,
+  getComingSoonFlags,
   getEnabledPipelineTabs,
+  getFeaturePageAccess,
   getPipelineDetailsRoutePattern,
   isFeatureAccessible,
   isFeatureComingSoon,
@@ -10,119 +13,117 @@ import {
   isFeatureHidden,
   isPipelineTabEnabled,
   isRouteNavVisible,
+  PIPELINE_TAB_FEATURE_FLAGS,
+  type FeatureFlag,
+  type GatedPipelineTab,
 } from "./featureFlag";
+
+const originalHideDisabled = featureFlagUi.hideDisabledFeaturesFromNav;
 
 describe("featureFlag", () => {
   afterEach(() => {
-    featureFlagUi.hideDisabledFeaturesFromNav = false;
+    featureFlagUi.hideDisabledFeaturesFromNav = originalHideDisabled;
   });
 
-  it("exposes disabled coming-soon and hidden features", () => {
-    expect(featureConfig.Vault).toEqual({
-      enabled: false,
-      mode: "comingSoon",
+  it("derives enabled, hidden, and coming-soon state from featureConfig", () => {
+    featureFlags.forEach((flag) => {
+      const { enabled, mode } = featureConfig[flag];
+
+      expect(isFeatureEnabled(flag)).toBe(enabled);
+      expect(isFeatureHidden(flag)).toBe(!enabled && mode === "hidden");
+      expect(isFeatureComingSoon(flag)).toBe(!enabled && mode === "comingSoon");
     });
   });
 
-  it("keeps coming-soon items in the nav by default", () => {
-    expect(featureFlagUi.hideDisabledFeaturesFromNav).toBe(false);
-  });
-
-  it("exposes enabled coming-soon and hidden features", () => {
-    expect(featureConfig.Connection).toEqual({
-      enabled: true,
-      mode: "comingSoon",
-    });
-    expect(featureConfig.Transforms).toEqual({
-      enabled: true,
-      mode: "comingSoon",
-    });
-    expect(featureConfig.PipelineMonitoring).toEqual({
-      enabled: true,
-      mode: "hidden",
-    });
-    expect(featureConfig.PipelineAction).toEqual({
-      enabled: true,
-      mode: "hidden",
-    });
-    expect(featureConfig.PipelineLogs).toEqual({
-      enabled: true,
-      mode: "hidden",
-    });
-  });
-
-  it("identifies enabled and disabled features", () => {
-    expect(isFeatureEnabled("Vault")).toBe(false);
-    expect(isFeatureEnabled("Alerts")).toBe(true);
-    expect(isFeatureEnabled("PipelineMonitoring")).toBe(true);
-    expect(isFeatureEnabled("Connection")).toBe(true);
-    expect(isFeatureEnabled("Transforms")).toBe(true);
-    expect(isFeatureEnabled("PipelineAction")).toBe(true);
-    expect(isFeatureEnabled("PipelineLogs")).toBe(true);
-  });
-
-  it("identifies hidden features only when disabled", () => {
-    expect(isFeatureHidden("PipelineMonitoring")).toBe(false);
-    expect(isFeatureHidden("PipelineAction")).toBe(false);
-    expect(isFeatureHidden("PipelineLogs")).toBe(false);
-    expect(isFeatureHidden("Vault")).toBe(false);
-  });
-
-  it("identifies coming-soon features only when disabled", () => {
-    expect(isFeatureComingSoon("Vault")).toBe(true);
-    expect(isFeatureComingSoon("Connection")).toBe(false);
-    expect(isFeatureComingSoon("Transforms")).toBe(false);
-    expect(isFeatureComingSoon("PipelineMonitoring")).toBe(false);
-  });
-
-  it("keeps coming-soon routes visible and reachable by default", () => {
-    expect(isRouteNavVisible("Vault")).toBe(true);
-    expect(isFeatureAccessible("Vault")).toBe(true);
-    expect(isRouteNavVisible("Alerts")).toBe(true);
-    expect(isFeatureAccessible("Alerts")).toBe(true);
-    expect(isRouteNavVisible("Connection")).toBe(true);
-    expect(isRouteNavVisible("Transforms")).toBe(true);
+  it("keeps ungated routes visible and reachable", () => {
     expect(isRouteNavVisible(undefined)).toBe(true);
     expect(isFeatureAccessible(undefined)).toBe(true);
   });
 
-  it("removes disabled coming-soon features from nav and access when configured", () => {
-    featureFlagUi.hideDisabledFeaturesFromNav = true;
+  it("applies the current nav policy to every feature flag", () => {
+    featureFlags.forEach((flag) => {
+      const visible = isRouteNavVisible(flag);
+      const accessible = isFeatureAccessible(flag);
+      const access = getFeaturePageAccess(flag);
 
-    expect(isRouteNavVisible("Vault")).toBe(false);
-    expect(isFeatureAccessible("Vault")).toBe(false);
-    expect(isRouteNavVisible("Alerts")).toBe(true);
-    expect(isFeatureAccessible("Alerts")).toBe(true);
-    expect(isRouteNavVisible("Connection")).toBe(true);
-    expect(isRouteNavVisible(undefined)).toBe(true);
+      if (isFeatureEnabled(flag)) {
+        expect(visible).toBe(true);
+        expect(accessible).toBe(true);
+        expect(access).toBe("enabled");
+        return;
+      }
+
+      if (isFeatureHidden(flag)) {
+        expect(visible).toBe(false);
+        expect(accessible).toBe(false);
+        expect(access).toBe("unavailable");
+        return;
+      }
+
+      expect(visible).toBe(!featureFlagUi.hideDisabledFeaturesFromNav);
+      expect(accessible).toBe(!featureFlagUi.hideDisabledFeaturesFromNav);
+      expect(access).toBe(
+        featureFlagUi.hideDisabledFeaturesFromNav ? "unavailable" : "comingSoon"
+      );
+    });
   });
 
-  it("keeps enabled features visible in navigation even when mode is hidden", () => {
-    expect(isRouteNavVisible("PipelineMonitoring")).toBe(true);
-    expect(isRouteNavVisible("PipelineAction")).toBe(true);
-    expect(isRouteNavVisible("PipelineLogs")).toBe(true);
+  it.skipIf(getComingSoonFlags().length === 0)(
+    "toggles coming-soon nav visibility with hideDisabledFeaturesFromNav",
+    () => {
+      const comingSoonFlags = getComingSoonFlags();
+
+      featureFlagUi.hideDisabledFeaturesFromNav = false;
+      comingSoonFlags.forEach((flag) => {
+        expect(isRouteNavVisible(flag)).toBe(true);
+        expect(isFeatureAccessible(flag)).toBe(true);
+        expect(getFeaturePageAccess(flag)).toBe("comingSoon");
+      });
+
+      featureFlagUi.hideDisabledFeaturesFromNav = true;
+      comingSoonFlags.forEach((flag) => {
+        expect(isRouteNavVisible(flag)).toBe(false);
+        expect(isFeatureAccessible(flag)).toBe(false);
+        expect(getFeaturePageAccess(flag)).toBe("unavailable");
+      });
+    }
+  );
+
+  it("keeps enabled features visible even when their mode is hidden", () => {
+    const enabledHiddenFlags = featureFlags.filter(
+      (flag) => featureConfig[flag].enabled && featureConfig[flag].mode === "hidden"
+    );
+
+    enabledHiddenFlags.forEach((flag) => {
+      expect(isRouteNavVisible(flag)).toBe(true);
+      expect(isFeatureAccessible(flag)).toBe(true);
+    });
   });
 
   it("returns enabled pipeline tabs based on feature flags", () => {
-    expect(getEnabledPipelineTabs()).toEqual([
-      "overview",
-      "action",
-      "monitoring",
-      "logs",
-      "edit",
-    ]);
-    expect(isPipelineTabEnabled("monitoring")).toBe(true);
-    expect(isPipelineTabEnabled("action")).toBe(true);
-    expect(isPipelineTabEnabled("logs")).toBe(true);
+    const tabs = getEnabledPipelineTabs();
+
+    expect(tabs).toContain("overview");
+    expect(tabs).toContain("edit");
+
+    (Object.entries(PIPELINE_TAB_FEATURE_FLAGS) as [GatedPipelineTab, FeatureFlag][]).forEach(
+      ([tab, flag]) => {
+        expect(tabs.includes(tab)).toBe(isFeatureEnabled(flag));
+        expect(isPipelineTabEnabled(tab)).toBe(isFeatureEnabled(flag));
+      }
+    );
   });
 
   it("builds a pipeline details route pattern from enabled tabs", () => {
-    expect(getPipelineDetailsRoutePattern().test("/pipeline/1/overview")).toBe(
-      true
+    const pattern = getPipelineDetailsRoutePattern();
+
+    expect(pattern.test("/pipeline/1/overview")).toBe(true);
+    expect(pattern.test("/pipeline/1/edit")).toBe(true);
+    expect(pattern.test("/pipeline/1/monitoring")).toBe(
+      isPipelineTabEnabled("monitoring")
     );
-    expect(getPipelineDetailsRoutePattern().test("/pipeline/1/monitoring")).toBe(
-      true
-    );
-    expect(getPipelineDetailsRoutePattern().test("/pipeline/1/logs")).toBe(true);
+    expect(pattern.test("/pipeline/1/logs")).toBe(isPipelineTabEnabled("logs"));
+    expect(pattern.test("/pipeline/1/action")).toBe(isPipelineTabEnabled("action"));
+    expect(pattern.test("/pipeline/1/unknown")).toBe(false);
   });
 });

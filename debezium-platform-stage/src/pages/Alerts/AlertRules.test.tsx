@@ -71,8 +71,8 @@ describe("AlertRules", () => {
 
     render(<AlertRules firingRuleIds={new Set()}  />);
 
-    expect(await screen.findByText("No alert rules yet")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Create rule" })).toBeInTheDocument();
+    expect(await screen.findByText("No alert rule")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add rule" })).toBeInTheDocument();
   });
 
   it("shows an error state when the rules request fails", async () => {

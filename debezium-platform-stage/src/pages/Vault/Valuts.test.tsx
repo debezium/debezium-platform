@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Vaults } from "./Vaults";
 import { useData } from "../../appLayout/AppContext";
 import { render } from "../../__test__/unit/test-utils";
+import { isFeatureComingSoon, isFeatureEnabled } from "@utils/featureFlag";
 
 const { mockNavigate } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
@@ -20,6 +21,8 @@ vi.mock("../../appLayout/AppContext", () => ({
   useData: vi.fn(),
 }));
 
+const vaultContentVisible = isFeatureEnabled("Vault") || isFeatureComingSoon("Vault");
+
 describe("Vaults Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -33,10 +36,20 @@ describe("Vaults Component", () => {
     });
   });
 
-  it("renders the Vaults component with correct content", () => {
+  it("renders the Vaults component according to the Vault feature flag", () => {
     render(<Vaults />);
 
-    expect(screen.getByAltText("Coming Soon")).toBeInTheDocument();
+    if (!vaultContentVisible) {
+      expect(screen.queryByText("No vault available")).not.toBeInTheDocument();
+      return;
+    }
+
+    if (isFeatureComingSoon("Vault")) {
+      expect(screen.getByAltText("Coming Soon")).toBeInTheDocument();
+    } else {
+      expect(screen.queryByAltText("Coming Soon")).not.toBeInTheDocument();
+    }
+
     expect(screen.getByText("No vault available")).toBeInTheDocument();
     expect(
       screen.getByText(/No vault is configure for this cluster yet/),
@@ -47,7 +60,7 @@ describe("Vaults Component", () => {
     expect(screen.getByText("Pipelines")).toBeInTheDocument();
   });
 
-  it("navigates via secondary quick links", () => {
+  it.skipIf(!vaultContentVisible)("navigates via secondary quick links", () => {
     render(<Vaults />);
 
     fireEvent.click(screen.getByText("Sources"));

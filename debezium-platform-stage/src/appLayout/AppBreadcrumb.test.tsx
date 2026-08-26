@@ -80,8 +80,8 @@ test("renders create alert rule breadcrumb", () => {
   vi.mocked(isFeatureAccessible).mockReturnValue(true);
   render(<AppBreadcrumb />, { initialEntries: ["/alerts/rules/create_rule"] });
 
-  expect(screen.getByText("Alerts")).toHaveAttribute("href", "/alerts/history");
-  expect(screen.getByText("Rules")).toHaveAttribute("href", "/alerts/rules");
+  expect(screen.getByText("Alert")).toHaveAttribute("href", "/alerts/history");
+  expect(screen.getByText("Rule")).toHaveAttribute("href", "/alerts/rules");
   expect(screen.getByText("Create rule")).toBeInTheDocument();
 });
 
@@ -89,7 +89,7 @@ test("renders edit alert rule breadcrumb", () => {
   vi.mocked(isFeatureAccessible).mockReturnValue(true);
   render(<AppBreadcrumb />, { initialEntries: ["/alerts/rules/14"] });
 
-  expect(screen.getByText("Alerts")).toHaveAttribute("href", "/alerts/history");
-  expect(screen.getByText("Rules")).toHaveAttribute("href", "/alerts/rules");
+  expect(screen.getByText("Alert")).toHaveAttribute("href", "/alerts/history");
+  expect(screen.getByText("Rule")).toHaveAttribute("href", "/alerts/rules");
   expect(screen.getByText("Edit rule")).toBeInTheDocument();
 });

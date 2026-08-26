@@ -42,7 +42,7 @@ import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../appLayout/AppNotificationContext";
 import { useDeleteData } from "src/apis";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import UsedIn from "./UsedIn";
 
 type TableType = "source" | "destination";
@@ -224,14 +224,15 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
       >
         <ModalHeader
           title={
-            <p>
-              {t("deleteModel.description", {
-                val: deleteInstance.name,
-              })}
-              {`${tableType}`}
-            </p>
+
+            <Trans
+              i18nKey="deleteModel.heading"
+              values={{ val: `"${deleteInstance.name}"`, val2: tableType }}
+              components={[<span />, <i />]}
+            />
           }
           titleIconVariant="warning"
+           description={t("deleteModel.description", {val: tableType})}
           labelId="delete-modal-title"
         />
         <ModalBody id="modal-box-body-variant">
@@ -255,7 +256,7 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
         <ModalFooter>
           <Button
             key="confirm"
-            variant="primary"
+            variant="danger"
             onClick={() => handleDelete(deleteInstance.id, tableType)}
             isDisabled={deleteInstanceName !== deleteInstance.name}
             isLoading={isLoading}

@@ -26,6 +26,7 @@ import {
   NotificationChannelType,
   WebhookChannelConfig,
 } from "./alertsTypes";
+import { useTranslation } from "react-i18next";
 
 interface AlertChannelFormModalProps {
   isOpen: boolean;
@@ -47,6 +48,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
   onSave,
 }) => {
   const isEdit = !!channel;
+  const { t } = useTranslation();
 
   const [name, setName] = React.useState(channel?.name ?? "");
   const [type, setType] = React.useState<NotificationChannelType>(channel?.type ?? "EMAIL");
@@ -105,18 +107,18 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
     const config: EmailChannelConfig | WebhookChannelConfig =
       type === "EMAIL"
         ? {
-            recipients: validRecipients,
-            subjectPrefix: subjectPrefix.trim() || undefined,
-          }
+          recipients: validRecipients,
+          subjectPrefix: subjectPrefix.trim() || undefined,
+        }
         : {
-            url: url.trim(),
-            method,
-            headers: headers.some((h) => h.key.trim())
-              ? Object.fromEntries(
-                  headers.filter((h) => h.key.trim()).map((h) => [h.key.trim(), h.value])
-                )
-              : undefined,
-          };
+          url: url.trim(),
+          method,
+          headers: headers.some((h) => h.key.trim())
+            ? Object.fromEntries(
+              headers.filter((h) => h.key.trim()).map((h) => [h.key.trim(), h.value])
+            )
+            : undefined,
+        };
 
     onSave({
       name: name.trim(),
@@ -134,7 +136,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
       aria-labelledby="alert-channel-modal-title"
     >
       <ModalHeader
-        title={isEdit ? "Edit notification channel" : "Create notification channel"}
+        title={isEdit ? t("breadcrumb.editResource", { val: "notification channel" }) : t("breadcrumb.createResource", { val: "notification channel" })}
         labelId="alert-channel-modal-title"
       />
       <ModalBody>
@@ -144,7 +146,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
             handleSubmit();
           }}
         >
-          <FormGroup label="Name" isRequired fieldId="channel-name">
+          <FormGroup label={t("alert:channel.name")} isRequired fieldId="channel-name">
             <TextInput
               id="channel-name"
               value={name}
@@ -156,13 +158,13 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
             {isNameDuplicate && (
               <HelperText>
                 <HelperTextItem variant="error">
-                  A channel with this name already exists.
+                  {t("statusMessage:apis.uniqueResourceNameError", { val: "channel" })}
                 </HelperTextItem>
               </HelperText>
             )}
           </FormGroup>
 
-          <FormGroup label="Type" isRequired fieldId="channel-type" isStack>
+          <FormGroup label={t("alert:channel.type")} isRequired fieldId="channel-type" isStack>
             <Radio
               id="channel-type-email"
               name="channel-type"
@@ -182,7 +184,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
           </FormGroup>
 
           {type === "EMAIL" ? (
-            <FormSection title="Email configuration">
+            <FormSection title={t("configurationHeading", { val: "Email" })}>
               <FormGroup label="Recipients" isRequired fieldId="channel-recipients">
                 {recipients.map((recipient, index) => (
                   <div key={index} className="alerts-channel-row">
@@ -215,11 +217,11 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
                   isDisabled={isSaving}
                   onClick={addRecipient}
                 >
-                  Add recipient
+                  {t("alert:buttons.addResource", { val: "recipient" })}
                 </Button>
               </FormGroup>
 
-              <FormGroup label="Subject prefix" fieldId="channel-subject-prefix">
+              <FormGroup label={t("alert:channel.subjectPrefix")} fieldId="channel-subject-prefix">
                 <TextInput
                   id="channel-subject-prefix"
                   value={subjectPrefix}
@@ -229,13 +231,13 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
                 />
                 <HelperText>
                   <HelperTextItem>
-                    Optional prefix added to the start of the alert email subject.
+                    {t("alert:channel.subjectPrefixHelper")}
                   </HelperTextItem>
                 </HelperText>
               </FormGroup>
             </FormSection>
           ) : (
-            <FormSection title="Webhook configuration">
+            <FormSection title={t("configurationHeading", { val: "Webhook" })}>
               <FormGroup label="URL" isRequired fieldId="channel-url">
                 <TextInput
                   id="channel-url"
@@ -247,8 +249,7 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
                 />
                 <HelperText>
                   <HelperTextItem variant={!isUrlValid ? "error" : "default"}>
-                    HTTPS required in production. Integrates with Slack, PagerDuty, OpsGenie,
-                    Teams, etc.
+                    {t("alert:channel.urlHelper")}
                   </HelperTextItem>
                 </HelperText>
               </FormGroup>
@@ -316,10 +317,10 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
                   isDisabled={isSaving}
                   onClick={addHeader}
                 >
-                  Add header
+                  {t("alert:buttons.addResource", { val: "header" })}
                 </Button>
                 <HelperText>
-                  <HelperTextItem>Use headers for authentication tokens.</HelperTextItem>
+                  <HelperTextItem>{t("alert:channel.headerHelper")}</HelperTextItem>
                 </HelperText>
               </FormGroup>
             </FormSection>
@@ -333,10 +334,10 @@ const AlertChannelFormModal: React.FC<AlertChannelFormModalProps> = ({
           isLoading={isSaving}
           onClick={handleSubmit}
         >
-          {isEdit ? "Save changes" : "Create channel"}
+          {isEdit ? t("alert:buttons.saveResource", { val: "channel" }) : t("alert:buttons.createResource", { val: "channel" })}
         </Button>
         <Button variant="link" isDisabled={isSaving} onClick={onClose}>
-          Cancel
+          {t("cancel")}
         </Button>
       </ModalFooter>
     </Modal>

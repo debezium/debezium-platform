@@ -59,6 +59,8 @@ import {
 import AlertChannelFormModal from "./AlertChannelFormModal";
 import { SingleSelectFilter } from "./alertsFilters";
 import "./AlertEvents.css";
+import { Trans, useTranslation } from "react-i18next";
+import EmptyStatus from "@components/EmptyStatus";
 
 const WEBHOOK_URL_DISPLAY_MAX = 42;
 
@@ -111,6 +113,7 @@ const ChannelDetails: React.FC<{ channel: NotificationChannel }> = ({ channel })
 const AlertChannels: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotification();
+  const { t } = useTranslation();
 
   const {
     data: channels = [],
@@ -249,23 +252,23 @@ const AlertChannels: React.FC = () => {
   };
 
   const rowActions = (channel: NotificationChannel): IAction[] => [
-  
+
     {
-      title: "Test",
+      title: t("alert:channel.test"),
       onClick: () => {
         void handleTest(channel);
       },
       isDisabled: testingId === channel.id,
     },
-      {
-      title: channel.enabled ? "Disable" : "Enable",
+    {
+      title: channel.enabled ? t("alert:channel.disable") : t("alert:channel.enable"),
       onClick: () => {
         void toggleEnabled(channel);
       },
     },
-     { isSeparator: true },
-    { title: "Edit", onClick: () => openEditForm(channel) },
-    { title: "Delete", onClick: () => requestDelete(channel) },
+    { isSeparator: true },
+    { title: t("edit"), onClick: () => openEditForm(channel) },
+    { title: t("delete"), onClick: () => requestDelete(channel) },
   ];
 
   if (isLoading) {
@@ -284,11 +287,11 @@ const AlertChannels: React.FC = () => {
         <Bullseye>
           <EmptyState
             variant={EmptyStateVariant.lg}
-            titleText="Failed to load notification channels"
+            titleText={t("statusMessage:apis.connectionErrorTitle", { val: "notification channels" })}
             headingLevel="h4"
             icon={ExclamationCircleIcon}
           >
-            <EmptyStateBody>Check your connection and try again.</EmptyStateBody>
+            <EmptyStateBody>{t("statusMessage:apis.connectionErrorDescription")}</EmptyStateBody>
           </EmptyState>
         </Bullseye>
       </PageSection>
@@ -296,12 +299,12 @@ const AlertChannels: React.FC = () => {
   }
 
   return (
-    <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", maxHeight: "100%" }}>
       {channels.length > 0 ? (
         <>
           <PageHeader
-            title="Notification Channels"
-            description="Named, reusable delivery targets for alert rules. One channel can serve multiple rules, and a rule can notify through multiple channels."
+            title={t("alert:channel.title")}
+            description={t("alert:channel.titleDescription")}
           />
           <PageSection>
             <Card className="pipeline-card">
@@ -310,7 +313,7 @@ const AlertChannels: React.FC = () => {
                   <ToolbarGroup variant="filter-group">
                     <ToolbarItem>
                       <SingleSelectFilter
-                        label="Filter by type"
+                        label={t("alert:buttons.filterBy", { val: "type" })}
                         options={["EMAIL", "WEBHOOK"] as NotificationChannelType[]}
                         selected={typeFilter}
                         onChange={setTypeFilter}
@@ -322,7 +325,7 @@ const AlertChannels: React.FC = () => {
                   </ToolbarGroup>
                   <ToolbarItem>
                     <Button variant="primary" icon={<PlusIcon />} onClick={openCreateForm}>
-                      Add channel
+                      {t("alert:buttons.addResource", { val: "channel" })}
                     </Button>
                   </ToolbarItem>
                   <ToolbarItem align={{ default: "alignEnd" }}>
@@ -338,45 +341,45 @@ const AlertChannels: React.FC = () => {
               <Table aria-label="Notification channels table">
                 <Thead>
                   <Tr>
-                    <Th key={0}>Name</Th>
-                    <Th key={1}>Type</Th>
-                    <Th key={2}>Details</Th>
-                    <Th key={3}>Status</Th>
-             
-                    <Th key={5} screenReaderText="Action" />
+                    <Th key={0}>{t("alert:channel.name")}</Th>
+                    <Th key={1}>{t("alert:channel.type")}</Th>
+                    <Th key={2}>{t("alert:channel.details")}</Th>
+                    <Th key={3}>{t("alert:channel.status")}</Th>
+
+                    <Th key={4} screenReaderText="Action" />
                   </Tr>
                 </Thead>
                 <Tbody>
                   {displayedChannels.length > 0 ? (
                     displayedChannels.map((channel) => (
-                    <Tr key={channel.id}>
-                      <Td dataLabel="Name">
-                        <Button variant="link" isInline onClick={() => openEditForm(channel)}>
-                          {channel.name}
-                        </Button>
-                      </Td>
-                      <Td dataLabel="Type">
-                        {channel.type === "EMAIL" ? "Email" : "Webhook"}
-                      </Td>
-                      <Td dataLabel="Details">
-                        <ChannelDetails channel={channel} />
-                      </Td>
-                      <Td dataLabel="Status">
-                        <Switch
-                          id={`channel-enabled-${channel.id}`}
-                          aria-label={`Enable ${channel.name}`}
-                          isChecked={channel.enabled}
-                          isDisabled={togglingChannelId === channel.id}
-                          onChange={() => {
-                            void toggleEnabled(channel);
-                          }}
-                          label={channel.enabled ? "On" : "Off"}
-                        />
-                      </Td>
-                      <Td>
-                        <ActionsColumn items={rowActions(channel)} />
-                      </Td>
-                    </Tr>
+                      <Tr key={channel.id}>
+                        <Td dataLabel="Name">
+                          <Button variant="link" isInline onClick={() => openEditForm(channel)}>
+                            {channel.name}
+                          </Button>
+                        </Td>
+                        <Td dataLabel="Type">
+                          {channel.type === "EMAIL" ? "Email" : "Webhook"}
+                        </Td>
+                        <Td dataLabel="Details">
+                          <ChannelDetails channel={channel} />
+                        </Td>
+                        <Td dataLabel="Status">
+                          <Switch
+                            id={`channel-enabled-${channel.id}`}
+                            aria-label={`Enable ${channel.name}`}
+                            isChecked={channel.enabled}
+                            isDisabled={togglingChannelId === channel.id}
+                            onChange={() => {
+                              void toggleEnabled(channel);
+                            }}
+                            label={channel.enabled ? "On" : "Off"}
+                          />
+                        </Td>
+                        <Td>
+                          <ActionsColumn items={rowActions(channel)} />
+                        </Td>
+                      </Tr>
                     ))
                   ) : (
                     <Tr>
@@ -384,15 +387,15 @@ const AlertChannels: React.FC = () => {
                         <Bullseye>
                           <EmptyState
                             headingLevel="h2"
-                            titleText="No matching channel is present."
+                            titleText={t("alert:channel.emptyFilterTitle")}
                             icon={SearchIcon}
                             variant={EmptyStateVariant.sm}
                           >
-                            <EmptyStateBody>Clear the type filter and try again.</EmptyStateBody>
+                            <EmptyStateBody>{t("alert:channel.emptyFilterDescription")}</EmptyStateBody>
                             <EmptyStateFooter>
                               <EmptyStateActions>
                                 <Button variant="link" onClick={() => setTypeFilter(undefined)}>
-                                  Clear filter
+                                  {t("clearFilter")}
                                 </Button>
                               </EmptyStateActions>
                             </EmptyStateFooter>
@@ -407,26 +410,23 @@ const AlertChannels: React.FC = () => {
           </PageSection>
         </>
       ) : (
-        <PageSection style={{ position: "relative", minHeight: "100%" }} isFilled>
-          <Bullseye>
-            <EmptyState
-              variant={EmptyStateVariant.lg}
-              titleText="No notification channels yet"
-              headingLevel="h4"
-              icon={OutlinedBellIcon}
+
+        <EmptyStatus
+          heading={t("alert:channel.emptyHeading")}
+          primaryMessage={t("alert:channel.emptyDescription")}
+          secondaryMessage=""
+          icon={OutlinedBellIcon as React.ComponentType<unknown>}
+          primaryAction={
+            <Button
+              variant="primary"
+              icon={<PlusIcon />}
+              data-tour="add-source"
+              onClick={openCreateForm}
             >
-              <EmptyStateBody>
-                Alerts always appear in the platform UI. Add an email or webhook channel to also
-                notify your team externally.
-              </EmptyStateBody>
-              <EmptyStateFooter>
-                <Button variant="primary" icon={<PlusIcon />} onClick={openCreateForm}>
-                  Create channel
-                </Button>
-              </EmptyStateFooter>
-            </EmptyState>
-          </Bullseye>
-        </PageSection>
+              {t('addButton', { val: "channel" })}
+            </Button>
+          }
+        />
       )}
 
       {isFormOpen && (
@@ -449,15 +449,19 @@ const AlertChannels: React.FC = () => {
         aria-labelledby="delete-channel-modal-title"
       >
         <ModalHeader
-          title={<p>Delete channel &quot;{deleteTarget?.name}&quot;?</p>}
+          title={
+            <Trans
+              i18nKey="deleteModel.heading"
+              values={{ val: `"${deleteTarget?.name}"`, val2: "channel" }}
+              components={[<span />, <i />]}
+            />
+
+          }
           titleIconVariant="warning"
+          description={t("alert:channel.deleteWarning")}
           labelId="delete-channel-modal-title"
         />
         <ModalBody>
-          <Content component="p">
-            Rules using this channel will keep evaluating, but will stop notifying through it.
-            Type the channel name to confirm.
-          </Content>
           <Form
             onSubmit={(e) => {
               e.preventDefault();
@@ -483,14 +487,14 @@ const AlertChannels: React.FC = () => {
               void confirmDelete();
             }}
           >
-            Delete
+            {t("delete")}
           </Button>
           <Button
             variant="link"
             isDisabled={isDeleting}
             onClick={() => setDeleteTarget(undefined)}
           >
-            Cancel
+            {t("cancel")}
           </Button>
         </ModalFooter>
       </Modal>

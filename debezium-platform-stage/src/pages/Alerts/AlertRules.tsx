@@ -42,7 +42,7 @@ import {
   ThProps,
   Tr,
 } from "@patternfly/react-table";
-import { BellIcon, ExclamationCircleIcon, FilterIcon, PlusIcon, SearchIcon } from "@patternfly/react-icons";
+import { ExclamationCircleIcon, FilterIcon, PlusIcon, RhUiTaskIcon, SearchIcon } from "@patternfly/react-icons";
 import { useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "@components/PageHeader";
@@ -56,6 +56,8 @@ import {
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { AlertRule, AlertSeverity } from "./alertsTypes";
 import { formatCondition, SeverityIcon } from "./severityUtils";
+import EmptyStatus from "@components/EmptyStatus";
+import { useTranslation } from "react-i18next";
 
 interface AlertRulesProps {
   firingRuleIds: Set<number>;
@@ -82,6 +84,7 @@ const SEVERITY_RANK: Record<AlertSeverity, number> = {
 
 const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { addNotification } = useNotification();
 
@@ -196,7 +199,7 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
   };
 
   const rowActions = (rule: AlertRule): IAction[] => [
-    
+
     {
       title: rule.enabled ? "Disable" : "Enable",
       onClick: () => {
@@ -212,7 +215,7 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
     return (
       <PageSection isFilled>
         <Bullseye>
-                    <Spinner size="lg" aria-label="Loading alert rules" />
+          <Spinner size="lg" aria-label="Loading alert rules" />
         </Bullseye>
       </PageSection>
     );
@@ -244,11 +247,11 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
             description="Define threshold-based rules against existing monitoring panels. A rule fires for any pipeline that breaches its threshold."
           />
           <PageSection>
-            <Card  className="source-card">
-              <Toolbar 
-              id="toolbar-sticky"
-                        className="custom-toolbar"
-                        isSticky
+            <Card className="source-card">
+              <Toolbar
+                id="toolbar-sticky"
+                className="custom-toolbar"
+                isSticky
               // id="alert-rules-toolbar-sticky" className="alerts-custom-toolbar" isSticky
               >
                 <ToolbarContent>
@@ -309,10 +312,10 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
                 <Thead>
                   <Tr>
                     <Th>Name</Th>
-                      <Th sort={getSortParams(SEVERITY_COLUMN_INDEX)}>Severity</Th>
+                    <Th sort={getSortParams(SEVERITY_COLUMN_INDEX)}>Severity</Th>
                     <Th>Metric</Th>
                     <Th>Condition</Th>
-                  
+
                     <Th>Status</Th>
                     <Th screenReaderText="Actions" />
                   </Tr>
@@ -332,12 +335,12 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
                             {rule.name}
                           </Button>
                         </Td>
-                            <Td dataLabel="Severity">
+                        <Td dataLabel="Severity">
                           <SeverityIcon severity={rule.severity} />
                         </Td>
                         <Td dataLabel="Metric">{rule.panelTitle}</Td>
                         <Td dataLabel="Condition">{formatCondition(rule)}</Td>
-                    
+
                         <Td dataLabel="Status">
                           <Switch
                             id={`rule-enabled-${rule.id}`}
@@ -384,29 +387,23 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
           </PageSection>
         </>
       ) : (
-        <PageSection style={{ position: "relative", minHeight: "100%" }} isFilled>
-          <Bullseye>
-            <EmptyState
-              variant={EmptyStateVariant.lg}
-              titleText="No alert rules yet"
-              headingLevel="h4"
-              icon={BellIcon}
+
+        <EmptyStatus
+          heading={t("alert:rule.emptyHeading")}
+          primaryMessage={t("alert:rule.emptyDescription")}
+          secondaryMessage=""
+          icon={RhUiTaskIcon as React.ComponentType<unknown>}
+          primaryAction={
+            <Button
+              variant="primary"
+              icon={<PlusIcon />}
+              data-tour="add-source"
+              onClick={openCreatePage}
             >
-              <EmptyStateBody>
-                <Content component="p">
-                  Create a rule to get notified when a pipeline metric breaches a threshold.
-                  No PromQL knowledge required, just pick a monitoring panel, a comparison, and
-                  a value.
-                </Content>
-              </EmptyStateBody>
-              <EmptyStateFooter>
-                <Button variant="primary" icon={<PlusIcon />} onClick={openCreatePage}>
-                  Create rule
-                </Button>
-              </EmptyStateFooter>
-            </EmptyState>
-          </Bullseye>
-        </PageSection>
+              {t('addButton', { val: "rule" })}
+            </Button>
+          }
+        />
       )}
 
       <Modal

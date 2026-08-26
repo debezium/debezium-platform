@@ -61,7 +61,7 @@ import {
 import { ActionData, DeleteInstance } from "@pipelinePage/index";
 import { useNotification } from "@appContext/index";
 import { FeatureGate } from "@components/FeatureGate";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import UsedIn from "@components/UsedIn";
 
 export interface ITransformsProps {
@@ -435,13 +435,15 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
             >
               <ModalHeader
                 title={
-                  <p>
-                    {t("transform:delete.description", {
-                      val: deleteInstance.name,
-                    })}
-                  </p>
+
+                  <Trans
+                    i18nKey="deleteModel.heading"
+                    values={{ val: `"${deleteInstance.name}"`, val2: "transform" }}
+                    components={[<span />, <i />]}
+                  />
                 }
                 titleIconVariant="warning"
+                description={t("deleteModel.description", { val: "transform" })}
                 labelId="delete-modal-title"
               />
               <ModalBody id="modal-box-body-variant">
@@ -464,7 +466,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
               <ModalFooter>
                 <Button
                   key="confirm"
-                  variant="primary"
+                  variant="danger"
                   onClick={() => handleDelete(deleteInstance.id)}
                   isDisabled={deleteInstanceName !== deleteInstance.name}
                   isLoading={isLoading}

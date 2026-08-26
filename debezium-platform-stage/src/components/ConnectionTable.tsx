@@ -41,7 +41,7 @@ import { Catalog } from "../apis/types";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../appLayout/AppNotificationContext";
 import { useDeleteData } from "src/apis";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import UsedIn from "./UsedIn";
 
 
@@ -232,14 +232,14 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
       >
         <ModalHeader
           title={
-            <p>
-              {t("deleteModel.description", {
-                val: deleteInstance.name,
-              })}
-              {`${t("connection:connection")}`}
-            </p>
+            <Trans
+              i18nKey="deleteModel.heading"
+              values={{ val: `"${deleteInstance.name}"`, val2: "connection" }}
+              components={[<span />, <i />]}
+            />
           }
           titleIconVariant="warning"
+            description={t("deleteModel.description", {val: "connection"})}
           labelId="delete-modal-title"
         />
         <ModalBody id="modal-box-body-variant">
@@ -264,7 +264,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
         <ModalFooter>
           <Button
             key="confirm"
-            variant="primary"
+            variant="danger"
             onClick={() => handleDelete(deleteInstance.id)}
             isDisabled={deleteInstanceName !== deleteInstance.name}
             isLoading={isLoading}

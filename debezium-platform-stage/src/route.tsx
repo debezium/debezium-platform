@@ -62,7 +62,6 @@ export type AppRouteConfig = IAppRoute | IAppRouteGroup;
 export const isRouteGroup = (route: AppRouteConfig): route is IAppRouteGroup =>
   Array.isArray((route as IAppRouteGroup).routes);
 
-// A leaf route is only worth navigating to if it has a label and isn't stripped by feature flags.
 export const isNavRouteVisible = (route: IAppRoute): boolean =>
   !!route.label && isRouteNavVisible(route.featureFlag);
 
@@ -189,7 +188,7 @@ const routes: AppRouteConfig[] = [
   {
     component: Connections,
     label: "Connections",
-    icon: <RhUiInfrastructureIcon/>,
+    icon: <RhUiInfrastructureIcon />,
     title: `${AppBranding} | Connections`,
     path: "/connections",
     navSection: "connections",
@@ -218,8 +217,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     // Intentionally no `label`: this is a hidden fallback so a bare "/alerts" URL still
-    // renders a component (defaults to the Rules tab). The nav-visible entry point is the
-    // "Alerts" IAppRouteGroup below - giving this route a label would show a duplicate item.
+    // renders a component (defaults to the Events tab).
     component: Alerts,
     path: "/alerts",
     navSection: "alerts",
@@ -230,7 +228,7 @@ const routes: AppRouteConfig[] = [
     label: "Alerts",
     icon: <RhUiNotificationIcon style={{ outline: "none" }} />,
     routes: [
-            {
+      {
         component: Alerts,
         label: "Events",
         path: "/alerts/history",

@@ -9,6 +9,8 @@
   "backToCatalog": "Back to catalog",
   "cancel": "Cancel",
   "clear": "Clear",
+  "clearFilter": "Clear filter",
+  "clearAllFilter": "Clear all filters",
   "comingSoon": "Coming soon",
   "confirm": "Confirm",
   "connection": "Connection",
@@ -23,7 +25,8 @@
   "deleteModel": {
     "cancel": "Cancel",
     "confirm": "Delete",
-    "description": "Enter '{{val}}' to delete ",
+    "description": "Type the {{val}} name to confirm.",
+    "heading": "Delete {{val2}} <1>{{val}}</1> ",
     "title": "Delete modal"
   },
   "description": "Description",
@@ -37,6 +40,7 @@
     "title": "No {{val}} available"
   },
   "enabled": "Enabled",
+  "configurationHeading": "{{val}} configuration",
   "enterValue": "enter a value",
   "error": "Error",
   "expandAll": "Expand all",
@@ -63,6 +67,7 @@
       "title": "Configuration properties"
     }
   },
+  "notFound": "404 Page Not Found",
   "formEditor": "Form editor",
   "goTo": "Go to {{val}}",
   "glassMode": "Glass mode",
@@ -122,5 +127,33 @@
       "dataTableDescription": "Select the {{val}} to be targeted for sync",
       "dataTableTitle": "{{val}} database"
     }
+  },
+  "navigation":{
+    "source": "Sources",
+    "destination": "Destinations",
+    "pipeline": "Pipelines",
+    "transform": "Transforms",
+    "connection": "Connections",
+    "alert": "Alerts",
+    "event": "Events",
+    "rule": "Rules",
+    "channel": "Channels"
+  },
+  "breadcrumb":{
+    "pipeline": "Pipeline",
+    "pipelineDesigner": "Pipeline designer",
+    "createResource": "Create {{val}}",
+    "overview": "Overview",
+    "action": "Action",
+    "monitoring": "Monitoring",
+    "editResource": "Edit {{val}}",
+    "log": "Logs",
+    "source": "Source",
+    "catalog": "Catalog",
+    "destination": "Destination",
+    "connection": "Connection",
+    "alert": "Alert",
+    "rule": "Rule"
   }
+  
 }

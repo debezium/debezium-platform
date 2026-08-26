@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 import AppSideNavigation from "./AppSideNavigation";
 import { expect, test, vi, afterEach } from "vitest";
 import { render } from "../__test__/unit/test-utils";
-import { featureFlagUi } from "@utils/featureFlag";
+import { featureFlagUi, isRouteNavVisible } from "@utils/featureFlag";
+import { isNavRouteVisible, isRouteGroup, routes } from "../route";
 
 vi.mock("./AppContext", async () => {
   const originalModule = await vi.importActual("./AppContext");
@@ -19,83 +20,100 @@ vi.mock("./AppContext", async () => {
   };
 });
 
+const originalHideDisabled = featureFlagUi.hideDisabledFeaturesFromNav;
+
+const visibleLeafLabels = () =>
+  routes.flatMap((route) =>
+    !isRouteGroup(route) && isNavRouteVisible(route) && route.label
+      ? [route.label]
+      : []
+  );
+
+const visibleGroupLabels = () =>
+  routes
+    .filter(isRouteGroup)
+    .filter((group) => group.routes.some(isNavRouteVisible))
+    .map((group) => group.label);
+
 afterEach(() => {
-  featureFlagUi.hideDisabledFeaturesFromNav = false;
+  featureFlagUi.hideDisabledFeaturesFromNav = originalHideDisabled;
 });
 
-test("renders the side navigation Expanded", () => {
+test("renders the side navigation Expanded according to current feature flags", () => {
   render(<AppSideNavigation isSidebarOpen={true} />);
 
-  // "Alerts" is a collapsed NavExpandable group (not a link) when the current
-  // route isn't inside it, so its children aren't part of the visible link list.
+  const expectedLinks = visibleLeafLabels();
+  const expectedGroups = visibleGroupLabels();
   const sideNavItems = screen.getAllByRole("link");
-  expect(sideNavItems).toHaveLength(6);
-
-  const expectedTexts = [
-    "Pipelines",
-    "Sources",
-    "Transforms",
-    "Destinations",
-    "Connections",
-    "Vaults",
-  ];
-
   const sideNavTexts = sideNavItems.map((item) => item.textContent);
 
-  expectedTexts.forEach((text) => {
+  expect(sideNavItems).toHaveLength(expectedLinks.length);
+  expectedLinks.forEach((text) => {
     expect(sideNavTexts).toContain(text);
   });
 
-  expect(screen.getByRole("button", { name: /alerts/i })).toBeInTheDocument();
-});
-
-test("expands the Alerts nav group and reveals its sub-navigation on click", async () => {
-  render(<AppSideNavigation isSidebarOpen={true} />);
-
-  await userEvent.click(screen.getByRole("button", { name: /alerts/i }));
-
-  ["Rules", "Channels", "Events"].forEach((text) => {
-    expect(screen.getByRole("link", { name: text })).toBeInTheDocument();
-  });
-});
-
-test("only highlights the current Alerts sub-item, not its siblings", () => {
-  render(<AppSideNavigation isSidebarOpen={true} />, {
-    initialEntries: ["/alerts/channels"],
+  expectedGroups.forEach((label) => {
+    expect(screen.getByRole("button", { name: new RegExp(label, "i") })).toBeInTheDocument();
   });
 
-  const rulesLink = screen.getByRole("link", { name: "Rules" });
-  const channelsLink = screen.getByRole("link", { name: "Channels" });
-  const eventsLink = screen.getByRole("link", { name: "Events" });
-
-  expect(rulesLink).not.toHaveClass("pf-m-current");
-  expect(channelsLink).toHaveClass("pf-m-current");
-  expect(eventsLink).not.toHaveClass("pf-m-current");
+  if (!isRouteNavVisible("Vault")) {
+    expect(screen.queryByRole("link", { name: "Vaults" })).not.toBeInTheDocument();
+  }
+  if (!isRouteNavVisible("Alerts")) {
+    expect(screen.queryByRole("button", { name: /alerts/i })).not.toBeInTheDocument();
+  }
 });
 
-test("renders the side navigation Collapsed", () => {
+test.skipIf(!isRouteNavVisible("Alerts"))(
+  "expands the Alerts nav group and reveals its sub-navigation on click",
+  async () => {
+    render(<AppSideNavigation isSidebarOpen={true} />);
+
+    await userEvent.click(screen.getByRole("button", { name: /alerts/i }));
+
+    ["Rules", "Channels", "Events"].forEach((text) => {
+      expect(screen.getByRole("link", { name: text })).toBeInTheDocument();
+    });
+  }
+);
+
+test.skipIf(!isRouteNavVisible("Alerts"))(
+  "only highlights the current Alerts sub-item, not its siblings",
+  () => {
+    render(<AppSideNavigation isSidebarOpen={true} />, {
+      initialEntries: ["/alerts/channels"],
+    });
+
+    const rulesLink = screen.getByRole("link", { name: "Rules" });
+    const channelsLink = screen.getByRole("link", { name: "Channels" });
+    const eventsLink = screen.getByRole("link", { name: "Events" });
+
+    expect(rulesLink).not.toHaveClass("pf-m-current");
+    expect(channelsLink).toHaveClass("pf-m-current");
+    expect(eventsLink).not.toHaveClass("pf-m-current");
+  }
+);
+
+test("renders the side navigation Collapsed according to current feature flags", () => {
   render(<AppSideNavigation isSidebarOpen={false} />);
   const sideNavItems = screen.getAllByRole("link");
-  expect(sideNavItems).toHaveLength(7);
+  expect(sideNavItems).toHaveLength(
+    visibleLeafLabels().length + visibleGroupLabels().length
+  );
 
   const sideNavTexts = sideNavItems.map((item) => item.textContent);
   expect(sideNavTexts.join("")).toBe("");
 });
 
-test("shows the group label as a tooltip on the collapsed Alerts icon", async () => {
-  const { container } = render(<AppSideNavigation isSidebarOpen={false} />);
+test.skipIf(!isRouteNavVisible("Alerts"))(
+  "shows the group label as a tooltip on the collapsed Alerts icon",
+  async () => {
+    const { container } = render(<AppSideNavigation isSidebarOpen={false} />);
 
-  const alertsIcon = container.querySelector('a[href="/alerts/history"] svg');
-  expect(alertsIcon).not.toBeNull();
-  await userEvent.hover(alertsIcon as Element);
+    const alertsIcon = container.querySelector('a[href="/alerts/history"] svg');
+    expect(alertsIcon).not.toBeNull();
+    await userEvent.hover(alertsIcon as Element);
 
-  expect(await screen.findByText("Alerts")).toBeInTheDocument();
-});
-
-test("omits disabled coming-soon items when hideDisabledFeaturesFromNav is true", () => {
-  featureFlagUi.hideDisabledFeaturesFromNav = true;
-  render(<AppSideNavigation isSidebarOpen={true} />);
-
-  expect(screen.queryByRole("link", { name: "Vaults" })).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /alerts/i })).toBeInTheDocument();
-});
+    expect(await screen.findByText("Alerts")).toBeInTheDocument();
+  }
+);

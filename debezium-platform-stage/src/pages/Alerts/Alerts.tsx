@@ -11,13 +11,11 @@ import "./Alerts.css";
 
 type AlertsTab = "rules" | "channels" | "history";
 
-// Sub-navigation between Rules/Channels/History now lives in the sidebar
-// (NavExpandable), so the active tab is derived from the URL rather than
-// owned as local state.
+
 const getActiveTab = (pathname: string): AlertsTab => {
   if (pathname.endsWith("/channels")) return "channels";
-  if (pathname.endsWith("/history")) return "history";
-  return "rules";
+  if (pathname.endsWith("/rules")) return "rules";
+  return "history";
 };
 
 const Alerts: React.FunctionComponent = () => {

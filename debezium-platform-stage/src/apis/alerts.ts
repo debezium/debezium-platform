@@ -1,3 +1,4 @@
+import i18next from "../i18n";
 import { API_URL } from "../utils/constants";
 import { ApiResponse, deleteData, fetchData } from "./apis";
 import {
@@ -18,6 +19,7 @@ export const DEFAULT_ALERT_EVENTS_PAGE_SIZE = 20;
 export const ALERT_RULES_QUERY_KEY = ["alertRules"] as const;
 export const ALERT_CHANNELS_QUERY_KEY = ["alertChannels"] as const;
 export const ALERT_STATUS_QUERY_KEY = ["alertStatus"] as const;
+
 
 export interface AlertEventsQueryParams {
   /** Defaults to 0 */
@@ -117,7 +119,7 @@ export const createAlertChannel = (
     `${API_URL}/api/alerts/channels`,
     "POST",
     payload,
-    "Failed to create notification channel"
+    i18next.t("statusMessage:apis.failedToCreate", { val: "notification channel" })
   );
 
 export const updateAlertChannel = (
@@ -128,7 +130,7 @@ export const updateAlertChannel = (
     `${API_URL}/api/alerts/channels/${id}`,
     "PUT",
     payload,
-    "Failed to update notification channel"
+    i18next.t("statusMessage:apis.failedToUpdate", { val: "notification channel" })
   );
 
 export const deleteAlertChannel = (id: number): Promise<void> =>
@@ -141,7 +143,7 @@ export const testAlertChannel = (
     `${API_URL}/api/alerts/channels/${id}/test`,
     "POST",
     {},
-    "Failed to send test notification"
+    i18next.t("statusMessage:apis.failedToTest")
   );
 
 export const createAlertRule = (
@@ -157,7 +159,7 @@ export const updateAlertRule = (
     `${API_URL}/api/alerts/rules/${id}`,
     "PUT",
     payload,
-    "Failed to update alert rule"
+    i18next.t("statusMessage:apis.failedToUpdate", { val: "alert rule" })
   );
 
 export const setAlertRuleEnabled = (
@@ -168,7 +170,7 @@ export const setAlertRuleEnabled = (
     `${API_URL}/api/alerts/rules/${id}/${enabled ? "enable" : "disable"}`,
     "PUT",
     {},
-    `Failed to ${enabled ? "enable" : "disable"} alert rule`
+    enabled ? i18next.t("statusMessage:apis.failedToEnable", { val: "alert rule" }) : i18next.t("statusMessage:apis.failedToDisable", { val: "alert rule" })
   );
 
 export const deleteAlertRule = (id: number): Promise<void> =>
