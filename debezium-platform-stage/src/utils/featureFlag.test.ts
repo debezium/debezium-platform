@@ -15,6 +15,7 @@ import {
   isRouteNavVisible,
   PIPELINE_TAB_FEATURE_FLAGS,
   type FeatureFlag,
+  type FeatureFlagConfig,
   type GatedPipelineTab,
 } from "./featureFlag";
 
@@ -27,7 +28,7 @@ describe("featureFlag", () => {
 
   it("derives enabled, hidden, and coming-soon state from featureConfig", () => {
     featureFlags.forEach((flag) => {
-      const { enabled, mode } = featureConfig[flag];
+      const { enabled, mode } = featureConfig[flag] as FeatureFlagConfig;
 
       expect(isFeatureEnabled(flag)).toBe(enabled);
       expect(isFeatureHidden(flag)).toBe(!enabled && mode === "hidden");
