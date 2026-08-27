@@ -5,11 +5,6 @@
  */
 package io.debezium.platform.environment.host;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -114,7 +109,7 @@ public class HostPipelineController implements PipelineController {
 
     @Override
     public LogReader logReader(Long pipelineId) {
-        return new HostDockerLogReader(pipelineId);
+        return new HostDockerLogReader(pipelineId, deploymentService, containerRuntime);
     }
 
     /**
@@ -145,24 +140,20 @@ public class HostPipelineController implements PipelineController {
             });
 
             HostPipelineMapper.MappedConfig mappedConfig = pipelineMapper.map(pipeline);
-
             HostAllocation allocation = deploymentService.allocateHostAndPort();
-            String sshAlias = allocation.host().getSshAlias();
-            int port = allocation.allocatedPort();
-
             String containerName = pipeline.getName();
 
             deploymentService.createDeployment(
                     pipelineId, allocation.host().getId(),
                     new DeploymentRequest(containerName, hostConfig.debeziumServerImage(),
-                            port, mappedConfig.configHash()));
+                            allocation.allocatedPort(), mappedConfig.configHash()));
 
             // Delegate all infrastructure work to the container runtime
-            containerRuntime.deploy(sshAlias, containerName, port,
+            containerRuntime.deploy(allocation.host().getSshAlias(), containerName, allocation.allocatedPort(),
                     mappedConfig.propertiesContent(), hostConfig.debeziumServerImage());
 
             logger.infov("Pipeline {0} deployment initiated on host {1}, port {2}, container {3}",
-                    pipelineId, sshAlias, port, containerName);
+                    pipelineId, allocation.host().getSshAlias(), allocation.allocatedPort(), containerName);
         }
         catch (Exception e) {
             logger.errorv(e, "Unexpected error during deployment of pipeline {0}", pipelineId);
@@ -250,52 +241,6 @@ public class HostPipelineController implements PipelineController {
         }
         else {
             task.run();
-        }
-    }
-
-    /**
-     * {@link LogReader} implementation that reads Docker container logs
-     * via the {@link HostContainerRuntime}.
-     */
-    private class HostDockerLogReader implements LogReader {
-
-        private final Long pipelineId;
-        private BufferedReader reader;
-
-        HostDockerLogReader(Long pipelineId) {
-            this.pipelineId = pipelineId;
-        }
-
-        @Override
-        public String readAll() {
-            HostDeployment deployment = deploymentService.requireByPipelineId(pipelineId);
-            String sshAlias = deployment.getSshAlias();
-            String containerName = deployment.getContainerName();
-            return containerRuntime.logs(sshAlias, containerName);
-        }
-
-        @Override
-        public BufferedReader reader() throws IOException {
-            if (reader == null) {
-                String content = readAll();
-                reader = new BufferedReader(
-                        new InputStreamReader(
-                                new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)),
-                                StandardCharsets.UTF_8));
-            }
-            return reader;
-        }
-
-        @Override
-        public String readLine() throws IOException {
-            return reader().readLine();
-        }
-
-        @Override
-        public void close() throws IOException {
-            if (reader != null) {
-                reader.close();
-            }
         }
     }
 }
