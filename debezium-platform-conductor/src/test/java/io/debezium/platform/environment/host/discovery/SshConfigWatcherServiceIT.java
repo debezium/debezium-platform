@@ -9,6 +9,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import jakarta.inject.Inject;
@@ -77,20 +79,19 @@ public class SshConfigWatcherServiceIT {
     @Test
     @Order(2)
     public void shouldDetectNewHostAddedToFile() throws IOException {
-        Files.writeString(java.nio.file.Path.of(sshConfigPath),
-                """
-                        Host db-server-1
-                            HostName 192.168.1.10
-                            User ubuntu
+        writeConfigAtomically("""
+                Host db-server-1
+                    HostName 192.168.1.10
+                    User ubuntu
 
-                        Host db-server-2
-                            HostName 192.168.1.20
-                            User deploy
+                Host db-server-2
+                    HostName 192.168.1.20
+                    User deploy
 
-                        Host db-server-3
-                            HostName 10.0.0.50
-                            User admin
-                        """);
+                Host db-server-3
+                    HostName 10.0.0.50
+                    User admin
+                """);
 
         watcherService.scheduledReconciliation();
 
@@ -108,16 +109,15 @@ public class SshConfigWatcherServiceIT {
     @Test
     @Order(3)
     public void shouldMarkRemovedHostWhenDeletedFromFile() throws IOException {
-        Files.writeString(java.nio.file.Path.of(sshConfigPath),
-                """
-                        Host db-server-1
-                            HostName 192.168.1.10
-                            User ubuntu
+        writeConfigAtomically("""
+                Host db-server-1
+                    HostName 192.168.1.10
+                    User ubuntu
 
-                        Host db-server-3
-                            HostName 10.0.0.50
-                            User admin
-                        """);
+                Host db-server-3
+                    HostName 10.0.0.50
+                    User admin
+                """);
 
         watcherService.scheduledReconciliation();
 
@@ -137,5 +137,19 @@ public class SshConfigWatcherServiceIT {
                 .get()
                 .extracting(HostStatus::getProvisioningStatus)
                 .isEqualTo(ProvisioningStatus.REMOVED);
+    }
+
+    /**
+     * Writes the SSH config content atomically — write to a temp file first,
+     * then move into place. This prevents background threads (WatchService
+     * watcher, @Scheduled fallback) from reading a partially written or
+     * empty file during the truncate-then-write window of
+     * {@link Files#writeString}.
+     */
+    private void writeConfigAtomically(String content) throws IOException {
+        Path target = Path.of(sshConfigPath);
+        Path tmp = Files.createTempFile(target.getParent(), "config", ".tmp");
+        Files.writeString(tmp, content);
+        Files.move(tmp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 }
