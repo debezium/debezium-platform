@@ -7,6 +7,7 @@ package io.debezium.platform.environment.host;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -101,14 +102,14 @@ class HostPipelineControllerTest {
                 new HostPipelineMapper.MappedConfig("debezium.source.connector.class=test", "hash123"));
 
         HostStatusReference host = mockHost(10L, "test-host");
-        when(deploymentService.allocateHostAndPort()).thenReturn(
-                new HostAllocation(host, 9000));
+        HostAllocation expectedAllocation = new HostAllocation(host, 9000);
+        when(deploymentService.allocateHostAndPort()).thenReturn(expectedAllocation);
 
         CountDownLatch latch = new CountDownLatch(1);
         doAnswer(inv -> {
             latch.countDown();
             return null;
-        }).when(containerRuntime).deploy(anyString(), anyString(), eq(9000), anyString(), anyString());
+        }).when(containerRuntime).deploy(any(), anyString(), anyString(), anyString());
 
         controller.deploy(pipeline);
 
@@ -118,7 +119,7 @@ class HostPipelineControllerTest {
         // Container name now uses pipeline name, not ID
         verify(deploymentService).createDeployment(eq(1L), eq(10L),
                 eq(new DeploymentRequest("test-pipeline-1", "quay.io/debezium/server:latest", 9000, "hash123")));
-        verify(containerRuntime).deploy(eq("test-host"), eq("test-pipeline-1"), eq(9000), anyString(), anyString());
+        verify(containerRuntime).deploy(eq(expectedAllocation), eq("test-pipeline-1"), anyString(), anyString());
     }
 
     @Test
@@ -135,7 +136,7 @@ class HostPipelineControllerTest {
         // Runtime deploy throws
         CountDownLatch latch = new CountDownLatch(1);
         doThrow(new DebeziumException("Failed to create config directory"))
-                .when(containerRuntime).deploy(anyString(), anyString(), eq(9001), anyString(), anyString());
+                .when(containerRuntime).deploy(any(), anyString(), anyString(), anyString());
 
         HostDeployment deploymentView = mockDeployment(101L, "test-pipeline-2", "test-host",
                 DeploymentStatus.DEPLOYING, "hash456", Instant.now());
@@ -248,7 +249,7 @@ class HostPipelineControllerTest {
             executionThreadName[0] = Thread.currentThread().getName();
             latch.countDown();
             return null;
-        }).when(containerRuntime).deploy(anyString(), anyString(), eq(9050), anyString(), anyString());
+        }).when(containerRuntime).deploy(any(), anyString(), anyString(), anyString());
 
         controller.deploy(pipeline);
 
@@ -343,7 +344,7 @@ class HostPipelineControllerTest {
         doAnswer(inv -> {
             latch.countDown();
             return null;
-        }).when(containerRuntime).deploy(anyString(), anyString(), eq(9000), anyString(), anyString());
+        }).when(containerRuntime).deploy(any(), anyString(), anyString(), anyString());
 
         controller.deploy(pipeline);
 

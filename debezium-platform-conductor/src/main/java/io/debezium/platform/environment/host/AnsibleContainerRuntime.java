@@ -10,6 +10,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
 import io.debezium.DebeziumException;
+import io.debezium.platform.domain.HostAllocation;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner;
 import io.debezium.platform.environment.host.provisioning.CommandResult;
@@ -48,7 +49,9 @@ public class AnsibleContainerRuntime implements HostContainerRuntime {
     }
 
     @Override
-    public void deploy(String host, String containerName, int port, String configContent, String image) {
+    public void deploy(HostAllocation allocation, String containerName, String configContent, String image) {
+        String host = allocation.host().getSshAlias();
+        int port = allocation.allocatedPort();
         String configDir = hostConfig.configBasePath() + PATH_SEPARATOR + containerName;
         String configPath = configDir + PATH_SEPARATOR + CONFIG_FILE_NAME;
         String dataDir = hostConfig.dataBasePath() + PATH_SEPARATOR + containerName;

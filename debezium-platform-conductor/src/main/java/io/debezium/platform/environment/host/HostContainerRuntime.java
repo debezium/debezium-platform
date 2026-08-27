@@ -5,6 +5,8 @@
  */
 package io.debezium.platform.environment.host;
 
+import io.debezium.platform.domain.HostAllocation;
+
 /**
  * Abstraction for managing Docker containers on a remote host.
  *
@@ -22,14 +24,13 @@ public interface HostContainerRuntime {
      * <p>Implementations handle all infrastructure steps (directory
      * creation, config file upload, Docker run) as a single operation.
      *
-     * @param host           the SSH alias or hostname of the target
+     * @param allocation     the host allocation (target host view and assigned port)
      * @param containerName  the Docker container name
-     * @param port           the host port to map to the container's 8080
      * @param configContent  the full {@code application.properties} content
      * @param image          the Docker image to run
      * @throws io.debezium.DebeziumException if any step fails
      */
-    void deploy(String host, String containerName, int port, String configContent, String image);
+    void deploy(HostAllocation allocation, String containerName, String configContent, String image);
 
     /**
      * Force-removes a container. Idempotent — succeeds even if the

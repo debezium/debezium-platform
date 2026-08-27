@@ -149,7 +149,7 @@ public class HostPipelineController implements PipelineController {
                             allocation.allocatedPort(), mappedConfig.configHash()));
 
             // Delegate all infrastructure work to the container runtime
-            containerRuntime.deploy(allocation.host().getSshAlias(), containerName, allocation.allocatedPort(),
+            containerRuntime.deploy(allocation, containerName,
                     mappedConfig.propertiesContent(), hostConfig.debeziumServerImage());
 
             logger.infov("Pipeline {0} deployment initiated on host {1}, port {2}, container {3}",
