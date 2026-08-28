@@ -11,8 +11,11 @@ import java.util.stream.Collectors;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.mongodb.client.model.Filters;
 
 import io.debezium.config.Configuration;
 import io.debezium.connector.mongodb.CollectionId;
@@ -33,6 +36,10 @@ public class MongoDbSourceInspector implements SourceInspector {
 
     public static final String MONGODB_CONNECTION_STRING = "connection.string";
     public static final String MONGODB_CREDENTIALS_MASKING_REGEX = "^(mongodb(?:\\+srv)?://)([^:/@]+):([^@]+)@";
+
+    private static final String SIGNAL_DATA_COLLECTION_CONFIGURED_MESSAGE = "Signal data collection correctly configured";
+    private static final String SIGNAL_DATA_COLLECTION_NOT_PRESENT_MESSAGE = "Signal data collection not present";
+    private static final String SIGNAL_DATA_COLLECTION_NAME_REQUIRED_MESSAGE = "A fully qualified signal data collection name is required";
 
     @Override
     public CollectionTree listAvailableCollections(Connection connectionConfig) {
@@ -91,9 +98,67 @@ public class MongoDbSourceInspector implements SourceInspector {
                 collections.size());
     }
 
+    /**
+     * Verifies that the signal data collection exists.
+     * <p>
+     * Unlike the relational inspectors this cannot check a structure: collections are schemaless, and a
+     * correctly configured signal collection is normally empty, so there is no document to inspect. Presence
+     * of the namespace is what can be established, and it is enough to catch the misspelled name that
+     * prompted this check.
+     */
     @Override
     public SignalDataCollectionVerifyResponse verifyDataCollectionStructure(Connection connection,
                                                                             String fullyQualifiedTableName) {
-        return new SignalDataCollectionVerifyResponse(true, "MongoDB signal data collection verification is not implemented yet");
+
+        if (fullyQualifiedTableName == null || fullyQualifiedTableName.isBlank()) {
+            LOGGER.warn("Signal data collection verification requested without a collection name");
+            return new SignalDataCollectionVerifyResponse(false, SIGNAL_DATA_COLLECTION_NAME_REQUIRED_MESSAGE);
+        }
+
+        // <databaseName>.<collectionName>, split on the FIRST dot because a collection name may itself
+        // contain dots. Returns null when there is no database part.
+        CollectionId collectionId = CollectionId.parse(fullyQualifiedTableName);
+        if (collectionId == null || collectionId.dbName().isBlank() || collectionId.name().isBlank()) {
+            LOGGER.warn("Unable to parse signal data collection name {}", fullyQualifiedTableName);
+            return new SignalDataCollectionVerifyResponse(false, SIGNAL_DATA_COLLECTION_NAME_REQUIRED_MESSAGE);
+        }
+
+        Object connectionString = connection.getConfig().get(MONGODB_CONNECTION_STRING);
+        Configuration mongoConfig = Configuration
+                .create()
+                .with("mongodb.connection.string", connectionString)
+                .build();
+
+        try (MongoDbConnection mongoDbConnection = MongoDbConnections.create(mongoConfig)) {
+
+            boolean exists = collectionExists(mongoDbConnection, collectionId);
+
+            String message = exists
+                    ? SIGNAL_DATA_COLLECTION_CONFIGURED_MESSAGE
+                    : SIGNAL_DATA_COLLECTION_NOT_PRESENT_MESSAGE;
+
+            return new SignalDataCollectionVerifyResponse(exists, message);
+        }
+        catch (Exception e) {
+            String sanitizedConnectionString = sanitizeConnectionString(connectionString);
+            LOGGER.error("Unable to verify signal data collection on {}", sanitizedConnectionString, e);
+            return new SignalDataCollectionVerifyResponse(false,
+                    String.format("Unable to verify signal data collection on %s", sanitizedConnectionString));
+        }
+    }
+
+    /**
+     * Asks the target database for that one collection rather than listing every collection in the cluster,
+     * so the answer does not depend on the connector's database and collection filters.
+     */
+    private boolean collectionExists(MongoDbConnection connection, CollectionId collectionId) {
+
+        Document collection = connection.getMongoClient()
+                .getDatabase(collectionId.dbName())
+                .listCollections()
+                .filter(Filters.eq("name", collectionId.name()))
+                .first();
+
+        return collection != null;
     }
 }
