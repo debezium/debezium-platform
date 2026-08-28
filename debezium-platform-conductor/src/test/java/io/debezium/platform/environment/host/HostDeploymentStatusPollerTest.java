@@ -116,9 +116,81 @@ class HostDeploymentStatusPollerTest {
         when(ansibleRunner.runShellCommand(eq("host-2"), any()))
                 .thenReturn(new CommandResult.Failure("No such container"));
 
-        poller.pollDeploymentStatus();
+        // Must fail FAILURE_THRESHOLD consecutive times before marking FAILED
+        for (int i = 0; i < HostDeploymentStatusPoller.FAILURE_THRESHOLD; i++) {
+            poller.pollDeploymentStatus();
+        }
 
         verify(deploymentService).updateStatus(3L, DeploymentStatus.FAILED);
+    }
+
+    @Test
+    void doesNotFailOnTransientInspectFailure() {
+        HostDeployment deployment = mockDeployment(11L, DeploymentStatus.RUNNING, "container-11", "host-9");
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+        when(ansibleRunner.runShellCommand(eq("host-9"), any()))
+                .thenReturn(new CommandResult.Failure("SSH timeout"));
+
+        // Poll fewer times than the threshold — should NOT mark FAILED
+        for (int i = 0; i < HostDeploymentStatusPoller.FAILURE_THRESHOLD - 1; i++) {
+            poller.pollDeploymentStatus();
+        }
+
+        verify(deploymentService, never()).updateStatus(eq(11L), any());
+    }
+
+    @Test
+    void resetsFailureCounterWhenContainerRecovers() {
+        HostDeployment deployment = mockDeployment(12L, DeploymentStatus.RUNNING, "container-12", "host-10",
+                "expected-hash", Instant.now().minus(Duration.ofMinutes(10)));
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+
+        // Fail twice (below threshold)
+        when(ansibleRunner.runShellCommand(eq("host-10"), any()))
+                .thenReturn(new CommandResult.Failure("SSH timeout"))
+                .thenReturn(new CommandResult.Failure("SSH timeout"))
+                // Then recover — inspect returns true, hash matches
+                .thenReturn(new CommandResult.Success("true"))
+                .thenReturn(new CommandResult.Success("expected-hash"))
+                // Then fail again twice (below threshold)
+                .thenReturn(new CommandResult.Failure("SSH timeout"))
+                .thenReturn(new CommandResult.Failure("SSH timeout"));
+
+        // 2 failures
+        poller.pollDeploymentStatus();
+        poller.pollDeploymentStatus();
+        // Recovery
+        poller.pollDeploymentStatus();
+        // 2 more failures (counter should have been reset)
+        poller.pollDeploymentStatus();
+        poller.pollDeploymentStatus();
+
+        // Should never have reached the threshold
+        verify(deploymentService, never()).updateStatus(eq(12L), eq(DeploymentStatus.FAILED));
+    }
+
+    @Test
+    void marksFailedAfterExactlyThresholdConsecutiveFailures() {
+        HostDeployment deployment = mockDeployment(13L, DeploymentStatus.RUNNING, "container-13", "host-11");
+
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+        when(ansibleRunner.runShellCommand(eq("host-11"), any()))
+                .thenReturn(new CommandResult.Failure("Connection refused"));
+
+        // Poll exactly threshold-1 times — should NOT mark FAILED yet
+        for (int i = 0; i < HostDeploymentStatusPoller.FAILURE_THRESHOLD - 1; i++) {
+            poller.pollDeploymentStatus();
+        }
+        verify(deploymentService, never()).updateStatus(eq(13L), any());
+
+        // One more poll — should now mark FAILED
+        poller.pollDeploymentStatus();
+        verify(deploymentService).updateStatus(13L, DeploymentStatus.FAILED);
     }
 
     @Test

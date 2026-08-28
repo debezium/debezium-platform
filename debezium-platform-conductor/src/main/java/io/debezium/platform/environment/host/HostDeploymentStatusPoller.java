@@ -8,6 +8,10 @@ package io.debezium.platform.environment.host;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -57,6 +61,17 @@ public class HostDeploymentStatusPoller {
      */
     private static final Duration DEPLOY_GRACE_PERIOD = Duration.ofMinutes(5);
 
+    /**
+     * Number of consecutive failed health checks required before a RUNNING
+     * deployment is marked FAILED. This prevents transient SSH or network
+     * hiccups from falsely killing a healthy pipeline.
+     *
+     * <p>At the default 30-second poll interval, 3 consecutive failures
+     * means a deployment must be unreachable for at least ~90 seconds
+     * before the platform gives up on it.
+     */
+    static final int FAILURE_THRESHOLD = 3;
+
     /** Remote path format for the deployed config file (matches HostPipelineController). */
     private static final String CONFIG_PATH_FORMAT = "%s/%s/application.properties";
     private static final String HASH_COMMAND_FORMAT = "sha256sum %s | awk '{print $1}'";
@@ -66,6 +81,8 @@ public class HostDeploymentStatusPoller {
     private final AnsibleCommandRunner ansibleRunner;
     private final HostConfigGroup hostConfig;
     private final String deploymentMode;
+
+    private final ConcurrentMap<Long, Integer> consecutiveFailures = new ConcurrentHashMap<>();
 
     public HostDeploymentStatusPoller(Logger logger,
                                       HostDeploymentService deploymentService,
@@ -94,8 +111,15 @@ public class HostDeploymentStatusPoller {
 
         if (activeDeployments.isEmpty()) {
             logger.debugv("No active deployments to poll");
+            consecutiveFailures.clear();
             return;
         }
+
+        // Remove stale entries for deployments that are no longer active
+        Set<Long> activeIds = activeDeployments.stream()
+                .map(HostDeployment::getId)
+                .collect(Collectors.toSet());
+        consecutiveFailures.keySet().retainAll(activeIds);
 
         logger.debugv("Polling {0} active deployment(s)", activeDeployments.size());
         activeDeployments.forEach(this::checkDeployment);
@@ -113,6 +137,7 @@ public class HostDeploymentStatusPoller {
 
             if (containerRunning && currentStatus == DeploymentStatus.DEPLOYING) {
                 deploymentService.updateStatus(deploymentId, DeploymentStatus.RUNNING);
+                consecutiveFailures.remove(deploymentId);
                 return;
             }
 
@@ -130,14 +155,25 @@ public class HostDeploymentStatusPoller {
             }
 
             if (!containerRunning && currentStatus == DeploymentStatus.RUNNING) {
-                logger.warnv("Container {0} on {1} stopped unexpectedly, marking FAILED",
-                        containerName, sshAlias);
-                deploymentService.updateStatus(deploymentId, DeploymentStatus.FAILED);
+                int failures = consecutiveFailures.merge(deploymentId, 1, Integer::sum);
+                if (failures >= FAILURE_THRESHOLD) {
+                    logger.warnv("Container {0} on {1} stopped unexpectedly "
+                            + "({2} consecutive failed checks), marking FAILED",
+                            containerName, sshAlias, failures);
+                    deploymentService.updateStatus(deploymentId, DeploymentStatus.FAILED);
+                    consecutiveFailures.remove(deploymentId);
+                }
+                else {
+                    logger.warnv("Container {0} on {1} health check failed "
+                            + "({2}/{3}), will retry next cycle",
+                            containerName, sshAlias, failures, FAILURE_THRESHOLD);
+                }
                 return;
             }
 
-            // Container is running and status is RUNNING — check for config drift
+            // Container is running and status is RUNNING — clear any prior failure count and check for config drift
             if (containerRunning && currentStatus == DeploymentStatus.RUNNING) {
+                consecutiveFailures.remove(deploymentId);
                 checkConfigDrift(deployment, sshAlias);
             }
         }
