@@ -65,8 +65,8 @@ describe("getAlertBadgeLabelStatus", () => {
 
 describe("getAlertBadgeAriaLabel", () => {
   it("describes the firing count or idle state", () => {
-    expect(getAlertBadgeAriaLabel(11, "critical")).toBe("11 firing alerts");
-    expect(getAlertBadgeAriaLabel(0, "idle")).toBe(
+    expect(getAlertBadgeAriaLabel(11)).toBe("11 firing alerts");
+    expect(getAlertBadgeAriaLabel(0)).toBe(
       "No firing critical or warning alerts"
     );
   });

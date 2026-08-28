@@ -61,7 +61,7 @@ export const useAlertBadge = () => {
     count,
     tone,
     labelStatus: getAlertBadgeLabelStatus(tone),
-    ariaLabel: getAlertBadgeAriaLabel(count, tone),
+    ariaLabel: getAlertBadgeAriaLabel(count),
     isClickable,
     navPath: getAlertNavPath(isClickable),
   };
