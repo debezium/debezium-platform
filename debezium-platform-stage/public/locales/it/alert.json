@@ -23,7 +23,11 @@
     },
     "rule": {
         "emptyHeading": "Nessuna regola di avviso",
-        "emptyDescription": "Crea una regola per ricevere una notifica quando una metrica della pipeline supera una soglia. Basta scegliere un pannello di monitoraggio, un confronto e un valore."
+        "emptyDescription": "Crea una regola per ricevere una notifica quando una metrica della pipeline supera una soglia. Basta scegliere un pannello di monitoraggio, un confronto e un valore.",
+        "noPipelineModal": {
+            "title": "Crea prima una pipeline",
+            "description": "Le regole di avviso valutano le metriche delle pipeline. Crea una pipeline prima di aggiungere una regola."
+        }
     },
     "event": {
         "emptyHeading": "Nessun evento di avviso",

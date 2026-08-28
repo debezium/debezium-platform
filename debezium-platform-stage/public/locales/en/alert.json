@@ -23,7 +23,11 @@
     },
     "rule": {
         "emptyHeading": "No alert rule",
-        "emptyDescription": "Create a rule to get notified when a pipeline metric breaches a threshold. Just pick a monitoring panel, a comparison, and a value."
+        "emptyDescription": "Create a rule to get notified when a pipeline metric breaches a threshold. Just pick a monitoring panel, a comparison, and a value.",
+        "noPipelineModal": {
+            "title": "Create a pipeline first",
+            "description": "Alert rules evaluate metrics from pipelines. Create a pipeline before adding a rule."
+        }
     },
      "event": {
         "emptyHeading": "No alert event",

@@ -1,10 +1,13 @@
-import { NotificationBadgeVariant } from "@patternfly/react-core";
+import { LabelStatus } from "@patternfly/react-core";
 import { describe, it, expect } from "vitest";
 import { AlertStatusResponse } from "./alertsTypes";
 import {
+  ALERTS_DEFAULT_PATH,
+  FIRING_ALERTS_PATH,
   getAlertBadgeAriaLabel,
+  getAlertBadgeLabelStatus,
   getAlertBadgePresentation,
-  getAlertBadgeVariant,
+  getAlertNavPath,
 } from "./useAlertBadge";
 
 const statusResponse = (
@@ -34,15 +37,15 @@ describe("getAlertBadgePresentation", () => {
     ).toEqual({ count: 4, tone: "warning" });
   });
 
-  it("uses info tone when only INFO alerts fire", () => {
+  it("is idle when only INFO alerts fire, matching the no-alert state", () => {
     expect(
       getAlertBadgePresentation(
         statusResponse({ CRITICAL: 0, WARNING: 0, INFO: 5 })
       )
-    ).toEqual({ count: 0, tone: "info" });
+    ).toEqual({ count: 0, tone: "idle" });
   });
 
-  it("is idle only when CRITICAL, WARNING, and INFO are all zero", () => {
+  it("is idle when CRITICAL, WARNING, and INFO are all zero", () => {
     expect(
       getAlertBadgePresentation(
         statusResponse({ CRITICAL: 0, WARNING: 0, INFO: 0 })
@@ -52,21 +55,26 @@ describe("getAlertBadgePresentation", () => {
   });
 });
 
-describe("getAlertBadgeVariant", () => {
-  it("maps critical to attention, info to unread, warning to unread (custom CSS), and idle to read", () => {
-    expect(getAlertBadgeVariant("critical")).toBe(NotificationBadgeVariant.attention);
-    expect(getAlertBadgeVariant("info")).toBe(NotificationBadgeVariant.unread);
-    expect(getAlertBadgeVariant("warning")).toBe(NotificationBadgeVariant.unread);
-    expect(getAlertBadgeVariant("idle")).toBe(NotificationBadgeVariant.read);
+describe("getAlertBadgeLabelStatus", () => {
+  it("maps critical to danger, warning to warning, and idle to undefined", () => {
+    expect(getAlertBadgeLabelStatus("critical")).toBe(LabelStatus.danger);
+    expect(getAlertBadgeLabelStatus("warning")).toBe(LabelStatus.warning);
+    expect(getAlertBadgeLabelStatus("idle")).toBeUndefined();
   });
 });
 
 describe("getAlertBadgeAriaLabel", () => {
-  it("describes the firing count, info-only, or idle state", () => {
+  it("describes the firing count or idle state", () => {
     expect(getAlertBadgeAriaLabel(11, "critical")).toBe("11 firing alerts");
-    expect(getAlertBadgeAriaLabel(0, "info")).toBe("Info alerts firing");
     expect(getAlertBadgeAriaLabel(0, "idle")).toBe(
       "No firing critical or warning alerts"
     );
+  });
+});
+
+describe("getAlertNavPath", () => {
+  it("opens events filtered to FIRING when there are firing alerts, otherwise the default events path", () => {
+    expect(getAlertNavPath(true)).toBe(FIRING_ALERTS_PATH);
+    expect(getAlertNavPath(false)).toBe(ALERTS_DEFAULT_PATH);
   });
 });

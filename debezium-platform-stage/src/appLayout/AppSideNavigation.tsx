@@ -6,19 +6,34 @@ import {
   NavItem,
   NavExpandable,
   Tooltip,
+  Label,
 } from "@patternfly/react-core";
-import React, {  } from "react";
-import { NavLink, useLocation } from "react-router-dom";
-import { IAppRoute, IAppRouteGroup, isNavRouteVisible, isRouteGroup, routes } from "../route";
+import React from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import {
+  getGroupDefaultPath,
+  IAppRoute,
+  IAppRouteGroup,
+  isNavRouteVisible,
+  isRouteGroup,
+  routes,
+} from "../route";
+import { useAlertBadge } from "../pages/Alerts/useAlertBadge";
+import "./AppSideNavigation.css";
 
 interface AppSideNavigationProps {
   isSidebarOpen: boolean;
 }
 
+const isAlertsGroup = (group: IAppRouteGroup) =>
+  group.routes.some((route) => route.featureFlag === "Alerts");
+
 const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
   isSidebarOpen,
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const alertBadge = useAlertBadge();
 
   // A group is only worth showing in the sidebar if at least one of its
   // children is visible; otherwise it would render as an empty, dead-end expandable.
@@ -27,6 +42,29 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
       ? route.routes.some((child) => isNavRouteVisible(child))
       : isNavRouteVisible(route)
   );
+
+  const renderAlertBadge = () => {
+    if (!alertBadge.enabled || !alertBadge.labelStatus) {
+      return null;
+    }
+    return (
+      <Label
+        isCompact
+        status={alertBadge.labelStatus}
+        className="alert-nav-badge"
+        aria-label={alertBadge.ariaLabel}
+      >
+        {alertBadge.count > 0 ? alertBadge.count : ""}
+      </Label>
+    );
+  };
+
+  const getGroupNavPath = (group: IAppRouteGroup) => {
+    if (isAlertsGroup(group) && alertBadge.enabled) {
+      return alertBadge.navPath;
+    }
+    return getGroupDefaultPath(group);
+  };
 
   const renderNavItem = (
     route: IAppRoute,
@@ -60,7 +98,6 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
         style={{ fontSize: "20px", flexDirection: "column" }}
       >
         <Tooltip position="right" content={<div>{route.label}</div>}>{route.icon}</Tooltip>
-        {/* {route.icon} */}
       </NavLink>
     </NavItem>
   );
@@ -68,27 +105,49 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
   const isGroupActive = (group: IAppRouteGroup) =>
     group.routes.some((route) => location.pathname.includes(route.navSection));
 
-  const renderNavGroup = (group: IAppRouteGroup, groupIndex: number) => (
-    <NavExpandable
-      key={`${group.label}-${groupIndex}`}
-      id={`${group.label}-${groupIndex}`}
-      title={group.label}
-      icon={group.icon}
-      isActive={isGroupActive(group)}
-      isExpanded={isGroupActive(group)}
-    >
-      {group.routes.map(
-        (route, idx) =>
-          isNavRouteVisible(route) && renderNavItem(route, idx, true)
-      )}
-    </NavExpandable>
-  );
+  const renderNavGroup = (group: IAppRouteGroup, groupIndex: number) => {
+    const groupPath = getGroupNavPath(group);
+    const showAlertsBadge = isAlertsGroup(group);
+    const title = showAlertsBadge ? (
+      <span className="alert-nav-group-title">
+        {group.label}
+        {renderAlertBadge()}
+      </span>
+    ) : (
+      group.label
+    );
+
+    return (
+      <NavExpandable
+        key={`${group.label}-${groupIndex}`}
+        id={`${group.label}-${groupIndex}`}
+        className={showAlertsBadge ? "alert-nav-group" : undefined}
+        title={title}
+        icon={group.icon}
+        isActive={isGroupActive(group)}
+        isExpanded={isGroupActive(group)}
+        {...(groupPath
+          ? {
+              onExpand: () => {
+                navigate(groupPath);
+              },
+            }
+          : {})}
+      >
+        {group.routes.map(
+          (route, idx) =>
+            isNavRouteVisible(route) && renderNavItem(route, idx, true)
+        )}
+      </NavExpandable>
+    );
+  };
 
   // The custom collapsed/icon-rail sidebar has no room for an expandable list, so
-  // collapse the group down to a single icon that links to its first visible child.
+  // collapse the group down to a single icon that links to its default child.
   const renderNavGroupIcon = (group: IAppRouteGroup, groupIndex: number) => {
-    const firstVisibleRoute = group.routes.find(isNavRouteVisible);
-    if (!firstVisibleRoute) return null;
+    const groupPath = getGroupNavPath(group);
+    if (!groupPath) return null;
+    const badge = isAlertsGroup(group) ? renderAlertBadge() : null;
     return (
       <NavItem
         key={`${group.label}-${groupIndex}`}
@@ -96,10 +155,15 @@ const AppSideNavigation: React.FC<AppSideNavigationProps> = ({
         isActive={isGroupActive(group)}
       >
         <NavLink
-          to={firstVisibleRoute.path}
+          to={groupPath}
           style={{ fontSize: "20px", flexDirection: "column" }}
         >
-          <Tooltip position="right" content={<div>{group.label}</div>}>{group.icon}</Tooltip>
+          <Tooltip position="right" content={<div>{group.label}</div>}>
+            <span className="alert-nav-icon-wrap">
+              {group.icon}
+              {badge ? <span className="alert-nav-icon-badge">{badge}</span> : null}
+            </span>
+          </Tooltip>
         </NavLink>
       </NavItem>
     );

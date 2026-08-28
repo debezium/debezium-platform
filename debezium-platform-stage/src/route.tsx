@@ -53,6 +53,8 @@ export interface IAppRoute {
 export interface IAppRouteGroup {
   label: string;
   icon?: React.ReactElement;
+  /** Default destination when the group title is clicked in the sidebar. */
+  path?: string;
   routes: IAppRoute[];
 }
 
@@ -64,6 +66,9 @@ export const isRouteGroup = (route: AppRouteConfig): route is IAppRouteGroup =>
 
 export const isNavRouteVisible = (route: IAppRoute): boolean =>
   !!route.label && isRouteNavVisible(route.featureFlag);
+
+export const getGroupDefaultPath = (group: IAppRouteGroup): string | undefined =>
+  group.path ?? group.routes.find(isNavRouteVisible)?.path;
 
 export const isRouteAccessible = (route: IAppRoute): boolean =>
   isFeatureAccessible(route.featureFlag);
@@ -87,7 +92,7 @@ const routes: AppRouteConfig[] = [
   {
     component: Pipelines,
     label: "Pipelines",
-    icon: <PipelineIcon />,
+    icon: <PipelineIcon style={{ outline: "none" }} />,
     path: "/pipeline",
     navSection: "pipeline",
     title: `${AppBranding} | Pipeline`,
@@ -113,7 +118,7 @@ const routes: AppRouteConfig[] = [
   {
     component: Sources,
     label: "Sources",
-    icon: <RhUiDataSourceIcon />,
+    icon: <RhUiDataSourceIcon style={{ outline: "none" }} />,
     path: "/source",
     navSection: "source",
     title: `${AppBranding} | Source`,
@@ -188,7 +193,7 @@ const routes: AppRouteConfig[] = [
   {
     component: Connections,
     label: "Connections",
-    icon: <RhUiInfrastructureIcon />,
+    icon: <RhUiInfrastructureIcon style={{ outline: "none" }} />,
     title: `${AppBranding} | Connections`,
     path: "/connections",
     navSection: "connections",
@@ -227,6 +232,7 @@ const routes: AppRouteConfig[] = [
   {
     label: "Alerts",
     icon: <RhUiNotificationIcon style={{ outline: "none" }} />,
+    path: "/alerts/history",
     routes: [
       {
         component: Alerts,

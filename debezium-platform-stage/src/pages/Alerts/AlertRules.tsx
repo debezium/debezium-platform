@@ -57,6 +57,9 @@ import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { AlertRule, AlertSeverity } from "./alertsTypes";
 import { formatCondition, SeverityIcon } from "./severityUtils";
 import EmptyStatus from "@components/EmptyStatus";
+import InformationModal from "@components/modal/InformationModal";
+import { fetchData, Pipeline } from "../../apis/apis";
+import { API_URL } from "../../utils/constants";
 import { useTranslation } from "react-i18next";
 
 interface AlertRulesProps {
@@ -94,7 +97,17 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
     isError,
   } = useResourceQuery<AlertRule[], Error>(ALERT_RULES_QUERY_KEY, fetchAlertRules);
 
+  const {
+    data: pipelinesList = [],
+    isLoading: pipelinesLoading,
+    isError: pipelinesError,
+  } = useResourceQuery<Pipeline[], Error>(
+    "pipelines",
+    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
+  );
+
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [isNoPipelineModalOpen, setIsNoPipelineModalOpen] = React.useState(false);
   const [filterField, setFilterField] = React.useState<FilterField>("name");
   const [isFilterSelectOpen, setIsFilterSelectOpen] = React.useState(false);
   const [activeSortIndex, setActiveSortIndex] = React.useState<number | null>(null);
@@ -148,7 +161,13 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
 
   const refreshRules = () => queryClient.invalidateQueries(ALERT_RULES_QUERY_KEY);
 
-  const openCreatePage = () => navigate("/alerts/rules/create_rule");
+  const openCreatePage = () => {
+    if (!pipelinesError && pipelinesList.length === 0) {
+      setIsNoPipelineModalOpen(true);
+      return;
+    }
+    navigate("/alerts/rules/create_rule");
+  };
 
   const openViewPage = (rule: AlertRule) => navigate(`/alerts/rules/${rule.id}?state=view`);
 
@@ -211,7 +230,7 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
     { title: "Delete", onClick: () => requestDelete(rule) },
   ];
 
-  if (isLoading) {
+  if (isLoading || pipelinesLoading) {
     return (
       <PageSection isFilled>
         <Bullseye>
@@ -405,6 +424,25 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
           }
         />
       )}
+
+      <InformationModal
+        isOpen={isNoPipelineModalOpen}
+        onClose={() => setIsNoPipelineModalOpen(false)}
+        title={t("alert:rule.noPipelineModal.title")}
+        primaryAction={{
+          label: t("pipeline:createPipeline"),
+          onClick: () => {
+            setIsNoPipelineModalOpen(false);
+            navigate("/pipeline/pipeline_designer");
+          },
+        }}
+        secondaryAction={{
+          label: t("cancel"),
+          onClick: () => setIsNoPipelineModalOpen(false),
+        }}
+      >
+        {t("alert:rule.noPipelineModal.description")}
+      </InformationModal>
 
       <Modal
         variant="small"

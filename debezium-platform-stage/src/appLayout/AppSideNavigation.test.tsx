@@ -1,10 +1,12 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useLocation } from "react-router-dom";
 import AppSideNavigation from "./AppSideNavigation";
-import { expect, test, vi, afterEach } from "vitest";
+import { expect, test, vi, afterEach, beforeEach } from "vitest";
 import { render } from "../__test__/unit/test-utils";
 import { featureFlagUi, isRouteNavVisible } from "@utils/featureFlag";
 import { isNavRouteVisible, isRouteGroup, routes } from "../route";
+import { AlertStatusResponse } from "../pages/Alerts/alertsTypes";
 
 vi.mock("./AppContext", async () => {
   const originalModule = await vi.importActual("./AppContext");
@@ -20,7 +22,34 @@ vi.mock("./AppContext", async () => {
   };
 });
 
+vi.mock("../apis/alerts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../apis/alerts")>();
+  return {
+    ...actual,
+    fetchAlertStatus: vi.fn(),
+  };
+});
+
+import { fetchAlertStatus } from "../apis/alerts";
+
 const originalHideDisabled = featureFlagUi.hideDisabledFeaturesFromNav;
+
+const statusResponse = (
+  firingBySeverity: AlertStatusResponse["firingBySeverity"]
+): AlertStatusResponse => ({
+  totalFiring:
+    firingBySeverity.CRITICAL + firingBySeverity.WARNING + firingBySeverity.INFO,
+  totalPending: 0,
+  firingBySeverity,
+  activeAlerts: [],
+});
+
+const idleStatus = statusResponse({ CRITICAL: 0, WARNING: 0, INFO: 0 });
+
+const LocationDisplay = () => {
+  const location = useLocation();
+  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
+};
 
 const visibleLeafLabels = () =>
   routes.flatMap((route) =>
@@ -34,6 +63,10 @@ const visibleGroupLabels = () =>
     .filter(isRouteGroup)
     .filter((group) => group.routes.some(isNavRouteVisible))
     .map((group) => group.label);
+
+beforeEach(() => {
+  vi.mocked(fetchAlertStatus).mockResolvedValue(idleStatus);
+});
 
 afterEach(() => {
   featureFlagUi.hideDisabledFeaturesFromNav = originalHideDisabled;
@@ -65,15 +98,22 @@ test("renders the side navigation Expanded according to current feature flags", 
 });
 
 test.skipIf(!isRouteNavVisible("Alerts"))(
-  "expands the Alerts nav group and reveals its sub-navigation on click",
+  "navigates to Alert events and reveals sub-navigation when the Alerts group is clicked",
   async () => {
-    render(<AppSideNavigation isSidebarOpen={true} />);
+    render(
+      <>
+        <LocationDisplay />
+        <AppSideNavigation isSidebarOpen={true} />
+      </>
+    );
 
     await userEvent.click(screen.getByRole("button", { name: /alerts/i }));
 
+    expect(screen.getByTestId("location")).toHaveTextContent("/alerts/history");
     ["Rules", "Channels", "Events"].forEach((text) => {
       expect(screen.getByRole("link", { name: text })).toBeInTheDocument();
     });
+    expect(screen.getByRole("link", { name: "Events" })).toHaveClass("pf-m-current");
   }
 );
 
@@ -115,5 +155,72 @@ test.skipIf(!isRouteNavVisible("Alerts"))(
     await userEvent.hover(alertsIcon as Element);
 
     expect(await screen.findByText("Alerts")).toBeInTheDocument();
+  }
+);
+
+test.skipIf(!isRouteNavVisible("Alerts"))(
+  "shows a danger badge with the firing count and opens events filtered to FIRING",
+  async () => {
+    vi.mocked(fetchAlertStatus).mockResolvedValue(
+      statusResponse({ CRITICAL: 1, WARNING: 2, INFO: 2 })
+    );
+
+    render(
+      <>
+        <LocationDisplay />
+        <AppSideNavigation isSidebarOpen={true} />
+      </>
+    );
+
+    const badge = await screen.findByLabelText("3 firing alerts");
+    expect(badge).toHaveTextContent("3");
+
+    await userEvent.click(screen.getByRole("button", { name: /alerts/i }));
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      "/alerts/history?status=FIRING"
+    );
+  }
+);
+
+test.skipIf(!isRouteNavVisible("Alerts"))(
+  "shows a warning badge when only warning alerts are firing",
+  async () => {
+    vi.mocked(fetchAlertStatus).mockResolvedValue(
+      statusResponse({ CRITICAL: 0, WARNING: 4, INFO: 0 })
+    );
+
+    render(<AppSideNavigation isSidebarOpen={true} />);
+
+    const badge = await screen.findByLabelText("4 firing alerts");
+    expect(badge).toHaveTextContent("4");
+  }
+);
+
+test.skipIf(!isRouteNavVisible("Alerts"))(
+  "does not show a badge when only INFO alerts are firing",
+  async () => {
+    vi.mocked(fetchAlertStatus).mockResolvedValue(
+      statusResponse({ CRITICAL: 0, WARNING: 0, INFO: 5 })
+    );
+
+    render(<AppSideNavigation isSidebarOpen={true} />);
+
+    await waitFor(() => expect(fetchAlertStatus).toHaveBeenCalled());
+    expect(screen.queryByLabelText(/firing alerts/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Info alerts firing")).not.toBeInTheDocument();
+  }
+);
+
+test.skipIf(!isRouteNavVisible("Alerts"))(
+  "links the collapsed Alerts icon to the FIRING events filter when alerts are firing",
+  async () => {
+    vi.mocked(fetchAlertStatus).mockResolvedValue(
+      statusResponse({ CRITICAL: 2, WARNING: 0, INFO: 0 })
+    );
+
+    const { container } = render(<AppSideNavigation isSidebarOpen={false} />);
+
+    expect(await screen.findByLabelText("2 firing alerts")).toBeInTheDocument();
+    expect(container.querySelector('a[href="/alerts/history?status=FIRING"]')).not.toBeNull();
   }
 );

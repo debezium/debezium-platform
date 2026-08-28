@@ -1,10 +1,10 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render } from "../../__test__/unit/test-utils";
+import { render, testQueryClient } from "../../__test__/unit/test-utils";
 import AlertHistory from "./AlertEvents";
 import { PagedAlertEventResponse } from "./alertsTypes";
-import { AlertRuleSummary } from "../../apis/alerts";
+import { ALERT_RULES_QUERY_KEY, AlertRuleSummary } from "../../apis/alerts";
 import { Pipeline } from "../../apis/apis";
 
 vi.mock("../../apis/apis", async (importOriginal) => {
@@ -96,6 +96,21 @@ describe("AlertHistory", () => {
     expect(await screen.findByText("high-source-lag")).toBeInTheDocument();
     expect(screen.getByText("Payments Stream")).toBeInTheDocument();
     expect(screen.queryByLabelText("Loading alert history")).not.toBeInTheDocument();
+  });
+
+  it("still renders history when the shared rules cache holds a non-array value", async () => {
+    testQueryClient.setQueryData(ALERT_RULES_QUERY_KEY, {
+      events: [],
+      page: 0,
+      size: 20,
+      totalElements: 0,
+      totalPages: 0,
+    });
+
+    render(<AlertHistory />);
+
+    expect(await screen.findByText("high-source-lag")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Severity" })).toBeInTheDocument();
   });
 
   it("requests page 0 and size 20 by default", async () => {

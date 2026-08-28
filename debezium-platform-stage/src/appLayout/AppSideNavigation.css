@@ -1,0 +1,48 @@
+/* Grow the Alerts title so the count badge can sit on the right of the row. */
+.alert-nav-group > .pf-v6-c-nav__link .pf-v6-c-nav__link-text {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.alert-nav-group-title {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.alert-nav-group-title .alert-nav-badge {
+  margin-inline-start: auto;
+  margin-inline-end: 0.25rem;
+}
+
+.alert-nav-badge {
+  pointer-events: none;
+}
+
+.alert-nav-badge .pf-v6-c-label__icon {
+  display: none;
+}
+
+/* Overlay the firing-count badge on the collapsed icon rail. */
+.alert-nav-icon-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.alert-nav-icon-badge {
+  position: absolute;
+  top: -1.35rem;
+  right: -1.75rem;
+  pointer-events: none;
+}
+
+.alert-nav-icon-badge .pf-v6-c-label {
+  --pf-v6-c-label--FontSize: 0.7rem;
+  min-width: 1.15rem;
+  justify-content: center;
+  padding-inline: 0.3rem;
+}

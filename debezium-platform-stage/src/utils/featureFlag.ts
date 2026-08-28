@@ -9,7 +9,7 @@ export const featureConfig = {
   Vault: { enabled: false, mode: "comingSoon" },
   Connection: { enabled: true, mode: "comingSoon" },
   Transforms: { enabled: true, mode: "comingSoon" },
-  Alerts: { enabled: true, mode: "comingSoon" },
+  Alerts: { enabled: false, mode: "comingSoon" },
   PipelineMonitoring: { enabled: true, mode: "hidden" },
   PipelineAction: { enabled: true, mode: "hidden" },
   PipelineLogs: { enabled: true, mode: "hidden" },

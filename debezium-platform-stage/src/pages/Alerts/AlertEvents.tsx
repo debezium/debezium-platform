@@ -406,7 +406,7 @@ const AlertEvents: React.FC = () => {
   );
   const pipelineOptions = React.useMemo<TypeaheadOption<string>[]>(
     () =>
-      (pipelinesList ?? [])
+      (Array.isArray(pipelinesList) ? pipelinesList : [])
         .map((pipeline) => ({ value: pipeline.name, label: pipeline.name }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     [pipelinesList]
@@ -419,7 +419,7 @@ const AlertEvents: React.FC = () => {
   );
   const ruleOptions = React.useMemo<TypeaheadOption<number>[]>(
     () =>
-      (ruleSummaries ?? [])
+      (Array.isArray(ruleSummaries) ? ruleSummaries : [])
         .map((rule) => ({ value: rule.id, label: rule.name }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     [ruleSummaries]

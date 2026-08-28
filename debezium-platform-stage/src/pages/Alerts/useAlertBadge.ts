@@ -1,19 +1,19 @@
-import { NotificationBadgeVariant } from "@patternfly/react-core";
+import { LabelStatus } from "@patternfly/react-core";
 import { ALERT_STATUS_QUERY_KEY, fetchAlertStatus } from "../../apis/alerts";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { isFeatureEnabled } from "@utils/featureFlag";
 import { AlertStatusResponse } from "./alertsTypes";
 
-export type AlertBadgeTone = "critical" | "warning" | "info" | "idle";
+export type AlertBadgeTone = "critical" | "warning" | "idle";
 
-export const FIRING_ALERTS_PATH = "/alerts/history?status=FIRING";
+export const ALERTS_DEFAULT_PATH = "/alerts/history";
+export const FIRING_ALERTS_PATH = `${ALERTS_DEFAULT_PATH}?status=FIRING`;
 
 export const getAlertBadgePresentation = (
   status: AlertStatusResponse | undefined
 ): { count: number; tone: AlertBadgeTone } => {
   const critical = status?.firingBySeverity?.CRITICAL ?? 0;
   const warning = status?.firingBySeverity?.WARNING ?? 0;
-  const info = status?.firingBySeverity?.INFO ?? 0;
   const count = critical + warning;
   if (critical > 0) {
     return { count, tone: "critical" };
@@ -21,35 +21,30 @@ export const getAlertBadgePresentation = (
   if (warning > 0) {
     return { count, tone: "warning" };
   }
-  if (info > 0) {
-    return { count: 0, tone: "info" };
-  }
   return { count: 0, tone: "idle" };
 };
 
-export const getAlertBadgeVariant = (tone: AlertBadgeTone): NotificationBadgeVariant => {
+export const getAlertBadgeLabelStatus = (
+  tone: AlertBadgeTone
+): LabelStatus | undefined => {
   if (tone === "critical") {
-    return NotificationBadgeVariant.attention;
-  }
-  if (tone === "info") {
-    return NotificationBadgeVariant.unread;
+    return LabelStatus.danger;
   }
   if (tone === "warning") {
-    // No PF warning notification variant; unread chrome is recolored in AppHeader.css.
-    return NotificationBadgeVariant.unread;
+    return LabelStatus.warning;
   }
-  return NotificationBadgeVariant.read;
+  return undefined;
 };
 
-export const getAlertBadgeAriaLabel = (count: number, tone: AlertBadgeTone): string => {
+export const getAlertBadgeAriaLabel = (count: number): string => {
   if (count > 0) {
     return `${count} firing alerts`;
   }
-  if (tone === "info") {
-    return "Info alerts firing";
-  }
   return "No firing critical or warning alerts";
 };
+
+export const getAlertNavPath = (hasFiringAlerts: boolean): string =>
+  hasFiringAlerts ? FIRING_ALERTS_PATH : ALERTS_DEFAULT_PATH;
 
 export const useAlertBadge = () => {
   const enabled = isFeatureEnabled("Alerts");
@@ -59,13 +54,15 @@ export const useAlertBadge = () => {
     { enabled }
   );
   const { count, tone } = getAlertBadgePresentation(data);
+  const isClickable = tone !== "idle";
 
   return {
     enabled,
     count,
     tone,
-    variant: getAlertBadgeVariant(tone),
+    labelStatus: getAlertBadgeLabelStatus(tone),
     ariaLabel: getAlertBadgeAriaLabel(count, tone),
-    isClickable: tone !== "idle",
+    isClickable,
+    navPath: getAlertNavPath(isClickable),
   };
 };

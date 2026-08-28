@@ -376,7 +376,7 @@ const AlertChannels: React.FC = () => {
                             label={channel.enabled ? "On" : "Off"}
                           />
                         </Td>
-                        <Td>
+                        <Td dataLabel="Actions" isActionCell>
                           <ActionsColumn items={rowActions(channel)} />
                         </Td>
                       </Tr>

@@ -37,8 +37,7 @@ import { useGuidedTour } from "../components/GuidedTourContext";
 import { useDocHelp } from "../components/DocHelpContext";
 import { resolveDocMapping } from "../docs/docMappings";
 import GlassModeIcon from "src/assets/customeIcons/GlassModeIcon";
-import { FIRING_ALERTS_PATH, useAlertBadge } from "../pages/Alerts/useAlertBadge";
-import "./AppHeader.css";
+import { isFeatureEnabled } from "@utils/featureFlag";
 
 interface AppHeaderProps {
   toggleSidebar: () => void;
@@ -68,7 +67,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   });
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
-  const alertBadge = useAlertBadge();
+  const showNotificationDrawerBadge = !isFeatureEnabled("Alerts");
 
 
   const onSelect = (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
@@ -200,41 +199,27 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                   </div>
                 </ToolbarItem>
               </ToolbarGroup>
-              <ToolbarItem variant="separator" />
-
-              <ToolbarGroup
-                variant="action-group-plain"
-              >
-                <ToolbarItem>
-                  <NotificationBadge
-                    variant={
-                      alertBadge.enabled
-                        ? alertBadge.variant
-                        : (getNotificationBadgeVariant() as
+              {showNotificationDrawerBadge && (
+                <>
+                  <ToolbarItem variant="separator" />
+                  <ToolbarGroup variant="action-group-plain">
+                    <ToolbarItem>
+                      <NotificationBadge
+                        variant={
+                          getNotificationBadgeVariant() as
                             | NotificationBadgeVariant
                             | "read"
                             | "unread"
                             | "attention"
-                            | undefined)
-                    }
-                    {...(alertBadge.enabled ? { count: alertBadge.count } : {})}
-                    className={
-                      alertBadge.enabled && alertBadge.tone === "warning"
-                        ? "alert-notification-badge--warning"
-                        : undefined
-                    }
-                    onClick={
-                      alertBadge.enabled
-                        ? () => navigate(FIRING_ALERTS_PATH)
-                        : handleNotificationBadgeClick
-                    }
-                    isDisabled={alertBadge.enabled && !alertBadge.isClickable}
-                    aria-label={
-                      alertBadge.enabled ? alertBadge.ariaLabel : "Notifications"
-                    }
-                  />
-                </ToolbarItem>
-              </ToolbarGroup>
+                            | undefined
+                        }
+                        onClick={handleNotificationBadgeClick}
+                        aria-label="Notifications"
+                      />
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                </>
+              )}
               <ToolbarItem variant="separator" />
               <ToolbarGroup variant="action-group-plain">
                 <ToolbarItem>

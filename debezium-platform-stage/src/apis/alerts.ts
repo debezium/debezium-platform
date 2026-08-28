@@ -106,8 +106,11 @@ export const fetchAlertStatus = (): Promise<AlertStatusResponse> =>
 /** `id`/`name` projection used by the History rule typeahead. */
 export type AlertRuleSummary = Pick<AlertRule, "id" | "name">;
 
-export const fetchAlertRules = (): Promise<AlertRule[]> =>
-  fetchData<AlertRule[]>(`${API_URL}/api/alerts/rules`);
+const asAlertRuleList = (data: unknown): AlertRule[] =>
+  Array.isArray(data) ? (data as AlertRule[]) : [];
+
+export const fetchAlertRules = async (): Promise<AlertRule[]> =>
+  asAlertRuleList(await fetchData<unknown>(`${API_URL}/api/alerts/rules`));
 
 export const fetchAlertChannels = (): Promise<NotificationChannel[]> =>
   fetchData<NotificationChannel[]>(`${API_URL}/api/alerts/channels`);
