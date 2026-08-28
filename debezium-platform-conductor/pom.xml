@@ -43,7 +43,8 @@
         <version.smallrye-open-api-core>4.3.5</version.smallrye-open-api-core>
         <version.blaze-persistence>1.6.20</version.blaze-persistence>
         <version.test-containers>2.0.5</version.test-containers>
-        <version.mockwebserver>5.3.2</version.mockwebserver>
+        <version.mockwebserver>4.12.0</version.mockwebserver>
+        <version.okhttp>4.12.0</version.okhttp>
         <version.infinispan>16.2.2</version.infinispan>
         <version.pravega>0.13.0</version.pravega>
         <version.google.cloud.pubsub>1.154.0</version.google.cloud.pubsub>
@@ -277,6 +278,18 @@
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>mockwebserver</artifactId>
                 <version>${version.mockwebserver}</version>
+            </dependency>
+
+            <!--
+                Pin okhttp to a single 4.x version. The Milvus SDK brings okhttp 4.8.1 (compile scope,
+                so it is on the test classpath) while mockwebserver brings its own okhttp; without this,
+                two okhttp majors clash and okhttp3.internal.concurrent.TaskRunner resolves to the wrong
+                constructor (NoSuchMethodError in tests using MockWebServer).
+            -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${version.okhttp}</version>
             </dependency>
 
             <dependency>
