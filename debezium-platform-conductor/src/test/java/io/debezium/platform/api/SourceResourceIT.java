@@ -169,6 +169,37 @@ class SourceResourceIT {
                 .body("message", equalTo("Invalid resource with id: 123456"));
     }
 
+    @ParameterizedTest(name = "Verifying signals with an invalid {0} should return 400")
+    @MethodSource("invalidSignalVerifyRequests")
+    void verifySignalsWithInvalidField(String fieldName, String jsonBody) {
+        given()
+                .contentType(ContentType.JSON)
+                .body(jsonBody)
+                .when()
+                .post("api/sources/signals/verify")
+                .then()
+                .statusCode(400)
+                .body("title", is("Constraint Violation"))
+                .body("violations.field", hasItem("verifySignalConfiguration.request." + fieldName));
+    }
+
+    static Stream<Arguments> invalidSignalVerifyRequests() {
+        return Stream.of(
+                Arguments.of("fullyQualifiedTableName", """
+                        {
+                            "connectionId": 1
+                        }"""),
+                Arguments.of("fullyQualifiedTableName", """
+                        {
+                            "connectionId": 1,
+                            "fullyQualifiedTableName": "  "
+                        }"""),
+                Arguments.of("connectionId", """
+                        {
+                            "fullyQualifiedTableName": "public.debezium_signal"
+                        }"""));
+    }
+
     @ParameterizedTest(name = "Creating a source with empty {0} should return 400")
     @MethodSource("invalidSourceRequests")
     void createSourceWithInvalidField(String fieldName, String jsonBody) {
