@@ -109,6 +109,7 @@ public class SourceResource {
 
     @Operation(summary = "Verify that signal data collection is configured correctly")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SignalDataCollectionVerifyResponse.class, type = SchemaType.OBJECT)))
+    @APIResponse(responseCode = "400", description = "Invalid request, the connection id and the fully qualified table name are both required", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(type = SchemaType.OBJECT)))
     @POST
     @Path("/signals/verify")
     public Response verifySignalConfiguration(@NotNull @Valid SignalCollectionVerifyRequest request) {

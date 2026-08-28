@@ -599,7 +599,12 @@ paths:
                   message:
                     type: string
         "400":
-          description: Bad Request
+          description: "Invalid request, the connection id and the fully qualified\
+            \ table name are both required"
+          content:
+            application/json:
+              schema:
+                type: object
   /api/sources/{id}:
     put:
       summary: Updates an existing source
@@ -1123,12 +1128,16 @@ components:
           type: string
     SignalCollectionVerifyRequest:
       type: object
+      required:
+      - connectionId
+      - fullyQualifiedTableName
       properties:
         connectionId:
           type: integer
           format: int64
         fullyQualifiedTableName:
           type: string
+          pattern: \S
     SignalRequest:
       type: object
       required:
