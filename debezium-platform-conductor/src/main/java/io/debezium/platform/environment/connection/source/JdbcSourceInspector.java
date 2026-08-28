@@ -38,6 +38,7 @@ public class JdbcSourceInspector implements SourceInspector {
 
     private static final String SIGNAL_DATA_COLLECTION_CONFIGURED_MESSAGE = "Signal data collection correctly configured";
     private static final String SIGNAL_DATA_COLLECTION_MISS_CONFIGURED_MESSAGE = "Signal data collection not present or misconfigured";
+    private static final String SIGNAL_DATA_COLLECTION_NAME_REQUIRED_MESSAGE = "A fully qualified signal data collection name is required";
 
     private final DatabaseConnectionFactory databaseConnectionFactory;
     private final SignalDataCollectionChecker signalDataCollectionChecker;
@@ -85,11 +86,20 @@ public class JdbcSourceInspector implements SourceInspector {
     @Override
     public SignalDataCollectionVerifyResponse verifyDataCollectionStructure(Connection connection, String fullyQualifiedTableName) {
 
+        if (fullyQualifiedTableName == null || fullyQualifiedTableName.isBlank()) {
+            LOGGER.warn("Signal data collection verification requested without a table name");
+            return new SignalDataCollectionVerifyResponse(false, SIGNAL_DATA_COLLECTION_NAME_REQUIRED_MESSAGE);
+        }
+
+        var table = TableId.parse(fullyQualifiedTableName, false);
+        if (table == null) {
+            LOGGER.warn("Unable to parse signal data collection name {}", fullyQualifiedTableName);
+            return new SignalDataCollectionVerifyResponse(false, SIGNAL_DATA_COLLECTION_NAME_REQUIRED_MESSAGE);
+        }
+
         DatabaseConnectionConfiguration databaseConnectionConfiguration = DatabaseConnectionConfiguration.from(connection);
 
         try (JdbcConnection jdbcConnection = databaseConnectionFactory.create(databaseConnectionConfiguration)) {
-
-            var table = TableId.parse(fullyQualifiedTableName, false);
 
             boolean isConform = signalDataCollectionChecker.verifyTableStructure(
                     jdbcConnection.connection(),
