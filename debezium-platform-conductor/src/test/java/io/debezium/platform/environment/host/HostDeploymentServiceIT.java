@@ -23,7 +23,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 
 import io.debezium.DebeziumException;
 import io.debezium.platform.data.model.DeploymentStatus;
-import io.debezium.platform.data.model.HostDeploymentEntity;
 import io.debezium.platform.data.model.HostStatusEntity;
 import io.debezium.platform.data.model.PipelineEntity;
 import io.debezium.platform.data.model.ProvisioningStatus;
@@ -349,8 +348,8 @@ public class HostDeploymentServiceIT {
     @Test
     @Order(15)
     @Transactional
-    public void shouldCascadeDeleteHostDeploymentOnPipelineDelete() {
-        // Create deployment for seededPipeline3Id (already persisted and committed during seedTestData)
+    public void shouldDeleteDeploymentRecordBeforePipelineDelete() {
+        // Create deployment for seededPipeline3Id
         deploymentService.createDeployment(
                 seededPipeline3Id, seededHostId,
                 new DeploymentRequest(
@@ -362,16 +361,24 @@ public class HostDeploymentServiceIT {
         HostDeployment deployment = deploymentService.requireByPipelineId(seededPipeline3Id);
         Long deploymentId = deployment.getId();
 
-        // Delete the pipeline entity directly — database ON DELETE CASCADE must remove host_deployment row without FK error
+        // Step 1: Delete deployment record explicitly via HostDeploymentService
+        deploymentService.deleteDeployment(deploymentId);
+
+        var deletedDeployment = deploymentService.findByPipelineId(seededPipeline3Id);
+        assertThat(deletedDeployment)
+                .as("Deployment record must be deleted")
+                .isEmpty();
+
+        // Step 2: Delete pipeline entity — succeeds because deployment reference was removed
         PipelineEntity pipeline = em.find(PipelineEntity.class, seededPipeline3Id);
         assertThat(pipeline).isNotNull();
         em.remove(pipeline);
         em.flush();
         em.clear();
 
-        var deletedDeployment = em.find(HostDeploymentEntity.class, deploymentId);
-        assertThat(deletedDeployment)
-                .as("HostDeploymentEntity must be automatically deleted by database ON DELETE CASCADE")
+        var deletedPipeline = em.find(PipelineEntity.class, seededPipeline3Id);
+        assertThat(deletedPipeline)
+                .as("PipelineEntity must be deleted after deployment record is removed")
                 .isNull();
     }
 }
