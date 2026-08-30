@@ -59,6 +59,20 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
         event.fire(PipelineEvent.update(flat, objectMapper));
     }
 
+    /**
+     * Deletes a pipeline by id.
+     * <p>
+     * Overrides {@link AbstractService#delete(long)} to synchronously undeploy
+     * the associated deployment (stop container, remove container, delete
+     * deployment record) <em>before</em> deleting the pipeline row.
+     * </p>
+     */
+    @Override
+    public void delete(long id) {
+        environmentController.get().pipelines().undeploySync(id);
+        super.delete(id);
+    }
+
     @Override
     @Transactional(Transactional.TxType.REQUIRED)
     public void onChange(Long id) {

@@ -8,10 +8,6 @@ package io.debezium.platform.environment.host;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -22,8 +18,11 @@ import io.debezium.platform.data.model.DeploymentStatus;
 import io.debezium.platform.domain.HostDeploymentService;
 import io.debezium.platform.domain.views.HostDeployment;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
+import io.debezium.platform.environment.host.provisioning.AnsibleCommandException;
 import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner;
 import io.debezium.platform.environment.host.provisioning.CommandResult;
+import io.debezium.util.DelayStrategy;
+import io.debezium.util.RetryingRunnable;
 import io.quarkus.scheduler.Scheduled;
 
 /**
@@ -40,6 +39,12 @@ import io.quarkus.scheduler.Scheduled;
  *   <li>{@code RUNNING → FAILED} — container crashed or stopped unexpectedly</li>
  *   <li>{@code RUNNING → CONFIG_DRIFT} — config hash mismatch detected</li>
  * </ul>
+ *
+ * <p><strong>Retry behaviour:</strong> The {@code docker inspect} call is
+ * wrapped in {@link RetryingRunnable} to tolerate transient SSH/network
+ * failures. Only {@link AnsibleCommandException} (connectivity failures)
+ * is retried — a definitive "no such object" response from {@code docker inspect}
+ * is trusted immediately.
  *
  * <p>Includes a deployment-mode guard to prevent this poller from firing
  * in operator (Kubernetes) mode — {@code @Scheduled} ignores
@@ -62,15 +67,14 @@ public class HostDeploymentStatusPoller {
     private static final Duration DEPLOY_GRACE_PERIOD = Duration.ofMinutes(5);
 
     /**
-     * Number of consecutive failed health checks required before a RUNNING
-     * deployment is marked FAILED. This prevents transient SSH or network
-     * hiccups from falsely killing a healthy pipeline.
-     *
-     * <p>At the default 30-second poll interval, 3 consecutive failures
-     * means a deployment must be unreachable for at least ~90 seconds
-     * before the platform gives up on it.
+     * Substrings in Ansible/Docker failure output that indicate the container
+     * genuinely does not exist — as opposed to a transient connectivity issue.
+     * When the output matches one of these, the failure is <em>definitive</em>
+     * and should not be retried.
      */
-    static final int FAILURE_THRESHOLD = 3;
+    private static final List<String> CONTAINER_NOT_FOUND_MARKERS = List.of(
+            "no such object",
+            "no such container");
 
     /** Remote path format for the deployed config file (matches HostPipelineController). */
     private static final String CONFIG_PATH_FORMAT = "%s/%s/application.properties";
@@ -81,8 +85,6 @@ public class HostDeploymentStatusPoller {
     private final AnsibleCommandRunner ansibleRunner;
     private final HostConfigGroup hostConfig;
     private final String deploymentMode;
-
-    private final ConcurrentMap<Long, Integer> consecutiveFailures = new ConcurrentHashMap<>();
 
     public HostDeploymentStatusPoller(Logger logger,
                                       HostDeploymentService deploymentService,
@@ -111,15 +113,8 @@ public class HostDeploymentStatusPoller {
 
         if (activeDeployments.isEmpty()) {
             logger.debugv("No active deployments to poll");
-            consecutiveFailures.clear();
             return;
         }
-
-        // Remove stale entries for deployments that are no longer active
-        Set<Long> activeIds = activeDeployments.stream()
-                .map(HostDeployment::getId)
-                .collect(Collectors.toSet());
-        consecutiveFailures.keySet().retainAll(activeIds);
 
         logger.debugv("Polling {0} active deployment(s)", activeDeployments.size());
         activeDeployments.forEach(this::checkDeployment);
@@ -131,13 +126,12 @@ public class HostDeploymentStatusPoller {
         Long deploymentId = deployment.getId();
 
         try {
-            boolean containerRunning = inspectContainerRunning(sshAlias, containerName);
+            boolean containerRunning = inspectContainerRunningWithRetry(sshAlias, containerName);
 
             DeploymentStatus currentStatus = deployment.getDeploymentStatus();
 
             if (containerRunning && currentStatus == DeploymentStatus.DEPLOYING) {
                 deploymentService.updateStatus(deploymentId, DeploymentStatus.RUNNING);
-                consecutiveFailures.remove(deploymentId);
                 return;
             }
 
@@ -155,27 +149,22 @@ public class HostDeploymentStatusPoller {
             }
 
             if (!containerRunning && currentStatus == DeploymentStatus.RUNNING) {
-                int failures = consecutiveFailures.merge(deploymentId, 1, Integer::sum);
-                if (failures >= FAILURE_THRESHOLD) {
-                    logger.warnv("Container {0} on {1} stopped unexpectedly "
-                            + "({2} consecutive failed checks), marking FAILED",
-                            containerName, sshAlias, failures);
-                    deploymentService.updateStatus(deploymentId, DeploymentStatus.FAILED);
-                    consecutiveFailures.remove(deploymentId);
-                }
-                else {
-                    logger.warnv("Container {0} on {1} health check failed "
-                            + "({2}/{3}), will retry next cycle",
-                            containerName, sshAlias, failures, FAILURE_THRESHOLD);
-                }
+                logger.warnv("Container {0} on {1} stopped unexpectedly, marking FAILED",
+                        containerName, sshAlias);
+                deploymentService.updateStatus(deploymentId, DeploymentStatus.FAILED);
                 return;
             }
 
-            // Container is running and status is RUNNING — clear any prior failure count and check for config drift
             if (containerRunning && currentStatus == DeploymentStatus.RUNNING) {
-                consecutiveFailures.remove(deploymentId);
                 checkConfigDrift(deployment, sshAlias);
             }
+        }
+        catch (AnsibleCommandException e) {
+            // All retries exhausted for a transient SSH/connectivity failure.
+            // The container's actual state is unknown — skip this cycle rather
+            // than incorrectly marking FAILED.
+            logger.warnv("All inspect retries exhausted for deployment {0} on {1}, "
+                    + "skipping this cycle: {2}", deploymentId, sshAlias, e.getMessage());
         }
         catch (Exception e) {
             logger.errorv(e, "Error polling deployment {0} on {1}, skipping this cycle",
@@ -183,14 +172,78 @@ public class HostDeploymentStatusPoller {
         }
     }
 
-    private boolean inspectContainerRunning(String sshAlias, String containerName) {
+    /**
+     * Wraps {@link #inspectContainerRunning(String, String)} with
+     * {@link RetryingRunnable} to tolerate transient SSH/Ansible failures.
+     *
+     * <p>Only {@link AnsibleCommandException} is retried — this means:
+     * <ul>
+     *   <li>A successful inspect returning {@code "false"} (container genuinely
+     *       stopped) is trusted immediately — no retry, mark FAILED right away.</li>
+     *   <li>A definitive "No such object" failure is also trusted immediately
+     *       (returns {@code false}, not retried).</li>
+     *   <li>A transient SSH timeout is retried up to N times with exponential backoff.</li>
+     * </ul>
+     *
+     * @return {@code true} if the container is confirmed running,
+     *         {@code false} if the container is definitively not running
+     * @throws AnsibleCommandException if all retries are exhausted
+     */
+    private boolean inspectContainerRunningWithRetry(String sshAlias, String containerName)
+            throws AnsibleCommandException, InterruptedException {
+        boolean[] result = { false };
+
+        RetryingRunnable.<RuntimeException> builder()
+                .retries(hostConfig.statusPollMaxRetries())
+                .doRun(() -> result[0] = inspectContainerRunning(sshAlias, containerName))
+                .delayStrategy(DelayStrategy.exponential(Duration.ofSeconds(1), Duration.ofSeconds(8)))
+                .retriableExceptions(AnsibleCommandException.class)
+                .build()
+                .run();
+
+        return result[0];
+    }
+
+    /**
+     * Runs {@code docker inspect} on the remote host and interprets the result.
+     *
+     * <p>Three possible outcomes:
+     * <ol>
+     *   <li><strong>Success + "true":</strong> container is running → returns {@code true}</li>
+     *   <li><strong>Success + "false" / Failure with "no such object":</strong>
+     *       container is definitively not running → returns {@code false}</li>
+     *   <li><strong>Failure (transient):</strong> SSH timeout, network unreachable,
+     *       etc. → throws {@link AnsibleCommandException} (will be retried by
+     *       {@link RetryingRunnable})</li>
+     * </ol>
+     *
+     * @throws AnsibleCommandException if the Ansible command failed due to a
+     *         transient connectivity issue (not a definitive "container not found")
+     */
+    boolean inspectContainerRunning(String sshAlias, String containerName) {
         String inspectCommand = String.format(DOCKER_INSPECT_FORMAT, containerName);
         CommandResult result = ansibleRunner.runShellCommand(sshAlias, inspectCommand);
 
         return switch (result) {
             case CommandResult.Success success -> extractLastLine(success.output()).equalsIgnoreCase(CONTAINER_RUNNING_VALUE);
-            case CommandResult.Failure ignored -> false;
+            case CommandResult.Failure failure -> {
+                if (isContainerNotFound(failure.output())) {
+                    yield false;
+                }
+
+                throw new AnsibleCommandException(
+                        "Transient Ansible failure inspecting container " + containerName
+                                + " on " + sshAlias + ": " + failure.output());
+            }
         };
+    }
+
+    private static boolean isContainerNotFound(String failureOutput) {
+        if (failureOutput == null) {
+            return false;
+        }
+        String lowerOutput = failureOutput.toLowerCase();
+        return CONTAINER_NOT_FOUND_MARKERS.stream().anyMatch(lowerOutput::contains);
     }
 
     private void checkConfigDrift(HostDeployment deployment, String sshAlias) {

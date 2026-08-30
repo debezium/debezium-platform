@@ -12,7 +12,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 import io.debezium.platform.domain.HostDeploymentService;
-import io.debezium.platform.domain.views.HostDeployment;
 import io.debezium.platform.environment.logs.LogReader;
 
 /**
@@ -36,10 +35,9 @@ class HostDockerLogReader implements LogReader {
 
     @Override
     public String readAll() {
-        HostDeployment deployment = deploymentService.requireByPipelineId(pipelineId);
-        String sshAlias = deployment.getSshAlias();
-        String containerName = deployment.getContainerName();
-        return containerRuntime.logs(sshAlias, containerName);
+        return deploymentService.findByPipelineId(pipelineId)
+                .map(deployment -> containerRuntime.logs(deployment.getSshAlias(), deployment.getContainerName()))
+                .orElse("No deployment logs available for pipeline id=" + pipelineId + " (deployment in progress or not deployed).");
     }
 
     @Override

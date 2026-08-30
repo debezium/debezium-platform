@@ -118,4 +118,13 @@ public interface HostConfigGroup {
     @WithName("status-poll-interval")
     @WithDefault("30s")
     String statusPollInterval();
+
+    /**
+     * Maximum number of retries for transient Ansible/SSH failures when
+     * polling container status via {@code docker inspect}. Uses exponential
+     * backoff between retries. A value of {@code 0} disables retries.
+     */
+    @WithName("status-poll-max-retries")
+    @WithDefault("3")
+    int statusPollMaxRetries();
 }

@@ -37,6 +37,24 @@ public interface PipelineController {
     void undeploy(Long id);
 
     /**
+     * Synchronously undeploys the pipeline with given id from the target environment.
+     * <p>
+     * Unlike {@link #undeploy(Long)}, this method runs on the <em>caller's thread</em>
+     * and blocks until the deployment is fully cleaned up (container stopped, removed,
+     * and deployment record deleted).
+     * </p>
+     * <p>
+     * Called directly by {@code PipelineService.delete()} as a pre-condition to
+     * satisfy the FK constraint between {@code host_deployment} and {@code pipeline}.
+     * This is an intentional exception to the "rely on Outbox" rule — the delete path
+     * <em>requires</em> synchronous cleanup before the pipeline row can be removed.
+     * </p>
+     *
+     * @param id the pipeline id
+     */
+    void undeploySync(Long id);
+
+    /**
      * Stops the pipeline with given id
      *
      * @param id the pipeline id

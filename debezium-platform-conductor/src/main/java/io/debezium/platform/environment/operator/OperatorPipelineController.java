@@ -57,6 +57,13 @@ public class OperatorPipelineController implements PipelineController {
     }
 
     @Override
+    public void undeploySync(Long pipelineId) {
+        // In operator (Kubernetes) mode, referential integrity is guaranteed asynchronously
+        // by the Outbox pattern. Synchronous undeploy is a no-op; the outbox CDC consumer
+        // will trigger undeploy(pipelineId) after the pipeline record is removed.
+    }
+
+    @Override
     public void stop(Long id) {
         kubernetesAdapter.changeStatus(id, true);
     }

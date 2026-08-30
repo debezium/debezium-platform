@@ -14,9 +14,11 @@ import jakarta.enterprise.event.Observes;
 import org.jboss.logging.Logger;
 
 import io.debezium.platform.data.model.DeploymentStatus;
+import io.debezium.platform.data.model.PipelineStatus;
 import io.debezium.platform.domain.DeploymentRequest;
 import io.debezium.platform.domain.HostAllocation;
 import io.debezium.platform.domain.HostDeploymentService;
+import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.Signal;
 import io.debezium.platform.domain.views.HostDeployment;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
@@ -57,18 +59,21 @@ public class HostPipelineController implements PipelineController {
     private final HostDeploymentService deploymentService;
     private final HostContainerRuntime containerRuntime;
     private final HostConfigGroup hostConfig;
+    private final PipelineService pipelineService;
     private final ExecutorService deployExecutor;
 
     public HostPipelineController(Logger logger,
                                   HostPipelineMapper pipelineMapper,
                                   HostDeploymentService deploymentService,
                                   HostContainerRuntime containerRuntime,
-                                  HostConfigGroup hostConfig) {
+                                  HostConfigGroup hostConfig,
+                                  PipelineService pipelineService) {
         this.logger = logger;
         this.pipelineMapper = pipelineMapper;
         this.deploymentService = deploymentService;
         this.containerRuntime = containerRuntime;
         this.hostConfig = hostConfig;
+        this.pipelineService = pipelineService;
 
         this.deployExecutor = Threads.newFixedThreadPool(
                 HostPipelineController.class, "conductor", "pipeline-deployer",
@@ -95,6 +100,11 @@ public class HostPipelineController implements PipelineController {
     @Override
     public void undeploy(Long pipelineId) {
         deployExecutor.submit(() -> runWithRequestContext(() -> executeUndeploy(pipelineId)));
+    }
+
+    @Override
+    public void undeploySync(Long pipelineId) {
+        executeUndeploy(pipelineId);
     }
 
     @Override
@@ -169,6 +179,16 @@ public class HostPipelineController implements PipelineController {
         if (deployment != null) {
             String sshAlias = deployment.getSshAlias();
             String containerName = deployment.getContainerName();
+
+            // Graceful stop (SIGTERM) before force-removing the container.
+            try {
+                containerRuntime.stop(sshAlias, containerName);
+            }
+            catch (Exception e) {
+                logger.debugv("Container {0} on {1} could not be stopped (may already be stopped): {2}",
+                        containerName, sshAlias, e.getMessage());
+            }
+
             containerRuntime.undeploy(sshAlias, containerName);
 
             // Hard-delete the deployment record (frees UNIQUE constraint + port)
@@ -176,10 +196,7 @@ public class HostPipelineController implements PipelineController {
             logger.infov("Pipeline {0} undeployed from host {1}", pipelineId, sshAlias);
         }
         else {
-            // Deployment DB record was already removed by ON DELETE CASCADE when pipeline row was deleted.
-            // Cannot determine container name without the DB record — log and skip.
-            logger.infov("Deployment DB record already removed by CASCADE for pipeline {0}, skipping container cleanup",
-                    pipelineId);
+            logger.infov("No deployment record found for pipeline {0}, skipping container cleanup", pipelineId);
         }
     }
 
@@ -213,6 +230,7 @@ public class HostPipelineController implements PipelineController {
     private void failDeployment(Long pipelineId, String reason) {
         deploymentService.findByPipelineId(pipelineId)
                 .ifPresent(deployment -> deploymentService.updateStatus(deployment.getId(), DeploymentStatus.FAILED));
+        pipelineService.updateStatus(pipelineId, PipelineStatus.FAILED, reason);
         logger.errorv("Deployment failed for pipeline {0}: {1}", pipelineId, reason);
     }
 

@@ -36,6 +36,7 @@ import io.debezium.platform.data.model.DeploymentStatus;
 import io.debezium.platform.domain.DeploymentRequest;
 import io.debezium.platform.domain.HostAllocation;
 import io.debezium.platform.domain.HostDeploymentService;
+import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.Signal;
 import io.debezium.platform.domain.views.HostDeployment;
 import io.debezium.platform.domain.views.flat.DestinationFlat;
@@ -84,9 +85,8 @@ class HostPipelineControllerTest {
         when(hostConfig.shutdownTimeoutSeconds()).thenReturn(5L);
         when(hostConfig.debeziumServerImage()).thenReturn("quay.io/debezium/server:latest");
 
-        when(deploymentService.findByPipelineId(anyLong())).thenReturn(Optional.empty());
-
-        controller = new HostPipelineController(logger, pipelineMapper, deploymentService, containerRuntime, hostConfig);
+        PipelineService pipelineService = mock(PipelineService.class);
+        controller = new HostPipelineController(logger, pipelineMapper, deploymentService, containerRuntime, hostConfig, pipelineService);
     }
 
     @AfterEach
@@ -153,7 +153,7 @@ class HostPipelineControllerTest {
     }
 
     @Test
-    void undeployDelegatesToRuntimeAndDeletesRecord() throws Exception {
+    void undeployStopsThenRemovesContainerAndDeletesRecord() throws Exception {
         HostDeployment deployment = mockDeployment(200L, "my-pipeline", "host-1");
         when(deploymentService.findByPipelineId(5L)).thenReturn(Optional.of(deployment));
 
@@ -166,6 +166,8 @@ class HostPipelineControllerTest {
         controller.undeploy(5L);
 
         assertThat(latch.await(ASYNC_WAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
+        // Graceful stop FIRST, then force-remove, then delete DB record
+        verify(containerRuntime).stop("host-1", "my-pipeline");
         verify(containerRuntime).undeploy("host-1", "my-pipeline");
         verify(deploymentService).deleteDeployment(200L);
     }

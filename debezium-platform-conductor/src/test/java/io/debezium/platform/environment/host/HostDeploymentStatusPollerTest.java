@@ -41,6 +41,8 @@ import io.debezium.platform.environment.host.provisioning.CommandResult;
  *   <li>No status change when container is running and config hash matches</li>
  *   <li>Poller skips in operator mode (deployment-mode guard)</li>
  *   <li>Poller skips when no active deployments exist</li>
+ *   <li>Transient SSH failures are retried via {@code RetryingRunnable}</li>
+ *   <li>Definitive "no such object" failures are trusted immediately</li>
  * </ul>
  */
 class HostDeploymentStatusPollerTest {
@@ -57,6 +59,7 @@ class HostDeploymentStatusPollerTest {
 
         HostConfigGroup hostConfig = mock(HostConfigGroup.class);
         when(hostConfig.configBasePath()).thenReturn("/opt/debezium/configs");
+        when(hostConfig.statusPollMaxRetries()).thenReturn(3);
 
         // Host mode — poller should be active
         poller = new HostDeploymentStatusPoller(logger, deploymentService, ansibleRunner, hostConfig, "host");
@@ -113,84 +116,63 @@ class HostDeploymentStatusPollerTest {
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
+        // docker inspect succeeds but returns "false" — container genuinely stopped
         when(ansibleRunner.runShellCommand(eq("host-2"), any()))
-                .thenReturn(new CommandResult.Failure("No such container"));
+                .thenReturn(new CommandResult.Success("false"));
 
-        // Must fail FAILURE_THRESHOLD consecutive times before marking FAILED
-        for (int i = 0; i < HostDeploymentStatusPoller.FAILURE_THRESHOLD; i++) {
-            poller.pollDeploymentStatus();
-        }
+        poller.pollDeploymentStatus();
 
+        // Should mark FAILED immediately — no retry needed, this is a definitive answer
         verify(deploymentService).updateStatus(3L, DeploymentStatus.FAILED);
     }
 
     @Test
-    void doesNotFailOnTransientInspectFailure() {
+    void transitionsRunningToFailedWhenContainerNotFound() {
         HostDeployment deployment = mockDeployment(11L, DeploymentStatus.RUNNING, "container-11", "host-9");
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
+        // docker inspect fails with "No such object" — container genuinely gone
         when(ansibleRunner.runShellCommand(eq("host-9"), any()))
-                .thenReturn(new CommandResult.Failure("SSH timeout"));
+                .thenReturn(new CommandResult.Failure("Error: No such object: container-11"));
 
-        // Poll fewer times than the threshold — should NOT mark FAILED
-        for (int i = 0; i < HostDeploymentStatusPoller.FAILURE_THRESHOLD - 1; i++) {
-            poller.pollDeploymentStatus();
-        }
+        poller.pollDeploymentStatus();
 
-        verify(deploymentService, never()).updateStatus(eq(11L), any());
+        // Should mark FAILED immediately — "No such object" is definitive, not retried
+        verify(deploymentService).updateStatus(11L, DeploymentStatus.FAILED);
     }
 
     @Test
-    void resetsFailureCounterWhenContainerRecovers() {
-        HostDeployment deployment = mockDeployment(12L, DeploymentStatus.RUNNING, "container-12", "host-10",
-                "expected-hash", Instant.now().minus(Duration.ofMinutes(10)));
+    void skipsStatusUpdateWhenAllInspectRetriesExhausted() {
+        HostDeployment deployment = mockDeployment(12L, DeploymentStatus.RUNNING, "container-12", "host-10");
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
-
-        // Fail twice (below threshold)
+        // Transient SSH failure — does NOT contain "no such object"
         when(ansibleRunner.runShellCommand(eq("host-10"), any()))
-                .thenReturn(new CommandResult.Failure("SSH timeout"))
-                .thenReturn(new CommandResult.Failure("SSH timeout"))
-                // Then recover — inspect returns true, hash matches
-                .thenReturn(new CommandResult.Success("true"))
-                .thenReturn(new CommandResult.Success("expected-hash"))
-                // Then fail again twice (below threshold)
-                .thenReturn(new CommandResult.Failure("SSH timeout"))
-                .thenReturn(new CommandResult.Failure("SSH timeout"));
+                .thenReturn(new CommandResult.Failure("SSH connection timed out"));
 
-        // 2 failures
-        poller.pollDeploymentStatus();
-        poller.pollDeploymentStatus();
-        // Recovery
-        poller.pollDeploymentStatus();
-        // 2 more failures (counter should have been reset)
-        poller.pollDeploymentStatus();
         poller.pollDeploymentStatus();
 
-        // Should never have reached the threshold
-        verify(deploymentService, never()).updateStatus(eq(12L), eq(DeploymentStatus.FAILED));
+        // All retries exhausted → AnsibleCommandException caught → no status change
+        verify(deploymentService, never()).updateStatus(eq(12L), any());
     }
 
     @Test
-    void marksFailedAfterExactlyThresholdConsecutiveFailures() {
-        HostDeployment deployment = mockDeployment(13L, DeploymentStatus.RUNNING, "container-13", "host-11");
+    void retriesTransientFailureBeforeReportingContainerRunning() {
+        HostDeployment deployment = mockDeployment(13L, DeploymentStatus.DEPLOYING, "container-13", "host-11");
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
+        // First call: transient SSH failure. Second call: success.
         when(ansibleRunner.runShellCommand(eq("host-11"), any()))
-                .thenReturn(new CommandResult.Failure("Connection refused"));
+                .thenReturn(new CommandResult.Failure("SSH connection timed out"))
+                .thenReturn(new CommandResult.Success("true"));
 
-        // Poll exactly threshold-1 times — should NOT mark FAILED yet
-        for (int i = 0; i < HostDeploymentStatusPoller.FAILURE_THRESHOLD - 1; i++) {
-            poller.pollDeploymentStatus();
-        }
-        verify(deploymentService, never()).updateStatus(eq(13L), any());
-
-        // One more poll — should now mark FAILED
         poller.pollDeploymentStatus();
-        verify(deploymentService).updateStatus(13L, DeploymentStatus.FAILED);
+
+        // RetryingRunnable retried after the first failure, second attempt succeeded
+        verify(deploymentService).updateStatus(13L, DeploymentStatus.RUNNING);
     }
 
     @Test
@@ -262,7 +244,7 @@ class HostDeploymentStatusPollerTest {
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
 
-        // Ansible throws an unexpected exception
+        // Ansible throws an unexpected exception (not AnsibleCommandException)
         when(ansibleRunner.runShellCommand(eq("host-5"), any()))
                 .thenThrow(new RuntimeException("Network error"));
 
