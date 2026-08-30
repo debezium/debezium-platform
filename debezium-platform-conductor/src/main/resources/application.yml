@@ -105,6 +105,9 @@ destinations:
   milvus:
     connection:
       timeout: 60
+  rocketmq:
+    connection:
+      timeout: 60
       
 quarkus:
   smallrye-openapi:

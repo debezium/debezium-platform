@@ -641,5 +641,41 @@
         }
       }
     }
+  },
+  {
+    "type": "ROCKETMQ",
+    "schema": {
+      "title": "Apache RocketMQ connection properties",
+      "description": "Properties required to connect to an Apache RocketMQ name server, including optional ACL authentication",
+      "type": "object",
+      "required": [
+        "producer.name.srv.addr"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "producer.name.srv.addr": {
+          "type": "string",
+          "title": "RocketMQ name server address list (e.g. localhost:9876)"
+        },
+        "producer.group": {
+          "type": "string",
+          "title": "Producer group used by the sink"
+        },
+        "producer.acl.enabled": {
+          "type": "boolean",
+          "title": "Enable ACL authentication for the connection"
+        },
+        "producer.access.key": {
+          "type": "string",
+          "title": "Access key used when ACL is enabled"
+        },
+        "producer.secret.key": {
+          "type": "string",
+          "title": "Secret key used when ACL is enabled"
+        }
+      }
+    }
   }
 ]

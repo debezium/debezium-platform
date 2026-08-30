@@ -42,4 +42,10 @@ class ConnectionValidatorFactoryTest {
         ConnectionValidator validator = factory.getValidator(ConnectionEntity.Type.AZURE_EVENTS_HUBS.name());
         assertFalse(validator.validate(new TestConnectionView(ConnectionEntity.Type.AZURE_EVENTS_HUBS, Map.of())).valid());
     }
+
+    @Test
+    void shouldReturnRocketMqValidator() {
+        ConnectionValidator validator = factory.getValidator(ConnectionEntity.Type.APACHE_ROCKETMQ.name());
+        assertFalse(validator.validate(new TestConnectionView(ConnectionEntity.Type.APACHE_ROCKETMQ, Map.of())).valid());
+    }
 }

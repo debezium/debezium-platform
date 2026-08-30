@@ -56,6 +56,7 @@
         <version.oras>0.6.4</version.oras>
         <version.rabbitmq>5.35.0</version.rabbitmq>
         <version.milvus>2.6.4</version.milvus>
+        <version.rocketmq>5.3.1</version.rocketmq>
 
         <format.formatter.goal>format</format.formatter.goal>
         <format.imports.goal>sort</format.imports.goal>
@@ -557,6 +558,22 @@
             <groupId>com.rabbitmq</groupId>
             <artifactId>amqp-client</artifactId>
             <version>${version.rabbitmq}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-client</artifactId>
+            <version>${version.rocketmq}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-acl</artifactId>
+            <version>${version.rocketmq}</version>
+        </dependency>
+        <!-- rocketmq-client 5.3.1 declares an older rocketmq-remoting, pin it to the client version -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-remoting</artifactId>
+            <version>${version.rocketmq}</version>
         </dependency>
 
         <dependency>
