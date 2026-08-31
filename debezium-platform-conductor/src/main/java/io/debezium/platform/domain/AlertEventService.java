@@ -85,12 +85,16 @@ public class AlertEventService extends AbstractService<AlertEventEntity, AlertEv
     }
 
     @Transactional
-    public AlertEventEntity createFiringEvent(AlertRuleEntity rule, String pipelineId,
+    public AlertEventEntity createFiringEvent(AlertRuleEntity rule, String pipelineName,
                                               Double value, String message, Instant firedAt) {
         AlertEventEntity event = new AlertEventEntity();
         event.setRule(rule);
         event.setRuleName(rule.getName());
-        event.setPipelineId(pipelineId);
+        // The value carried by the service_name metric label is the pipeline name, so the legacy
+        // pipelineId column and pipelineName currently hold the same value. pipelineId is kept for
+        // backward compatibility until the frontend drops it.
+        event.setPipelineId(pipelineName);
+        event.setPipelineName(pipelineName);
         event.setValue(value);
         event.setThreshold(rule.getThreshold());
         event.setSeverity(rule.getSeverity());

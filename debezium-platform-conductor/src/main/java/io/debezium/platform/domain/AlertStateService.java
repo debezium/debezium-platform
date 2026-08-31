@@ -68,7 +68,7 @@ public class AlertStateService extends AbstractService<AlertStateEntity, AlertSt
                 .getResultList();
     }
 
-    public void evaluate(AlertRuleEntity rule, String pipelineId, double value,
+    public void evaluate(AlertRuleEntity rule, String pipelineName, double value,
                          AlertStateEntity state, Instant now) {
         boolean conditionMet = rule.getOperator().evaluate(value, rule.getThreshold());
         Duration forDuration = Duration.parse(rule.getForDuration());
@@ -76,7 +76,7 @@ public class AlertStateService extends AbstractService<AlertStateEntity, AlertSt
         if (state == null) {
             state = new AlertStateEntity();
             state.setRule(rule);
-            state.setPipelineId(pipelineId);
+            state.setPipelineId(pipelineName);
             state.setState(AlertStateValue.OK);
         }
 
