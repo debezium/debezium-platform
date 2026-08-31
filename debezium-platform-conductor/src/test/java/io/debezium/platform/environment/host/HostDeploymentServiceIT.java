@@ -13,6 +13,7 @@ import java.util.List;
 
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -348,8 +349,8 @@ public class HostDeploymentServiceIT {
     @Test
     @Order(15)
     @Transactional
-    public void shouldDeleteDeploymentRecordBeforePipelineDelete() {
-        // Create deployment for seededPipeline3Id
+    public void shouldRejectPipelineDeleteWhenDeploymentExists() {
+        // Create deployment for pipeline3 (REQUIRES_NEW — committed immediately)
         deploymentService.createDeployment(
                 seededPipeline3Id, seededHostId,
                 new DeploymentRequest(
@@ -357,28 +358,42 @@ public class HostDeploymentServiceIT {
                         "quay.io/debezium/server:latest",
                         9099, "cascadehash"));
 
-        // Query back to get the deployment ID
+        // Attempting to delete the pipeline directly must fail:
+        // the FK constraint (without CASCADE) blocks it while a deployment still references it.
+        PipelineEntity pipeline = em.find(PipelineEntity.class, seededPipeline3Id);
+        assertThat(pipeline).isNotNull();
+        assertThatThrownBy(() -> {
+            em.remove(pipeline);
+            em.flush();
+        }).isInstanceOf(PersistenceException.class);
+
+        // Clear persistence context after the failed flush
+        em.clear();
+    }
+
+    @Test
+    @Order(16)
+    @Transactional
+    public void shouldDeleteDeploymentAfterPipelineDelete() {
+        // Deployment from Order 15 still exists (createDeployment used REQUIRES_NEW)
         HostDeployment deployment = deploymentService.requireByPipelineId(seededPipeline3Id);
         Long deploymentId = deployment.getId();
 
-        // Step 1: Delete deployment record explicitly via HostDeploymentService
+        // Correct flow: delete deployment record first, then the pipeline
         deploymentService.deleteDeployment(deploymentId);
 
-        var deletedDeployment = deploymentService.findByPipelineId(seededPipeline3Id);
-        assertThat(deletedDeployment)
-                .as("Deployment record must be deleted")
+        assertThat(deploymentService.findByPipelineId(seededPipeline3Id))
+                .as("Deployment must be deleted")
                 .isEmpty();
 
-        // Step 2: Delete pipeline entity — succeeds because deployment reference was removed
         PipelineEntity pipeline = em.find(PipelineEntity.class, seededPipeline3Id);
         assertThat(pipeline).isNotNull();
         em.remove(pipeline);
         em.flush();
         em.clear();
 
-        var deletedPipeline = em.find(PipelineEntity.class, seededPipeline3Id);
-        assertThat(deletedPipeline)
-                .as("PipelineEntity must be deleted after deployment record is removed")
+        assertThat(em.find(PipelineEntity.class, seededPipeline3Id))
+                .as("Pipeline must be deleted after deployment is removed")
                 .isNull();
     }
 }
