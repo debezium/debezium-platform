@@ -23,6 +23,8 @@ import io.debezium.operator.api.model.ConfigProperties;
 import io.debezium.operator.api.model.DebeziumServer;
 import io.debezium.operator.api.model.DebeziumServerBuilder;
 import io.debezium.operator.api.model.DebeziumServerSpecBuilder;
+import io.debezium.operator.api.model.Format;
+import io.debezium.operator.api.model.FormatType;
 import io.debezium.operator.api.model.Predicate;
 import io.debezium.operator.api.model.PredicateBuilder;
 import io.debezium.operator.api.model.Quarkus;
@@ -58,6 +60,8 @@ public class PipelineMapper {
 
     private static final String SIGNAL_ENABLED_CHANNELS_CONFIG = "signal.enabled.channels";
     private static final String NOTIFICATION_ENABLED_CHANNELS_CONFIG = "notification.enabled.channels";
+    private static final String FORMAT_CONFIG_PREFIX = "debezium.format.";
+    private static final List<String> FORMAT_PARTS = List.of("key", "value", "header");
     private static final String DEFAULT_SIGNAL_CHANNELS = "source,in-process";
     private static final String DEFAULT_NOTIFICATION_CHANNELS = "log";
     private static final String PREDICATE_PREFIX = "p";
@@ -101,7 +105,7 @@ public class PipelineMapper {
 
         var dsRuntime = createRuntime();
 
-        var dsSource = createSource(pipeline);
+        var dsSourceMapping = createSource(pipeline);
 
         var dsSink = createSink(pipeline);
 
@@ -118,8 +122,9 @@ public class PipelineMapper {
         var specBuilder = new DebeziumServerSpecBuilder()
                 .withQuarkus(dsQuarkus)
                 .withRuntime(dsRuntime)
-                .withSource(dsSource)
+                .withSource(dsSourceMapping.source())
                 .withSink(dsSink)
+                .withFormat(dsSourceMapping.format())
                 .withTransforms(transformations)
                 .withPredicates(predicates);
 
@@ -207,7 +212,15 @@ public class PipelineMapper {
                 .build();
     }
 
-    private Source createSource(PipelineFlat pipeline) {
+    /**
+     * Result of mapping a pipeline's source: the {@link Source} spec itself, plus the
+     * {@link Format} extracted from its {@code debezium.format.*} additional properties
+     * (see {@link #extractFormat(Map)}).
+     */
+    private record SourceMapping(Source source, Format format) {
+    }
+
+    private SourceMapping createSource(PipelineFlat pipeline) {
 
         var source = pipeline.getSource();
         var sourceConfig = new ConfigProperties();
@@ -219,16 +232,62 @@ public class PipelineMapper {
                     .forEach((configName, configValue) -> sourceConfig.setProps(getName(connectionType, configName, configPrefix), configValue));
         }
 
-        sourceConfig.setAllProps(source.getConfig());
+        Map<String, Object> additionalProperties = new HashMap<>(source.getConfig());
+        Format dsFormat = extractFormat(additionalProperties);
+
+        sourceConfig.setAllProps(additionalProperties);
         sourceConfig.setProps(SIGNAL_ENABLED_CHANNELS_CONFIG, DEFAULT_SIGNAL_CHANNELS);
         sourceConfig.setProps(NOTIFICATION_ENABLED_CHANNELS_CONFIG, DEFAULT_NOTIFICATION_CHANNELS);
 
-        return new SourceBuilder()
+        var dsSource = new SourceBuilder()
                 .withSourceClass(source.getType())
                 .withOffset(getOffset(pipeline))
                 .withSchemaHistory(getSchemaHistory(pipeline))
                 .withConfig(sourceConfig)
                 .build();
+
+        return new SourceMapping(dsSource, dsFormat);
+    }
+
+    /**
+     * Extracts {@code debezium.format.(key|value|header)} and
+     * {@code debezium.format.(key|value|header).*} entries from the source's additional
+     * properties into a {@link Format}, removing them from {@code additionalProperties} so
+     * they are not also emitted under {@code debezium.source.*} (see debezium/dbz#1963).
+     *
+     * <p>This is an interim solution: it lets users configure the message format (e.g. Avro
+     * with a schema registry, or disabling the JSON schema envelope) per-pipeline today,
+     * through the source's additional properties, until format becomes a first-class,
+     * reusable resource of its own.
+     */
+    private static Format extractFormat(Map<String, Object> additionalProperties) {
+        var format = new Format();
+        Map<String, FormatType> formatTypesByPart = Map.of(
+                "key", format.getKey(),
+                "value", format.getValue(),
+                "header", format.getHeader());
+
+        for (String part : FORMAT_PARTS) {
+            FormatType formatType = formatTypesByPart.get(part);
+            String typeKey = FORMAT_CONFIG_PREFIX + part;
+            String nestedPrefix = typeKey + ".";
+
+            Object type = additionalProperties.remove(typeKey);
+            if (type != null) {
+                formatType.setType(type.toString());
+            }
+
+            additionalProperties.entrySet().removeIf(entry -> {
+                if (!entry.getKey().startsWith(nestedPrefix)) {
+                    return false;
+                }
+                String nestedKey = entry.getKey().substring(nestedPrefix.length());
+                formatType.getConfig().setProps(nestedKey, entry.getValue());
+                return true;
+            });
+        }
+
+        return format;
     }
 
     private static String getName(ConnectionEntity.Type connectionType, String configName, String configPrefix) {
