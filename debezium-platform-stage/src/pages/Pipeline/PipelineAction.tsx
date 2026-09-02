@@ -1,15 +1,18 @@
-import { FormGroup, FormSelect, FormSelectOption, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, TextArea, FormGroupLabelHelp, Popover, FormHelperText, HelperText, HelperTextItem, FormFieldGroupExpandable, FormFieldGroupHeader, FormFieldGroup, Grid, GridItem } from '@patternfly/react-core';
-import React, { useEffect, useState } from 'react';
+import { FormGroup, FormSelect, FormSelectOption, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, TextArea, FormGroupLabelHelp, Popover, FormHelperText, HelperText, HelperTextItem, FormFieldGroupExpandable, FormFieldGroupHeader, FormFieldGroup, Grid, GridItem, Spinner, Content } from '@patternfly/react-core';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form"
 import { useTranslation } from 'react-i18next';
 import signalActions from "../../__mocks__/data/Signals.json";
 import { API_URL } from '@utils/constants';
 import { createPost, fetchDataCall, PipelineSignalPayload, Source, TableData } from 'src/apis';
+import { SelectedDataListItem } from 'src/apis/types';
 import { useNotification } from '@appContext/index';
 import { TrashIcon } from '@patternfly/react-icons';
 import { v4 as uuidv4 } from 'uuid';
 import { getConnectorTypeName } from '@utils/helpers';
 import './PipelineAction.css';
+import TableViewComponent from '../../components/TableViewComponent';
+import ApiComponentError from '../../components/ApiComponentError';
 
 
 const getSignalActions = () => {
@@ -46,7 +49,6 @@ const getSignalActions = () => {
 }
 
 interface FilterConditions {
-    filterCollectionName: string;
     filterCondition: string;
 }
 
@@ -55,7 +57,6 @@ interface Inputs {
     actionType: string;
     actionId: string;
     logMessage?: string;
-    collectionName?: string;
     additionalConditions?: FilterConditions[];
 }
 
@@ -75,45 +76,46 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     const [pipelineAction, setPipelineAction] = React.useState('please choose');
     const [isLoading, setIsLoading] = React.useState(false);
 
-    /* eslint-disable @typescript-eslint/no-unused-vars -- intentionally unused until collections UI is wired */
-    const [_isCollectionsLoading, setIsCollectionsLoading] = useState(false);
-    const [_collectionsError, setCollectionsError] = useState<object | undefined>(undefined);
-    const [_collections, setCollections] = useState<TableData | undefined>(undefined);
-    const [_sourceName, setSourceName] = useState<string | undefined>(undefined);
-    /* eslint-enable @typescript-eslint/no-unused-vars */
+    const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
+    const [collectionsError, setCollectionsError] = useState<object | undefined>(undefined);
+    const [collections, setCollections] = useState<TableData | undefined>(undefined);
+    const [sourceName, setSourceName] = useState<string | undefined>(undefined);
+    const [selectedDataListItems, setSelectedDataListItems] = useState<SelectedDataListItem | undefined>(undefined);
+    const [additionalConditionsSelections, setAdditionalConditionsSelections] = useState<(SelectedDataListItem | undefined)[]>([]);
 
    
 
+    const fetchConnectionCollections = useCallback(async () => {
+        if (!sourceId) return;
+        setIsCollectionsLoading(true);
+        const sourceResponse = await fetchDataCall<Source>(
+            `${API_URL}/api/sources/${sourceId}`
+        );
+        if (sourceResponse.error) {
+            setCollectionsError(sourceResponse);
+        } else {
+            const connectionId = sourceResponse.data?.connection?.id;
+            setCollectionsError(undefined);
+            setSourceName(getConnectorTypeName(sourceResponse.data?.type || ""));
+            const collectionResponse = await fetchDataCall<TableData>(
+                `${API_URL}/api/connections/${connectionId}/collections`
+            );
+            if (collectionResponse.error) {
+                setCollectionsError(collectionResponse.error.body?.error || "");
+                setCollectionsError(collectionResponse);
+            } else {
+                setCollections(collectionResponse.data as TableData);
+                setCollectionsError(undefined);
+            }
+        }
+        setIsCollectionsLoading(false);
+    }, [sourceId]);
+
     useEffect(() => {
         if (!sourceId || activeTabKey !== "action") return;
-
-        const fetchConnectionCollections = async () => {
-            setIsCollectionsLoading(true);
-            const sourceResponse = await fetchDataCall<Source>(
-                `${API_URL}/api/sources/${sourceId}`
-            );
-            if (sourceResponse.error) {
-                setCollectionsError(sourceResponse);
-            } else {
-                const connectionId = sourceResponse.data?.connection?.id;
-                setCollectionsError(undefined);
-                setSourceName(getConnectorTypeName(sourceResponse.data?.type || ""));
-                const collectionResponse = await fetchDataCall<TableData>(
-                    `${API_URL}/api/connections/${connectionId}/collections`
-                );
-                if (collectionResponse.error) {
-                    setCollectionsError(collectionResponse.error.body?.error || "");
-                    setCollectionsError(collectionResponse);
-                } else {
-                    setCollections(collectionResponse.data as TableData);
-                    setCollectionsError(undefined);
-                }
-            }
-            setIsCollectionsLoading(false);
-        };
-
-        fetchConnectionCollections();
-    }, [sourceId, activeTabKey]);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional async data fetch on dependency change
+        void fetchConnectionCollections();
+    }, [sourceId, activeTabKey, fetchConnectionCollections]);
 
     const {
         register,
@@ -133,17 +135,26 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     });
 
     const addFilterCondition = () => {
-        append({ filterCollectionName: '', filterCondition: '' });
+        append({ filterCondition: '' });
+        setAdditionalConditionsSelections(prev => [...prev, undefined]);
     };
 
     const deleteAdditionalCondition = (index: number) => {
         remove(index);
+        setAdditionalConditionsSelections(prev => prev.filter((_, i) => i !== index));
     };
 
     const deleteAllConditions = () => {
         for (let i = fields.length - 1; i >= 0; i--) {
             remove(i);
         }
+        setAdditionalConditionsSelections([]);
+    };
+
+    const getDataCollections = (selected: SelectedDataListItem | undefined): string[] => {
+        if (selected?.tables && selected.tables.length > 0) return selected.tables;
+        if (selected?.schemas && selected.schemas.length > 0) return selected.schemas;
+        return [""];
     };
 
     const onSubmit: SubmitHandler<Inputs> = (data) => {
@@ -166,11 +177,11 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                 payload = {
                     ...payload,
                     "data": JSON.stringify({
-                        "data-collections": data.collectionName ? data.collectionName.split(",").map(name => name.trim()) : [""],
+                        "data-collections": getDataCollections(selectedDataListItems),
                         "type": "INCREMENTAL",
                         ...(data.additionalConditions && data.additionalConditions.length > 0 && {
-                            "additional-conditions": data.additionalConditions.map(condition => ({
-                                "filter-collection-name": condition.filterCollectionName,
+                            "additional-conditions": data.additionalConditions.map((condition, i) => ({
+                                "filter-collection-name": getDataCollections(additionalConditionsSelections[i])[0] ?? "",
                                 "filter-condition": condition.filterCondition
                             }))
                         }),
@@ -181,7 +192,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                 payload = {
                     ...payload,
                     "data": JSON.stringify({
-                        "data-collections": data.collectionName ? data.collectionName.split(",").map(name => name.trim()) : [""],
+                        "data-collections": getDataCollections(selectedDataListItems),
                         "type": "INCREMENTAL"
                     }),
                 }
@@ -193,11 +204,11 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                 payload = {
                     ...payload,
                     "data": JSON.stringify({
-                        "data-collections": data.collectionName ? data.collectionName.split(",").map(name => name.trim()) : [""],
+                        "data-collections": getDataCollections(selectedDataListItems),
                         "type": "BLOCKING",
                         ...(data.additionalConditions && data.additionalConditions.length > 0 && {
-                            "additional-conditions": data.additionalConditions.map(condition => ({
-                                "filter-collection-name": condition.filterCollectionName,
+                            "additional-conditions": data.additionalConditions.map((condition, i) => ({
+                                "filter-collection-name": getDataCollections(additionalConditionsSelections[i])[0] ?? "",
                                 "filter-condition": condition.filterCondition
                             }))
                         }),
@@ -210,7 +221,46 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
 
     const handleOptionChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
         setPipelineAction(value);
+        setSelectedDataListItems(undefined);
     };
+
+    const renderTableExplorer = useCallback((
+        selected: SelectedDataListItem | undefined,
+        onSelect: (items: SelectedDataListItem | undefined) => void,
+    ) => {
+        if (!sourceId) return null;
+        if (isCollectionsLoading) {
+            return (
+                <FormFieldGroup>
+                    <Spinner aria-label="Table explorer" />
+                </FormFieldGroup>
+            );
+        }
+        if (collectionsError) {
+            return (
+                <FormFieldGroup>
+                    <ApiComponentError
+                        error={collectionsError}
+                        isCompact={true}
+                        retry={() => { void fetchConnectionCollections(); }}
+                    />
+                </FormFieldGroup>
+            );
+        }
+        return (
+            <div className="table-explorer-section">
+                <Content component="h3" className="table-explorer-section__title">
+                    {t("pipeline:actions.collectionField")}
+                    {sourceName ? ` (${sourceName})` : ""}
+                </Content>
+                <TableViewComponent
+                    collections={collections}
+                    setSelectedDataListItems={onSelect}
+                    selectedDataListItems={selected}
+                />
+            </div>
+        );
+    }, [sourceId, isCollectionsLoading, collectionsError, collections, sourceName, fetchConnectionCollections, t]);
 
     const sendPipelineSignalAction = async (payload: PipelineSignalPayload) => {
         const response = await createPost(`${API_URL}/api/pipelines/${pipelineId}/signals`, payload);
@@ -320,47 +370,15 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                         );
                                     case "stopAdhocSnapshotActions":
                                         return (
-
-                                            <FormGroup label={t("pipeline:actions.collectionField")} fieldId="collection-name"
-                                                labelHelp={
-                                                    <Popover
-                                                        bodyContent={
-                                                            <div>
-
-                                                                {t("pipeline:actions.collectionFieldDescription")}
-                                                            </div>
-                                                        }
-                                                    >
-                                                        <FormGroupLabelHelp aria-label="More info for name field" />
-                                                    </Popover>
-                                                }
-                                            >
-                                                <TextInput type="text" id="collection-name"
-
-                                                    {...register("collectionName")} />
-                                            </FormGroup>
+                                            <>
+                                                {renderTableExplorer(selectedDataListItems, setSelectedDataListItems)}
+                                            </>
                                         );
                                     case "blockingSnapshotActions":
                                     case "adhocSnapshotActions":
                                         return (
                                             <>
-                                                <FormGroup label={t("pipeline:actions.collectionField")} fieldId="collection-name"
-                                                    labelHelp={
-                                                        <Popover
-                                                            bodyContent={
-                                                                <div>
-
-                                                                    {t("pipeline:actions.collectionFieldDescription")}
-                                                                </div>
-                                                            }
-                                                        >
-                                                            <FormGroupLabelHelp aria-label="More info for name field" />
-                                                        </Popover>
-                                                    }
-                                                >
-                                                    <TextInput type="text" id="collection-name"
-                                                        {...register("collectionName")} />
-                                                </FormGroup>
+                                                {renderTableExplorer(selectedDataListItems, setSelectedDataListItems)}
                                                 <FormFieldGroupExpandable
                                                     isExpanded
                                                     toggleAriaLabel="Details"
@@ -413,24 +431,15 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                                                     {...register(`additionalConditions.${index}.filterCondition` as const)}
                                                                 />
                                                             </FormGroup>
-                                                            <FormGroup label={t("pipeline:actions.filterConditionFields.collectionsField")} fieldId={`filter-collection-name-field-${index}`}
-                                                                labelHelp={
-                                                                    <Popover
-                                                                        bodyContent={
-                                                                            <div>
-                                                                                {t("pipeline:actions.filterConditionFields.collectionsHelperText")}
-                                                                            </div>
-                                                                        }
-                                                                    >
-                                                                        <FormGroupLabelHelp aria-label="More info for name field" />
-                                                                    </Popover>
-                                                                }
-                                                            >
-                                                                <TextInput
-                                                                    type="text"
-                                                                    id={`filter-collection-name-${index}`}
-                                                                    {...register(`additionalConditions.${index}.filterCollectionName` as const)}
-                                                                />
+                                                            <FormGroup label={t("pipeline:actions.filterConditionFields.collectionsField")} fieldId={`filter-collection-name-field-${index}`}>
+                                                                {renderTableExplorer(
+                                                                    additionalConditionsSelections[index],
+                                                                    (items) => setAdditionalConditionsSelections(prev => {
+                                                                        const next = [...prev];
+                                                                        next[index] = items;
+                                                                        return next;
+                                                                    })
+                                                                )}
                                                             </FormGroup>
                                                         </FormFieldGroup>
                                                     ))}
@@ -453,44 +462,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
 
                     </Form>
                 </GridItem>
-                {/* <GridItem span={4} style={{ height: "100%", overflowY: "auto" }}>
-                    {
-                        isCollectionsLoading ?
-                            <FormFieldGroup>
-                                <br />
-                                <Skeleton fontSize="md" width="75%" />
-                                <br />
-                                <Skeleton fontSize="2xl" width="75%" />
-                                <br />
-                                <Skeleton fontSize="md" width="50%" />
-                                <br />
-                                <Skeleton fontSize="md" width="50%" />
-                                <br />
-                                <Skeleton fontSize="md" width="50%" />
-                                <br />
-                            </FormFieldGroup> : !_.isEmpty(collectionsError) ? <FormFieldGroup> <ApiComponentError error={collectionsError || {}} isCompact={true} retry={fetchConnectionCollections} />   </FormFieldGroup> : <FormFieldGroup
-                                className="table-explorer-section"
-                                header={
-                                    <FormFieldGroupHeader
-                                        titleText={{
-                                            text: <span style={{ fontWeight: 500 }}>{t("source:create.dataTableTitle", { val: sourceName })}</span>,
-                                            id: `field-group-data-table-id`,
-                                        }}
-                                        titleDescription={t("source:create.dataTableDescriptionAction", {
-                                            val: sourceName ?
-                                                (() => {
-                                                    const databaseType = _.find(Object.keys(DatabaseItemsList), (key) => sourceName.toLowerCase().includes(key));
-                                                    return databaseType ? DatabaseItemsList[databaseType as keyof typeof DatabaseItemsList].join(" and ") : "";
-                                                })()
-                                                : ""
-                                        })}
-                                    />
-                                }
-                            >
-                                <TableViewComponent collections={collections} setSelectedDataListItems={() => { }} />
-                            </FormFieldGroup>
-                    }
-                </GridItem> */}
             </Grid>
         </>
 
