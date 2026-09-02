@@ -41,6 +41,7 @@ import {
   Alert,
   ClipboardCopy,
   Tooltip,
+  Spinner,
 } from "@patternfly/react-core";
 import {
   AddCircleOIcon,
@@ -496,15 +497,14 @@ const CreateSchemaForm = React.forwardRef<
         : { message: String(collectionsQueryError) }
       : undefined;
 
+  // Table Explorer is only for sources, not destinations
   const renderDataTableExplorer = useCallback(() => {
-    // Table Explorer is only for sources, not destinations
     if (isDestination) return null;
     if (!selectedConnection?.id) return null;
     if (isCollectionsLoading) {
       return (
         <FormFieldGroup>
-          <Skeleton fontSize="2xl" width="50%" />
-          <Skeleton fontSize="md" width="33%" />
+         <Spinner aria-label="Table explorer" />
         </FormFieldGroup>
       );
     }
