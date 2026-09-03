@@ -83,8 +83,10 @@ import { useTranslation } from "react-i18next";
 
 type EntityFilterMode = "pipeline" | "rule" | "severity" | "status";
 
-const parseStatusQueryParam = (value: string | null): AlertEventStatus | undefined =>
-  value === "FIRING" || value === "RESOLVED" ? value : undefined;
+const parseStatusQueryParam = (value: string | null): AlertEventStatus | undefined => {
+  const normalized = value?.toLowerCase();
+  return normalized === "firing" || normalized === "resolved" ? normalized : undefined;
+};
 
 const getDefaultCustomRange = () => {
   const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
@@ -557,7 +559,7 @@ const AlertEvents: React.FC = () => {
           </Button>
         );
       case "status":
-        return event.status === "FIRING" ? (
+        return event.status === "firing" ? (
           <Label color={LabelColor.red}>Firing</Label>
         ) : (
           <Label color={LabelColor.green}>Resolved</Label>
@@ -573,7 +575,7 @@ const AlertEvents: React.FC = () => {
       case "createdAt":
         return formatDateTime(event.createdAt);
       case "duration":
-        return formatDurationSeconds(event.durationSeconds, event.status === "FIRING");
+        return formatDurationSeconds(event.durationSeconds, event.status === "firing");
     }
   };
 
@@ -630,10 +632,10 @@ const AlertEvents: React.FC = () => {
                   />
                   <SingleSelectFilter
                     label="Filter by status"
-                    options={["FIRING", "RESOLVED"] as AlertEventStatus[]}
+                    options={["firing", "resolved"] as AlertEventStatus[]}
                     selected={statusFilter}
                     onChange={setStatusFilter}
-                    getLabel={(v) => (v === "FIRING" ? "Firing" : "Resolved")}
+                    getLabel={(v) => (v === "firing" ? "Firing" : "Resolved")}
                         showToolbarItem={entityFilterMode === "status"}
                   />
                   <TypeaheadMultiSelectFilter
@@ -667,10 +669,10 @@ const AlertEvents: React.FC = () => {
                 <ToolbarItem>
                   <SingleSelectFilter
                     label="Status"
-                    options={["FIRING", "RESOLVED"] as AlertEventStatus[]}
+                    options={["firing", "resolved"] as AlertEventStatus[]}
                     selected={statusFilter}
                     onChange={setStatusFilter}
-                    getLabel={(v) => (v === "FIRING" ? "Firing" : "Resolved")}
+                    getLabel={(v) => (v === "firing" ? "Firing" : "Resolved")}
                   />
                 </ToolbarItem>
               </ToolbarGroup> */}
@@ -820,7 +822,7 @@ const AlertEvents: React.FC = () => {
                                 <dd>
                                   {formatDurationSeconds(
                                     event.durationSeconds,
-                                    event.status === "FIRING"
+                                    event.status === "firing"
                                   )}
                                 </dd>
                                 <dt>Value</dt>

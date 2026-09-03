@@ -177,7 +177,7 @@ test.skipIf(!isRouteNavVisible("Alerts"))(
 
     await userEvent.click(screen.getByRole("button", { name: /alerts/i }));
     expect(screen.getByTestId("location")).toHaveTextContent(
-      "/alerts/history?status=FIRING"
+      "/alerts/history?status=firing"
     );
   }
 );
@@ -221,6 +221,6 @@ test.skipIf(!isRouteNavVisible("Alerts"))(
     const { container } = render(<AppSideNavigation isSidebarOpen={false} />);
 
     expect(await screen.findByLabelText("2 firing alerts")).toBeInTheDocument();
-    expect(container.querySelector('a[href="/alerts/history?status=FIRING"]')).not.toBeNull();
+    expect(container.querySelector('a[href="/alerts/history?status=firing"]')).not.toBeNull();
   }
 );

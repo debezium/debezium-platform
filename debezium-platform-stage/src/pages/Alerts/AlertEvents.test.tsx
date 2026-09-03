@@ -27,7 +27,7 @@ const singlePageResponse = (
       ruleName: "high-source-lag",
       pipelineId: "payments-stream",
       pipelineName: "Payments Stream",
-      status: "FIRING",
+      status: "firing",
       value: 1500,
       threshold: 1000,
       severity: "CRITICAL",
@@ -155,13 +155,13 @@ describe("AlertHistory", () => {
     });
   });
 
-  it("requests status=FIRING when the URL includes status=FIRING", async () => {
-    render(<AlertHistory />, { initialEntries: ["/alerts/history?status=FIRING"] });
+  it("requests status=firing when the URL includes status=firing", async () => {
+    render(<AlertHistory />, { initialEntries: ["/alerts/history?status=firing"] });
 
     await screen.findByText("high-source-lag");
 
     expect(lastRequestedUrl("/api/alerts/events").searchParams.getAll("status")).toEqual([
-      "FIRING",
+      "firing",
     ]);
   });
 
@@ -175,7 +175,7 @@ describe("AlertHistory", () => {
     await userEvent.click(within(listbox).getByText("Firing"));
 
     await waitFor(() => {
-      expect(lastRequestedUrl("/api/alerts/events").searchParams.getAll("status")).toEqual(["FIRING"]);
+      expect(lastRequestedUrl("/api/alerts/events").searchParams.getAll("status")).toEqual(["firing"]);
     });
 
     await userEvent.click(screen.getByRole("button", { name: "Filter by status" }));
@@ -183,7 +183,7 @@ describe("AlertHistory", () => {
     await userEvent.click(within(nextListbox).getByText("Resolved"));
 
     await waitFor(() => {
-      expect(lastRequestedUrl("/api/alerts/events").searchParams.getAll("status")).toEqual(["RESOLVED"]);
+      expect(lastRequestedUrl("/api/alerts/events").searchParams.getAll("status")).toEqual(["resolved"]);
     });
   });
 

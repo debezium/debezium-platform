@@ -101,7 +101,7 @@ export interface AlertChannelTestResponse {
   message: string;
 }
 
-export type AlertEventStatus = "FIRING" | "RESOLVED";
+export type AlertEventStatus = "firing" | "resolved";
 
 export interface AlertEvent {
   id: number;

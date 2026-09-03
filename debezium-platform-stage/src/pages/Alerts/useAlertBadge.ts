@@ -7,7 +7,7 @@ import { AlertStatusResponse } from "./alertsTypes";
 export type AlertBadgeTone = "critical" | "warning" | "idle";
 
 export const ALERTS_DEFAULT_PATH = "/alerts/history";
-export const FIRING_ALERTS_PATH = `${ALERTS_DEFAULT_PATH}?status=FIRING`;
+export const FIRING_ALERTS_PATH = `${ALERTS_DEFAULT_PATH}?status=firing`;
 
 export const getAlertBadgePresentation = (
   status: AlertStatusResponse | undefined
