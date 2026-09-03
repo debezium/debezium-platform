@@ -176,7 +176,7 @@ describe("PipelineDetails API failure", () => {
   afterEach(() => {
     vi.mocked(fetchDataTypeTwo).mockResolvedValue({
       data: mockPipeline,
-      error: null,
+      error: undefined,
     });
   });
 
