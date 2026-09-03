@@ -139,7 +139,7 @@ export type Connection = {
   id: number;
 };
 
-export type PipelineStatus = "FAILED";
+export type PipelineStatus = "FAILED" | "DEPLOYING" | "RUNNING";
 
 export type Pipeline = {
   name: string;

@@ -5,6 +5,8 @@
   "deletePipeline": "Elimina pipeline",
   "dbzServerButton": "Configurazione server DBZ",
   "pipelineFailureMsg": "Impossibile avviare la pipeline",
+  "pipelineDeployingMsg": "Distribuzione della pipeline in corso",
+  "pipelineRunningMsg": "La pipeline è in esecuzione con successo",
   "debeziumServerModal": {
     "title": "Crea risorse pipeline utilizzando la configurazione del server Debezium",
     "description": "Carica un file di configurazione del server Debezium per creare automaticamente le risorse della pipeline. Caricando un file di configurazione verranno creati un'origine, trasformazioni e una destinazione in modo sincrono in base alla configurazione caricata e infine potrai creare una pipeline utilizzando queste risorse.",

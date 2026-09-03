@@ -41,6 +41,11 @@
             "uniqueChannelNameError": "A channel with this name already exists."
         }
     },
+    "pipelineStatus": {
+        "failed": "Failed",
+        "deploying": "Deploying",
+        "running": "Running"
+    },
     "apis": {
         "failedToCreate": "Failed to create {{val}}",
         "failedToUpdate": "Failed to update {{val}}",

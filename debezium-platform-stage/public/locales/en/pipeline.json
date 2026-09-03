@@ -5,6 +5,8 @@
     "deletePipeline": "Delete pipeline",
     "dbzServerButton": "Debezium server configuration",
     "pipelineFailureMsg": "Failed to start the pipeline",
+    "pipelineDeployingMsg": "Deploying the pipeline",
+    "pipelineRunningMsg": "Pipeline is running successful",
     "debeziumServerModal": {
         "title": "Create pipeline resources using Debezium server configuration",
         "description": "Upload a Debezium server configuration file to auto create pipeline resources. On uploading a config file a source, transforms and a destination will be created synchronously based on the uploaded config and then finally you can create a pipeline using these resources.",

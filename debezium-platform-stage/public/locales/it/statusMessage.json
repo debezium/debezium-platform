@@ -41,6 +41,11 @@
             "uniqueChannelNameError": "Esiste già un canale con questo nome."
         }
     },
+    "pipelineStatus": {
+        "failed": "Fallita",
+        "deploying": "In distribuzione",
+        "running": "In esecuzione"
+    },
     "apis": {
         "failedToCreate": "Creazione di {{val}} non riuscita",
         "failedToUpdate": "Aggiornamento di {{val}} non riuscito",

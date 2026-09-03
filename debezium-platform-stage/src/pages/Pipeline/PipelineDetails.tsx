@@ -3,10 +3,12 @@ import * as React from "react";
 import {
   Alert,
   Button,
+  EmptyState,
   Icon,
   Label,
   LabelColor,
   PageSection,
+  Spinner,
   Tab,
   TabContent,
   TabContentBody,
@@ -19,9 +21,12 @@ import {
   editPut,
   fetchDataTypeTwo,
   Pipeline,
+  PipelineStatus,
+  Transform,
 } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { buildPipelineRestartPayload } from "@utils/pipelineUtils";
+import { useVisibilityPolling } from "../../hooks/useVisibilityPolling";
 
 import "./PipelineDetails.css";
 import PipelineLog from "./PipelineLog";
@@ -37,6 +42,16 @@ import {
 import { PageHeader } from "@patternfly/react-component-groups";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { InfoAltIcon, RhUiPathIcon } from "@patternfly/react-icons";
+import ApiError from "../../components/ApiError";
+
+const PIPELINE_STATUS_CONFIG: Record<PipelineStatus, { color: LabelColor; labelKey: string; tooltipKey: string }> = {
+  FAILED:   { color: LabelColor.red,   labelKey: "statusMessage:pipelineStatus.failed",    tooltipKey: "pipeline:pipelineFailureMsg"   },
+  DEPLOYING:{ color: LabelColor.yellow,  labelKey: "statusMessage:pipelineStatus.deploying", tooltipKey: "pipeline:pipelineDeployingMsg" },
+  RUNNING:  { color: LabelColor.green, labelKey: "statusMessage:pipelineStatus.running",   tooltipKey: "pipeline:pipelineRunningMsg"   },
+};
+
+const EMPTY_TRANSFORMS: Transform[] = [];
+const EMPTY_LOG_LEVELS: Record<string, string> = {};
 
 const PipelineDetails: React.FunctionComponent = () => {
   const { pipelineId, detailsTab } = useParams<{
@@ -99,7 +114,9 @@ const PipelineDetails: React.FunctionComponent = () => {
 
       if (response.error) {
         setError(response.error);
+        setPipeline(undefined);
       } else {
+        setError(null);
         setPipeline(response.data as Pipeline);
       }
       setIsFetchLoading(false);
@@ -112,18 +129,49 @@ const PipelineDetails: React.FunctionComponent = () => {
     };
   }, [pipelineId]);
 
-  const refreshPipeline = async () => {
+  const refreshPipeline = React.useCallback(async () => {
     const response = await fetchDataTypeTwo<Pipeline>(
       `${API_URL}/api/pipelines/${pipelineId}`
     );
 
     if (response.error) {
-      setError(response.error);
       return;
     }
 
+    setError(null);
     setPipeline(response.data as Pipeline);
-  };
+  }, [pipelineId]);
+
+  // Poll the pipeline every 5s so the header status can move DEPLOYING → RUNNING.
+  // Skip until the first load succeeds, and pause on Edit so in-progress form
+  // state is not competing with a full refetch. Pauses when the browser tab is hidden.
+  useVisibilityPolling(
+    5_000,
+    () => { void refreshPipeline(); },
+    !!pipeline && activeTabKey !== "edit"
+  );
+
+  // Stabilize the sub-objects so PipelineDesignerEdit's useEffect deps don't
+  const stablePipelineSource = React.useMemo(
+    () => pipeline?.source,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(pipeline?.source)]
+  );
+  const stablePipelineDestination = React.useMemo(
+    () => pipeline?.destination,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(pipeline?.destination)]
+  );
+  const stableTransforms = React.useMemo(
+    () => pipeline?.transforms,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(pipeline?.transforms)]
+  );
+  const stableLogLevels = React.useMemo(
+    () => pipeline?.logLevels,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(pipeline?.logLevels)]
+  );
 
   const onRestartHandler = async () => {
     if (!pipeline) {
@@ -194,22 +242,47 @@ const PipelineDetails: React.FunctionComponent = () => {
   );
 
   if (isFetchLoading) {
-    return <div>Loading...</div>;
+    return (
+      <PageSection isWidthLimited>
+        <EmptyState
+          titleText={t("loading")}
+          headingLevel="h4"
+          icon={Spinner}
+        />
+      </PageSection>
+    );
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <PageSection isWidthLimited>
+        <ApiError
+          errorType="large"
+          errorMsg={error}
+          secondaryActions={
+            <Button variant="link" onClick={() => navigate("/pipeline")}>
+              {t("goTo", { val: t("pipeline") })}
+            </Button>
+          }
+        />
+      </PageSection>
+    );
   }
+
+  const statusConfig = pipeline?.status ? PIPELINE_STATUS_CONFIG[pipeline.status] : null;
 
   return (
     <>
       <PageHeader
         title={pipeline?.name}
         subtitle={pipeline?.description}
-        label={pipeline?.status === "FAILED" ?   <Label color={LabelColor.red}>
-                                               {t("failed")}
-                                          
-                                              </Label> : ""}
+        label={
+          statusConfig ? (
+             <Label color={statusConfig.color}>
+                    {t(statusConfig.labelKey)}
+                  </Label>
+          ) : ""
+        }
         icon={<Icon size="2xl" className="custom-header_icon" isInProgress={pipeline === undefined} >
           <RhUiPathIcon />
         </Icon>}
@@ -226,7 +299,7 @@ const PipelineDetails: React.FunctionComponent = () => {
           ) : undefined
         }
       />
-      {pipeline?.errorMessage && (
+      {pipeline?.status === "FAILED" && pipeline.errorMessage && (
         <PageSection
           isWidthLimited
           padding={{ default: "noPadding" }}
@@ -297,7 +370,13 @@ const PipelineDetails: React.FunctionComponent = () => {
           hidden={"overview" !== activeTabKey}
         >
           <TabContentBody>
-            <PipelineOverview pipelineId={pipelineId || ""} activeTabKey={activeTabKey} />
+            {pipeline && (
+              <PipelineOverview
+                pipelineId={pipelineId || ""}
+                activeTabKey={activeTabKey}
+                pipeline={pipeline}
+              />
+            )}
           </TabContentBody>
         </TabContent>
         {isPipelineTabEnabled("logs") && (
@@ -326,15 +405,15 @@ const PipelineDetails: React.FunctionComponent = () => {
           className="pipeline-details__tab-error"
         >
           <TabContentBody className="pipeline-details__tab-error">
-            {pipeline?.id && (
+            {pipeline?.id && stablePipelineSource && stablePipelineDestination && (
               <PipelineDesignerEdit
-                pipelineSource={pipeline?.source}
-                pipelineDestination={pipeline?.destination}
-                transforms={pipeline?.transforms}
-                name={pipeline?.name}
+                pipelineSource={stablePipelineSource}
+                pipelineDestination={stablePipelineDestination}
+                transforms={stableTransforms ?? EMPTY_TRANSFORMS}
+                name={pipeline.name}
                 desc={pipeline.description || ""}
                 definedLogLevel={pipeline.logLevel}
-                definedLogLevels={pipeline?.logLevels}
+                definedLogLevels={stableLogLevels ?? EMPTY_LOG_LEVELS}
                 pipelineId={pipeline.id}
               />
             )}

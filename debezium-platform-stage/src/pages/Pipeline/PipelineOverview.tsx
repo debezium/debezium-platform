@@ -23,7 +23,6 @@ import {
   Destination,
   Connection,
   fetchDataTypeTwo,
-  Transform,
   TransformData,
 } from "src/apis/apis";
 import "./PipelineOverview.css";
@@ -44,12 +43,13 @@ import {
   triggerPropertiesDownload,
 } from "@utils/generateServerConfig";
 
-type PipelineOverviewProp = {
+export type PipelineOverviewProp = {
   pipelineId: string;
   activeTabKey: string;
+  pipeline: Pipeline;
 };
 
-const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }) => {
+const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey, pipeline }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { addNotification } = useNotification();
@@ -57,9 +57,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }
   const navigateTo = (url: string) => {
     navigate(url);
   };
-  const [pipeline, setPipeline] = useState<Pipeline>()
   const [source, setSource] = useState<Source>();
-  const [transforms, setTransforms] = useState<Transform[]>([]);
   const [destination, setDestination] = useState<Destination>();
   const [isFetchLoading, setIsFetchLoading] = useState<boolean>(true);
   const [isSourceFetchLoading, setIsSourceFetchLoading] =
@@ -68,6 +66,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }
     useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isExportLoading, setIsExportLoading] = useState<boolean>(false);
+  const transforms = pipeline.transforms ?? [];
 
   const handleExportServerConfig = useCallback(async () => {
     if (!source || !destination || !pipeline) return;
@@ -133,54 +132,65 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey }
     } finally {
       setIsExportLoading(false);
     }
-  }, [source, destination, transforms, addNotification, t]);
+  }, [source, destination, transforms, pipeline, addNotification, t]);
 
   useEffect(() => {
     if (activeTabKey !== "overview") return;
 
-    const fetchData = async () => {
+    const sourceId = pipeline.source?.id;
+    const destinationId = pipeline.destination?.id;
+    if (!sourceId || !destinationId) {
+      setIsFetchLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchResources = async () => {
       setIsFetchLoading(true);
+      setIsSourceFetchLoading(true);
+      setIsDestinationFetchLoading(true);
+      setError(null);
+
       try {
-        const pipelineResponse = await fetchDataTypeTwo<Pipeline>(
-          `${API_URL}/api/pipelines/${pipelineId}`
-        );
+        const [sourceResponse, destinationResponse] = await Promise.all([
+          fetchDataTypeTwo<Source>(
+            `${API_URL}/api/sources/${sourceId}`
+          ),
+          fetchDataTypeTwo<Destination>(
+            `${API_URL}/api/destinations/${destinationId}`
+          ),
+        ]);
 
-        if (pipelineResponse.error) {
-          throw new Error(pipelineResponse.error);
+        if (cancelled) {
+          return;
         }
 
-        const pipelineData = pipelineResponse.data as Pipeline;
-        setTransforms(pipelineData.transforms as Transform[]);
-        setPipeline(pipelineData);
-        if (pipelineData?.source?.id && pipelineData?.destination?.id) {
-          const [sourceResponse, destinationResponse] = await Promise.all([
-            fetchDataTypeTwo<Source>(
-              `${API_URL}/api/sources/${pipelineData.source.id}`
-            ),
-            fetchDataTypeTwo<Destination>(
-              `${API_URL}/api/destinations/${pipelineData.destination.id}`
-            ),
-          ]);
-
-          if (!sourceResponse.error) {
-            setSource(sourceResponse.data as Source);
-          }
-
-          if (!destinationResponse.error) {
-            setDestination(destinationResponse.data as Destination);
-          }
+        if (sourceResponse.error || destinationResponse.error) {
+          throw new Error(sourceResponse.error ?? destinationResponse.error);
         }
+
+        setSource(sourceResponse.data as Source);
+        setDestination(destinationResponse.data as Destination);
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : String(err));
+        }
       } finally {
-        setIsFetchLoading(false);
-        setIsSourceFetchLoading(false);
-        setIsDestinationFetchLoading(false);
+        if (!cancelled) {
+          setIsFetchLoading(false);
+          setIsSourceFetchLoading(false);
+          setIsDestinationFetchLoading(false);
+        }
       }
     };
 
-    fetchData();
-  }, [pipelineId, activeTabKey]);
+    void fetchResources();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTabKey, pipeline.source?.id, pipeline.destination?.id]);
 
   const CompositionFlowMemo = memo(CompositionFlow);
 

@@ -1,11 +1,22 @@
 import { screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, afterEach } from "vitest";
 import { Route, Routes } from "react-router-dom";
 import { PipelineDetails } from "./PipelineDetails";
 import { render } from "../../__test__/unit/test-utils";
+import { fetchDataTypeTwo } from "../../apis/apis";
 
-const { mockNavigate } = vi.hoisted(() => ({
+const { mockNavigate, mockPipeline } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
+  mockPipeline: {
+    id: 123,
+    name: "test-pipeline",
+    description: "",
+    source: { id: 1 },
+    destination: { id: 2 },
+    transforms: [],
+    logLevel: "INFO",
+    logLevels: {},
+  },
 }));
 
 vi.mock("react-router-dom", async () => {
@@ -38,16 +49,7 @@ vi.mock("./PipelineMonitoring", () => ({
 
 vi.mock("../../apis/apis", () => ({
   fetchDataTypeTwo: vi.fn().mockResolvedValue({
-    data: {
-      id: 123,
-      name: "test-pipeline",
-      description: "",
-      source: { id: 1 },
-      destination: { id: 2 },
-      transforms: [],
-      logLevel: "INFO",
-      logLevels: {},
-    },
+    data: mockPipeline,
     error: null,
   }),
 }));
@@ -167,5 +169,34 @@ describe("PipelineDetails feature gating", () => {
     expect(screen.getByText("Monitoring content")).toBeInTheDocument();
     expect(screen.getByText("Actions")).toBeInTheDocument();
     expect(screen.getByText("Logs")).toBeInTheDocument();
+  });
+});
+
+describe("PipelineDetails API failure", () => {
+  afterEach(() => {
+    vi.mocked(fetchDataTypeTwo).mockResolvedValue({
+      data: mockPipeline,
+      error: null,
+    });
+  });
+
+  it("shows the API error empty state with retry when pipeline fetch fails", async () => {
+    vi.mocked(fetchDataTypeTwo).mockResolvedValue({
+      error: "Failed to fetch data: Internal Server Error",
+    });
+
+    renderPipelineDetails("/pipeline/123/overview");
+
+    expect(
+      await screen.findByRole("heading", { name: "Failed to load" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Error: Failed to fetch data: Internal Server Error")
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /refresh/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /go to pipelines/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Overview content")).not.toBeInTheDocument();
   });
 });

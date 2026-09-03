@@ -91,6 +91,57 @@ export type ActionData = {
   status?: PipelineStatus
 };
 
+type StatusConfig = {
+  color: LabelColor;
+  labelKey: string;
+  tooltipKey: string;
+};
+
+const STATUS_CONFIG: Record<PipelineStatus, StatusConfig> = {
+  FAILED: {
+    color: LabelColor.red,
+    labelKey: "statusMessage:pipelineStatus.failed",
+    tooltipKey: "pipeline:pipelineFailureMsg",
+  },
+  DEPLOYING: {
+    color: LabelColor.yellow,
+    labelKey: "statusMessage:pipelineStatus.deploying",
+    tooltipKey: "pipeline:pipelineDeployingMsg",
+  },
+  RUNNING: {
+    color: LabelColor.green,
+    labelKey: "statusMessage:pipelineStatus.running",
+    tooltipKey: "pipeline:pipelineRunningMsg",
+  },
+};
+
+type PipelineStatusLabelProps = {
+  status: PipelineStatus;
+  onLabelClick: () => void;
+};
+
+const PipelineStatusLabel: React.FC<PipelineStatusLabelProps> = ({ status, onLabelClick }) => {
+  const { t } = useTranslation();
+  const { color, labelKey, tooltipKey } = STATUS_CONFIG[status];
+  return (
+    <Flex alignItems={{ default: "alignItemsCenter" }}>
+      <FlexItem>
+        <Tooltip
+          aria="none"
+          aria-live="polite"
+          exitDelay={100}
+          flipBehavior="flip"
+          content={t(tooltipKey)}
+        >
+          <Label color={color} onClick={status === "FAILED" ? onLabelClick : undefined}>
+            {t(labelKey)}
+          </Label>
+        </Tooltip>
+      </FlexItem>
+    </Flex>
+  );
+};
+
 const Pipelines: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -601,25 +652,11 @@ const Pipelines: React.FunctionComponent = () => {
                                 />
 
                                 <Td dataLabel={t("status")} style={{ alignContent: "center", verticalAlign: "middle" }}>
-                                  {instance.status === "FAILED" && (
-                                    <Flex alignItems={{ default: "alignItemsCenter" }}>
-                                      <FlexItem>
-                                        <Tooltip
-                                          aria="none"
-                                          aria-live="polite"
-                                          exitDelay={100}
-                                          flipBehavior="flip"
-                                          content={t("pipeline:pipelineFailureMsg")}
-                                        >
-                                          <Label
-                                            color={LabelColor.red}
-                                            onClick={onPipelineClick(instance.id)}
-                                          >
-                                            {t("failed")}
-                                          </Label>
-                                        </Tooltip>
-                                      </FlexItem>
-                                    </Flex>
+                                  {instance.status && (
+                                    <PipelineStatusLabel
+                                      status={instance.status}
+                                      onLabelClick={onPipelineClick(instance.id)}
+                                    />
                                   )}
                                 </Td>
                                 <Td modifier="fitContent" hasAction style={{ alignContent: "center" }}>

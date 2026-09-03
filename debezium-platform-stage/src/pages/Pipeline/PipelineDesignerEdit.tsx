@@ -242,7 +242,8 @@ const PipelineDesignerEdit: React.FunctionComponent<
       if (pipelineSource?.id) {
         fetchSource();
       }
-    }, [pipelineSource]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pipelineSource?.id]);
 
     useEffect(() => {
       const fetchDestination = async () => {
@@ -262,7 +263,8 @@ const PipelineDesignerEdit: React.FunctionComponent<
       if (pipelineDestination?.id) {
         fetchDestination();
       }
-    }, [pipelineDestination]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pipelineDestination?.id]);
 
     useLayoutEffect(() => {
       if (initializedPipelineIdRef.current === pipelineId) {
