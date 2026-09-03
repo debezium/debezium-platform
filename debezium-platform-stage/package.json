@@ -81,7 +81,7 @@
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.68.0",
     "@vitejs/plugin-react": "^5.2.0",
-    "@vitejs/plugin-react-swc": "^4.3.0",
+    "@vitejs/plugin-react-swc": "^4.3.3",
     "@vitest/coverage-v8": "^4.1.0",
     "chromatic": "^18.0.1",
     "cypress": "^15.14.2",
