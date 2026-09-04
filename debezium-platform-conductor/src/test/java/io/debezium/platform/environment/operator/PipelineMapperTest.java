@@ -238,15 +238,16 @@ public class PipelineMapperTest {
     @Test
     @FixFor("debezium/dbz#1963")
     public void testMapper_ShouldExtractFormatFromSourceAdditionalProperties() {
-        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
-                DATABASE, "customers",
-                USERNAME, "sa"));
-        when(pipeline.getSource().getConfig()).thenReturn(Map.of(
-                "debezium.format.key", "json",
-                "debezium.format.key.schemas.enable", "false",
-                "debezium.format.value", "json",
-                "debezium.format.value.schemas.enable", "false",
-                "snapshot.mode", "when_needed"));
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL,
+                Map.of(
+                        DATABASE, "customers",
+                        USERNAME, "sa"),
+                Map.of(
+                        "debezium.format.key", "json",
+                        "debezium.format.key.schemas.enable", "false",
+                        "debezium.format.value", "json",
+                        "debezium.format.value.schemas.enable", "false",
+                        "snapshot.mode", "when_needed"));
 
         var result = pipelineMapper.map(pipeline);
 
@@ -322,6 +323,11 @@ public class PipelineMapperTest {
     }
 
     private PipelineFlat mockPipelineWithSource(ConnectionEntity.Type type, Map<String, Object> connectionConfig) {
+        return mockPipelineWithSource(type, connectionConfig, Map.of());
+    }
+
+    private PipelineFlat mockPipelineWithSource(ConnectionEntity.Type type, Map<String, Object> connectionConfig,
+                                                Map<String, Object> sourceConfig) {
         var pipeline = mock(PipelineFlat.class);
         var source = mock(SourceFlat.class);
         var destination = mock(DestinationFlat.class);
@@ -331,6 +337,7 @@ public class PipelineMapperTest {
         when(connection.getConfig()).thenReturn(connectionConfig);
 
         when(source.getConnection()).thenReturn(connection);
+        when(source.getConfig()).thenReturn(sourceConfig);
 
         when(pipeline.getSource()).thenReturn(source);
         when(pipeline.getDestination()).thenReturn(destination);

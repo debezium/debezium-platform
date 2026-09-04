@@ -13,6 +13,7 @@ import static io.debezium.platform.environment.database.DatabaseConnectionConfig
 import static io.debezium.platform.environment.database.DatabaseConnectionFactory.DATABASE_CONNECTION_CONFIGURATION_PREFIX;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -277,14 +278,15 @@ public class PipelineMapper {
                 formatType.setType(type.toString());
             }
 
-            additionalProperties.entrySet().removeIf(entry -> {
-                if (!entry.getKey().startsWith(nestedPrefix)) {
-                    return false;
+            Iterator<Map.Entry<String, Object>> iterator = additionalProperties.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, Object> entry = iterator.next();
+                if (entry.getKey().startsWith(nestedPrefix)) {
+                    String nestedKey = entry.getKey().substring(nestedPrefix.length());
+                    formatType.getConfig().setProps(nestedKey, entry.getValue());
+                    iterator.remove();
                 }
-                String nestedKey = entry.getKey().substring(nestedPrefix.length());
-                formatType.getConfig().setProps(nestedKey, entry.getValue());
-                return true;
-            });
+            }
         }
 
         return format;
