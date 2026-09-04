@@ -30,27 +30,36 @@ export function formatCode(connectorType: "source" | "destination", formatType: 
             const match = trimmed.match(/^\s*([a-zA-Z0-9._-]+)\s*=\s*(.*)$/);
             if (match) {
                 const key = match[1];
-                const value = match[2];
+                const value = match[2].trim();
                 if (connectorType === "source") {
                     if (key === "debezium.source.connector.class") {
                         connectorClass = value;
                     } else if (key.startsWith("debezium.source.")) {
                         config[key.replace("debezium.source.", "")] = value;
+                    } else if (key === "name" || key === "description") {
+                        config[key] = value;
                     }
                 } else {
                     if (key === "debezium.sink.type") {
                         connectorClass = value;
                     } else if (key.startsWith("debezium.sink.")) {
                         config[key.replace("debezium.sink.", "")] = value;
+                    } else if (key === "name" || key === "description") {
+                        config[key] = value;
                     }
                 }
 
             }
         }
 
+        const name = config.name || "";
+        const description = config.description || "";
+        delete config.name;
+        delete config.description;
+
         formattedCode = {
-            name: "",
-            description: "",
+            name,
+            description,
             type: connectorClass,
             schema: "schema123",
             vaults: [],

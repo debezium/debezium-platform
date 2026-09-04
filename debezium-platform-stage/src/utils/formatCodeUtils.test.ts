@@ -28,17 +28,25 @@ describe("formatCode", () => {
 # header
 debezium.source.connector.class = io.debezium.connector.mysql.MySqlConnector
 debezium.source.database.hostname = localhost
+debezium.source.name = my-postgres-source
+debezium.source.description = My postgres source
 `;
     const out = formatCode("source", "properties-file", raw);
     expect(out.type).toBe("io.debezium.connector.mysql.MySqlConnector");
+    expect(out.name).toBe("my-postgres-source");
+    expect(out.description).toBe("My postgres source");
     expect(out.config).toEqual({ "database.hostname": "localhost" });
   });
 
   it("parses properties-file for destination", () => {
     const raw = `debezium.sink.type = kafka
-debezium.sink.topics = orders`;
+debezium.sink.topics = orders
+debezium.sink.name = my-dest
+debezium.sink.description = My dest`;
     const out = formatCode("destination", "properties-file", raw);
     expect(out.type).toBe("kafka");
+    expect(out.name).toBe("my-dest");
+    expect(out.description).toBe("My dest");
     expect(out.config).toEqual({ topics: "orders" });
   });
 });

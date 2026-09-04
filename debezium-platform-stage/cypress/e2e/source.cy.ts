@@ -247,7 +247,7 @@ describe('Source Management', () => {
       cy.visitWithTourDisabled('/source/catalog');
       cy.contains('button', 'Create using smart editor').click({ force: true });
       cy.url().should('match', /\/source\/create_source\/?$/);
-      cy.contains('No connector selected').should('be.visible');
+      cy.get('.smartEditor').should('be.visible');
     });
   });
 
