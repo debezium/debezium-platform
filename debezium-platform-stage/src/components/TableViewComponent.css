@@ -1,5 +1,28 @@
-.tree-view-component__toolbar-expand {
-    padding: .5rem !important;
+.virtual-tree__toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: var(--pf-t--global--spacer--sm);
+    width: 100%;
+}
+
+.virtual-tree__toolbar-search {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.virtual-tree__toolbar-search .pf-v6-c-tree-view__search {
+    width: 100%;
+    padding-inline: 0;
+    padding-block-start: 0;
+}
+
+.virtual-tree__toolbar-search .pf-v6-c-form-control {
+    width: 100%;
+}
+
+.virtual-tree__toolbar-actions {
+    flex: 0 0 auto;
+    margin-inline-start: auto;
 }
 
 .virtual-tree {
@@ -11,7 +34,7 @@
 .virtual-tree__toolbar {
     background-color: var(--pf-t--global--background--color--primary--default);
     border-bottom: 1px solid var(--pf-t--global--border--color--default);
-    padding: 10px 10px 0px 10px;
+    padding: 5px 10px 5px 10px;
 }
 
 .virtual-tree__scroll-area {

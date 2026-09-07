@@ -1,4 +1,4 @@
-import { Button, Toolbar, ToolbarContent, ToolbarItem, TreeViewDataItem, TreeViewSearch } from "@patternfly/react-core";
+import { Button, TreeViewDataItem, TreeViewSearch } from "@patternfly/react-core";
 import { AngleRightIcon, DatabaseIcon, ServerGroupIcon } from "@patternfly/react-icons";
 import { FC, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { TableData } from "src/apis";
@@ -417,24 +417,22 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     });
 
     const toolbar = readOnly ? null : (
-        <Toolbar style={{ padding: 0 }}>
-            <ToolbarContent style={{ padding: 0 }}>
-                <ToolbarItem>
-                    <TreeViewSearch
-                        onSearch={onSearch}
-                        id="input-search"
-                        name="search-input"
-                        aria-label="Search input example"
-                    />
-                </ToolbarItem>
-                <ToolbarItem className="tree-view-component__toolbar-expand">
-                    <Button variant="link" onClick={onToggleAll}>
-                        {allExpanded && t('collapseAll')}
-                        {!allExpanded && t('expandAll')}
-                    </Button>
-                </ToolbarItem>
-            </ToolbarContent>
-        </Toolbar>
+        <div className="virtual-tree__toolbar-row">
+            <div className="virtual-tree__toolbar-search">
+                <TreeViewSearch
+                    onSearch={onSearch}
+                    id="input-search"
+                    name="search-input"
+                    aria-label="Search input example"
+                />
+            </div>
+            <div className="virtual-tree__toolbar-actions">
+                <Button variant="link" onClick={onToggleAll}>
+                    {allExpanded && t('collapseAll')}
+                    {!allExpanded && t('expandAll')}
+                </Button>
+            </div>
+        </div>
     );
 
     return (

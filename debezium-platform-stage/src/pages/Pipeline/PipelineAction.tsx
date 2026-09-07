@@ -1,4 +1,4 @@
-import { FormGroup, FormSelect, FormSelectOption, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, TextArea, FormGroupLabelHelp, Popover, FormHelperText, HelperText, HelperTextItem, FormFieldGroupExpandable, FormFieldGroupHeader, FormFieldGroup, Grid, GridItem, Spinner, Content } from '@patternfly/react-core';
+import { FormGroup, FormSelect, FormSelectOption, ActionGroup, Button, Form, FormSelectOptionGroup, TextInput, FormSection, TextArea, FormGroupLabelHelp, Popover, FormHelperText, HelperText, HelperTextItem, FormFieldGroupExpandable, FormFieldGroupHeader, FormFieldGroup, Grid, GridItem, Spinner } from '@patternfly/react-core';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form"
 import { useTranslation } from 'react-i18next';
@@ -181,8 +181,8 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                         "type": "INCREMENTAL",
                         ...(data.additionalConditions && data.additionalConditions.length > 0 && {
                             "additional-conditions": data.additionalConditions.map((condition, i) => ({
-                                "filter-collection-name": getDataCollections(additionalConditionsSelections[i])[0] ?? "",
-                                "filter-condition": condition.filterCondition
+                                "data-collection": getDataCollections(additionalConditionsSelections[i])[0] ?? "",
+                                "filter": condition.filterCondition
                             }))
                         }),
                     }),
@@ -208,8 +208,8 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                         "type": "BLOCKING",
                         ...(data.additionalConditions && data.additionalConditions.length > 0 && {
                             "additional-conditions": data.additionalConditions.map((condition, i) => ({
-                                "filter-collection-name": getDataCollections(additionalConditionsSelections[i])[0] ?? "",
-                                "filter-condition": condition.filterCondition
+                                "data-collection": getDataCollections(additionalConditionsSelections[i])[0] ?? "",
+                                "filter": condition.filterCondition
                             }))
                         }),
                     }),
@@ -224,35 +224,26 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
         setSelectedDataListItems(undefined);
     };
 
-    const renderTableExplorer = useCallback((
+    const renderCollectionSelector = useCallback((
         selected: SelectedDataListItem | undefined,
         onSelect: (items: SelectedDataListItem | undefined) => void,
+        className = "pipeline-action-collection-selector",
     ) => {
         if (!sourceId) return null;
         if (isCollectionsLoading) {
-            return (
-                <FormFieldGroup>
-                    <Spinner aria-label="Table explorer" />
-                </FormFieldGroup>
-            );
+            return <Spinner aria-label={t("pipeline:actions.collectionField")} />;
         }
         if (collectionsError) {
             return (
-                <FormFieldGroup>
-                    <ApiComponentError
-                        error={collectionsError}
-                        isCompact={true}
-                        retry={() => { void fetchConnectionCollections(); }}
-                    />
-                </FormFieldGroup>
+                <ApiComponentError
+                    error={collectionsError}
+                    isCompact={true}
+                    retry={() => { void fetchConnectionCollections(); }}
+                />
             );
         }
         return (
-            <div className="table-explorer-section">
-                <Content component="h3" className="table-explorer-section__title">
-                    {t("pipeline:actions.collectionField")}
-                    {sourceName ? ` (${sourceName})` : ""}
-                </Content>
+            <div className={className}>
                 <TableViewComponent
                     collections={collections}
                     setSelectedDataListItems={onSelect}
@@ -260,7 +251,19 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                 />
             </div>
         );
-    }, [sourceId, isCollectionsLoading, collectionsError, collections, sourceName, fetchConnectionCollections, t]);
+    }, [sourceId, isCollectionsLoading, collectionsError, collections, fetchConnectionCollections, t]);
+
+    // const collectionFieldLabel = sourceName
+    //     ? `${t("pipeline:actions.collectionField")} (${sourceName})`
+    //     : t("pipeline:actions.collectionField");
+
+            const collectionFieldLabel = t("pipeline:actions.collectionField");
+
+    const collectionFieldLabelHelp = (
+        <Popover bodyContent={<div>{t("pipeline:actions.collectionFieldDescription")}</div>}>
+            <FormGroupLabelHelp aria-label={t("pipeline:actions.collectionFieldDescription")} />
+        </Popover>
+    );
 
     const sendPipelineSignalAction = async (payload: PipelineSignalPayload) => {
         const response = await createPost(`${API_URL}/api/pipelines/${pipelineId}/signals`, payload);
@@ -370,15 +373,27 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                         );
                                     case "stopAdhocSnapshotActions":
                                         return (
-                                            <>
-                                                {renderTableExplorer(selectedDataListItems, setSelectedDataListItems)}
-                                            </>
+                                            <FormGroup
+                                                label={collectionFieldLabel}
+                                                fieldId="data-collection"
+                                                isRequired
+                                                labelHelp={collectionFieldLabelHelp}
+                                            >
+                                                {renderCollectionSelector(selectedDataListItems, setSelectedDataListItems)}
+                                            </FormGroup>
                                         );
                                     case "blockingSnapshotActions":
                                     case "adhocSnapshotActions":
                                         return (
                                             <>
-                                                {renderTableExplorer(selectedDataListItems, setSelectedDataListItems)}
+                                                <FormGroup
+                                                    label={collectionFieldLabel}
+                                                    fieldId="data-collection"
+                                                    isRequired
+                                                    labelHelp={collectionFieldLabelHelp}
+                                                >
+                                                    {renderCollectionSelector(selectedDataListItems, setSelectedDataListItems)}
+                                                </FormGroup>
                                                 <FormFieldGroupExpandable
                                                     isExpanded
                                                     toggleAriaLabel="Details"
@@ -431,14 +446,23 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
                                                                     {...register(`additionalConditions.${index}.filterCondition` as const)}
                                                                 />
                                                             </FormGroup>
-                                                            <FormGroup label={t("pipeline:actions.filterConditionFields.collectionsField")} fieldId={`filter-collection-name-field-${index}`}>
-                                                                {renderTableExplorer(
+                                                            <FormGroup
+                                                                label={t("pipeline:actions.filterConditionFields.collectionsField")}
+                                                                fieldId={`filter-collection-name-field-${index}`}
+                                                                labelHelp={
+                                                                    <Popover bodyContent={<div>{t("pipeline:actions.filterConditionFields.collectionsHelperText")}</div>}>
+                                                                        <FormGroupLabelHelp aria-label={t("pipeline:actions.filterConditionFields.collectionsHelperText")} />
+                                                                    </Popover>
+                                                                }
+                                                            >
+                                                                {renderCollectionSelector(
                                                                     additionalConditionsSelections[index],
                                                                     (items) => setAdditionalConditionsSelections(prev => {
                                                                         const next = [...prev];
                                                                         next[index] = items;
                                                                         return next;
-                                                                    })
+                                                                    }),
+                                                                    "pipeline-action-collection-selector pipeline-action-collection-selector--compact"
                                                                 )}
                                                             </FormGroup>
                                                         </FormFieldGroup>
