@@ -132,7 +132,7 @@
         "messageFieldDescription": "The message parameter specifies the string to print to the log. If you add a placeholder ({ }) to the message, it is replaced with streaming coordinates.",
         "selectAnAction": "Select an action",
         "actionTypeFieldDescription": "Specifies type parameter specifies the operation that the signal is intended to trigger.",
-        "actionIdHelper": "Its prefilled with UUID string, user can also update it to provide their own ID.",
+        "actionIdHelper": "Its prefilled with UUID string, user can also update it to provide their own unique ID.",
         "addFilter": "Add filter",
         "filterCondition": "Filter condition {{val}}",
         "filterConditionFields": {

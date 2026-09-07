@@ -132,7 +132,7 @@
     "messageFieldDescription": "Il parametro del messaggio specifica la stringa da stampare nel log. Se aggiungi un segnaposto ({ }), viene sostituito con le coordinate di streaming.",
     "selectAnAction": "Seleziona un'azione",
     "actionTypeFieldDescription": "Specifica il tipo di parametro che indica l'operazione che il segnale è destinato a innescare.",
-    "actionIdHelper": "È precompilato con una stringa UUID, l'utente può anche aggiornarlo per fornire il proprio ID.",
+    "actionIdHelper": "È precompilato con una stringa UUID; l'utente può anche aggiornarlo per inserire il proprio ID univoco.",
     "addFilter": "Aggiungi filtro",
     "filterCondition": "Condizione del filtro {{val}}",
     "filterConditionFields": {
