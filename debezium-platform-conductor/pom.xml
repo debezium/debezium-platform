@@ -47,7 +47,7 @@
         <version.okhttp>4.12.0</version.okhttp>
         <version.infinispan>16.2.2</version.infinispan>
         <version.pravega>0.13.0</version.pravega>
-        <version.google.cloud.pubsub>1.154.0</version.google.cloud.pubsub>
+        <version.google.cloud.pubsub>1.155.0</version.google.cloud.pubsub>
         <version.azure-messaging-eventhubs>5.21.6</version.azure-messaging-eventhubs>
         <version.impsort>1.13.0</version.impsort>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
