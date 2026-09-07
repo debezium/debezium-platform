@@ -2811,10 +2811,10 @@ chromatic@^11.15.0:
   resolved "https://registry.npmjs.org/chromatic/-/chromatic-11.29.0.tgz"
   integrity sha512-yisBlntp9hHVj19lIQdpTlcYIXuU9H/DbFuu6tyWHmj6hWT2EtukCCcxYXL78XdQt1vm2GfIrtgtKpj/Rzmo4A==
 
-chromatic@^18.0.1:
-  version "18.0.1"
-  resolved "https://registry.yarnpkg.com/chromatic/-/chromatic-18.0.1.tgz#d70692b8131ea25913ec51e560da7735cd84ab73"
-  integrity sha512-GlTYrZ4ui5ZW8Jzut6SAo5bMH3sIugYZ37Nq2DyVHBfPINeEzGA8eG5xNo4N/I2aRdM9Xnqw0SCls7wgf2llvA==
+chromatic@^18.7.2:
+  version "18.7.2"
+  resolved "https://registry.yarnpkg.com/chromatic/-/chromatic-18.7.2.tgz#43c633198abe856103ee0cf64248ae77f7fffba4"
+  integrity sha512-e6YsVD1c97hF2Fz/IxmHiLSK6Di8PV6edc6lKql20Wp5ZUWxluBXC8ZHKgpqJMr6u3vhn708BqOEnZntOgiTOA==
   dependencies:
     semver "^7.3.5"
 
