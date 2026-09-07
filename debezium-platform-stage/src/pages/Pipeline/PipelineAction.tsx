@@ -9,7 +9,6 @@ import { SelectedDataListItem } from 'src/apis/types';
 import { useNotification } from '@appContext/index';
 import { TrashIcon } from '@patternfly/react-icons';
 import { v4 as uuidv4 } from 'uuid';
-import { getConnectorTypeName } from '@utils/helpers';
 import './PipelineAction.css';
 import TableViewComponent from '../../components/TableViewComponent';
 import ApiComponentError from '../../components/ApiComponentError';
@@ -79,7 +78,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
     const [collectionsError, setCollectionsError] = useState<object | undefined>(undefined);
     const [collections, setCollections] = useState<TableData | undefined>(undefined);
-    const [sourceName, setSourceName] = useState<string | undefined>(undefined);
     const [selectedDataListItems, setSelectedDataListItems] = useState<SelectedDataListItem | undefined>(undefined);
     const [additionalConditionsSelections, setAdditionalConditionsSelections] = useState<(SelectedDataListItem | undefined)[]>([]);
 
@@ -96,7 +94,6 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
         } else {
             const connectionId = sourceResponse.data?.connection?.id;
             setCollectionsError(undefined);
-            setSourceName(getConnectorTypeName(sourceResponse.data?.type || ""));
             const collectionResponse = await fetchDataCall<TableData>(
                 `${API_URL}/api/connections/${connectionId}/collections`
             );
