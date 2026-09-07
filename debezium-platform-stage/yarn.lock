@@ -901,10 +901,10 @@
   resolved "https://registry.npmjs.org/@open-draft/until/-/until-2.1.0.tgz"
   integrity sha512-U69T3ItWHvLwGg5eJ0n3I62nWuE6ilHlmz7zM0npLBRvPRd7e6NYmg54vvRtP5mZG7kZqZCFVdsTWo7BPtBujg==
 
-"@patternfly/patternfly@^6.6.0":
-  version "6.6.0"
-  resolved "https://registry.yarnpkg.com/@patternfly/patternfly/-/patternfly-6.6.0.tgz#9d240389ea05a71ba80ea5a3238393c9c4c0f1f3"
-  integrity sha512-drZ4wYFQdhYY+VxLIl8PqbYnJoEa0UrNhiUkMCKkgMVNPxmCfNa1d2eEA97tnp2aYew15jQp+MaZcQIQIG8wVg==
+"@patternfly/patternfly@^6.6.1":
+  version "6.6.1"
+  resolved "https://registry.yarnpkg.com/@patternfly/patternfly/-/patternfly-6.6.1.tgz#0b2022ba08f4821b255bfebe0da491cdab87ccbd"
+  integrity sha512-8P9C1TmFk5y5s2/1XVjmP9JmSyDXDiNBwPZewhPizULtqlaRu+Evljx/X1HTSFrCNY0qgI1uDKy+NXiorIniyA==
 
 "@patternfly/react-charts@^8.6.0":
   version "8.6.0"
