@@ -17,15 +17,15 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
 /**
- * Executes Docker CLI commands via {@link ProcessBuilder}.
+ * Executes {@link HostCommand host commands} via {@link ProcessBuilder}.
  *
- * <p>This follows the same {@code ProcessBuilder} pattern used by
- * {@code AnsibleHostProvisioner} in the Conductor module. Each method
- * constructs a process, captures stdout + stderr, and returns a
- * {@link CommandOutput} with the exit code and combined output.
+ * <p>This follows the Command pattern used by the Conductor's
+ * {@code AnsibleCommandRunner}. The command object declares its arguments;
+ * this runner executes it, drains output while it runs, and applies the
+ * timeout consistently.
  *
- * <p>Docker commands run locally on the host where the Agent is deployed,
- * so no SSH or Ansible is involved — just a direct {@code docker} CLI call.
+ * <p>Most commands are Docker CLI commands, but the same execution boundary
+ * also handles the ownership command required for bind-mounted data paths.
  */
 @ApplicationScoped
 public class DockerCommandRunner {
@@ -39,29 +39,33 @@ public class DockerCommandRunner {
     }
 
     /**
-     * Runs a Docker command synchronously and returns its output.
+     * Runs a host command synchronously and returns its output.
      *
-     * @param command  the command and arguments (e.g. {@code "docker", "inspect", "--format", "...", "name"})
+     * @param command  command to execute
      * @return the command output with exit code and stdout/stderr
      */
-    public CommandOutput run(String... command) {
+    public CommandOutput run(HostCommand command) {
+        Process process = null;
         try {
-            logger.debugv("Executing: {0}", String.join(" ", command));
+            logger.debugv("Executing: {0}", String.join(" ", command.arguments()));
 
-            ProcessBuilder pb = new ProcessBuilder(command);
+            ProcessBuilder pb = new ProcessBuilder(command.arguments());
             pb.redirectErrorStream(true);
-            Process process = pb.start();
+            process = pb.start();
 
-            String output;
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-                output = reader.lines().collect(Collectors.joining("\n"));
-            }
+            ProcessOutputDrainer drainer = new ProcessOutputDrainer(process);
+            Thread drainerThread = Thread.ofVirtual().name("host-command-output-drainer").start(drainer);
 
             boolean finished = process.waitFor(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!finished) {
                 process.destroyForcibly();
-                return new CommandOutput(124, "Command timed out after " + DEFAULT_TIMEOUT_SECONDS + " seconds");
+                process.waitFor();
+            }
+            drainerThread.join();
+
+            String output = drainer.output();
+            if (!finished) {
+                return new CommandOutput(124, "Command timed out after " + DEFAULT_TIMEOUT_SECONDS + " seconds\n" + output);
             }
 
             int exitCode = process.exitValue();
@@ -72,22 +76,25 @@ public class DockerCommandRunner {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            logger.errorv(e, "Failed to execute command: {0}", String.join(" ", command));
+            if (process != null) {
+                process.destroyForcibly();
+            }
+            logger.errorv(e, "Failed to execute command: {0}", String.join(" ", command.arguments()));
             return new CommandOutput(-1, "Process execution failed: " + e.getMessage());
         }
     }
 
     /**
-     * Fires a Docker command asynchronously (fire-and-forget).
+     * Fires a host command asynchronously (fire-and-forget).
      *
      * <p>Used for {@code docker run} during deploy — the Agent returns
      * {@code 202 Accepted} immediately while Docker pulls the image and
      * starts the container in the background. The Conductor's status
      * poller will detect when the container is running.
      *
-     * @param command  the command and arguments
+     * @param command  command to execute
      */
-    public void runAsync(String... command) {
+    public void runAsync(HostCommand command) {
         Thread.ofVirtual().name("docker-async").start(() -> {
             CommandOutput result = run(command);
             if (result.exitCode() != 0) {
@@ -95,6 +102,31 @@ public class DockerCommandRunner {
                         result.exitCode(), result.output());
             }
         });
+    }
+
+    private static final class ProcessOutputDrainer implements Runnable {
+
+        private final Process process;
+        private String output = "";
+
+        private ProcessOutputDrainer(Process process) {
+            this.process = process;
+        }
+
+        @Override
+        public void run() {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                output = reader.lines().collect(Collectors.joining("\n"));
+            }
+            catch (IOException e) {
+                output = "[Error reading process output: " + e.getMessage() + "]";
+            }
+        }
+
+        private String output() {
+            return output;
+        }
     }
 
     /**

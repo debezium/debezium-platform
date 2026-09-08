@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
-import io.restassured.http.ContentType;
 
 /**
  * Tests for {@link AgentTokenFilter} bearer token authentication.
@@ -70,12 +69,8 @@ class AgentTokenFilterTest {
     @Test
     void rejectsPostWithoutToken() {
         given()
-                .contentType(ContentType.JSON)
-                .body("""
-                        { "containerName": "test" }
-                        """)
                 .when()
-                .post("/api/agent/stop")
+                .post("/api/agent/stop/test")
                 .then()
                 .statusCode(401);
     }
