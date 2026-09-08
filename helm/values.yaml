@@ -6,8 +6,11 @@ domain:
   # proxy) and ingress.enabled is false, otherwise the stage UI builds an http://
   # conductor URL and the browser blocks /api calls as mixed content.
   # scheme: https
-# Global list of image pull secrets, applied to every pod created by this chart.
+# Global list of image pull secrets, applied to the pods this chart renders itself:
+# conductor, stage, and the Debezium Server pods created by pipelines.
 # A per-component imagePullSecrets replaces this list, it is not merged with it.
+# The operator pod is rendered by the debezium-operator subchart and is not
+# covered, see "Image pull secrets" in the README.
 # Example:
 #   imagePullSecrets:
 #     - name: my-registry-secret

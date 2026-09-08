@@ -71,7 +71,7 @@ The following operators must be installed in the cluster **before** deploying th
 | ingress.annotations                        | Extra ingress annotations                                                                                                                                                             | {}                                         |
 | ingress.tls.enabled                        | Enable TLS section on ingress                                                                                                                                                         | false                                      |
 | ingress.tls.secretName                     | Secret name used when TLS is enabled                                                                                                                                                  | ""                                         |
-| imagePullSecrets                           | Global list of image pull secrets, applied to every pod created by this chart. See [Image pull secrets](#image-pull-secrets).                                                          | []                                         |
+| imagePullSecrets                           | Global list of image pull secrets, applied to the conductor, stage and pipeline pods. See [Image pull secrets](#image-pull-secrets).                                                   | []                                         |
 | stage.image                                | Image for the stage (UI)                                                                                                                                                              | quay.io/debezium/platform-stage:latest     |
 | stage.imagePullPolicy                      | Image pull policy for the stage container (UI). If empty it will default to IfNotPresent.                                                                                             | IfNotPresent                               |
 | stage.imagePullSecrets                     | Replaces the global `imagePullSecrets` for the stage pod. Leave empty to inherit it.                                                                                                  | []                                         |
@@ -245,7 +245,8 @@ imagePullSecrets:
   - name: my-registry-secret
 ```
 
-The global list is applied to every pod created by the chart. To use a different secret for a single
+The global list is applied to the pods this chart renders itself: conductor, stage, and the Debezium
+Server pods created by pipelines. To use a different secret for a single
 component, set its own `imagePullSecrets`:
 
 ```yaml
@@ -270,6 +271,23 @@ Helm chart convention. Two consequences worth knowing:
 
 The secret must live in the same namespace as the release. Nothing is rendered into the pod spec
 when both lists are empty, so existing installations are unaffected.
+
+The operator pod is not covered, since it is rendered by the `debezium-operator` subchart, and Helm gives a
+parent chart no way to pass its own values into a subchart, so the global list never reaches it. Set
+the secret on the operator chart directly. With the bundled operator (`debezium-operator.enabled: true`)
+that is the subchart's own value in this chart's `values.yaml`:
+
+```yaml
+debezium-operator:
+  app:
+    imagePullSecrets:
+      - name: my-registry-secret
+```
+
+This requires an operator chart with `app.imagePullSecrets`, that is 3.7.0 or later
+([debezium/dbz#2461](https://github.com/debezium/dbz/issues/2461)). With a separately installed operator
+(`debezium-operator.enabled: false`) set the value on that installation instead, nothing under
+`debezium-operator` here is applied.
 
 The descriptors bundle is an exception: it is not pulled by the kubelet but downloaded by the
 conductor itself at start-up, so it needs registry credentials from
