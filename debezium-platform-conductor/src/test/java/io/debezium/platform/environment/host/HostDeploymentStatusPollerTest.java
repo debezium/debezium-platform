@@ -30,6 +30,8 @@ import io.debezium.platform.domain.views.HostDeployment;
 import io.debezium.platform.environment.host.agent.AgentContainerStatus;
 import io.debezium.platform.environment.host.agent.HostAgentClient;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
+import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner;
+import io.debezium.platform.environment.host.provisioning.CommandResult;
 
 /**
  * Unit tests for {@link HostDeploymentStatusPoller}.
@@ -50,20 +52,25 @@ import io.debezium.platform.environment.host.config.HostConfigGroup;
 class HostDeploymentStatusPollerTest {
 
     private HostDeploymentService deploymentService;
+    private AnsibleCommandRunner ansibleRunner;
     private HostAgentClient agentClient;
+    private HostConfigGroup hostConfig;
     private HostDeploymentStatusPoller poller;
 
     @BeforeEach
     void setUp() {
         Logger logger = Logger.getLogger(HostDeploymentStatusPollerTest.class);
         deploymentService = mock(HostDeploymentService.class);
+        ansibleRunner = mock(AnsibleCommandRunner.class);
         agentClient = mock(HostAgentClient.class);
 
-        HostConfigGroup hostConfig = mock(HostConfigGroup.class);
+        hostConfig = mock(HostConfigGroup.class);
+        when(hostConfig.containerRuntime()).thenReturn(HostConfigGroup.AGENT_RUNTIME);
+        when(hostConfig.configBasePath()).thenReturn("/opt/debezium/configs");
         when(hostConfig.statusPollMaxRetries()).thenReturn(3);
 
         // Host mode — poller should be active
-        poller = new HostDeploymentStatusPoller(logger, deploymentService, agentClient, hostConfig, "host");
+        poller = new HostDeploymentStatusPoller(logger, deploymentService, ansibleRunner, agentClient, hostConfig, "host");
     }
 
     @Test
@@ -212,7 +219,7 @@ class HostDeploymentStatusPollerTest {
     void skipsPollingInOperatorMode() {
         Logger logger = Logger.getLogger(HostDeploymentStatusPollerTest.class);
         HostDeploymentStatusPoller operatorPoller = new HostDeploymentStatusPoller(
-                logger, deploymentService, agentClient, mock(HostConfigGroup.class), "operator");
+                logger, deploymentService, ansibleRunner, agentClient, mock(HostConfigGroup.class), "operator");
 
         operatorPoller.pollDeploymentStatus();
 
@@ -228,6 +235,38 @@ class HostDeploymentStatusPollerTest {
         poller.pollDeploymentStatus();
 
         // Should not call Agent client
+        verify(agentClient, never()).status(anyString(), anyInt(), anyString(), anyString());
+    }
+
+    @Test
+    void transitionsDeployingToRunningWithAnsibleRuntime() {
+        HostDeployment deployment = mockDeployment(14L, DeploymentStatus.DEPLOYING, "container-14", "host-14");
+        when(hostConfig.containerRuntime()).thenReturn(HostConfigGroup.ANSIBLE_RUNTIME);
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+        when(ansibleRunner.runShellCommand(eq("host-14"), anyString()))
+                .thenReturn(new CommandResult.Success("true"));
+
+        poller.pollDeploymentStatus();
+
+        verify(deploymentService).updateStatus(14L, DeploymentStatus.RUNNING);
+        verify(agentClient, never()).status(anyString(), anyInt(), anyString(), anyString());
+    }
+
+    @Test
+    void detectsConfigDriftWithAnsibleRuntime() {
+        HostDeployment deployment = mockDeployment(15L, DeploymentStatus.RUNNING, "container-15", "host-15",
+                "expected-hash", Instant.now().minus(Duration.ofMinutes(10)));
+        when(hostConfig.containerRuntime()).thenReturn(HostConfigGroup.ANSIBLE_RUNTIME);
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+        when(ansibleRunner.runShellCommand(eq("host-15"), anyString()))
+                .thenReturn(new CommandResult.Success("true"))
+                .thenReturn(new CommandResult.Success("different-hash"));
+
+        poller.pollDeploymentStatus();
+
+        verify(deploymentService).updateStatus(15L, DeploymentStatus.CONFIG_DRIFT);
         verify(agentClient, never()).status(anyString(), anyInt(), anyString(), anyString());
     }
 

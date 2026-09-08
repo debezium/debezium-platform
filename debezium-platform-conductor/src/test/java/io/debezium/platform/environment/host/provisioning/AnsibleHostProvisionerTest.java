@@ -59,6 +59,9 @@ class AnsibleHostProvisionerTest {
         when(hostConfig.ansibleTeardownPath()).thenReturn(Optional.empty());
         when(hostConfig.ansibleTimeoutMinutes()).thenReturn(30);
         when(hostConfig.sshConfigPath()).thenReturn("/etc/ssh/test-config");
+        when(hostConfig.containerRuntime()).thenReturn(HostConfigGroup.AGENT_RUNTIME);
+        when(hostConfig.agentVersion()).thenReturn(Optional.of("3.7.0-SNAPSHOT"));
+        when(hostConfig.agentMavenRepositoryUrl()).thenReturn(Optional.empty());
 
         provisioner = spy(new AnsibleHostProvisioner(logger, hostConfig));
     }
@@ -75,7 +78,27 @@ class AnsibleHostProvisionerTest {
         assertThat(command.get(4)).isEqualTo("--ssh-extra-args");
         assertThat(command.get(5)).isEqualTo("-F /etc/ssh/test-config");
         assertThat(command.get(6)).isEqualTo("--extra-vars");
-        assertThat(command.get(7)).isEqualTo("agent_token=test-token-abc ansible_become_timeout=60");
+        assertThat(command.get(7)).isEqualTo("agent_token=test-token-abc ansible_become_timeout=60 "
+                + "install_host_agent=true agent_version=3.7.0-SNAPSHOT");
+    }
+
+    @Test
+    void buildProvisionCommandSkipsAgentInstallationForAnsibleRuntime() {
+        HostConfigGroup hostConfig = mock(HostConfigGroup.class);
+        when(hostConfig.ansiblePlaybookPath()).thenReturn(Optional.empty());
+        when(hostConfig.ansibleTeardownPath()).thenReturn(Optional.empty());
+        when(hostConfig.ansibleTimeoutMinutes()).thenReturn(30);
+        when(hostConfig.sshConfigPath()).thenReturn("/etc/ssh/test-config");
+        when(hostConfig.containerRuntime()).thenReturn(HostConfigGroup.ANSIBLE_RUNTIME);
+        when(hostConfig.agentVersion()).thenReturn(Optional.empty());
+        when(hostConfig.agentMavenRepositoryUrl()).thenReturn(Optional.empty());
+
+        AnsibleHostProvisioner ansibleProvisioner = new AnsibleHostProvisioner(
+                Logger.getLogger(AnsibleHostProvisionerTest.class), hostConfig);
+
+        assertThat(ansibleProvisioner.buildProvisionCommand("db-server-1", "test-token-abc").get(7))
+                .contains("install_host_agent=false")
+                .doesNotContain("agent_version=");
     }
 
     @Test
