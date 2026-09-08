@@ -14,6 +14,7 @@ import io.debezium.platform.domain.HostAllocation;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner;
 import io.debezium.platform.environment.host.provisioning.CommandResult;
+import io.quarkus.arc.lookup.LookupIfProperty;
 
 /**
  * Ansible-based implementation of {@link HostContainerRuntime}.
@@ -22,11 +23,11 @@ import io.debezium.platform.environment.host.provisioning.CommandResult;
  * commands executed via SSH. Each method delegates to
  * {@link AnsibleCommandRunner} for the actual process invocation.
  *
- * <p>Superceded by {@link AgentContainerRuntime} as the default runtime
- * implementation, but retained for fallback and reference purposes.
+ * <p>Selected when {@code platform.host.container-runtime=ansible}, which is
+ * also the compatibility default when the property is absent.
  */
-
 @ApplicationScoped
+@LookupIfProperty(name = HostConfigGroup.CONTAINER_RUNTIME_PROPERTY, stringValue = HostConfigGroup.ANSIBLE_RUNTIME, lookupIfMissing = true)
 public class AnsibleContainerRuntime implements HostContainerRuntime {
 
     private static final String DOCKER_RUN_FORMAT = "docker run -d --user $(id -u):$(id -g) --name %s -p %d:8080 -v %s:/debezium/config/application.properties -v %s:/debezium/data %s";

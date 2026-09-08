@@ -128,6 +128,8 @@ quarkus:
       url: http://localhost:8090
       connect-timeout: 5000
       read-timeout: 30000
+      # HostAgentClient maps Agent responses, including 404, explicitly.
+      disable-default-mapper: true
   # OIDC bearer-token validation (service mode), OFF by default. Enable with
   # QUARKUS_OIDC_TENANT_ENABLED=true and OIDC_ISSUER; /api/* is then secured by
   # default (see quarkus.http.auth.permission.api below).

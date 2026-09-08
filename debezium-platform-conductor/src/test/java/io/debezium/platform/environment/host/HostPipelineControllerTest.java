@@ -26,6 +26,8 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.enterprise.inject.Instance;
+
 import org.jboss.logging.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,6 +73,7 @@ class HostPipelineControllerTest {
     private HostPipelineMapper pipelineMapper;
     private HostDeploymentService deploymentService;
     private HostContainerRuntime containerRuntime;
+    private Instance<HostContainerRuntime> containerRuntimeInstance;
     private HostPipelineController controller;
 
     @BeforeEach
@@ -79,6 +82,9 @@ class HostPipelineControllerTest {
         pipelineMapper = mock(HostPipelineMapper.class);
         deploymentService = mock(HostDeploymentService.class);
         containerRuntime = mock(HostContainerRuntime.class);
+        containerRuntimeInstance = mock(Instance.class);
+        when(containerRuntimeInstance.isResolvable()).thenReturn(true);
+        when(containerRuntimeInstance.get()).thenReturn(containerRuntime);
 
         HostConfigGroup hostConfig = mock(HostConfigGroup.class);
         when(hostConfig.executorPoolSize()).thenReturn(4);
@@ -86,7 +92,7 @@ class HostPipelineControllerTest {
         when(hostConfig.debeziumServerImage()).thenReturn("quay.io/debezium/server:latest");
 
         PipelineService pipelineService = mock(PipelineService.class);
-        controller = new HostPipelineController(logger, pipelineMapper, deploymentService, containerRuntime, hostConfig, pipelineService);
+        controller = new HostPipelineController(logger, pipelineMapper, deploymentService, containerRuntimeInstance, hostConfig, pipelineService);
     }
 
     @AfterEach

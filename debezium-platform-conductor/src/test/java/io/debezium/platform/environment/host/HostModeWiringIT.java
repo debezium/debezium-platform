@@ -28,6 +28,9 @@ public class HostModeWiringIT {
     @Inject
     Instance<EnvironmentController> environmentController;
 
+    @Inject
+    Instance<HostContainerRuntime> containerRuntime;
+
     @Test
     public void shouldActivateHostControllerWhenModeIsHost() {
         assertThat(environmentController.isResolvable())
@@ -54,5 +57,11 @@ public class HostModeWiringIT {
         assertThat(controller.pipelines())
                 .as("Host mode pipelines() should return HostPipelineController")
                 .isInstanceOf(HostPipelineController.class);
+    }
+
+    @Test
+    public void shouldSelectAnsibleRuntimeByDefault() {
+        assertThat(containerRuntime.isResolvable()).isTrue();
+        assertThat(containerRuntime.get()).isInstanceOf(AnsibleContainerRuntime.class);
     }
 }

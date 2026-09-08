@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.Instance;
 
 import org.jboss.logging.Logger;
 
@@ -34,9 +35,7 @@ import io.quarkus.runtime.ShutdownEvent;
  * Host-mode implementation of {@link PipelineController}.
  *
  * <p>Orchestrates the full pipeline lifecycle by delegating container
- * operations to {@link HostContainerRuntime}. Delegates to the Agent-based
- * REST implementation ({@link AgentContainerRuntime}), which manages
- * Docker containers via the remote Host Agent.
+ * operations to the configured {@link HostContainerRuntime} implementation.
  *
  * <p>Operations:
  * <ul>
@@ -58,7 +57,7 @@ public class HostPipelineController implements PipelineController {
     private final Logger logger;
     private final HostPipelineMapper pipelineMapper;
     private final HostDeploymentService deploymentService;
-    private final HostContainerRuntime containerRuntime;
+    private final Instance<HostContainerRuntime> containerRuntime;
     private final HostConfigGroup hostConfig;
     private final PipelineService pipelineService;
     private final ExecutorService deployExecutor;
@@ -66,7 +65,7 @@ public class HostPipelineController implements PipelineController {
     public HostPipelineController(Logger logger,
                                   HostPipelineMapper pipelineMapper,
                                   HostDeploymentService deploymentService,
-                                  HostContainerRuntime containerRuntime,
+                                  Instance<HostContainerRuntime> containerRuntime,
                                   HostConfigGroup hostConfig,
                                   PipelineService pipelineService) {
         this.logger = logger;
@@ -120,7 +119,7 @@ public class HostPipelineController implements PipelineController {
 
     @Override
     public LogReader logReader(Long pipelineId) {
-        return new HostDockerLogReader(pipelineId, deploymentService, containerRuntime);
+        return new HostDockerLogReader(pipelineId, deploymentService, containerRuntime());
     }
 
     /**
@@ -145,7 +144,7 @@ public class HostPipelineController implements PipelineController {
                 logger.infov("Found existing deployment for pipeline {0} (status={1}), cleaning up before redeploy",
                         pipelineId, existing.getDeploymentStatus());
                 if (existing.getSshAlias() != null && existing.getContainerName() != null) {
-                    containerRuntime.undeploy(existing.getSshAlias(), existing.getContainerName());
+                    containerRuntime().undeploy(existing.getSshAlias(), existing.getContainerName());
                 }
                 deploymentService.deleteDeployment(existing.getId());
             });
@@ -160,7 +159,7 @@ public class HostPipelineController implements PipelineController {
                             allocation.allocatedPort(), mappedConfig.configHash()));
 
             // Delegate all infrastructure work to the container runtime
-            containerRuntime.deploy(allocation, containerName,
+            containerRuntime().deploy(allocation, containerName,
                     mappedConfig.propertiesContent(), hostConfig.debeziumServerImage());
 
             logger.infov("Pipeline {0} deployment initiated on host {1}, port {2}, container {3}",
@@ -183,14 +182,14 @@ public class HostPipelineController implements PipelineController {
 
             // Graceful stop (SIGTERM) before force-removing the container.
             try {
-                containerRuntime.stop(sshAlias, containerName);
+                containerRuntime().stop(sshAlias, containerName);
             }
             catch (Exception e) {
                 logger.debugv("Container {0} on {1} could not be stopped (may already be stopped): {2}",
                         containerName, sshAlias, e.getMessage());
             }
 
-            containerRuntime.undeploy(sshAlias, containerName);
+            containerRuntime().undeploy(sshAlias, containerName);
 
             // Hard-delete the deployment record (frees UNIQUE constraint + port)
             deploymentService.deleteDeployment(deployment.getId());
@@ -208,7 +207,7 @@ public class HostPipelineController implements PipelineController {
         String sshAlias = deployment.getSshAlias();
         String containerName = deployment.getContainerName();
 
-        containerRuntime.stop(sshAlias, containerName);
+        containerRuntime().stop(sshAlias, containerName);
 
         deploymentService.updateStatus(deployment.getId(), DeploymentStatus.STOPPED);
         logger.infov("Pipeline {0} stopped on host {1}", pipelineId, sshAlias);
@@ -221,7 +220,7 @@ public class HostPipelineController implements PipelineController {
         String sshAlias = deployment.getSshAlias();
         String containerName = deployment.getContainerName();
 
-        containerRuntime.start(sshAlias, containerName);
+        containerRuntime().start(sshAlias, containerName);
 
         // Poller will promote DEPLOYING → RUNNING once it detects the container running
         deploymentService.updateStatus(deployment.getId(), DeploymentStatus.DEPLOYING);
@@ -233,6 +232,13 @@ public class HostPipelineController implements PipelineController {
                 .ifPresent(deployment -> deploymentService.updateStatus(deployment.getId(), DeploymentStatus.FAILED));
         pipelineService.updateStatus(pipelineId, PipelineStatus.FAILED, reason);
         logger.errorv("Deployment failed for pipeline {0}: {1}", pipelineId, reason);
+    }
+
+    private HostContainerRuntime containerRuntime() {
+        if (!containerRuntime.isResolvable()) {
+            throw new IllegalStateException("No HostContainerRuntime is configured");
+        }
+        return containerRuntime.get();
     }
 
     /**

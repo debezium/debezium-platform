@@ -7,7 +7,6 @@ package io.debezium.platform.environment.host.agent;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -15,8 +14,10 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import org.eclipse.microprofile.rest.client.annotation.ClientHeaderParam;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
+import io.quarkus.rest.client.reactive.NotBody;
 import io.quarkus.rest.client.reactive.Url;
 
 /**
@@ -40,47 +41,45 @@ import io.quarkus.rest.client.reactive.Url;
  */
 @Path("/api/agent")
 @RegisterRestClient(configKey = "host-agent-api")
+@ClientHeaderParam(name = "Authorization", value = "Bearer {agentToken}")
 public interface HostAgentApi {
 
     @POST
     @Path("/deploy")
     @Consumes(MediaType.APPLICATION_JSON)
     Response deploy(@Url String baseUrl,
-                    @HeaderParam("Authorization") String authHeader,
+                    @NotBody String agentToken,
                     AgentDeployRequest request);
 
     @POST
-    @Path("/undeploy")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/undeploy/{containerName}")
     Response undeploy(@Url String baseUrl,
-                      @HeaderParam("Authorization") String authHeader,
-                      AgentContainerNameRequest request);
+                      @NotBody String agentToken,
+                      @PathParam("containerName") String containerName);
 
     @POST
-    @Path("/stop")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/stop/{containerName}")
     Response stop(@Url String baseUrl,
-                  @HeaderParam("Authorization") String authHeader,
-                  AgentContainerNameRequest request);
+                  @NotBody String agentToken,
+                  @PathParam("containerName") String containerName);
 
     @POST
-    @Path("/start")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/start/{containerName}")
     Response start(@Url String baseUrl,
-                   @HeaderParam("Authorization") String authHeader,
-                   AgentContainerNameRequest request);
+                   @NotBody String agentToken,
+                   @PathParam("containerName") String containerName);
 
     @GET
     @Path("/status/{containerName}")
     @Produces(MediaType.APPLICATION_JSON)
     Response status(@Url String baseUrl,
-                    @HeaderParam("Authorization") String authHeader,
+                    @NotBody String agentToken,
                     @PathParam("containerName") String containerName);
 
     @GET
     @Path("/logs/{containerName}")
     @Produces(MediaType.TEXT_PLAIN)
     Response logs(@Url String baseUrl,
-                  @HeaderParam("Authorization") String authHeader,
+                  @NotBody String agentToken,
                   @PathParam("containerName") String containerName);
 }

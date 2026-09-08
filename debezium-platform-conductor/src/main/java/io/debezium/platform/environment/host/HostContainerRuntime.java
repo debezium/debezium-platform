@@ -10,8 +10,9 @@ import io.debezium.platform.domain.HostAllocation;
 /**
  * Abstraction for managing Docker containers on a remote host.
  *
- * <p>Implementations include {@link AgentContainerRuntime} (default, REST-based)
- * and {@link AnsibleContainerRuntime} (fallback, SSH/Ansible-based).
+ * <p>Implementations include {@link AgentContainerRuntime} (REST-based) and
+ * {@link AnsibleContainerRuntime} (SSH/Ansible-based). The configured
+ * implementation is resolved through CDI at the controller boundary.
  */
 public interface HostContainerRuntime {
 

@@ -31,6 +31,10 @@ import io.smallrye.config.WithName;
 @ConfigRoot(phase = ConfigPhase.RUN_TIME)
 public interface HostConfigGroup {
 
+    String CONTAINER_RUNTIME_PROPERTY = "platform.host.container-runtime";
+    String AGENT_RUNTIME = "agent";
+    String ANSIBLE_RUNTIME = "ansible";
+
     @WithName("ssh-config-path")
     @WithDefault("~/.ssh/config")
     String sshConfigPath();
@@ -44,6 +48,31 @@ public interface HostConfigGroup {
     @WithName("ansible-timeout-minutes")
     @WithDefault("30")
     int ansibleTimeoutMinutes();
+
+    /**
+     * Selects the host container-management implementation.
+     *
+     * <p>{@code ansible} preserves the existing SSH/Ansible behaviour;
+     * {@code agent} delegates lifecycle operations to the Host Agent REST API.
+     */
+    @WithName("container-runtime")
+    @WithDefault(ANSIBLE_RUNTIME)
+    String containerRuntime();
+
+    /**
+     * Version of the Host Agent artifact to download when the Agent runtime is enabled.
+     * The value is intentionally required only for Agent provisioning, because a
+     * development snapshot is not a deployable production default.
+     */
+    @WithName("agent-version")
+    Optional<String> agentVersion();
+
+    /**
+     * Optional Maven repository URL for the Host Agent artifact. When unset,
+     * Ansible uses the Maven Central default of the Maven artifact module.
+     */
+    @WithName("agent-maven-repository-url")
+    Optional<String> agentMavenRepositoryUrl();
 
     @WithName("executor-pool-size")
     @WithDefault("4")
