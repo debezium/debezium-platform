@@ -236,6 +236,53 @@ public class PipelineMapperTest {
     }
 
     @Test
+    @FixFor("debezium/dbz#1963")
+    public void testMapper_ShouldExtractFormatFromSourceAdditionalProperties() {
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL,
+                Map.of(
+                        DATABASE, "customers",
+                        USERNAME, "sa"),
+                Map.of(
+                        "debezium.format.key", "json",
+                        "debezium.format.key.schemas.enable", "false",
+                        "debezium.format.value", "json",
+                        "debezium.format.value.schemas.enable", "false",
+                        "snapshot.mode", "when_needed"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        var format = result.getSpec().getFormat();
+        assertThat(format.getKey().getType()).isEqualTo("json");
+        assertThat(format.getKey().getConfig().getProps()).containsEntry("schemas.enable", "false");
+        assertThat(format.getValue().getType()).isEqualTo("json");
+        assertThat(format.getValue().getConfig().getProps()).containsEntry("schemas.enable", "false");
+
+        assertThat(result.getSpec().getSource().getConfig().getProps())
+                .containsEntry("snapshot.mode", "when_needed")
+                .doesNotContainKeys(
+                        "debezium.format.key",
+                        "debezium.format.key.schemas.enable",
+                        "debezium.format.value",
+                        "debezium.format.value.schemas.enable");
+    }
+
+    @Test
+    @FixFor("debezium/dbz#1963")
+    public void testMapper_ShouldDefaultFormatWhenNotConfigured() {
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        var format = result.getSpec().getFormat();
+        assertThat(format.getKey().getType()).isEqualTo("json");
+        assertThat(format.getKey().getConfig().getProps()).isEmpty();
+        assertThat(format.getValue().getType()).isEqualTo("json");
+        assertThat(format.getValue().getConfig().getProps()).isEmpty();
+    }
+
+    @Test
     @FixFor("debezium/dbz#2112")
     public void testMapper_ShouldHandleTransformWithEmptyPredicate() {
         var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
@@ -276,6 +323,11 @@ public class PipelineMapperTest {
     }
 
     private PipelineFlat mockPipelineWithSource(ConnectionEntity.Type type, Map<String, Object> connectionConfig) {
+        return mockPipelineWithSource(type, connectionConfig, Map.of());
+    }
+
+    private PipelineFlat mockPipelineWithSource(ConnectionEntity.Type type, Map<String, Object> connectionConfig,
+                                                Map<String, Object> sourceConfig) {
         var pipeline = mock(PipelineFlat.class);
         var source = mock(SourceFlat.class);
         var destination = mock(DestinationFlat.class);
@@ -285,6 +337,7 @@ public class PipelineMapperTest {
         when(connection.getConfig()).thenReturn(connectionConfig);
 
         when(source.getConnection()).thenReturn(connection);
+        when(source.getConfig()).thenReturn(sourceConfig);
 
         when(pipeline.getSource()).thenReturn(source);
         when(pipeline.getDestination()).thenReturn(destination);
