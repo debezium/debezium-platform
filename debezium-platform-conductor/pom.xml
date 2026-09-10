@@ -45,7 +45,7 @@
         <version.test-containers>2.0.5</version.test-containers>
         <version.mockwebserver>4.12.0</version.mockwebserver>
         <version.okhttp>4.12.0</version.okhttp>
-        <version.infinispan>16.2.2</version.infinispan>
+        <version.infinispan>16.2.3</version.infinispan>
         <version.pravega>0.13.0</version.pravega>
         <version.google.cloud.pubsub>1.155.0</version.google.cloud.pubsub>
         <version.azure-messaging-eventhubs>5.21.6</version.azure-messaging-eventhubs>
