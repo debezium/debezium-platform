@@ -45,12 +45,12 @@ const DataSelectorNode: React.FC<DataSelectorNodeProps> = ({ data }) => {
             isCompact
             isPlain
             className="pf-v5-u-box-shadow-md"
-            style={{ cursor: "auto", width: 110 }}
+            style={{ cursor: "auto", minWidth: "100px"}}
           >
             <CardBody
               style={{
-                paddingTop: "5px",
-                paddingBottom: "2px",
+                paddingTop: "10px",
+                paddingBottom: "5px",
                 paddingLeft: "10px",
                 paddingRight: "10px",
               }}

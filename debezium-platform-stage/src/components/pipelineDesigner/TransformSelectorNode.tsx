@@ -1,7 +1,7 @@
 import { useData } from "../../appLayout/AppContext";
 import { AppColors } from "@utils/constants";
 import { Card, CardBody, Stack, StackItem } from "@patternfly/react-core";
-import { DataProcessorIcon } from "@patternfly/react-icons";
+import { RhUiDataProcessorIcon } from "@patternfly/react-icons";
 
 interface TransformSelectorNodeProps {
   data: {
@@ -39,14 +39,11 @@ const TransformSelectorNode: React.FC<TransformSelectorNodeProps> = ({
             isCompact
             isPlain
             className="pf-v5-u-box-shadow-md"
-            style={{ cursor: "auto", width: 110 }}
+            style={{ cursor: "auto", minWidth: 110 }}
           >
             <CardBody
               style={{
-                paddingTop: "5px",
-                paddingBottom: "2px",
-                paddingLeft: "10px",
-                paddingRight: "10px",
+                padding: "10px 5px"
               }}
               className="pf-v5-u-box-shadow-md"
             >
@@ -61,7 +58,7 @@ const TransformSelectorNode: React.FC<TransformSelectorNodeProps> = ({
                   <div
                     className={darkMode ? "connectorImageWrapperDark" : "connectorImageWrapperLight"}
                   >
-                    <DataProcessorIcon style={{ fontSize: 15 }} />
+                    <RhUiDataProcessorIcon style={{ fontSize: 15 }} />
                   </div>
                 </StackItem>
                 <StackItem

@@ -42,7 +42,7 @@ import {
   ThProps,
   Tr,
 } from "@patternfly/react-table";
-import { ExclamationCircleIcon, FilterIcon, PlusIcon, RhUiTaskIcon, SearchIcon } from "@patternfly/react-icons";
+import { ExclamationCircleIcon, FilterIcon, RhUiAddCircleIcon, RhUiTaskIcon, SearchIcon } from "@patternfly/react-icons";
 import { useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "@components/PageHeader";
@@ -313,7 +313,7 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
                     </ToolbarItem>
                   </ToolbarGroup>
                   <ToolbarItem>
-                    <Button variant="primary" icon={<PlusIcon />} onClick={openCreatePage}>
+                    <Button variant="primary" icon={<RhUiAddCircleIcon />} onClick={openCreatePage}>
                       Add rule
                     </Button>
                   </ToolbarItem>
@@ -415,7 +415,7 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
           primaryAction={
             <Button
               variant="primary"
-              icon={<PlusIcon />}
+              icon={<RhUiAddCircleIcon />}
               data-tour="add-source"
               onClick={openCreatePage}
             >

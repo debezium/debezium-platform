@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Button, Card, Content, ContentVariants, EmptyState, MenuToggle, MenuToggleElement, PageSection, SearchInput, Select, SelectList, SelectOption, Spinner, ToggleGroup, Toolbar, ToolbarContent, ToolbarGroup, ToolbarItem } from "@patternfly/react-core";
-import { FilterIcon, PlusIcon } from "@patternfly/react-icons";
+import { FilterIcon, RhUiAddCircleIcon, RhUiInfrastructureIcon } from "@patternfly/react-icons";
 import EmptyStatus from "../../components/EmptyStatus";
 import { useNavigate } from "react-router-dom";
 // import { useData } from "../../appLayout/AppContext";
@@ -291,7 +291,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                             <ToggleGroup aria-label="Icon variant toggle group">
                               <Button
                                 variant="primary"
-                                icon={<PlusIcon />}
+                                icon={<RhUiAddCircleIcon />}
                                 onClick={() =>
                                   navigateTo("/connections/catalog")
                                 }
@@ -334,8 +334,9 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                       heading={t("connection:page.emptyStateTitle")}
                       primaryMessage={t("connection:page.emptyStateDescription")}
                       secondaryMessage=""
+                      icon={RhUiInfrastructureIcon as React.ComponentType<unknown>}
                       primaryAction={
-                        <Button variant="primary" icon={<PlusIcon />} onClick={() => navigateTo("/connections/catalog")}>
+                        <Button variant="primary" icon={<RhUiAddCircleIcon />} onClick={() => navigateTo("/connections/catalog")}>
                           {t("addButton", { val: t("connection:connection") })}
                         </Button>
                       }

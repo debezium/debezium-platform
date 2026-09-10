@@ -20,7 +20,7 @@
         "validate": "Convalida",
         "createConnection": "Crea connessione",
         "backToCatalog": "Torna al catalogo",
-        "modalDescription": "Crea una nuova connessione per il tuo {{val}}, seleziona il tipo di connessione dall'elenco sottostante."
+        "modalDescription": "Crea una nuova connessione per il tuo {{val}}."
     },
     "edit": {
         "title": "Modifica connessione",

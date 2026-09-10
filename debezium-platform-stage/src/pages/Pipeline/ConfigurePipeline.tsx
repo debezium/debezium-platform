@@ -41,8 +41,8 @@ import {
   CodeIcon,
   ExclamationCircleIcon,
   ArrowRightIcon,
-  TrashIcon,
-  PlusIcon,
+  RhUiAddIcon,
+  RhUiTrashIcon,
 } from "@patternfly/react-icons";
 import ConnectorImage from "../../components/ComponentImage";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -654,7 +654,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                                 <>
                                   <Button
                                     variant="secondary"
-                                    icon={<PlusIcon />}
+                                    icon={<RhUiAddIcon />}
                                     onClick={handleAddProperty}
                                   >
                                     {t("pipeline:form.addPackage")}
@@ -741,7 +741,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                                     aria-label="Remove"
                                     onClick={() => handleDeleteProperty(key)}
                                   >
-                                    <TrashIcon />
+                                    <RhUiTrashIcon />
                                   </Button>
                                 </Tooltip>
 

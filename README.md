@@ -130,6 +130,14 @@ cd ..
 
 after all pods are running you should access the platform UI from `http://platform.debezium.io/`
 
+**Platform UI**
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="resources/images/pipeline_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="resources/images/pipeline.png">
+  <img alt="Debezium Management Platform" src="resources/images/pipeline.png">
+</picture>
+
 To finish the example we will create a PostgreSQL, that will be used as source database,
 and a kafka cluster, used as destination in our example pipeline.
 
@@ -162,9 +170,6 @@ kubectl create -n debezium-platform -f examples/k8s/kafka/001_kafka.yml
 ```
 
 And that's all. 
-
-![Debezium Management Platform Architecture](resources/images/pipeline.png)
-
 You should have a test pipeline configured to move data from PostgreSQL to Kakfa.
 
 

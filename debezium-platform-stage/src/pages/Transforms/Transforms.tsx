@@ -35,7 +35,7 @@ import {
 import {
   DataProcessorIcon,
   FilterIcon,
-  PlusIcon,
+  RhUiAddCircleIcon,
   SearchIcon,
 } from "@patternfly/react-icons";
 import EmptyStatus from "../../components/EmptyStatus";
@@ -298,7 +298,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                               <ToggleGroup aria-label="Icon variant toggle group">
                                 <Button
                                   variant="primary"
-                                  icon={<PlusIcon />}
+                                  icon={<RhUiAddCircleIcon />}
                                   onClick={() =>
                                     navigateTo("/transform/create_transform")
                                   }
@@ -405,7 +405,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                     primaryAction={
                       <Button
                         variant="primary"
-                        icon={<PlusIcon />}
+                        icon={<RhUiAddCircleIcon />}
                         onClick={() =>
                           navigateTo("/transform/create_transform")
                         }
