@@ -44,7 +44,6 @@ import {
   Spinner,
 } from "@patternfly/react-core";
 import {
-  AddCircleOIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
   ListIcon,
@@ -1097,52 +1096,36 @@ const CreateSchemaForm = React.forwardRef<
       defaultValue: "Please select a connection before setting up signaling",
     });
 
+    const setupButton = (
+      <Button
+        variant="secondary"
+        icon={signalCollectionName ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <PlusIcon />}
+        onClick={handleSignalModalToggle}
+        isDisabled={!isConnectionSelected}
+        style={{ marginTop: "15px" }}
+      >
+        {t("source:signal.setupSignaling")}
+      </Button>
+    );
+
     return (
-      <Form isWidthLimited>
-        <FormFieldGroup
-          header={
-            <FormFieldGroupHeader
-              titleText={{
-                text: <span style={{ fontWeight: 500 }}>{t("source:signal.title")}</span>,
-                id: "field-group-signal-id",
-              }}
-              titleDescription={t("source:signal.description")}
-            />
-          }
-        >
-          {readOnly ? (
-            <Content component="p">
-              {signalCollectionName
-                ? `${t("source:signal.signalingCollectionField.label", { defaultValue: "Signaling collection" })}: ${signalCollectionName}`
-                : t("source:signal.notConfigured", {
-                    defaultValue: `Signaling is not configured for this ${isDestination ? 'destination' : 'source'}.`,
-                  })}
-            </Content>
-          ) : (
-            <Tooltip
-              content={disabledTooltip}
-              isVisible={!isConnectionSelected ? undefined : false}
-            >
-              <span
-                style={{ display: "block", width: "100%" }}
-                tabIndex={!isConnectionSelected ? 0 : -1}
-              >
-                <Button
-                  variant="link"
-                  size="lg"
-                  icon={signalCollectionName ? <CheckCircleIcon style={{ color: "#3D7318" }} /> : <AddCircleOIcon />}
-                  iconPosition="left"
-                  onClick={handleSignalModalToggle}
-                  isDisabled={!isConnectionSelected}
-                  isBlock
-                >
-                  {t("source:signal.setupSignaling")}
-                </Button>
-              </span>
-            </Tooltip>
-          )}
-        </FormFieldGroup>
-      </Form>
+      <>
+        {readOnly ? (
+          <Content component="p">
+            {signalCollectionName
+              ? `${t("source:signal.signalingCollectionField.label", { defaultValue: "Signaling collection" })}: ${signalCollectionName}`
+              : t("source:signal.notConfigured", {
+                  defaultValue: `Signaling is not configured for this ${isDestination ? "destination" : "source"}.`,
+                })}
+          </Content>
+        ) : !isConnectionSelected ? (
+          <Tooltip content={disabledTooltip}>
+            <span style={{ display: "inline-block" }}>{setupButton}</span>
+          </Tooltip>
+        ) : (
+          setupButton
+        )}
+      </>
     );
   };
 
@@ -1214,6 +1197,12 @@ const CreateSchemaForm = React.forwardRef<
         {/* Signal Collections */}
         {!hideSignalCollections && (
           <section id="signal-collections" className="jumplinks-section-bordered">
+             <Content component="h2" className="jumplinks-section-title">
+           Signal collections
+          </Content>
+          <Content component="p" className="jumplinks-section-description">
+            To enable the signaling capability, set the Signaling collection name and confirm that databse DDL has ben execulted.
+          </Content>
             {renderSignalCollections()}
           </section>
         )}

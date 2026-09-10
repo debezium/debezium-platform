@@ -37,7 +37,7 @@ import {
   ToolbarItem,
   Tooltip,
 } from "@patternfly/react-core";
-import { FilterIcon, PlusIcon, SearchIcon } from "@patternfly/react-icons";
+import { FilterIcon, RhUiAddCircleIcon, SearchIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import {
   Connection,
@@ -592,7 +592,7 @@ const Pipelines: React.FunctionComponent = () => {
                             <ToggleGroup aria-label="Icon variant toggle group">
                               <Button
                                 variant="primary"
-                                icon={<PlusIcon />}
+                                icon={<RhUiAddCircleIcon />}
                                 onClick={() =>
                                   navigateTo("/pipeline/pipeline_designer")
                                 }

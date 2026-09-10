@@ -19,7 +19,7 @@ import {
   ToolbarGroup,
   ToolbarItem,
 } from "@patternfly/react-core";
-import { RhUiDataSinkIcon, FilterIcon, PlusIcon } from "@patternfly/react-icons";
+import { RhUiDataSinkIcon, FilterIcon, RhUiAddCircleIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import EmptyStatus from "../../components/EmptyStatus";
 import { Destination, fetchData } from "../../apis/apis";
@@ -33,7 +33,6 @@ import PageHeader from "@components/PageHeader";
 import { useTranslation } from "react-i18next";
 import PageTour from "../../components/PageTour";
 import { Step } from "react-joyride";
-import { isRouteNavVisible } from "@utils/featureFlag";
 
 const useDestinationPageTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
@@ -212,7 +211,7 @@ const Destinations: React.FunctionComponent = () => {
                             <ToggleGroup aria-label="Icon variant toggle group">
                               <Button
                                 variant="primary"
-                                icon={<PlusIcon />}
+                                icon={<RhUiAddCircleIcon />}
                                 data-tour="add-destination"
                                 onClick={() =>
                                   navigateTo("/destination/catalog")
@@ -254,7 +253,7 @@ const Destinations: React.FunctionComponent = () => {
                   primaryAction={
                     <Button
                       variant="primary"
-                      icon={<PlusIcon />}
+                      icon={<RhUiAddCircleIcon />}
                       data-tour="add-destination"
                       onClick={() => navigateTo("/destination/catalog")}
                     >
@@ -265,6 +264,12 @@ const Destinations: React.FunctionComponent = () => {
                   }
                   secondaryActions={
                     <>
+                    <Button
+                          variant="link"
+                          onClick={() => navigateTo("/connections")}
+                        >
+                          {t("connection")}
+                        </Button>
                       <Button
                         variant="link"
                         onClick={() => navigateTo("/source")}
@@ -277,14 +282,7 @@ const Destinations: React.FunctionComponent = () => {
                       >
                         {t("transform")}
                       </Button>
-                      {isRouteNavVisible("Vault") && (
-                        <Button
-                          variant="link"
-                          onClick={() => navigateTo("/vaults")}
-                        >
-                          {t("vaults")}
-                        </Button>
-                      )}
+                     
                     </>
                   }
                 />

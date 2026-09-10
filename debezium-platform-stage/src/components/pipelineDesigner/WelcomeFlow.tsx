@@ -13,7 +13,6 @@ import {
   Background,
   useReactFlow,
 } from "@xyflow/react";
-import DataNode from "./DataNode";
 import { MdLogin, MdLogout } from "react-icons/md";
 import DataNodeSelector from "./DataSelectorNode";
 import "./CreationFlow.css";
@@ -26,7 +25,6 @@ import { useTranslation } from "react-i18next";
 const nodeTypes = {
   dataNodeSelector: DataNodeSelector,
   debeziumNode: DebeziumNode,
-  dataNode: DataNode,
 };
 
 const edgeTypes = {
@@ -87,7 +85,7 @@ const WelcomeFlow: React.FC = () => {
         sourcePosition: "right",
         targetPosition: "left",
       },
-      position: { x: 330, y: 147 },
+      position: { x: 330, y: 155 },
       targetPosition: "left",
       type: "debeziumNode",
       draggable: false,

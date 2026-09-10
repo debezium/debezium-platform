@@ -31,7 +31,7 @@ import {
   Transform,
   TransformData,
 } from "../../apis/apis";
-import { PlusIcon, UploadIcon } from "@patternfly/react-icons";
+import { RhUiAddIcon, UploadIcon } from "@patternfly/react-icons";
 import "./CreationFlow.css";
 import PipelineSourceModel from "./PipelineSourceModel";
 import PipelineDestinationModel from "./PipelineDestinationModel";
@@ -137,7 +137,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
             isDisabled={!selectedSource}
             onClick={handleTransformModalToggle}
             style={{ paddingRight: 5, paddingLeft: 5, fontSize: ".8em" }}
-            icon={<PlusIcon />}
+            icon={<RhUiAddIcon />}
             size="sm"
           >
             {buttonText}
@@ -161,7 +161,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
               : handleDestinationModalToggle
           }
           style={{ paddingRight: 5, paddingLeft: 5, fontSize: ".8em" }}
-          icon={<PlusIcon />}
+          icon={<RhUiAddIcon />}
           size="sm"
         >
           {buttonText}
@@ -184,14 +184,14 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
         isDisabled={!selectedSource}
         onClick={handleTransformModalToggle}
         style={{ padding: "5px 9px" }}
-        icon={<PlusIcon />}
+        icon={<RhUiAddIcon />}
         size="sm"
       />
     );
     if (!selectedSource) {
       return (
         <Tooltip content={t("pipeline:selectSourceFirst")}>
-          <span>{btn}</span>
+          {btn}
         </Tooltip>
       );
     }

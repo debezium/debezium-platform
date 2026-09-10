@@ -19,7 +19,7 @@ import {
   ToolbarGroup,
   ToolbarItem,
 } from "@patternfly/react-core";
-import { DataSourceIcon, FilterIcon, PlusIcon } from "@patternfly/react-icons";
+import { DataSourceIcon, FilterIcon, RhUiAddCircleIcon } from "@patternfly/react-icons";
 import EmptyStatus from "../../components/EmptyStatus";
 import { useNavigate } from "react-router-dom";
 import { Source, fetchData } from "../../apis/apis";
@@ -214,7 +214,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                             <ToggleGroup aria-label="Icon variant toggle group">
                               <Button
                                 variant="primary"
-                                icon={<PlusIcon />}
+                                icon={<RhUiAddCircleIcon />}
                                 data-tour="add-source"
                                 onClick={() => navigateTo("/source/catalog")}
                               >
@@ -252,7 +252,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                   primaryAction={
                     <Button
                       variant="primary"
-                      icon={<PlusIcon />}
+                      icon={<RhUiAddCircleIcon />}
                       data-tour="add-source"
                       onClick={() => navigateTo("/source/catalog")}
                     >

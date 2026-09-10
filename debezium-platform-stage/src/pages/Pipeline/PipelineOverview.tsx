@@ -415,6 +415,22 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey, 
                   )}
                 </DescriptionListDescription>
               </DescriptionListGroup>
+                  <DescriptionListGroup>
+                <DescriptionListTerm>{t("connection")}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  {isSourceFetchLoading ? (
+                    <Skeleton screenreaderText="Loading contents" />
+                  ) : (
+                       <Button
+                                                          variant="link"
+                                                          isInline
+                                                          onClick={()=> navigate(`/connections/${source?.connection?.id}/?state=view`)}
+                                                        >
+                                                          {source?.connection?.name}
+                                                        </Button>
+                  )}
+                </DescriptionListDescription>
+              </DescriptionListGroup>
               <DescriptionListGroup>
                 <DescriptionListTerm>{t("form.subHeading.title")}</DescriptionListTerm>
                 <DescriptionListDescription>
@@ -505,6 +521,22 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey, 
                     <Skeleton screenreaderText="Loading contents" />
                   ) : (
                     destination?.description
+                  )}
+                </DescriptionListDescription>
+              </DescriptionListGroup>
+                 <DescriptionListGroup>
+                <DescriptionListTerm>{t("connection")}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  {isSourceFetchLoading ? (
+                    <Skeleton screenreaderText="Loading contents" />
+                  ) : (
+                       <Button
+                                                          variant="link"
+                                                          isInline
+                                                          onClick={()=> navigate(`/connections/${destination?.connection?.id}/?state=view`)}
+                                                        >
+                                                          {destination?.connection?.name}
+                                                        </Button>
                   )}
                 </DescriptionListDescription>
               </DescriptionListGroup>
