@@ -9,11 +9,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 import org.jboss.logging.Logger;
 
+import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.domain.HostAllocation;
 import io.debezium.platform.domain.HostDeploymentService;
 import io.debezium.platform.domain.views.HostDeployment;
 import io.debezium.platform.environment.host.agent.HostAgentClient;
-import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.quarkus.arc.lookup.LookupIfProperty;
 
 /**
@@ -24,7 +24,7 @@ import io.quarkus.arc.lookup.LookupIfProperty;
  * Agent runs on each provisioned host and translates HTTP requests
  * into Docker CLI commands locally.
  *
- * <p>Selected when {@code platform.host.container-runtime=agent}. The
+ * <p>Selected when {@code pipeline.host.container-runtime=agent}. The
  * controller resolves the implementation through {@code Instance.get()}, so
  * the property controls the runtime without making the two implementations
  * ambiguous CDI injection candidates.
@@ -40,7 +40,7 @@ import io.quarkus.arc.lookup.LookupIfProperty;
  * @author Divyanshu Kumar Nayak
  */
 @ApplicationScoped
-@LookupIfProperty(name = HostConfigGroup.CONTAINER_RUNTIME_PROPERTY, stringValue = HostConfigGroup.AGENT_RUNTIME)
+@LookupIfProperty(name = PipelineConfigGroup.HOST_CONTAINER_RUNTIME_PROPERTY, stringValue = PipelineConfigGroup.AGENT_RUNTIME)
 public class AgentContainerRuntime implements HostContainerRuntime {
 
     private final Logger logger;

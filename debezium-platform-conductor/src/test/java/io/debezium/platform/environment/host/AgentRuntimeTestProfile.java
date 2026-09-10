@@ -14,7 +14,7 @@ public class AgentRuntimeTestProfile extends HostModeTestProfile {
     @Override
     public Map<String, String> getConfigOverrides() {
         Map<String, String> overrides = new HashMap<>(super.getConfigOverrides());
-        overrides.put("platform.host.container-runtime", "agent");
+        overrides.put("pipeline.host.container-runtime", "agent");
         return overrides;
     }
 }

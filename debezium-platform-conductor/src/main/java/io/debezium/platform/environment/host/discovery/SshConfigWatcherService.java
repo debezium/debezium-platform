@@ -28,6 +28,7 @@ import jakarta.enterprise.event.Observes;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.domain.HostStatusService;
 import io.debezium.platform.domain.views.HostStatus;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
@@ -48,7 +49,7 @@ import io.quarkus.scheduler.Scheduled;
  * than {@code ENTRY_MODIFY} events).
  *
  * <p>This bean is active in both operator and host deployment modes. The
- * {@code platform.deployment.mode} runtime guard at the start of each
+ * {@code pipeline.deployment.mode} runtime guard at the start of each
  * {@code @Observes} and {@code @Scheduled} method ensures no file-system
  * operations are attempted in operator mode, where {@code ~/.ssh/config}
  * may not exist.
@@ -79,7 +80,7 @@ public class SshConfigWatcherService {
             PosixFilePermission.OTHERS_READ,
             PosixFilePermission.OTHERS_WRITE);
 
-    @ConfigProperty(name = "platform.deployment.mode", defaultValue = "operator")
+    @ConfigProperty(name = PipelineConfigGroup.DEPLOYMENT_MODE_PROPERTY, defaultValue = "operator")
     String deploymentMode;
 
     private final Logger logger;

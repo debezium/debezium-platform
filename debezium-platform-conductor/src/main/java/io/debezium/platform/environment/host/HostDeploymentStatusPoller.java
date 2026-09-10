@@ -15,6 +15,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import io.debezium.DebeziumException;
+import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.data.model.DeploymentStatus;
 import io.debezium.platform.domain.HostDeploymentService;
 import io.debezium.platform.domain.views.HostDeployment;
@@ -34,7 +35,7 @@ import io.quarkus.scheduler.Scheduled;
  * <p>Wakes up at a configurable interval (default 30 seconds) and inspects
  * every deployment in {@code DEPLOYING} or {@code RUNNING} state. It uses
  * either the remote Host Agent status endpoint or Ansible ad-hoc commands,
- * according to {@code platform.host.container-runtime}.
+ * according to {@code pipeline.host.container-runtime}.
  *
  * <p><strong>State transitions:</strong>
  * <ul>
@@ -82,6 +83,7 @@ public class HostDeploymentStatusPoller {
     private final AnsibleCommandRunner ansibleRunner;
     private final HostAgentClient agentClient;
     private final HostConfigGroup hostConfig;
+    private final PipelineConfigGroup pipelineConfig;
     private final String deploymentMode;
 
     public HostDeploymentStatusPoller(Logger logger,
@@ -89,12 +91,14 @@ public class HostDeploymentStatusPoller {
                                       AnsibleCommandRunner ansibleRunner,
                                       HostAgentClient agentClient,
                                       HostConfigGroup hostConfig,
-                                      @ConfigProperty(name = "platform.deployment.mode", defaultValue = "operator") String deploymentMode) {
+                                      PipelineConfigGroup pipelineConfig,
+                                      @ConfigProperty(name = PipelineConfigGroup.DEPLOYMENT_MODE_PROPERTY, defaultValue = "operator") String deploymentMode) {
         this.logger = logger;
         this.deploymentService = deploymentService;
         this.ansibleRunner = ansibleRunner;
         this.agentClient = agentClient;
         this.hostConfig = hostConfig;
+        this.pipelineConfig = pipelineConfig;
         this.deploymentMode = deploymentMode;
     }
 
@@ -316,7 +320,7 @@ public class HostDeploymentStatusPoller {
     }
 
     private boolean usesAgentRuntime() {
-        return HostConfigGroup.AGENT_RUNTIME.equals(hostConfig.containerRuntime());
+        return PipelineConfigGroup.AGENT_RUNTIME.equals(pipelineConfig.host().containerRuntime());
     }
 
     private boolean isHostMode() {

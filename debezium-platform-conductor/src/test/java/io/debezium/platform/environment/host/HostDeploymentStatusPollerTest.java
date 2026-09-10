@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.debezium.DebeziumException;
+import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.data.model.DeploymentStatus;
 import io.debezium.platform.domain.HostDeploymentService;
 import io.debezium.platform.domain.views.HostDeployment;
@@ -55,6 +56,7 @@ class HostDeploymentStatusPollerTest {
     private AnsibleCommandRunner ansibleRunner;
     private HostAgentClient agentClient;
     private HostConfigGroup hostConfig;
+    private PipelineConfigGroup pipelineConfig;
     private HostDeploymentStatusPoller poller;
 
     @BeforeEach
@@ -65,12 +67,15 @@ class HostDeploymentStatusPollerTest {
         agentClient = mock(HostAgentClient.class);
 
         hostConfig = mock(HostConfigGroup.class);
-        when(hostConfig.containerRuntime()).thenReturn(HostConfigGroup.AGENT_RUNTIME);
         when(hostConfig.configBasePath()).thenReturn("/opt/debezium/configs");
         when(hostConfig.statusPollMaxRetries()).thenReturn(3);
+        pipelineConfig = mock(PipelineConfigGroup.class);
+        PipelineConfigGroup.HostConfig hostRuntimeConfig = mock(PipelineConfigGroup.HostConfig.class);
+        when(pipelineConfig.host()).thenReturn(hostRuntimeConfig);
+        when(hostRuntimeConfig.containerRuntime()).thenReturn(PipelineConfigGroup.AGENT_RUNTIME);
 
         // Host mode — poller should be active
-        poller = new HostDeploymentStatusPoller(logger, deploymentService, ansibleRunner, agentClient, hostConfig, "host");
+        poller = new HostDeploymentStatusPoller(logger, deploymentService, ansibleRunner, agentClient, hostConfig, pipelineConfig, "host");
     }
 
     @Test
@@ -219,7 +224,7 @@ class HostDeploymentStatusPollerTest {
     void skipsPollingInOperatorMode() {
         Logger logger = Logger.getLogger(HostDeploymentStatusPollerTest.class);
         HostDeploymentStatusPoller operatorPoller = new HostDeploymentStatusPoller(
-                logger, deploymentService, ansibleRunner, agentClient, mock(HostConfigGroup.class), "operator");
+                logger, deploymentService, ansibleRunner, agentClient, mock(HostConfigGroup.class), pipelineConfig, "operator");
 
         operatorPoller.pollDeploymentStatus();
 
@@ -241,7 +246,7 @@ class HostDeploymentStatusPollerTest {
     @Test
     void transitionsDeployingToRunningWithAnsibleRuntime() {
         HostDeployment deployment = mockDeployment(14L, DeploymentStatus.DEPLOYING, "container-14", "host-14");
-        when(hostConfig.containerRuntime()).thenReturn(HostConfigGroup.ANSIBLE_RUNTIME);
+        when(pipelineConfig.host().containerRuntime()).thenReturn(PipelineConfigGroup.ANSIBLE_RUNTIME);
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
         when(ansibleRunner.runShellCommand(eq("host-14"), anyString()))
@@ -257,7 +262,7 @@ class HostDeploymentStatusPollerTest {
     void detectsConfigDriftWithAnsibleRuntime() {
         HostDeployment deployment = mockDeployment(15L, DeploymentStatus.RUNNING, "container-15", "host-15",
                 "expected-hash", Instant.now().minus(Duration.ofMinutes(10)));
-        when(hostConfig.containerRuntime()).thenReturn(HostConfigGroup.ANSIBLE_RUNTIME);
+        when(pipelineConfig.host().containerRuntime()).thenReturn(PipelineConfigGroup.ANSIBLE_RUNTIME);
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
         when(ansibleRunner.runShellCommand(eq("host-15"), anyString()))

@@ -10,13 +10,14 @@ import jakarta.inject.Named;
 
 import org.jboss.logging.Logger;
 
+import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.environment.EnvironmentController;
 import io.debezium.platform.environment.PipelineController;
 import io.debezium.platform.environment.VaultController;
 import io.quarkus.arc.lookup.LookupIfProperty;
 
 @ApplicationScoped
-@LookupIfProperty(name = "platform.deployment.mode", stringValue = "operator", lookupIfMissing = true)
+@LookupIfProperty(name = PipelineConfigGroup.DEPLOYMENT_MODE_PROPERTY, stringValue = "operator", lookupIfMissing = true)
 @Named(OperatorEnvironmentController.BEAN_NAME)
 public class OperatorEnvironmentController implements EnvironmentController {
     public static final String BEAN_NAME = "operator-environment-controller";

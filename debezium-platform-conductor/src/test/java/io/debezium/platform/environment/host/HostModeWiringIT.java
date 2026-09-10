@@ -19,7 +19,7 @@ import io.quarkus.test.junit.TestProfile;
 /**
  * Verifies that CDI bean selection via {@code @LookupIfProperty} correctly
  * activates {@link HostEnvironmentController} when
- * {@code platform.deployment.mode=host}.
+ * {@code pipeline.deployment.mode=host}.
  */
 @QuarkusTest
 @TestProfile(HostModeTestProfile.class)
