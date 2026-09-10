@@ -1,11 +1,13 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import Joyride, {
-  CallBackProps,
+import {
+  Joyride,
+  EventData,
   ACTIONS,
   EVENTS,
   STATUS,
   Step,
   TooltipRenderProps,
+  ButtonType,
 } from "react-joyride";
 import { useTranslation } from "react-i18next";
 import {
@@ -76,7 +78,7 @@ const PageTourTooltip: React.FC<TooltipRenderProps> = ({
             alignItems={{ default: "alignItemsCenter" }}
           >
             <FlexItem>
-              {step.showSkipButton && (
+              {step.buttons.includes("skip") && (
                 <Button
                   variant="link"
                   onClick={(e) => {
@@ -95,7 +97,7 @@ const PageTourTooltip: React.FC<TooltipRenderProps> = ({
                 gap={{ default: "gapSm" }}
                 alignItems={{ default: "alignItemsCenter" }}
               >
-                {index > 0 && !step.hideBackButton && (
+                {index > 0 && step.buttons.includes("back") && (
                   <FlexItem>
                     <Button
                       variant="secondary"
@@ -182,7 +184,7 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
   }, [pageKey, markPageTourCompleted]);
 
   const handleCallback = useCallback(
-    (data: CallBackProps) => {
+    (data: EventData) => {
       const { status, action, index, type } = data;
 
       if (status === STATUS.FINISHED) {
@@ -258,9 +260,16 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
     return null;
   }
 
+  const defaultButtons: ButtonType[] = ["back", "close", "primary", "skip"];
+
   const joyrideSteps = steps.map((step, index) =>
     index === stepIndex && hideBackOnCurrentStep
-      ? { ...step, hideBackButton: true }
+      ? {
+          ...step,
+          buttons: (step.buttons ?? defaultButtons).filter(
+            (button) => button !== "back"
+          ),
+        }
       : step
   );
 
@@ -270,9 +279,7 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
       run={run}
       stepIndex={stepIndex}
       continuous
-      showSkipButton
-      disableOverlayClose={false}
-      callback={handleCallback}
+      onEvent={handleCallback}
       tooltipComponent={PageTourTooltip}
       locale={{
         back: t("buttons.back"),
@@ -281,14 +288,12 @@ const PageTour: React.FC<PageTourProps> = ({ pageKey, steps }) => {
         next: t("buttons.next"),
         skip: t("buttons.skip"),
       }}
-      styles={{
-        options: {
-          overlayColor: "rgba(0, 0, 0, 0.4)",
-          zIndex: 10000,
-        },
-        spotlight: {
-          borderRadius: "4px",
-        },
+      options={{
+        buttons: defaultButtons,
+        overlayClickAction: "close",
+        overlayColor: "rgba(0, 0, 0, 0.4)",
+        zIndex: 10000,
+        spotlightRadius: 4,
       }}
     />
   );

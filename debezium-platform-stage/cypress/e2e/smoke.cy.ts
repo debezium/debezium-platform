@@ -10,7 +10,7 @@ import {
 } from "../support/featureFlags";
 
 describe("Debezium Platform - Smoke Test", () => {
-  const apiUrl = () => Cypress.env("apiUrl");
+  const apiUrl = () => Cypress.expose("apiUrl");
 
   const CORE_API_PATHS = [
     "/api/pipelines",

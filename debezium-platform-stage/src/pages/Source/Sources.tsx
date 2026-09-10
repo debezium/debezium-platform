@@ -47,14 +47,14 @@ const useSourcePageTourSteps = (): Step[] => {
       placement: "bottom",
       title: t("sourcePage.welcome.title"),
       content: t("sourcePage.welcome.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="add-source"]',
       placement: "bottom",
       title: t("sourcePage.addSource.title"),
       content: t("sourcePage.addSource.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
   ];
 };

@@ -39,14 +39,14 @@ const useDestinationCatalogTourSteps = (): Step[] => {
       placement: "bottom",
       title: t("destinationCatalog.smartEditor.title"),
       content: t("destinationCatalog.smartEditor.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="catalog-grid"] .custom-gallery > :first-child',
       placement: "bottom",
       title: t("destinationCatalog.kafkaCard.title"),
       content: t("destinationCatalog.kafkaCard.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
   ];
 };

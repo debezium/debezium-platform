@@ -96,7 +96,7 @@ class MockWebSocket {
   }
 }
 
-global.WebSocket = MockWebSocket as unknown as typeof WebSocket;
+globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket;
 
 describe("PipelineLog", () => {
   const mockProps = {
@@ -168,8 +168,8 @@ describe("PipelineLog", () => {
   it("handles download log file click", async () => {
     const mockCreateObjectURL = vi.fn(() => 'blob:mock-url');
     const mockRevokeObjectURL = vi.fn();
-    global.URL.createObjectURL = mockCreateObjectURL;
-    global.URL.revokeObjectURL = mockRevokeObjectURL;
+    globalThis.URL.createObjectURL = mockCreateObjectURL;
+    globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
     
     const mockAnchor = document.createElement('a');
     const mockClick = vi.fn();

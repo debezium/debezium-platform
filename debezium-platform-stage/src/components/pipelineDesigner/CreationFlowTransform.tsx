@@ -717,7 +717,7 @@ const CreationFlowTransform: React.FC<CreationFlowTransformProps> = ({
 
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
+    if (import.meta.env.DEV) {
       hasMounted.current = false;
     }
   }, []);

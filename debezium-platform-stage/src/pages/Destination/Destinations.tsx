@@ -43,14 +43,14 @@ const useDestinationPageTourSteps = (): Step[] => {
       placement: "bottom",
       title: t("destinationPage.welcome.title"),
       content: t("destinationPage.welcome.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="add-destination"]',
       placement: "bottom",
       title: t("destinationPage.addDestination.title"),
       content: t("destinationPage.addDestination.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
   ];
 };

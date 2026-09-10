@@ -70,7 +70,7 @@ describe('Connection Management', () => {
   };
 
   const ensureSeedPostgresConnection = () => {
-    const connectionsUrl = `${Cypress.env('apiUrl')}/api/connections`;
+    const connectionsUrl = `${Cypress.expose('apiUrl')}/api/connections`;
 
     cy.request({ method: 'GET', url: connectionsUrl, failOnStatusCode: false }).then((response) => {
       const list = Array.isArray(response.body) ? (response.body as { name?: string }[]) : [];
@@ -153,7 +153,7 @@ describe('Connection Management', () => {
     cy.wrap(name).as('testConnectionName');
     cy.request({
       method: 'POST',
-      url: `${Cypress.env('apiUrl')}/api/connections`,
+      url: `${Cypress.expose('apiUrl')}/api/connections`,
       failOnStatusCode: false,
       body: {
         type: 'POSTGRESQL',

@@ -46,7 +46,7 @@ describe('Pipeline Management', () => {
   let seedSourceId: number;
   let seedDestinationId: number;
 
-  const apiUrl = () => Cypress.env('apiUrl');
+  const apiUrl = () => Cypress.expose('apiUrl');
 
   const resolveSeedIdsFromApi = () => {
     cy.request({

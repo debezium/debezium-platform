@@ -43,7 +43,7 @@ describe('Destination Management', () => {
   };
 
   const ensureTestKafkaConnection = () => {
-    const apiUrl = Cypress.env('apiUrl');
+    const apiUrl = Cypress.expose('apiUrl');
     const connectionsUrl = `${apiUrl}/api/connections`;
 
     cy.request({
