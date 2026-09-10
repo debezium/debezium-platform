@@ -65,6 +65,37 @@ class AgentResourceTest {
     }
 
     @Test
+    void rejectsInvalidPathContainerNameBeforeCallingTheService() {
+        given()
+                .when()
+                .get("/api/agent/status/bad%20name")
+                .then()
+                .statusCode(400);
+
+        verifyNoInteractions(containerService);
+    }
+
+    @Test
+    void rejectsInvalidDeployFieldsBeforeCallingTheService() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "containerName": "test-pipeline",
+                          "image": "",
+                          "port": 0,
+                          "configContent": null
+                        }
+                        """)
+                .when()
+                .post("/api/agent/deploy")
+                .then()
+                .statusCode(400);
+
+        verifyNoInteractions(containerService);
+    }
+
+    @Test
     void undeployUsesContainerNamePathParameter() {
         given()
                 .when()

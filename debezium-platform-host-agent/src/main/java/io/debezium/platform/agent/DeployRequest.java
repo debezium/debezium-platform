@@ -5,6 +5,12 @@
  */
 package io.debezium.platform.agent;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+
 /**
  * Request body for the {@code POST /api/agent/deploy} endpoint.
  *
@@ -19,8 +25,8 @@ package io.debezium.platform.agent;
  * @param configContent  full {@code application.properties} content for Debezium Server
  */
 public record DeployRequest(
-        String containerName,
-        String image,
-        int port,
-        String configContent) {
+        @NotBlank(message = "A container name is required") @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9_.-]*", message = "The container name contains unsupported characters") String containerName,
+        @NotBlank(message = "A container image is required") String image,
+        @Min(value = 1, message = "The container port must be between 1 and 65535") @Max(value = 65_535, message = "The container port must be between 1 and 65535") int port,
+        @NotNull(message = "Container configuration is required") String configContent) {
 }
