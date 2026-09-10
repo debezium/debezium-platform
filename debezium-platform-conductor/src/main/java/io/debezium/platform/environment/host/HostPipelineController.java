@@ -235,9 +235,6 @@ public class HostPipelineController implements PipelineController {
     }
 
     private HostContainerRuntime containerRuntime() {
-        if (!containerRuntime.isResolvable()) {
-            throw new IllegalStateException("No HostContainerRuntime is configured");
-        }
         return containerRuntime.get();
     }
 
