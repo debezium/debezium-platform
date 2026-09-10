@@ -60,7 +60,7 @@ describe('Source Management', () => {
   };
 
   const ensureTestPostgresConnection = () => {
-    const apiUrl = Cypress.env('apiUrl');
+    const apiUrl = Cypress.expose('apiUrl');
     const connectionsUrl = `${apiUrl}/api/connections`;
 
     cy.request({

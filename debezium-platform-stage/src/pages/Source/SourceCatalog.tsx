@@ -39,14 +39,14 @@ const useSourceCatalogTourSteps = (): Step[] => {
       placement: "bottom",
       title: t("sourceCatalog.smartEditor.title"),
       content: t("sourceCatalog.smartEditor.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="catalog-grid"] .custom-gallery > :first-child',
       placement: "bottom",
       title: t("sourceCatalog.postgresqlCard.title"),
       content: t("sourceCatalog.postgresqlCard.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
   ];
 };

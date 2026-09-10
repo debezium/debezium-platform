@@ -32,9 +32,10 @@ export default defineConfig({
       });
     },
   },
-  env: {
+  expose: {
     apiUrl: "http://localhost:8080",
   },
+  allowCypressEnv: false,
   chromeWebSecurity: false,
 });
 

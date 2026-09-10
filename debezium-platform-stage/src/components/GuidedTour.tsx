@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import Joyride, {
-  CallBackProps,
+import {
+  Joyride,
+  EventData,
   ACTIONS,
   EVENTS,
   STATUS,
@@ -77,7 +78,7 @@ const PatternFlyTooltip: React.FC<PatternFlyTooltipProps> = ({
             alignItems={{ default: "alignItemsCenter" }}
           >
             <FlexItem>
-              {step.showSkipButton && (
+              {step.buttons.includes("skip") && (
                 <Button
                   variant="link"
                   onClick={
@@ -107,7 +108,7 @@ const PatternFlyTooltip: React.FC<PatternFlyTooltipProps> = ({
                     </Content>
                   </FlexItem>
                 )}
-                {index > 0 && !step.hideBackButton && (
+                {index > 0 && step.buttons.includes("back") && (
                   <FlexItem>
                     <Button
                       variant="secondary"
@@ -264,49 +265,49 @@ const useBasicSteps = (): TourStepDef[] => {
       placement: "center",
       title: t("welcome.title"),
       content: t("welcome.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="sidebar-nav"]',
       placement: "right",
       title: t("sidebarNav.title"),
       content: t("sidebarNav.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="nav-pipeline"]',
       placement: "right",
       title: t("pipelineNav.title"),
       content: t("pipelineNav.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="nav-source"]',
       placement: "right",
       title: t("sourceNav.title"),
       content: t("sourceNav.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="nav-destination"]',
       placement: "right",
       title: t("destinationNav.title"),
       content: t("destinationNav.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="nav-connections"]',
       placement: "right",
       title: t("connectionNav.title"),
       content: t("connectionNav.content"),
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="add-pipeline"]',
       placement: "bottom",
       title: t("addPipeline.title"),
       content: t("addPipeline.content"),
-      disableBeacon: true,
+      skipBeacon: true,
       requiredPath: "/pipeline",
     },
   ];
@@ -324,7 +325,7 @@ const useAdvancedSteps = (): TourStepDef[] => {
       placement: "bottom",
       title: t("advAddPipeline.title"),
       content: t("advAddPipeline.content"),
-      disableBeacon: true,
+      skipBeacon: true,
       requiredPath: "/pipeline",
     },
     {
@@ -332,7 +333,7 @@ const useAdvancedSteps = (): TourStepDef[] => {
       placement: "bottom",
       title: t("advDesignerSource.title"),
       content: t("advDesignerSource.content"),
-      disableBeacon: true,
+      skipBeacon: true,
       requiredPath: "/pipeline/pipeline_designer",
     },
     {
@@ -340,7 +341,7 @@ const useAdvancedSteps = (): TourStepDef[] => {
       placement: "bottom",
       title: t("advDesignerDestination.title"),
       content: t("advDesignerDestination.content"),
-      disableBeacon: true,
+      skipBeacon: true,
       requiredPath: "/pipeline/pipeline_designer",
     },
     {
@@ -348,7 +349,7 @@ const useAdvancedSteps = (): TourStepDef[] => {
       placement: "bottom",
       title: t("advDesignerTransform.title"),
       content: t("advDesignerTransform.content"),
-      disableBeacon: true,
+      skipBeacon: true,
       requiredPath: "/pipeline/pipeline_designer",
     },
     {
@@ -356,7 +357,7 @@ const useAdvancedSteps = (): TourStepDef[] => {
       placement: "bottom",
       title: t("advDbzServerConfig.title"),
       content: t("advDbzServerConfig.content"),
-      disableBeacon: true,
+      skipBeacon: true,
       requiredPath: "/pipeline/pipeline_designer",
     },
     {
@@ -364,7 +365,7 @@ const useAdvancedSteps = (): TourStepDef[] => {
       placement: "top",
       title: t("advConfigurePipeline.title"),
       content: t("advConfigurePipeline.content"),
-      disableBeacon: true,
+      skipBeacon: true,
       requiredPath: "/pipeline/pipeline_designer",
     },
   ];
@@ -460,7 +461,7 @@ const GuidedTour: React.FC = () => {
   }, [completeTour, tourMode, navigate]);
 
   const handleCallback = useCallback(
-    (data: CallBackProps) => {
+    (data: EventData) => {
       const { status, action, index, type } = data;
 
       if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
@@ -565,11 +566,8 @@ const GuidedTour: React.FC = () => {
       run={run}
       stepIndex={stepIndex}
       continuous
-      showSkipButton
-      showProgress
-      disableOverlayClose={false}
-      callback={handleCallback}
-      tooltipComponent={(props) => (
+      onEvent={handleCallback}
+      tooltipComponent={(props: TooltipRenderProps) => (
         <PatternFlyTooltip {...props} onForceSkip={stopTour} />
       )}
       locale={{
@@ -579,14 +577,13 @@ const GuidedTour: React.FC = () => {
         next: t("buttons.next"),
         skip: t("buttons.skip"),
       }}
-      styles={{
-        options: {
-          overlayColor: "rgba(0, 0, 0, 0.5)",
-          zIndex: 10000,
-        },
-        spotlight: {
-          borderRadius: "4px",
-        },
+      options={{
+        buttons: ["back", "close", "primary", "skip"],
+        showProgress: true,
+        overlayClickAction: "close",
+        overlayColor: "rgba(0, 0, 0, 0.5)",
+        zIndex: 10000,
+        spotlightRadius: 4,
       }}
     />
   );

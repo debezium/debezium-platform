@@ -11,7 +11,7 @@ describe('Transform Management', () => {
   /** Preferred Debezium SMT when present in catalog. */
   const DEFAULT_TRANSFORM_TYPE = 'io.debezium.transforms.ExtractNewRecordState';
 
-  const apiUrl = () => Cypress.env('apiUrl');
+  const apiUrl = () => Cypress.expose('apiUrl');
 
   type CatalogTransform = { class?: string; name?: string };
 

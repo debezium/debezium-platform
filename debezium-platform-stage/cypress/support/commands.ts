@@ -31,7 +31,7 @@ declare global {
 
 // Custom command to check if backend is ready
 Cypress.Commands.add('waitForBackend', () => {
-  const apiUrl = Cypress.env('apiUrl');
+  const apiUrl = Cypress.expose('apiUrl');
   cy.request({
     url: `${apiUrl}/api/pipelines`,
     timeout: 30000,
