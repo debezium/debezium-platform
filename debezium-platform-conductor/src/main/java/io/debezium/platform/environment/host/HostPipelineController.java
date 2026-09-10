@@ -119,7 +119,7 @@ public class HostPipelineController implements PipelineController {
 
     @Override
     public LogReader logReader(Long pipelineId) {
-        return new HostDockerLogReader(pipelineId, deploymentService, containerRuntime());
+        return new HostDockerLogReader(pipelineId, deploymentService, containerRuntime.get());
     }
 
     /**
@@ -144,7 +144,7 @@ public class HostPipelineController implements PipelineController {
                 logger.infov("Found existing deployment for pipeline {0} (status={1}), cleaning up before redeploy",
                         pipelineId, existing.getDeploymentStatus());
                 if (existing.getSshAlias() != null && existing.getContainerName() != null) {
-                    containerRuntime().undeploy(existing.getSshAlias(), existing.getContainerName());
+                    containerRuntime.get().undeploy(existing.getSshAlias(), existing.getContainerName());
                 }
                 deploymentService.deleteDeployment(existing.getId());
             });
@@ -159,7 +159,7 @@ public class HostPipelineController implements PipelineController {
                             allocation.allocatedPort(), mappedConfig.configHash()));
 
             // Delegate all infrastructure work to the container runtime
-            containerRuntime().deploy(allocation, containerName,
+            containerRuntime.get().deploy(allocation, containerName,
                     mappedConfig.propertiesContent(), hostConfig.debeziumServerImage());
 
             logger.infov("Pipeline {0} deployment initiated on host {1}, port {2}, container {3}",
@@ -182,14 +182,14 @@ public class HostPipelineController implements PipelineController {
 
             // Graceful stop (SIGTERM) before force-removing the container.
             try {
-                containerRuntime().stop(sshAlias, containerName);
+                containerRuntime.get().stop(sshAlias, containerName);
             }
             catch (Exception e) {
                 logger.debugv("Container {0} on {1} could not be stopped (may already be stopped): {2}",
                         containerName, sshAlias, e.getMessage());
             }
 
-            containerRuntime().undeploy(sshAlias, containerName);
+            containerRuntime.get().undeploy(sshAlias, containerName);
 
             // Hard-delete the deployment record (frees UNIQUE constraint + port)
             deploymentService.deleteDeployment(deployment.getId());
@@ -207,7 +207,7 @@ public class HostPipelineController implements PipelineController {
         String sshAlias = deployment.getSshAlias();
         String containerName = deployment.getContainerName();
 
-        containerRuntime().stop(sshAlias, containerName);
+        containerRuntime.get().stop(sshAlias, containerName);
 
         deploymentService.updateStatus(deployment.getId(), DeploymentStatus.STOPPED);
         logger.infov("Pipeline {0} stopped on host {1}", pipelineId, sshAlias);
@@ -220,7 +220,7 @@ public class HostPipelineController implements PipelineController {
         String sshAlias = deployment.getSshAlias();
         String containerName = deployment.getContainerName();
 
-        containerRuntime().start(sshAlias, containerName);
+        containerRuntime.get().start(sshAlias, containerName);
 
         // Poller will promote DEPLOYING → RUNNING once it detects the container running
         deploymentService.updateStatus(deployment.getId(), DeploymentStatus.DEPLOYING);
@@ -232,10 +232,6 @@ public class HostPipelineController implements PipelineController {
                 .ifPresent(deployment -> deploymentService.updateStatus(deployment.getId(), DeploymentStatus.FAILED));
         pipelineService.updateStatus(pipelineId, PipelineStatus.FAILED, reason);
         logger.errorv("Deployment failed for pipeline {0}: {1}", pipelineId, reason);
-    }
-
-    private HostContainerRuntime containerRuntime() {
-        return containerRuntime.get();
     }
 
     /**
