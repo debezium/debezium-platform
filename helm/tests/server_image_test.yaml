@@ -64,3 +64,47 @@ tests:
           content:
             name: PIPELINE_SERVER_IMAGE
             value: quay.io/debezium/server:nightly
+
+  - it: should inject PIPELINE_SERVER_IMAGE_PULL_SECRETS env var from global imagePullSecrets
+    template: conductor-deployment.yaml
+    set:
+      imagePullSecrets:
+        - name: regcred
+        - name: other
+    asserts:
+      - isKind:
+          of: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_SERVER_IMAGE_PULL_SECRETS
+            value: "regcred,other"
+
+  - it: should prefer server.imagePullSecrets over global imagePullSecrets
+    template: conductor-deployment.yaml
+    set:
+      imagePullSecrets:
+        - name: global-secret
+      server.imagePullSecrets:
+        - name: srv
+    asserts:
+      - isKind:
+          of: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_SERVER_IMAGE_PULL_SECRETS
+            value: "srv"
+
+  - it: should not inject PIPELINE_SERVER_IMAGE_PULL_SECRETS env var when both lists are empty
+    template: conductor-deployment.yaml
+    set:
+      imagePullSecrets: []
+      server.imagePullSecrets: []
+    asserts:
+      - isKind:
+          of: Deployment
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_SERVER_IMAGE_PULL_SECRETS

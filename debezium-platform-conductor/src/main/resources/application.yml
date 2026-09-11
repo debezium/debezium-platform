@@ -69,6 +69,7 @@ pipeline:
   labels: {}
   server:
     image: ${PIPELINE_SERVER_IMAGE:}
+    image-pull-secrets: ${PIPELINE_SERVER_IMAGE_PULL_SECRETS:}
   monitoring:
     otel:
       enabled: ${PIPELINE_MONITORING_OTEL_ENABLED:false}
@@ -196,6 +197,8 @@ quarkus:
       "registry":
         host: ${conductor.descriptors.image.registry}
         enabled: true
+        username: ${CONDUCTOR_DESCRIPTORS_REGISTRY_USERNAME:}
+        password: ${CONDUCTOR_DESCRIPTORS_REGISTRY_PASSWORD:}
 
 "%dev":
   conductor:

@@ -71,16 +71,20 @@ The following operators must be installed in the cluster **before** deploying th
 | ingress.annotations                        | Extra ingress annotations                                                                                                                                                             | {}                                         |
 | ingress.tls.enabled                        | Enable TLS section on ingress                                                                                                                                                         | false                                      |
 | ingress.tls.secretName                     | Secret name used when TLS is enabled                                                                                                                                                  | ""                                         |
+| imagePullSecrets                           | Global list of image pull secrets, applied to the conductor, stage and pipeline pods. See [Image pull secrets](#image-pull-secrets).                                                   | []                                         |
 | stage.image                                | Image for the stage (UI)                                                                                                                                                              | quay.io/debezium/platform-stage:latest     |
 | stage.imagePullPolicy                      | Image pull policy for the stage container (UI). If empty it will default to IfNotPresent.                                                                                             | IfNotPresent                               |
+| stage.imagePullSecrets                     | Replaces the global `imagePullSecrets` for the stage pod. Leave empty to inherit it.                                                                                                  | []                                         |
 | conductor.image                            | Image for the conductor                                                                                                                                                               | quay.io/debezium/platform-conductor:latest |
 | conductor.imagePullPolicy                  | Image pull policy for the conductor container. If empty it will default to IfNotPresent.                                                                                              | IfNotPresent                               |
+| conductor.imagePullSecrets                 | Replaces the global `imagePullSecrets` for the conductor pod. Leave empty to inherit it.                                                                                              | []                                         |
 | conductor.offset.existingConfigMap         | Name of the config map used to store conductor offsets. If empty it will be automatically created.                                                                                    | ""                                         |
 | conductor.descriptors.official.enabled     | Enable official Debezium descriptors (downloaded via ORAS at startup)                                                                                                                 | true                                       |
 | conductor.descriptors.official.registry    | Registry hosting the descriptor OCI artifact                                                                                                                                          | quay.io                                    |
 | conductor.descriptors.official.image       | Image name for the descriptor OCI artifact                                                                                                                                            | debezium/debezium-descriptors              |
 | conductor.descriptors.official.tag         | Image tag for the descriptor OCI artifact                                                                                                                                             | nightly                                    |
 | conductor.descriptors.official.mountPath   | Path where descriptors will be downloaded inside the container                                                                                                                        | /opt/descriptors                           |
+| conductor.descriptors.official.auth.existingSecret | Name of an existing K8s Secret containing `username` and `password` keys for the descriptors registry                                                                                 | ""                                         |
 | conductor.extraVolumes                     | Extra volumes to add to the conductor deployment                                                                                                                                      | []                                         |
 | conductor.extraVolumeMounts                | Extra volume mounts to add to the conductor container                                                                                                                                 | []                                         |
 | conductor.oidc.enabled                     | Enable OIDC bearer-token security (resource-server / service mode). When disabled the conductor is unsecured                                                                          | false                                      |
@@ -89,6 +93,7 @@ The following operators must be installed in the cluster **before** deploying th
 | conductor.oidc.apiPolicy                   | Policy applied to /api/*: authenticated by default (require a token), permit (opt back out, leave open), or a named role policy                                                       | authenticated                              |
 | conductor.oidc.audience                    | Expected aud claim. Empty disables audience enforcement                                                                                                                               | ""                                         |
 | server.image                               | Image for Debezium Server instances created by pipelines. If empty, the operator's ServerImageProvider determines the image                                                           | ""                                         |
+| server.imagePullSecrets                    | Replaces the global `imagePullSecrets` for Debezium Server pods created by pipelines. Leave empty to inherit it.                                                                      | []                                         |
 | database.enabled                           | Enable the installation of PostgreSQL by the chart                                                                                                                                    | false                                      |
 | database.name                              | Database name                                                                                                                                                                         | postgres                                   |
 | database.host                              | Database host                                                                                                                                                                         | postgres                                   |
@@ -200,6 +205,96 @@ alerting:
   webhook:
     allowPrivateNetworks: true
 ```
+
+## Image pull secrets
+
+To pull the conductor and stage images from a private registry, create a `docker-registry` secret in
+the release namespace and reference it from `imagePullSecrets`:
+
+```shell
+kubectl create secret docker-registry my-registry-secret \
+  --docker-server=registry.example.com \
+  --docker-username=<username> \
+  --docker-password=<password> \
+  --namespace <release-namespace>
+```
+
+If you have already authenticated to the registry with `docker login`, `podman login`, or `skopeo
+login`, the credentials can be taken from the resulting file instead. Despite the name, this format
+is not specific to Docker, and no container runtime is required to create the secret:
+
+```shell
+# scope the credentials to a single registry first
+podman login --authfile ./pull-auth.json registry.example.com
+
+kubectl create secret docker-registry my-registry-secret \
+  --from-file=.dockerconfigjson=./pull-auth.json \
+  --namespace <release-namespace>
+```
+
+The intermediate `--authfile` matters. The default credential store
+(`$XDG_RUNTIME_DIR/containers/auth.json` for Podman, `~/.docker/config.json` for Docker) accumulates
+an entry for every registry you have ever logged into, and `--from-file` copies the file verbatim.
+Pointing it at the default store would hand the cluster credentials for registries unrelated to this
+deployment.
+
+Then reference the secret:
+
+```yaml
+imagePullSecrets:
+  - name: my-registry-secret
+```
+
+The global list is applied to the pods this chart renders itself: conductor, stage, and the Debezium
+Server pods created by pipelines. To use a different secret for a single
+component, set its own `imagePullSecrets`:
+
+```yaml
+imagePullSecrets:
+  - name: shared-registry-secret
+
+conductor:
+  imagePullSecrets:
+    - name: conductor-registry-secret   # conductor uses this one only
+# stage has no imagePullSecrets, so it inherits shared-registry-secret
+```
+
+A per-component list **replaces** the global one, it is not merged with it. This follows the usual
+Helm chart convention. Two consequences worth knowing:
+
+- Leaving a component's `imagePullSecrets` empty means *inherit the global list*, so there is no way
+  to explicitly opt a single component out of a configured global list. Move the secret from the
+  global list to the components that need it instead.
+- `imagePullSecrets` is a pod-level field, so a component's list applies to every image the pod
+  pulls. If those images come from different registries, list one secret per registry; the kubelet
+  selects by registry host.
+
+The secret must live in the same namespace as the release. Nothing is rendered into the pod spec
+when both lists are empty, so existing installations are unaffected.
+
+The operator pod is not covered, since it is rendered by the `debezium-operator` subchart, and Helm gives a
+parent chart no way to pass its own values into a subchart, so the global list never reaches it. Set
+the secret on the operator chart directly. With the bundled operator (`debezium-operator.enabled: true`)
+that is the subchart's own value in this chart's `values.yaml`:
+
+```yaml
+debezium-operator:
+  app:
+    imagePullSecrets:
+      - name: my-registry-secret
+```
+
+This requires an operator chart with `app.imagePullSecrets`, that is 3.7.0 or later
+([debezium/dbz#2461](https://github.com/debezium/dbz/issues/2461)). With a separately installed operator
+(`debezium-operator.enabled: false`) set the value on that installation instead, nothing under
+`debezium-operator` here is applied.
+
+The descriptors bundle is an exception: it is not pulled by the kubelet but downloaded by the
+conductor itself at start-up, so it needs registry credentials from
+`conductor.descriptors.official.auth.existingSecret` instead of `imagePullSecrets`.
+
+Debezium Server pods created for pipelines are not covered by the pod lists above either; they
+inherit the global `imagePullSecrets` unless `server.imagePullSecrets` overrides it.
 
 ## Descriptor OCI Artifacts
 
