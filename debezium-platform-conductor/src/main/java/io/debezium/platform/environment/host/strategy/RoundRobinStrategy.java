@@ -26,8 +26,7 @@ import io.debezium.platform.domain.views.refs.HostStatusReference;
  * injected directly to avoid a circular dependency with
  * {@code HostDeploymentService} (which depends on {@code DeployStrategy}).
  *
- * <p>Fails loudly if no ready hosts are available — never silently
- * returns a default or null, per Mario's "Fail Loud, Never Guess" rule.
+ * @author Divyanshu Kumar Nayak
  */
 @ApplicationScoped
 public class RoundRobinStrategy implements DeployStrategy {

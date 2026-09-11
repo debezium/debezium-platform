@@ -10,11 +10,23 @@ import java.util.Map;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 
 @ConfigMapping(prefix = "pipeline")
 @ConfigRoot(phase = ConfigPhase.RUN_TIME)
 public interface PipelineConfigGroup {
+
+    String DEPLOYMENT_MODE_PROPERTY = "pipeline.deployment.mode";
+    String HOST_CONTAINER_RUNTIME_PROPERTY = "pipeline.host.container-runtime";
+    String AGENT_RUNTIME = "agent";
+    String ANSIBLE_RUNTIME = "ansible";
+
+    @WithName("deployment.mode")
+    @WithDefault("operator")
+    String deploymentMode();
+
+    HostConfig host();
 
     OffsetConfigGroup offset();
 
@@ -28,4 +40,11 @@ public interface PipelineConfigGroup {
     MonitoringConfigGroup monitoring();
 
     HealthProbesConfigGroup health();
+
+    interface HostConfig {
+
+        @WithName("container-runtime")
+        @WithDefault(ANSIBLE_RUNTIME)
+        String containerRuntime();
+    }
 }

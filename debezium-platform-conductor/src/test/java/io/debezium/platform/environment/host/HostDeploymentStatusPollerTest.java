@@ -6,6 +6,7 @@
 package io.debezium.platform.environment.host;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -22,9 +23,13 @@ import org.jboss.logging.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.debezium.DebeziumException;
+import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.data.model.DeploymentStatus;
 import io.debezium.platform.domain.HostDeploymentService;
 import io.debezium.platform.domain.views.HostDeployment;
+import io.debezium.platform.environment.host.agent.AgentContainerStatus;
+import io.debezium.platform.environment.host.agent.HostAgentClient;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.debezium.platform.environment.host.provisioning.AnsibleCommandRunner;
 import io.debezium.platform.environment.host.provisioning.CommandResult;
@@ -32,23 +37,26 @@ import io.debezium.platform.environment.host.provisioning.CommandResult;
 /**
  * Unit tests for {@link HostDeploymentStatusPoller}.
  *
- * <p>Verifies all state transition scenarios:
+ * <p>Verifies all state transition scenarios using the Agent REST API:
  * <ul>
- *   <li>{@code DEPLOYING → RUNNING} when container is confirmed running</li>
- *   <li>{@code DEPLOYING → FAILED} when container is not running after deploy</li>
+ *   <li>{@code DEPLOYING → RUNNING} when Agent confirms container running</li>
+ *   <li>{@code DEPLOYING → FAILED} when container not running after deploy</li>
  *   <li>{@code RUNNING → FAILED} when container stopped unexpectedly</li>
- *   <li>{@code RUNNING → CONFIG_DRIFT} when config hash mismatch detected</li>
- *   <li>No status change when container is running and config hash matches</li>
- *   <li>Poller skips in operator mode (deployment-mode guard)</li>
+ *   <li>{@code RUNNING → FAILED} when Agent returns 404 (container removed)</li>
+ *   <li>{@code RUNNING → CONFIG_DRIFT} when config hash mismatch</li>
+ *   <li>No status change when container running and config matches</li>
+ *   <li>Poller skips in operator mode</li>
  *   <li>Poller skips when no active deployments exist</li>
- *   <li>Transient SSH failures are retried via {@code RetryingRunnable}</li>
- *   <li>Definitive "no such object" failures are trusted immediately</li>
+ *   <li>Transient HTTP failures retried via RetryingRunnable</li>
  * </ul>
  */
 class HostDeploymentStatusPollerTest {
 
     private HostDeploymentService deploymentService;
     private AnsibleCommandRunner ansibleRunner;
+    private HostAgentClient agentClient;
+    private HostConfigGroup hostConfig;
+    private PipelineConfigGroup pipelineConfig;
     private HostDeploymentStatusPoller poller;
 
     @BeforeEach
@@ -56,13 +64,18 @@ class HostDeploymentStatusPollerTest {
         Logger logger = Logger.getLogger(HostDeploymentStatusPollerTest.class);
         deploymentService = mock(HostDeploymentService.class);
         ansibleRunner = mock(AnsibleCommandRunner.class);
+        agentClient = mock(HostAgentClient.class);
 
-        HostConfigGroup hostConfig = mock(HostConfigGroup.class);
+        hostConfig = mock(HostConfigGroup.class);
         when(hostConfig.configBasePath()).thenReturn("/opt/debezium/configs");
         when(hostConfig.statusPollMaxRetries()).thenReturn(3);
+        pipelineConfig = mock(PipelineConfigGroup.class);
+        PipelineConfigGroup.HostConfig hostRuntimeConfig = mock(PipelineConfigGroup.HostConfig.class);
+        when(pipelineConfig.host()).thenReturn(hostRuntimeConfig);
+        when(hostRuntimeConfig.containerRuntime()).thenReturn(PipelineConfigGroup.AGENT_RUNTIME);
 
         // Host mode — poller should be active
-        poller = new HostDeploymentStatusPoller(logger, deploymentService, ansibleRunner, hostConfig, "host");
+        poller = new HostDeploymentStatusPoller(logger, deploymentService, ansibleRunner, agentClient, hostConfig, pipelineConfig, "host");
     }
 
     @Test
@@ -71,8 +84,8 @@ class HostDeploymentStatusPollerTest {
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
-        when(ansibleRunner.runShellCommand(eq("host-1"), any()))
-                .thenReturn(new CommandResult.Success("true"));
+        when(agentClient.status(eq("host-1"), eq(8090), anyString(), eq("container-1")))
+                .thenReturn(new AgentContainerStatus(true, "hash-1"));
 
         poller.pollDeploymentStatus();
 
@@ -86,8 +99,8 @@ class HostDeploymentStatusPollerTest {
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
-        when(ansibleRunner.runShellCommand(eq("host-1"), any()))
-                .thenReturn(new CommandResult.Success("false"));
+        when(agentClient.status(eq("host-1"), eq(8090), anyString(), eq("container-2")))
+                .thenReturn(new AgentContainerStatus(false, null));
 
         poller.pollDeploymentStatus();
 
@@ -101,8 +114,8 @@ class HostDeploymentStatusPollerTest {
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
-        when(ansibleRunner.runShellCommand(eq("host-1"), any()))
-                .thenReturn(new CommandResult.Success("false"));
+        when(agentClient.status(eq("host-1"), eq(8090), anyString(), eq("container-8")))
+                .thenReturn(new AgentContainerStatus(false, null));
 
         poller.pollDeploymentStatus();
 
@@ -116,13 +129,13 @@ class HostDeploymentStatusPollerTest {
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
-        // docker inspect succeeds but returns "false" — container genuinely stopped
-        when(ansibleRunner.runShellCommand(eq("host-2"), any()))
-                .thenReturn(new CommandResult.Success("false"));
+        // Agent returns running=false — container genuinely stopped
+        when(agentClient.status(eq("host-2"), eq(8090), anyString(), eq("container-3")))
+                .thenReturn(new AgentContainerStatus(false, null));
 
         poller.pollDeploymentStatus();
 
-        // Should mark FAILED immediately — no retry needed, this is a definitive answer
+        // Should mark FAILED immediately — no retry needed
         verify(deploymentService).updateStatus(3L, DeploymentStatus.FAILED);
     }
 
@@ -132,29 +145,29 @@ class HostDeploymentStatusPollerTest {
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
-        // docker inspect fails with "No such object" — container genuinely gone
-        when(ansibleRunner.runShellCommand(eq("host-9"), any()))
-                .thenReturn(new CommandResult.Failure("Error: No such object: container-11"));
+        // Agent returns null (404) — container genuinely removed
+        when(agentClient.status(eq("host-9"), eq(8090), anyString(), eq("container-11")))
+                .thenReturn(null);
 
         poller.pollDeploymentStatus();
 
-        // Should mark FAILED immediately — "No such object" is definitive, not retried
+        // Should mark FAILED immediately — 404 is definitive, not retried
         verify(deploymentService).updateStatus(11L, DeploymentStatus.FAILED);
     }
 
     @Test
-    void skipsStatusUpdateWhenAllInspectRetriesExhausted() {
+    void skipsStatusUpdateWhenAllRetriesExhausted() {
         HostDeployment deployment = mockDeployment(12L, DeploymentStatus.RUNNING, "container-12", "host-10");
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
-        // Transient SSH failure — does NOT contain "no such object"
-        when(ansibleRunner.runShellCommand(eq("host-10"), any()))
-                .thenReturn(new CommandResult.Failure("SSH connection timed out"));
+        // Transient HTTP failure — DebeziumException is retried by RetryingRunnable
+        when(agentClient.status(eq("host-10"), eq(8090), anyString(), eq("container-12")))
+                .thenThrow(new DebeziumException("Connection refused"));
 
         poller.pollDeploymentStatus();
 
-        // All retries exhausted → AnsibleCommandException caught → no status change
+        // All retries exhausted → DebeziumException caught → no status change
         verify(deploymentService, never()).updateStatus(eq(12L), any());
     }
 
@@ -164,10 +177,10 @@ class HostDeploymentStatusPollerTest {
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
-        // First call: transient SSH failure. Second call: success.
-        when(ansibleRunner.runShellCommand(eq("host-11"), any()))
-                .thenReturn(new CommandResult.Failure("SSH connection timed out"))
-                .thenReturn(new CommandResult.Success("true"));
+        // First call: transient failure. Second call: success.
+        when(agentClient.status(eq("host-11"), eq(8090), anyString(), eq("container-13")))
+                .thenThrow(new DebeziumException("Connection refused"))
+                .thenReturn(new AgentContainerStatus(true, "hash-1"));
 
         poller.pollDeploymentStatus();
 
@@ -182,12 +195,9 @@ class HostDeploymentStatusPollerTest {
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
-
-        // First call: docker inspect → running
-        // Second call: sha256sum → different hash
-        when(ansibleRunner.runShellCommand(eq("host-3"), any()))
-                .thenReturn(new CommandResult.Success("true"))
-                .thenReturn(new CommandResult.Success("different-hash-xyz"));
+        // Agent returns running=true but different hash
+        when(agentClient.status(eq("host-3"), eq(8090), anyString(), eq("container-4")))
+                .thenReturn(new AgentContainerStatus(true, "different-hash-xyz"));
 
         poller.pollDeploymentStatus();
 
@@ -201,12 +211,8 @@ class HostDeploymentStatusPollerTest {
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
-
-        // First call: docker inspect → running
-        // Second call: sha256sum → matching hash
-        when(ansibleRunner.runShellCommand(eq("host-4"), any()))
-                .thenReturn(new CommandResult.Success("true"))
-                .thenReturn(new CommandResult.Success("matching-hash"));
+        when(agentClient.status(eq("host-4"), eq(8090), anyString(), eq("container-5")))
+                .thenReturn(new AgentContainerStatus(true, "matching-hash"));
 
         poller.pollDeploymentStatus();
 
@@ -218,7 +224,7 @@ class HostDeploymentStatusPollerTest {
     void skipsPollingInOperatorMode() {
         Logger logger = Logger.getLogger(HostDeploymentStatusPollerTest.class);
         HostDeploymentStatusPoller operatorPoller = new HostDeploymentStatusPoller(
-                logger, deploymentService, ansibleRunner, mock(HostConfigGroup.class), "operator");
+                logger, deploymentService, ansibleRunner, agentClient, mock(HostConfigGroup.class), pipelineConfig, "operator");
 
         operatorPoller.pollDeploymentStatus();
 
@@ -233,19 +239,51 @@ class HostDeploymentStatusPollerTest {
 
         poller.pollDeploymentStatus();
 
-        // Should not call Ansible
-        verify(ansibleRunner, never()).runShellCommand(anyString(), anyString());
+        // Should not call Agent client
+        verify(agentClient, never()).status(anyString(), anyInt(), anyString(), anyString());
     }
 
     @Test
-    void handlesExceptionDuringInspectGracefully() {
+    void transitionsDeployingToRunningWithAnsibleRuntime() {
+        HostDeployment deployment = mockDeployment(14L, DeploymentStatus.DEPLOYING, "container-14", "host-14");
+        when(pipelineConfig.host().containerRuntime()).thenReturn(PipelineConfigGroup.ANSIBLE_RUNTIME);
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+        when(ansibleRunner.runShellCommand(eq("host-14"), anyString()))
+                .thenReturn(new CommandResult.Success("true"));
+
+        poller.pollDeploymentStatus();
+
+        verify(deploymentService).updateStatus(14L, DeploymentStatus.RUNNING);
+        verify(agentClient, never()).status(anyString(), anyInt(), anyString(), anyString());
+    }
+
+    @Test
+    void detectsConfigDriftWithAnsibleRuntime() {
+        HostDeployment deployment = mockDeployment(15L, DeploymentStatus.RUNNING, "container-15", "host-15",
+                "expected-hash", Instant.now().minus(Duration.ofMinutes(10)));
+        when(pipelineConfig.host().containerRuntime()).thenReturn(PipelineConfigGroup.ANSIBLE_RUNTIME);
+        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
+                .thenReturn(List.of(deployment));
+        when(ansibleRunner.runShellCommand(eq("host-15"), anyString()))
+                .thenReturn(new CommandResult.Success("true"))
+                .thenReturn(new CommandResult.Success("different-hash"));
+
+        poller.pollDeploymentStatus();
+
+        verify(deploymentService).updateStatus(15L, DeploymentStatus.CONFIG_DRIFT);
+        verify(agentClient, never()).status(anyString(), anyInt(), anyString(), anyString());
+    }
+
+    @Test
+    void handlesExceptionDuringStatusGracefully() {
         HostDeployment deployment = mockDeployment(6L, DeploymentStatus.RUNNING, "container-6", "host-5");
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
 
-        // Ansible throws an unexpected exception (not AnsibleCommandException)
-        when(ansibleRunner.runShellCommand(eq("host-5"), any()))
+        // Agent throws an unexpected exception (not DebeziumException)
+        when(agentClient.status(eq("host-5"), eq(8090), anyString(), eq("container-6")))
                 .thenThrow(new RuntimeException("Network error"));
 
         // Should NOT throw — should log and skip
@@ -256,91 +294,41 @@ class HostDeploymentStatusPollerTest {
     }
 
     @Test
-    void skipsConfigDriftWhenHashCommandFails() {
+    void skipsConfigDriftWhenHashIsNull() {
         HostDeployment deployment = mockDeployment(7L, DeploymentStatus.RUNNING, "container-7", "host-6",
                 "expected-hash", Instant.now().minus(Duration.ofMinutes(10)));
 
         when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
                 .thenReturn(List.of(deployment));
-
-        // First call: docker inspect → running
-        // Second call: sha256sum → Failure (e.g., file not found)
-        when(ansibleRunner.runShellCommand(eq("host-6"), any()))
-                .thenReturn(new CommandResult.Success("true"))
-                .thenReturn(new CommandResult.Failure("No such file or directory"));
+        // Agent returns running=true but no config hash (file not found)
+        when(agentClient.status(eq("host-6"), eq(8090), anyString(), eq("container-7")))
+                .thenReturn(new AgentContainerStatus(true, null));
 
         poller.pollDeploymentStatus();
 
-        // No status update — sha256sum failure is silently skipped (only logged at debug)
+        // No CONFIG_DRIFT — null hash means file not found, skipped
         verify(deploymentService, never()).updateStatus(eq(7L), any());
-    }
-
-    @Test
-    void handlesNoisyAnsibleOutputForConfigHash() {
-        // Reproduces the exact output Ansible returns on test-host:
-        // Warnings + metadata + the actual hash on the last line
-        HostDeployment deployment = mockDeployment(9L, DeploymentStatus.RUNNING, "container-9", "host-7",
-                "e1272390382212e4164631eaa80eb72ced68c390887220163f90211cca1c3129",
-                Instant.now().minus(Duration.ofMinutes(10)));
-
-        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
-                .thenReturn(List.of(deployment));
-
-        String noisyOutput = "[WARNING]: Host 'test-host' is using the discovered Python interpreter "
-                + "at '/usr/bin/python3.14', but future installation of another Python interpreter "
-                + "could cause a different interpreter to be discovered.\n"
-                + "test-host | CHANGED | rc=0 >>\n"
-                + "e1272390382212e4164631eaa80eb72ced68c390887220163f90211cca1c3129\n";
-
-        // First call: docker inspect → running
-        // Second call: sha256sum → noisy but hash matches
-        when(ansibleRunner.runShellCommand(eq("host-7"), any()))
-                .thenReturn(new CommandResult.Success("true"))
-                .thenReturn(new CommandResult.Success(noisyOutput));
-
-        poller.pollDeploymentStatus();
-
-        // Should NOT mark CONFIG_DRIFT — hash is the same after extracting the last line
-        verify(deploymentService, never()).updateStatus(eq(9L), eq(DeploymentStatus.CONFIG_DRIFT));
-    }
-
-    @Test
-    void handlesNoisyAnsibleOutputForDockerInspect() {
-        // Verifies docker inspect also works when Ansible wraps output with warnings
-        HostDeployment deployment = mockDeployment(10L, DeploymentStatus.DEPLOYING, "container-10", "host-8");
-
-        when(deploymentService.findByStatuses(DeploymentStatus.DEPLOYING, DeploymentStatus.RUNNING))
-                .thenReturn(List.of(deployment));
-
-        String noisyInspect = "[WARNING]: Host 'test-host' is using the discovered Python interpreter.\n"
-                + "test-host | CHANGED | rc=0 >>\n"
-                + "true\n";
-
-        when(ansibleRunner.runShellCommand(eq("host-8"), any()))
-                .thenReturn(new CommandResult.Success(noisyInspect));
-
-        poller.pollDeploymentStatus();
-
-        // Should transition DEPLOYING → RUNNING even with noisy output
-        verify(deploymentService).updateStatus(10L, DeploymentStatus.RUNNING);
     }
 
     // ── Helper ──
 
     private HostDeployment mockDeployment(Long id, DeploymentStatus status,
-                                          String containerName, String sshAlias) {
-        return mockDeployment(id, status, containerName, sshAlias,
+                                          String containerName, String hostname) {
+        return mockDeployment(id, status, containerName, hostname,
                 "default-hash", Instant.now().minus(Duration.ofMinutes(10)));
     }
 
     private HostDeployment mockDeployment(Long id, DeploymentStatus status,
-                                          String containerName, String sshAlias,
+                                          String containerName, String hostname,
                                           String configHash, Instant deployedAt) {
         HostDeployment deployment = mock(HostDeployment.class);
         when(deployment.getId()).thenReturn(id);
         when(deployment.getPipelineId()).thenReturn(id);
         when(deployment.getContainerName()).thenReturn(containerName);
-        when(deployment.getSshAlias()).thenReturn(sshAlias);
+        when(deployment.getSshAlias()).thenReturn(hostname);
+        when(deployment.getHostname()).thenReturn(hostname);
+        when(deployment.getAgentPort()).thenReturn(8090);
+        when(deployment.getAgentToken()).thenReturn("test-token");
         when(deployment.getDeploymentStatus()).thenReturn(status);
         when(deployment.getConfigHash()).thenReturn(configHash);
         when(deployment.getDeployedAt()).thenReturn(deployedAt);

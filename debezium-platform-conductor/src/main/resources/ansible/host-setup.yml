@@ -4,7 +4,7 @@
 # before making changes.
 #
 # Invoked from AnsibleHostProvisioner via:
-#   ansible-playbook host-setup.yml -i "db-server-1," --extra-vars "agent_token=<uuid>"
+#   ansible-playbook host-setup.yml -i "db-server-1," --extra-vars "install_host_agent=true agent_token=<uuid> agent_version=<version>"
 #
 # Ansible resolves HostName, User, IdentityFile from ~/.ssh/config automatically.
 
@@ -146,47 +146,71 @@
         groups: docker
         append: true
 
-    # NOTE: The Host Agent binary is built by an upcoming feature and is not
-    # yet available. This task creates the systemd service file pointing to
-    # the documented artifact path. The actual binary copy task will be
-    # added once that feature lands.
-    - name: Create Host Agent directory
-      ansible.builtin.file:
-        path: /opt/debezium/agent
-        state: directory
-        mode: "0755"
+    # The Agent is installed only when it is the configured runtime. The JAR
+    # is fetched from Maven instead of copied from the Conductor's local build
+    # directory, so a provisioned host is independent of the build machine.
+    - name: Install Host Agent
+      when: install_host_agent | bool
       tags: [host_agent]
+      block:
+        - name: Require a Host Agent version
+          ansible.builtin.assert:
+            that: agent_version is defined
+            fail_msg: platform.host.agent-version is required when using the Agent runtime
 
-    - name: Deploy Host Agent systemd unit file
-      ansible.builtin.copy:
-        dest: /etc/systemd/system/debezium-host-agent.service
-        mode: "0644"
-        content: |
-          [Unit]
-          Description=Debezium Host Agent
-          After=network.target docker.service
-          Requires=docker.service
+        - name: Install Java Runtime Environment
+          ansible.builtin.package:
+            name: "{{ 'default-jre-headless' if ansible_facts['os_family'] == 'Debian' else 'java-headless' }}"
+            state: present
 
-          [Service]
-          Type=simple
-          User=root
-          Environment="AGENT_TOKEN={{ agent_token }}"
-          ExecStart=/usr/bin/java -jar /opt/debezium/agent/debezium-host-agent-runner.jar
-          Restart=always
-          RestartSec=5
+        - name: Create Host Agent directory
+          ansible.builtin.file:
+            path: /opt/debezium/agent
+            state: directory
+            mode: "0755"
 
-          [Install]
-          WantedBy=multi-user.target
-      notify: Restart Host Agent
-      tags: [host_agent]
+        - name: Install Python lxml library for community.general.maven_artifact
+          ansible.builtin.package:
+            name: python3-lxml
+            state: present
 
-    - name: Enable and start Host Agent service
-      ansible.builtin.systemd:
-        name: debezium-host-agent
-        state: started
-        enabled: true
-        daemon_reload: true
-      tags: [host_agent]
+        - name: Download Host Agent from Maven
+          community.general.maven_artifact:
+            group_id: io.debezium
+            artifact_id: debezium-platform-host-agent
+            version: "{{ agent_version }}"
+            repository_url: "{{ agent_maven_repository_url | default(omit) }}"
+            dest: /opt/debezium/agent/debezium-host-agent-runner.jar
+            mode: "0755"
+
+        - name: Deploy Host Agent systemd unit file
+          ansible.builtin.copy:
+            dest: /etc/systemd/system/debezium-host-agent.service
+            mode: "0644"
+            content: |
+              [Unit]
+              Description=Debezium Host Agent
+              After=network.target docker.service
+              Requires=docker.service
+
+              [Service]
+              Type=simple
+              User=root
+              Environment="AGENT_TOKEN={{ agent_token }}"
+              ExecStart=/usr/bin/java -jar /opt/debezium/agent/debezium-host-agent-runner.jar
+              Restart=always
+              RestartSec=5
+
+              [Install]
+              WantedBy=multi-user.target
+          notify: Restart Host Agent
+
+        - name: Enable and start Host Agent service
+          ansible.builtin.systemd:
+            name: debezium-host-agent
+            state: started
+            enabled: true
+            daemon_reload: true
 
     # community.docker.docker_image_pull (used in Step 8) does NOT use the
     # Docker SDK for Python — as of community.docker 3.6.0 it talks to the

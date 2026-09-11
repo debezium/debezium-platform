@@ -29,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.debezium.platform.environment.host.provisioning.HostProvisioner.ProvisionResult;
 
@@ -55,12 +56,15 @@ class AnsibleHostProvisionerTest {
         Logger logger = Logger.getLogger(AnsibleHostProvisionerTest.class);
 
         HostConfigGroup hostConfig = mock(HostConfigGroup.class);
+        PipelineConfigGroup pipelineConfig = pipelineConfig(PipelineConfigGroup.AGENT_RUNTIME);
         when(hostConfig.ansiblePlaybookPath()).thenReturn(Optional.empty());
         when(hostConfig.ansibleTeardownPath()).thenReturn(Optional.empty());
         when(hostConfig.ansibleTimeoutMinutes()).thenReturn(30);
         when(hostConfig.sshConfigPath()).thenReturn("/etc/ssh/test-config");
+        when(hostConfig.agentVersion()).thenReturn(Optional.of("3.7.0-SNAPSHOT"));
+        when(hostConfig.agentMavenRepositoryUrl()).thenReturn(Optional.empty());
 
-        provisioner = spy(new AnsibleHostProvisioner(logger, hostConfig));
+        provisioner = spy(new AnsibleHostProvisioner(logger, hostConfig, pipelineConfig));
     }
 
     @Test
@@ -75,7 +79,27 @@ class AnsibleHostProvisionerTest {
         assertThat(command.get(4)).isEqualTo("--ssh-extra-args");
         assertThat(command.get(5)).isEqualTo("-F /etc/ssh/test-config");
         assertThat(command.get(6)).isEqualTo("--extra-vars");
-        assertThat(command.get(7)).isEqualTo("agent_token=test-token-abc ansible_become_timeout=60");
+        assertThat(command.get(7)).isEqualTo("agent_token=test-token-abc ansible_become_timeout=60 "
+                + "install_host_agent=true agent_version=3.7.0-SNAPSHOT");
+    }
+
+    @Test
+    void buildProvisionCommandSkipsAgentInstallationForAnsibleRuntime() {
+        HostConfigGroup hostConfig = mock(HostConfigGroup.class);
+        when(hostConfig.ansiblePlaybookPath()).thenReturn(Optional.empty());
+        when(hostConfig.ansibleTeardownPath()).thenReturn(Optional.empty());
+        when(hostConfig.ansibleTimeoutMinutes()).thenReturn(30);
+        when(hostConfig.sshConfigPath()).thenReturn("/etc/ssh/test-config");
+        when(hostConfig.agentVersion()).thenReturn(Optional.empty());
+        when(hostConfig.agentMavenRepositoryUrl()).thenReturn(Optional.empty());
+
+        AnsibleHostProvisioner ansibleProvisioner = new AnsibleHostProvisioner(
+                Logger.getLogger(AnsibleHostProvisionerTest.class), hostConfig,
+                pipelineConfig(PipelineConfigGroup.ANSIBLE_RUNTIME));
+
+        assertThat(ansibleProvisioner.buildProvisionCommand("db-server-1", "test-token-abc").get(7))
+                .contains("install_host_agent=false")
+                .doesNotContain("agent_version=");
     }
 
     @Test
@@ -83,6 +107,14 @@ class AnsibleHostProvisionerTest {
         List<String> command = provisioner.buildProvisionCommand("my-host", "token-123");
 
         assertThat(command.get(3)).endsWith(",");
+    }
+
+    private static PipelineConfigGroup pipelineConfig(String containerRuntime) {
+        PipelineConfigGroup pipelineConfig = mock(PipelineConfigGroup.class);
+        PipelineConfigGroup.HostConfig hostConfig = mock(PipelineConfigGroup.HostConfig.class);
+        when(pipelineConfig.host()).thenReturn(hostConfig);
+        when(hostConfig.containerRuntime()).thenReturn(containerRuntime);
+        return pipelineConfig;
     }
 
     @Test

@@ -10,7 +10,7 @@ import java.util.Map;
 import io.quarkus.test.junit.QuarkusTestProfile;
 
 /**
- * Test profile that sets {@code platform.deployment.mode=host} to activate
+ * Test profile that sets {@code pipeline.deployment.mode=host} to activate
  * the host deployment path for CDI bean selection tests.
  */
 public class HostModeTestProfile implements QuarkusTestProfile {
@@ -18,7 +18,7 @@ public class HostModeTestProfile implements QuarkusTestProfile {
     @Override
     public Map<String, String> getConfigOverrides() {
         return Map.of(
-                "platform.deployment.mode", "host",
+                "pipeline.deployment.mode", "host",
                 "conductor.watcher.enabled", "false",
                 "conductor.descriptors.volume-source", "true",
                 "quarkus.oras.devservices.base-port", "25010",

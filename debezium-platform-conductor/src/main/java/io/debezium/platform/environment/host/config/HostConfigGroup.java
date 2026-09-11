@@ -45,6 +45,21 @@ public interface HostConfigGroup {
     @WithDefault("30")
     int ansibleTimeoutMinutes();
 
+    /**
+     * Version of the Host Agent artifact to download when the Agent runtime is enabled.
+     * The value is intentionally required only for Agent provisioning, because a
+     * development snapshot is not a deployable production default.
+     */
+    @WithName("agent-version")
+    Optional<String> agentVersion();
+
+    /**
+     * Optional Maven repository URL for the Host Agent artifact. When unset,
+     * Ansible uses the Maven Central default of the Maven artifact module.
+     */
+    @WithName("agent-maven-repository-url")
+    Optional<String> agentMavenRepositoryUrl();
+
     @WithName("executor-pool-size")
     @WithDefault("4")
     int executorPoolSize();

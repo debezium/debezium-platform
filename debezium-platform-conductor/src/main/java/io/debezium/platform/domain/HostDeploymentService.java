@@ -63,6 +63,7 @@ import io.debezium.platform.environment.host.strategy.DeployStrategy;
 public class HostDeploymentService extends AbstractService<HostDeploymentEntity, HostDeployment, HostDeploymentReference> {
 
     private static final Logger logger = Logger.getLogger(HostDeploymentService.class);
+    private static final String CONTAINER_NAME_ATTRIBUTE = "containerName";
 
     // ── JPQL constants for queries that require features Blaze CriteriaBuilder does not support ──
     private static final String FIND_READY_HOSTS_JPQL = "SELECT h FROM host_status h WHERE h.provisioningStatus = :status ORDER BY h.id ASC";
@@ -204,6 +205,26 @@ public class HostDeploymentService extends AbstractService<HostDeploymentEntity,
                 EntityViewSetting.create(HostDeployment.class),
                 cb().where("deploymentStatus").eq(status))
                 .getResultList();
+    }
+
+    /**
+     * Finds a deployment by its Docker container name.
+     *
+     * <p>Used by {@link io.debezium.platform.environment.host.AgentContainerRuntime}
+     * to resolve the host's Agent connection details (hostname, port, token)
+     * when the {@link HostContainerRuntime} interface only provides the
+     * container name string.
+     *
+     * @return the matching deployment, or empty if none exists
+     */
+    @Transactional(SUPPORTS)
+    public Optional<HostDeployment> findByContainerName(String containerName) {
+        return evm.applySetting(
+                EntityViewSetting.create(HostDeployment.class),
+                cb().where(CONTAINER_NAME_ATTRIBUTE).eq(containerName))
+                .getResultList()
+                .stream()
+                .findFirst();
     }
 
     /**

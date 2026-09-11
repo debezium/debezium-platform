@@ -25,6 +25,15 @@ public interface HostDeployment extends HostDeploymentReference {
     @Mapping("hostStatus.sshAlias")
     String getSshAlias();
 
+    @Mapping("hostStatus.hostname")
+    String getHostname();
+
+    @Mapping("hostStatus.agentPort")
+    int getAgentPort();
+
+    @Mapping("hostStatus.agentToken")
+    String getAgentToken();
+
     DeploymentStatus getDeploymentStatus();
 
     void setDeploymentStatus(DeploymentStatus status);

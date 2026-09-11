@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import io.debezium.operator.api.model.DebeziumServer;
 import io.debezium.operator.api.model.status.Condition;
+import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.data.model.PipelineStatus;
 import io.debezium.platform.environment.DebeziumServerStatusChanged;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -31,7 +32,7 @@ import io.quarkus.runtime.StartupEvent;
  * Watches {@link DebeziumServer} CR status changes via a Kubernetes informer and
  * translates operator conditions into {@link DebeziumServerStatusChanged} CDI events.
  *
- * <p>Active only when {@code platform.deployment.mode=operator}. Uses
+ * <p>Active only when {@code pipeline.deployment.mode=operator}. Uses
  * {@link Instance} for the {@link KubernetesClient} so the actual client is never
  * resolved in host mode.</p>
  *
@@ -61,7 +62,7 @@ public class OperatorPipelineStatusWatcher {
     private final Instance<KubernetesClient> kubernetesClient;
     private final Event<DebeziumServerStatusChanged> statusChangedEvent;
 
-    @ConfigProperty(name = "platform.deployment.mode", defaultValue = "operator")
+    @ConfigProperty(name = PipelineConfigGroup.DEPLOYMENT_MODE_PROPERTY, defaultValue = "operator")
     String deploymentMode;
 
     private SharedIndexInformer<DebeziumServer> informer;

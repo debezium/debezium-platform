@@ -19,7 +19,7 @@ import io.quarkus.test.junit.TestProfile;
 /**
  * Verifies that CDI bean selection via {@code @LookupIfProperty} correctly
  * activates {@link HostEnvironmentController} when
- * {@code platform.deployment.mode=host}.
+ * {@code pipeline.deployment.mode=host}.
  */
 @QuarkusTest
 @TestProfile(HostModeTestProfile.class)
@@ -27,6 +27,9 @@ public class HostModeWiringIT {
 
     @Inject
     Instance<EnvironmentController> environmentController;
+
+    @Inject
+    Instance<HostContainerRuntime> containerRuntime;
 
     @Test
     public void shouldActivateHostControllerWhenModeIsHost() {
@@ -54,5 +57,11 @@ public class HostModeWiringIT {
         assertThat(controller.pipelines())
                 .as("Host mode pipelines() should return HostPipelineController")
                 .isInstanceOf(HostPipelineController.class);
+    }
+
+    @Test
+    public void shouldSelectAnsibleRuntimeByDefault() {
+        assertThat(containerRuntime.isResolvable()).isTrue();
+        assertThat(containerRuntime.get()).isInstanceOf(AnsibleContainerRuntime.class);
     }
 }

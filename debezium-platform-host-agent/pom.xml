@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.debezium</groupId>
+        <artifactId>debezium-parent</artifactId>
+        <version>3.7.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>debezium-platform-host-agent</artifactId>
+    <version>3.7.0-SNAPSHOT</version>
+    <name>Debezium Platform Host Agent</name>
+    <description>Lightweight HTTP agent deployed on remote hosts to manage containers on behalf of the Conductor.</description>
+
+    <properties>
+        <maven.compiler.source>${debezium.java.source}</maven.compiler.source>
+        <maven.compiler.target>${debezium.java.specific.target}</maven.compiler.target>
+        <maven.compiler.release>${debezium.java.specific.target}</maven.compiler.release>
+        <maven.compiler.testSource>${debezium.java.source}</maven.compiler.testSource>
+        <maven.compiler.testTarget>${debezium.java.specific.target}</maven.compiler.testTarget>
+        <maven.compiler.testRelease>${debezium.java.specific.target}</maven.compiler.testRelease>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+        <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+        <version.quarkus.platform>3.38.2</version.quarkus.platform>
+
+        <version.surefire-plugin>3.5.5</version.surefire-plugin>
+        <version.compiler.plugin>3.15.0</version.compiler.plugin>
+
+        <skipITs>false</skipITs>
+
+        <!-- Uber-jar matches the systemd unit ExecStart in host-setup.yml -->
+        <quarkus.package.jar.type>uber-jar</quarkus.package.jar.type>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>quarkus-bom</artifactId>
+                <version>${version.quarkus.platform}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- Core Quarkus REST with Jackson JSON binding -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-rest-jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-openapi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5-mockito</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>debezium-host-agent</finalName>
+        <plugins>
+            <plugin>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <version>${version.quarkus.platform}</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${version.compiler.plugin}</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${version.surefire-plugin}</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>native</id>
+            <activation>
+                <property>
+                    <name>native</name>
+                </property>
+            </activation>
+            <properties>
+                <skipITs>false</skipITs>
+                <quarkus.package.type>native</quarkus.package.type>
+            </properties>
+        </profile>
+    </profiles>
+</project>
