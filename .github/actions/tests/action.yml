@@ -30,13 +30,22 @@ runs:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
 
-    - name: Cache Maven Repository
+    # Restore only.  This action consumes the repository built by the build-cache action;
+    # it never needs to write.  Saving here would either duplicate the entry build-cache
+    # already wrote in this repository's CI, or add an entry to debezium/debezium's cache
+    # quota when this action is driven from there.
+    #
+    # No restore-keys on purpose.  In this repository's CI the exact key always hits,
+    # because the build_cache job has just saved it.  When driven from debezium/debezium
+    # this action shares a job with build-cache, so the repository is already populated
+    # and a miss is correct: a prefix match there would extract a stale platform cache
+    # over dependencies that were just restored.
+    - name: Restore Maven Repository
       id: cache-check
-      uses: actions/cache@v5
+      uses: actions/cache/restore@v5
       with:
         path: ~/.m2/repository
         key: ${{ inputs.cache-key }}
-        restore-keys: ${{ inputs.cache-key }}
 
     - name: Install Ansible
       shell: bash
