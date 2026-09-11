@@ -22,7 +22,7 @@ import {
   Tooltip,
   Button,
 } from "@patternfly/react-core";
-import { BarsIcon, QuestionCircleIcon, RhUiQuestionMarkCircleIcon } from "@patternfly/react-icons";
+import { BarsIcon, RhUiQuestionMarkCircleIcon } from "@patternfly/react-icons";
 import React, { useCallback, useEffect, useState } from "react";
 import dbz_logo_black from "../assets/color_black_debezium.svg";
 import dbz_svg from "../assets/debezium_logo.png";
