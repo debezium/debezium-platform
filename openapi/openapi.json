@@ -735,13 +735,15 @@
       },
       "SignalCollectionVerifyRequest" : {
         "type" : "object",
+        "required" : [ "connectionId", "fullyQualifiedTableName" ],
         "properties" : {
           "connectionId" : {
             "type" : "integer",
             "format" : "int64"
           },
           "fullyQualifiedTableName" : {
-            "type" : "string"
+            "type" : "string",
+            "pattern" : "\\S"
           }
         }
       },
@@ -2316,7 +2318,14 @@
             }
           },
           "400" : {
-            "description" : "Bad Request"
+            "description" : "Invalid request, the connection id and the fully qualified table name are both required",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            }
           }
         }
       }

@@ -5,7 +5,10 @@
  */
 package io.debezium.platform.data.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public record SignalCollectionVerifyRequest(
-        Long connectionId,
-        String fullyQualifiedTableName) {
+        @NotNull Long connectionId,
+        @NotBlank String fullyQualifiedTableName) {
 }
