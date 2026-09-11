@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import {
+  buildSignalCollectionSetupQuery,
   convertMapToObject,
   getConnectionRole,
   getConnectorTypeName,
@@ -110,6 +111,43 @@ describe("openDBZIssues", () => {
   it("does not throw when popup is blocked", () => {
     vi.spyOn(window, "open").mockReturnValue(null);
     expect(() => openDBZIssues()).not.toThrow();
+  });
+});
+
+describe("buildSignalCollectionSetupQuery", () => {
+  it("returns MongoDB createCollection command for mongo connectors", () => {
+    expect(
+      buildSignalCollectionSetupQuery(
+        "io.debezium.connector.mongodb.MongoDbConnector",
+        "inventory.debezium_signal",
+      ),
+    ).toBe('db.getSiblingDB("inventory").createCollection("debezium_signal")');
+  });
+
+  it("uses placeholders for mongo when collection name is incomplete", () => {
+    expect(buildSignalCollectionSetupQuery("mongodb", "debezium_signal")).toBe(
+      'db.getSiblingDB("<database>").createCollection("<collection>")',
+    );
+    expect(buildSignalCollectionSetupQuery("mongodb", "")).toBe(
+      'db.getSiblingDB("<database>").createCollection("<collection>")',
+    );
+  });
+
+  it("supports collection names containing dots after the database prefix", () => {
+    expect(
+      buildSignalCollectionSetupQuery("mongodb", "inventory.debezium.signal"),
+    ).toBe('db.getSiblingDB("inventory").createCollection("debezium.signal")');
+  });
+
+  it("returns SQL DDL for relational connectors", () => {
+    expect(
+      buildSignalCollectionSetupQuery(
+        "io.debezium.connector.postgresql.PostgresConnector",
+        "public.debezium_signal",
+      ),
+    ).toBe(
+      "CREATE TABLE public.debezium_signal (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);",
+    );
   });
 });
 
