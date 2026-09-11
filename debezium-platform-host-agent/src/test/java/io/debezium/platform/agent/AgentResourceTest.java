@@ -27,6 +27,18 @@ class AgentResourceTest {
     AgentContainerService containerService;
 
     @Test
+    void documentsAgentEndpointsInOpenApi() {
+        given()
+                .accept(ContentType.JSON)
+                .when()
+                .get("/q/openapi")
+                .then()
+                .statusCode(200)
+                .body("paths.'/api/agent/deploy'.post.summary", equalTo("Deploys a Debezium Server container"))
+                .body("paths.'/api/agent/status/{containerName}'.get.responses.200.description", equalTo("Container status"));
+    }
+
+    @Test
     void deployReturns202Accepted() {
         given()
                 .contentType(ContentType.JSON)
