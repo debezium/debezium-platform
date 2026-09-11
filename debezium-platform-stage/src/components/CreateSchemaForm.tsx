@@ -67,6 +67,7 @@ import {
 } from "src/apis";
 import { API_URL } from "@utils/constants";
 import {
+  buildSignalCollectionSetupQuery,
   getConnectionRole,
   getConnectorTypeName,
   getDatabaseType,
@@ -329,6 +330,11 @@ const CreateSchemaForm = React.forwardRef<
   );
 
   const connectorTypeString = dataType || connectorId;
+
+  const signalCollectionSetupQuery = useMemo(
+    () => buildSignalCollectionSetupQuery(connectorTypeString, signalCollectionNameVerify),
+    [connectorTypeString, signalCollectionNameVerify]
+  );
 
   const tableManagedFilterNames = useMemo(
     () => isDestination ? new Set<string>() : new Set(getTableManagedFilterPropertyNames(connectorTypeString)),
@@ -1343,7 +1349,7 @@ const CreateSchemaForm = React.forwardRef<
             </FormGroup>
             <FormGroup label={t("source:signal.ddlQuery")} fieldId="ddl-query-name">
               <ClipboardCopy isReadOnly hoverTip={t("copy")} clickTip={t("copied")}>
-                {`CREATE TABLE ${signalCollectionNameVerify} (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);`}
+                {signalCollectionSetupQuery}
               </ClipboardCopy>
             </FormGroup>
           </Form>

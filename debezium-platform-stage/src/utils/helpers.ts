@@ -181,3 +181,27 @@ export const capitalizeLabel = (label: string): string => {
   if (!label) return label;
   return label.charAt(0).toUpperCase() + label.slice(1);
 };
+
+export const isMongoDbConnector = (connectorType: string): boolean =>
+  connectorType.toLowerCase().includes("mongo");
+
+/**
+ * Returns the setup statement shown in the signal collection modal.
+ * MongoDB sources use a createCollection shell command; relational sources use SQL DDL.
+ */
+export const buildSignalCollectionSetupQuery = (
+  connectorType: string,
+  fullyQualifiedCollectionName: string,
+): string => {
+  if (isMongoDbConnector(connectorType)) {
+    const dotIndex = fullyQualifiedCollectionName.indexOf(".");
+    if (dotIndex > 0 && dotIndex < fullyQualifiedCollectionName.length - 1) {
+      const database = fullyQualifiedCollectionName.substring(0, dotIndex);
+      const collection = fullyQualifiedCollectionName.substring(dotIndex + 1);
+      return `db.getSiblingDB("${database}").createCollection("${collection}")`;
+    }
+    return `db.getSiblingDB("<database>").createCollection("<collection>")`;
+  }
+
+  return `CREATE TABLE ${fullyQualifiedCollectionName} (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);`;
+};
