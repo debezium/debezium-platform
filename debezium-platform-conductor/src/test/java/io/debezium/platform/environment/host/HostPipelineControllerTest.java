@@ -357,6 +357,20 @@ class HostPipelineControllerTest {
                 eq(new DeploymentRequest("test-pipeline-1", "quay.io/debezium/server:latest", 9000, "hash123")));
     }
 
+    @Test
+    void undeploySyncIsNoOp() {
+        HostDeployment deployment = mockDeployment(500L, "my-pipeline", "host-7");
+        when(deploymentService.findByPipelineId(25L)).thenReturn(Optional.of(deployment));
+
+        controller.undeploySync(25L);
+
+        // undeploySync is a no-op in host mode — container cleanup is handled
+        // exclusively by the outbox-driven undeploy()
+        verify(deploymentService, never()).deleteDeployment(anyLong());
+        verify(containerRuntime, never()).stop(anyString(), anyString());
+        verify(containerRuntime, never()).undeploy(anyString(), anyString());
+    }
+
     // ── Helpers ──
 
     private PipelineFlat buildMinimalPipeline(Long id) {
