@@ -104,7 +104,10 @@ public class HostPipelineController implements PipelineController {
 
     @Override
     public void undeploySync(Long pipelineId) {
-        executeUndeploy(pipelineId);
+        // The pipeline→host_deployment FK was dropped (V3.7.0.3) and the
+        // @OneToOne is optional, so pipeline deletion does not require
+        // prior host_deployment cleanup. Container teardown is handled
+        // exclusively by the outbox-driven undeploy(pipelineId).
     }
 
     @Override

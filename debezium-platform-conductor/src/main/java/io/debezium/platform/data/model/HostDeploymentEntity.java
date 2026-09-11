@@ -36,8 +36,8 @@ public class HostDeploymentEntity {
     @GeneratedValue
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "pipeline_id", unique = true, nullable = false)
+    @OneToOne(optional = true)
+    @JoinColumn(name = "pipeline_id", unique = true, nullable = true)
     private PipelineEntity pipeline;
 
     @ManyToOne
