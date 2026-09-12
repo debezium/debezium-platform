@@ -181,17 +181,11 @@ export const FOR_DURATION_OPTIONS: { value: string; label: string; shortLabel: s
   { value: "PT30M", label: "30 minutes", shortLabel: "30m" },
 ];
 
-export const EVALUATION_WINDOW_OPTIONS: { value: string; label: string }[] = [
-  { value: "PT1M", label: "1 minute" },
-  { value: "PT2M", label: "2 minutes" },
-  { value: "PT5M", label: "5 minutes" },
-  { value: "PT10M", label: "10 minutes" },
-  { value: "PT15M", label: "15 minutes" },
-  { value: "PT30M", label: "30 minutes" },
-  { value: "PT1H", label: "1 hour" },
-];
-
 export const SEVERITY_OPTIONS: AlertSeverity[] =  ["CRITICAL", "WARNING", "INFO"];
+
+export const EVALUATION_WINDOW_MIN_MINUTES = 1;
+
+export const EVALUATION_WINDOW_MAX_MINUTES = 60;
 
 const ISO_DURATION_PATTERN = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/;
 
