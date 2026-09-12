@@ -30,6 +30,9 @@ import {
   AlertRule,
   AlertRuleRequest,
   AlertSeverity,
+  EVALUATION_WINDOW_CUSTOM_VALUE,
+  EVALUATION_WINDOW_MAX_MINUTES,
+  EVALUATION_WINDOW_MIN_MINUTES,
   EVALUATION_WINDOW_OPTIONS,
   FOR_DURATION_OPTIONS,
   isoDurationToSeconds,
@@ -108,10 +111,17 @@ const AlertRuleForm: React.FC<AlertRuleFormProps> = ({
     rule ? secondsToIsoDuration(rule.forDuration) : "PT0S"
   );
   const [isDurationOpen, setIsDurationOpen] = React.useState(false);
-  const [evaluationWindow, setEvaluationWindow] = React.useState(
-    rule ? secondsToIsoDuration(rule.evaluationWindow) : "PT5M"
-  );
+  const [evaluationWindow, setEvaluationWindow] = React.useState(() => {
+    if (!rule) return "PT5M";
+    const iso = secondsToIsoDuration(rule.evaluationWindow);
+    return EVALUATION_WINDOW_OPTIONS.some((o) => o.value === iso)
+      ? iso
+      : EVALUATION_WINDOW_CUSTOM_VALUE;
+  });
   const [isWindowOpen, setIsWindowOpen] = React.useState(false);
+  const [evaluationWindowMinutes, setEvaluationWindowMinutes] = React.useState(
+    rule ? String(Math.round(rule.evaluationWindow / 60)) : "5"
+  );
   const [severity, setSeverity] = React.useState<AlertSeverity>(rule?.severity ?? "WARNING");
   const [selectedChannelIds, setSelectedChannelIds] = React.useState<Set<number>>(
     new Set(rule?.channels.map((c) => c.id) ?? [])
@@ -154,12 +164,22 @@ const AlertRuleForm: React.FC<AlertRuleFormProps> = ({
   const thresholdNumber = Number(threshold);
   const isThresholdValid = threshold.trim() !== "" && !Number.isNaN(thresholdNumber);
 
+  const evaluationWindowNumber = Number(evaluationWindowMinutes);
+  const isEvaluationWindowValid =
+    reduceFunction === "LAST" ||
+    evaluationWindow !== EVALUATION_WINDOW_CUSTOM_VALUE ||
+    (evaluationWindowMinutes.trim() !== "" &&
+      Number.isInteger(evaluationWindowNumber) &&
+      evaluationWindowNumber >= EVALUATION_WINDOW_MIN_MINUTES &&
+      evaluationWindowNumber <= EVALUATION_WINDOW_MAX_MINUTES);
+
   const canSubmit =
     name.trim().length > 0 &&
     isNameValid &&
     !isNameDuplicate &&
     !!panelId &&
-    isThresholdValid;
+    isThresholdValid &&
+    isEvaluationWindowValid;
 
   React.useEffect(() => {
     onCanSubmitChange?.(canSubmit);
@@ -186,7 +206,10 @@ const AlertRuleForm: React.FC<AlertRuleFormProps> = ({
       threshold: thresholdNumber,
       forDuration: isoDurationToSeconds(forDuration),
       reduceFunction,
-      evaluationWindow: isoDurationToSeconds(evaluationWindow),
+      evaluationWindow:
+        evaluationWindow === EVALUATION_WINDOW_CUSTOM_VALUE
+          ? evaluationWindowNumber * 60
+          : isoDurationToSeconds(evaluationWindow),
       severity,
       enabled: rule?.enabled ?? true,
       channelIds: [...selectedChannelIds],
@@ -200,7 +223,15 @@ const AlertRuleForm: React.FC<AlertRuleFormProps> = ({
   const operatorLabel = OPERATOR_OPTIONS.find((o) => o.value === operator)?.label;
   const reduceLabel = REDUCE_FUNCTION_OPTIONS.find((o) => o.value === reduceFunction)?.label;
   const durationLabel = FOR_DURATION_OPTIONS.find((o) => o.value === forDuration)?.label;
-  const windowLabel = EVALUATION_WINDOW_OPTIONS.find((o) => o.value === evaluationWindow)?.label;
+  const isWindowCustom = evaluationWindow === EVALUATION_WINDOW_CUSTOM_VALUE;
+  const windowToggleLabel = isWindowCustom
+    ? "Custom"
+    : EVALUATION_WINDOW_OPTIONS.find((o) => o.value === evaluationWindow)?.label;
+  const windowReviewLabel = isWindowCustom
+    ? Number.isInteger(evaluationWindowNumber)
+      ? `${evaluationWindowNumber} minute${evaluationWindowNumber === 1 ? "" : "s"}`
+      : undefined
+    : windowToggleLabel;
 
   return (
     <Form id={formId} onSubmit={handleSubmit} isWidthLimited>
@@ -389,37 +420,66 @@ const AlertRuleForm: React.FC<AlertRuleFormProps> = ({
             {reduceFunction !== "LAST" && (
               <FormGroup label="Evaluation window" fieldId="rule-window">
                 {viewMode ? (
-                  <ReviewValue>{windowLabel}</ReviewValue>
+                  <ReviewValue>{windowReviewLabel}</ReviewValue>
                 ) : (
-                  <Select
-                    id="rule-window"
-                    isOpen={isWindowOpen}
-                    selected={evaluationWindow}
-                    onSelect={(_e, value) => {
-                      setEvaluationWindow(value as string);
-                      setIsWindowOpen(false);
-                    }}
-                    onOpenChange={setIsWindowOpen}
-                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                      <MenuToggle
-                        ref={toggleRef}
-                        onClick={() => setIsWindowOpen((prev) => !prev)}
-                        isExpanded={isWindowOpen}
-                        isDisabled={isSaving}
-                        style={{ width: "220px" }}
-                      >
-                        {windowLabel}
-                      </MenuToggle>
+                  <>
+                    <Select
+                      id="rule-window"
+                      isOpen={isWindowOpen}
+                      selected={evaluationWindow}
+                      onSelect={(_e, value) => {
+                        setEvaluationWindow(value as string);
+                        setIsWindowOpen(false);
+                      }}
+                      onOpenChange={setIsWindowOpen}
+                      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                        <MenuToggle
+                          ref={toggleRef}
+                          onClick={() => setIsWindowOpen((prev) => !prev)}
+                          isExpanded={isWindowOpen}
+                          isDisabled={isSaving}
+                          style={{ width: "220px" }}
+                        >
+                          {windowToggleLabel}
+                        </MenuToggle>
+                      )}
+                    >
+                      <SelectList>
+                        {EVALUATION_WINDOW_OPTIONS.map((option) => (
+                          <SelectOption key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectOption>
+                        ))}
+                        <SelectOption value={EVALUATION_WINDOW_CUSTOM_VALUE}>Custom</SelectOption>
+                      </SelectList>
+                    </Select>
+                    {isWindowCustom && (
+                      <>
+                        <InputGroup style={{ marginTop: "0.5rem" }}>
+                          <InputGroupItem>
+                            <TextInput
+                              id="rule-window-custom"
+                              type="number"
+                              min={EVALUATION_WINDOW_MIN_MINUTES}
+                              max={EVALUATION_WINDOW_MAX_MINUTES}
+                              value={evaluationWindowMinutes}
+                              onChange={(_e, value) => setEvaluationWindowMinutes(value)}
+                              validated={isEvaluationWindowValid ? "default" : "error"}
+                              isDisabled={isSaving}
+                              aria-label="Custom evaluation window in minutes"
+                              style={{ width: "120px" }}
+                            />
+                          </InputGroupItem>
+                        </InputGroup>
+                        <HelperText>
+                          <HelperTextItem variant={isEvaluationWindowValid ? "default" : "error"}>
+                            Enter a whole number of minutes between {EVALUATION_WINDOW_MIN_MINUTES}{" "}
+                            and {EVALUATION_WINDOW_MAX_MINUTES}.
+                          </HelperTextItem>
+                        </HelperText>
+                      </>
                     )}
-                  >
-                    <SelectList>
-                      {EVALUATION_WINDOW_OPTIONS.map((option) => (
-                        <SelectOption key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectOption>
-                      ))}
-                    </SelectList>
-                  </Select>
+                  </>
                 )}
               </FormGroup>
             )}
