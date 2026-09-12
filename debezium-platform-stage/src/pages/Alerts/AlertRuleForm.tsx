@@ -30,7 +30,8 @@ import {
   AlertRule,
   AlertRuleRequest,
   AlertSeverity,
-  EVALUATION_WINDOW_OPTIONS,
+  EVALUATION_WINDOW_MAX_MINUTES,
+  EVALUATION_WINDOW_MIN_MINUTES,
   FOR_DURATION_OPTIONS,
   isoDurationToSeconds,
   NotificationChannel,
@@ -108,10 +109,9 @@ const AlertRuleForm: React.FC<AlertRuleFormProps> = ({
     rule ? secondsToIsoDuration(rule.forDuration) : "PT0S"
   );
   const [isDurationOpen, setIsDurationOpen] = React.useState(false);
-  const [evaluationWindow, setEvaluationWindow] = React.useState(
-    rule ? secondsToIsoDuration(rule.evaluationWindow) : "PT5M"
+  const [evaluationWindowMinutes, setEvaluationWindowMinutes] = React.useState(
+    rule ? String(Math.round(rule.evaluationWindow / 60)) : "5"
   );
-  const [isWindowOpen, setIsWindowOpen] = React.useState(false);
   const [severity, setSeverity] = React.useState<AlertSeverity>(rule?.severity ?? "WARNING");
   const [selectedChannelIds, setSelectedChannelIds] = React.useState<Set<number>>(
     new Set(rule?.channels.map((c) => c.id) ?? [])
@@ -154,12 +154,21 @@ const AlertRuleForm: React.FC<AlertRuleFormProps> = ({
   const thresholdNumber = Number(threshold);
   const isThresholdValid = threshold.trim() !== "" && !Number.isNaN(thresholdNumber);
 
+  const evaluationWindowNumber = Number(evaluationWindowMinutes);
+  const isEvaluationWindowValid =
+    reduceFunction === "LAST" ||
+    (evaluationWindowMinutes.trim() !== "" &&
+      Number.isInteger(evaluationWindowNumber) &&
+      evaluationWindowNumber >= EVALUATION_WINDOW_MIN_MINUTES &&
+      evaluationWindowNumber <= EVALUATION_WINDOW_MAX_MINUTES);
+
   const canSubmit =
     name.trim().length > 0 &&
     isNameValid &&
     !isNameDuplicate &&
     !!panelId &&
-    isThresholdValid;
+    isThresholdValid &&
+    isEvaluationWindowValid;
 
   React.useEffect(() => {
     onCanSubmitChange?.(canSubmit);
@@ -186,7 +195,7 @@ const AlertRuleForm: React.FC<AlertRuleFormProps> = ({
       threshold: thresholdNumber,
       forDuration: isoDurationToSeconds(forDuration),
       reduceFunction,
-      evaluationWindow: isoDurationToSeconds(evaluationWindow),
+      evaluationWindow: evaluationWindowNumber * 60,
       severity,
       enabled: rule?.enabled ?? true,
       channelIds: [...selectedChannelIds],
@@ -200,7 +209,9 @@ const AlertRuleForm: React.FC<AlertRuleFormProps> = ({
   const operatorLabel = OPERATOR_OPTIONS.find((o) => o.value === operator)?.label;
   const reduceLabel = REDUCE_FUNCTION_OPTIONS.find((o) => o.value === reduceFunction)?.label;
   const durationLabel = FOR_DURATION_OPTIONS.find((o) => o.value === forDuration)?.label;
-  const windowLabel = EVALUATION_WINDOW_OPTIONS.find((o) => o.value === evaluationWindow)?.label;
+  const windowLabel = Number.isInteger(evaluationWindowNumber)
+    ? `${evaluationWindowNumber} minute${evaluationWindowNumber === 1 ? "" : "s"}`
+    : undefined;
 
   return (
     <Form id={formId} onSubmit={handleSubmit} isWidthLimited>
@@ -391,35 +402,29 @@ const AlertRuleForm: React.FC<AlertRuleFormProps> = ({
                 {viewMode ? (
                   <ReviewValue>{windowLabel}</ReviewValue>
                 ) : (
-                  <Select
-                    id="rule-window"
-                    isOpen={isWindowOpen}
-                    selected={evaluationWindow}
-                    onSelect={(_e, value) => {
-                      setEvaluationWindow(value as string);
-                      setIsWindowOpen(false);
-                    }}
-                    onOpenChange={setIsWindowOpen}
-                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                      <MenuToggle
-                        ref={toggleRef}
-                        onClick={() => setIsWindowOpen((prev) => !prev)}
-                        isExpanded={isWindowOpen}
-                        isDisabled={isSaving}
-                        style={{ width: "220px" }}
-                      >
-                        {windowLabel}
-                      </MenuToggle>
-                    )}
-                  >
-                    <SelectList>
-                      {EVALUATION_WINDOW_OPTIONS.map((option) => (
-                        <SelectOption key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectOption>
-                      ))}
-                    </SelectList>
-                  </Select>
+                  <>
+                    <InputGroup>
+                      <InputGroupItem>
+                        <TextInput
+                          id="rule-window"
+                          type="number"
+                          min={EVALUATION_WINDOW_MIN_MINUTES}
+                          max={EVALUATION_WINDOW_MAX_MINUTES}
+                          value={evaluationWindowMinutes}
+                          onChange={(_e, value) => setEvaluationWindowMinutes(value)}
+                          validated={isEvaluationWindowValid ? "default" : "error"}
+                          isDisabled={isSaving}
+                          style={{ width: "120px" }}
+                        />
+                      </InputGroupItem>
+                    </InputGroup>
+                    <HelperText>
+                      <HelperTextItem variant={isEvaluationWindowValid ? "default" : "error"}>
+                        Enter a whole number of minutes between {EVALUATION_WINDOW_MIN_MINUTES} and{" "}
+                        {EVALUATION_WINDOW_MAX_MINUTES}.
+                      </HelperTextItem>
+                    </HelperText>
+                  </>
                 )}
               </FormGroup>
             )}
