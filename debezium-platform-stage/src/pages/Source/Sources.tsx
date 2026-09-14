@@ -83,6 +83,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
     data: sourcesList = [],
     error,
     isLoading: isSourceLoading,
+    retry: retryResource,
   } = useResourceQuery<Source[], Error>(
     "sources",
     () => fetchData<Source[]>(`${API_URL}/api/sources`)
@@ -136,7 +137,11 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
       {error ? (
         <ApiError
           errorType="large"
-          errorMsg={error.message}
+          title={t("statusMessage:apis.connectionErrorTitle", {
+            val: t("navigation.source"),
+          })}
+          description={t("statusMessage:apis.connectionErrorDescription")}
+          onRetry={retryResource}
           secondaryActions={
             <>
               <Button variant="link" onClick={() => navigateTo("/destination")}>
@@ -152,7 +157,6 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
         <>
           {isSourceLoading ? (
             <EmptyState
-              titleText="Loading..."
               headingLevel="h4"
               icon={Spinner}
             />

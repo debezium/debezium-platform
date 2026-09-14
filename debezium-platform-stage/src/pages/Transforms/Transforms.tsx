@@ -101,6 +101,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
     data: pipelineList = [],
     error: _pipelineError,
     isLoading: _isPipelineLoading,
+    retry: retryPipelines,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
     () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
@@ -110,10 +111,16 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
     data: transformsList = [],
     error,
     isLoading: isTransformsLoading,
+    retry: retryResource,
   } = useResourceQuery<TransformData[], Error>(
     "transforms",
     () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
   );
+
+  const retryAll = React.useCallback(() => {
+    retryPipelines();
+    retryResource();
+  }, [retryPipelines, retryResource]);
 
   // Compute filtered results based on search query and filter field
   const searchResult = React.useMemo(() => {
@@ -216,7 +223,11 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
           <PageSection isWidthLimited>
             <ApiError
               errorType="large"
-              errorMsg={error.message}
+              title={t("statusMessage:apis.connectionErrorTitle", {
+                val: t("navigation.transform"),
+              })}
+              description={t("statusMessage:apis.connectionErrorDescription")}
+              onRetry={retryAll}
               secondaryActions={
                 <>
                   <Button variant="link" onClick={() => navigateTo("/source")}>
@@ -236,7 +247,6 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
           <>
             {isTransformsLoading ? (
               <EmptyState
-                titleText={t("loading")}
                 headingLevel="h4"
                 icon={Spinner}
               />
