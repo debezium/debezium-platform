@@ -44,7 +44,7 @@
         <version.blaze-persistence>1.6.20</version.blaze-persistence>
         <version.test-containers>2.0.5</version.test-containers>
         <version.mockwebserver>4.12.0</version.mockwebserver>
-        <version.okhttp>4.12.0</version.okhttp>
+        <version.okhttp>5.5.0</version.okhttp>
         <version.infinispan>16.2.3</version.infinispan>
         <version.pravega>0.13.0</version.pravega>
         <version.google.cloud.pubsub>1.155.0</version.google.cloud.pubsub>
