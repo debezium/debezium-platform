@@ -2,6 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "../../__test__/unit/test-utils";
+import { POLLING } from "../../utils/pollingConfig";
 import AlertChannels from "./AlertChannels";
 import { NotificationChannel } from "./alertsTypes";
 
@@ -95,7 +96,11 @@ describe("AlertChannels", () => {
 
     render(<AlertChannels />);
 
-    expect(await screen.findByText("Failed to load notification channels")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Failed to load notification channels", undefined, {
+        timeout: POLLING.failureInterval * POLLING.maxFailures + 2000,
+      })
+    ).toBeInTheDocument();
   });
 
   it("opens the create form from the empty state", async () => {
