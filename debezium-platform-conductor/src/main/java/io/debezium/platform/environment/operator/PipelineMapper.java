@@ -189,13 +189,7 @@ public class PipelineMapper {
                         .filter(name -> name != null && !name.isBlank())
                         .toList())
                 .filter(names -> !names.isEmpty())
-                .ifPresent(names -> {
-                    var pod = new PodTemplate();
-                    pod.setImagePullSecrets(names.stream()
-                            .map(LocalObjectReference::new)
-                            .toList());
-                    templates.setPod(pod);
-                });
+                .ifPresent(names -> templates.setPod(createPodTemplate(names)));
 
         return new RuntimeBuilder()
                 .withApi(new RuntimeApiBuilder().withEnabled().build())
@@ -404,5 +398,13 @@ public class PipelineMapper {
 
     private static String toQuarkusFormat(String key) {
         return String.format(PipelineMapper.QUARKUS_LOG_CATEGORY_FORMAT, key);
+    }
+
+    private static PodTemplate createPodTemplate(List<String> imagePullSecretNames) {
+        var pod = new PodTemplate();
+        pod.setImagePullSecrets(imagePullSecretNames.stream()
+                .map(LocalObjectReference::new)
+                .toList());
+        return pod;
     }
 }
