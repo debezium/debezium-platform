@@ -77,6 +77,7 @@ const Destinations: React.FunctionComponent = () => {
     data: destinationsList = [],
     error,
     isLoading: isDestinationLoading,
+    retry: retryResource,
   } = useResourceQuery<Destination[], Error>(
     "destinations",
     () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
@@ -132,7 +133,11 @@ const Destinations: React.FunctionComponent = () => {
       {error ? (
         <ApiError
           errorType="large"
-          errorMsg={error.message}
+          title={t("statusMessage:apis.connectionErrorTitle", {
+            val: t("navigation.destination"),
+          })}
+          description={t("statusMessage:apis.connectionErrorDescription")}
+          onRetry={retryResource}
           secondaryActions={
             <>
               <Button variant="link" onClick={() => navigateTo("/source")}>
@@ -148,7 +153,6 @@ const Destinations: React.FunctionComponent = () => {
         <>
           {isDestinationLoading ? (
             <EmptyState
-              titleText={t("loading")}
               headingLevel="h4"
               icon={Spinner}
             />

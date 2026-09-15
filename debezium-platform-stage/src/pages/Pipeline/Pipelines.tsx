@@ -186,6 +186,7 @@ const Pipelines: React.FunctionComponent = () => {
     error: pipelinesError,
     isLoading: pipelinesLoading,
     refetch: refetchPipelines,
+    retry: retryResource,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
     () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
@@ -510,17 +511,21 @@ const Pipelines: React.FunctionComponent = () => {
         <PageSection isWidthLimited>
           <ApiError
             errorType="large"
-            errorMsg={pipelinesError.message}
+            title={t("statusMessage:apis.connectionErrorTitle", {
+              val: t("navigation.pipeline"),
+            })}
+            description={t("statusMessage:apis.connectionErrorDescription")}
+            onRetry={retryResource}
             secondaryActions={
               <>
                 <Button variant="link" onClick={() => navigateTo("/source")}>
-                  {t("goto", { val: t("source") })}
+                  {t("goTo", { val: t("source") })}
                 </Button>
                 <Button
                   variant="link"
                   onClick={() => navigateTo("/destination")}
                 >
-                  {t("goto", { val: t("destination") })}
+                  {t("goTo", { val: t("destination") })}
                 </Button>
               </>
             }
@@ -530,7 +535,6 @@ const Pipelines: React.FunctionComponent = () => {
         <>
           {pipelinesLoading ? (
             <EmptyState
-              titleText={t("loading")}
               headingLevel="h4"
               icon={Spinner}
             />

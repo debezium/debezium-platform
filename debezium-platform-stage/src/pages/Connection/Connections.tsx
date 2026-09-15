@@ -72,6 +72,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
   const {
     data: sourceList = [],
+    retry: retrySources,
   } = useResourceQuery<Source[], Error>(
     "sources",
     () => fetchData<Source[]>(`${API_URL}/api/sources`)
@@ -79,6 +80,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
   const {
     data: destinationList = [],
+    retry: retryDestinations,
   } = useResourceQuery<Destination[], Error>(
     "destinations",
     () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
@@ -88,10 +90,17 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     data: connectionsList = [],
     error,
     isLoading: isConnectionsLoading,
+    retry: retryResource,
   } = useResourceQuery<Connection[], Error>(
     "connections",
     () => fetchData<Connection[]>(`${API_URL}/api/connections`)
   );
+
+  const retryAll = React.useCallback(() => {
+    retrySources();
+    retryDestinations();
+    retryResource();
+  }, [retrySources, retryDestinations, retryResource]);
 
   const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>(
     "sourceConnectorCatalog",
@@ -181,7 +190,11 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
       {error ? (
         <ApiError
           errorType="large"
-          errorMsg={error.message}
+          title={t("statusMessage:apis.connectionErrorTitle", {
+            val: t("navigation.connection"),
+          })}
+          description={t("statusMessage:apis.connectionErrorDescription")}
+          onRetry={retryAll}
           secondaryActions={
             <>
               <Button variant="link" onClick={() => navigateTo("/pipeline")}>
@@ -200,7 +213,6 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
         <>
           {isConnectionsLoading ? (
             <EmptyState
-              titleText={t("Loading...")}
               headingLevel="h4"
               icon={Spinner}
             />

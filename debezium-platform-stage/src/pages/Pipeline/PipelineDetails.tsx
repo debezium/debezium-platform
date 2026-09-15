@@ -245,7 +245,6 @@ const PipelineDetails: React.FunctionComponent = () => {
     return (
       <PageSection isWidthLimited>
         <EmptyState
-          titleText={t("loading")}
           headingLevel="h4"
           icon={Spinner}
         />

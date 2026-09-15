@@ -30,6 +30,21 @@ vi.mock("src/apis", () => ({
   useDeleteData: vi.fn(),
 }));
 
+vi.mock("../../hooks/useResourceQuery", async () => {
+  const { useQuery } = await import("react-query");
+  return {
+    useResourceQuery: (...args: any[]) => {
+      const result = (useQuery as any)(...args) ?? {};
+      return {
+        consecutiveFailures: 0,
+        hasPollingStopped: Boolean(result.error),
+        retry: vi.fn(),
+        ...result,
+      };
+    },
+  };
+});
+
 vi.mock("../../appLayout/AppContext", () => ({
   useData: () => ({
     darkMode: false,
@@ -90,7 +105,7 @@ describe("Connections", () => {
       return { data: undefined, error: null, isLoading: false } as any;
     });
     render(<Connections />);
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
   });
 
   it("shows API error when connections query fails", () => {
@@ -105,7 +120,12 @@ describe("Connections", () => {
       return { data: undefined, error: null, isLoading: false } as any;
     });
     render(<Connections />);
-    expect(screen.getByText("Error: boom")).toBeInTheDocument();
+    expect(
+      screen.getByText("Failed to load Connections")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Check your connection and try again.")
+    ).toBeInTheDocument();
   });
 
   it("renders empty state when there are no connections", () => {
