@@ -1,0 +1,129 @@
+suite: test conductor alerting configuration
+templates:
+  - conductor-deployment.yaml
+values:
+  - ../../examples/example.yaml
+tests:
+  - it: should not render any QUARKUS_MAILER_* env var by default
+    asserts:
+      - isKind:
+          of: Deployment
+      # An empty QUARKUS_MAILER_HOST fails Quarkus config validation, so with no host
+      # configured none of the mailer variables may be rendered.
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_HOST
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_PORT
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_FROM
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_START_TLS
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_USERNAME
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_PASSWORD
+          any: true
+      # The non-email alerting settings are unaffected.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ALERTING_EVALUATION_INTERVAL
+            value: "60s"
+
+  - it: should render the mailer env vars when a host is set
+    set:
+      alerting.email.host: smtp.example.com
+      alerting.email.from: alerts@example.com
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_HOST
+            value: smtp.example.com
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_PORT
+            value: "587"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_FROM
+            value: alerts@example.com
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_START_TLS
+            value: REQUIRED
+      # No secret configured: an open relay needs no credentials.
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_USERNAME
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_PASSWORD
+          any: true
+
+  - it: should render mailer credentials from the existing secret when a host is set
+    set:
+      alerting.email.host: smtp.example.com
+      alerting.email.auth.existingSecret: smtp-credentials
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: smtp-credentials
+                key: username
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: smtp-credentials
+                key: password
+
+  - it: should not render mailer credentials without a host
+    set:
+      alerting.email.auth.existingSecret: smtp-credentials
+    asserts:
+      # Credentials without a server are meaningless and would authenticate against
+      # Quarkus's default host; the secret is only wired when email alerting is on.
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_HOST
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_USERNAME
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_MAILER_PASSWORD
+          any: true

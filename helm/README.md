@@ -163,7 +163,7 @@ Alert rules and notification channels (webhook, email) are managed from the UI. 
 
 ### Email Notifications
 
-To enable email notifications, configure the SMTP server settings. Email channels are created and enabled from the UI; the Helm values provide the underlying transport configuration.
+To enable email notifications, configure the SMTP server settings. Email channels are created and enabled from the UI; the Helm values provide the underlying transport configuration. The mailer settings, including `auth.existingSecret`, are only passed to the conductor when `alerting.email.host` is set; leave it empty to keep email disabled.
 
 ```yaml
 alerting:

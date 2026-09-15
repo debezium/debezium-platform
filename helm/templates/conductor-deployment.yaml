@@ -164,6 +164,7 @@ spec:
               value: {{ .Values.alerting.webhook.connectTimeout | quote }}
             - name: ALERTING_WEBHOOK_READ_TIMEOUT
               value: {{ .Values.alerting.webhook.readTimeout | quote }}
+{{- if .Values.alerting.email.host }}
             - name: QUARKUS_MAILER_HOST
               value: {{ .Values.alerting.email.host | quote }}
             - name: QUARKUS_MAILER_PORT
@@ -183,6 +184,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.alerting.email.auth.existingSecret }}
                   key: password
+{{- end }}
 {{- end }}
 {{ include "debezium-platform.offsetConfig" . | indent 12 }}
 {{ include "debezium-platform.schemaHistoryConfig" . | indent 12 }}
