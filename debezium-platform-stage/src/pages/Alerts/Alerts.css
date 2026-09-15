@@ -57,11 +57,15 @@
 }
 
 .alerts-review-value--empty {
-  color: var(--pf-t--color--gray--60, #6a6e73);
+  color: var(--pf-t--global--text--color--subtle, #6a6e73);
   font-style: italic;
 }
 
 .alerts-review-value--set {
-  color: var(--pf-t--color--gray--90, #151515);
+  color: var(--pf-t--global--text--color--regular, #151515);
   font-weight: 500;
+}
+
+.pf-v6-theme-dark .alerts-review-value--set {
+  color: var(--pf-t--global--text--color--regular, #f0f0f0);
 }
