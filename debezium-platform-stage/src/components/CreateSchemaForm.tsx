@@ -63,6 +63,7 @@ import {
   fetchDataCall,
   Source,
   TableData,
+  SignalDataCollectionVerifyResponse,
   verifySignals,
 } from "src/apis";
 import { API_URL } from "@utils/constants";
@@ -701,6 +702,7 @@ const CreateSchemaForm = React.forwardRef<
 
   const verifySignalsHandler = async () => {
     setIsSignalLoading(true);
+    setSignalVerified(false);
     if (!selectedConnection?.id) {
       setSignalMissingConnection(true);
       setIsSignalLoading(false);
@@ -711,12 +713,25 @@ const CreateSchemaForm = React.forwardRef<
       connectionId: selectedConnection.id,
       fullyQualifiedTableName: signalCollectionNameVerify,
     };
-    const response = await verifySignals(`${API_URL}/api/sources/signals/verify`, payload);
+    const response = await verifySignals<SignalDataCollectionVerifyResponse>(
+      `${API_URL}/api/sources/signals/verify`,
+      payload
+    );
     if (response.error) {
       addNotification("danger", "Signal verification failed", `Couldn't verify: ${response.error}`);
-    } else {
+    } else if (response.data?.exists) {
       setSignalVerified(true);
-      addNotification("success", "Signal verification successful", `Verified: ${signalCollectionNameVerify}`);
+      addNotification(
+        "success",
+        "Signal verification successful",
+        response.data.message || `Verified: ${signalCollectionNameVerify}`
+      );
+    } else {
+      addNotification(
+        "danger",
+        "Signal verification failed",
+        response.data?.message || "Signal collection does not exist"
+      );
     }
     setIsSignalLoading(false);
   };
@@ -1360,7 +1375,12 @@ const CreateSchemaForm = React.forwardRef<
               {t("done")}
             </Button>
           ) : (
-            <Button variant="primary" isLoading={isSignalLoading} onClick={verifySignalsHandler}>
+            <Button
+              variant="primary"
+              isLoading={isSignalLoading}
+              isDisabled={!signalCollectionNameVerify}
+              onClick={verifySignalsHandler}
+            >
               {t("verify")}
             </Button>
           )}
