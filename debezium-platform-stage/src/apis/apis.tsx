@@ -388,6 +388,11 @@ export const fetchFile = async (
 };
 
 
+export type SignalDataCollectionVerifyResponse = {
+  exists: boolean;
+  message: string;
+};
+
 export const verifySignals = async <T,>(
   url: string,
   payload: unknown
@@ -405,10 +410,14 @@ export const verifySignals = async <T,>(
       let errorMsg = `Failed to verify the signals: ${response.statusText}`;
       try {
         const errJson = await response.json();
-        if (errJson && errJson.details && errJson.details.length > 0) {
+        if (errJson?.violations?.length > 0) {
+          errorMsg = errJson.violations[0].message;
+        } else if (errJson?.details?.length > 0) {
           errorMsg = errJson.details[0];
-        } else if (errJson && errJson.error) {
+        } else if (errJson?.error) {
           errorMsg = errJson.error;
+        } else if (errJson?.message) {
+          errorMsg = errJson.message;
         }
       } catch {
         // ignore
