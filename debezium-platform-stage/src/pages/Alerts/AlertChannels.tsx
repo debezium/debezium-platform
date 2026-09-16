@@ -36,7 +36,7 @@ import {
   Thead,
   Tr,
 } from "@patternfly/react-table";
-import { OutlinedBellIcon, PlusIcon, SearchIcon } from "@patternfly/react-icons";
+import { OutlinedBellIcon, RhUiAddCircleIcon, SearchIcon } from "@patternfly/react-icons";
 import { useQueryClient } from "react-query";
 import PageHeader from "@components/PageHeader";
 import { useNotification } from "../../appLayout/AppNotificationContext";
@@ -326,7 +326,7 @@ const AlertChannels: React.FC = () => {
                     </ToolbarItem>
                   </ToolbarGroup>
                   <ToolbarItem>
-                    <Button variant="primary" icon={<PlusIcon />} onClick={openCreateForm}>
+                    <Button variant="primary" icon={<RhUiAddCircleIcon />} onClick={openCreateForm}>
                       {t("alert:buttons.addResource", { val: "channel" })}
                     </Button>
                   </ToolbarItem>
@@ -421,7 +421,7 @@ const AlertChannels: React.FC = () => {
           primaryAction={
             <Button
               variant="primary"
-              icon={<PlusIcon />}
+              icon={<RhUiAddCircleIcon />}
               data-tour="add-source"
               onClick={openCreateForm}
             >
