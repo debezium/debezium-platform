@@ -97,7 +97,7 @@ describe("AlertChannels", () => {
     render(<AlertChannels />);
 
     expect(
-      await screen.findByText("Failed to load notification channels", undefined, {
+      await screen.findByText("Failed to load Channels", undefined, {
         timeout: POLLING.failureInterval * POLLING.maxFailures + 2000,
       })
     ).toBeInTheDocument();

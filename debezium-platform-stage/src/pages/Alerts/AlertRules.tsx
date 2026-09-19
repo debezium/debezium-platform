@@ -42,7 +42,7 @@ import {
   ThProps,
   Tr,
 } from "@patternfly/react-table";
-import { ExclamationCircleIcon, FilterIcon, RhUiAddCircleIcon, RhUiTaskIcon, SearchIcon } from "@patternfly/react-icons";
+import { FilterIcon, RhUiAddCircleIcon, RhUiTaskIcon, SearchIcon } from "@patternfly/react-icons";
 import { useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "@components/PageHeader";
@@ -53,6 +53,7 @@ import {
   fetchAlertRules,
   setAlertRuleEnabled,
 } from "../../apis/alerts";
+import ApiError from "../../components/ApiError";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { AlertRule, AlertSeverity } from "./alertsTypes";
 import { formatCondition, SeverityIcon } from "./severityUtils";
@@ -95,16 +96,23 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
     data: rules = [],
     isLoading,
     isError,
+    retry: retryResource,
   } = useResourceQuery<AlertRule[], Error>(ALERT_RULES_QUERY_KEY, fetchAlertRules);
 
   const {
     data: pipelinesList = [],
     isLoading: pipelinesLoading,
     isError: pipelinesError,
+    retry: retryPipelines,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
     () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
   );
+
+  const retryAll = React.useCallback(() => {
+    retryPipelines();
+    retryResource();
+  }, [retryPipelines, retryResource]);
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isNoPipelineModalOpen, setIsNoPipelineModalOpen] = React.useState(false);
@@ -244,14 +252,14 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
     return (
       <PageSection isFilled>
         <Bullseye>
-          <EmptyState
-            variant={EmptyStateVariant.lg}
-            titleText="Failed to load alert rules"
-            headingLevel="h4"
-            icon={ExclamationCircleIcon}
-          >
-            <EmptyStateBody>Check your connection and try again.</EmptyStateBody>
-          </EmptyState>
+          <ApiError
+            errorType="large"
+            title={t("statusMessage:apis.connectionErrorTitle", {
+              val: t("navigation.rule"),
+            })}
+            description={t("statusMessage:apis.connectionErrorDescription")}
+            onRetry={retryAll}
+          />
         </Bullseye>
       </PageSection>
     );
