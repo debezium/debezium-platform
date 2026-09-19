@@ -28,6 +28,21 @@ vi.mock("src/apis", () => ({
   useDeleteData: vi.fn(),
 }));
 
+vi.mock("../../hooks/useResourceQuery", async () => {
+  const { useQuery } = await import("react-query");
+  return {
+    useResourceQuery: (...args: any[]) => {
+      const result = (useQuery as any)(...args) ?? {};
+      return {
+        consecutiveFailures: 0,
+        hasPollingStopped: Boolean(result.error),
+        retry: vi.fn(),
+        ...result,
+      };
+    },
+  };
+});
+
 vi.mock("../../appLayout/AppContext", () => ({
   useData: () => ({
     darkMode: false,
@@ -79,7 +94,7 @@ describe("Sources", () => {
       isLoading: true,
     } as any);
     render(<Sources />);
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
   });
 
   it("displays error message when API fails", async () => {
@@ -99,7 +114,7 @@ describe("Sources", () => {
     render(<Sources />);
     await waitFor(() => {
       expect(
-        screen.getByText("Error: Failed to fetch sources")
+        screen.getByText("Failed to load Sources")
       ).toBeInTheDocument();
     });
   });

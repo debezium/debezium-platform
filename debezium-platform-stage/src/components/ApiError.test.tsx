@@ -28,6 +28,36 @@ describe("ApiError", () => {
     expect(screen.getByRole("button", { name: "Go home" })).toBeInTheDocument();
   });
 
+  it("uses a custom title and description, and retries in place", () => {
+    const reload = vi.fn();
+    vi.spyOn(window, "location", "get").mockReturnValue({
+      ...window.location,
+      reload,
+    } as unknown as Location);
+    const onRetry = vi.fn();
+
+    render(
+      <ApiError
+        errorType="large"
+        title="Failed to load Transforms"
+        description="Check your connection and try again."
+        onRetry={onRetry}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Failed to load Transforms" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Check your connection and try again."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/^Error:/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(onRetry).toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
+  });
+
   it("invokes window.location.reload when refresh is clicked", () => {
     const reload = vi.fn();
     vi.spyOn(window, "location", "get").mockReturnValue({

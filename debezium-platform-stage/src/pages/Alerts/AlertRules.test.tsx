@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { http, HttpResponse } from "msw";
 import { render } from "../../__test__/unit/test-utils";
+import { POLLING } from "../../utils/pollingConfig";
 import { server } from "../../__mocks__/server";
 import AlertRules from "./AlertRules";
 import { AlertRule, isoDurationToSeconds, secondsToIsoDuration } from "./alertsTypes";
@@ -95,7 +96,11 @@ describe("AlertRules", () => {
 
     render(<AlertRules firingRuleIds={new Set()}  />);
 
-    expect(await screen.findByText("Failed to load alert rules")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Failed to load Rules", undefined, {
+        timeout: POLLING.failureInterval * POLLING.maxFailures + 2000,
+      })
+    ).toBeInTheDocument();
   });
 
   it("formats an immediate for-duration with no 'for' suffix", async () => {

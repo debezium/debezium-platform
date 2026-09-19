@@ -39,7 +39,6 @@ import {
   Tr,
 } from "@patternfly/react-table";
 import {
-  ExclamationCircleIcon,
   FilterIcon,
   HistoryIcon,
   OutlinedClockIcon,
@@ -56,6 +55,7 @@ import {
   fetchAlertEvents,
   fetchAlertRules,
 } from "../../apis/alerts";
+import ApiError from "../../components/ApiError";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import {
   AlertEvent,
@@ -490,7 +490,7 @@ const AlertEvents: React.FC = () => {
     to: dateRange?.to,
   };
 
-  const { data, isLoading, isError } = useResourceQuery<PagedAlertEventResponse, Error>(
+  const { data, isLoading, isError, retry: retryResource } = useResourceQuery<PagedAlertEventResponse, Error>(
     ["alertEvents", queryParams],
     () => fetchAlertEvents(queryParams),
     { profile: "slow" }
@@ -766,14 +766,14 @@ const AlertEvents: React.FC = () => {
             </Bullseye>
           ) : isError ? (
             <Bullseye>
-              <EmptyState
-                variant={EmptyStateVariant.sm}
-                titleText="Failed to load alert history"
-                headingLevel="h2"
-                icon={ExclamationCircleIcon}
-              >
-                <EmptyStateBody>Check your connection and try again.</EmptyStateBody>
-              </EmptyState>
+              <ApiError
+                errorType="large"
+                title={t("statusMessage:apis.connectionErrorTitle", {
+                  val: t("navigation.event"),
+                })}
+                description={t("statusMessage:apis.connectionErrorDescription")}
+                onRetry={retryResource}
+              />
             </Bullseye>
           ) : events.length > 0 ? (
             <>
