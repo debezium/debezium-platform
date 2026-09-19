@@ -36,7 +36,7 @@ import {
   Thead,
   Tr,
 } from "@patternfly/react-table";
-import { ExclamationCircleIcon, OutlinedBellIcon, PlusIcon, SearchIcon } from "@patternfly/react-icons";
+import { OutlinedBellIcon, PlusIcon, SearchIcon } from "@patternfly/react-icons";
 import { useQueryClient } from "react-query";
 import PageHeader from "@components/PageHeader";
 import { useNotification } from "../../appLayout/AppNotificationContext";
@@ -48,6 +48,7 @@ import {
   testAlertChannel,
   updateAlertChannel,
 } from "../../apis/alerts";
+import ApiError from "../../components/ApiError";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import {
   EmailChannelConfig,
@@ -119,6 +120,7 @@ const AlertChannels: React.FC = () => {
     data: channels = [],
     isLoading,
     isError,
+    retry: retryResource,
   } = useResourceQuery<NotificationChannel[], Error>(ALERT_CHANNELS_QUERY_KEY, fetchAlertChannels);
 
   const [isFormOpen, setIsFormOpen] = React.useState(false);
@@ -285,14 +287,14 @@ const AlertChannels: React.FC = () => {
     return (
       <PageSection isFilled>
         <Bullseye>
-          <EmptyState
-            variant={EmptyStateVariant.lg}
-            titleText={t("statusMessage:apis.connectionErrorTitle", { val: "notification channels" })}
-            headingLevel="h4"
-            icon={ExclamationCircleIcon}
-          >
-            <EmptyStateBody>{t("statusMessage:apis.connectionErrorDescription")}</EmptyStateBody>
-          </EmptyState>
+          <ApiError
+            errorType="large"
+            title={t("statusMessage:apis.connectionErrorTitle", {
+              val: t("navigation.channel"),
+            })}
+            description={t("statusMessage:apis.connectionErrorDescription")}
+            onRetry={retryResource}
+          />
         </Bullseye>
       </PageSection>
     );

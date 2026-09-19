@@ -97,7 +97,7 @@ describe("AlertRules", () => {
     render(<AlertRules firingRuleIds={new Set()}  />);
 
     expect(
-      await screen.findByText("Failed to load alert rules", undefined, {
+      await screen.findByText("Failed to load Rules", undefined, {
         timeout: POLLING.failureInterval * POLLING.maxFailures + 2000,
       })
     ).toBeInTheDocument();
