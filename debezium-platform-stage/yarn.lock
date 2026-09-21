@@ -1042,17 +1042,7 @@
     lodash "^4.18.1"
     tslib "^2.8.1"
 
-"@patternfly/react-tokens@^6.5.1":
-  version "6.5.1"
-  resolved "https://registry.npmjs.org/@patternfly/react-tokens/-/react-tokens-6.5.1.tgz"
-  integrity sha512-zwepLsIQTL0Lf4R2/PIBOk1m+pm0hYVT3lktf2H4+Y87eRIifwMRb19c+pr4hj4ckGvHs+WxwjTfTj2Qqwn5rw==
-
-"@patternfly/react-tokens@^6.6.0":
-  version "6.6.0"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-tokens/-/react-tokens-6.6.0.tgz#be9100a8eb83fb5cac4de5f72d6dc219b4b2c547"
-  integrity sha512-oRUFYJAM9LKYTM9YRnd7rz3wB6ZoaBWit/Eu+EK22J4o5AhZRjLt0+ewXQ7I99dBP4c8BbnPEUFnxQYAroqNLg==
-
-"@patternfly/react-tokens@^6.6.1":
+"@patternfly/react-tokens@^6.5.1", "@patternfly/react-tokens@^6.6.0", "@patternfly/react-tokens@^6.6.1":
   version "6.6.1"
   resolved "https://registry.yarnpkg.com/@patternfly/react-tokens/-/react-tokens-6.6.1.tgz#dc1544f7841b138b392d244ab2648d2d4936f3bd"
   integrity sha512-t7dDEJMnO3QkdIKyjbyKJznVYki9ONZG27Cn/9RXwaM0lDGCrgQEJXy2XoVUCdYhIdXZu+TGSEqXeNFYUyZECg==
