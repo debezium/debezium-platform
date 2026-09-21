@@ -28,7 +28,8 @@
         "setupSignaling": "Configura il signaling",
         "signalingCollectionField": {
             "label": "Nome della collezione di signaling",
-            "helper": "Il valore inserito sarà suffisso con '{{val}}' per creare la collezione di signaling sul database di origine."
+            "helper": "Il valore inserito sarà suffisso con '{{val}}' per creare la collezione di signaling sul database di origine.",
+            "required": "Il nome della collezione di signaling non deve essere vuoto"
         },
         "ddlQuery": "Query DDL",
         "errorMsg": "Si prega di compilare i campi {{val}} nelle proprietà di configurazione del connettore."
