@@ -285,6 +285,7 @@ const CreateSchemaForm = React.forwardRef<
   const [signalCollectionName, setSignalCollectionName] = useState("");
   const [isSignalModalOpen, setIsSignalModalOpen] = useState(false);
   const [signalCollectionNameVerify, setSignalCollectionNameVerify] = useState("");
+  const [signalCollectionNameError, setSignalCollectionNameError] = useState<string>();
   const [signalVerified, setSignalVerified] = useState(false);
   const [signalMissingConnection, setSignalMissingConnection] = useState(false);
   const [isSignalLoading, setIsSignalLoading] = useState(false);
@@ -698,11 +699,18 @@ const CreateSchemaForm = React.forwardRef<
     setIsSignalModalOpen(!isSignalModalOpen);
     setSignalMissingConnection(false);
     setSignalVerified(false);
+    setSignalCollectionNameError(undefined);
   };
 
   const verifySignalsHandler = async () => {
-    setIsSignalLoading(true);
     setSignalVerified(false);
+    const collectionName = signalCollectionNameVerify.trim();
+    if (!collectionName) {
+      setSignalCollectionNameError(t("source:signal.signalingCollectionField.required"));
+      return;
+    }
+    setSignalCollectionNameError(undefined);
+    setIsSignalLoading(true);
     if (!selectedConnection?.id) {
       setSignalMissingConnection(true);
       setIsSignalLoading(false);
@@ -711,7 +719,7 @@ const CreateSchemaForm = React.forwardRef<
     const payload = {
       databaseType: getDatabaseType(connectorId),
       connectionId: selectedConnection.id,
-      fullyQualifiedTableName: signalCollectionNameVerify,
+      fullyQualifiedTableName: collectionName,
     };
     const response = await verifySignals<SignalDataCollectionVerifyResponse>(
       `${API_URL}/api/sources/signals/verify`,
@@ -724,7 +732,7 @@ const CreateSchemaForm = React.forwardRef<
       addNotification(
         "success",
         "Signal verification successful",
-        response.data.message || `Verified: ${signalCollectionNameVerify}`
+        response.data.message || `Verified: ${collectionName}`
       );
     } else {
       addNotification(
@@ -737,7 +745,7 @@ const CreateSchemaForm = React.forwardRef<
   };
 
   const configureSignalCollection = () => {
-    setSignalCollectionName(signalCollectionNameVerify);
+    setSignalCollectionName(signalCollectionNameVerify.trim());
     setIsSignalModalOpen(false);
   };
 
@@ -1359,8 +1367,27 @@ const CreateSchemaForm = React.forwardRef<
               <TextInput
                 id="signaling-collection-name"
                 value={signalCollectionNameVerify}
-                onChange={(_e, val) => setSignalCollectionNameVerify(val)}
+                validated={signalCollectionNameError ? "error" : "default"}
+                onChange={(_e, val) => {
+                  setSignalCollectionNameVerify(val);
+                  setSignalCollectionNameError(undefined);
+                  setSignalVerified(false);
+                }}
+                onBlur={() => {
+                  if (!signalCollectionNameVerify.trim()) {
+                    setSignalCollectionNameError(t("source:signal.signalingCollectionField.required"));
+                  }
+                }}
               />
+              {signalCollectionNameError && (
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem icon={<ExclamationCircleIcon />} variant="error">
+                      {signalCollectionNameError}
+                    </HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
+              )}
             </FormGroup>
             <FormGroup label={t("source:signal.ddlQuery")} fieldId="ddl-query-name">
               <ClipboardCopy isReadOnly hoverTip={t("copy")} clickTip={t("copied")}>
@@ -1378,7 +1405,7 @@ const CreateSchemaForm = React.forwardRef<
             <Button
               variant="primary"
               isLoading={isSignalLoading}
-              isDisabled={!signalCollectionNameVerify}
+              isDisabled={!signalCollectionNameVerify.trim()}
               onClick={verifySignalsHandler}
             >
               {t("verify")}

@@ -411,7 +411,7 @@ export const verifySignals = async <T,>(
       try {
         const errJson = await response.json();
         if (errJson?.violations?.length > 0) {
-          errorMsg = errJson.violations[0].message;
+          errorMsg = errJson.violations[0].field + ":" + errJson.violations[0].message;
         } else if (errJson?.details?.length > 0) {
           errorMsg = errJson.details[0];
         } else if (errJson?.error) {
