@@ -32,6 +32,8 @@ import org.jboss.logging.Logger;
 import io.debezium.platform.api.dto.SourceRequest;
 import io.debezium.platform.api.dto.SourceResponse;
 import io.debezium.platform.api.mapper.SourceMapper;
+import io.debezium.platform.data.dto.SignalCollectionSetupQueryRequest;
+import io.debezium.platform.data.dto.SignalCollectionSetupQueryResponse;
 import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
 import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import io.debezium.platform.domain.SourceService;
@@ -101,6 +103,16 @@ public class SourceResource {
     public Response delete(@PathParam("id") Long id) {
         sourceService.delete(id);
         return Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    @Operation(summary = "Returns a database specific DDL query for setting up the signal collection table")
+    @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SignalCollectionSetupQueryResponse.class, required = true)))
+    @GET
+    @Path("/signals/query")
+    public Response getSignalCollectionSetupQuery(@NotNull @Valid SignalCollectionSetupQueryRequest request) {
+        var signalCollectionSetupQuery = sourceService.buildSignalCollectionSetupQuery(request);
+
+        return Response.ok().entity(signalCollectionSetupQuery).build();
     }
 
     @Operation(summary = "Verify that signal data collection is configured correctly")
