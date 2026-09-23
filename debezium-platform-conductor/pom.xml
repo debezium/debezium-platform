@@ -55,7 +55,7 @@
         <version.pulsar>4.2.4</version.pulsar>
         <version.nats>2.26.3</version.nats>
         <version.oras>0.6.4</version.oras>
-        <version.rabbitmq>5.35.0</version.rabbitmq>
+        <version.rabbitmq>5.36.0</version.rabbitmq>
         <version.milvus>3.0.10</version.milvus>
         <version.rocketmq>5.3.2</version.rocketmq>
 
