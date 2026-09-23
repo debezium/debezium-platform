@@ -23,6 +23,30 @@ const makeRow = (partial: Partial<TransformData> & Pick<TransformData, "id" | "n
   ...partial,
 });
 
+const renderList = (
+  data: TransformData[],
+  extra: {
+    onSelection?: (selection: TransformData[]) => void;
+    onCopy?: (transform: TransformData) => void;
+    sourceType?: string;
+  } = {}
+) => {
+  const onSelection = extra.onSelection ?? vi.fn();
+  const onCopy = extra.onCopy ?? vi.fn();
+  return {
+    onSelection,
+    onCopy,
+    ...render(
+      <TransformSelectionList
+        data={data}
+        onSelection={onSelection}
+        onCopy={onCopy}
+        sourceType={extra.sourceType}
+      />
+    ),
+  };
+};
+
 describe("TransformSelectionList", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -35,32 +59,93 @@ describe("TransformSelectionList", () => {
 
   it("renders empty state when there are no transforms", () => {
     const onSelection = vi.fn();
-    render(<TransformSelectionList data={[]} onSelection={onSelection} />);
+    render(<TransformSelectionList data={[]} onSelection={onSelection} onCopy={vi.fn()} />);
 
     expect(
       screen.getByRole("heading", { name: /no transform available/i }),
     ).toBeInTheDocument();
   });
 
-  it("renders table rows and invokes onSelection on row click", () => {
-    const onSelection = vi.fn();
+  it("renders table rows and invokes onSelection from Use, not row click", () => {
     const row = makeRow({
       id: 6,
       name: "filter-transform",
       type: "io.debezium.transforms.Filter",
     });
 
-    render(<TransformSelectionList data={[row]} onSelection={onSelection} />);
+    const { onSelection } = renderList([row]);
 
     expect(screen.getByRole("cell", { name: "filter-transform" })).toBeInTheDocument();
     const [, dataRow] = screen.getAllByRole("row");
     fireEvent.click(dataRow);
+    expect(onSelection).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /^use$/i }));
     expect(onSelection).toHaveBeenCalledWith([row]);
+  });
+
+  it("invokes onCopy from Copy", () => {
+    const row = makeRow({
+      id: 1,
+      name: "unused-transform",
+      type: "io.debezium.transforms.Filter",
+    });
+    const { onCopy } = renderList([row]);
+
+    fireEvent.click(screen.getByRole("button", { name: /^copy$/i }));
+    expect(onCopy).toHaveBeenCalledWith(row);
+  });
+
+  it("makes Copy the primary action when Used in is 2 or more", () => {
+    const row = makeRow({
+      id: 6,
+      name: "filter-transform",
+      type: "io.debezium.transforms.Filter",
+    });
+    vi.mocked(useQuery).mockReturnValue({
+      data: [
+        { ...pipelinesMock[0], id: 1, transforms: [{ id: 6, name: "filter-transform" }] },
+        { ...pipelinesMock[0], id: 2, name: "second", transforms: [{ id: 6, name: "filter-transform" }] },
+      ],
+      error: null,
+      isLoading: false,
+    } as any);
+
+    renderList([row]);
+
+    expect(screen.getByRole("button", { name: /^copy$/i })).toHaveClass("pf-m-primary");
+    expect(screen.getByRole("button", { name: /^use$/i })).toHaveClass("pf-m-link");
+    expect(screen.getByText(/shared with 2 pipelines/i)).toBeInTheDocument();
+  });
+
+  it("makes Use the primary action when the transform is unused", () => {
+    const row = makeRow({
+      id: 99,
+      name: "unused-transform",
+      type: "io.debezium.transforms.Filter",
+    });
+    renderList([row]);
+
+    expect(screen.getByRole("button", { name: /^use$/i })).toHaveClass("pf-m-primary");
+    expect(screen.getByRole("button", { name: /^copy$/i })).toHaveClass("pf-m-link");
+  });
+
+  it("shows a shared-transform helper when any row is used in a pipeline", () => {
+    const row = makeRow({
+      id: 6,
+      name: "filter-transform",
+      type: "io.debezium.transforms.Filter",
+    });
+    renderList([row]);
+
+    expect(
+      screen.getByText(/transforms already used by other pipelines are shared/i),
+    ).toBeInTheDocument();
   });
 
   it("renders a toolbar with a search input and filter selector", () => {
     const row = makeRow({ id: 1, name: "my-transform", type: "io.debezium.transforms.Filter" });
-    render(<TransformSelectionList data={[row]} onSelection={vi.fn()} />);
+    renderList([row]);
 
     expect(screen.getByRole("button", { name: /name/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/find by name/i)).toBeInTheDocument();
@@ -71,7 +156,7 @@ describe("TransformSelectionList", () => {
       makeRow({ id: 1, name: "filter-transform", type: "io.debezium.transforms.Filter" }),
       makeRow({ id: 2, name: "router-transform", type: "io.debezium.transforms.Router" }),
     ];
-    render(<TransformSelectionList data={rows} onSelection={vi.fn()} />);
+    renderList(rows);
 
     const searchInput = screen.getByPlaceholderText(/find by name/i);
     await userEvent.type(searchInput, "router");
@@ -87,7 +172,7 @@ describe("TransformSelectionList", () => {
       makeRow({ id: 1, name: "filter-transform", type: "io.debezium.transforms.Filter" }),
       makeRow({ id: 2, name: "router-transform", type: "io.debezium.transforms.Router" }),
     ];
-    render(<TransformSelectionList data={rows} onSelection={vi.fn()} />);
+    renderList(rows);
 
     // Open the filter dropdown and pick "Type"
     const filterToggle = screen.getByRole("button", { name: /name/i });
@@ -107,7 +192,7 @@ describe("TransformSelectionList", () => {
 
   it("shows a no-results empty state when the search matches nothing", async () => {
     const row = makeRow({ id: 1, name: "filter-transform", type: "io.debezium.transforms.Filter" });
-    render(<TransformSelectionList data={[row]} onSelection={vi.fn()} />);
+    renderList([row]);
 
     const searchInput = screen.getByPlaceholderText(/find by name/i);
     await userEvent.type(searchInput, "zzznomatch");
@@ -122,7 +207,7 @@ describe("TransformSelectionList", () => {
       makeRow({ id: 1, name: "filter-transform", type: "io.debezium.transforms.Filter" }),
       makeRow({ id: 2, name: "router-transform", type: "io.debezium.transforms.Router" }),
     ];
-    render(<TransformSelectionList data={rows} onSelection={vi.fn()} />);
+    renderList(rows);
 
     // No filter active → "2 items"
     expect(screen.getByText(/2 items/i)).toBeInTheDocument();
@@ -137,7 +222,6 @@ describe("TransformSelectionList", () => {
   });
 
   it("disables connector-specific rows that do not match the selected source", () => {
-    const onSelection = vi.fn();
     const rows = [
       makeRow({
         id: 1,
@@ -156,23 +240,21 @@ describe("TransformSelectionList", () => {
       }),
     ];
 
-    render(
-      <TransformSelectionList
-        data={rows}
-        onSelection={onSelection}
-        sourceType="io.debezium.connector.postgresql.PostgresConnector"
-      />
-    );
+    const { onSelection, onCopy } = renderList(rows, {
+      sourceType: "io.debezium.connector.postgresql.PostgresConnector",
+    });
 
-    const rowsEls = screen.getAllByRole("row");
-    // header + 3 data rows
-    fireEvent.click(rowsEls[2]); // mongo — incompatible
-    expect(onSelection).not.toHaveBeenCalled();
+    const mongoRow = screen.getByRole("cell", { name: "mongo-smt" }).closest("tr");
+    expect(mongoRow).toBeTruthy();
+    expect(mongoRow?.querySelector("button")).toBeNull();
 
-    fireEvent.click(rowsEls[1]); // postgres — compatible
+    fireEvent.click(screen.getAllByRole("button", { name: /^use$/i })[0]);
     expect(onSelection).toHaveBeenCalledWith([rows[0]]);
 
-    fireEvent.click(rowsEls[3]); // generic — always compatible
+    fireEvent.click(screen.getAllByRole("button", { name: /^use$/i })[1]);
     expect(onSelection).toHaveBeenCalledWith([rows[2]]);
+
+    fireEvent.click(screen.getAllByRole("button", { name: /^copy$/i })[0]);
+    expect(onCopy).toHaveBeenCalledWith(rows[0]);
   });
 });

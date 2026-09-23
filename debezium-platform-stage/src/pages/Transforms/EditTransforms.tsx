@@ -12,15 +12,18 @@ import {
 } from "@patternfly/react-core";
 import { PencilAltIcon, RhUiDataProcessorIcon } from "@patternfly/react-icons";
 import { useRef, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
+  createPost,
   editPut,
   fetchData,
   fetchDataTypeTwo,
+  Pipeline,
   TransformData,
   TransformPayload,
 } from "src/apis";
 import { API_URL } from "@utils/constants";
+import { nextCopyName } from "@utils/helpers";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "react-query";
@@ -30,6 +33,7 @@ import CreateTransformForm, {
 } from "@components/CreateTransformForm";
 import TransformReviewView from "@components/TransformReviewView";
 import EditConfirmationModel from "../components/EditConfirmationModel";
+import { getActivePipelineCount } from "@components/UsedIn";
 
 export interface IEditTransformsProps {
   onSelection?: (selection: TransformData) => void;
@@ -40,6 +44,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
 }) => {
   const { transformId } = useParams<{ transformId: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const initialState = searchParams.get("state") as "view" | "edit" | null;
   const [viewMode, setViewMode] = useState<boolean>(initialState === "view");
   const [isWarningOpen, setIsWarningOpen] = useState(false);
@@ -48,6 +53,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
     setError: (fieldId: string, error: string | undefined) => void;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const saveIntentRef = useRef<"update" | "copy">("update");
 
   const formRef = useRef<CreateTransformFormHandle>(null);
   const { addNotification } = useNotification();
@@ -57,6 +63,11 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   const { data: existingTransforms = [] } = useQuery<TransformData[], Error>(
     "transforms",
     () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
+  );
+
+  const { data: pipelineList = [] } = useQuery<Pipeline[], Error>(
+    "pipelines",
+    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
   );
 
   const existingNames = React.useMemo(() => {
@@ -83,8 +94,43 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
     { enabled: !!transformId }
   );
 
+  const usedInCount = transformData
+    ? getActivePipelineCount(pipelineList, transformData.id, "transform")
+    : 0;
+
   const handleSchemaSubmit = async (payload: TransformPayload) => {
     setIsLoading(true);
+    if (saveIntentRef.current === "copy") {
+      const name =
+        payload.name === transformData?.name
+          ? nextCopyName(transformData.name, existingNames)
+          : payload.name;
+      const response = await createPost(`${API_URL}/api/transforms`, {
+        ...payload,
+        name,
+      });
+      if (response.error) {
+        addNotification(
+          "danger",
+          `Transform creation failed`,
+          `Failed to create ${name}: ${response.error}`
+        );
+      } else {
+        const created = response.data as TransformData;
+        addNotification(
+          "success",
+          `Create successful`,
+          `Transform "${created.name}" created successfully.`
+        );
+        await queryClient.invalidateQueries("transforms");
+        if (created?.id) {
+          navigate(`/transform/${created.id}?state=view`);
+        }
+      }
+      setIsLoading(false);
+      return;
+    }
+
     const response = await editPut(
       `${API_URL}/api/transforms/${transformData?.id}`,
       payload
@@ -114,6 +160,12 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   ) => {
     void values;
     void setError;
+    saveIntentRef.current = "update";
+    formRef.current?.submit();
+  };
+
+  const handleSaveAsCopy = () => {
+    saveIntentRef.current = "copy";
     formRef.current?.submit();
   };
 
@@ -130,8 +182,19 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
       );
       return;
     }
+    if (usedInCount === 0) {
+      saveIntentRef.current = "update";
+      form.submit();
+      return;
+    }
     setPendingSave({ values: {}, setError: () => {} });
     setIsWarningOpen(true);
+  };
+
+  const navigateToDuplicate = () => {
+    if (transformData?.id) {
+      navigate(`/transform/create_transform?from=${transformData.id}`);
+    }
   };
 
   const renderLoading = () => (
@@ -206,16 +269,31 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
             </Icon>
           }
           actionMenu={
-            <Button
-              variant="secondary"
-              ouiaId="Primary"
-              icon={<PencilAltIcon />}
-              onClick={() => {
-                setViewMode(false);
-              }}
-            >
-              {t("edit")}
-            </Button>
+            <ActionList>
+              <ActionListGroup>
+                <ActionListItem>
+                  <Button
+                    variant="primary"
+                    ouiaId="Primary"
+                    icon={<PencilAltIcon />}
+                    onClick={() => {
+                      setViewMode(false);
+                    }}
+                  >
+                    {t("edit")}
+                  </Button>
+                </ActionListItem>
+                <ActionListItem>
+                  <Button
+                    variant="secondary"
+                    isDisabled={!transformData}
+                    onClick={navigateToDuplicate}
+                  >
+                    {t("duplicate")}
+                  </Button>
+                </ActionListItem>
+              </ActionListGroup>
+            </ActionList>
           }
         />
       ) : (
@@ -267,6 +345,8 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
         pendingSave={pendingSave}
         setPendingSave={setPendingSave}
         handleEdit={handleEditConfirm}
+        usedInCount={usedInCount}
+        onSaveAsCopy={handleSaveAsCopy}
       />
     </>
   );

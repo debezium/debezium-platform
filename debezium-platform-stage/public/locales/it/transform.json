@@ -34,7 +34,8 @@
         "negateFieldDescription": "Impostando questa opzione su True, il predicato verrà applicato solo ai record che **non** corrispondono alla condizione definita",
         "validationFailedGeneric": "Compila tutti i campi obbligatori.",
         "validationFailedInOneSection": "Correggi gli errori in {{section}}.",
-        "validationFailedInMultipleSections": "Correggi gli errori in: {{list}}."
+        "validationFailedInMultipleSections": "Correggi gli errori in: {{list}}.",
+        "copiedFrom": "Copiato da {{name}}"
     },
     "jumplinks": {
         "label": "Sezioni del modulo",
@@ -67,6 +68,15 @@
     "createTitle": "Crea una trasformazione",
     "createDescription": "Crea una nuova trasformazione per la tua pipeline di dati.",
     "formDescription": "Compila il modulo sottostante per creare una trasformazione.",
-    "incompatibleWithSource": "Compatibile solo con sorgenti {{family}}"
+    "incompatibleWithSource": "Compatibile solo con sorgenti {{family}}",
+    "sharedHelper": "Le trasformazioni già usate da altre pipeline sono condivise. Copiane una se questa pipeline necessita di impostazioni proprie.",
+    "sharedWithPipelines": "Condivisa con {{count}} pipeline"
+  },
+  "editConfirmation": {
+    "title": "Questa trasformazione è usata da altre pipeline",
+    "saveAsCopy": "Salva come nuova copia",
+    "saveAsCopyDescription": "Le altre pipeline mantengono le impostazioni attuali. La nuova trasformazione non è associata a nessuna pipeline finché non la aggiungi.",
+    "updateShared": "Aggiorna la trasformazione condivisa",
+    "updateSharedDescription": "Le pipeline che usano questa trasformazione verranno riavviate."
   }
 }

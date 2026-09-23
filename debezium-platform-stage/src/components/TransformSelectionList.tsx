@@ -1,4 +1,5 @@
 import {
+  Alert,
   Bullseye,
   Button,
   Content,
@@ -7,6 +8,8 @@ import {
   EmptyStateBody,
   EmptyStateFooter,
   EmptyStateVariant,
+  Flex,
+  FlexItem,
   MenuToggle,
   MenuToggleElement,
   SearchInput,
@@ -31,7 +34,7 @@ import {
 import { API_URL } from "../utils/constants";
 import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useTranslation } from "react-i18next";
-import UsedIn from "./UsedIn";
+import UsedIn, { getActivePipelineCount } from "./UsedIn";
 import { debounce } from "lodash";
 import {
   getConnectorFamily,
@@ -45,15 +48,18 @@ const FILTER_OPTIONS: { value: FilterField; label: string }[] = [
   { value: "type", label: "Type" },
 ];
 
+const COPY_PRIMARY_USED_IN = 2;
+
 interface ITransformSelectionListProps {
   data: TransformApiResponse;
   onSelection: (selection: TransformData[]) => void;
+  onCopy: (transform: TransformData) => void;
   sourceType?: string;
 }
 
 const TransformSelectionList: React.FunctionComponent<
   ITransformSelectionListProps
-> = ({ data, onSelection, sourceType }) => {
+> = ({ data, onSelection, onCopy, sourceType }) => {
   const { t } = useTranslation();
 
   const { data: pipelineList = [] } = useResourceQuery<Pipeline[], Error>(
@@ -106,6 +112,15 @@ const TransformSelectionList: React.FunctionComponent<
       instance[filterField].toLowerCase().includes(q)
     );
   }, [data, debouncedQuery, filterField]);
+
+  const hasSharedTransform = useMemo(
+    () =>
+      data.some(
+        (instance) =>
+          getActivePipelineCount(pipelineList, instance.id, "transform") >= 1
+      ),
+    [data, pipelineList]
+  );
 
   const selectedLabel =
     FILTER_OPTIONS.find((o) => o.value === filterField)?.label ?? "Name";
@@ -179,12 +194,22 @@ const TransformSelectionList: React.FunctionComponent<
         </ToolbarContent>
       </Toolbar>
 
+      {hasSharedTransform && (
+        <Alert
+          isInline
+          variant="info"
+          title={t("transform:transformModal.sharedHelper")}
+          style={{ marginBottom: "0.75rem" }}
+        />
+      )}
+
       <Table aria-label="transform table" variant="compact">
         <Thead>
           <Tr>
             <Th key={0}>{t("name")}</Th>
             <Th key={1}>{t("type")}</Th>
-            <Th key={2}>{t("active")}</Th>
+            <Th key={2}>{t("usedIn")}</Th>
+            <Th key={3}>{t("actions")}</Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -195,14 +220,15 @@ const TransformSelectionList: React.FunctionComponent<
                 sourceType
               );
               const family = getConnectorFamily(instance.type);
+              const usedInCount = getActivePipelineCount(
+                pipelineList,
+                instance.id,
+                "transform"
+              );
+              const copyIsPrimary = usedInCount >= COPY_PRIMARY_USED_IN;
               return (
                 <Tr
                   key={instance.id}
-                  onRowClick={
-                    compatible ? () => onSelection([instance]) : undefined
-                  }
-                  isSelectable={compatible}
-                  isClickable={compatible}
                   style={
                     compatible
                       ? undefined
@@ -211,7 +237,16 @@ const TransformSelectionList: React.FunctionComponent<
                 >
                   <Td dataLabel={t("name")}>
                     {compatible ? (
-                      instance.name
+                      <>
+                        {instance.name}
+                        {usedInCount >= COPY_PRIMARY_USED_IN && (
+                          <Content component={ContentVariants.small}>
+                            {t("transform:transformModal.sharedWithPipelines", {
+                              count: usedInCount,
+                            })}
+                          </Content>
+                        )}
+                      </>
                     ) : (
                       <Tooltip
                         content={t(
@@ -226,7 +261,7 @@ const TransformSelectionList: React.FunctionComponent<
                   <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
                     {instance.type}
                   </Td>
-                  <Td dataLabel={t("active")}>
+                  <Td dataLabel={t("usedIn")}>
                     <UsedIn
                       resourceList={pipelineList}
                       resourceType={"pipeline"}
@@ -234,12 +269,37 @@ const TransformSelectionList: React.FunctionComponent<
                       instance={instance}
                     />
                   </Td>
+                  <Td dataLabel={t("actions")} modifier="fitContent">
+                    {compatible && (
+                      <Flex
+                        spaceItems={{ default: "spaceItemsSm" }}
+                        flexWrap={{ default: "nowrap" }}
+                      >
+                        <FlexItem>
+                          <Button
+                            variant={copyIsPrimary ? "link" : "primary"}
+                            onClick={() => onSelection([instance])}
+                          >
+                            {t("use")}
+                          </Button>
+                        </FlexItem>
+                        <FlexItem>
+                          <Button
+                            variant={copyIsPrimary ? "primary" : "link"}
+                            onClick={() => onCopy(instance)}
+                          >
+                            {t("copy")}
+                          </Button>
+                        </FlexItem>
+                      </Flex>
+                    )}
+                  </Td>
                 </Tr>
               );
             })
           ) : (
             <Tr>
-              <Td colSpan={3}>
+              <Td colSpan={4}>
                 <Bullseye>
                   <EmptyState
                     headingLevel="h2"

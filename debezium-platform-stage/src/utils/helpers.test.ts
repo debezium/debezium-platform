@@ -6,6 +6,7 @@ import {
   getConnectorTypeName,
   getDatabaseType,
   isEmpty,
+  nextCopyName,
   openDBZIssues,
 } from "./helpers";
 import type { Catalog } from "../apis/types";
@@ -175,5 +176,30 @@ describe("convertMapToObject", () => {
     const setWarnings = vi.fn();
     expect(convertMapToObject(map, undefined, setWarnings)).toEqual({ a: "1" });
     expect(setWarnings).toHaveBeenCalledWith([]);
+  });
+});
+
+describe("nextCopyName", () => {
+  it("appends -copy when the name is free", () => {
+    expect(nextCopyName("unwrap-inventory", [])).toBe("unwrap-inventory-copy");
+  });
+
+  it("increments -copy-N when earlier candidates are taken", () => {
+    expect(
+      nextCopyName("unwrap-inventory", [
+        "unwrap-inventory",
+        "unwrap-inventory-copy",
+      ])
+    ).toBe("unwrap-inventory-copy-2");
+    expect(
+      nextCopyName("unwrap-inventory", [
+        "unwrap-inventory-copy",
+        "unwrap-inventory-copy-2",
+      ])
+    ).toBe("unwrap-inventory-copy-3");
+  });
+
+  it("still suffixes -copy when the base already ends in -copy", () => {
+    expect(nextCopyName("unwrap-copy", ["unwrap-copy"])).toBe("unwrap-copy-copy");
   });
 });
