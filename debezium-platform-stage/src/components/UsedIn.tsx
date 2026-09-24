@@ -88,7 +88,6 @@ const UsedIn: FC<IUsedInProps> = ({ resourceList, resourceType, instance, reques
 
     return (
         <Popover
-            triggerAction="hover"
             aria-label="used in popover"
             bodyContent={
                 <div>

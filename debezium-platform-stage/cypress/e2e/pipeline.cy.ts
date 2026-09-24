@@ -40,8 +40,6 @@ describe('Pipeline Management', () => {
   const selectRowByExactName = (tableSelector: string, name: string) => {
     cy.get(tableSelector, { timeout: 30000 })
       .contains('td', new RegExp(`^${escapeRegExp(name)}$`))
-      .closest('tr')
-      .contains('button', /^Use$/)
       .click();
   };
 

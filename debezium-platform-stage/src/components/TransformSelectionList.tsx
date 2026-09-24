@@ -8,8 +8,6 @@ import {
   EmptyStateBody,
   EmptyStateFooter,
   EmptyStateVariant,
-  Flex,
-  FlexItem,
   MenuToggle,
   MenuToggleElement,
   SearchInput,
@@ -209,7 +207,7 @@ const TransformSelectionList: React.FunctionComponent<
             <Th key={0}>{t("name")}</Th>
             <Th key={1}>{t("type")}</Th>
             <Th key={2}>{t("usedIn")}</Th>
-            <Th key={3}>{t("actions")}</Th>
+            <Th key={3}></Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -229,6 +227,11 @@ const TransformSelectionList: React.FunctionComponent<
               return (
                 <Tr
                   key={instance.id}
+                  onRowClick={
+                    compatible ? () => onSelection([instance]) : undefined
+                  }
+                  isSelectable={compatible}
+                  isClickable={compatible}
                   style={
                     compatible
                       ? undefined
@@ -271,27 +274,17 @@ const TransformSelectionList: React.FunctionComponent<
                   </Td>
                   <Td dataLabel={t("actions")} modifier="fitContent">
                     {compatible && (
-                      <Flex
-                        spaceItems={{ default: "spaceItemsSm" }}
-                        flexWrap={{ default: "nowrap" }}
+                      <Button
+                      style={{"marginLeft": "-20px"}}
+                        variant={copyIsPrimary ? "primary" : "secondary"}
+                        size="sm"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onCopy(instance);
+                        }}
                       >
-                        <FlexItem>
-                          <Button
-                            variant={copyIsPrimary ? "link" : "primary"}
-                            onClick={() => onSelection([instance])}
-                          >
-                            {t("use")}
-                          </Button>
-                        </FlexItem>
-                        <FlexItem>
-                          <Button
-                            variant={copyIsPrimary ? "primary" : "link"}
-                            onClick={() => onCopy(instance)}
-                          >
-                            {t("copy")}
-                          </Button>
-                        </FlexItem>
-                      </Flex>
+                        Use copy
+                      </Button>
                     )}
                   </Td>
                 </Tr>

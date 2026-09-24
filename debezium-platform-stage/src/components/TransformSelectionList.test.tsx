@@ -66,7 +66,7 @@ describe("TransformSelectionList", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders table rows and invokes onSelection from Use, not row click", () => {
+  it("renders table rows and invokes onSelection on row click", () => {
     const row = makeRow({
       id: 6,
       name: "filter-transform",
@@ -78,22 +78,20 @@ describe("TransformSelectionList", () => {
     expect(screen.getByRole("cell", { name: "filter-transform" })).toBeInTheDocument();
     const [, dataRow] = screen.getAllByRole("row");
     fireEvent.click(dataRow);
-    expect(onSelection).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole("button", { name: /^use$/i }));
     expect(onSelection).toHaveBeenCalledWith([row]);
   });
 
-  it("invokes onCopy from Copy", () => {
+  it("invokes onCopy from Copy without attaching the original", () => {
     const row = makeRow({
       id: 1,
       name: "unused-transform",
       type: "io.debezium.transforms.Filter",
     });
-    const { onCopy } = renderList([row]);
+    const { onCopy, onSelection } = renderList([row]);
 
     fireEvent.click(screen.getByRole("button", { name: /^copy$/i }));
     expect(onCopy).toHaveBeenCalledWith(row);
+    expect(onSelection).not.toHaveBeenCalled();
   });
 
   it("makes Copy the primary action when Used in is 2 or more", () => {
@@ -114,11 +112,10 @@ describe("TransformSelectionList", () => {
     renderList([row]);
 
     expect(screen.getByRole("button", { name: /^copy$/i })).toHaveClass("pf-m-primary");
-    expect(screen.getByRole("button", { name: /^use$/i })).toHaveClass("pf-m-link");
     expect(screen.getByText(/shared with 2 pipelines/i)).toBeInTheDocument();
   });
 
-  it("makes Use the primary action when the transform is unused", () => {
+  it("keeps Copy secondary when the transform is unused", () => {
     const row = makeRow({
       id: 99,
       name: "unused-transform",
@@ -126,8 +123,7 @@ describe("TransformSelectionList", () => {
     });
     renderList([row]);
 
-    expect(screen.getByRole("button", { name: /^use$/i })).toHaveClass("pf-m-primary");
-    expect(screen.getByRole("button", { name: /^copy$/i })).toHaveClass("pf-m-link");
+    expect(screen.getByRole("button", { name: /^copy$/i })).toHaveClass("pf-m-secondary");
   });
 
   it("shows a shared-transform helper when any row is used in a pipeline", () => {
@@ -248,13 +244,18 @@ describe("TransformSelectionList", () => {
     expect(mongoRow).toBeTruthy();
     expect(mongoRow?.querySelector("button")).toBeNull();
 
-    fireEvent.click(screen.getAllByRole("button", { name: /^use$/i })[0]);
+    const rowsEls = screen.getAllByRole("row");
+    fireEvent.click(rowsEls[2]); // mongo — incompatible
+    expect(onSelection).not.toHaveBeenCalled();
+
+    fireEvent.click(rowsEls[1]); // postgres — compatible
     expect(onSelection).toHaveBeenCalledWith([rows[0]]);
 
-    fireEvent.click(screen.getAllByRole("button", { name: /^use$/i })[1]);
+    fireEvent.click(rowsEls[3]); // generic — always compatible
     expect(onSelection).toHaveBeenCalledWith([rows[2]]);
 
     fireEvent.click(screen.getAllByRole("button", { name: /^copy$/i })[0]);
     expect(onCopy).toHaveBeenCalledWith(rows[0]);
+    expect(onCopy).toHaveBeenCalledTimes(1);
   });
 });
