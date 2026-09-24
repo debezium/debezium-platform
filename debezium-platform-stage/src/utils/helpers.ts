@@ -205,3 +205,18 @@ export const buildSignalCollectionSetupQuery = (
 
   return `CREATE TABLE ${fullyQualifiedCollectionName} (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);`;
 };
+
+/**
+ * Suggests a unique name for a duplicated resource: `{base}-copy`, then `-copy-2`, …
+ */
+export const nextCopyName = (base: string, existingNames: string[]): string => {
+  const existing = new Set(existingNames);
+  const root = base.replace(/-copy(-\d+)?$/, "");
+  let candidate = `${root}-copy`;
+  let n = 2;
+  while (existing.has(candidate)) {
+    candidate = `${root}-copy-${n}`;
+    n += 1;
+  }
+  return candidate;
+};

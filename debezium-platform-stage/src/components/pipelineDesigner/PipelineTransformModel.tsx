@@ -35,11 +35,12 @@ const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     error: _transformError,
     isLoading: isTransformLoading,
-  } = useQuery<TransformData[], Error>("transform", () =>
+  } = useQuery<TransformData[], Error>("transforms", () =>
     fetchData<TransformData[]>(`${API_URL}/api/transforms`)
   );
 
   const [userSelection, setUserSelection] = useState<string | null>(null);
+  const [copySeed, setCopySeed] = useState<TransformData | null>(null);
 
   const isCreateChecked = userSelection !== null 
     ? userSelection 
@@ -47,6 +48,12 @@ const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
 
   const onChange = (event: React.FormEvent<HTMLInputElement>) => {
     setUserSelection(event.currentTarget.id);
+    setCopySeed(null);
+  };
+
+  const onCopy = (transform: TransformData) => {
+    setCopySeed(transform);
+    setUserSelection(id2);
   };
 
   return (
@@ -109,13 +116,16 @@ const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
         <TransformSelectionList
           data={transformList}
           onSelection={onTransformSelection}
+          onCopy={onCopy}
           sourceType={sourceType}
         />
       ) : (
         <CreateTransforms
+          key={copySeed ? `copy-${copySeed.id}` : "create"}
           modelLoaded={true}
           onSelection={onTransformSelection}
           sourceType={sourceType}
+          initialTransform={copySeed ?? undefined}
         />
       )}
     </>

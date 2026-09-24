@@ -220,7 +220,7 @@ const SourceDestinationSelectionList: React.FunctionComponent<
                   <UsedIn
                     resourceList={pipelineList}
                     resourceType={"pipeline"}
-                    requestedPageType={"source"}
+                    requestedPageType={tableType}
                     instance={instance}
                   />
                 </Td>
