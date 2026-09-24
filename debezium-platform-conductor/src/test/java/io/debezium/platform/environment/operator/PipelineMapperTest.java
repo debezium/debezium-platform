@@ -30,6 +30,7 @@ import io.debezium.doc.FixFor;
 import io.debezium.operator.api.model.runtime.metrics.Metrics;
 import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
 import io.debezium.platform.config.PipelineConfigGroup;
+import io.debezium.platform.config.SnapshotMonitoringConfigGroup;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.domain.views.Transform;
@@ -50,12 +51,22 @@ public class PipelineMapperTest {
     @Mock
     TableNameResolver tableNameResolver;
 
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    SnapshotMonitoringConfigGroup snapshotMonitoringConfigGroup;
+
     private PipelineMapper pipelineMapper;
 
     @BeforeEach
     void setUp() {
 
         when(tableNameResolver.resolve(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
+
+        when(snapshotMonitoringConfigGroup.notification().channels()).thenReturn("log,http");
+        when(snapshotMonitoringConfigGroup.notification().serviceName()).thenReturn("conductor");
+        when(snapshotMonitoringConfigGroup.notification().port()).thenReturn(8080);
+        when(snapshotMonitoringConfigGroup.notification().timeoutMs()).thenReturn(5000);
+        when(snapshotMonitoringConfigGroup.notification().retries()).thenReturn(2);
+
         when(pipelineConfigGroup.labels()).thenReturn(Map.of());
         when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(false);
         when(pipelineConfigGroup.monitoring().otel().jmxIntervalMs()).thenReturn(1000);
@@ -310,8 +321,27 @@ public class PipelineMapperTest {
         assertThat(result.getSpec().getRuntime().getTemplates().getPod().getImagePullSecrets()).isEmpty();
     }
 
+    @Test
+    @FixFor("debezium/dbz#2536")
+    public void testMapperShouldEnableHttpNotificationChannelWithCallbackUrl() {
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getSource().getConfig().getProps())
+                .containsEntry("notification.enabled.channels", "log,http")
+                .containsEntry("notification.http.url",
+                        "http://conductor:8080/api/internal/pipelines/1/notifications")
+                .containsEntry("notification.http.timeout.ms", "5000")
+                .containsEntry("notification.http.retries", "2")
+                .containsEntry("notification.http.allow.private.networks", "true");
+    }
+
     private PipelineMapper createMapper() {
-        return new PipelineMapper(pipelineConfigGroup, tableNameResolver, buildMetrics(pipelineConfigGroup));
+        return new PipelineMapper(pipelineConfigGroup, tableNameResolver, buildMetrics(pipelineConfigGroup),
+                snapshotMonitoringConfigGroup);
     }
 
     private static Metrics buildMetrics(PipelineConfigGroup config) {

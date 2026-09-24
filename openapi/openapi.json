@@ -12,6 +12,8 @@
   }, {
     "name" : "pipelines"
   }, {
+    "name" : "snapshots"
+  }, {
     "name" : "sources"
   }, {
     "name" : "transforms"
@@ -417,6 +419,33 @@
         "format" : "date-time",
         "examples" : [ "2022-03-10T16:15:50Z" ]
       },
+      "MediaType" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "subtype" : {
+            "type" : "string"
+          },
+          "parameters" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "hash" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "wildcardType" : {
+            "type" : "boolean"
+          },
+          "wildcardSubtype" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "Metadata" : {
         "type" : "object",
         "properties" : {
@@ -490,6 +519,37 @@
         "type" : "string",
         "enum" : [ "GREATER_THAN", "GREATER_THAN_OR_EQUAL", "LESS_THAN", "LESS_THAN_OR_EQUAL", "EQUAL", "NOT_EQUAL" ]
       },
+      "OutboundSseEvent" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "reconnectDelay" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "reconnectDelaySet" : {
+            "type" : "boolean"
+          },
+          "type" : {
+            "type" : "object"
+          },
+          "genericType" : {
+            "type" : "object"
+          },
+          "mediaType" : {
+            "$ref" : "#/components/schemas/MediaType"
+          },
+          "data" : { }
+        }
+      },
       "PagedAlertEventResponse" : {
         "type" : "object",
         "properties" : {
@@ -497,6 +557,33 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/AlertEventResponse"
+            }
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "totalElements" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PagedSnapshotHistoryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SnapshotHistoryResponse"
             }
           },
           "page" : {
@@ -777,6 +864,64 @@
           }
         }
       },
+      "SnapshotHistoryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "pipelineId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "pipelineName" : {
+            "type" : "string"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/SnapshotType"
+          },
+          "outcome" : {
+            "$ref" : "#/components/schemas/SnapshotState"
+          },
+          "totalTables" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "completedTables" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "totalRowsScanned" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startedAt" : {
+            "$ref" : "#/components/schemas/Instant"
+          },
+          "completedAt" : {
+            "$ref" : "#/components/schemas/Instant"
+          },
+          "durationSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "tables" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TableHistoryEntry"
+            }
+          }
+        }
+      },
+      "SnapshotState" : {
+        "type" : "string",
+        "enum" : [ "IDLE", "RUNNING", "PAUSED", "COMPLETED", "ABORTED", "SKIPPED", "UNKNOWN" ]
+      },
+      "SnapshotType" : {
+        "type" : "string",
+        "enum" : [ "INITIAL", "BLOCKING", "INCREMENTAL" ]
+      },
       "SourceRequest" : {
         "type" : "object",
         "required" : [ "name", "type", "schema" ],
@@ -846,6 +991,32 @@
             "additionalProperties" : { }
           }
         }
+      },
+      "TableHistoryEntry" : {
+        "type" : "object",
+        "properties" : {
+          "tableName" : {
+            "type" : "string"
+          },
+          "outcome" : {
+            "$ref" : "#/components/schemas/TableState"
+          },
+          "rowsScanned" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "skipReason" : {
+            "type" : "string"
+          },
+          "durationSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "TableState" : {
+        "type" : "string",
+        "enum" : [ "PENDING", "IN_PROGRESS", "COMPLETED", "SKIPPED", "FAILED" ]
       },
       "TimeRange" : {
         "type" : "object",
@@ -2230,6 +2401,166 @@
           },
           "400" : {
             "description" : "Bad Request"
+          }
+        }
+      }
+    },
+    "/api/pipelines/{pipelineId}/snapshots/history" : {
+      "get" : {
+        "summary" : "List completed snapshot runs for a pipeline (paginated)",
+        "tags" : [ "snapshots" ],
+        "parameters" : [ {
+          "name" : "pipelineId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "schema" : {
+            "$ref" : "#/components/schemas/Instant"
+          }
+        }, {
+          "name" : "outcome",
+          "in" : "query",
+          "schema" : {
+            "$ref" : "#/components/schemas/SnapshotState"
+          }
+        }, {
+          "name" : "page",
+          "in" : "query",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 0,
+            "default" : 0
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 1,
+            "default" : 20
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "schema" : {
+            "$ref" : "#/components/schemas/Instant"
+          }
+        }, {
+          "name" : "type",
+          "in" : "query",
+          "schema" : {
+            "$ref" : "#/components/schemas/SnapshotType"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedSnapshotHistoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pipelines/{pipelineId}/snapshots/history/{historyId}" : {
+      "get" : {
+        "summary" : "Return a single snapshot run with its per-table breakdown",
+        "tags" : [ "snapshots" ],
+        "parameters" : [ {
+          "name" : "historyId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "pipelineId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SnapshotHistoryResponse"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Unknown snapshot run for this pipeline"
+          }
+        }
+      }
+    },
+    "/api/pipelines/{pipelineId}/snapshots/progress" : {
+      "get" : {
+        "summary" : "Current snapshot progress for a pipeline (non-streaming)",
+        "tags" : [ "snapshots" ],
+        "parameters" : [ {
+          "name" : "pipelineId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : { }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pipelines/{pipelineId}/snapshots/progress/stream" : {
+      "get" : {
+        "summary" : "Stream live snapshot progress for a pipeline via SSE",
+        "tags" : [ "snapshots" ],
+        "parameters" : [ {
+          "name" : "pipelineId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/event-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OutboundSseEvent"
+                }
+              }
+            }
           }
         }
       }
