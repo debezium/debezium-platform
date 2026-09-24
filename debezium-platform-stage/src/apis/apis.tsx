@@ -387,6 +387,9 @@ export const fetchFile = async (
   }
 };
 
+export type SignalCollectionSetupQueryResponse = {
+  query: string;
+}
 
 export type SignalDataCollectionVerifyResponse = {
   exists: boolean;

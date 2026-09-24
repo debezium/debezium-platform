@@ -5,21 +5,7 @@
  */
 package io.debezium.platform.api;
 
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-
 import java.net.URI;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
@@ -38,6 +24,18 @@ import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
 import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import io.debezium.platform.domain.SourceService;
 import io.debezium.platform.error.NotFoundException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.Context;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
 @Tag(name = "sources")
 @Path("/sources")
@@ -108,7 +106,7 @@ public class SourceResource {
     @Operation(summary = "Returns a database specific DDL query for setting up the signal collection table")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SignalCollectionSetupQueryResponse.class, required = true)))
     @GET
-    @Path("/signals/query")
+    @Path("/signals/query/{connectorType}")
     public Response getSignalCollectionSetupQuery(@NotNull @Valid SignalCollectionSetupQueryRequest request) {
         var signalCollectionSetupQuery = sourceService.buildSignalCollectionSetupQuery(request);
 
