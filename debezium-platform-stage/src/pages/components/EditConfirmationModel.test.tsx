@@ -31,7 +31,7 @@ describe("EditConfirmationModel", () => {
         type="transform"
         {...baseProps}
         handleEdit={handleEdit}
-        usedInCount={2}
+        usedInCount={1}
         onSaveAsCopy={onSaveAsCopy}
       />
     );
@@ -63,5 +63,20 @@ describe("EditConfirmationModel", () => {
     fireEvent.click(screen.getByRole("button", { name: /^continue$/i }));
     expect(handleEdit).toHaveBeenCalled();
     expect(onSaveAsCopy).not.toHaveBeenCalled();
+  });
+
+  it("keeps the restart confirm copy for an unused transform", () => {
+    render(
+      <EditConfirmationModel
+        type="transform"
+        {...baseProps}
+        usedInCount={0}
+        onSaveAsCopy={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/transform update will restart pipeline/i)).toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^confirm$/i })).toBeInTheDocument();
   });
 });

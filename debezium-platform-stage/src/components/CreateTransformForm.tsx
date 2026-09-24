@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import {
   Alert,
+  AlertActionCloseButton,
   Button,
   Card,
   CardBody,
@@ -168,6 +169,7 @@ const CreateTransformForm = React.forwardRef<
     const initialSchemaValuesRef = useRef<Record<string, string>>({});
     const initialPredicateValuesRef = useRef<Record<string, string>>({});
     const lastValidationFailureBodyRef = useRef("");
+    const [isAlertVisible, setIsAlertVisible] = useState<boolean>(true);
 
     const [layoutMode, setLayoutMode] = useState<"jumplinks" | "tabs">(
       defaultLayoutMode
@@ -1544,14 +1546,15 @@ const CreateTransformForm = React.forwardRef<
 
     return (
       <>
-        {isCopy && initialTransform && (
+        {isCopy && initialTransform && isAlertVisible && (
           <Alert
             variant="info"
             isInline
             title={t("transform:form.copiedFrom", {
               name: initialTransform.name,
             })}
-            style={{ marginBottom: "1rem" }}
+             actionClose={<AlertActionCloseButton onClose={() => setIsAlertVisible(false)} />}
+            className="copied-from-alert"
           />
         )}
         <div className="schema-form-layout-toggle">

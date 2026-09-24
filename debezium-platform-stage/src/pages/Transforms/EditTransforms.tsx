@@ -65,10 +65,10 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
     () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
   );
 
-  const { data: pipelineList = [] } = useQuery<Pipeline[], Error>(
-    "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
-  );
+  const { data: pipelineList, isSuccess: isPipelineListLoaded } = useQuery<
+    Pipeline[],
+    Error
+  >("pipelines", () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`));
 
   const existingNames = React.useMemo(() => {
     return Array.isArray(existingTransforms)
@@ -94,9 +94,10 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
     { enabled: !!transformId }
   );
 
-  const usedInCount = transformData
-    ? getActivePipelineCount(pipelineList, transformData.id, "transform")
-    : 0;
+  const usedInCount =
+    transformData && pipelineList
+      ? getActivePipelineCount(pipelineList, transformData.id, "transform")
+      : 0;
 
   const handleSchemaSubmit = async (payload: TransformPayload) => {
     setIsLoading(true);
@@ -182,7 +183,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
       );
       return;
     }
-    if (usedInCount === 0) {
+    if (isPipelineListLoaded && usedInCount === 0) {
       saveIntentRef.current = "update";
       form.submit();
       return;

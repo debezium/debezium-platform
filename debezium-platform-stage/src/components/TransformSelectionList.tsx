@@ -1,5 +1,6 @@
 import {
   Alert,
+  AlertActionCloseButton,
   Bullseye,
   Button,
   Content,
@@ -46,8 +47,6 @@ const FILTER_OPTIONS: { value: FilterField; label: string }[] = [
   { value: "type", label: "Type" },
 ];
 
-const COPY_PRIMARY_USED_IN = 2;
-
 interface ITransformSelectionListProps {
   data: TransformApiResponse;
   onSelection: (selection: TransformData[]) => void;
@@ -69,6 +68,7 @@ const TransformSelectionList: React.FunctionComponent<
   const [debouncedQuery, setDebouncedQuery] = useState<string>("");
   const [filterField, setFilterField] = useState<FilterField>("name");
   const [isSelectOpen, setIsSelectOpen] = useState<boolean>(false);
+  const [isAlertVisible, setIsAlertVisible] = useState<boolean>(true);
 
   const debouncedSetSearchQuery = useMemo(
     () => debounce((value: string) => setDebouncedQuery(value), 300),
@@ -192,12 +192,13 @@ const TransformSelectionList: React.FunctionComponent<
         </ToolbarContent>
       </Toolbar>
 
-      {hasSharedTransform && (
+      {hasSharedTransform && isAlertVisible && (
         <Alert
           isInline
           variant="info"
           title={t("transform:transformModal.sharedHelper")}
-          style={{ marginBottom: "0.75rem" }}
+          actionClose={<AlertActionCloseButton onClose={() => setIsAlertVisible(false)} />}
+          style={{ marginBottom: "0.75rem", marginTop: "0.75rem" }}
         />
       )}
 
@@ -218,12 +219,6 @@ const TransformSelectionList: React.FunctionComponent<
                 sourceType
               );
               const family = getConnectorFamily(instance.type);
-              const usedInCount = getActivePipelineCount(
-                pipelineList,
-                instance.id,
-                "transform"
-              );
-              const copyIsPrimary = usedInCount >= COPY_PRIMARY_USED_IN;
               return (
                 <Tr
                   key={instance.id}
@@ -240,16 +235,7 @@ const TransformSelectionList: React.FunctionComponent<
                 >
                   <Td dataLabel={t("name")}>
                     {compatible ? (
-                      <>
-                        {instance.name}
-                        {usedInCount >= COPY_PRIMARY_USED_IN && (
-                          <Content component={ContentVariants.small}>
-                            {t("transform:transformModal.sharedWithPipelines", {
-                              count: usedInCount,
-                            })}
-                          </Content>
-                        )}
-                      </>
+                      instance.name
                     ) : (
                       <Tooltip
                         content={t(
@@ -276,7 +262,7 @@ const TransformSelectionList: React.FunctionComponent<
                     {compatible && (
                       <Button
                       style={{"marginLeft": "-20px"}}
-                        variant={copyIsPrimary ? "primary" : "secondary"}
+                        variant="secondary"
                         size="sm"
                         onClick={(event) => {
                           event.stopPropagation();

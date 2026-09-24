@@ -199,7 +199,19 @@ describe("nextCopyName", () => {
     ).toBe("unwrap-inventory-copy-3");
   });
 
-  it("still suffixes -copy when the base already ends in -copy", () => {
-    expect(nextCopyName("unwrap-copy", ["unwrap-copy"])).toBe("unwrap-copy-copy");
+  it("strips trailing -copy before generating the next copy name", () => {
+    expect(nextCopyName("unwrap-copy", [])).toBe("unwrap-copy");
+    expect(nextCopyName("unwrap-copy", ["unwrap-copy"])).toBe("unwrap-copy-2");
+    expect(nextCopyName("unwrap-copy", ["unwrap-copy", "unwrap-copy-2"])).toBe(
+      "unwrap-copy-3"
+    );
+  });
+
+  it("strips trailing -copy-N before generating the next copy name", () => {
+    expect(nextCopyName("unwrap-copy-3", [])).toBe("unwrap-copy");
+    expect(nextCopyName("unwrap-copy-3", ["unwrap-copy"])).toBe("unwrap-copy-2");
+    expect(
+      nextCopyName("unwrap-copy-3", ["unwrap-copy", "unwrap-copy-2", "unwrap-copy-3"])
+    ).toBe("unwrap-copy-4");
   });
 });

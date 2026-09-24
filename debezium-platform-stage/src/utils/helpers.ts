@@ -208,14 +208,14 @@ export const buildSignalCollectionSetupQuery = (
 
 /**
  * Suggests a unique name for a duplicated resource: `{base}-copy`, then `-copy-2`, …
- * If `base` already ends in `-copy` or `-copy-N`, still suffix `-copy`.
  */
 export const nextCopyName = (base: string, existingNames: string[]): string => {
   const existing = new Set(existingNames);
-  let candidate = `${base}-copy`;
+  const root = base.replace(/-copy(-\d+)?$/, "");
+  let candidate = `${root}-copy`;
   let n = 2;
   while (existing.has(candidate)) {
-    candidate = `${base}-copy-${n}`;
+    candidate = `${root}-copy-${n}`;
     n += 1;
   }
   return candidate;

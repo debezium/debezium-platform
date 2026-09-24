@@ -70,8 +70,7 @@
         "createDescription": "Create a new transform for your data pipeline.",
         "formDescription": "Fill out the form below to create a transform.",
         "incompatibleWithSource": "Compatible only with {{family}} sources",
-        "sharedHelper": "Transforms already used by other pipelines are shared. Copy one if this pipeline needs its own settings.",
-        "sharedWithPipelines": "Shared with {{count}} pipelines"
+        "sharedHelper": "Transforms already used by other pipelines are shared. Copy one if this pipeline needs its own settings."
     },
     "editConfirmation": {
         "title": "This transform is used by other pipelines",

@@ -81,7 +81,7 @@ describe("TransformSelectionList", () => {
     expect(onSelection).toHaveBeenCalledWith([row]);
   });
 
-  it("invokes onCopy from Copy without attaching the original", () => {
+  it("invokes onCopy from Use copy without attaching the original", () => {
     const row = makeRow({
       id: 1,
       name: "unused-transform",
@@ -89,12 +89,12 @@ describe("TransformSelectionList", () => {
     });
     const { onCopy, onSelection } = renderList([row]);
 
-    fireEvent.click(screen.getByRole("button", { name: /^copy$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^use copy$/i }));
     expect(onCopy).toHaveBeenCalledWith(row);
     expect(onSelection).not.toHaveBeenCalled();
   });
 
-  it("makes Copy the primary action when Used in is 2 or more", () => {
+  it("keeps Use copy secondary even when the transform is shared", () => {
     const row = makeRow({
       id: 6,
       name: "filter-transform",
@@ -111,11 +111,11 @@ describe("TransformSelectionList", () => {
 
     renderList([row]);
 
-    expect(screen.getByRole("button", { name: /^copy$/i })).toHaveClass("pf-m-primary");
-    expect(screen.getByText(/shared with 2 pipelines/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^use copy$/i })).toHaveClass("pf-m-secondary");
+    expect(screen.queryByText(/shared with 2 pipelines/i)).not.toBeInTheDocument();
   });
 
-  it("keeps Copy secondary when the transform is unused", () => {
+  it("keeps Use copy secondary when the transform is unused", () => {
     const row = makeRow({
       id: 99,
       name: "unused-transform",
@@ -123,7 +123,7 @@ describe("TransformSelectionList", () => {
     });
     renderList([row]);
 
-    expect(screen.getByRole("button", { name: /^copy$/i })).toHaveClass("pf-m-secondary");
+    expect(screen.getByRole("button", { name: /^use copy$/i })).toHaveClass("pf-m-secondary");
   });
 
   it("shows a shared-transform helper when any row is used in a pipeline", () => {
@@ -254,7 +254,7 @@ describe("TransformSelectionList", () => {
     fireEvent.click(rowsEls[3]); // generic — always compatible
     expect(onSelection).toHaveBeenCalledWith([rows[2]]);
 
-    fireEvent.click(screen.getAllByRole("button", { name: /^copy$/i })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: /^use copy$/i })[0]);
     expect(onCopy).toHaveBeenCalledWith(rows[0]);
     expect(onCopy).toHaveBeenCalledTimes(1);
   });
