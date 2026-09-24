@@ -11,8 +11,8 @@ import {
   Skeleton,
 } from "@patternfly/react-core";
 import { PencilAltIcon, RhUiDataProcessorIcon } from "@patternfly/react-icons";
-import { useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   createPost,
   editPut,
@@ -34,6 +34,7 @@ import CreateTransformForm, {
 import TransformReviewView from "@components/TransformReviewView";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import { getActivePipelineCount } from "@components/UsedIn";
+import { resolveTransformPageViewMode, transformPageNavState } from "./transformPageNavigation";
 
 export interface IEditTransformsProps {
   onSelection?: (selection: TransformData) => void;
@@ -43,10 +44,13 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   onSelection,
 }) => {
   const { transformId } = useParams<{ transformId: string }>();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const initialState = searchParams.get("state") as "view" | "edit" | null;
-  const [viewMode, setViewMode] = useState<boolean>(initialState === "view");
+  const queryStateParam = searchParams.get("state");
+  const [viewMode, setViewMode] = useState<boolean>(() =>
+    resolveTransformPageViewMode(location.state, queryStateParam)
+  );
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [pendingSave, setPendingSave] = useState<{
     values: Record<string, string>;
@@ -59,6 +63,13 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   const { addNotification } = useNotification();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setViewMode(
+      resolveTransformPageViewMode(location.state, searchParams.get("state"))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transformId, location.key]);
 
   const { data: existingTransforms = [] } = useQuery<TransformData[], Error>(
     "transforms",
@@ -125,7 +136,10 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
         );
         await queryClient.invalidateQueries("transforms");
         if (created?.id) {
-          navigate(`/transform/${created.id}?state=view`);
+          setViewMode(true);
+          navigate(`/transform/${created.id}?state=view`, {
+            state: transformPageNavState.view,
+          });
         }
       }
       setIsLoading(false);

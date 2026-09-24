@@ -35,6 +35,7 @@ import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useTranslation } from "react-i18next";
 import UsedIn, { getActivePipelineCount } from "./UsedIn";
 import { debounce } from "lodash";
+import "./TransformSelectionList.css";
 import {
   getConnectorFamily,
   isTransformCompatibleWithSource,
@@ -151,7 +152,7 @@ const TransformSelectionList: React.FunctionComponent<
                     icon={<FilterIcon />}
                     onClick={() => setIsSelectOpen((prev) => !prev)}
                     isExpanded={isSelectOpen}
-                    style={{ width: "120px" } as React.CSSProperties}
+                    className="transform-selection-filter-toggle"
                   >
                     {selectedLabel}
                   </MenuToggle>
@@ -198,7 +199,7 @@ const TransformSelectionList: React.FunctionComponent<
           variant="info"
           title={t("transform:transformModal.sharedHelper")}
           actionClose={<AlertActionCloseButton onClose={() => setIsAlertVisible(false)} />}
-          style={{ marginBottom: "0.75rem", marginTop: "0.75rem" }}
+          className="transform-selection-shared-alert"
         />
       )}
 
@@ -247,7 +248,7 @@ const TransformSelectionList: React.FunctionComponent<
                       </Tooltip>
                     )}
                   </Td>
-                  <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
+                  <Td dataLabel={t("type")} className="transform-selection-type-cell">
                     {instance.type}
                   </Td>
                   <Td dataLabel={t("usedIn")}>
@@ -261,7 +262,6 @@ const TransformSelectionList: React.FunctionComponent<
                   <Td dataLabel={t("actions")} modifier="fitContent">
                     {compatible && (
                       <Button
-                      style={{"marginLeft": "-20px"}}
                         variant="secondary"
                         size="sm"
                         onClick={(event) => {
@@ -269,7 +269,7 @@ const TransformSelectionList: React.FunctionComponent<
                           onCopy(instance);
                         }}
                       >
-                        Use copy
+                        {t("transform:transformModal.useCopy")}
                       </Button>
                     )}
                   </Td>

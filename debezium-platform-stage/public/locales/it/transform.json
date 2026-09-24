@@ -69,7 +69,8 @@
     "createDescription": "Crea una nuova trasformazione per la tua pipeline di dati.",
     "formDescription": "Compila il modulo sottostante per creare una trasformazione.",
     "incompatibleWithSource": "Compatibile solo con sorgenti {{family}}",
-    "sharedHelper": "Le trasformazioni già usate da altre pipeline sono condivise. Copiane una se questa pipeline necessita di impostazioni proprie."
+    "sharedHelper": "Le trasformazioni già usate da altre pipeline sono condivise. Copiane una se questa pipeline necessita di impostazioni proprie.",
+    "useCopy": "Usa copia"
   },
   "editConfirmation": {
     "title": "Questa trasformazione è usata da altre pipeline",
