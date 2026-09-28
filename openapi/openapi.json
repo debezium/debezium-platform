@@ -733,6 +733,27 @@
           }
         }
       },
+      "SignalCollectionSetupQueryRequest" : {
+        "type" : "object",
+        "required" : [ "connectorType" ],
+        "properties" : {
+          "connectorType" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "fullyQualifiedCollectionName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SignalCollectionSetupQueryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "setupQuery" : {
+            "type" : "string"
+          }
+        }
+      },
       "SignalCollectionVerifyRequest" : {
         "type" : "object",
         "required" : [ "connectionId", "fullyQualifiedTableName" ],
@@ -2284,6 +2305,37 @@
         }
       }
     },
+    "/api/sources/signals/query" : {
+      "post" : {
+        "summary" : "Returns a database specific DDL query for setting up the signal collection table",
+        "tags" : [ "sources" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignalCollectionSetupQueryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignalCollectionSetupQueryResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        }
+      }
+    },
     "/api/sources/signals/verify" : {
       "post" : {
         "summary" : "Verify that signal data collection is configured correctly",
@@ -2684,10 +2736,10 @@
     }
   },
   "servers" : [ {
-    "url" : "http://localhost:8080",
+    "url" : "http://localhost:8081",
     "description" : "Auto generated value"
   }, {
-    "url" : "http://0.0.0.0:8080",
+    "url" : "http://0.0.0.0:8081",
     "description" : "Auto generated value"
   } ]
 }
