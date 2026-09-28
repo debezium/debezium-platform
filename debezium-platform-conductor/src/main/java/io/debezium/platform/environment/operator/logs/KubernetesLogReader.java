@@ -44,11 +44,15 @@ public class KubernetesLogReader implements LogReader {
 
     @Override
     public void close() throws IOException {
-        if (reader != null) {
-            reader.close();
+        try {
+            if (reader != null) {
+                reader.close();
+            }
         }
-        if (watch != null) {
-            watch.close();
+        finally {
+            if (watch != null) {
+                watch.close();
+            }
         }
     }
 
