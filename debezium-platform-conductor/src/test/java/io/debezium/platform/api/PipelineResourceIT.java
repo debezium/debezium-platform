@@ -196,11 +196,13 @@ class PipelineResourceIT {
                    }
                  }""".formatted(sourceId, resourceSuffix, destinationId, resourceSuffix, transformId);
 
-        given()
+        Number pipelineId = given()
                 .header("Content-Type", "application/json")
                 .body(jsonBody).when().post("api/pipelines")
                 .then()
-                .statusCode(201);
+                .statusCode(201)
+                .extract()
+                .path("id");
 
         Awaitility.await()
                 .atMost(Duration.of(120, ChronoUnit.SECONDS))
@@ -239,7 +241,12 @@ class PipelineResourceIT {
                 .containsEntry("debezium.source.database.password", "debezium")
                 .containsEntry("debezium.source.database.port", dbHelper.getPort())
                 .containsEntry("debezium.source.database.user", "debezium")
-                .containsEntry("debezium.source.notification.enabled.channels", "log")
+                .containsEntry("debezium.source.notification.enabled.channels", "log,http")
+                .containsEntry("debezium.source.notification.http.url",
+                        "http://conductor:8080/api/internal/pipelines/" + pipelineId.longValue() + "/notifications")
+                .containsEntry("debezium.source.notification.http.timeout.ms", "5000")
+                .containsEntry("debezium.source.notification.http.retries", "2")
+                .containsEntry("debezium.source.notification.http.allow.private.networks", "true")
                 .containsEntry("debezium.source.offset.flush.interval.ms", "60000")
                 .containsEntry("debezium.source.offset.storage", "io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore")
                 .containsEntry("debezium.source.offset.storage.jdbc.offset.table.name", "test_pipeline_offset")

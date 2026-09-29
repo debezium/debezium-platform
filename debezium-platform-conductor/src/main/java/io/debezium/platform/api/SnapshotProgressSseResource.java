@@ -22,6 +22,7 @@ import io.debezium.platform.api.dto.SnapshotProgressResponse;
 import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.snapshot.SnapshotProgressAggregator;
 import io.debezium.platform.error.NotFoundException;
+import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
@@ -61,23 +62,25 @@ public class SnapshotProgressSseResource {
     @GET
     @Path("/progress/stream")
     @Produces(MediaType.SERVER_SENT_EVENTS)
+    @Blocking
     @Operation(summary = "Stream live snapshot progress for a pipeline via SSE")
     public Multi<OutboundSseEvent> stream(@PathParam("pipelineId") Long pipelineId, @Context Sse sse) {
+        // The pipeline-existence check must happen here, synchronously, and not inside the returned
+        // Multi: RESTEasy commits the SSE response (200, chunked) as soon as this method returns, so a
+        // failure raised at subscription time can no longer set a status code and merely truncates the
+        // stream. Throwing before returning lets the exception mapper produce a real 404. The check hits
+        // the database, hence @Blocking: it moves this method off the reactive event loop, where starting
+        // a JTA transaction is forbidden.
+        if (pipelineService.findById(pipelineId).isEmpty()) {
+            throw new NotFoundException(pipelineId);
+        }
         // Read the initial state lazily, at subscription time, so the window between reading it and the
         // broadcaster becoming subscribed (during which a broadcast would otherwise be dropped) is kept
         // as small as possible. Every event is a full-state snapshot, so a later update simply supersedes.
-        // currentState() is @Transactional (it hits the database), so it must run on a worker thread: this
-        // Multi is subscribed on the reactive event loop, where starting a JTA transaction is forbidden.
-        // The pipeline-existence check is @Transactional too, so it shares that worker-thread hop and fails
-        // the stream with a 404 (via NotFoundException) before any SSE event is emitted when the pipeline
-        // does not exist.
+        // currentState() is @Transactional too, and subscription happens on the event loop, so the read is
+        // explicitly moved to a worker thread.
         Multi<SnapshotProgressResponse> initial = Uni.createFrom()
-                .item(() -> {
-                    if (pipelineService.findById(pipelineId).isEmpty()) {
-                        throw new NotFoundException(pipelineId);
-                    }
-                    return aggregator.currentState(pipelineId);
-                })
+                .item(() -> aggregator.currentState(pipelineId))
                 .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
                 .toMulti();
         return Multi.createBy().concatenating().streams(
