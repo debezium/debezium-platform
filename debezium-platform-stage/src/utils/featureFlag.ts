@@ -13,6 +13,7 @@ export const featureConfig = {
   PipelineMonitoring: { enabled: true, mode: "hidden" },
   PipelineAction: { enabled: true, mode: "hidden" },
   PipelineLogs: { enabled: true, mode: "hidden" },
+  PipelineSnapshots: { enabled: true, mode: "hidden" },
 } as const satisfies Record<string, FeatureFlagConfig>;
 
 export type FeatureFlag = keyof typeof featureConfig;
@@ -29,6 +30,7 @@ export const featureFlagUi = {
 export const featureFlags = Object.keys(featureConfig) as FeatureFlag[];
 
 export const PIPELINE_TAB_FEATURE_FLAGS = {
+  snapshots: "PipelineSnapshots",
   action: "PipelineAction",
   logs: "PipelineLogs",
   monitoring: "PipelineMonitoring",
@@ -38,6 +40,7 @@ export type GatedPipelineTab = keyof typeof PIPELINE_TAB_FEATURE_FLAGS;
 
 const PIPELINE_TAB_ORDER = [
   "overview",
+  "snapshots",
   "action",
   "monitoring",
   "logs",

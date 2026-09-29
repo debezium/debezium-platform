@@ -35,6 +35,12 @@ import { PipelineDesignerEdit } from "./PipelineDesignerEdit";
 import { useTranslation } from 'react-i18next';
 import PipelineAction from "./PipelineAction";
 import PipelineMonitoring from "./PipelineMonitoring";
+import PipelineSnapshots from "./PipelineSnapshots";
+import { isSnapshotActive } from "./snapshotModel";
+import {
+  SnapshotProgressProvider,
+  useSnapshotProgressState,
+} from "./useSnapshotProgress";
 import {
   getEnabledPipelineTabs,
   isPipelineTabEnabled,
@@ -63,6 +69,7 @@ const PipelineDetails: React.FunctionComponent = () => {
   const { addNotification } = useNotification();
 
   const validTabs = React.useMemo(() => getEnabledPipelineTabs(), []);
+  const snapshotsEnabled = isPipelineTabEnabled("snapshots");
 
   const [activeTabKey, setActiveTabKey] = React.useState(() => {
     const initialTab = detailsTab || "overview";
@@ -224,6 +231,10 @@ const PipelineDetails: React.FunctionComponent = () => {
     () => <TabTitleText>{t("pipeline:tabs.overview")}</TabTitleText>,
     [t]
   );
+  const snapshotsTabTitle = React.useMemo(
+    () => <SnapshotsTabTitle />,
+    []
+  );
   const actionTabTitle = React.useMemo(
     () => <TabTitleText>{t("pipeline:tabs.action")}</TabTitleText>,
     [t]
@@ -271,6 +282,7 @@ const PipelineDetails: React.FunctionComponent = () => {
   const statusConfig = pipeline?.status ? PIPELINE_STATUS_CONFIG[pipeline.status] : null;
 
   return (
+    <SnapshotProgressProvider pipelineId={snapshotsEnabled ? pipelineId : undefined}>
     <>
       <PageHeader
         title={pipeline?.name}
@@ -329,6 +341,13 @@ const PipelineDetails: React.FunctionComponent = () => {
             title={overviewTabTitle}
             tabContentId={`tabContent${"overview"}`}
           />
+          {isPipelineTabEnabled("snapshots") && (
+            <Tab
+              eventKey={"snapshots"}
+              title={snapshotsTabTitle}
+              tabContentId={`tabContent${"snapshots"}`}
+            />
+          )}
           {isPipelineTabEnabled("action") && (
             <Tab
               eventKey={"action"}
@@ -378,6 +397,22 @@ const PipelineDetails: React.FunctionComponent = () => {
             )}
           </TabContentBody>
         </TabContent>
+        {isPipelineTabEnabled("snapshots") && (
+          <TabContent
+            key={"snapshots"}
+            eventKey={"snapshots"}
+            id={`tabContent${"snapshots"}`}
+            activeKey={activeTabKey}
+            hidden={"snapshots" !== activeTabKey}
+          >
+            <TabContentBody>
+              <PipelineSnapshots
+                pipelineId={pipelineId || ""}
+                activeTabKey={activeTabKey}
+              />
+            </TabContentBody>
+          </TabContent>
+        )}
         {isPipelineTabEnabled("logs") && (
           <TabContent
             key={"logs"}
@@ -446,6 +481,31 @@ const PipelineDetails: React.FunctionComponent = () => {
         )}
       </PageSection>
     </>
+    </SnapshotProgressProvider>
+  );
+};
+
+const SnapshotsTabTitle: React.FC = () => {
+  const { t } = useTranslation();
+  const { progress } = useSnapshotProgressState();
+  const snapshotStatus = progress?.status;
+
+  return (
+    <TabTitleText>
+      <span className="snapshot-tab-title">
+        {t("pipeline:tabs.snapshots")}
+        {isSnapshotActive(snapshotStatus) && (
+          <Label
+            isCompact
+            color={snapshotStatus === "PAUSED" ? LabelColor.orange : LabelColor.blue}
+          >
+            {snapshotStatus === "PAUSED"
+              ? t("pipeline:snapshots.paused")
+              : t("pipeline:snapshots.running")}
+          </Label>
+        )}
+      </span>
+    </TabTitleText>
   );
 };
 

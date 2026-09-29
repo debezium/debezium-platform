@@ -36,6 +36,13 @@ test("render pipeline overview breadcrumb", () => {
   expect(screen.queryByText("Create pipeline")).not.toBeInTheDocument();
 });
 
+test("render pipeline snapshots breadcrumb when tab is enabled", () => {
+  render(<AppBreadcrumb />, { initialEntries: ["/pipeline/123/snapshots"] });
+
+  expect(screen.getByText("Pipeline")).toBeInTheDocument();
+  expect(screen.getByText("Snapshots")).toBeInTheDocument();
+});
+
 test("render pipeline monitoring breadcrumb when tab is enabled", () => {
   vi.mocked(getPipelineDetailsRoutePattern).mockReturnValue(
     /^\/pipeline\/[^/]+\/(overview|logs|edit|action|monitoring)$/

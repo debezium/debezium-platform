@@ -145,6 +145,7 @@
     "pipelineDesigner": "Designer della pipeline",
     "createResource": "Crea {{val}}",
     "overview": "Panoramica",
+    "snapshots": "Snapshot",
     "action": "Azione",
     "monitoring": "Monitoraggio",
     "editResource": "Modifica {{val}}",
