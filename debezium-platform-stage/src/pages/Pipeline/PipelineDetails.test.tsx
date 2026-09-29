@@ -47,6 +47,21 @@ vi.mock("./PipelineMonitoring", () => ({
   default: () => <div>Monitoring content</div>,
 }));
 
+vi.mock("./PipelineSnapshots", () => ({
+  default: () => <div>Snapshots content</div>,
+}));
+
+vi.mock("./snapshotClient", () => ({
+  getSnapshotProgress: vi.fn(() =>
+    Promise.resolve({
+      data: { type: null, status: "IDLE", globalProgress: null, tables: [] },
+    })
+  ),
+  subscribeSnapshotProgress: vi.fn(() => () => undefined),
+  getSnapshotHistory: vi.fn(),
+  getSnapshotHistoryDetail: vi.fn(),
+}));
+
 vi.mock("../../apis/apis", () => ({
   fetchDataTypeTwo: vi.fn().mockResolvedValue({
     data: mockPipeline,

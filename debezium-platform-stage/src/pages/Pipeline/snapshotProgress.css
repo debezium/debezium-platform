@@ -1,0 +1,45 @@
+.snapshot-progress__bar {
+  flex: 1 1 auto;
+  min-width: 8rem;
+}
+
+.snapshot-progress__table-bar {
+  min-width: 8rem;
+}
+
+.snapshot-progress__indeterminate {
+  position: relative;
+  height: 0.5rem;
+  background-color: var(--pf-t--global--background--color--secondary--default, #d2d2d2);
+  border-radius: var(--pf-t--global--border--radius--small, 3px);
+  overflow: hidden;
+}
+
+.snapshot-progress__indeterminate-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 35%;
+  background-color: var(--pf-t--global--color--brand--default, #0066cc);
+  animation: snapshot-progress-indeterminate 1.4s ease-in-out infinite;
+}
+
+.snapshot-progress__indeterminate--paused .snapshot-progress__indeterminate-bar {
+  animation: none;
+  width: 100%;
+  opacity: 0.35;
+}
+
+.snapshot-progress__summary {
+  margin-top: var(--pf-t--global--spacer--sm, 0.5rem);
+  margin-bottom: 0;
+}
+
+@keyframes snapshot-progress-indeterminate {
+  0% {
+    left: -35%;
+  }
+  100% {
+    left: 100%;
+  }
+}
