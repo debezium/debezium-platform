@@ -10,3 +10,11 @@
 .transform-selection-type-cell {
   padding-left: 0;
 }
+
+.transform-selection-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--pf-t--global--spacer--sm);
+}

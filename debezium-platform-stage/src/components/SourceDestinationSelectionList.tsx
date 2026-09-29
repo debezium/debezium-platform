@@ -19,6 +19,7 @@ import {
   ToolbarContent,
   ToolbarGroup,
   ToolbarItem,
+  Tooltip,
 } from "@patternfly/react-core";
 import {
   FilterIcon,
@@ -193,17 +194,13 @@ const SourceDestinationSelectionList: React.FunctionComponent<
             <Th key={0}>{t("name")}</Th>
             <Th key={1}>{t("type")}</Th>
             <Th key={2}>{t("active")}</Th>
+            <Th key={3}></Th>
           </Tr>
         </Thead>
         <Tbody>
           {filteredData.length > 0 ? (
             filteredData.map((instance) => (
-              <Tr
-                key={instance.id}
-                onRowClick={() => onSelection(instance)}
-                isSelectable
-                isClickable
-              >
+              <Tr key={instance.id}>
                 <Td dataLabel={t("name")}>{instance.name}</Td>
                 <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
                   <Flex alignItems={{ default: "alignItemsCenter" }}>
@@ -224,11 +221,26 @@ const SourceDestinationSelectionList: React.FunctionComponent<
                     instance={instance}
                   />
                 </Td>
+                <Td dataLabel={t("actions")} modifier="fitContent">
+                  <Tooltip
+                    content={t("selectResourceTooltip", {
+                      resource: t(`${tableType}:${tableType}`),
+                    })}
+                  >
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => onSelection(instance)}
+                    >
+                      {t("select")}
+                    </Button>
+                  </Tooltip>
+                </Td>
               </Tr>
             ))
           ) : (
             <Tr>
-              <Td colSpan={3}>
+              <Td colSpan={4}>
                 <Bullseye>
                   <EmptyState
                     headingLevel="h2"

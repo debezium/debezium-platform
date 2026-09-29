@@ -18,6 +18,8 @@
   "continue": "Continue",
   "copied": "Copied",
   "copy": "Copy",
+  "select": "Select",
+  "selectResourceTooltip": "Add this {{resource}} to the pipeline. Other pipelines share it.",
   "create": "Create",
   "duplicate": "Duplicate",
   "dark": "Dark",

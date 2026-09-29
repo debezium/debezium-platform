@@ -223,11 +223,6 @@ const TransformSelectionList: React.FunctionComponent<
               return (
                 <Tr
                   key={instance.id}
-                  onRowClick={
-                    compatible ? () => onSelection([instance]) : undefined
-                  }
-                  isSelectable={compatible}
-                  isClickable={compatible}
                   style={
                     compatible
                       ? undefined
@@ -261,16 +256,30 @@ const TransformSelectionList: React.FunctionComponent<
                   </Td>
                   <Td dataLabel={t("actions")} modifier="fitContent">
                     {compatible && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onCopy(instance);
-                        }}
-                      >
-                        {t("transform:transformModal.useCopy")}
-                      </Button>
+                      <div className="transform-selection-actions">
+                        <Tooltip
+                          content={t("transform:transformModal.selectTooltip")}
+                        >
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => onSelection([instance])}
+                          >
+                            {t("select")}
+                          </Button>
+                        </Tooltip>
+                        <Tooltip
+                          content={t("transform:transformModal.copyTooltip")}
+                        >
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => onCopy(instance)}
+                          >
+                            {t("copy")}
+                          </Button>
+                        </Tooltip>
+                      </div>
                     )}
                   </Td>
                 </Tr>

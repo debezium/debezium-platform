@@ -211,7 +211,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
       },
     },
     {
-      title: t("duplicate"),
+      title: t("copy"),
       onClick: () => {
         navigate(`/transform/create_transform?from=${actionData.id}`);
       },

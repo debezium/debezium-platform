@@ -66,7 +66,7 @@ describe("TransformSelectionList", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders table rows and invokes onSelection on row click", () => {
+  it("renders table rows and selects a transform from the Select button", () => {
     const row = makeRow({
       id: 6,
       name: "filter-transform",
@@ -76,12 +76,24 @@ describe("TransformSelectionList", () => {
     const { onSelection } = renderList([row]);
 
     expect(screen.getByRole("cell", { name: "filter-transform" })).toBeInTheDocument();
-    const [, dataRow] = screen.getAllByRole("row");
-    fireEvent.click(dataRow);
+    fireEvent.click(screen.getByRole("button", { name: /^select$/i }));
     expect(onSelection).toHaveBeenCalledWith([row]);
   });
 
-  it("invokes onCopy from Use copy without attaching the original", () => {
+  it("does not select a transform when the row is clicked", () => {
+    const row = makeRow({
+      id: 6,
+      name: "filter-transform",
+      type: "io.debezium.transforms.Filter",
+    });
+    const { onSelection } = renderList([row]);
+
+    const [, dataRow] = screen.getAllByRole("row");
+    fireEvent.click(dataRow);
+    expect(onSelection).not.toHaveBeenCalled();
+  });
+
+  it("invokes onCopy from Copy without attaching the original", () => {
     const row = makeRow({
       id: 1,
       name: "unused-transform",
@@ -89,12 +101,12 @@ describe("TransformSelectionList", () => {
     });
     const { onCopy, onSelection } = renderList([row]);
 
-    fireEvent.click(screen.getByRole("button", { name: /^use copy$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^copy$/i }));
     expect(onCopy).toHaveBeenCalledWith(row);
     expect(onSelection).not.toHaveBeenCalled();
   });
 
-  it("keeps Use copy secondary even when the transform is shared", () => {
+  it("keeps Copy secondary even when the transform is shared", () => {
     const row = makeRow({
       id: 6,
       name: "filter-transform",
@@ -111,11 +123,12 @@ describe("TransformSelectionList", () => {
 
     renderList([row]);
 
-    expect(screen.getByRole("button", { name: /^use copy$/i })).toHaveClass("pf-m-secondary");
+    expect(screen.getByRole("button", { name: /^copy$/i })).toHaveClass("pf-m-secondary");
+    expect(screen.getByRole("button", { name: /^select$/i })).toHaveClass("pf-m-primary");
     expect(screen.queryByText(/shared with 2 pipelines/i)).not.toBeInTheDocument();
   });
 
-  it("keeps Use copy secondary when the transform is unused", () => {
+  it("keeps Copy secondary when the transform is unused", () => {
     const row = makeRow({
       id: 99,
       name: "unused-transform",
@@ -123,7 +136,7 @@ describe("TransformSelectionList", () => {
     });
     renderList([row]);
 
-    expect(screen.getByRole("button", { name: /^use copy$/i })).toHaveClass("pf-m-secondary");
+    expect(screen.getByRole("button", { name: /^copy$/i })).toHaveClass("pf-m-secondary");
   });
 
   it("shows a shared-transform helper when any row is used in a pipeline", () => {
@@ -248,14 +261,38 @@ describe("TransformSelectionList", () => {
     fireEvent.click(rowsEls[2]); // mongo — incompatible
     expect(onSelection).not.toHaveBeenCalled();
 
-    fireEvent.click(rowsEls[1]); // postgres — compatible
+    const selectButtons = screen.getAllByRole("button", { name: /^select$/i });
+    fireEvent.click(selectButtons[0]); // postgres — compatible
     expect(onSelection).toHaveBeenCalledWith([rows[0]]);
 
-    fireEvent.click(rowsEls[3]); // generic — always compatible
+    fireEvent.click(selectButtons[1]); // generic — always compatible
     expect(onSelection).toHaveBeenCalledWith([rows[2]]);
 
-    fireEvent.click(screen.getAllByRole("button", { name: /^use copy$/i })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: /^copy$/i })[0]);
     expect(onCopy).toHaveBeenCalledWith(rows[0]);
     expect(onCopy).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains Select and Copy in tooltips", async () => {
+    const row = makeRow({
+      id: 1,
+      name: "unused-transform",
+      type: "io.debezium.transforms.Filter",
+    });
+    renderList([row]);
+
+    await userEvent.hover(screen.getByRole("button", { name: /^select$/i }));
+    expect(
+      await screen.findByText(
+        /add this transform to the pipeline\. other pipelines share it/i,
+      ),
+    ).toBeInTheDocument();
+
+    await userEvent.hover(screen.getByRole("button", { name: /^copy$/i }));
+    expect(
+      await screen.findByText(
+        /create a new transform from this one\. other pipelines keep the original/i,
+      ),
+    ).toBeInTheDocument();
   });
 });

@@ -33,13 +33,14 @@ describe('Pipeline Management', () => {
   const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   /**
-   * Clicks the row whose name cell text is *exactly* `name` — avoids Cypress
-   * `.contains()` substring matches (e.g. "source" matching "source-alt") which
-   * previously caused the wrong row to be selected.
+   * Clicks Select on the row whose name cell text is *exactly* `name`.
+   * Avoids Cypress `.contains()` substring matches (e.g. "source" matching "source-alt").
    */
   const selectRowByExactName = (tableSelector: string, name: string) => {
     cy.get(tableSelector, { timeout: 30000 })
       .contains('td', new RegExp(`^${escapeRegExp(name)}$`))
+      .parents('tr')
+      .contains('button', /^Select$/)
       .click();
   };
 

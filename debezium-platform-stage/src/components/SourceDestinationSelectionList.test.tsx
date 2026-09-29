@@ -78,7 +78,7 @@ describe("SourceDestinationSelectionList", () => {
 
   // ── Row render & selection ─────────────────────────────────────────────────
 
-  it("renders source rows and calls onSelection on click", () => {
+  it("renders source rows and calls onSelection from Select", () => {
     const onSelection = vi.fn();
     const row = makeSource({
       id: 1,
@@ -95,12 +95,32 @@ describe("SourceDestinationSelectionList", () => {
     );
 
     expect(screen.getByRole("cell", { name: "mongo-source" })).toBeInTheDocument();
-    const [, dataRow] = screen.getAllByRole("row");
-    fireEvent.click(dataRow);
+    fireEvent.click(screen.getByRole("button", { name: /^select$/i }));
     expect(onSelection).toHaveBeenCalledWith(row);
   });
 
-  it("renders destination rows and calls onSelection on click", () => {
+  it("does not select a source when the row is clicked", () => {
+    const onSelection = vi.fn();
+    const row = makeSource({
+      id: 1,
+      name: "mongo-source",
+      type: "io.debezium.connector.mongodb.MongoDbConnector",
+    });
+
+    render(
+      <SourceDestinationSelectionList
+        tableType="source"
+        data={[row]}
+        onSelection={onSelection}
+      />
+    );
+
+    const [, dataRow] = screen.getAllByRole("row");
+    fireEvent.click(dataRow);
+    expect(onSelection).not.toHaveBeenCalled();
+  });
+
+  it("renders destination rows and calls onSelection from Select", () => {
     const onSelection = vi.fn();
     const row = makeDestination({
       id: 2,
@@ -117,8 +137,7 @@ describe("SourceDestinationSelectionList", () => {
     );
 
     expect(screen.getByRole("cell", { name: "kafka-sink" })).toBeInTheDocument();
-    const [, dataRow] = screen.getAllByRole("row");
-    fireEvent.click(dataRow);
+    fireEvent.click(screen.getByRole("button", { name: /^select$/i }));
     expect(onSelection).toHaveBeenCalledWith(row);
   });
 
