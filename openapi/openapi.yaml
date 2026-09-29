@@ -1932,7 +1932,7 @@ paths:
         "204": {}
 info:
   title: Debezium Platform API
-  version: 3.7.0-SNAPSHOT
+  version: 3.7.0.Final
   description: REST API for the Debezium Platform
   contact:
     name: Debezium
