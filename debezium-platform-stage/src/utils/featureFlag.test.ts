@@ -124,6 +124,9 @@ describe("featureFlag", () => {
       isPipelineTabEnabled("monitoring")
     );
     expect(pattern.test("/pipeline/1/logs")).toBe(isPipelineTabEnabled("logs"));
+    expect(pattern.test("/pipeline/1/snapshots")).toBe(
+      isPipelineTabEnabled("snapshots")
+    );
     expect(pattern.test("/pipeline/1/action")).toBe(isPipelineTabEnabled("action"));
     expect(pattern.test("/pipeline/1/unknown")).toBe(false);
   });

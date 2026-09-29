@@ -18,6 +18,7 @@ export type { FeatureFlag };
 
 export const PIPELINE_TAB_LABELS = {
   overview: "Overview",
+  snapshots: "Snapshots",
   action: "Actions",
   monitoring: "Monitoring",
   logs: "Logs",

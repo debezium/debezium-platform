@@ -106,6 +106,7 @@ export const getBreadcrumbTrail = (route: string): BreadcrumbTrailItem[] => {
       const detailsTab = route.split("/").pop() || "overview";
       const tabLabels: Record<string, string> = {
         overview: i18next.t("breadcrumb.overview"),
+        snapshots: i18next.t("breadcrumb.snapshots"),
         logs: i18next.t("breadcrumb.log"),
         edit:  i18next.t("breadcrumb.editResource", { val : "pipeline"}),
         action: i18next.t("breadcrumb.action"),
