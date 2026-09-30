@@ -5,17 +5,18 @@
  */
 package io.debezium.platform.environment.operator.logs;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Proxy;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
+import io.debezium.doc.FixFor;
 import io.fabric8.kubernetes.client.dsl.LogWatch;
 import io.fabric8.kubernetes.client.dsl.PrettyLoggable;
 import io.fabric8.kubernetes.client.dsl.TailPrettyLoggable;
@@ -23,54 +24,16 @@ import io.fabric8.kubernetes.client.dsl.TailPrettyLoggable;
 class KubernetesLogReaderTest {
 
     @Test
+    @FixFor("debezium/dbz#2722")
     void shouldCloseWatchWhenReaderCloseFails() throws IOException {
-        AtomicBoolean watchClosed = new AtomicBoolean();
-        InputStream output = new InputStream() {
-            @Override
-            public int read() {
-                return -1;
-            }
-
-            @Override
-            public void close() throws IOException {
-                throw new IOException("reader close failed");
-            }
-        };
-        LogWatch watch = (LogWatch) Proxy.newProxyInstance(
-                LogWatch.class.getClassLoader(),
-                new Class<?>[]{ LogWatch.class },
-                (proxy, method, args) -> {
-                    return switch (method.getName()) {
-                        case "getOutput" -> output;
-                        case "onClose" -> CompletableFuture.completedFuture(null);
-                        case "close" -> {
-                            watchClosed.set(true);
-                            yield null;
-                        }
-                        case "toString" -> "test-watch";
-                        default -> throw new UnsupportedOperationException(method.getName());
-                    };
-                });
-        PrettyLoggable tailedLog = (PrettyLoggable) Proxy.newProxyInstance(
-                PrettyLoggable.class.getClassLoader(),
-                new Class<?>[]{ PrettyLoggable.class },
-                (proxy, method, args) -> {
-                    return switch (method.getName()) {
-                        case "watchLog" -> watch;
-                        case "toString" -> "test-loggable";
-                        default -> throw new UnsupportedOperationException(method.getName());
-                    };
-                });
-        TailPrettyLoggable loggable = (TailPrettyLoggable) Proxy.newProxyInstance(
-                TailPrettyLoggable.class.getClassLoader(),
-                new Class<?>[]{ TailPrettyLoggable.class },
-                (proxy, method, args) -> {
-                    return switch (method.getName()) {
-                        case "tailingLines" -> tailedLog;
-                        case "toString" -> "test-tail-loggable";
-                        default -> throw new UnsupportedOperationException(method.getName());
-                    };
-                });
+        InputStream output = mock(InputStream.class);
+        doThrow(new IOException("reader close failed")).when(output).close();
+        LogWatch watch = mock(LogWatch.class);
+        when(watch.getOutput()).thenReturn(output);
+        PrettyLoggable tailedLog = mock(PrettyLoggable.class);
+        when(tailedLog.watchLog()).thenReturn(watch);
+        TailPrettyLoggable loggable = mock(TailPrettyLoggable.class);
+        when(loggable.tailingLines(KubernetesLogReader.STREAM_TAIL_LINES)).thenReturn(tailedLog);
 
         KubernetesLogReader reader = new KubernetesLogReader(() -> loggable);
         reader.reader();
@@ -78,6 +41,6 @@ class KubernetesLogReaderTest {
         assertThatThrownBy(reader::close)
                 .isInstanceOf(IOException.class)
                 .hasMessage("reader close failed");
-        assertThat(watchClosed).isTrue();
+        verify(watch).close();
     }
 }
