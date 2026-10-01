@@ -1,4 +1,6 @@
 import {
+  Alert,
+  AlertActionCloseButton,
   Bullseye,
   Button,
   Content,
@@ -31,8 +33,9 @@ import {
 import { API_URL } from "../utils/constants";
 import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useTranslation } from "react-i18next";
-import UsedIn from "./UsedIn";
+import UsedIn, { getActivePipelineCount } from "./UsedIn";
 import { debounce } from "lodash";
+import "./TransformSelectionList.css";
 import {
   getConnectorFamily,
   isTransformCompatibleWithSource,
@@ -48,12 +51,13 @@ const FILTER_OPTIONS: { value: FilterField; label: string }[] = [
 interface ITransformSelectionListProps {
   data: TransformApiResponse;
   onSelection: (selection: TransformData[]) => void;
+  onCopy: (transform: TransformData) => void;
   sourceType?: string;
 }
 
 const TransformSelectionList: React.FunctionComponent<
   ITransformSelectionListProps
-> = ({ data, onSelection, sourceType }) => {
+> = ({ data, onSelection, onCopy, sourceType }) => {
   const { t } = useTranslation();
 
   const { data: pipelineList = [] } = useResourceQuery<Pipeline[], Error>(
@@ -65,6 +69,7 @@ const TransformSelectionList: React.FunctionComponent<
   const [debouncedQuery, setDebouncedQuery] = useState<string>("");
   const [filterField, setFilterField] = useState<FilterField>("name");
   const [isSelectOpen, setIsSelectOpen] = useState<boolean>(false);
+  const [isAlertVisible, setIsAlertVisible] = useState<boolean>(true);
 
   const debouncedSetSearchQuery = useMemo(
     () => debounce((value: string) => setDebouncedQuery(value), 300),
@@ -107,6 +112,15 @@ const TransformSelectionList: React.FunctionComponent<
     );
   }, [data, debouncedQuery, filterField]);
 
+  const hasSharedTransform = useMemo(
+    () =>
+      data.some(
+        (instance) =>
+          getActivePipelineCount(pipelineList, instance.id, "transform") >= 1
+      ),
+    [data, pipelineList]
+  );
+
   const selectedLabel =
     FILTER_OPTIONS.find((o) => o.value === filterField)?.label ?? "Name";
 
@@ -138,7 +152,7 @@ const TransformSelectionList: React.FunctionComponent<
                     icon={<FilterIcon />}
                     onClick={() => setIsSelectOpen((prev) => !prev)}
                     isExpanded={isSelectOpen}
-                    style={{ width: "120px" } as React.CSSProperties}
+                    className="transform-selection-filter-toggle"
                   >
                     {selectedLabel}
                   </MenuToggle>
@@ -179,12 +193,23 @@ const TransformSelectionList: React.FunctionComponent<
         </ToolbarContent>
       </Toolbar>
 
+      {hasSharedTransform && isAlertVisible && (
+        <Alert
+          isInline
+          variant="info"
+          title={t("transform:transformModal.sharedHelper")}
+          actionClose={<AlertActionCloseButton onClose={() => setIsAlertVisible(false)} />}
+          className="transform-selection-shared-alert"
+        />
+      )}
+
       <Table aria-label="transform table" variant="compact">
         <Thead>
           <Tr>
             <Th key={0}>{t("name")}</Th>
             <Th key={1}>{t("type")}</Th>
-            <Th key={2}>{t("active")}</Th>
+            <Th key={2}>{t("usedIn")}</Th>
+            <Th key={3}></Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -223,10 +248,10 @@ const TransformSelectionList: React.FunctionComponent<
                       </Tooltip>
                     )}
                   </Td>
-                  <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
+                  <Td dataLabel={t("type")} className="transform-selection-type-cell">
                     {instance.type}
                   </Td>
-                  <Td dataLabel={t("active")}>
+                  <Td dataLabel={t("usedIn")}>
                     <UsedIn
                       resourceList={pipelineList}
                       resourceType={"pipeline"}
@@ -234,12 +259,26 @@ const TransformSelectionList: React.FunctionComponent<
                       instance={instance}
                     />
                   </Td>
+                  <Td dataLabel={t("actions")} modifier="fitContent">
+                    {compatible && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onCopy(instance);
+                        }}
+                      >
+                        {t("transform:transformModal.useCopy")}
+                      </Button>
+                    )}
+                  </Td>
                 </Tr>
               );
             })
           ) : (
             <Tr>
-              <Td colSpan={3}>
+              <Td colSpan={4}>
                 <Bullseye>
                   <EmptyState
                     headingLevel="h2"

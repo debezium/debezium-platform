@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import {
   Alert,
+  AlertActionCloseButton,
   Button,
   Card,
   CardBody,
@@ -72,6 +73,7 @@ import {
   collectAllDependants,
 } from "@utils/connectorSchemaLayout";
 import { buildSchemaConfigPayload } from "@utils/schemaConfigPayload";
+import { nextCopyName } from "@utils/helpers";
 import {
   buildGroupedSchemaProperties,
   descriptorPath,
@@ -96,6 +98,7 @@ export interface CreateTransformFormHandle {
 interface CreateTransformFormProps {
   onSubmit: (payload: TransformPayload) => void;
   initialTransform?: TransformData;
+  isCopy?: boolean;
   defaultLayoutMode?: "jumplinks" | "tabs";
   existingNames?: string[];
   sourceType?: string;
@@ -151,6 +154,7 @@ const CreateTransformForm = React.forwardRef<
     {
       onSubmit,
       initialTransform,
+      isCopy = false,
       defaultLayoutMode = "jumplinks",
       existingNames,
       sourceType,
@@ -160,9 +164,12 @@ const CreateTransformForm = React.forwardRef<
     const { t } = useTranslation();
     const { addNotification } = useNotification();
     const hydratedIdRef = useRef<number | null>(null);
+    const nameTouchedRef = useRef(false);
+    const didFocusNameRef = useRef(false);
     const initialSchemaValuesRef = useRef<Record<string, string>>({});
     const initialPredicateValuesRef = useRef<Record<string, string>>({});
     const lastValidationFailureBodyRef = useRef("");
+    const [isAlertVisible, setIsAlertVisible] = useState<boolean>(true);
 
     const [layoutMode, setLayoutMode] = useState<"jumplinks" | "tabs">(
       defaultLayoutMode
@@ -291,19 +298,30 @@ const CreateTransformForm = React.forwardRef<
       { enabled: !!predicateDescriptor }
     );
 
-    // Hydrate from initial transform (edit)
+    // Hydrate from initial transform (edit or copy)
     useLayoutEffect(() => {
       if (!initialTransform || transformations.length === 0) {
         return;
       }
+      /* eslint-disable react-hooks/set-state-in-effect */
       if (hydratedIdRef.current === initialTransform.id) {
+        if (isCopy && !nameTouchedRef.current) {
+          setTransformName(
+            nextCopyName(initialTransform.name, existingNames ?? [])
+          );
+        }
         return;
       }
       hydratedIdRef.current = initialTransform.id;
+      nameTouchedRef.current = false;
+      didFocusNameRef.current = false;
 
       const entry = findEntryByClass(transformations, initialTransform.type);
-      /* eslint-disable react-hooks/set-state-in-effect */
-      setTransformName(initialTransform.name);
+      setTransformName(
+        isCopy
+          ? nextCopyName(initialTransform.name, existingNames ?? [])
+          : initialTransform.name
+      );
       setDescription(initialTransform.description ?? "");
       if (entry) {
         setSelectedName(entry.name);
@@ -357,7 +375,19 @@ const CreateTransformForm = React.forwardRef<
         setPredicateValues(stringPConfig);
       }
       /* eslint-enable react-hooks/set-state-in-effect */
-    }, [initialTransform, transformations, predicates]);
+    }, [initialTransform, transformations, predicates, isCopy, existingNames]);
+
+    useLayoutEffect(() => {
+      if (!isCopy || !transformName || didFocusNameRef.current) {
+        return;
+      }
+      const el = document.getElementById("transform-name");
+      if (el instanceof HTMLInputElement) {
+        el.focus();
+        el.select();
+        didFocusNameRef.current = true;
+      }
+    }, [isCopy, transformName]);
 
     const orderedGroups = useMemo(
       () =>
@@ -609,7 +639,9 @@ const CreateTransformForm = React.forwardRef<
         existingNames.includes(transformName.trim())
       ) {
         const isEditing =
-          initialTransform && initialTransform.name === transformName.trim();
+          initialTransform &&
+          !isCopy &&
+          initialTransform.name === transformName.trim();
         if (!isEditing) {
           newErrors["transform-name"] = t("transform:form.nameExists", {
             defaultValue: "Transform with name '{{name}}' already exists",
@@ -681,6 +713,7 @@ const CreateTransformForm = React.forwardRef<
       transformName,
       existingNames,
       initialTransform,
+      isCopy,
       transformSchema,
       effectiveSchemaValues,
       allDependants,
@@ -1023,6 +1056,7 @@ const CreateTransformForm = React.forwardRef<
             id="transform-name"
             value={transformName}
             onChange={(_e, val) => {
+              nameTouchedRef.current = true;
               setTransformName(val);
               setErrors((e) => ({ ...e, "transform-name": undefined }));
             }}
@@ -1512,6 +1546,17 @@ const CreateTransformForm = React.forwardRef<
 
     return (
       <>
+        {isCopy && initialTransform && isAlertVisible && (
+          <Alert
+            variant="info"
+            isInline
+            title={t("transform:form.copiedFrom", {
+              name: initialTransform.name,
+            })}
+             actionClose={<AlertActionCloseButton onClose={() => setIsAlertVisible(false)} />}
+            className="copied-from-alert"
+          />
+        )}
         <div className="schema-form-layout-toggle">
           <ToggleGroup aria-label="Switch between jump links and tabs layout">
             <ToggleGroupItem

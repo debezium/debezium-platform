@@ -211,6 +211,12 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
       },
     },
     {
+      title: t("duplicate"),
+      onClick: () => {
+        navigate(`/transform/create_transform?from=${actionData.id}`);
+      },
+    },
+    {
       title: t("delete"),
       onClick: () => onDeleteHandler(actionData.id, actionData.name),
     },

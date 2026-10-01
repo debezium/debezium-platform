@@ -69,7 +69,7 @@ describe("UsedIn", () => {
 
     const trigger = document.querySelector(".pf-v6-c-label.pf-m-blue");
     expect(trigger).toBeTruthy();
-    await user.hover(trigger as HTMLElement);
+    await user.click(trigger as HTMLElement);
     const link = await screen.findByRole("button", { name: "indra-ui-test" });
     await user.click(link);
     expect(mockNavigate).toHaveBeenCalledWith("/pipeline/1/overview");
@@ -98,7 +98,7 @@ describe("UsedIn", () => {
 
     const trigger = document.querySelector(".pf-v6-c-label.pf-m-blue");
     expect(trigger).toBeTruthy();
-    await user.hover(trigger as HTMLElement);
+    await user.click(trigger as HTMLElement);
     await user.click(await screen.findByRole("button", { name: "ConnSrc" }));
     expect(mockNavigate).toHaveBeenCalledWith("/source/5?state=view", {
       state: sourcePageNavState.view,

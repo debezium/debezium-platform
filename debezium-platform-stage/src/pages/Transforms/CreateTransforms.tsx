@@ -6,14 +6,15 @@ import {
   Button,
   ButtonType,
   PageSection,
+  Skeleton,
 } from "@patternfly/react-core";
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPost, fetchData, TransformData, TransformPayload } from "src/apis";
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { PageHeader } from "@patternfly/react-component-groups";
 import CreateTransformForm, {
   CreateTransformFormHandle,
@@ -23,20 +24,26 @@ export interface ICreateTransformsProps {
   modelLoaded?: boolean;
   onSelection?: (selection: TransformData[]) => void;
   sourceType?: string;
+  initialTransform?: TransformData;
 }
 
 const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
   modelLoaded,
   onSelection,
   sourceType,
+  initialTransform,
 }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation();
   const { addNotification } = useNotification();
+  const queryClient = useQueryClient();
   const formRef = useRef<CreateTransformFormHandle>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: existingTransforms = [] } = useQuery<TransformData[]>(
+  const fromId = modelLoaded ? null : searchParams.get("from");
+
+  const { data: existingTransforms = [], isLoading: isTransformsLoading } = useQuery<TransformData[]>(
     "transforms",
     () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
   );
@@ -46,6 +53,14 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
       ? existingTransforms.map((tr) => tr.name)
       : [];
   }, [existingTransforms]);
+
+  const seedTransform = React.useMemo(() => {
+    if (initialTransform) return initialTransform;
+    if (!fromId) return undefined;
+    return existingTransforms.find((tr) => String(tr.id) === fromId);
+  }, [initialTransform, fromId, existingTransforms]);
+
+  const isCopy = !!seedTransform;
 
   const createNewTransform = async (payload: TransformPayload) => {
     setIsLoading(true);
@@ -57,13 +72,22 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
         `Failed to create ${payload.name}: ${response.error}`
       );
     } else {
-      modelLoaded && onSelection?.([response.data as TransformData]);
+      const created = response.data as TransformData;
+      await queryClient.invalidateQueries("transforms");
+      await queryClient.invalidateQueries("transform");
+      modelLoaded && onSelection?.([created]);
       addNotification(
         "success",
         `Create successful`,
         `Transform "${payload.name}" created successfully.`
       );
-      !modelLoaded && navigate("/transform");
+      if (!modelLoaded) {
+        if (isCopy && created?.id) {
+          navigate(`/transform/${created.id}?state=view`);
+        } else {
+          navigate("/transform");
+        }
+      }
     }
     setIsLoading(false);
   };
@@ -81,13 +105,24 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
         isFilled
         padding={modelLoaded ? { default: "noPadding" } : undefined}
       >
-        <CreateTransformForm
-          ref={formRef}
-          onSubmit={createNewTransform}
-          existingNames={existingNames}
-          sourceType={sourceType}
-          {...(modelLoaded ? { defaultLayoutMode: "tabs" as const } : {})}
-        />
+        {!!fromId && isTransformsLoading ? (
+          <>
+            <Skeleton fontSize="md" width="40%" />
+            <br />
+            <Skeleton fontSize="md" width="70%" />
+          </>
+        ) : (
+          <CreateTransformForm
+            key={seedTransform ? `copy-${seedTransform.id}` : "create"}
+            ref={formRef}
+            onSubmit={createNewTransform}
+            existingNames={existingNames}
+            sourceType={sourceType}
+            initialTransform={seedTransform}
+            isCopy={isCopy}
+            {...(modelLoaded ? { defaultLayoutMode: "tabs" as const } : {})}
+          />
+        )}
       </PageSection>
 
       <PageSection
@@ -101,7 +136,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
               <Button
                 variant="primary"
                 isLoading={isLoading}
-                isDisabled={isLoading}
+                isDisabled={isLoading || (!!fromId && isTransformsLoading)}
                 type={ButtonType.submit}
                 onClick={(e) => {
                   e.preventDefault();

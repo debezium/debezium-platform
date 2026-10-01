@@ -35,7 +35,8 @@
         "negateFieldDescription": "Setting this option to True applies the predicate only to records that do not match the defined predicate condition",
         "validationFailedGeneric": "Please fill all required fields.",
         "validationFailedInOneSection": "Please fix errors in {{section}}.",
-        "validationFailedInMultipleSections": "Please fix errors in: {{list}}."
+        "validationFailedInMultipleSections": "Please fix errors in: {{list}}.",
+        "copiedFrom": "Copied from {{name}}"
     },
     "jumplinks": {
         "label": "Form sections",
@@ -68,6 +69,15 @@
         "createTitle": "Create a transform",
         "createDescription": "Create a new transform for your data pipeline.",
         "formDescription": "Fill out the form below to create a transform.",
-        "incompatibleWithSource": "Compatible only with {{family}} sources"
+        "incompatibleWithSource": "Compatible only with {{family}} sources",
+        "sharedHelper": "Transforms already used by other pipelines are shared. Copy one if this pipeline needs its own settings.",
+        "useCopy": "Use copy"
+    },
+    "editConfirmation": {
+        "title": "This transform is used by other pipelines",
+        "saveAsCopy": "Save as a new copy",
+        "saveAsCopyDescription": "Other pipelines keep the current settings. The new transform is not attached to any pipeline until you add it.",
+        "updateShared": "Update the shared transform",
+        "updateSharedDescription": "Pipelines using this transform will restart."
     }
 }

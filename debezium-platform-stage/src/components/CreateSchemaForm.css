@@ -85,3 +85,7 @@
 .pf-v6-c-menu.pf-m-scrollable .pf-v6-c-menu__content {
   overscroll-behavior: contain;
 }
+
+.copied-from-alert {
+  margin-bottom: 0.75rem;
+}
