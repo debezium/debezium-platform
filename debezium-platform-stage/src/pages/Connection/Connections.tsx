@@ -72,6 +72,8 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
   const {
     data: sourceList = [],
+    error: sourcesError,
+    isLoading: isSourcesLoading,
     retry: retrySources,
   } = useResourceQuery<Source[], Error>(
     "sources",
@@ -80,6 +82,8 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
   const {
     data: destinationList = [],
+    error: destinationsError,
+    isLoading: isDestinationsLoading,
     retry: retryDestinations,
   } = useResourceQuery<Destination[], Error>(
     "destinations",
@@ -333,6 +337,12 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
                         destinationList={destinationList}
                         catalog={catalog}
                         onClear={onClear}
+                        sourcesError={sourcesError}
+                        isSourcesLoading={isSourcesLoading}
+                        retrySources={retrySources}
+                        destinationsError={destinationsError}
+                        isDestinationsLoading={isDestinationsLoading}
+                        retryDestinations={retryDestinations}
                       />
                     </Card>
                   </PageSection>
