@@ -20,3 +20,9 @@
   .pipeline-details__tab-error {
     height: 100% !important;
   }
+
+  .snapshot-tab-title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pf-t--global--spacer--sm, 0.5rem);
+  }
