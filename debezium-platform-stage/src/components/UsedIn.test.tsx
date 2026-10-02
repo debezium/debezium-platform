@@ -104,4 +104,46 @@ describe("UsedIn", () => {
       state: sourcePageNavState.view,
     });
   });
+
+  it("renders spinner when isLoading is true", () => {
+    render(
+      <UsedIn
+        resourceList={[]}
+        resourceType="pipeline"
+        instance={{ id: 1, name: "src" } as Source}
+        requestedPageType="source"
+        isLoading={true}
+      />,
+    );
+
+    expect(screen.getByLabelText("Loading usage data")).toBeInTheDocument();
+  });
+
+  it("renders localized compact error trigger and opens popover on hover with retry", async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+
+    render(
+      <UsedIn
+        resourceList={[]}
+        resourceType="pipeline"
+        instance={{ id: 1, name: "src" } as Source}
+        requestedPageType="source"
+        error={new Error("Failed to fetch")}
+        onRetry={onRetry}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: /error/i });
+    expect(trigger).toBeInTheDocument();
+    expect(trigger).toHaveClass("api_error-popover-trigger");
+    expect(trigger.querySelector(".api_error-icon")).toBeTruthy();
+    await user.hover(trigger);
+
+    expect(await screen.findByText(/failed to fetch/i)).toBeInTheDocument();
+    const retryBtn = await screen.findByRole("button", { name: /retry/i });
+    expect(retryBtn).toBeInTheDocument();
+    await user.click(retryBtn);
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
 });

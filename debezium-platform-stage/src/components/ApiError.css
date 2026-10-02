@@ -1,3 +1,35 @@
-.api_error-icon{
-    color: #C9190B !important;
+.api_error-icon {
+    color: var(--pf-t--global--color--status--danger--default, #C9190B) !important;
+}
+
+.api_error-small {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--pf-t--global--font--size--sm, 14px);
+    color: var(--pf-t--global--color--status--danger--default, #C9190B);
+}
+
+.api_error-retry-btn {
+    font-size: var(--pf-t--global--font--size--sm, 14px);
+}
+
+.api_error-popover-trigger,
+.used-in-error-trigger {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.api_error-popover-trigger:hover .api_error-icon,
+.api_error-popover-trigger:focus .api_error-icon,
+.used-in-error-trigger:hover .api_error-icon,
+.used-in-error-trigger:focus .api_error-icon {
+    filter: brightness(1.2);
+}
+
+.used-in-error-trigger:focus-visible {
+    outline: 2px solid var(--pf-t--global--color--brand--default, #0066cc);
+    outline-offset: 2px;
 }

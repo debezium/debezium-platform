@@ -56,7 +56,12 @@ const TransformSelectionList: React.FunctionComponent<
 > = ({ data, onSelection, sourceType }) => {
   const { t } = useTranslation();
 
-  const { data: pipelineList = [] } = useResourceQuery<Pipeline[], Error>(
+  const {
+    data: pipelineList = [],
+    error: pipelineError,
+    isLoading: isPipelineLoading,
+    retry: retryPipelines,
+  } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
     () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
   );
@@ -232,6 +237,9 @@ const TransformSelectionList: React.FunctionComponent<
                       resourceType={"pipeline"}
                       requestedPageType={"transform"}
                       instance={instance}
+                      error={pipelineError}
+                      isLoading={isPipelineLoading}
+                      onRetry={retryPipelines}
                     />
                   </Td>
                 </Tr>

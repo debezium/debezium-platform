@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from "react";
 import {
   Bullseye,
@@ -99,8 +98,8 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
 
   const {
     data: pipelineList = [],
-    error: _pipelineError,
-    isLoading: _isPipelineLoading,
+    error: pipelineError,
+    isLoading: isPipelineLoading,
     retry: retryPipelines,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
@@ -354,8 +353,15 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                                   </Td>
                                   <Td dataLabel={t("type")}>{instance.type}</Td>
                                   <Td dataLabel={t("usedIn")}>
-                                    <UsedIn resourceList={pipelineList} resourceType={"pipeline"} requestedPageType={"transform"} instance={instance} />
-
+                                    <UsedIn
+                                      resourceList={pipelineList}
+                                      resourceType={"pipeline"}
+                                      requestedPageType={"transform"}
+                                      instance={instance}
+                                      error={pipelineError}
+                                      isLoading={isPipelineLoading}
+                                      onRetry={retryPipelines}
+                                    />
                                   </Td>
                                   <Td dataLabel={t("actions")} isActionCell>
                                     <ActionsColumn

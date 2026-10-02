@@ -51,6 +51,12 @@ interface IConnectionTableProps {
   destinationList: Destination[];
   catalog: Catalog[];
   onClear: () => void;
+  sourcesError?: Error | null;
+  isSourcesLoading?: boolean;
+  retrySources?: () => void;
+  destinationsError?: Error | null;
+  isDestinationsLoading?: boolean;
+  retryDestinations?: () => void;
 }
 
 type DeleteInstance = {
@@ -69,6 +75,12 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
   destinationList,
   catalog,
   onClear,
+  sourcesError,
+  isSourcesLoading,
+  retrySources,
+  destinationsError,
+  isDestinationsLoading,
+  retryDestinations,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -188,7 +200,21 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
                   </Flex>
                 </Td>
                 <Td dataLabel={t("usedIn")}>
-                  <UsedIn resourceList={getConnectionRole(instance.type.toLowerCase(), catalog) === "source" ? sourceList : destinationList} resourceType={getConnectionRole(instance.type.toLowerCase(), catalog) || ""} requestedPageType={"connection"} instance={instance} />
+                  {(() => {
+                    const role = getConnectionRole(instance.type.toLowerCase(), catalog);
+                    const isSource = role === "source";
+                    return (
+                      <UsedIn
+                        resourceList={isSource ? sourceList : destinationList}
+                        resourceType={role || ""}
+                        requestedPageType={"connection"}
+                        instance={instance}
+                        error={isSource ? sourcesError : destinationsError}
+                        isLoading={isSource ? isSourcesLoading : isDestinationsLoading}
+                        onRetry={isSource ? retrySources : retryDestinations}
+                      />
+                    );
+                  })()}
                 </Td>
                 <Td dataLabel={t("actions")} isActionCell>
                   <ActionsColumn

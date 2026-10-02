@@ -62,7 +62,12 @@ const SourceDestinationSelectionList: React.FunctionComponent<
 > = ({ tableType, data, onSelection }) => {
   const { t } = useTranslation();
 
-  const { data: pipelineList = [] } = useResourceQuery<Pipeline[], Error>(
+  const {
+    data: pipelineList = [],
+    error: pipelineError,
+    isLoading: isPipelineLoading,
+    retry: retryPipelines,
+  } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
     () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
   );
@@ -220,8 +225,11 @@ const SourceDestinationSelectionList: React.FunctionComponent<
                   <UsedIn
                     resourceList={pipelineList}
                     resourceType={"pipeline"}
-                    requestedPageType={"source"}
+                    requestedPageType={tableType}
                     instance={instance}
+                    error={pipelineError}
+                    isLoading={isPipelineLoading}
+                    onRetry={retryPipelines}
                   />
                 </Td>
               </Tr>

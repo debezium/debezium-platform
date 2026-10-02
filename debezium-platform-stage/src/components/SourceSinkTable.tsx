@@ -83,8 +83,9 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
 
   const {
     data: pipelineList = [],
-    error: _pipelineError,
-    isLoading: _isPipelineLoading,
+    error: pipelineError,
+    isLoading: isPipelineLoading,
+    retry: retryPipelines,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
     () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
@@ -180,7 +181,15 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
                   </Flex>
                 </Td>
                 <Td dataLabel={t("usedIn")}>
-                  <UsedIn resourceList={pipelineList} resourceType={"pipeline"} requestedPageType={tableType} instance={instance} />
+                  <UsedIn
+                    resourceList={pipelineList}
+                    resourceType={"pipeline"}
+                    requestedPageType={tableType}
+                    instance={instance}
+                    error={pipelineError}
+                    isLoading={isPipelineLoading}
+                    onRetry={retryPipelines}
+                  />
                 </Td>
                 <Td dataLabel={t("actions")} isActionCell>
                   <ActionsColumn

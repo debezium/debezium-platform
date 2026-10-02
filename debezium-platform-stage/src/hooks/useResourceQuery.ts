@@ -57,6 +57,7 @@ export function useResourceQuery<TData, TError = Error>(
   const queryClient = useQueryClient();
   const previousIntervalRef = useRef<number | false>(interval);
   const [failure, setFailure] = useState<FailureState<TError>>(NO_FAILURE);
+  const [isManualRetrying, setIsManualRetrying] = useState(false);
 
   useEffect(() => {
     const previous = previousIntervalRef.current;
@@ -72,6 +73,7 @@ export function useResourceQuery<TData, TError = Error>(
 
   const handleError = useCallback(
     (error: TError) => {
+      setIsManualRetrying(false);
       setFailure((previous) => ({ count: previous.count + 1, error }));
       onError?.(error);
     },
@@ -80,6 +82,7 @@ export function useResourceQuery<TData, TError = Error>(
 
   const handleSuccess = useCallback(
     (data: TData) => {
+      setIsManualRetrying(false);
       setFailure((previous) => (previous.count === 0 ? previous : NO_FAILURE));
       onSuccess?.(data);
     },
@@ -98,6 +101,7 @@ export function useResourceQuery<TData, TError = Error>(
   const { refetch } = result;
 
   const retry = useCallback(() => {
+    setIsManualRetrying(true);
     setFailure(NO_FAILURE);
     void refetch();
   }, [refetch]);
@@ -112,7 +116,7 @@ export function useResourceQuery<TData, TError = Error>(
 
   return {
     ...result,
-    isLoading: result.isLoading || isRetrying,
+    isLoading: result.isLoading || isRetrying || isManualRetrying,
     isError: hasPollingStopped && (result.isError || failure.error !== null),
     error: hasPollingStopped ? result.error ?? failure.error : null,
     consecutiveFailures: failure.count,

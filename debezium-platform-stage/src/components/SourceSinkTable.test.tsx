@@ -27,6 +27,21 @@ vi.mock("react-query", async (importOriginal) => {
   };
 });
 
+vi.mock("../hooks/useResourceQuery", async () => {
+  const { useQuery } = await import("react-query");
+  return {
+    useResourceQuery: (...args: any[]) => {
+      const result = (useQuery as any)(...args) ?? {};
+      return {
+        consecutiveFailures: 0,
+        hasPollingStopped: Boolean(result.error),
+        retry: vi.fn(),
+        ...result,
+      };
+    },
+  };
+});
+
 vi.mock("src/apis", async (importOriginal) => {
   const mod = await importOriginal<typeof import("src/apis")>();
   return {
@@ -40,7 +55,11 @@ vi.mock("../appLayout/AppNotificationContext", () => ({
 }));
 
 vi.mock("./UsedIn", () => ({
-  default: () => <span data-testid="used-in-stub" />,
+  default: (props: any) => (
+    <span data-testid="used-in-stub">
+      {props.error ? "UsedIn Error" : props.isLoading ? "UsedIn Loading" : "UsedIn Loaded"}
+    </span>
+  ),
 }));
 
 vi.mock("./ComponentImage", () => ({
@@ -171,5 +190,20 @@ describe("SourceSinkTable", () => {
         expect.stringContaining("source"),
       );
     });
+  });
+
+  it("passes pipeline error to UsedIn without crashing table rendering", async () => {
+    vi.mocked(useQuery).mockReturnValue({
+      data: undefined,
+      error: new Error("Pipeline API failure"),
+      isLoading: false,
+    } as any);
+
+    render(
+      <SourceSinkTable tableType="source" data={[sourceInstance]} onClear={vi.fn()} />,
+    );
+
+    expect(screen.getByRole("button", { name: "Warehouse" })).toBeInTheDocument();
+    expect(screen.getByText("UsedIn Error")).toBeInTheDocument();
   });
 });

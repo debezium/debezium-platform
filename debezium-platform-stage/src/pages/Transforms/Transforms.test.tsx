@@ -170,4 +170,29 @@ describe("Transforms", () => {
       expect(screen.getByText("7 Items")).toBeInTheDocument();
     });
   });
+
+  it("does not crash or show full page error when pipeline API fails but transforms succeeds", async () => {
+    vi.mocked(useQuery).mockImplementation((key) => {
+      if (key === "transforms") {
+        return {
+          data: mockTransforms,
+          error: null,
+          isLoading: false,
+        } as any;
+      } else if (key === "pipelines") {
+        return {
+          data: undefined,
+          error: new Error("Pipeline API failure"),
+          isLoading: false,
+        } as any;
+      }
+      return { data: undefined, error: null, isLoading: false } as any;
+    });
+
+    render(<Transforms />);
+    await waitFor(() => {
+      expect(screen.getByText("extract-new-record")).toBeInTheDocument();
+      expect(screen.queryByText("Failed to load Transforms")).not.toBeInTheDocument();
+    });
+  });
 });

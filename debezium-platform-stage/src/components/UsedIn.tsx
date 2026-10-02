@@ -1,4 +1,4 @@
-import { Button, Label, Popover } from "@patternfly/react-core"
+import { Button, Label, Popover, Spinner } from "@patternfly/react-core"
 import { RhUiDataSinkIcon, RhUiDataSourceIcon } from "@patternfly/react-icons"
 import { RhUiPathIcon as PipelineIcon } from "@patternfly/react-icons";
 import { t } from "i18next"
@@ -6,12 +6,16 @@ import { FC, Fragment } from "react"
 import { useNavigate } from "react-router-dom"
 import { sourcePageNavState } from "@sourcePage/sourcePageNavigation"
 import { Connection, Destination, Pipeline, ResourceType, Source, TransformData } from "src/apis"
+import ApiError from "./ApiError"
 
 interface IUsedInProps {
-    resourceList: Source[] | Destination[] | Pipeline[],
+    resourceList?: Source[] | Destination[] | Pipeline[],
     resourceType: string,
     instance: Source | Destination | Connection | TransformData,
-    requestedPageType: ResourceType
+    requestedPageType: ResourceType,
+    error?: Error | null,
+    isLoading?: boolean,
+    onRetry?: () => void
 }
 
 export const getActiveConnectionCount = (
@@ -36,8 +40,31 @@ export const getActivePipelineCount = (
     }
 };
 
-const UsedIn: FC<IUsedInProps> = ({ resourceList, resourceType, instance, requestedPageType }) => {
+const UsedIn: FC<IUsedInProps> = ({
+    resourceList = [],
+    resourceType,
+    instance,
+    requestedPageType,
+    error,
+    isLoading,
+    onRetry,
+}) => {
     const navigate = useNavigate();
+
+    if (isLoading) {
+        return <Spinner size="sm" aria-label="Loading usage data" />;
+    }
+
+    if (error) {
+        return (
+            <ApiError
+                errorType="popover"
+                errorMsg={error?.message ? `${t("error")}: ${error.message}` : undefined}
+                onRetry={onRetry}
+            />
+        );
+    }
+
     const activeCount = requestedPageType === "connection" ? getActiveConnectionCount(resourceList as Source[] | Destination[], instance.id) : getActivePipelineCount(resourceList as Pipeline[], instance.id, requestedPageType as "source" | "destination" | "transform");
     const icon = resourceType === "source" ? <RhUiDataSourceIcon /> : resourceType === "destination" ? <RhUiDataSinkIcon /> : <PipelineIcon />;
     const labelColor = activeCount === 0 ? "grey" : "blue";
@@ -61,21 +88,21 @@ const UsedIn: FC<IUsedInProps> = ({ resourceList, resourceType, instance, reques
     };
 
     const getActiveResourceDetails = (
-        resourceList: Source[] | Destination[] | Pipeline[],
+        list: Source[] | Destination[] | Pipeline[],
         id: number,
     ): { name: string, id: number }[] => {
         if (requestedPageType === "connection") {
-            return (resourceList as Source[] | Destination[])
+            return (list as Source[] | Destination[])
                 .filter((resource) => resource?.connection?.id === id)
                 .map((resource) => ({ name: resource?.name, id: resource?.id }));
         }
         else if (requestedPageType === "source" || requestedPageType === "destination") {
-            return (resourceList as Pipeline[])
+            return (list as Pipeline[])
                 .filter((resource) => resource?.[requestedPageType as "source" | "destination"]?.id === id)
                 .map((resource) => ({ name: resource?.name, id: resource?.id }));
         }
         else {
-            return (resourceList as Pipeline[])
+            return (list as Pipeline[])
                 .filter((resource) => resource?.transforms?.some((transform) => transform.id === id))
                 .map((resource) => ({ name: resource?.name, id: resource?.id }));
         }
