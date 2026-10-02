@@ -48,6 +48,7 @@ import io.debezium.operator.api.model.source.Source;
 import io.debezium.operator.api.model.source.SourceBuilder;
 import io.debezium.operator.api.model.source.storage.CustomStoreBuilder;
 import io.debezium.platform.config.PipelineConfigGroup;
+import io.debezium.platform.config.SnapshotMonitoringConfigGroup;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Transform;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
@@ -60,8 +61,12 @@ public class PipelineMapper {
 
     private static final String SIGNAL_ENABLED_CHANNELS_CONFIG = "signal.enabled.channels";
     private static final String NOTIFICATION_ENABLED_CHANNELS_CONFIG = "notification.enabled.channels";
+    private static final String NOTIFICATION_HTTP_URL_CONFIG = "notification.http.url";
+    private static final String NOTIFICATION_HTTP_TIMEOUT_CONFIG = "notification.http.timeout.ms";
+    private static final String NOTIFICATION_HTTP_RETRIES_CONFIG = "notification.http.retries";
+    private static final String NOTIFICATION_HTTP_ALLOW_PRIVATE_NETWORKS_CONFIG = "notification.http.allow.private.networks";
     private static final String DEFAULT_SIGNAL_CHANNELS = "source,in-process";
-    private static final String DEFAULT_NOTIFICATION_CHANNELS = "log";
+    private static final String CALLBACK_URL_FORMAT = "http://%s:%d/api/internal/pipelines/%d/notifications";
     private static final String PREDICATE_PREFIX = "p";
     private static final String PREDICATE_ALIAS_FORMAT = "%s%s";
     private static final String QUARKUS_LOG_CATEGORY_FORMAT = "log.category.\"%s\".level";
@@ -88,13 +93,16 @@ public class PipelineMapper {
     final PipelineConfigGroup pipelineConfigGroup;
     final TableNameResolver tableNameResolver;
     final Metrics metrics;
+    final SnapshotMonitoringConfigGroup snapshotMonitoringConfigGroup;
 
     public PipelineMapper(PipelineConfigGroup pipelineConfigGroup,
                           TableNameResolver tableNameResolver,
-                          Metrics metrics) {
+                          Metrics metrics,
+                          SnapshotMonitoringConfigGroup snapshotMonitoringConfigGroup) {
         this.pipelineConfigGroup = pipelineConfigGroup;
         this.tableNameResolver = tableNameResolver;
         this.metrics = metrics;
+        this.snapshotMonitoringConfigGroup = snapshotMonitoringConfigGroup;
     }
 
     public DebeziumServer map(PipelineFlat pipeline) {
@@ -230,7 +238,7 @@ public class PipelineMapper {
 
         sourceConfig.setAllProps(source.getConfig());
         sourceConfig.setProps(SIGNAL_ENABLED_CHANNELS_CONFIG, DEFAULT_SIGNAL_CHANNELS);
-        sourceConfig.setProps(NOTIFICATION_ENABLED_CHANNELS_CONFIG, DEFAULT_NOTIFICATION_CHANNELS);
+        configureSnapshotNotifications(sourceConfig, pipeline);
 
         return new SourceBuilder()
                 .withSourceClass(source.getType())
@@ -238,6 +246,37 @@ public class PipelineMapper {
                 .withSchemaHistory(getSchemaHistory(pipeline))
                 .withConfig(sourceConfig)
                 .build();
+    }
+
+    /**
+     * Enables the snapshot-monitoring notification channels on the source and injects the callback
+     * URL pointing back at this Conductor's internal ingestion endpoint (DDD-68). The values
+     * come from {@link SnapshotMonitoringConfigGroup} so they can be overridden per deployment; the
+     * pipeline id is baked into the URL as a path parameter.
+     */
+    private void configureSnapshotNotifications(ConfigProperties sourceConfig, PipelineFlat pipeline) {
+        var notification = snapshotMonitoringConfigGroup.notification();
+        sourceConfig.setProps(NOTIFICATION_ENABLED_CHANNELS_CONFIG, notification.channels());
+        sourceConfig.setProps(NOTIFICATION_HTTP_URL_CONFIG, callbackUrl(notification, pipeline.getId()));
+        sourceConfig.setProps(NOTIFICATION_HTTP_TIMEOUT_CONFIG, String.valueOf(notification.timeoutMs()));
+        sourceConfig.setProps(NOTIFICATION_HTTP_RETRIES_CONFIG, String.valueOf(notification.retries()));
+        // The callback always targets the in-cluster Conductor Service (a site-local ClusterIP), so the
+        // channel's SSRF guard must permit private networks; otherwise it rejects the callback URL. This
+        // is intrinsic to how the platform wires the callback and is not a per-pipeline option.
+        sourceConfig.setProps(NOTIFICATION_HTTP_ALLOW_PRIVATE_NETWORKS_CONFIG, Boolean.TRUE.toString());
+    }
+
+    /**
+     * Builds the callback URL from the bare Conductor service name. The Debezium Server pipeline runs
+     * in the same namespace as the Conductor (the operator applies the DebeziumServer resource in the
+     * Conductor's own namespace), so Kubernetes DNS resolves the bare service name from the pipeline
+     * pod without needing a fully qualified name.
+     */
+    private String callbackUrl(SnapshotMonitoringConfigGroup.NotificationConfigGroup notification, Long pipelineId) {
+        return String.format(CALLBACK_URL_FORMAT,
+                notification.serviceName(),
+                notification.port(),
+                pipelineId);
     }
 
     private static String getName(ConnectionEntity.Type connectionType, String configName, String configPrefix) {
