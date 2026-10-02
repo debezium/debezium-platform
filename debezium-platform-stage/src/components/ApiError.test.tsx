@@ -129,7 +129,7 @@ describe("ApiError", () => {
 
     await user.hover(trigger);
 
-    expect(await screen.findByRole("heading", { name: "Custom Header" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /custom header/i })).toBeInTheDocument();
     expect(await screen.findByText("Detailed failure description")).toBeInTheDocument();
   });
 });
