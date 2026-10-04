@@ -304,7 +304,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
                     isDisabled={!transformData}
                     onClick={navigateToDuplicate}
                   >
-                    {t("copy")}
+                    {t("duplicate")}
                   </Button>
                 </ActionListItem>
               </ActionListGroup>
