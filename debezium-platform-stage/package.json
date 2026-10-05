@@ -22,7 +22,7 @@
     "e2e:ci": "start-server-and-test dev http://localhost:3000 cypress:run"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.2.2",
+    "@hookform/resolvers": "^5.9.1",
     "@patternfly/patternfly": "^6.6.1",
     "@patternfly/react-charts": "^8.6.0",
     "@patternfly/react-code-editor": "^6.6.1",
