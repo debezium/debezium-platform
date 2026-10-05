@@ -56,7 +56,8 @@ public class SnapshotProgressAggregator {
     private final ActiveSnapshotService activeService;
     private final SnapshotHistoryService historyService;
     private final PipelineService pipelineService;
-    private final SnapshotMonitoringConfigGroup config;
+    private final Duration broadcastDebounce;
+    private final Duration progressHeartbeat;
 
     // One broadcast pipe per pipeline that has (or had) subscribers.
     private final Map<Long, BroadcastProcessor<SnapshotProgressResponse>> broadcasters = new ConcurrentHashMap<>();
@@ -75,7 +76,8 @@ public class SnapshotProgressAggregator {
         this.activeService = activeService;
         this.historyService = historyService;
         this.pipelineService = pipelineService;
-        this.config = config;
+        this.broadcastDebounce = config.sse().debounce();
+        this.progressHeartbeat = config.watchdog().heartbeat();
     }
 
     /**
@@ -227,7 +229,10 @@ public class SnapshotProgressAggregator {
 
     private void onChunkProgress(Long pipelineId, SnapshotNotificationRequest notification) {
         Instant timestamp = instantOf(notification);
-        ChunkProgressEvent event = ChunkProgressEvent.from(notification.additionalData());
+        ChunkProgressEvent event = ChunkProgressEvent.from(notification.type(), notification.additionalData());
+        if (event.currentTable() == null) {
+            return; // no table to attribute the chunk to: neither the overlay nor the active row can use it
+        }
         RecordOutcome outcome = chunkProgress.record(pipelineId, event, timestamp);
         if (outcome == RecordOutcome.STALE) {
             return; // reordered chunk event, already superseded
@@ -240,7 +245,7 @@ public class SnapshotProgressAggregator {
         // does just as well. The live view is unaffected: currentState() takes the latest of the
         // persisted timestamp and the in-memory overlays, which every event updates.
         if (outcome != RecordOutcome.FIRST_FOR_TABLE
-                && !intervalElapsed(lastProgressPersist, pipelineId, timestamp, config.watchdog().heartbeat())) {
+                && !intervalElapsed(lastProgressPersist, pipelineId, timestamp, progressHeartbeat)) {
             return;
         }
         activeService.markInProgress(pipelineId, event.currentTable(), timestamp);
@@ -271,7 +276,7 @@ public class SnapshotProgressAggregator {
             return; // nobody subscribed; avoid the state read entirely
         }
         Instant now = Instant.now();
-        if (!isCheckpointEvent && !intervalElapsed(lastBroadcast, pipelineId, now, config.sse().debounce())) {
+        if (!isCheckpointEvent && !intervalElapsed(lastBroadcast, pipelineId, now, broadcastDebounce)) {
             return; // within the debounce window for a high-frequency chunk update
         }
         lastBroadcast.put(pipelineId, now);
@@ -282,10 +287,15 @@ public class SnapshotProgressAggregator {
      * Whether {@code interval} has elapsed since the pipeline's last entry in {@code lastRun}, which is
      * also the case when there is no entry yet. Shared by the two per-pipeline throttles: the SSE
      * broadcast debounce and the chunk-progress persistence heartbeat.
+     * <p>
+     * A {@code now} that moved backwards also counts as elapsed. The heartbeat compares notification
+     * timestamps, which are produced by the connector and can step back (a clock correction, or events
+     * for two tables crossing), and a single timestamp from the future would otherwise wedge the
+     * throttle until real time caught up with it.
      */
     private static boolean intervalElapsed(Map<Long, Instant> lastRun, Long pipelineId, Instant now, Duration interval) {
         Instant previous = lastRun.get(pipelineId);
-        return previous == null || Duration.between(previous, now).compareTo(interval) >= 0;
+        return previous == null || now.isBefore(previous) || Duration.between(previous, now).compareTo(interval) >= 0;
     }
 
     private Object lockFor(Long pipelineId) {

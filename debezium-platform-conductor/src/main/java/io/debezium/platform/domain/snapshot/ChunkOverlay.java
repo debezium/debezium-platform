@@ -14,5 +14,6 @@ import java.time.Instant;
  * rebuilt after a restart) and the concurrency contract (the map is mutated only under the
  * aggregator's per-pipeline lock).
  */
-record ChunkOverlay(Integer chunkIndex, Integer totalChunks, long rowsScanned, Instant lastUpdatedAt) {
+record ChunkOverlay(Integer chunkNumber, Integer completedChunks, Integer totalChunks, long rowsScanned,
+        Instant lastUpdatedAt) {
 }

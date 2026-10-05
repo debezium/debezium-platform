@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.debezium.platform.api.dto.SnapshotProgressResponse.TableProgress;
 import io.debezium.platform.api.dto.SnapshotProgressResponse.TableProgress.ChunkProgress;
+import io.debezium.platform.data.model.TableState;
 import io.debezium.platform.domain.views.ActiveSnapshotTable;
 
 /**
@@ -58,24 +59,30 @@ public class ChunkProgressTracker {
                 ? event.rowsScanned()
                 : (previous != null ? previous.rowsScanned() : 0L);
         tableOverlays.put(event.currentTable(),
-                new ChunkOverlay(event.chunkIndex(), event.totalChunks(), rowsScanned, timestamp));
+                new ChunkOverlay(event.chunkNumber(), event.completedChunks(), event.totalChunks(), rowsScanned,
+                        timestamp));
         return previous == null ? RecordOutcome.FIRST_FOR_TABLE : RecordOutcome.UPDATED;
     }
 
     /**
      * Merges the overlay for a pipeline onto a persisted table row, producing the view-model entry.
      * When an overlay exists for the table, the live row count wins over the (possibly stale) persisted
-     * value and the chunk progress is attached.
+     * value and the chunk progress is attached. A table that already reached a terminal state keeps its
+     * persisted values: its counts are final, and a chunk event that arrives after the table was
+     * completed (a retried notification, see {@code snapshot.monitoring.notification.retries}) must not
+     * put a progress bar back on it.
      */
     TableProgress toTableProgress(Long pipelineId, ActiveSnapshotTable table) {
-        ChunkOverlay overlay = overlayFor(pipelineId, table.getTableName());
+        ChunkOverlay overlay = isTerminal(table.getState()) ? null : overlayFor(pipelineId, table.getTableName());
         long rows = table.getRowsScanned();
         ChunkProgress chunk = null;
         if (overlay != null) {
             rows = Math.max(rows, overlay.rowsScanned());
-            if (overlay.chunkIndex() != null && overlay.totalChunks() != null && overlay.totalChunks() > 0) {
-                double chunkPercentage = Math.min(100.0, overlay.chunkIndex() * 100.0 / overlay.totalChunks());
-                chunk = new ChunkProgress(overlay.chunkIndex(), overlay.totalChunks(), chunkPercentage);
+            if (overlay.chunkNumber() != null && overlay.totalChunks() != null && overlay.totalChunks() > 0) {
+                // The chunk being worked on is reported as-is, while the bar only counts finished chunks,
+                // so it reaches 100% on the last chunk's completion and not when that chunk starts.
+                double chunkPercentage = Math.min(100.0, overlay.completedChunks() * 100.0 / overlay.totalChunks());
+                chunk = new ChunkProgress(overlay.chunkNumber(), overlay.totalChunks(), chunkPercentage);
             }
         }
         return new TableProgress(table.getTableName(), table.getState(), chunk, rows, table.getSkipReason());
@@ -114,6 +121,10 @@ public class ChunkProgressTracker {
      */
     void clear(Long pipelineId) {
         overlays.remove(pipelineId);
+    }
+
+    private static boolean isTerminal(TableState state) {
+        return state == TableState.COMPLETED || state == TableState.SKIPPED || state == TableState.FAILED;
     }
 
     private ChunkOverlay overlayFor(Long pipelineId, String tableName) {

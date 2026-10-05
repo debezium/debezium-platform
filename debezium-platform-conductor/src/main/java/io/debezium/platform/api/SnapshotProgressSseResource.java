@@ -16,6 +16,9 @@ import jakarta.ws.rs.sse.OutboundSseEvent;
 import jakarta.ws.rs.sse.Sse;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import io.debezium.platform.api.dto.SnapshotProgressResponse;
@@ -52,6 +55,8 @@ public class SnapshotProgressSseResource {
     @Path("/progress")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Current snapshot progress for a pipeline (non-streaming)")
+    @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = SnapshotProgressResponse.class, required = true)))
+    @APIResponse(responseCode = "404", description = "Unknown pipeline")
     public Response current(@PathParam("pipelineId") Long pipelineId) {
         if (pipelineService.findById(pipelineId).isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -64,6 +69,8 @@ public class SnapshotProgressSseResource {
     @Produces(MediaType.SERVER_SENT_EVENTS)
     @Blocking
     @Operation(summary = "Stream live snapshot progress for a pipeline via SSE")
+    @APIResponse(responseCode = "200", description = "Stream of named snapshot-progress events, each carrying the full current state", content = @Content(mediaType = MediaType.SERVER_SENT_EVENTS, schema = @Schema(implementation = SnapshotProgressResponse.class, required = true)))
+    @APIResponse(responseCode = "404", description = "Unknown pipeline")
     public Multi<OutboundSseEvent> stream(@PathParam("pipelineId") Long pipelineId, @Context Sse sse) {
         // The pipeline-existence check must happen here, synchronously, and not inside the returned
         // Multi: RESTEasy commits the SSE response (200, chunked) as soon as this method returns, so a

@@ -49,6 +49,7 @@ class SnapshotProgressAggregatorTest {
     private static final Long PIPELINE_ID = 1L;
     private static final Instant TS = Instant.parse("2026-09-21T10:00:00Z");
     private static final Duration HEARTBEAT = Duration.ofSeconds(30);
+    private static final Duration DEBOUNCE = Duration.ofSeconds(1);
 
     @Mock
     ActiveSnapshotService activeService;
@@ -65,12 +66,17 @@ class SnapshotProgressAggregatorTest {
     @Mock
     SnapshotMonitoringConfigGroup.WatchdogConfigGroup watchdog;
 
+    @Mock
+    SnapshotMonitoringConfigGroup.SseConfigGroup sse;
+
     SnapshotProgressAggregator aggregator;
 
     @BeforeEach
     void setUp() {
         when(config.watchdog()).thenReturn(watchdog);
         when(watchdog.heartbeat()).thenReturn(HEARTBEAT);
+        when(config.sse()).thenReturn(sse);
+        when(sse.debounce()).thenReturn(DEBOUNCE);
         aggregator = new SnapshotProgressAggregator(activeService, historyService, pipelineService, config);
         // Unstubbed Optional-returning mocks default to Optional.empty(); individual tests that need an
         // active snapshot stub activeService.find(...) explicitly.
@@ -191,6 +197,34 @@ class SnapshotProgressAggregatorTest {
 
     @Test
     @FixFor("debezium/dbz#2536")
+    void chunkProgressTimestampFromTheFutureDoesNotWedgeTheHeartbeat() {
+        // The heartbeat compares notification timestamps, which are per-table and can cross: a single
+        // event from the future must not suppress another table's writes until event time catches up.
+        chunkProgressAt("inventory.orders", TS);
+        chunkProgressAt("inventory.products", TS.plusSeconds(1));
+        chunkProgressAt("inventory.orders", TS.plus(Duration.ofHours(2)));
+
+        chunkProgressAt("inventory.products", TS.plusSeconds(2));
+
+        verify(activeService).markInProgress(PIPELINE_ID, "inventory.products", TS.plusSeconds(2));
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
+    void chunkProgressWithoutTableNameIsIgnored() {
+        // Nothing can be attributed to a table, so neither the overlay nor the active row is touched and
+        // the event must not count as a heartbeat write for the next real one.
+        aggregator.accept(PIPELINE_ID, notificationAt(SnapshotNotifications.AGG_INITIAL,
+                SnapshotNotifications.TABLE_CHUNK_IN_PROGRESS,
+                Map.of(SnapshotNotifications.K_ROWS_SCANNED, "1000"), TS.toEpochMilli()));
+        chunkProgressAt("inventory.orders", TS.plusSeconds(1));
+
+        verify(activeService, times(1)).markInProgress(anyLong(), any(), any());
+        verify(activeService).markInProgress(PIPELINE_ID, "inventory.orders", TS.plusSeconds(1));
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
     void tableScanSucceededMapsToCompleted() {
         aggregator.accept(PIPELINE_ID, notification(SnapshotNotifications.AGG_INITIAL, SnapshotNotifications.TABLE_SCAN_COMPLETED,
                 Map.of(SnapshotNotifications.K_SCANNED_COLLECTION, "inventory.orders",
@@ -300,7 +334,7 @@ class SnapshotProgressAggregatorTest {
         assertThat(state.tables()).hasSize(1);
         var tableProgress = state.tables().get(0);
         assertThat(tableProgress.name()).isEqualTo("inventory.orders");
-        assertThat(tableProgress.progress().chunkIndex()).isEqualTo(3);
+        assertThat(tableProgress.progress().chunkNumber()).isEqualTo(4);
         assertThat(tableProgress.progress().totalChunks()).isEqualTo(6);
         assertThat(tableProgress.progress().percentage()).isEqualTo(50.0);
         // Live overlay row count wins over the (stale) persisted value.

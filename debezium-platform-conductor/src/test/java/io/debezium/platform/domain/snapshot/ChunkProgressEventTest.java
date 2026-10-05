@@ -28,12 +28,34 @@ class ChunkProgressEventTest {
                 SnapshotNotifications.K_TOTAL_CHUNKS, "6",
                 SnapshotNotifications.K_ROWS_SCANNED, "3000");
 
-        ChunkProgressEvent event = ChunkProgressEvent.from(data);
+        ChunkProgressEvent event = ChunkProgressEvent.from(SnapshotNotifications.TABLE_CHUNK_IN_PROGRESS, data);
 
         assertThat(event.currentTable()).isEqualTo("inventory.orders");
-        assertThat(event.chunkIndex()).isEqualTo(3);
+        // chunk_index is 0-based: the fourth chunk is running and three are done.
+        assertThat(event.chunkNumber()).isEqualTo(4);
+        assertThat(event.completedChunks()).isEqualTo(3);
         assertThat(event.totalChunks()).isEqualTo(6);
         assertThat(event.rowsScanned()).isEqualTo(3000L);
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
+    void completedChunkCountsItselfWhileARunningOneDoesNot() {
+        // Both notifications bracketing a chunk carry the same chunk_index, so the chunk counts as done
+        // only on TABLE_CHUNK_COMPLETED. The last chunk of a table is therefore "4 of 4" at 75% while it
+        // runs, and reaches 100% when it completes.
+        Map<String, String> data = Map.of(
+                SnapshotNotifications.K_CURRENT_COLLECTION, "inventory.orders",
+                SnapshotNotifications.K_CHUNK_INDEX, "3",
+                SnapshotNotifications.K_TOTAL_CHUNKS, "4");
+
+        ChunkProgressEvent running = ChunkProgressEvent.from(SnapshotNotifications.TABLE_CHUNK_IN_PROGRESS, data);
+        ChunkProgressEvent completed = ChunkProgressEvent.from(SnapshotNotifications.TABLE_CHUNK_COMPLETED, data);
+
+        assertThat(running.chunkNumber()).isEqualTo(4);
+        assertThat(running.completedChunks()).isEqualTo(3);
+        assertThat(completed.chunkNumber()).isEqualTo(4);
+        assertThat(completed.completedChunks()).isEqualTo(4);
     }
 
     @Test
@@ -46,10 +68,11 @@ class ChunkProgressEventTest {
                 SnapshotNotifications.K_CHUNK_INDEX, "3",
                 SnapshotNotifications.K_TOTAL_CHUNKS, "10");
 
-        ChunkProgressEvent event = ChunkProgressEvent.from(data);
+        ChunkProgressEvent event = ChunkProgressEvent.from(SnapshotNotifications.TABLE_CHUNK_COMPLETED, data);
 
         assertThat(event.currentTable()).isEqualTo("inventory.orders");
-        assertThat(event.chunkIndex()).isEqualTo(3);
+        assertThat(event.chunkNumber()).isEqualTo(4);
+        assertThat(event.completedChunks()).isEqualTo(4);
         assertThat(event.totalChunks()).isEqualTo(10);
         assertThat(event.rowsScanned()).isNull();
     }
@@ -61,16 +84,19 @@ class ChunkProgressEventTest {
                 SnapshotNotifications.K_CURRENT_COLLECTION, "inventory.orders",
                 SnapshotNotifications.K_SCANNED_COLLECTION, "inventory.products");
 
-        assertThat(ChunkProgressEvent.from(data).currentTable()).isEqualTo("inventory.orders");
+        assertThat(ChunkProgressEvent.from(SnapshotNotifications.TABLE_CHUNK_IN_PROGRESS, data).currentTable())
+                .isEqualTo("inventory.orders");
     }
 
     @Test
     @FixFor("debezium/dbz#2536")
     void fromReturnsNullsForAbsentEntries() {
-        ChunkProgressEvent event = ChunkProgressEvent.from(new HashMap<>());
+        ChunkProgressEvent event = ChunkProgressEvent.from(SnapshotNotifications.TABLE_CHUNK_IN_PROGRESS,
+                new HashMap<>());
 
         assertThat(event.currentTable()).isNull();
-        assertThat(event.chunkIndex()).isNull();
+        assertThat(event.chunkNumber()).isNull();
+        assertThat(event.completedChunks()).isNull();
         assertThat(event.totalChunks()).isNull();
         assertThat(event.rowsScanned()).isNull();
     }
@@ -84,10 +110,11 @@ class ChunkProgressEventTest {
                 SnapshotNotifications.K_TOTAL_CHUNKS, "  ",
                 SnapshotNotifications.K_ROWS_SCANNED, "12.5");
 
-        ChunkProgressEvent event = ChunkProgressEvent.from(data);
+        ChunkProgressEvent event = ChunkProgressEvent.from(SnapshotNotifications.TABLE_CHUNK_IN_PROGRESS, data);
 
         assertThat(event.currentTable()).isEqualTo("inventory.orders");
-        assertThat(event.chunkIndex()).isNull();
+        assertThat(event.chunkNumber()).isNull();
+        assertThat(event.completedChunks()).isNull();
         assertThat(event.totalChunks()).isNull();
         assertThat(event.rowsScanned()).isNull();
     }
@@ -99,9 +126,9 @@ class ChunkProgressEventTest {
                 SnapshotNotifications.K_CHUNK_INDEX, " 2 ",
                 SnapshotNotifications.K_ROWS_SCANNED, " 1000 ");
 
-        ChunkProgressEvent event = ChunkProgressEvent.from(data);
+        ChunkProgressEvent event = ChunkProgressEvent.from(SnapshotNotifications.TABLE_CHUNK_IN_PROGRESS, data);
 
-        assertThat(event.chunkIndex()).isEqualTo(2);
+        assertThat(event.chunkNumber()).isEqualTo(3);
         assertThat(event.rowsScanned()).isEqualTo(1000L);
     }
 }

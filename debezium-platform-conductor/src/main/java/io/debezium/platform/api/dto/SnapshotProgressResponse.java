@@ -40,7 +40,12 @@ public record SnapshotProgressResponse(
             long rowsScanned,
             String skipReason) {
 
-        public record ChunkProgress(int chunkIndex, int totalChunks, double percentage) {
+        /**
+         * Chunk-level progress of a table currently being scanned. {@code chunkNumber} is 1-based (the
+         * chunk being worked on, as in "chunk 2 of 6") while {@code percentage} counts the chunks that
+         * actually finished, so it is still below 100% while the last chunk is running.
+         */
+        public record ChunkProgress(int chunkNumber, int totalChunks, double percentage) {
         }
     }
 

@@ -46,7 +46,7 @@ class ChunkProgressTrackerTest {
 
         assertThat(outcome).isEqualTo(RecordOutcome.FIRST_FOR_TABLE);
         TableProgress progress = tracker.toTableProgress(PIPELINE_ID, mockTable(ORDERS, TableState.IN_PROGRESS, 0L));
-        assertThat(progress.progress().chunkIndex()).isEqualTo(2);
+        assertThat(progress.progress().chunkNumber()).isEqualTo(3);
         assertThat(progress.rowsScanned()).isEqualTo(2000L);
     }
 
@@ -102,9 +102,9 @@ class ChunkProgressTrackerTest {
         TableProgress orders = tracker.toTableProgress(PIPELINE_ID, mockTable(ORDERS, TableState.IN_PROGRESS, 0L));
         TableProgress products = tracker.toTableProgress(PIPELINE_ID, mockTable(PRODUCTS, TableState.IN_PROGRESS, 0L));
 
-        assertThat(orders.progress().chunkIndex()).isEqualTo(3);
+        assertThat(orders.progress().chunkNumber()).isEqualTo(4);
         assertThat(orders.rowsScanned()).isEqualTo(3000L);
-        assertThat(products.progress().chunkIndex()).isEqualTo(5);
+        assertThat(products.progress().chunkNumber()).isEqualTo(6);
         assertThat(products.rowsScanned()).isEqualTo(4000L);
     }
 
@@ -127,11 +127,33 @@ class ChunkProgressTrackerTest {
         TableProgress progress = tracker.toTableProgress(PIPELINE_ID, mockTable(ORDERS, TableState.IN_PROGRESS, 100L));
 
         assertThat(progress.name()).isEqualTo(ORDERS);
-        assertThat(progress.progress().chunkIndex()).isEqualTo(3);
+        assertThat(progress.progress().chunkNumber()).isEqualTo(4);
         assertThat(progress.progress().totalChunks()).isEqualTo(6);
         assertThat(progress.progress().percentage()).isEqualTo(50.0);
         // Live overlay row count wins over the (stale) persisted value.
         assertThat(progress.rowsScanned()).isEqualTo(3000L);
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
+    void lastChunkReachesHundredPercentOnlyOnceItCompletes() {
+        // The two notifications of the last chunk carry the same 0-based index, so the bar stays at
+        // 75% while that chunk is scanned and only fills up when its completion arrives.
+        tracker.record(PIPELINE_ID, event(ORDERS, "3", "4", "3000"), TS);
+        assertThat(tracker.toTableProgress(PIPELINE_ID, mockTable(ORDERS, TableState.IN_PROGRESS, 0L)).progress())
+                .satisfies(progress -> {
+                    assertThat(progress.chunkNumber()).isEqualTo(4);
+                    assertThat(progress.percentage()).isEqualTo(75.0);
+                });
+
+        tracker.record(PIPELINE_ID,
+                event(SnapshotNotifications.TABLE_CHUNK_COMPLETED, ORDERS, "3", "4", null), TS.plusSeconds(1));
+
+        assertThat(tracker.toTableProgress(PIPELINE_ID, mockTable(ORDERS, TableState.IN_PROGRESS, 0L)).progress())
+                .satisfies(progress -> {
+                    assertThat(progress.chunkNumber()).isEqualTo(4);
+                    assertThat(progress.percentage()).isEqualTo(100.0);
+                });
     }
 
     @Test
@@ -196,6 +218,19 @@ class ChunkProgressTrackerTest {
 
     @Test
     @FixFor("debezium/dbz#2536")
+    void overlayIsIgnoredOnceTheTableReachedATerminalState() {
+        // A chunk event can still arrive after the table was completed (a retried notification), which
+        // re-creates its overlay; the finished table must keep its final persisted values.
+        tracker.record(PIPELINE_ID, event(ORDERS, "3", "6", "3000"), TS);
+
+        TableProgress progress = tracker.toTableProgress(PIPELINE_ID, mockTable(ORDERS, TableState.COMPLETED, 5000L));
+
+        assertThat(progress.progress()).isNull();
+        assertThat(progress.rowsScanned()).isEqualTo(5000L);
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
     void completeTableKeepsOverlayForDifferentTable() {
         tracker.record(PIPELINE_ID, event(ORDERS, "3", "6", "3000"), TS);
 
@@ -203,7 +238,7 @@ class ChunkProgressTrackerTest {
 
         // The overlay for the still-running table survives, so it keeps merging onto it.
         TableProgress progress = tracker.toTableProgress(PIPELINE_ID, mockTable(ORDERS, TableState.IN_PROGRESS, 0L));
-        assertThat(progress.progress().chunkIndex()).isEqualTo(3);
+        assertThat(progress.progress().chunkNumber()).isEqualTo(4);
         assertThat(progress.rowsScanned()).isEqualTo(3000L);
     }
 
@@ -221,6 +256,11 @@ class ChunkProgressTrackerTest {
     }
 
     private static ChunkProgressEvent event(String currentTable, String chunkIndex, String totalChunks, String rows) {
+        return event(SnapshotNotifications.TABLE_CHUNK_IN_PROGRESS, currentTable, chunkIndex, totalChunks, rows);
+    }
+
+    private static ChunkProgressEvent event(String notificationType, String currentTable, String chunkIndex,
+                                            String totalChunks, String rows) {
         HashMap<String, String> data = new HashMap<>();
         if (currentTable != null) {
             data.put(SnapshotNotifications.K_CURRENT_COLLECTION, currentTable);
@@ -234,7 +274,7 @@ class ChunkProgressTrackerTest {
         if (rows != null) {
             data.put(SnapshotNotifications.K_ROWS_SCANNED, rows);
         }
-        return ChunkProgressEvent.from(data);
+        return ChunkProgressEvent.from(notificationType, data);
     }
 
     private static ActiveSnapshotTable mockTable(String name, TableState state, long rowsScanned) {

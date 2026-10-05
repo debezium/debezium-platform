@@ -214,6 +214,18 @@ components:
       enum:
       - EMAIL
       - WEBHOOK
+    ChunkProgress:
+      type: object
+      properties:
+        chunkNumber:
+          type: integer
+          format: int32
+        totalChunks:
+          type: integer
+          format: int32
+        percentage:
+          type: number
+          format: double
     CollectionNode:
       type: object
       properties:
@@ -309,29 +321,23 @@ components:
       format: duration
       examples:
       - P1D
+    GlobalProgress:
+      type: object
+      properties:
+        totalTables:
+          type: integer
+          format: int32
+        completedTables:
+          type: integer
+          format: int32
+        percentage:
+          type: number
+          format: double
     Instant:
       type: string
       format: date-time
       examples:
       - 2022-03-10T16:15:50Z
-    MediaType:
-      type: object
-      properties:
-        type:
-          type: string
-        subtype:
-          type: string
-        parameters:
-          type: object
-          additionalProperties:
-            type: string
-        hash:
-          type: integer
-          format: int32
-        wildcardType:
-          type: boolean
-        wildcardSubtype:
-          type: boolean
     Metadata:
       type: object
       properties:
@@ -391,27 +397,6 @@ components:
       - LESS_THAN_OR_EQUAL
       - EQUAL
       - NOT_EQUAL
-    OutboundSseEvent:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        comment:
-          type: string
-        reconnectDelay:
-          type: integer
-          format: int64
-        reconnectDelaySet:
-          type: boolean
-        type:
-          type: object
-        genericType:
-          type: object
-        mediaType:
-          $ref: "#/components/schemas/MediaType"
-        data: {}
     PagedAlertEventResponse:
       type: object
       properties:
@@ -684,6 +669,29 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TableHistoryEntry"
+    SnapshotProgressResponse:
+      type: object
+      properties:
+        type:
+          $ref: "#/components/schemas/SnapshotType"
+        status:
+          $ref: "#/components/schemas/SnapshotState"
+        globalProgress:
+          $ref: "#/components/schemas/GlobalProgress"
+        tables:
+          type: array
+          items:
+            $ref: "#/components/schemas/TableProgress"
+        startedAt:
+          $ref: "#/components/schemas/Instant"
+        lastUpdatedAt:
+          $ref: "#/components/schemas/Instant"
+        elapsedSeconds:
+          type: integer
+          format: int64
+        totalRowsScanned:
+          type: integer
+          format: int64
     SnapshotState:
       type: string
       enum:
@@ -767,6 +775,20 @@ components:
         durationSeconds:
           type: integer
           format: int64
+    TableProgress:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          $ref: "#/components/schemas/TableState"
+        progress:
+          $ref: "#/components/schemas/ChunkProgress"
+        rowsScanned:
+          type: integer
+          format: int64
+        skipReason:
+          type: string
     TableState:
       type: string
       enum:
@@ -1854,7 +1876,10 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: "#/components/schemas/SnapshotProgressResponse"
+        "404":
+          description: Unknown pipeline
   /api/pipelines/{pipelineId}/snapshots/progress/stream:
     get:
       summary: Stream live snapshot progress for a pipeline via SSE
@@ -1869,11 +1894,14 @@ paths:
           format: int64
       responses:
         "200":
-          description: OK
+          description: "Stream of named snapshot-progress events, each carrying the\
+            \ full current state"
           content:
             text/event-stream:
               schema:
-                $ref: "#/components/schemas/OutboundSseEvent"
+                $ref: "#/components/schemas/SnapshotProgressResponse"
+        "404":
+          description: Unknown pipeline
   /api/sources:
     post:
       summary: Creates new source

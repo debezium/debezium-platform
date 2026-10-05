@@ -31,11 +31,11 @@ import io.restassured.response.ValidatableResponse;
  * End-to-end integration tests for {@link SnapshotNotificationReceiver} (DDD-68). A posted
  * notification flows through the aggregator into the active tier and is reflected by the one-shot
  * progress endpoint. The main test drives a whole snapshot lifecycle so every notification type the
- * aggregator handles is exercised over HTTP &mdash; STARTED, chunk progress (both the
- * {@code IN_PROGRESS} and {@code TABLE_CHUNK_IN_PROGRESS} spellings), table completion (both
- * {@code TABLE_SCAN_COMPLETED} and {@code TABLE_CHUNK_COMPLETED}), PAUSED/RESUMED, and each of the
- * three terminals (COMPLETED, ABORTED, SKIPPED) &mdash; plus the receiver-level validation of the
- * target pipeline (404) and request body (400) and the graceful handling of ignored notifications.
+ * aggregator handles is exercised over HTTP &mdash; STARTED, chunk progress (all three of
+ * {@code IN_PROGRESS}, {@code TABLE_CHUNK_IN_PROGRESS} and {@code TABLE_CHUNK_COMPLETED}), table
+ * completion via {@code TABLE_SCAN_COMPLETED}, PAUSED/RESUMED, and each of the three terminals
+ * (COMPLETED, ABORTED, SKIPPED) &mdash; plus the receiver-level validation of the target pipeline
+ * (404) and request body (400) and the graceful handling of ignored notifications.
  */
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -150,7 +150,7 @@ class SnapshotNotificationReceiverIT {
                 .body("status", is("RUNNING"))
                 .body("tables[0].name", is("inventory.orders"))
                 .body("tables[0].status", is("IN_PROGRESS"))
-                .body("tables[0].progress.chunkIndex", is(2))
+                .body("tables[0].progress.chunkNumber", is(3))
                 .body("tables[0].progress.totalChunks", is(10))
                 .body("tables[0].progress.percentage", is(20.0f))
                 .body("tables[0].rowsScanned", is(2000));
@@ -170,7 +170,7 @@ class SnapshotNotificationReceiverIT {
                 T0 + 120_000));
 
         progress()
-                .body("tables[0].progress.chunkIndex", is(5))
+                .body("tables[0].progress.chunkNumber", is(6))
                 .body("tables[0].progress.percentage", is(50.0f))
                 .body("tables[0].rowsScanned", is(4000));
     }
@@ -197,13 +197,38 @@ class SnapshotNotificationReceiverIT {
     @Test
     @Order(8)
     @FixFor("debezium/dbz#2536")
-    void emptyTableChunkCompletedMapsToSkipped() {
-        // TABLE_CHUNK_COMPLETED is handled by the same branch as TABLE_SCAN_COMPLETED.
-        accept(notification("n-products-done", SnapshotNotifications.TABLE_CHUNK_COMPLETED,
+    void tableChunkCompletedReportsProgressWithoutCompletingTheTable() {
+        // TABLE_CHUNK_COMPLETED ends one chunk, not the table scan: it is handled by the chunk branch,
+        // so it moves the table to IN_PROGRESS and attaches live progress, and only
+        // TABLE_SCAN_COMPLETED marks the table done. Being the completion of the (0-based) chunk 3 of
+        // 4, it reports the fourth chunk as the current one and all four as scanned.
+        accept(notification("n-products-chunk", SnapshotNotifications.TABLE_CHUNK_COMPLETED,
+                additionalData(
+                        SnapshotNotifications.K_SCANNED_COLLECTION, "inventory.products",
+                        SnapshotNotifications.K_CHUNK_INDEX, "3",
+                        SnapshotNotifications.K_TOTAL_CHUNKS, "4",
+                        SnapshotNotifications.K_ROWS_SCANNED, "300"),
+                T0 + 240_000));
+
+        progress()
+                .body("globalProgress.completedTables", is(1))
+                .body("tables[1].name", is("inventory.products"))
+                .body("tables[1].status", is("IN_PROGRESS"))
+                .body("tables[1].progress.chunkNumber", is(4))
+                .body("tables[1].progress.totalChunks", is(4))
+                .body("tables[1].progress.percentage", is(100.0f))
+                .body("tables[1].rowsScanned", is(300));
+    }
+
+    @Test
+    @Order(9)
+    @FixFor("debezium/dbz#2536")
+    void emptyTableScanCompletedMapsToSkipped() {
+        accept(notification("n-products-done", SnapshotNotifications.TABLE_SCAN_COMPLETED,
                 additionalData(
                         SnapshotNotifications.K_SCANNED_COLLECTION, "inventory.products",
                         SnapshotNotifications.K_STATUS, "EMPTY"),
-                T0 + 240_000));
+                T0 + 270_000));
 
         progress()
                 .body("globalProgress.completedTables", is(1))
@@ -211,11 +236,13 @@ class SnapshotNotificationReceiverIT {
                 .body("tables[1].name", is("inventory.products"))
                 .body("tables[1].status", is("SKIPPED"))
                 .body("tables[1].skipReason", is("Table is empty"))
+                // The chunk overlay is dropped once the table is done, so the live count gives way.
+                .body("tables[1].progress", nullValue())
                 .body("tables[1].rowsScanned", is(0));
     }
 
     @Test
-    @Order(9)
+    @Order(10)
     @FixFor("debezium/dbz#2536")
     void pausedThenResumedUpdatesStatus() {
         accept(notification("n-paused", SnapshotNotifications.PAUSED, "{}", T0 + 300_000));
@@ -226,7 +253,7 @@ class SnapshotNotificationReceiverIT {
     }
 
     @Test
-    @Order(10)
+    @Order(11)
     @FixFor("debezium/dbz#2536")
     void unknownNotificationTypeIsAcknowledgedButIgnored() {
         accept(notification("n-unknown", "SOMETHING_NEW", "{}", T0 + 420_000));
@@ -235,7 +262,7 @@ class SnapshotNotificationReceiverIT {
     }
 
     @Test
-    @Order(11)
+    @Order(12)
     @FixFor("debezium/dbz#2536")
     void nonSnapshotAggregateIsAcknowledgedButIgnored() {
         accept(notification("n-other", "Some Other Aggregate", SnapshotNotifications.STARTED, "{}", T0 + 480_000));
@@ -243,7 +270,7 @@ class SnapshotNotificationReceiverIT {
     }
 
     @Test
-    @Order(12)
+    @Order(13)
     @FixFor("debezium/dbz#2536")
     void completedDrainsToIdleAndWritesHistory() {
         accept(notification("n-completed", SnapshotNotifications.COMPLETED, "{}", T0 + 540_000));
@@ -265,7 +292,7 @@ class SnapshotNotificationReceiverIT {
     }
 
     @Test
-    @Order(13)
+    @Order(14)
     @FixFor("debezium/dbz#2536")
     void startedThenAbortedRecordsAbortedRun() {
         accept(notification("n-started-2", SnapshotNotifications.STARTED,
@@ -285,7 +312,7 @@ class SnapshotNotificationReceiverIT {
     }
 
     @Test
-    @Order(14)
+    @Order(15)
     @FixFor("debezium/dbz#2536")
     void startedThenSkippedRecordsSkippedRun() {
         accept(notification("n-started-3", SnapshotNotifications.STARTED,
