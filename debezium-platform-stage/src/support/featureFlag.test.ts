@@ -61,16 +61,16 @@ describe("featureFlag", () => {
         return;
       }
 
-      expect(visible).toBe(!featureFlagUi.hideDisabledFeaturesFromNav);
-      expect(accessible).toBe(!featureFlagUi.hideDisabledFeaturesFromNav);
-      expect(access).toBe(
-        featureFlagUi.hideDisabledFeaturesFromNav ? "unavailable" : "comingSoon"
-      );
+      // coming-soon features are always visible in the nav and always routable
+      // so the coming-soon overlay can be rendered, regardless of hideDisabledFeaturesFromNav
+      expect(visible).toBe(true);
+      expect(accessible).toBe(true);
+      expect(access).toBe("comingSoon");
     });
   });
 
   it.skipIf(getComingSoonFlags().length === 0)(
-    "toggles coming-soon nav visibility with hideDisabledFeaturesFromNav",
+    "coming-soon features remain visible regardless of hideDisabledFeaturesFromNav",
     () => {
       const comingSoonFlags = getComingSoonFlags();
 
@@ -83,9 +83,9 @@ describe("featureFlag", () => {
 
       featureFlagUi.hideDisabledFeaturesFromNav = true;
       comingSoonFlags.forEach((flag) => {
-        expect(isRouteNavVisible(flag)).toBe(false);
-        expect(isFeatureAccessible(flag)).toBe(false);
-        expect(getFeaturePageAccess(flag)).toBe("unavailable");
+        expect(isRouteNavVisible(flag)).toBe(true);
+        expect(isFeatureAccessible(flag)).toBe(true);
+        expect(getFeaturePageAccess(flag)).toBe("comingSoon");
       });
     }
   );

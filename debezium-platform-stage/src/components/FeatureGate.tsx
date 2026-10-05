@@ -6,7 +6,7 @@ import {
   isFeatureComingSoon,
   isFeatureEnabled,
   isFeatureHidden,
-} from "@utils/featureFlag";
+} from "@support/featureFlag";
 import "./FeatureGate.css";
 
 type FeatureGateProps = {

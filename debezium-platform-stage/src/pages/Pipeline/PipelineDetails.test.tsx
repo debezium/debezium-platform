@@ -69,9 +69,9 @@ vi.mock("../../apis/apis", () => ({
   }),
 }));
 
-vi.mock("@utils/featureFlag", async () => {
-  const actual = await vi.importActual<typeof import("@utils/featureFlag")>(
-    "@utils/featureFlag"
+vi.mock("@support/featureFlag", async () => {
+  const actual = await vi.importActual<typeof import("@support/featureFlag")>(
+    "@support/featureFlag"
   );
 
   return {
@@ -84,7 +84,7 @@ vi.mock("@utils/featureFlag", async () => {
 import {
   getEnabledPipelineTabs,
   isPipelineTabEnabled,
-} from "@utils/featureFlag";
+} from "@support/featureFlag";
 
 const renderPipelineDetails = (initialEntry: string) =>
   render(

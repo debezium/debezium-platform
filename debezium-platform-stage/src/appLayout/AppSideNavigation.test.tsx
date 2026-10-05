@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import AppSideNavigation from "./AppSideNavigation";
 import { expect, test, vi, afterEach, beforeEach } from "vitest";
 import { render } from "../__test__/unit/test-utils";
-import { featureFlagUi, isRouteNavVisible } from "@utils/featureFlag";
+import { featureFlagUi, isRouteNavVisible } from "@support/featureFlag";
 import { isNavRouteVisible, isRouteGroup, routes } from "../route";
 import { AlertStatusResponse } from "../pages/Alerts/alertsTypes";
 

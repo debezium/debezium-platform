@@ -7,7 +7,7 @@ import {
   getComingSoonFlags,
   getFeaturePageAccess,
   type FeatureFlag,
-} from "@utils/featureFlag";
+} from "@support/featureFlag";
 
 vi.mock("./appLayout/AppContext", () => ({
   useData: () => ({
@@ -52,7 +52,7 @@ describe("AppRoutes", () => {
   });
 
   it.skipIf(getComingSoonFlags().length === 0)(
-    "does not expose disabled coming-soon routes when hideDisabledFeaturesFromNav is true",
+    "still renders the coming-soon overlay when hideDisabledFeaturesFromNav is true",
     () => {
       const comingSoonFlag = getComingSoonFlags()[0];
       const path = GATED_PAGE_PATHS[comingSoonFlag];
@@ -63,7 +63,8 @@ describe("AppRoutes", () => {
       featureFlagUi.hideDisabledFeaturesFromNav = true;
       render(<AppRoutes />, { initialEntries: [path] });
 
-      expect(screen.getByText(/404: Page Not Found/i)).toBeInTheDocument();
+      expect(screen.queryByText(/404: Page Not Found/i)).not.toBeInTheDocument();
+      expect(screen.getByAltText("Coming Soon")).toBeInTheDocument();
     }
   );
 });

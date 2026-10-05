@@ -3,9 +3,9 @@ import AppBreadcrumb, { getBreadcrumbTrail } from "./AppBreadcrumb";
 import { expect, test, vi } from "vitest";
 import { render } from "../__test__/unit/test-utils";
 
-vi.mock("@utils/featureFlag", async () => {
-  const actual = await vi.importActual<typeof import("@utils/featureFlag")>(
-    "@utils/featureFlag"
+vi.mock("@support/featureFlag", async () => {
+  const actual = await vi.importActual<typeof import("@support/featureFlag")>(
+    "@support/featureFlag"
   );
 
   return {
@@ -15,7 +15,7 @@ vi.mock("@utils/featureFlag", async () => {
   };
 });
 
-import { getPipelineDetailsRoutePattern, isFeatureAccessible } from "@utils/featureFlag";
+import { getPipelineDetailsRoutePattern, isFeatureAccessible } from "@support/featureFlag";
 
 test("render the Breadcrumb component", () => {
   const testPath = "/source/catalog";

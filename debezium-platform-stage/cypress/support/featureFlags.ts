@@ -5,7 +5,7 @@ import {
   isPipelineTabEnabled,
   isRouteNavVisible,
   type FeatureFlag,
-} from "../../src/utils/featureFlag";
+} from "../../src/support/featureFlag";
 
 export {
   getEnabledPipelineTabs,

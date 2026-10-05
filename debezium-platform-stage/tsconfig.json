@@ -24,11 +24,14 @@
       "@appContext/*": ["src/appLayout/*"],
       "@components/*": ["src/components/*"],
       "@utils/*": ["src/utils/*"],
+      "@support/*": ["src/support/*"],
       "@pipelinePage/*": ["src/pages/Pipeline/*"],
       "@sourcePage/*": ["src/pages/Source/*"],
       "@destinationPage/*": ["src/pages/Destination/*"],
       "@vaultPage/*": ["src/pages/Vault/*"],
       "@transformPage/*": ["src/pages/Transform/*"],
+      "@connectionPage/*": ["src/pages/Connection/*"],
+      "@alertsPage/*": ["src/pages/Alerts/*"]
     }
   },
   "include": ["src"],

@@ -37,7 +37,7 @@ import { useGuidedTour } from "../components/GuidedTourContext";
 import { useDocHelp } from "../components/DocHelpContext";
 import { resolveDocMapping } from "../docs/docMappings";
 import GlassModeIcon from "src/assets/customeIcons/GlassModeIcon";
-import { isFeatureEnabled } from "@utils/featureFlag";
+import { isFeatureEnabled } from "@support/featureFlag";
 
 interface AppHeaderProps {
   toggleSidebar: () => void;
