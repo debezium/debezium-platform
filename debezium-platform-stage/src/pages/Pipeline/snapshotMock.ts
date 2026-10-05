@@ -212,9 +212,9 @@ export const advanceSnapshotProgress = (
   };
 };
 
-export const getSnapshotProgress = (
-  _pipelineId: string
-): Promise<SnapshotMockResponse<SnapshotProgressResponse>> =>
+export const getSnapshotProgress: (
+  pipelineId: string
+) => Promise<SnapshotMockResponse<SnapshotProgressResponse>> = () =>
   Promise.resolve({ data: createSnapshotProgress() });
 
 export const subscribeSnapshotProgress = (

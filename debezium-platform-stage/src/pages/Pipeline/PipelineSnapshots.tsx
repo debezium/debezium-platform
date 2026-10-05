@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import {
   Alert,
   Bullseye,
@@ -231,81 +231,70 @@ const PipelineSnapshots: FC<PipelineSnapshotsProps> = ({
   const status = progress?.status;
   const [history, setHistory] = useState<PagedSnapshotHistoryResponse | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyKey, setHistoryKey] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(HISTORY_PAGE_SIZE);
   const [historyReload, setHistoryReload] = useState(0);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [details, setDetails] = useState<Record<number, SnapshotHistoryResponse>>({});
   const [detailErrors, setDetailErrors] = useState<Record<number, string>>({});
-  const [detailLoadingId, setDetailLoadingId] = useState<number | null>(null);
-  const detailsRef = useRef(details);
-  detailsRef.current = details;
+  const [historyPipelineId, setHistoryPipelineId] = useState(pipelineId);
+
+  const shouldLoadHistory =
+    activeTabKey === "snapshots" &&
+    Boolean(pipelineId) &&
+    !isSnapshotActive(status) &&
+    !((isProgressLoading || progressError) && !status);
+  const historyRequestKey = [
+    pipelineId,
+    page,
+    perPage,
+    historyReload,
+    status ?? "",
+    activeTabKey,
+    isProgressLoading ? "1" : "0",
+    progressError ?? "",
+  ].join(":");
 
   useEffect(() => {
-    setHistory(null);
-    setHistoryError(null);
-    setExpandedId(null);
-    setDetails({});
-    setDetailErrors({});
-    setPage(1);
-  }, [pipelineId]);
-
-  useEffect(() => {
-    if (activeTabKey !== "snapshots" || !pipelineId) {
-      return;
-    }
-    if (isSnapshotActive(status)) {
-      return;
-    }
-    if ((isProgressLoading || progressError) && !status) {
+    if (!shouldLoadHistory || !pipelineId) {
       return;
     }
 
     let cancelled = false;
-    setHistoryLoading(true);
+    const key = historyRequestKey;
 
     void getSnapshotHistory(pipelineId, page - 1, perPage).then((response) => {
       if (cancelled) {
         return;
       }
-      setHistoryLoading(false);
       if (response.error || !response.data) {
         setHistory(null);
         setHistoryError(response.error ?? "Snapshot history is unavailable.");
+        setHistoryKey(key);
         return;
       }
       setHistoryError(null);
       setHistory(response.data);
+      setHistoryKey(key);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [
-    activeTabKey,
-    pipelineId,
-    status,
-    page,
-    perPage,
-    historyReload,
-    isProgressLoading,
-    progressError,
-  ]);
+  }, [shouldLoadHistory, pipelineId, page, perPage, historyRequestKey]);
 
   useEffect(() => {
-    if (expandedId == null || detailsRef.current[expandedId] || !pipelineId) {
+    if (expandedId == null || details[expandedId] || !pipelineId) {
       return;
     }
 
     let cancelled = false;
-    setDetailLoadingId(expandedId);
 
     void getSnapshotHistoryDetail(pipelineId, expandedId).then((response) => {
       if (cancelled) {
         return;
       }
-      setDetailLoadingId((current) => (current === expandedId ? null : current));
       if (response.error || !response.data) {
         setDetailErrors((current) => ({
           ...current,
@@ -313,13 +302,29 @@ const PipelineSnapshots: FC<PipelineSnapshotsProps> = ({
         }));
         return;
       }
-      setDetails((current) => ({ ...current, [expandedId]: response.data as SnapshotHistoryResponse }));
+      setDetails((current) => ({
+        ...current,
+        [expandedId]: response.data as SnapshotHistoryResponse,
+      }));
     });
 
     return () => {
       cancelled = true;
     };
-  }, [expandedId, pipelineId]);
+  }, [expandedId, pipelineId, details]);
+
+  if (pipelineId !== historyPipelineId) {
+    setHistoryPipelineId(pipelineId);
+    setHistory(null);
+    setHistoryError(null);
+    setHistoryKey(null);
+    setExpandedId(null);
+    setDetails({});
+    setDetailErrors({});
+    setPage(1);
+  }
+
+  const historyLoading = shouldLoadHistory && historyKey !== historyRequestKey;
 
   if (isProgressLoading && !progress) {
     return (
@@ -526,7 +531,7 @@ const PipelineSnapshots: FC<PipelineSnapshotsProps> = ({
                         <Td />
                         <Td colSpan={6}>
                           <ExpandableRowContent>
-                            {detailLoadingId === item.id && !detail ? (
+                            {!detail && !detailErrors[item.id] ? (
                               <Spinner size="sm" aria-label={t("pipeline:snapshots.historyTables")} />
                             ) : detailErrors[item.id] && !detail ? (
                               <Content component="p">{detailErrors[item.id]}</Content>
