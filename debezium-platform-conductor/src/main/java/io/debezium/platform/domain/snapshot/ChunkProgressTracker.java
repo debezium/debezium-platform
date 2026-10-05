@@ -32,15 +32,26 @@ public class ChunkProgressTracker {
     private final Map<Long, Map<String, ChunkOverlay>> overlays = new ConcurrentHashMap<>();
 
     /**
-     * Records a chunk-progress update for the event's table. Ignores events older than the latest one
-     * already seen for that table (per-table reordering guard). Returns {@code true} when the
-     * update was applied, {@code false} when it was ignored as stale.
+     * What {@link #record(Long, ChunkProgressEvent, Instant)} did with an event. Callers distinguish a
+     * table's first event (the one whose table row still has to be created and moved to
+     * {@code IN_PROGRESS}) from the subsequent ones, which only carry progress.
      */
-    boolean record(Long pipelineId, ChunkProgressEvent event, Instant timestamp) {
+    enum RecordOutcome {
+        FIRST_FOR_TABLE,
+        UPDATED,
+        STALE
+    }
+
+    /**
+     * Records a chunk-progress update for the event's table. Events older than the latest one already
+     * seen for that table (per-table reordering guard) are ignored and reported as
+     * {@link RecordOutcome#STALE}.
+     */
+    RecordOutcome record(Long pipelineId, ChunkProgressEvent event, Instant timestamp) {
         Map<String, ChunkOverlay> tableOverlays = overlays.computeIfAbsent(pipelineId, key -> new HashMap<>());
         ChunkOverlay previous = tableOverlays.get(event.currentTable());
         if (previous != null && timestamp.isBefore(previous.lastUpdatedAt())) {
-            return false;
+            return RecordOutcome.STALE;
         }
         // Keep the last known row count when this event omits it; only overwrite on a reported value.
         long rowsScanned = event.rowsScanned() != null
@@ -48,7 +59,7 @@ public class ChunkProgressTracker {
                 : (previous != null ? previous.rowsScanned() : 0L);
         tableOverlays.put(event.currentTable(),
                 new ChunkOverlay(event.chunkIndex(), event.totalChunks(), rowsScanned, timestamp));
-        return true;
+        return previous == null ? RecordOutcome.FIRST_FOR_TABLE : RecordOutcome.UPDATED;
     }
 
     /**
@@ -86,15 +97,6 @@ public class ChunkProgressTracker {
             }
         }
         return latest;
-    }
-
-    /**
-     * Whether an overlay already exists for the table, i.e. a chunk event for it has been recorded
-     * before. Callers use this to tell a table's first chunk (which needs its row created and moved to
-     * {@code IN_PROGRESS}) from the subsequent ones.
-     */
-    boolean isTracked(Long pipelineId, String tableName) {
-        return overlayFor(pipelineId, tableName) != null;
     }
 
     /**

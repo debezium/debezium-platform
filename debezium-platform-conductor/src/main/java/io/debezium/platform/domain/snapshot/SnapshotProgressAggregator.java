@@ -32,6 +32,7 @@ import io.debezium.platform.data.model.TableState;
 import io.debezium.platform.domain.ActiveSnapshotService;
 import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.SnapshotHistoryService;
+import io.debezium.platform.domain.snapshot.ChunkProgressTracker.RecordOutcome;
 import io.debezium.platform.domain.snapshot.SnapshotNotifications.TableOutcome;
 import io.debezium.platform.domain.views.ActiveSnapshot;
 import io.debezium.platform.domain.views.ActiveSnapshotTable;
@@ -227,32 +228,23 @@ public class SnapshotProgressAggregator {
     private void onChunkProgress(Long pipelineId, SnapshotNotificationRequest notification) {
         Instant timestamp = instantOf(notification);
         ChunkProgressEvent event = ChunkProgressEvent.from(notification.additionalData());
-        // Asked before record(), which creates the overlay: no overlay yet means this is the first chunk
-        // event seen for the table, the one that has to create its row and move it to IN_PROGRESS.
-        boolean firstEventForTable = !chunkProgress.isTracked(pipelineId, event.currentTable());
-        if (!chunkProgress.record(pipelineId, event, timestamp)) {
-            return; // reordered (stale) chunk event, already superseded
+        RecordOutcome outcome = chunkProgress.record(pipelineId, event, timestamp);
+        if (outcome == RecordOutcome.STALE) {
+            return; // reordered chunk event, already superseded
         }
-        // Chunk events are the high-frequency ones: one per chunk, per snapshot thread, and every thread
-        // of a pipeline writes the same single active_snapshot row, so persisting each of them would make
-        // that row a contention point whose write rate grows with snapshot.max.threads (and with the
-        // chunk-size multiplier). Only the first event per table is structural; the rest just refresh
+        // Chunk events are the high-frequency ones, and every snapshot thread of a pipeline writes the
+        // same active_snapshot row. Only a table's first event is persisted eagerly: that one is
+        // structural, since markInProgress creates the table row (back-filling the list when the table
+        // set was not known at STARTED) and moves it to IN_PROGRESS. The rest merely refresh
         // last_updated_at so the staleness watchdog does not fire mid-scan, which a periodic heartbeat
         // does just as well. The live view is unaffected: currentState() takes the latest of the
         // persisted timestamp and the in-memory overlays, which every event updates.
-        if (!firstEventForTable && !heartbeatDue(pipelineId, timestamp)) {
+        if (outcome != RecordOutcome.FIRST_FOR_TABLE
+                && !intervalElapsed(lastProgressPersist, pipelineId, timestamp, config.watchdog().heartbeat())) {
             return;
         }
-        // Lazily ensure the current table exists as IN_PROGRESS (back-fills the list when the table
-        // set was not known at STARTED).
         activeService.markInProgress(pipelineId, event.currentTable(), timestamp);
         lastProgressPersist.put(pipelineId, timestamp);
-    }
-
-    private boolean heartbeatDue(Long pipelineId, Instant timestamp) {
-        Instant persistedAt = lastProgressPersist.get(pipelineId);
-        return persistedAt == null
-                || Duration.between(persistedAt, timestamp).compareTo(config.watchdog().heartbeat()) >= 0;
     }
 
     private void onTableCompleted(Long pipelineId, SnapshotNotificationRequest notification) {
@@ -279,14 +271,21 @@ public class SnapshotProgressAggregator {
             return; // nobody subscribed; avoid the state read entirely
         }
         Instant now = Instant.now();
-        if (!isCheckpointEvent) {
-            Instant lastBroadcastAt = lastBroadcast.get(pipelineId);
-            if (lastBroadcastAt != null && Duration.between(lastBroadcastAt, now).compareTo(config.sse().debounce()) < 0) {
-                return; // within the debounce window for a high-frequency chunk update
-            }
+        if (!isCheckpointEvent && !intervalElapsed(lastBroadcast, pipelineId, now, config.sse().debounce())) {
+            return; // within the debounce window for a high-frequency chunk update
         }
         lastBroadcast.put(pipelineId, now);
         broadcaster.onNext(currentState(pipelineId));
+    }
+
+    /**
+     * Whether {@code interval} has elapsed since the pipeline's last entry in {@code lastRun}, which is
+     * also the case when there is no entry yet. Shared by the two per-pipeline throttles: the SSE
+     * broadcast debounce and the chunk-progress persistence heartbeat.
+     */
+    private static boolean intervalElapsed(Map<Long, Instant> lastRun, Long pipelineId, Instant now, Duration interval) {
+        Instant previous = lastRun.get(pipelineId);
+        return previous == null || Duration.between(previous, now).compareTo(interval) >= 0;
     }
 
     private Object lockFor(Long pipelineId) {

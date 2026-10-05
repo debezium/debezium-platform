@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import io.debezium.doc.FixFor;
 import io.debezium.platform.api.dto.SnapshotProgressResponse.TableProgress;
 import io.debezium.platform.data.model.TableState;
+import io.debezium.platform.domain.snapshot.ChunkProgressTracker.RecordOutcome;
 import io.debezium.platform.domain.views.ActiveSnapshotTable;
 
 /**
@@ -41,9 +42,9 @@ class ChunkProgressTrackerTest {
     @Test
     @FixFor("debezium/dbz#2536")
     void recordAppliesChunkStateForNewPipeline() {
-        boolean applied = tracker.record(PIPELINE_ID, event(ORDERS, "2", "10", "2000"), TS);
+        RecordOutcome outcome = tracker.record(PIPELINE_ID, event(ORDERS, "2", "10", "2000"), TS);
 
-        assertThat(applied).isTrue();
+        assertThat(outcome).isEqualTo(RecordOutcome.FIRST_FOR_TABLE);
         TableProgress progress = tracker.toTableProgress(PIPELINE_ID, mockTable(ORDERS, TableState.IN_PROGRESS, 0L));
         assertThat(progress.progress().chunkIndex()).isEqualTo(2);
         assertThat(progress.rowsScanned()).isEqualTo(2000L);
@@ -51,12 +52,25 @@ class ChunkProgressTrackerTest {
 
     @Test
     @FixFor("debezium/dbz#2536")
+    void recordReportsFirstEventPerTableOnlyOnce() {
+        // The first event for a table is the structural one; callers persist it eagerly and throttle
+        // the rest, so the two cases must be distinguishable per table rather than per pipeline.
+        assertThat(tracker.record(PIPELINE_ID, event(ORDERS, "1", "10", "1000"), TS))
+                .isEqualTo(RecordOutcome.FIRST_FOR_TABLE);
+        assertThat(tracker.record(PIPELINE_ID, event(ORDERS, "2", "10", "2000"), TS.plusSeconds(1)))
+                .isEqualTo(RecordOutcome.UPDATED);
+        assertThat(tracker.record(PIPELINE_ID, event(PRODUCTS, "1", "4", "500"), TS.plusSeconds(2)))
+                .isEqualTo(RecordOutcome.FIRST_FOR_TABLE);
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
     void recordIgnoresEventOlderThanTheLatestSeen() {
         tracker.record(PIPELINE_ID, event(ORDERS, "3", "10", "5000"), TS);
 
-        boolean applied = tracker.record(PIPELINE_ID, event(ORDERS, "1", "10", "1000"), TS.minusSeconds(30));
+        RecordOutcome outcome = tracker.record(PIPELINE_ID, event(ORDERS, "1", "10", "1000"), TS.minusSeconds(30));
 
-        assertThat(applied).isFalse();
+        assertThat(outcome).isEqualTo(RecordOutcome.STALE);
         // The stale event must not overwrite the newer overlay.
         assertThat(tracker.toTableProgress(PIPELINE_ID, mockTable(ORDERS, TableState.IN_PROGRESS, 0L)).rowsScanned())
                 .isEqualTo(5000L);
