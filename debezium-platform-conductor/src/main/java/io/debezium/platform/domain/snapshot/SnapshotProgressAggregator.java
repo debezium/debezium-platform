@@ -65,6 +65,8 @@ public class SnapshotProgressAggregator {
     private final Map<Long, Object> locks = new ConcurrentHashMap<>();
     // Debounce bookkeeping: last broadcast timestamp per pipeline.
     private final Map<Long, Instant> lastBroadcast = new ConcurrentHashMap<>();
+    // Heartbeat bookkeeping: timestamp of the last chunk progress actually persisted, per pipeline.
+    private final Map<Long, Instant> lastProgressPersist = new ConcurrentHashMap<>();
 
     public SnapshotProgressAggregator(ActiveSnapshotService activeService,
                                       SnapshotHistoryService historyService, PipelineService pipelineService,
@@ -210,7 +212,7 @@ public class SnapshotProgressAggregator {
         SnapshotType type = SnapshotNotifications.typeOf(notification.aggregateType());
         List<String> tables = parseTables(notification.additionalData().get(K_DATA_COLLECTIONS));
         activeService.create(pipelineId, type, correlationId(notification), tables, instantOf(notification));
-        chunkProgress.clear(pipelineId);
+        discardRuntimeState(pipelineId);
     }
 
     private void onDataCollectionsResolved(Long pipelineId, SnapshotNotificationRequest notification) {
@@ -225,12 +227,32 @@ public class SnapshotProgressAggregator {
     private void onChunkProgress(Long pipelineId, SnapshotNotificationRequest notification) {
         Instant timestamp = instantOf(notification);
         ChunkProgressEvent event = ChunkProgressEvent.from(notification.additionalData());
+        // Asked before record(), which creates the overlay: no overlay yet means this is the first chunk
+        // event seen for the table, the one that has to create its row and move it to IN_PROGRESS.
+        boolean firstEventForTable = !chunkProgress.isTracked(pipelineId, event.currentTable());
         if (!chunkProgress.record(pipelineId, event, timestamp)) {
             return; // reordered (stale) chunk event, already superseded
+        }
+        // Chunk events are the high-frequency ones: one per chunk, per snapshot thread, and every thread
+        // of a pipeline writes the same single active_snapshot row, so persisting each of them would make
+        // that row a contention point whose write rate grows with snapshot.max.threads (and with the
+        // chunk-size multiplier). Only the first event per table is structural; the rest just refresh
+        // last_updated_at so the staleness watchdog does not fire mid-scan, which a periodic heartbeat
+        // does just as well. The live view is unaffected: currentState() takes the latest of the
+        // persisted timestamp and the in-memory overlays, which every event updates.
+        if (!firstEventForTable && !heartbeatDue(pipelineId, timestamp)) {
+            return;
         }
         // Lazily ensure the current table exists as IN_PROGRESS (back-fills the list when the table
         // set was not known at STARTED).
         activeService.markInProgress(pipelineId, event.currentTable(), timestamp);
+        lastProgressPersist.put(pipelineId, timestamp);
+    }
+
+    private boolean heartbeatDue(Long pipelineId, Instant timestamp) {
+        Instant persistedAt = lastProgressPersist.get(pipelineId);
+        return persistedAt == null
+                || Duration.between(persistedAt, timestamp).compareTo(config.watchdog().heartbeat()) >= 0;
     }
 
     private void onTableCompleted(Long pipelineId, SnapshotNotificationRequest notification) {
@@ -272,14 +294,16 @@ public class SnapshotProgressAggregator {
     }
 
     /**
-     * Drops the in-memory per-pipeline state that only makes sense while a snapshot is active (the chunk
-     * overlay and the debounce timestamp) once the snapshot has ended. The lock and broadcast pipe are
-     * intentionally retained: the lock guards concurrent handling and cannot be removed safely from
-     * inside its own critical section, and the broadcaster keeps serving any live SSE subscribers.
+     * Drops the in-memory per-pipeline state that only makes sense within a single run (the chunk overlay,
+     * the debounce timestamp and the heartbeat timestamp), once the snapshot has ended or when a new one
+     * starts. The lock and broadcast pipe are intentionally retained: the lock guards concurrent handling
+     * and cannot be removed safely from inside its own critical section, and the broadcaster keeps serving
+     * any live SSE subscribers.
      */
     private void discardRuntimeState(Long pipelineId) {
         chunkProgress.clear(pipelineId);
         lastBroadcast.remove(pipelineId);
+        lastProgressPersist.remove(pipelineId);
     }
 
     private String resolveName(Long pipelineId) {

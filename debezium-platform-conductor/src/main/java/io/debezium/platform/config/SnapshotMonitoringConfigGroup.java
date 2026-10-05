@@ -73,5 +73,14 @@ public interface SnapshotMonitoringConfigGroup {
         @WithDefault("1h")
         @WithName("stale-timeout")
         Duration staleTimeout();
+
+        /**
+         * How often chunk progress is written back to the active snapshot row to refresh its
+         * last-updated timestamp. Chunk notifications arrive far more often than that, and the write
+         * only exists so {@link #staleTimeout()} does not fire on a snapshot that is merely scanning a
+         * large table, so it is throttled to this interval. Must stay well below the stale timeout.
+         */
+        @WithDefault("30s")
+        Duration heartbeat();
     }
 }

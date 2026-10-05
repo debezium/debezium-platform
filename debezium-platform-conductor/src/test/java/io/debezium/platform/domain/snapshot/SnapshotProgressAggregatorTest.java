@@ -15,6 +15,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ class SnapshotProgressAggregatorTest {
 
     private static final Long PIPELINE_ID = 1L;
     private static final Instant TS = Instant.parse("2026-09-21T10:00:00Z");
+    private static final Duration HEARTBEAT = Duration.ofSeconds(30);
 
     @Mock
     ActiveSnapshotService activeService;
@@ -60,10 +62,15 @@ class SnapshotProgressAggregatorTest {
     @Mock
     SnapshotMonitoringConfigGroup config;
 
+    @Mock
+    SnapshotMonitoringConfigGroup.WatchdogConfigGroup watchdog;
+
     SnapshotProgressAggregator aggregator;
 
     @BeforeEach
     void setUp() {
+        when(config.watchdog()).thenReturn(watchdog);
+        when(watchdog.heartbeat()).thenReturn(HEARTBEAT);
         aggregator = new SnapshotProgressAggregator(activeService, historyService, pipelineService, config);
         // Unstubbed Optional-returning mocks default to Optional.empty(); individual tests that need an
         // active snapshot stub activeService.find(...) explicitly.
@@ -141,6 +148,45 @@ class SnapshotProgressAggregatorTest {
 
         verify(activeService).markInProgress(PIPELINE_ID, "inventory.orders", TS);
         verify(activeService, never()).completeTable(anyLong(), any(), any(), anyLong(), any(), any());
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
+    void repeatedChunkProgressWithinHeartbeatIsPersistedOnce() {
+        // Chunk events arrive at a high rate and all of a pipeline's snapshot threads write the same
+        // active_snapshot row; only the first one and a periodic heartbeat have to reach the database.
+        chunkProgressAt("inventory.orders", TS);
+        chunkProgressAt("inventory.orders", TS.plusSeconds(1));
+        chunkProgressAt("inventory.orders", TS.plus(HEARTBEAT).minusSeconds(1));
+
+        verify(activeService, times(1)).markInProgress(eq(PIPELINE_ID), eq("inventory.orders"), any());
+        verify(activeService).markInProgress(PIPELINE_ID, "inventory.orders", TS);
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
+    void firstChunkProgressOfEachTableIsPersistedEvenWithinHeartbeat() {
+        // The first event for a table is structural (it creates the row and moves it to IN_PROGRESS), so
+        // the throttle must never swallow it, however close it is to the previous table's.
+        chunkProgressAt("inventory.orders", TS);
+        chunkProgressAt("inventory.products", TS.plusSeconds(1));
+
+        verify(activeService).markInProgress(PIPELINE_ID, "inventory.orders", TS);
+        verify(activeService).markInProgress(PIPELINE_ID, "inventory.products", TS.plusSeconds(1));
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
+    void chunkProgressIsPersistedAgainOnceHeartbeatElapses() {
+        // A long single-table scan must keep refreshing last_updated_at, or the staleness watchdog would
+        // flag a snapshot that is simply still scanning.
+        chunkProgressAt("inventory.orders", TS);
+        chunkProgressAt("inventory.orders", TS.plusSeconds(10));
+        chunkProgressAt("inventory.orders", TS.plus(HEARTBEAT));
+
+        verify(activeService, times(2)).markInProgress(eq(PIPELINE_ID), eq("inventory.orders"), any());
+        verify(activeService).markInProgress(PIPELINE_ID, "inventory.orders", TS);
+        verify(activeService).markInProgress(PIPELINE_ID, "inventory.orders", TS.plus(HEARTBEAT));
     }
 
     @Test
@@ -369,6 +415,14 @@ class SnapshotProgressAggregatorTest {
         assertThat(closed).isZero();
         verify(activeService, never()).markStale(anyLong());
         verify(historyService, never()).historicize(anyLong(), any(), any(), any());
+    }
+
+    private void chunkProgressAt(String tableName, Instant timestamp) {
+        aggregator.accept(PIPELINE_ID, notificationAt(SnapshotNotifications.AGG_INITIAL,
+                SnapshotNotifications.TABLE_CHUNK_IN_PROGRESS,
+                Map.of(SnapshotNotifications.K_CURRENT_COLLECTION, tableName,
+                        SnapshotNotifications.K_ROWS_SCANNED, "1000"),
+                timestamp.toEpochMilli()));
     }
 
     private static SnapshotNotificationRequest notification(String aggregateType, String type, Map<String, String> data) {

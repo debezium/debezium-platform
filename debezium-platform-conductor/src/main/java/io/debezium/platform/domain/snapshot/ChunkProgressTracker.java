@@ -89,6 +89,15 @@ public class ChunkProgressTracker {
     }
 
     /**
+     * Whether an overlay already exists for the table, i.e. a chunk event for it has been recorded
+     * before. Callers use this to tell a table's first chunk (which needs its row created and moved to
+     * {@code IN_PROGRESS}) from the subsequent ones.
+     */
+    boolean isTracked(Long pipelineId, String tableName) {
+        return overlayFor(pipelineId, tableName) != null;
+    }
+
+    /**
      * Drops the overlay for a table that just finished scanning (its final count is now persisted).
      */
     void completeTable(Long pipelineId, String tableName) {
