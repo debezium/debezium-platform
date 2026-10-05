@@ -38,6 +38,34 @@ class ChunkProgressEventTest {
 
     @Test
     @FixFor("debezium/dbz#2536")
+    void fromFallsBackToScannedCollectionForTableName() {
+        // TABLE_CHUNK_COMPLETED names the table with scanned_collection, unlike the in-progress
+        // notifications which use current_collection_in_progress.
+        Map<String, String> data = Map.of(
+                SnapshotNotifications.K_SCANNED_COLLECTION, "inventory.orders",
+                SnapshotNotifications.K_CHUNK_INDEX, "3",
+                SnapshotNotifications.K_TOTAL_CHUNKS, "10");
+
+        ChunkProgressEvent event = ChunkProgressEvent.from(data);
+
+        assertThat(event.currentTable()).isEqualTo("inventory.orders");
+        assertThat(event.chunkIndex()).isEqualTo(3);
+        assertThat(event.totalChunks()).isEqualTo(10);
+        assertThat(event.rowsScanned()).isNull();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
+    void fromPrefersCurrentCollectionOverScannedCollection() {
+        Map<String, String> data = Map.of(
+                SnapshotNotifications.K_CURRENT_COLLECTION, "inventory.orders",
+                SnapshotNotifications.K_SCANNED_COLLECTION, "inventory.products");
+
+        assertThat(ChunkProgressEvent.from(data).currentTable()).isEqualTo("inventory.orders");
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
     void fromReturnsNullsForAbsentEntries() {
         ChunkProgressEvent event = ChunkProgressEvent.from(new HashMap<>());
 

@@ -87,12 +87,12 @@ public class SnapshotProgressAggregator {
             switch (notification.type()) {
                 case SnapshotNotifications.STARTED -> onStarted(pipelineId, notification);
                 case SnapshotNotifications.DATA_COLLECTIONS_RESOLVED -> onDataCollectionsResolved(pipelineId, notification);
-                case SnapshotNotifications.IN_PROGRESS, SnapshotNotifications.TABLE_CHUNK_IN_PROGRESS -> {
+                case SnapshotNotifications.IN_PROGRESS, SnapshotNotifications.TABLE_CHUNK_IN_PROGRESS,
+                        SnapshotNotifications.TABLE_CHUNK_COMPLETED -> {
                     onChunkProgress(pipelineId, notification);
                     isCheckpointEvent = false;
                 }
-                case SnapshotNotifications.TABLE_SCAN_COMPLETED, SnapshotNotifications.TABLE_CHUNK_COMPLETED ->
-                    onTableCompleted(pipelineId, notification);
+                case SnapshotNotifications.TABLE_SCAN_COMPLETED -> onTableCompleted(pipelineId, notification);
                 case SnapshotNotifications.PAUSED -> onStatus(pipelineId, notification, SnapshotState.PAUSED);
                 case SnapshotNotifications.RESUMED -> onStatus(pipelineId, notification, SnapshotState.RUNNING);
                 case SnapshotNotifications.COMPLETED -> onTerminal(pipelineId, notification, SnapshotState.COMPLETED);

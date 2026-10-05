@@ -129,6 +129,22 @@ class SnapshotProgressAggregatorTest {
 
     @Test
     @FixFor("debezium/dbz#2536")
+    void tableChunkCompletedDoesNotCompleteTheTable() {
+        // TABLE_CHUNK_COMPLETED reports that one slice finished, not the whole table, and it names the
+        // table with scanned_collection rather than current_collection_in_progress. Treating it as a
+        // table completion would mark the table terminal (with rowsScanned 0) after its first chunk.
+        aggregator.accept(PIPELINE_ID, notification(SnapshotNotifications.AGG_INITIAL, SnapshotNotifications.TABLE_CHUNK_COMPLETED,
+                Map.of(SnapshotNotifications.K_SCANNED_COLLECTION, "inventory.orders",
+                        SnapshotNotifications.K_CHUNK_INDEX, "3",
+                        SnapshotNotifications.K_TOTAL_CHUNKS, "10",
+                        SnapshotNotifications.K_STATUS, "SUCCEEDED")));
+
+        verify(activeService).markInProgress(PIPELINE_ID, "inventory.orders", TS);
+        verify(activeService, never()).completeTable(anyLong(), any(), any(), anyLong(), any(), any());
+    }
+
+    @Test
+    @FixFor("debezium/dbz#2536")
     void tableScanSucceededMapsToCompleted() {
         aggregator.accept(PIPELINE_ID, notification(SnapshotNotifications.AGG_INITIAL, SnapshotNotifications.TABLE_SCAN_COMPLETED,
                 Map.of(SnapshotNotifications.K_SCANNED_COLLECTION, "inventory.orders",
