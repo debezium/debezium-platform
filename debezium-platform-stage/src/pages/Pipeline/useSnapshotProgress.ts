@@ -22,25 +22,24 @@ export const useSnapshotProgress = (
   pipelineId: string | undefined
 ): SnapshotProgressQuery => {
   const [progress, setProgress] = useState<SnapshotProgressResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(Boolean(pipelineId));
   const [error, setError] = useState<string | null>(null);
+  const [resolvedKey, setResolvedKey] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
 
   const refresh = useCallback(() => {
     setReloadToken((token) => token + 1);
   }, []);
 
+  const requestKey = pipelineId == null ? null : `${pipelineId}:${reloadToken}`;
+
   useEffect(() => {
-    if (!pipelineId) {
-      setProgress(null);
-      setError(null);
-      setIsLoading(false);
+    if (!pipelineId || requestKey == null) {
       return;
     }
 
     let cancelled = false;
     let sawStreamEvent = false;
-    setIsLoading(true);
+    const key = requestKey;
 
     const apply = (next: SnapshotProgressResponse) => {
       if (cancelled) {
@@ -48,7 +47,7 @@ export const useSnapshotProgress = (
       }
       setProgress(next);
       setError(null);
-      setIsLoading(false);
+      setResolvedKey(key);
     };
 
     void getSnapshotProgress(pipelineId).then((response) => {
@@ -57,7 +56,7 @@ export const useSnapshotProgress = (
       }
       if (response.error || !response.data) {
         setError(response.error ?? "An error occurred while fetching data");
-        setIsLoading(false);
+        setResolvedKey(key);
         return;
       }
       apply(response.data);
@@ -72,9 +71,28 @@ export const useSnapshotProgress = (
       cancelled = true;
       unsubscribe();
     };
-  }, [pipelineId, reloadToken]);
+  }, [pipelineId, requestKey]);
 
-  return { progress, isLoading, error, refresh };
+  if (
+    pipelineId == null &&
+    (progress !== null || error !== null || resolvedKey !== null)
+  ) {
+    setProgress(null);
+    setError(null);
+    setResolvedKey(null);
+  }
+
+  if (!pipelineId) {
+    return { progress: null, isLoading: false, error: null, refresh };
+  }
+
+  const isCurrent = resolvedKey === requestKey;
+  return {
+    progress,
+    isLoading: !isCurrent,
+    error: isCurrent ? error : null,
+    refresh,
+  };
 };
 
 const SnapshotProgressContext = createContext<SnapshotProgressQuery | null>(null);
