@@ -7,9 +7,9 @@ export type FeatureFlagConfig = {
 
 export const featureConfig = {
   Vault: { enabled: false, mode: "comingSoon" },
-  Connection: { enabled: true, mode: "comingSoon" },
-  Transforms: { enabled: true, mode: "comingSoon" },
-  Alerts: { enabled: true, mode: "comingSoon" },
+  Connection: { enabled: true, mode: "hidden" },
+  Transforms: { enabled: true, mode: "hidden" },
+  Alerts: { enabled: true, mode: "hidden" },
   PipelineMonitoring: { enabled: true, mode: "hidden" },
   PipelineAction: { enabled: true, mode: "hidden" },
   PipelineLogs: { enabled: true, mode: "hidden" },
@@ -60,7 +60,8 @@ export const isFeatureComingSoon = (flag: FeatureFlag): boolean => {
   return !config.enabled && config.mode === "comingSoon";
 };
 
-/** Hidden features are never routable; coming-soon features 404 only when stripped from nav. */
+/** Hidden features are never routable; coming-soon features are always routable so the
+ *  overlay can be shown — `hideDisabledFeaturesFromNav` only 404s truly hidden features. */
 export const isFeatureAccessible = (flag: FeatureFlag | undefined): boolean => {
   if (!flag) {
     return true;
@@ -68,19 +69,28 @@ export const isFeatureAccessible = (flag: FeatureFlag | undefined): boolean => {
   if (isFeatureHidden(flag)) {
     return false;
   }
+  if (isFeatureComingSoon(flag)) {
+    return true;
+  }
   if (featureFlagUi.hideDisabledFeaturesFromNav) {
     return isFeatureEnabled(flag);
   }
   return true;
 };
 
-/** Hidden features are always excluded from nav; coming-soon features stay unless stripped. */
+/** Hidden features are always excluded from nav; coming-soon features stay unless stripped.
+ *  `hideDisabledFeaturesFromNav` only strips features whose mode is "hidden" — features
+ *  with mode "comingSoon" are always shown in the nav so the coming-soon overlay is visible.
+ */
 export const isRouteNavVisible = (flag: FeatureFlag | undefined): boolean => {
   if (!flag) {
     return true;
   }
   if (isFeatureHidden(flag)) {
     return false;
+  }
+  if (isFeatureComingSoon(flag)) {
+    return true;
   }
   if (featureFlagUi.hideDisabledFeaturesFromNav) {
     return isFeatureEnabled(flag);

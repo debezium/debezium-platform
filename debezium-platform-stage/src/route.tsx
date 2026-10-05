@@ -8,7 +8,7 @@ import {
   RhUiNotificationIcon,
 } from "@patternfly/react-icons";
 import { RhUiPathIcon as PipelineIcon } from "@patternfly/react-icons";
-import { ServiceCatalogIcon as VaultIcon } from "@patternfly/react-icons";
+import { RhUiLockIcon as VaultIcon } from "@patternfly/react-icons";
 import {
   CreateSource,
   EditSource,
@@ -36,7 +36,7 @@ import { Connections } from "./pages/Connection/Connections";
 import { CreateConnection } from "./pages/Connection/CreateConnection";
 import { ConnectionsCatalog } from "./pages/Connection/ConnectionsCatalog";
 import { EditConnection } from "./pages/Connection/EditConnection";
-import { FeatureFlag, isFeatureAccessible, isRouteNavVisible } from "./utils/featureFlag";
+import { FeatureFlag, isFeatureAccessible, isRouteNavVisible } from "@support/featureFlag";
 
 export interface IAppRoute {
   label?: string; // Excluding the label will exclude the route from the nav sidebar in AppLayout

@@ -12,7 +12,7 @@ import type {
  */
 export type SnapshotMockScenario = "running" | "paused" | "idle";
 
-export const snapshotMockScenario: SnapshotMockScenario = "running";
+export const snapshotMockScenario: SnapshotMockScenario = "paused";
 
 export type SnapshotMockResponse<T> = {
   data?: T;
