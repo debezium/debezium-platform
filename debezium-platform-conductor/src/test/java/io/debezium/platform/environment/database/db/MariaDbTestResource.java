@@ -27,10 +27,7 @@ public class MariaDbTestResource implements QuarkusTestResourceLifecycleManager 
         return Map.of(
                 "mariadb.jdbc.url", MARIADB.getJdbcUrl(),
                 "mariadb.username", MARIADB.getUsername(),
-                "mariadb.password", MARIADB.getPassword(),
-                "quarkus.datasource.jdbc.url", MARIADB.getJdbcUrl(),
-                "quarkus.datasource.username", MARIADB.getUsername(),
-                "quarkus.datasource.password", MARIADB.getPassword());
+                "mariadb.password", MARIADB.getPassword());
     }
 
     @Override

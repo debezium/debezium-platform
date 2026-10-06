@@ -19,12 +19,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.destination.RedisConnectionValidator;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 /**
  * Integration tests for RedisConnectionValidator using Testcontainers WITHOUT authentication.
@@ -70,6 +72,7 @@ import io.quarkus.test.junit.QuarkusTest;
  *
  */
 @QuarkusTest
+@TestProfile(MinimalDevServicesTestProfile.class)
 @QuarkusTestResource(value = RedisTestResource.class, restrictToAnnotatedClass = true)
 class RedisConnectionValidatorIT {
 

@@ -847,9 +847,6 @@
                         <io.opentelemetry.context.contextStorageProvider>default</io.opentelemetry.context.contextStorageProvider>
                     </systemPropertyVariables>
                     <argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
-                    <parallel>classes</parallel>
-                    <threadCount>2</threadCount>
-                    <perCoreThreadCount>false</perCoreThreadCount>
                 </configuration>
             </plugin>
             <plugin>

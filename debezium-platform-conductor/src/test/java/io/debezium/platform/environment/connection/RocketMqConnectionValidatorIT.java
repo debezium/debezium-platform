@@ -15,15 +15,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.destination.RocketMqConnectionValidator;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
-@QuarkusTestResource(RocketMqTestResource.class)
+@TestProfile(MinimalDevServicesTestProfile.class)
+@QuarkusTestResource(value = RocketMqTestResource.class, restrictToAnnotatedClass = true)
 class RocketMqConnectionValidatorIT {
 
     private static final int DEFAULT_TIMEOUT_SECONDS = 30;

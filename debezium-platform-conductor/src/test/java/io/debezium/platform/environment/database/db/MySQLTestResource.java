@@ -7,17 +7,17 @@ package io.debezium.platform.environment.database.db;
 
 import java.util.Map;
 
-import org.testcontainers.mysql.MySQLContainer;
+import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
 public class MySQLTestResource implements QuarkusTestResourceLifecycleManager {
 
-    private static final MySQLContainer MYSQL = new MySQLContainer(
+    private static final MySQLContainer<?> MYSQL = new MySQLContainer<>(
             DockerImageName.parse("quay.io/debezium/example-mysql-master:latest").asCompatibleSubstituteFor("mysql"));
 
-    public static MySQLContainer getContainer() {
+    public static MySQLContainer<?> getContainer() {
         return MYSQL;
     }
 
@@ -27,10 +27,7 @@ public class MySQLTestResource implements QuarkusTestResourceLifecycleManager {
         return Map.of(
                 "mysql.jdbc.url", MYSQL.getJdbcUrl(),
                 "mysql.username", MYSQL.getUsername(),
-                "mysql.password", MYSQL.getPassword(),
-                "quarkus.datasource.jdbc.url", MYSQL.getJdbcUrl(),
-                "quarkus.datasource.username", MYSQL.getUsername(),
-                "quarkus.datasource.password", MYSQL.getPassword());
+                "mysql.password", MYSQL.getPassword());
     }
 
     @Override

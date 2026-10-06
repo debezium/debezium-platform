@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
@@ -24,9 +25,11 @@ import io.debezium.platform.environment.connection.destination.PubSubConnectionV
 import io.debezium.platform.environment.connection.destination.PubSubTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
-@QuarkusTestResource(PubSubTestResource.class)
+@TestProfile(MinimalDevServicesTestProfile.class)
+@QuarkusTestResource(value = PubSubTestResource.class, restrictToAnnotatedClass = true)
 class PubSubConnectionValidatorIT {
 
     public static final int DEFAULT_TIMEOUT_SECONDS = 10;

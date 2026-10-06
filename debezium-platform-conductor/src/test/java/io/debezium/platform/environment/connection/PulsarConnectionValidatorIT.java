@@ -20,6 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.pulsar.PulsarContainer;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
@@ -27,8 +28,10 @@ import io.debezium.platform.environment.connection.destination.PulsarConnectionV
 import io.debezium.platform.environment.destination.ApachePulsarTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
+@TestProfile(MinimalDevServicesTestProfile.class)
 @QuarkusTestResource(value = ApachePulsarTestResource.class, restrictToAnnotatedClass = true)
 class PulsarConnectionValidatorIT {
     @Inject

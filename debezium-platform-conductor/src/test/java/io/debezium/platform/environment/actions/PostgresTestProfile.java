@@ -19,6 +19,10 @@ public class PostgresTestProfile implements QuarkusTestProfile {
     public Map<String, String> getConfigOverrides() {
         return Map.of(
                 "quarkus.arc.exclude-types",
-                "io.debezium.platform.environment.watcher.config.WatcherConfig,io.debezium.platform.environment.watcher.ConductorEnvironmentWatcher");
+                "io.debezium.platform.environment.watcher.config.WatcherConfig,io.debezium.platform.environment.watcher.ConductorEnvironmentWatcher",
+                // Disable all dev services - not needed for database connection validation
+                "quarkus.devservices.enabled", "false",
+                "quarkus.kafka.devservices.enabled", "false",
+                "quarkus.kubernetes-client.devservices.enabled", "false");
     }
 }

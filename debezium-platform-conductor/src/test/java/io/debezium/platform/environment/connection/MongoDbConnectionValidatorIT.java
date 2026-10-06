@@ -15,13 +15,16 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.mongodb.MongoDBContainer;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.environment.connection.source.MongoDbConnectionValidator;
 import io.debezium.platform.environment.database.db.MongoDbTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
+@TestProfile(MinimalDevServicesTestProfile.class)
 @QuarkusTestResource(value = MongoDbTestResource.class, restrictToAnnotatedClass = true)
 public class MongoDbConnectionValidatorIT {
 

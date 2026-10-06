@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
@@ -31,6 +32,7 @@ import io.debezium.platform.environment.connection.destination.MilvusConnectionV
 import io.debezium.platform.environment.database.db.MilvusTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 /**
  * Integration tests for {@link MilvusConnectionValidator} without authentication.
@@ -42,6 +44,7 @@ import io.quarkus.test.junit.QuarkusTest;
  *
  */
 @QuarkusTest
+@TestProfile(MinimalDevServicesTestProfile.class)
 @QuarkusTestResource(value = MilvusTestResource.class, restrictToAnnotatedClass = true)
 class MilvusConnectionValidatorIT {
 

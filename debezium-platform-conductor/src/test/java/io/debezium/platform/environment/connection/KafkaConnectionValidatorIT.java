@@ -17,18 +17,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.destination.KafkaConnectionValidator;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.kafka.InjectKafkaCompanion;
 import io.quarkus.test.kafka.KafkaCompanionResource;
 import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
 
 @QuarkusTest
-@QuarkusTestResource(KafkaCompanionResource.class)
+@TestProfile(MinimalDevServicesTestProfile.class)
+@QuarkusTestResource(value = KafkaCompanionResource.class, restrictToAnnotatedClass = true)
 class KafkaConnectionValidatorIT {
 
     public static final int DEFAULT_30_SECONDS_TIMEOUT = 30;
