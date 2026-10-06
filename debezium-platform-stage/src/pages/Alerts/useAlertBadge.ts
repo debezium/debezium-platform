@@ -1,7 +1,7 @@
 import { LabelStatus } from "@patternfly/react-core";
 import { ALERT_STATUS_QUERY_KEY, fetchAlertStatus } from "../../apis/alerts";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
-import { isFeatureEnabled } from "@utils/featureFlag";
+import { isFeatureEnabled } from "@support/featureFlag";
 import { AlertStatusResponse } from "./alertsTypes";
 
 export type AlertBadgeTone = "critical" | "warning" | "idle";

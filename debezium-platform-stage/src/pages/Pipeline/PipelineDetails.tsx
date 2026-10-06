@@ -35,19 +35,25 @@ import { PipelineDesignerEdit } from "./PipelineDesignerEdit";
 import { useTranslation } from 'react-i18next';
 import PipelineAction from "./PipelineAction";
 import PipelineMonitoring from "./PipelineMonitoring";
+import PipelineSnapshots from "./PipelineSnapshots";
+import { isSnapshotActive } from "./snapshotModel";
+import {
+  SnapshotProgressProvider,
+  useSnapshotProgressState,
+} from "./useSnapshotProgress";
 import {
   getEnabledPipelineTabs,
   isPipelineTabEnabled,
-} from "@utils/featureFlag";
+} from "@support/featureFlag";
 import { PageHeader } from "@patternfly/react-component-groups";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { InfoAltIcon, RhUiPathIcon } from "@patternfly/react-icons";
 import ApiError from "../../components/ApiError";
 
 const PIPELINE_STATUS_CONFIG: Record<PipelineStatus, { color: LabelColor; labelKey: string; tooltipKey: string }> = {
-  FAILED:   { color: LabelColor.red,   labelKey: "statusMessage:pipelineStatus.failed",    tooltipKey: "pipeline:pipelineFailureMsg"   },
-  DEPLOYING:{ color: LabelColor.yellow,  labelKey: "statusMessage:pipelineStatus.deploying", tooltipKey: "pipeline:pipelineDeployingMsg" },
-  RUNNING:  { color: LabelColor.green, labelKey: "statusMessage:pipelineStatus.running",   tooltipKey: "pipeline:pipelineRunningMsg"   },
+  FAILED: { color: LabelColor.red, labelKey: "statusMessage:pipelineStatus.failed", tooltipKey: "pipeline:pipelineFailureMsg" },
+  DEPLOYING: { color: LabelColor.yellow, labelKey: "statusMessage:pipelineStatus.deploying", tooltipKey: "pipeline:pipelineDeployingMsg" },
+  RUNNING: { color: LabelColor.green, labelKey: "statusMessage:pipelineStatus.running", tooltipKey: "pipeline:pipelineRunningMsg" },
 };
 
 const EMPTY_TRANSFORMS: Transform[] = [];
@@ -63,6 +69,7 @@ const PipelineDetails: React.FunctionComponent = () => {
   const { addNotification } = useNotification();
 
   const validTabs = React.useMemo(() => getEnabledPipelineTabs(), []);
+  const snapshotsEnabled = isPipelineTabEnabled("snapshots");
 
   const [activeTabKey, setActiveTabKey] = React.useState(() => {
     const initialTab = detailsTab || "overview";
@@ -224,6 +231,10 @@ const PipelineDetails: React.FunctionComponent = () => {
     () => <TabTitleText>{t("pipeline:tabs.overview")}</TabTitleText>,
     [t]
   );
+  const snapshotsTabTitle = React.useMemo(
+    () => <SnapshotsTabTitle />,
+    []
+  );
   const actionTabTitle = React.useMemo(
     () => <TabTitleText>{t("pipeline:tabs.action")}</TabTitleText>,
     [t]
@@ -271,181 +282,230 @@ const PipelineDetails: React.FunctionComponent = () => {
   const statusConfig = pipeline?.status ? PIPELINE_STATUS_CONFIG[pipeline.status] : null;
 
   return (
-    <>
-      <PageHeader
-        title={pipeline?.name}
-        subtitle={pipeline?.description}
-        label={
-          statusConfig ? (
-             <Label color={statusConfig.color}>
-                    {t(statusConfig.labelKey)}
-                  </Label>
-          ) : ""
-        }
-        icon={<Icon size="2xl" className="custom-header_icon" isInProgress={pipeline === undefined} >
-          <RhUiPathIcon />
-        </Icon>}
-        actionMenu={
-          pipeline?.status === "FAILED" ? (
-            <Button
-              variant="primary"
-              isLoading={isRestarting}
-              isDisabled={isRestarting}
-              onClick={() => void onRestartHandler()}
-            >
-              {t("pipeline:userActions.restart")}
-            </Button>
-          ) : undefined
-        }
-      />
-      {pipeline?.status === "FAILED" && pipeline.errorMessage && (
-        <PageSection
-          isWidthLimited
-          padding={{ default: "noPadding" }}
-          style={{
-            paddingInlineStart: "var(--pf-v6-c-page__main-section--PaddingInlineStart)",
-            paddingInlineEnd: "var(--pf-v6-c-page__main-section--PaddingInlineEnd)",
-          }}
-        >
-          <Alert
-            isExpandable
-            customIcon={<InfoAltIcon />}
-            variant="danger"
-            title={t("pipeline:pipelineFailureMsg")}
+    <SnapshotProgressProvider pipelineId={snapshotsEnabled ? pipelineId : undefined}>
+      <>
+        <PageHeader
+          title={pipeline?.name}
+          subtitle={pipeline?.description}
+          label={
+            statusConfig ? (
+              <Label color={statusConfig.color}>
+                {t(statusConfig.labelKey)}
+              </Label>
+            ) : ""
+          }
+          icon={<Icon size="2xl" className="custom-header_icon" isInProgress={pipeline === undefined} >
+            <RhUiPathIcon />
+          </Icon>}
+          actionMenu={
+            pipeline?.status === "FAILED" ? (
+              <Button
+                variant="primary"
+                isLoading={isRestarting}
+                isDisabled={isRestarting}
+                onClick={() => void onRestartHandler()}
+              >
+                {t("pipeline:userActions.restart")}
+              </Button>
+            ) : undefined
+          }
+        />
+        {pipeline?.status === "FAILED" && pipeline.errorMessage && (
+          <PageSection
+            isWidthLimited
+            padding={{ default: "noPadding" }}
+            style={{
+              paddingInlineStart: "var(--pf-v6-c-page__main-section--PaddingInlineStart)",
+              paddingInlineEnd: "var(--pf-v6-c-page__main-section--PaddingInlineEnd)",
+            }}
           >
-            <p>{pipeline.errorMessage}</p>
-          </Alert>
+            <Alert
+              isExpandable
+              customIcon={<InfoAltIcon />}
+              variant="danger"
+              title={t("pipeline:pipelineFailureMsg")}
+            >
+              <p>{pipeline.errorMessage}</p>
+            </Alert>
+          </PageSection>
+        )}
+        <PageSection type="tabs" isWidthLimited>
+          <Tabs
+            activeKey={activeTabKey}
+            onSelect={handleTabClick}
+            usePageInsets
+            id="pipeline-details-tabs"
+          >
+            <Tab
+              eventKey={"overview"}
+              title={overviewTabTitle}
+              tabContentId={`tabContent${"overview"}`}
+            />
+            {isPipelineTabEnabled("monitoring") && (
+              <Tab
+                eventKey={"monitoring"}
+                title={monitoringTabTitle}
+                tabContentId={`tabContent${"monitoring"}`}
+                // isDisabled={pipeline?.status === "FAILED"}
+              />
+            )}
+            {isPipelineTabEnabled("logs") && (
+              <Tab
+                eventKey={"logs"}
+                title={logsTabTitle}
+                tabContentId={`tabContent${"logs"}`}
+              />
+            )}
+            {isPipelineTabEnabled("snapshots") && (
+              <Tab
+                eventKey={"snapshots"}
+                title={snapshotsTabTitle}
+                tabContentId={`tabContent${"snapshots"}`}
+              />
+            )}
+            {isPipelineTabEnabled("action") && (
+              <Tab
+                eventKey={"action"}
+                title={actionTabTitle}
+                tabContentId={`tabContent${"action"}`}
+                // isDisabled={pipeline?.status === "FAILED"}
+              />
+            )}
+            <Tab
+              eventKey={"edit"}
+              title={editTabTitle}
+              tabContentId={`tabContent${"edit"}`}
+            />
+
+          </Tabs>
         </PageSection>
-      )}
-      <PageSection type="tabs" isWidthLimited>
-        <Tabs
-          activeKey={activeTabKey}
-          onSelect={handleTabClick}
-          usePageInsets
-          id="pipeline-details-tabs"
-        >
-          <Tab
+        <PageSection isWidthLimited isFilled>
+          <TabContent
+            key={"overview"}
             eventKey={"overview"}
-            title={overviewTabTitle}
-            tabContentId={`tabContent${"overview"}`}
-          />
-          {isPipelineTabEnabled("action") && (
-            <Tab
-              eventKey={"action"}
-              title={actionTabTitle}
-              tabContentId={`tabContent${"action"}`}
-              isDisabled={pipeline?.status === "FAILED"}
-            />
-          )}
-          {isPipelineTabEnabled("monitoring") && (
-            <Tab
-              eventKey={"monitoring"}
-              title={monitoringTabTitle}
-              tabContentId={`tabContent${"monitoring"}`}
-              isDisabled={pipeline?.status === "FAILED"}
-            />
+            id={`tabContent${"overview"}`}
+            activeKey={activeTabKey}
+            hidden={"overview" !== activeTabKey}
+          >
+            <TabContentBody>
+              {pipeline && (
+                <PipelineOverview
+                  pipelineId={pipelineId || ""}
+                  activeTabKey={activeTabKey}
+                  pipeline={pipeline}
+                />
+              )}
+            </TabContentBody>
+          </TabContent>
+          {isPipelineTabEnabled("snapshots") && (
+            <TabContent
+              key={"snapshots"}
+              eventKey={"snapshots"}
+              id={`tabContent${"snapshots"}`}
+              activeKey={activeTabKey}
+              hidden={"snapshots" !== activeTabKey}
+            >
+              <TabContentBody>
+                <PipelineSnapshots
+                  pipelineId={pipelineId || ""}
+                  activeTabKey={activeTabKey}
+                />
+              </TabContentBody>
+            </TabContent>
           )}
           {isPipelineTabEnabled("logs") && (
-            <Tab
+            <TabContent
+              key={"logs"}
               eventKey={"logs"}
-              title={logsTabTitle}
-              tabContentId={`tabContent${"logs"}`}
-            />
+              id={`tabContent${"logs"}`}
+              activeKey={activeTabKey}
+              hidden={"logs" !== activeTabKey}
+            >
+              <TabContentBody>
+                <PipelineLog
+                  activeTabKey={activeTabKey}
+                  pipelineId={pipelineId}
+                  pipelineName={pipeline?.name || ""}
+                />
+              </TabContentBody>
+            </TabContent>
           )}
-          <Tab
+          <TabContent
+            key={"edit"}
             eventKey={"edit"}
-            title={editTabTitle}
-            tabContentId={`tabContent${"edit"}`}
-          />
+            id={`tabContent${"edit"}`}
+            activeKey={activeTabKey}
+            hidden={"edit" !== activeTabKey}
+            className="pipeline-details__tab-error"
+          >
+            <TabContentBody className="pipeline-details__tab-error">
+              {pipeline?.id && stablePipelineSource && stablePipelineDestination && (
+                <PipelineDesignerEdit
+                  pipelineSource={stablePipelineSource}
+                  pipelineDestination={stablePipelineDestination}
+                  transforms={stableTransforms ?? EMPTY_TRANSFORMS}
+                  name={pipeline.name}
+                  desc={pipeline.description || ""}
+                  definedLogLevel={pipeline.logLevel}
+                  definedLogLevels={stableLogLevels ?? EMPTY_LOG_LEVELS}
+                  pipelineId={pipeline.id}
+                />
+              )}
+            </TabContentBody>
+          </TabContent>
+          {isPipelineTabEnabled("action") && (
+            <TabContent
+              key={"action"}
+              eventKey={"action"}
+              id={`tabContent${"action"}`}
+              activeKey={activeTabKey}
+              hidden={"action" !== activeTabKey}
+            >
+              <TabContentBody>
+                <PipelineAction pipelineId={pipelineId} sourceId={pipeline?.source.id} activeTabKey={activeTabKey} />
+              </TabContentBody>
+            </TabContent>
+          )}
+          {isPipelineTabEnabled("monitoring") && (
+            <TabContent
+              key={"monitoring"}
+              eventKey={"monitoring"}
+              id={`tabContent${"monitoring"}`}
+              activeKey={activeTabKey}
+              hidden={"monitoring" !== activeTabKey}
+            >
+              <TabContentBody>
+                <PipelineMonitoring pipelineName={pipeline?.name || ""} activeTabKey={activeTabKey} />
+              </TabContentBody>
+            </TabContent>
+          )}
+        </PageSection>
+      </>
+    </SnapshotProgressProvider>
+  );
+};
 
-        </Tabs>
-      </PageSection>
-      <PageSection isWidthLimited isFilled>
-        <TabContent
-          key={"overview"}
-          eventKey={"overview"}
-          id={`tabContent${"overview"}`}
-          activeKey={activeTabKey}
-          hidden={"overview" !== activeTabKey}
-        >
-          <TabContentBody>
-            {pipeline && (
-              <PipelineOverview
-                pipelineId={pipelineId || ""}
-                activeTabKey={activeTabKey}
-                pipeline={pipeline}
-              />
-            )}
-          </TabContentBody>
-        </TabContent>
-        {isPipelineTabEnabled("logs") && (
-          <TabContent
-            key={"logs"}
-            eventKey={"logs"}
-            id={`tabContent${"logs"}`}
-            activeKey={activeTabKey}
-            hidden={"logs" !== activeTabKey}
+const SnapshotsTabTitle: React.FC = () => {
+  const { t } = useTranslation();
+  const { progress } = useSnapshotProgressState();
+  const snapshotStatus = progress?.status;
+
+  return (
+    <TabTitleText>
+      <span className="snapshot-tab-title">
+        {t("pipeline:tabs.snapshots")}
+        {isSnapshotActive(snapshotStatus) && (
+          <Label
+            isCompact
+            color={snapshotStatus === "PAUSED" ? LabelColor.orange : LabelColor.blue}
           >
-            <TabContentBody>
-              <PipelineLog
-                activeTabKey={activeTabKey}
-                pipelineId={pipelineId}
-                pipelineName={pipeline?.name || ""}
-              />
-            </TabContentBody>
-          </TabContent>
+            {snapshotStatus === "PAUSED"
+              ? t("pipeline:snapshots.paused")
+              : t("pipeline:snapshots.running")}
+          </Label>
         )}
-        <TabContent
-          key={"edit"}
-          eventKey={"edit"}
-          id={`tabContent${"edit"}`}
-          activeKey={activeTabKey}
-          hidden={"edit" !== activeTabKey}
-          className="pipeline-details__tab-error"
-        >
-          <TabContentBody className="pipeline-details__tab-error">
-            {pipeline?.id && stablePipelineSource && stablePipelineDestination && (
-              <PipelineDesignerEdit
-                pipelineSource={stablePipelineSource}
-                pipelineDestination={stablePipelineDestination}
-                transforms={stableTransforms ?? EMPTY_TRANSFORMS}
-                name={pipeline.name}
-                desc={pipeline.description || ""}
-                definedLogLevel={pipeline.logLevel}
-                definedLogLevels={stableLogLevels ?? EMPTY_LOG_LEVELS}
-                pipelineId={pipeline.id}
-              />
-            )}
-          </TabContentBody>
-        </TabContent>
-        {isPipelineTabEnabled("action") && (
-          <TabContent
-            key={"action"}
-            eventKey={"action"}
-            id={`tabContent${"action"}`}
-            activeKey={activeTabKey}
-            hidden={"action" !== activeTabKey}
-          >
-            <TabContentBody>
-              <PipelineAction pipelineId={pipelineId} sourceId={pipeline?.source.id} activeTabKey={activeTabKey} />
-            </TabContentBody>
-          </TabContent>
-        )}
-        {isPipelineTabEnabled("monitoring") && (
-          <TabContent
-            key={"monitoring"}
-            eventKey={"monitoring"}
-            id={`tabContent${"monitoring"}`}
-            activeKey={activeTabKey}
-            hidden={"monitoring" !== activeTabKey}
-          >
-            <TabContentBody>
-              <PipelineMonitoring pipelineName={pipeline?.name || ""} activeTabKey={activeTabKey} />
-            </TabContentBody>
-          </TabContent>
-        )}
-      </PageSection>
-    </>
+      </span>
+    </TabTitleText>
   );
 };
 

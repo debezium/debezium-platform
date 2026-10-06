@@ -5,7 +5,7 @@ import {
   isPipelineTabEnabled,
   isRouteNavVisible,
   type FeatureFlag,
-} from "../../src/utils/featureFlag";
+} from "../../src/support/featureFlag";
 
 export {
   getEnabledPipelineTabs,
@@ -18,6 +18,7 @@ export type { FeatureFlag };
 
 export const PIPELINE_TAB_LABELS = {
   overview: "Overview",
+  snapshots: "Snapshots",
   action: "Actions",
   monitoring: "Monitoring",
   logs: "Logs",

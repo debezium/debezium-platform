@@ -33,7 +33,7 @@ import PageHeader from "@components/PageHeader";
 import { useTranslation } from "react-i18next";
 import PageTour from "../../components/PageTour";
 import { Step } from "react-joyride";
-import { isRouteNavVisible } from "@utils/featureFlag";
+import { isRouteNavVisible } from "@support/featureFlag";
 
 export interface ISourceProps {
   sampleProp?: string;

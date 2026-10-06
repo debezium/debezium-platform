@@ -47,6 +47,21 @@ vi.mock("./PipelineMonitoring", () => ({
   default: () => <div>Monitoring content</div>,
 }));
 
+vi.mock("./PipelineSnapshots", () => ({
+  default: () => <div>Snapshots content</div>,
+}));
+
+vi.mock("./snapshotClient", () => ({
+  getSnapshotProgress: vi.fn(() =>
+    Promise.resolve({
+      data: { type: null, status: "IDLE", globalProgress: null, tables: [] },
+    })
+  ),
+  subscribeSnapshotProgress: vi.fn(() => () => undefined),
+  getSnapshotHistory: vi.fn(),
+  getSnapshotHistoryDetail: vi.fn(),
+}));
+
 vi.mock("../../apis/apis", () => ({
   fetchDataTypeTwo: vi.fn().mockResolvedValue({
     data: mockPipeline,
@@ -54,9 +69,9 @@ vi.mock("../../apis/apis", () => ({
   }),
 }));
 
-vi.mock("@utils/featureFlag", async () => {
-  const actual = await vi.importActual<typeof import("@utils/featureFlag")>(
-    "@utils/featureFlag"
+vi.mock("@support/featureFlag", async () => {
+  const actual = await vi.importActual<typeof import("@support/featureFlag")>(
+    "@support/featureFlag"
   );
 
   return {
@@ -69,7 +84,7 @@ vi.mock("@utils/featureFlag", async () => {
 import {
   getEnabledPipelineTabs,
   isPipelineTabEnabled,
-} from "@utils/featureFlag";
+} from "@support/featureFlag";
 
 const renderPipelineDetails = (initialEntry: string) =>
   render(

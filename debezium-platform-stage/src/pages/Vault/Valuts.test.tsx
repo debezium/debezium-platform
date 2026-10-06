@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Vaults } from "./Vaults";
 import { useData } from "../../appLayout/AppContext";
 import { render } from "../../__test__/unit/test-utils";
-import { isFeatureComingSoon, isFeatureEnabled } from "@utils/featureFlag";
+import { isFeatureComingSoon, isFeatureEnabled } from "@support/featureFlag";
 
 const { mockNavigate } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
