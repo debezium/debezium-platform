@@ -9,15 +9,15 @@ import java.util.Map;
 
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.model.ConnectionEntity;
-import io.debezium.platform.environment.actions.SqlServerTestProfile;
 import io.debezium.platform.environment.database.db.SqlserverTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
-@TestProfile(SqlServerTestProfile.class)
+@TestProfile(MinimalDevServicesTestProfile.class)
 @QuarkusTestResource(value = SqlserverTestResource.class, restrictToAnnotatedClass = true)
 class SqlServerDatabaseConnectionValidatorIT extends AbstractDatabaseConnectionValidatorIT {
 

@@ -7,15 +7,15 @@ package io.debezium.platform.environment.connection;
 
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.model.ConnectionEntity;
-import io.debezium.platform.environment.actions.MariaDbTestProfile;
 import io.debezium.platform.environment.database.db.MariaDbTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
-@TestProfile(MariaDbTestProfile.class)
+@TestProfile(MinimalDevServicesTestProfile.class)
 @QuarkusTestResource(value = MariaDbTestResource.class, restrictToAnnotatedClass = true)
 class MariaDbDatabaseConnectionValidatorIT extends AbstractDatabaseConnectionValidatorIT {
 

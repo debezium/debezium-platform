@@ -7,15 +7,15 @@ package io.debezium.platform.environment.connection;
 
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.model.ConnectionEntity;
-import io.debezium.platform.environment.actions.MySQLTestProfile;
 import io.debezium.platform.environment.database.db.MySQLTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
-@TestProfile(MySQLTestProfile.class)
+@TestProfile(MinimalDevServicesTestProfile.class)
 @QuarkusTestResource(value = MySQLTestResource.class, restrictToAnnotatedClass = true)
 class MySQLDatabaseConnectionValidatorIT extends AbstractDatabaseConnectionValidatorIT {
 
