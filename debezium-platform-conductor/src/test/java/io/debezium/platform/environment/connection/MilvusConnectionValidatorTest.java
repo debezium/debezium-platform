@@ -31,12 +31,18 @@ import io.debezium.platform.environment.connection.destination.MilvusConnectionV
  */
 class MilvusConnectionValidatorTest {
 
+    /**
+     * Kept deliberately short: every test that points at a non-routable address waits for this
+     * deadline to elapse, so the value is the dominant cost of this class. The production default
+     * is 60 seconds, but none of these assertions depend on it since the peer never answers.
+     */
+    private static final int CONNECTION_TIMEOUT_SECONDS = 2;
+
     private MilvusConnectionValidator connectionValidator;
 
     @BeforeEach
     void setup() {
-        // Initialize with a default timeout of 5 seconds
-        connectionValidator = new MilvusConnectionValidator(5);
+        connectionValidator = new MilvusConnectionValidator(CONNECTION_TIMEOUT_SECONDS);
     }
 
     @Test
@@ -117,7 +123,7 @@ class MilvusConnectionValidatorTest {
     @DisplayName("Should accept valid HTTPS URI")
     void shouldAcceptValidHttpsUri() {
         Map<String, Object> config = new HashMap<>();
-        config.put("uri", "https://milvus.example.com:19530");
+        config.put("uri", "https://milvus.invalid:19530"); // reserved TLD, fails DNS resolution immediately
 
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, config);
 

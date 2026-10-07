@@ -13,7 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.inject.Inject;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,13 +36,8 @@ import io.quarkus.test.junit.TestProfile;
 @QuarkusTestResource(value = InfinispanTestResource.class, restrictToAnnotatedClass = true)
 public class InfinispanConnectionValidatorIT {
 
-    private static final int DEFAULT_TIMEOUT_SECONDS = 30;
-    private InfinispanConnectionValidator validator;
-
-    @BeforeEach
-    void setUp() {
-        validator = new InfinispanConnectionValidator(DEFAULT_TIMEOUT_SECONDS);
-    }
+    @Inject
+    InfinispanConnectionValidator validator;
 
     @Test
     @DisplayName("Should successfully validate connection with valid Infinispan configuration")

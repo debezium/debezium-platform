@@ -13,7 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.inject.Inject;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -31,20 +32,14 @@ import io.quarkus.test.junit.TestProfile;
 @QuarkusTestResource(value = AzureEventHubsTestResource.class, restrictToAnnotatedClass = true)
 class AzureEventHubsConnectionValidatorIT {
 
-    private static final int DEFAULT_60_SECONDS_TIMEOUT = 60;
-
     /**
      * The Event Hub name configured in {@code azure_eventhubs_emulator_config.json} and created
      * by the emulator on startup.
      */
     private static final String EMULATOR_HUB_NAME = "eh1";
 
-    private AzureEventHubsConnectionValidator validator;
-
-    @BeforeEach
-    void setUp() {
-        validator = new AzureEventHubsConnectionValidator(DEFAULT_60_SECONDS_TIMEOUT);
-    }
+    @Inject
+    AzureEventHubsConnectionValidator validator;
 
     /**
      * Returns the emulator's auto-generated connection string, which contains

@@ -12,8 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 
+import jakarta.inject.Inject;
+
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -34,17 +35,11 @@ import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
 @QuarkusTestResource(value = KafkaCompanionResource.class, restrictToAnnotatedClass = true)
 class KafkaConnectionValidatorIT {
 
-    public static final int DEFAULT_30_SECONDS_TIMEOUT = 30;
-
     @InjectKafkaCompanion
     KafkaCompanion companion;
 
-    private KafkaConnectionValidator validator;
-
-    @BeforeEach
-    void setUp() {
-        validator = new KafkaConnectionValidator(DEFAULT_30_SECONDS_TIMEOUT);
-    }
+    @Inject
+    KafkaConnectionValidator validator;
 
     @Test
     @DisplayName("Should successfully validate connection with valid Kafka configuration")

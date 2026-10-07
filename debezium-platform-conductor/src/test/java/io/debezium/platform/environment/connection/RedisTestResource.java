@@ -52,10 +52,7 @@ public class RedisTestResource implements QuarkusTestResourceLifecycleManager {
     public Map<String, String> start() {
         REDIS.start();
 
-        // Configure timeout for Redis connection validator
-        return Map.of(
-                "destinations.redis.connection.timeout", "30",
-                "test.redis.auth.enabled", "false");
+        return Map.of("test.redis.auth.enabled", "false");
     }
 
     @Override

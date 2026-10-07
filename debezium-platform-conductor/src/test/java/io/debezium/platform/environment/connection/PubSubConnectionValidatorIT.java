@@ -12,8 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 
+import jakarta.inject.Inject;
+
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -32,14 +33,8 @@ import io.quarkus.test.junit.TestProfile;
 @QuarkusTestResource(value = PubSubTestResource.class, restrictToAnnotatedClass = true)
 class PubSubConnectionValidatorIT {
 
-    public static final int DEFAULT_TIMEOUT_SECONDS = 10;
-
-    private PubSubConnectionValidator validator;
-
-    @BeforeEach
-    void setUp() {
-        validator = new PubSubConnectionValidator(DEFAULT_TIMEOUT_SECONDS, PubSubConnectionValidator.DEFAULT_PUBSUB_SCOPE);
-    }
+    @Inject
+    PubSubConnectionValidator validator;
 
     @Test
     @DisplayName("Should successfully validate connection with valid configuration against emulator")

@@ -12,7 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.inject.Inject;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -31,14 +32,8 @@ import io.quarkus.test.junit.TestProfile;
 @QuarkusTestResource(value = PravegaTestResource.class, restrictToAnnotatedClass = true)
 public class PravegaConnectionValidatorIT {
 
-    private static final int DEFAULT_TIMEOUT_SECONDS = 30;
-
-    private PravegaConnectionValidator validator;
-
-    @BeforeEach
-    void setUp() {
-        validator = new PravegaConnectionValidator(DEFAULT_TIMEOUT_SECONDS);
-    }
+    @Inject
+    PravegaConnectionValidator validator;
 
     @Test
     @DisplayName("Should successfully validate connection with valid Pravega configuration")

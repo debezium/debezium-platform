@@ -272,6 +272,44 @@ quarkus:
           level: TRACE
 
 "%test":
+  sources:
+    database:
+      connection:
+        timeout: 2
+  destinations:
+    redis:
+      connection:
+        timeout: 2
+    kafka:
+      connection:
+        timeout: 2
+    infinispan:
+      connection:
+        timeout: 2
+    pravega:
+      connection:
+        timeout: 2
+    pulsar:
+      connection:
+        timeout: 2
+    eventhubs:
+      connection:
+        timeout: 2
+    rabbitmq:
+      connection:
+        timeout: 2
+    pubsub:
+      connection:
+        timeout: 2
+    qdrant:
+      connection:
+        timeout: 2
+    milvus:
+      connection:
+        timeout: 2
+    rocketmq:
+      connection:
+        timeout: 2
   conductor:
     descriptors:
       # Override to use ORAS download mode in test
