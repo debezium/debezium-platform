@@ -5,13 +5,7 @@
  */
 package io.debezium.platform.domain;
 
-import static jakarta.transaction.Transactional.TxType.SUPPORTS;
-
 import java.util.Optional;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +24,10 @@ import io.debezium.platform.domain.views.refs.SourceReference;
 import io.debezium.platform.environment.connection.source.SourceInspector;
 import io.debezium.platform.environment.connection.source.SourceInspectorFactory;
 import io.debezium.platform.error.NotFoundException;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
 @ApplicationScoped
 public class SourceService extends AbstractService<SourceEntity, Source, SourceReference> {
@@ -66,23 +64,6 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
     }
 
     public SignalCollectionSetupQueryResponse buildSignalCollectionSetupQuery(SignalCollectionSetupQueryRequest signalCollectionSetupQueryRequest) {
-        // export const buildSignalCollectionSetupQuery = (
-        // connectorType: string,
-        // fullyQualifiedCollectionName: string,
-        // ): string => {
-        // if (isMongoDbConnector(connectorType)) {
-        // const dotIndex = fullyQualifiedCollectionName.indexOf(".");
-        // if (dotIndex > 0 && dotIndex < fullyQualifiedCollectionName.length - 1) {
-        // const database = fullyQualifiedCollectionName.substring(0, dotIndex);
-        // const collection = fullyQualifiedCollectionName.substring(dotIndex + 1);
-        // return `db.getSiblingDB("${database}").createCollection("${collection}")`;
-        // }
-        // return `db.getSiblingDB("<database>").createCollection("<collection>")`;
-        // }
-
-        // return `CREATE TABLE ${fullyQualifiedCollectionName} (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);`;
-        // };
-
         try {
             String connectorType = signalCollectionSetupQueryRequest.connectorType();
             String fullyQualifiedCollectionName = signalCollectionSetupQueryRequest.fullyQualifiedCollectionName();
@@ -91,100 +72,93 @@ public class SourceService extends AbstractService<SourceEntity, Source, SourceR
 
             connectorType = connectorType.toLowerCase();
 
-            // truly diabolical >:-)
             if (connectorType.contains("mongo")) {
                 int dotIndex = fullyQualifiedCollectionName.indexOf(".");
                 if (dotIndex > 0 && dotIndex < fullyQualifiedCollectionName.length() - 1) {
                     String database = fullyQualifiedCollectionName.substring(0, dotIndex);
                     String collection = fullyQualifiedCollectionName.substring(dotIndex + 1);
-                    setupQuery = String.format("db.getSiblingDB(\"%s\").createCollection(\"%s\")", database, collection);
+                    setupQuery = String.format("db.getSiblingDB('%s').createCollection('%s')", database, collection);
                 }
                 else {
-                    setupQuery = "db.getSiblingDB(\"<database>\").createCollection(\"<collection>\")";
+                    setupQuery = "db.getSiblingDB('<database>').createCollection('<collection>')";
                 }
             }
-            else if (connectorType.contains("postgre")) {
+            else if (connectorType.contains("postgre") || connectorType.contains("mysql") || connectorType.contains("mariadb") || connectorType.contains("sqlserver")) {
                 setupQuery = String.format("CREATE TABLE %s (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL);",
                         fullyQualifiedCollectionName);
             }
-            else if (connectorType.contains("cassandra")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("mysql")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("mariadb")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("sqlserver")) {
-                setupQuery = "";
+            else if (connectorType.contains("oracle")) {
+                setupQuery = String.format("CREATE TABLE %s (id VARCHAR2(42) PRIMARY KEY, type VARCHAR2(32) NOT NULL, data VARCHAR2(2048) NULL);",
+                        fullyQualifiedCollectionName);
             }
             else if (connectorType.contains("db2")) {
-                setupQuery = "";
+                setupQuery = String.format("CREATE TABLE %s (id VARCHAR(42) NOT NULL, type VARCHAR(32) NOT NULL, data VARCHAR(2048) NULL, PRIMARY KEY(id));",
+                        fullyQualifiedCollectionName);
             }
-            else if (connectorType.contains("apache_pulsar") || connectorType.contains("pulsar")) {
-                setupQuery = "";
+            else if (connectorType.contains("cassandra")) {
+                setupQuery = String.format("CREATE TABLE %s (id text PRIMARY KEY, type text, data text);",
+                        fullyQualifiedCollectionName);
             }
-            else if (connectorType.contains("oracle")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("rocketmq")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("kinesis")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("eventhubs") || connectorType.contains("event_hubs")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("rabbitmq")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("jdbc")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("nats")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("kafka")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("infinispan")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("instructlab")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("fluss")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("pub_sub_lite") || connectorType.contains("pubsub_lite")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("pub_sub") || connectorType.contains("pubsub")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("pravega")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("milvus")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("qdrant")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("redis")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("http")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("sns")) {
-                setupQuery = "";
-            }
-            else if (connectorType.contains("sqs")) {
-                setupQuery = "";
-            }
+            // else if (connectorType.contains("apache_pulsar") || connectorType.contains("pulsar")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("rocketmq")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("kinesis")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("eventhubs") || connectorType.contains("event_hubs")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("rabbitmq")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("jdbc")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("nats")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("kafka")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("infinispan")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("instructlab")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("fluss")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("pub_sub_lite") || connectorType.contains("pubsub_lite")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("pub_sub") || connectorType.contains("pubsub")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("pravega")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("milvus")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("qdrant")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("redis")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("http")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("sns")) {
+            // setupQuery = "";
+            // }
+            // else if (connectorType.contains("sqs")) {
+            // setupQuery = "";
+            // }
             else {
                 throw new Exception(String.format("No statement available for connector type: {}", connectorType));
             }

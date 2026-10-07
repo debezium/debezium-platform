@@ -735,7 +735,7 @@
       },
       "SignalCollectionSetupQueryRequest" : {
         "type" : "object",
-        "required" : [ "connectorType" ],
+        "required" : [ "connectorType", "fullyQualifiedCollectionName" ],
         "properties" : {
           "connectorType" : {
             "type" : "string",

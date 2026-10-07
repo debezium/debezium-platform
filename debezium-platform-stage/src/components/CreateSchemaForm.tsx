@@ -65,6 +65,7 @@ import {
   TableData,
   SignalCollectionSetupQueryResponse,
   SignalDataCollectionVerifyResponse,
+  fetchSignalQuery,
   verifySignals,
 } from "src/apis";
 import { API_URL } from "@utils/constants";
@@ -341,10 +342,14 @@ const CreateSchemaForm = React.forwardRef<
   // );
 
   const { data: signalCollectionSetupQuery } = useQuery<String>(
-    ["signalCollectionSetupQuery", connectorTypeString],
+    ["signalCollectionSetupQuery", connectorTypeString, signalCollectionNameVerify],
     async () => {
-      const response = await fetchData<SignalCollectionSetupQueryResponse>(`${API_URL}/api/signals/query/${connectorTypeString}`);
-      return response.query;
+      const payload = {
+        connectorType: connectorTypeString,
+        fullyQualifiedCollectionName: signalCollectionNameVerify
+      }
+      const response = await fetchSignalQuery<SignalCollectionSetupQueryResponse>(`${API_URL}/api/signals/query`, payload);
+      return response.data?.setupQuery as String;
     }
   );
 

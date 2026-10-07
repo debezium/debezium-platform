@@ -558,6 +558,7 @@ components:
       type: object
       required:
       - connectorType
+      - fullyQualifiedCollectionName
       properties:
         connectorType:
           type: string
