@@ -5,6 +5,7 @@
  */
 package io.debezium.platform.environment.connection.source;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,6 +13,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
 import org.bson.Document;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,14 +43,17 @@ public class MongoDbSourceInspector implements SourceInspector {
     private static final String SIGNAL_DATA_COLLECTION_NOT_PRESENT_MESSAGE = "Signal data collection not present";
     private static final String SIGNAL_DATA_COLLECTION_NAME_REQUIRED_MESSAGE = "A fully qualified signal data collection name is required";
 
+    private final int connectionTimeoutSeconds;
+
+    public MongoDbSourceInspector(@ConfigProperty(name = "sources.database.connection.timeout") int connectionTimeoutSeconds) {
+        this.connectionTimeoutSeconds = connectionTimeoutSeconds;
+    }
+
     @Override
     public CollectionTree listAvailableCollections(Connection connectionConfig) {
 
         Object connectionString = connectionConfig.getConfig().get(MONGODB_CONNECTION_STRING);
-        Configuration mongoConfig = Configuration
-                .create()
-                .with("mongodb.connection.string", connectionString)
-                .build();
+        Configuration mongoConfig = toMongoDbConfiguration(connectionString);
 
         try (MongoDbConnection connection = MongoDbConnections.create(mongoConfig)) {
             List<CollectionId> collectionIds = connection.collections();
@@ -124,10 +129,7 @@ public class MongoDbSourceInspector implements SourceInspector {
         }
 
         Object connectionString = connection.getConfig().get(MONGODB_CONNECTION_STRING);
-        Configuration mongoConfig = Configuration
-                .create()
-                .with("mongodb.connection.string", connectionString)
-                .build();
+        Configuration mongoConfig = toMongoDbConfiguration(connectionString);
 
         try (MongoDbConnection mongoDbConnection = MongoDbConnections.create(mongoConfig)) {
 
@@ -161,4 +163,18 @@ public class MongoDbSourceInspector implements SourceInspector {
 
         return collection != null;
     }
+
+    private Configuration toMongoDbConfiguration(Object connectionString) {
+        // Without these the driver falls back to its own defaults, and server selection alone blocks for
+        // 30s before an unreachable host is reported as unreachable.
+        long timeoutMs = Duration.ofSeconds(connectionTimeoutSeconds).toMillis();
+
+        return Configuration
+                .create()
+                .with("mongodb.connection.string", connectionString)
+                .with("mongodb.connect.timeout.ms", timeoutMs)
+                .with("mongodb.server.selection.timeout.ms", timeoutMs)
+                .build();
+    }
+
 }

@@ -5,9 +5,12 @@
  */
 package io.debezium.platform.environment.connection.source;
 
+import java.time.Duration;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +28,12 @@ public class MongoDbConnectionValidator implements ConnectionValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoDbConnectionValidator.class);
     public static final String MONGODB_CONNECTION_STRING = "connection.string";
+
+    private final int connectionTimeoutSeconds;
+
+    public MongoDbConnectionValidator(@ConfigProperty(name = "sources.database.connection.timeout") int connectionTimeoutSeconds) {
+        this.connectionTimeoutSeconds = connectionTimeoutSeconds;
+    }
 
     @Override
     public ConnectionValidationResult validate(Connection connectionConfig) {
@@ -49,8 +58,14 @@ public class MongoDbConnectionValidator implements ConnectionValidator {
             throw new IllegalArgumentException("MongoDB connection string is required");
         }
 
+        // Without these the driver falls back to its own defaults, and server selection alone blocks for
+        // 30s before an unreachable host is reported as unreachable.
+        long timeoutMs = Duration.ofSeconds(connectionTimeoutSeconds).toMillis();
+
         return Configuration.create()
                 .with("mongodb.connection.string", value)
+                .with("mongodb.connect.timeout.ms", timeoutMs)
+                .with("mongodb.server.selection.timeout.ms", timeoutMs)
                 .build();
     }
 }
