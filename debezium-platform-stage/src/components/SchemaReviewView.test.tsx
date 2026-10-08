@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import SchemaReviewView from "./SchemaReviewView";
 import type { ConnectorSchema, Source } from "../apis/types";
 import { render } from "../__test__/unit/test-utils";
@@ -16,8 +16,8 @@ vi.mock("./TableViewComponent", () => ({
   default: () => <div data-testid="table-view-mock" />,
 }));
 
-vi.mock("react-query", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("react-query")>();
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...mod,
     useQuery: vi.fn(),
@@ -262,7 +262,11 @@ describe("SchemaReviewView", () => {
     };
 
     vi.mocked(useQuery).mockImplementation((key: unknown) => {
-      if (Array.isArray(key) && key[0] === "connection-collections") {
+      const queryKey =
+        key && typeof key === "object" && "queryKey" in key
+          ? (key as { queryKey: unknown }).queryKey
+          : key;
+      if (Array.isArray(queryKey) && queryKey[0] === "connection-collections") {
         return {
           data: undefined,
           error: { message: "not allowed" },

@@ -11,7 +11,7 @@ import {
 import { PageHeader } from "@patternfly/react-component-groups";
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { FeatureGate } from "@components/FeatureGate";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import {
@@ -61,7 +61,9 @@ const CreateAlertRule: React.FunctionComponent = () => {
         "Create successful",
         `Rule "${payload.name}" created successfully.`
       );
-      await queryClient.invalidateQueries(ALERT_RULES_QUERY_KEY);
+      await queryClient.invalidateQueries({
+        queryKey: ALERT_RULES_QUERY_KEY
+      });
       navigate("/alerts/rules");
     }
     setIsSaving(false);

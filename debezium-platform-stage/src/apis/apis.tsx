@@ -1,16 +1,21 @@
-import { QueryClient } from "react-query";
+import i18next from "../i18n";
 import { API_URL } from "../utils/constants";
-
-const queryClient = new QueryClient();
 
 export type ApiResponse<T> = {
   data?: T | null;
   error?: string;
 };
 
+const createResourceFallback = () =>
+  i18next.t("statusMessage:apis.failedToCreateResource");
+
+const updateResourceFallback = () =>
+  i18next.t("statusMessage:apis.failedToUpdateResource");
+
 export const createPost = async <T,>(
   url: string,
-  payload: unknown
+  payload: unknown,
+  fallback = createResourceFallback()
 ): Promise<ApiResponse<T>> => {
   try {
     const response = await fetch(url, {
@@ -22,7 +27,7 @@ export const createPost = async <T,>(
     });
 
     if (!response.ok) {
-      let errorMsg = `Failed to create source: ${response.statusText}`;
+      let errorMsg = `${fallback}: ${response.statusText}`;
       try {
         const errJson = await response.json();
         if (errJson && errJson.details && errJson.details.length > 0) {
@@ -37,19 +42,17 @@ export const createPost = async <T,>(
     }
 
     const data = await response.json();
-    // Refresh data after source is created
-    queryClient.invalidateQueries("sources");
-
     return { data };
   } catch (error) {
-    console.error("Error creating source:", error);
-    return { error: "An error occurred while creating source" };
+    console.error(fallback, error);
+    return { error: fallback };
   }
 };
 
 export const editPut = async <T,>(
   url: string,
-  payload: unknown
+  payload: unknown,
+  fallback = updateResourceFallback()
 ): Promise<ApiResponse<T>> => {
   try {
     const response = await fetch(url, {
@@ -61,7 +64,7 @@ export const editPut = async <T,>(
     });
 
     if (!response.ok) {
-      let errorMsg = `Failed to create source: ${response.statusText}`;
+      let errorMsg = `${fallback}: ${response.statusText}`;
       try {
         const errJson = await response.json();
         if (errJson && errJson.details && errJson.details.length > 0) {
@@ -76,13 +79,10 @@ export const editPut = async <T,>(
     }
 
     const data = await response.json();
-    // Refresh data after source is created
-    queryClient.invalidateQueries("sources");
-
     return { data };
   } catch (error) {
-    console.error("Error creating source:", error);
-    return { error: "An error occurred while creating source" };
+    console.error(fallback, error);
+    return { error: fallback };
   }
 };
 

@@ -14,7 +14,7 @@ import { createPost, fetchData, TransformData, TransformPayload } from "src/apis
 import { API_URL } from "@utils/constants";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@patternfly/react-component-groups";
 import CreateTransformForm, {
   CreateTransformFormHandle,
@@ -43,10 +43,10 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
 
   const fromId = modelLoaded ? null : searchParams.get("from");
 
-  const { data: existingTransforms = [], isLoading: isTransformsLoading } = useQuery<TransformData[]>(
-    "transforms",
-    () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
-  );
+  const { data: existingTransforms = [], isLoading: isTransformsLoading } = useQuery<TransformData[]>({
+    queryKey: ["transforms"],
+    queryFn: () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
+  });
 
   const existingNames = React.useMemo(() => {
     return Array.isArray(existingTransforms)
@@ -73,8 +73,12 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
       );
     } else {
       const created = response.data as TransformData;
-      await queryClient.invalidateQueries("transforms");
-      await queryClient.invalidateQueries("transform");
+      await queryClient.invalidateQueries({
+        queryKey: ["transforms"]
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["transform"]
+      });
       modelLoaded && onSelection?.([created]);
       addNotification(
         "success",

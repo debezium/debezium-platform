@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createPost } from "src/apis";
 import { CreateConnection } from "./CreateConnection";
 import { render } from "../../__test__/unit/test-utils";
@@ -16,8 +16,8 @@ vi.mock("react-router-dom", async (importOriginal) => {
   };
 });
 
-vi.mock("react-query", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("react-query")>();
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@tanstack/react-query")>();
   return { ...mod, useQuery: vi.fn() };
 });
 
@@ -62,10 +62,13 @@ describe("CreateConnection description field", () => {
   /** `connectionsSchema` drives whether the form takes the schema-backed path. */
   const withSchemas = (schemas: unknown) =>
     vi.mocked(useQuery).mockImplementation(
-      ((key: unknown) =>
-        key === "connectionsSchema"
+      ((options: { queryKey?: unknown }) => {
+        const queryKey = options.queryKey;
+        const name = Array.isArray(queryKey) ? queryKey[0] : queryKey;
+        return name === "connectionsSchema"
           ? { data: schemas, error: null, isLoading: false }
-          : { data: [], error: null, isLoading: false }) as any,
+          : { data: [], error: null, isLoading: false };
+      }) as any,
     );
 
   beforeEach(() => {

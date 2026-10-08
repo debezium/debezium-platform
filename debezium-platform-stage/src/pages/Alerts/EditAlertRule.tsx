@@ -19,7 +19,7 @@ import { PageHeader } from "@patternfly/react-component-groups";
 import { ExclamationCircleIcon, PencilAltIcon, RhUiNotificationIcon, RhUiTaskIcon } from "@patternfly/react-icons";
 import * as React from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { FeatureGate } from "@components/FeatureGate";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import {
@@ -76,7 +76,9 @@ const EditAlertRule: React.FunctionComponent = () => {
         "Save successful",
         `Rule "${payload.name}" updated successfully.`
       );
-      await queryClient.invalidateQueries(ALERT_RULES_QUERY_KEY);
+      await queryClient.invalidateQueries({
+        queryKey: ALERT_RULES_QUERY_KEY
+      });
       setViewMode(true);
     }
     setIsSaving(false);

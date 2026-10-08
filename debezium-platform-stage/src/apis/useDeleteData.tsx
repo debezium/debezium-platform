@@ -1,4 +1,4 @@
-import { useQueryClient, useMutation } from "react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { deleteData } from "./apis";
 
 export const useDeleteData = ({
@@ -10,20 +10,33 @@ export const useDeleteData = ({
 }) => {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, string>((url: string) => deleteData(url), {
+  return useMutation<void, Error, string>({
+    mutationFn: (url: string) => deleteData(url),
+
     onSuccess: () => {
       // Invalidate and refetch the data after deletion
-      queryClient.invalidateQueries("pipelines");
-      queryClient.invalidateQueries("destinations");
-      queryClient.invalidateQueries("sources");
-      queryClient.invalidateQueries("transforms");
-      queryClient.invalidateQueries("connections");
+      queryClient.invalidateQueries({
+        queryKey: ["pipelines"]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["destinations"]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["sources"]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["transforms"]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["connections"]
+      });
 
       // Call the optional onSuccess callback from the component
       if (onSuccess) {
         onSuccess();
       }
     },
+
     onError: (error) => {
       console.error("Error deleting data:", error);
 
@@ -31,6 +44,6 @@ export const useDeleteData = ({
       if (onError) {
         onError(error);
       }
-    },
+    }
   });
 };

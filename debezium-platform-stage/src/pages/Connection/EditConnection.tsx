@@ -5,7 +5,7 @@ import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Connection, ConnectionAdditionalConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost, editPut, fetchData, fetchDataTypeTwo } from "src/apis";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
 import { buildFlatConfigFromFormData, buildNestedConnectionYupFields, flatConnectionConfigToRhfShape } from "@utils/connectionForm";
@@ -63,10 +63,10 @@ type ConnectionFormValues = {
 };
 
 const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
-    const { data: connections = [] } = useQuery<Connection[], Error>(
-        "connections",
-        () => fetchData<Connection[]>(`${API_URL}/api/connections`)
-    );
+    const { data: connections = [] } = useQuery<Connection[], Error>({
+        queryKey: ["connections"],
+        queryFn: () => fetchData<Connection[]>(`${API_URL}/api/connections`)
+    });
     // const navigate = useNavigate();
     const { t } = useTranslation();
     const { addNotification } = useNotification();
