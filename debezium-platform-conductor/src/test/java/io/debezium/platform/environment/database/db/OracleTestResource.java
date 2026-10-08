@@ -28,9 +28,9 @@ public class OracleTestResource implements QuarkusTestResourceLifecycleManager {
     public Map<String, String> start() {
         ORACLE.start();
         return Map.of(
-                "quarkus.datasource.oracle.jdbc.url", ORACLE.getJdbcUrl(),
-                "quarkus.datasource.oracle.username", ORACLE.getUsername(),
-                "quarkus.datasource.oracle.password", ORACLE.getPassword());
+                "oracle.jdbc.url", ORACLE.getJdbcUrl(),
+                "oracle.username", ORACLE.getUsername(),
+                "oracle.password", ORACLE.getPassword());
     }
 
     @Override

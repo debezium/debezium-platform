@@ -23,13 +23,13 @@ import io.debezium.platform.environment.connection.destination.JdbcConnectionVal
 
 class JdbcConnectionValidatorTest {
 
-    private static final int DEFAULT_TIMEOUT = 5;
+    private static final int CONNECTION_TIMEOUT_SECONDS = 2;
 
     private JdbcConnectionValidator validator;
 
     @BeforeEach
     void setUp() {
-        validator = new JdbcConnectionValidator(DEFAULT_TIMEOUT);
+        validator = new JdbcConnectionValidator(CONNECTION_TIMEOUT_SECONDS);
     }
 
     @Test
@@ -100,7 +100,7 @@ class JdbcConnectionValidatorTest {
     @DisplayName("Should fail validation with invalid JDBC URL")
     void shouldFailValidationWithInvalidUrl() {
         Map<String, Object> config = new HashMap<>();
-        config.put("url", "jdbc:postgresql://invalid-host-that-does-not-exist:5432/testdb");
+        config.put("url", "jdbc:postgresql://invalid-host.invalid:5432/testdb"); // reserved TLD, fails DNS resolution immediately
         config.put("username", "user");
         config.put("password", "pass");
         Connection connection = new TestConnectionView(ConnectionEntity.Type.JDBC, config);
@@ -115,7 +115,10 @@ class JdbcConnectionValidatorTest {
     @DisplayName("Should handle optional username and password gracefully")
     void shouldHandleOptionalCredentials() {
         Map<String, Object> config = new HashMap<>();
-        config.put("url", "jdbc:postgresql://10.255.255.1:5432/testdb");
+        // connectTimeout is set on the URL because the validator passes its configured timeout via
+        // DriverManager.setLoginTimeout(), which pgjdbc ignores; without it the driver's own 10s
+        // default governs and this test spends that long waiting on the non-routable address.
+        config.put("url", "jdbc:postgresql://10.255.255.1:5432/testdb?connectTimeout=" + CONNECTION_TIMEOUT_SECONDS);
         Connection connection = new TestConnectionView(ConnectionEntity.Type.JDBC, config);
 
         ConnectionValidationResult result = validator.validate(connection);

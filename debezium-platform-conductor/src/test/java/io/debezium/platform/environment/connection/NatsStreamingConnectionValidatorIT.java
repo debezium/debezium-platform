@@ -16,15 +16,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.destination.NatsStreamingConnectionValidator;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
-@QuarkusTestResource(NatsStreamingTestResource.class)
+@TestProfile(MinimalDevServicesTestProfile.class)
+@QuarkusTestResource(value = NatsStreamingTestResource.class, restrictToAnnotatedClass = true)
 class NatsStreamingConnectionValidatorIT {
 
     private static final int DEFAULT_TIMEOUT_SECONDS = 30;

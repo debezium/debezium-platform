@@ -12,30 +12,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.inject.Inject;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.destination.PravegaConnectionValidator;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
+@TestProfile(MinimalDevServicesTestProfile.class)
 @QuarkusTestResource(value = PravegaTestResource.class, restrictToAnnotatedClass = true)
 public class PravegaConnectionValidatorIT {
 
-    private static final int DEFAULT_TIMEOUT_SECONDS = 30;
-
-    private PravegaConnectionValidator validator;
-
-    @BeforeEach
-    void setUp() {
-        validator = new PravegaConnectionValidator(DEFAULT_TIMEOUT_SECONDS);
-    }
+    @Inject
+    PravegaConnectionValidator validator;
 
     @Test
     @DisplayName("Should successfully validate connection with valid Pravega configuration")

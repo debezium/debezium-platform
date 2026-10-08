@@ -64,13 +64,18 @@ import io.debezium.platform.environment.connection.destination.RedisConnectionVa
  */
 class RedisConnectionValidatorTest {
 
-    public static final Duration DEFAULT_30_SECONDS_TIMEOUT = Duration.ofSeconds(30);
+    /**
+     * Kept deliberately short: every test that points at a non-routable address waits for this
+     * timeout to elapse, so the value is the dominant cost of this class. The production default
+     * is 60 seconds, but none of these assertions depend on it since the peer never answers.
+     */
+    private static final Duration CONNECTION_TIMEOUT = Duration.ofSeconds(2);
 
     private RedisConnectionValidator validator;
 
     @BeforeEach
     void setUp() {
-        validator = new RedisConnectionValidator(DEFAULT_30_SECONDS_TIMEOUT);
+        validator = new RedisConnectionValidator(CONNECTION_TIMEOUT);
     }
 
     @Test
@@ -182,7 +187,7 @@ class RedisConnectionValidatorTest {
     @DisplayName("Should fail validation with invalid host")
     void shouldFailValidationWithInvalidHost() {
         Map<String, Object> config = new HashMap<>();
-        config.put("host", "invalid-host-that-does-not-exist");
+        config.put("host", "invalid-host.invalid"); // reserved TLD, fails DNS resolution immediately
         config.put("port", RedisConnectionValidator.DEFAULT_PORT);
         Connection connection = new TestConnectionView(ConnectionEntity.Type.REDIS, config);
 

@@ -26,9 +26,9 @@ public class SqlserverTestResource implements QuarkusTestResourceLifecycleManage
     public Map<String, String> start() {
         SQLSERVER.start();
         return Map.of(
-                "quarkus.datasource.mssql.jdbc.url", SQLSERVER.getJdbcUrl(),
-                "quarkus.datasource.mssql.username", SQLSERVER.getUsername(),
-                "quarkus.datasource.mssql.password", SQLSERVER.getPassword());
+                "mssql.jdbc.url", SQLSERVER.getJdbcUrl(),
+                "mssql.username", SQLSERVER.getUsername(),
+                "mssql.password", SQLSERVER.getPassword());
     }
 
     @Override

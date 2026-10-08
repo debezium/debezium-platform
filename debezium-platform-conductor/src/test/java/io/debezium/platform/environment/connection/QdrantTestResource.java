@@ -33,8 +33,7 @@ public class QdrantTestResource implements QuarkusTestResourceLifecycleManager {
     @Override
     public Map<String, String> start() {
         QDRANT.start();
-        return Map.of(
-                "destinations.qdrant.connection.timeout", "60");
+        return Map.of();
     }
 
     @Override

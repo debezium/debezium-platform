@@ -38,8 +38,7 @@ public class AzureEventHubsTestResource implements QuarkusTestResourceLifecycleM
                 .withAzuriteContainer(azurite);
         emulator.start();
 
-        return Map.of(
-                "destinations.eventhubs.connection.timeout", "60");
+        return Map.of();
     }
 
     public static String getConnectionString() {

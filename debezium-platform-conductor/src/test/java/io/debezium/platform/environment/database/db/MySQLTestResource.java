@@ -25,9 +25,9 @@ public class MySQLTestResource implements QuarkusTestResourceLifecycleManager {
     public Map<String, String> start() {
         MYSQL.start();
         return Map.of(
-                "quarkus.datasource.mysql.jdbc.url", MYSQL.getJdbcUrl(),
-                "quarkus.datasource.mysql.username", MYSQL.getUsername(),
-                "quarkus.datasource.mysql.password", MYSQL.getPassword());
+                "mysql.jdbc.url", MYSQL.getJdbcUrl(),
+                "mysql.username", MYSQL.getUsername(),
+                "mysql.password", MYSQL.getPassword());
     }
 
     @Override

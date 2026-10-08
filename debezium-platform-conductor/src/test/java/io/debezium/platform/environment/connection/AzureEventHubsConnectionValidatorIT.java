@@ -13,22 +13,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.inject.Inject;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.data.model.ConnectionEntity;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.environment.connection.destination.AzureEventHubsConnectionValidator;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
+@TestProfile(MinimalDevServicesTestProfile.class)
 @QuarkusTestResource(value = AzureEventHubsTestResource.class, restrictToAnnotatedClass = true)
 class AzureEventHubsConnectionValidatorIT {
-
-    private static final int DEFAULT_60_SECONDS_TIMEOUT = 60;
 
     /**
      * The Event Hub name configured in {@code azure_eventhubs_emulator_config.json} and created
@@ -36,12 +38,8 @@ class AzureEventHubsConnectionValidatorIT {
      */
     private static final String EMULATOR_HUB_NAME = "eh1";
 
-    private AzureEventHubsConnectionValidator validator;
-
-    @BeforeEach
-    void setUp() {
-        validator = new AzureEventHubsConnectionValidator(DEFAULT_60_SECONDS_TIMEOUT);
-    }
+    @Inject
+    AzureEventHubsConnectionValidator validator;
 
     /**
      * Returns the emulator's auto-generated connection string, which contains

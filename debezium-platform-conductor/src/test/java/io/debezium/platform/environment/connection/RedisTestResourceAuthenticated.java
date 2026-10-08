@@ -69,9 +69,8 @@ public class RedisTestResourceAuthenticated implements QuarkusTestResourceLifecy
     public Map<String, String> start() {
         REDIS.start();
 
-        // Configure timeout and provide password for tests
+        // Provide credentials for tests
         return Map.of(
-                "destinations.redis.connection.timeout", "30",
                 "test.redis.auth.enabled", "true",
                 "test.redis.password", PASSWORD,
                 "test.redis.username", USERNAME);
