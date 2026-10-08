@@ -121,10 +121,10 @@ public class MilvusConnectionValidator implements ConnectionValidator {
             String uri = milvusConfig.get(URI_KEY).toString().trim();
             LOGGER.debug("Attempting to connect to Milvus at: {}", uri);
 
+            // Build connection configuration using the official API
             var configBuilder = ConnectConfig.builder()
                     .uri(uri)
-                    .connectTimeoutMs(defaultConnectionTimeout * 1000L) // Convert seconds to milliseconds
-                    .rpcDeadlineMs(defaultConnectionTimeout * 1000L);
+                    .rpcDeadlineMs(defaultConnectionTimeout * 1000L); // Convert seconds to milliseconds
 
             // Add database if specified
             if (milvusConfig.containsKey(DATABASE_KEY) && milvusConfig.get(DATABASE_KEY) != null
