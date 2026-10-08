@@ -12,7 +12,7 @@ import {
   MemoryRouter,
   type MemoryRouterProps,
 } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GuidedTourProvider } from "../../components/GuidedTourContext";
 import { DocHelpProvider } from "../../components/DocHelpContext";
 import { NotificationProvider } from "../../appLayout/AppNotificationContext";

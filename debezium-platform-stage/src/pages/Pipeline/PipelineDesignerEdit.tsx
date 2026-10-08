@@ -46,18 +46,9 @@ import {
 } from "@patternfly/react-core";
 import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import "./PipelineDesigner.css";
-import {
-  Destination,
-  editPut,
-  fetchDataTypeTwo,
-  Pipeline,
-  PipelineDestination,
-  PipelineSource,
-  PipelineUpdatePayload,
-  Source,
-  Transform,
-} from "../../apis/apis";
+import { editPut, fetchDataTypeTwo } from "../../apis/apis";
 import {
   DragDropSort,
   DragDropSortDragEndEvent,
@@ -78,7 +69,16 @@ import { useNotification } from "@appContext/AppNotificationContext";
 import ApiError from "@components/ApiError";
 import TrademarkMessage from "@components/TrademarkMessage";
 import { useTranslation } from "react-i18next";
-import { Properties } from "src/apis/types";
+import {
+  Destination,
+  Pipeline,
+  PipelineDestination,
+  PipelineSource,
+  PipelineUpdatePayload,
+  Properties,
+  Source,
+  Transform,
+} from "src/apis/types";
 import { selectedTransformAtom } from "./PipelineDesigner";
 import { getPipelineNameValidationError } from "@utils/pipelineNameValidation";
 
@@ -141,6 +141,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
   pipelineId,
 }) => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { t } = useTranslation();
 
     const [items, setItems] = React.useState<DraggableObject[]>([]);
@@ -400,6 +401,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
           t('statusMessage:edit.successTitle'),
           t('statusMessage:edit.successTitle', { val: `${t('pipeline')} ${(response.data as Pipeline).name}` }),
         );
+        await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
         navigateTo("/pipeline");
       }
     };

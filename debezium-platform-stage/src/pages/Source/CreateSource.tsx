@@ -11,13 +11,13 @@ import {
 } from "@patternfly/react-core";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useRef, useState } from "react";
-import { createPost, Payload, Source } from "../../apis/apis";
+import { createPost } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
-import { ConnectorSchema } from "../../apis/types";
+import { ConnectorSchema, Payload, Source } from "../../apis/types";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
 } from "@components/CreateSchemaForm";
@@ -45,6 +45,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   const { t } = useTranslation();
   const { addNotification } = useNotification();
   const { darkMode } = useData();
+  const queryClient = useQueryClient();
 
   const sourceIdParam = useParams<{ sourceId: string }>();
   const sourceId = modelLoaded ? selectedId : sourceIdParam.sourceId;
@@ -67,16 +68,16 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     data: connectorSchema,
     isLoading: isSchemaLoading,
     error: schemaError,
-  } = useQuery<ConnectorSchema, Error>(
-    ["connectorSchema", descriptorPath],
-    () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
-    { enabled: !!descriptorPath }
-  );
+  } = useQuery<ConnectorSchema, Error>({
+    queryKey: ["connectorSchema", descriptorPath],
+    queryFn: () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
+    enabled: !!descriptorPath
+  });
 
-  const { data: sources = [] } = useQuery<Source[], Error>(
-    "sources",
-    () => fetchData<Source[]>(`${API_URL}/api/sources`)
-  );
+  const { data: sources = [] } = useQuery<Source[], Error>({
+    queryKey: ["sources"],
+    queryFn: () => fetchData<Source[]>(`${API_URL}/api/sources`)
+  });
 
   const existingSources = React.useMemo(() => {
     return Array.isArray(sources) ? sources.map((s) => s.name) : [];
@@ -105,6 +106,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         "Create successful",
         `Source "${(response.data as Source).name}" created successfully.`
       );
+      await queryClient.invalidateQueries({ queryKey: ["sources"] });
       if (!modelLoaded) navigate("/source");
     }
     setIsLoading(false);

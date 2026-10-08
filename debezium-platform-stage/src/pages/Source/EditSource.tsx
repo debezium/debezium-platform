@@ -17,15 +17,13 @@ import {
   editPut,
   fetchData,
   fetchDataTypeTwo,
-  Payload,
-  Source,
 } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { PageHeader } from "@patternfly/react-component-groups";
 import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "react-query";
-import { ConnectorSchema } from "../../apis/types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ConnectorSchema, Payload, Source } from "../../apis/types";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
 } from "@components/CreateSchemaForm";
@@ -54,10 +52,10 @@ const EditSource: React.FunctionComponent = () => {
   const { addNotification } = useNotification();
   const queryClient = useQueryClient();
 
-  const { data: sources = [] } = useQuery<Source[], Error>(
-    "sources",
-    () => fetchData<Source[]>(`${API_URL}/api/sources`)
-  );
+  const { data: sources = [] } = useQuery<Source[], Error>({
+    queryKey: ["sources"],
+    queryFn: () => fetchData<Source[]>(`${API_URL}/api/sources`)
+  });
 
   const existingSources = React.useMemo(() => {
     return Array.isArray(sources) ? sources.map((s) => s.name) : [];
@@ -74,9 +72,10 @@ const EditSource: React.FunctionComponent = () => {
     data: source,
     isLoading: isSourceLoading,
     error: sourceQueryError,
-  } = useQuery<Source, Error>(
-    ["source", routeSourceId],
-    async () => {
+  } = useQuery<Source, Error>({
+    queryKey: ["source", routeSourceId],
+
+    queryFn: async () => {
       const response = await fetchDataTypeTwo<Source>(
         `${API_URL}/api/sources/${routeSourceId}`
       );
@@ -85,8 +84,9 @@ const EditSource: React.FunctionComponent = () => {
       }
       return response.data as Source;
     },
-    { enabled: !!routeSourceId }
-  );
+
+    enabled: !!routeSourceId
+  });
 
   const connectorType = source?.type;
   const descriptorPath = connectorType
@@ -97,11 +97,11 @@ const EditSource: React.FunctionComponent = () => {
     data: connectorSchema,
     isLoading: isSchemaLoading,
     error: schemaError,
-  } = useQuery<ConnectorSchema, Error>(
-    ["connectorSchema", descriptorPath],
-    () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
-    { enabled: !!descriptorPath }
-  );
+  } = useQuery<ConnectorSchema, Error>({
+    queryKey: ["connectorSchema", descriptorPath],
+    queryFn: () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
+    enabled: !!descriptorPath
+  });
 
   const sourceErrorMessage =
     sourceQueryError instanceof Error ? sourceQueryError.message : sourceQueryError
@@ -130,7 +130,10 @@ const EditSource: React.FunctionComponent = () => {
           val: `${(response.data as Source)?.name ?? source?.name}`,
         })
       );
-      await queryClient.invalidateQueries(["source", routeSourceId]);
+      await queryClient.invalidateQueries({
+        queryKey: ["source", routeSourceId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["sources"] });
       setViewMode(true);
     }
     setIsLoading(false);

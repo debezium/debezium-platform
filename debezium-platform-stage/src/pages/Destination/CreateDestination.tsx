@@ -11,13 +11,13 @@ import {
 } from "@patternfly/react-core";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useRef, useState } from "react";
-import { createPost, Payload, Destination } from "../../apis/apis";
+import { createPost } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
-import { ConnectorSchema } from "../../apis/types";
+import { ConnectorSchema, Destination, Payload } from "../../apis/types";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
 } from "@components/CreateSchemaForm";
@@ -45,6 +45,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   const { t } = useTranslation();
   const { addNotification } = useNotification();
   const { darkMode } = useData();
+  const queryClient = useQueryClient();
 
   const destinationIdParam = useParams<{ destinationId: string }>();
   const destinationId = modelLoaded ? selectedId : destinationIdParam.destinationId;
@@ -67,16 +68,16 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     data: connectorSchema,
     isLoading: isSchemaLoading,
     error: schemaError,
-  } = useQuery<ConnectorSchema, Error>(
-    ["connectorSchema", descriptorPath],
-    () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
-    { enabled: !!descriptorPath }
-  );
+  } = useQuery<ConnectorSchema, Error>({
+    queryKey: ["connectorSchema", descriptorPath],
+    queryFn: () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
+    enabled: !!descriptorPath
+  });
 
-  const { data: destinations = [] } = useQuery<Destination[], Error>(
-    "destinations",
-    () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
-  );
+  const { data: destinations = [] } = useQuery<Destination[], Error>({
+    queryKey: ["destinations"],
+    queryFn: () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
+  });
 
   const existingDestinations = React.useMemo(() => {
     return Array.isArray(destinations) ? destinations.map((d) => d.name) : [];
@@ -105,6 +106,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
         "Create successful",
         `Destination "${(response.data as Destination).name}" created successfully.`
       );
+      await queryClient.invalidateQueries({ queryKey: ["destinations"] });
       if (!modelLoaded) navigate("/destination");
     }
     setIsLoading(false);

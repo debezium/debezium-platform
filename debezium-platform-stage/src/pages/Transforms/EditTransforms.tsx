@@ -26,7 +26,7 @@ import { API_URL } from "@utils/constants";
 import { nextCopyName } from "@utils/helpers";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@patternfly/react-component-groups";
 import CreateTransformForm, {
   CreateTransformFormHandle,
@@ -71,15 +71,18 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transformId, location.key]);
 
-  const { data: existingTransforms = [] } = useQuery<TransformData[], Error>(
-    "transforms",
-    () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
-  );
+  const { data: existingTransforms = [] } = useQuery<TransformData[], Error>({
+    queryKey: ["transforms"],
+    queryFn: () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
+  });
 
   const { data: pipelineList, isSuccess: isPipelineListLoaded } = useQuery<
     Pipeline[],
     Error
-  >("pipelines", () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`));
+  >({
+    queryKey: ["pipelines"],
+    queryFn: () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
+  });
 
   const existingNames = React.useMemo(() => {
     return Array.isArray(existingTransforms)
@@ -91,9 +94,10 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
     data: transformData,
     isLoading: isFetchLoading,
     error: fetchError,
-  } = useQuery<TransformData, Error>(
-    ["transform", transformId],
-    async () => {
+  } = useQuery<TransformData, Error>({
+    queryKey: ["transform", transformId],
+
+    queryFn: async () => {
       const response = await fetchDataTypeTwo<TransformData>(
         `${API_URL}/api/transforms/${transformId}`
       );
@@ -102,8 +106,9 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
       }
       return response.data as TransformData;
     },
-    { enabled: !!transformId }
-  );
+
+    enabled: !!transformId
+  });
 
   const usedInCount =
     transformData && pipelineList
@@ -134,7 +139,9 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
           `Create successful`,
           `Transform "${created.name}" created successfully.`
         );
-        await queryClient.invalidateQueries("transforms");
+        await queryClient.invalidateQueries({
+          queryKey: ["transforms"]
+        });
         if (created?.id) {
           setViewMode(true);
           navigate(`/transform/${created.id}?state=view`, {
@@ -163,7 +170,10 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
         `Edit successful`,
         `Transform "${(response.data as TransformData).name}" edited successfully.`
       );
-      await queryClient.invalidateQueries(["transform", transformId]);
+      await queryClient.invalidateQueries({
+        queryKey: ["transform", transformId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["transforms"] });
       setViewMode(true);
     }
     setIsLoading(false);

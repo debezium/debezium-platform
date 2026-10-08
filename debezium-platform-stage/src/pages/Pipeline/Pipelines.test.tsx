@@ -2,7 +2,7 @@
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Pipelines } from "./Pipelines";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useDeleteData } from "src/apis";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import pipelinesMock from "../../__mocks__/data/Pipelines.json";
@@ -12,8 +12,8 @@ vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock("react-query", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("react-query")>();
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...mod,
     useQuery: vi.fn(),

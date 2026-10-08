@@ -37,7 +37,7 @@ import {
   Tr,
 } from "@patternfly/react-table";
 import { OutlinedBellIcon, RhUiAddCircleIcon, SearchIcon } from "@patternfly/react-icons";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@components/PageHeader";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import {
@@ -142,7 +142,9 @@ const AlertChannels: React.FC = () => {
     [channels, typeFilter]
   );
 
-  const refreshChannels = () => queryClient.invalidateQueries(ALERT_CHANNELS_QUERY_KEY);
+  const refreshChannels = () => queryClient.invalidateQueries({
+    queryKey: ALERT_CHANNELS_QUERY_KEY
+  });
 
   const openCreateForm = () => {
     setEditingChannel(undefined);

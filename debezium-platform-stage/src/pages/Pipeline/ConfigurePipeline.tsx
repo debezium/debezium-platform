@@ -49,14 +49,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "./ConfigurePipeline.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { useEffect, useRef, useState } from "react";
-import {
-  createPost,
-  Destination,
-  fetchDataTypeTwo,
-  PipelinePayload,
-  Source,
-  Transform,
-} from "../../apis/apis";
+import { useQueryClient } from "@tanstack/react-query";
+import { createPost, fetchDataTypeTwo } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useAtom } from "jotai";
 import { selectedTransformAtom } from "./PipelineDesigner";
@@ -65,7 +59,13 @@ import Ajv from "ajv";
 import { useTranslation } from "react-i18next";
 import { pipelineSchema } from "@utils/schemas";
 import style from "../../styles/createConnector.module.css"
-import { Properties } from "src/apis/types";
+import {
+  Destination,
+  PipelinePayload,
+  Properties,
+  Source,
+  Transform,
+} from "src/apis/types";
 import { useData } from "@appContext/AppContext";
 import {
   getPipelineSchemaValidationError,
@@ -161,6 +161,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   const { darkMode } = useData();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const sourceId = params.get("sourceId");
@@ -325,6 +326,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
       t('statusMessage:creation.successTitle', { val: t('pipeline') }),
       t('statusMessage:creation.successDescription', { val: `${t('pipeline')} ${payload["name"]}` }),
     );
+    await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
     navigateTo("/pipeline");
 
     return response;

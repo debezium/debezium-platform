@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { resetActivityTrackerForTests } from "../utils/activityTracker";
 import { POLLING } from "../utils/pollingConfig";
 import { useResourceQuery } from "./useResourceQuery";
 
 function wrapper({ children }: { children: ReactNode }) {
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { cacheTime: 0 } },
+    defaultOptions: { queries: { gcTime: 0 } },
   });
   return (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

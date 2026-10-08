@@ -1,232 +1,21 @@
-import { QueryClient } from "react-query";
+import i18next from "../i18n";
 import { API_URL } from "../utils/constants";
-
-const queryClient = new QueryClient();
 
 export type ApiResponse<T> = {
   data?: T | null;
   error?: string;
 };
 
-export type Vault = {
-  name: string;
-  id: number;
-};
+const createResourceFallback = () =>
+  i18next.t("statusMessage:apis.failedToCreateResource");
 
-export type Transform = {
-  name: string;
-  id: number;
-};
-
-export type PipelineDestination = {
-  name: string;
-  id: number;
-};
-
-export type PipelineSource = {
-  name: string;
-  id: number;
-};
-
-export type DestinationConfig = {
-  [key: string]: string; // Dynamic keys with string values
-};
-
-export type ConnectionUnknownConfig = {
-  [key: string]: string | number | boolean;
-};
-
-export type ConnectionAdditionalConfig = {
-  [key: string]: string | number | boolean;
-};
-
-export type ConnectionConfig = {
-  id: number;
-  name: string;
-}
-
-export type Payload = {
-  type: string;
-  schema: string;
-  vaults: Vault[];
-  config: DestinationConfig;
-  connection?: ConnectionConfig | Record<string, never>;
-  description?: string;
-  name: string;
-};
-
-export type TableCollection = {
-  name: string;
-  fullyQualifiedName: string;
-};
-
-export type TableSchema = {
-  name: string;
-  collections: TableCollection[];
-  collectionCount: number;
-};
-
-export type TableCatalog = {
-  name: string | null;
-  schemas: TableSchema[];
-  totalCollections: number;
-};
-
-export type TableData = {
-  catalogs: TableCatalog[];
-};
-
-export type ResourceType = "source" | "destination" | "transform" | "connection" | "pipeline";
-
-export type ConnectionValidationResult = {
-  valid: boolean;
-  message: string;
-  errorType: string;
-};
-
-export type ConnectionPayload = {
-  type: string;
-  id?: string;
-  config: ConnectionUnknownConfig | ConnectionAdditionalConfig;
-  description?: string;
-  name: string;
-};
-
-export type PipelineSignalPayload = {
-  id: string;
-  type: string;
-  data?: string;
-  additionalData?: {
-    additionalProp1: string;
-  }
-}
-
-export type Destination = {
-  type: string;
-  schema: string;
-  vaults: Vault[];
-  config: DestinationConfig;
-  connection?: ConnectionConfig;
-  description?: string;
-  name: string;
-  id: number;
-};
-
-export type ConnectionsSchema = {
-  type: string;
-  schema: ConnectionSchema;
-}
-
-export type ConnectionSchema = {
-  type: string;
-  title: string;
-  description: string;
-  required: string[];
-  additionalProperties: {
-    type: string;
-  };
-  properties: Record<string, {
-    type: string;
-    title: string;
-  }>;
-};
-
-export type Connection = {
-  type: string;
-  config: ConnectionUnknownConfig;
-  description?: string;
-  name: string;
-  id: number;
-};
-
-export type PipelineStatus = "FAILED" | "DEPLOYING" | "RUNNING";
-
-export type Pipeline = {
-  name: string;
-  id: number;
-  errorMessage: string
-  source: PipelineSource;
-  destination: PipelineDestination;
-  status: PipelineStatus;
-  description?: string;
-  transforms: Transform[];
-  logLevel: string;
-  logLevels: Record<string, string>;
-};
-
-export type PipelinePayload = {
-  name: string;
-  source: PipelineSource;
-  destination: PipelineDestination;
-  description?: string;
-  transforms: Transform[];
-  logLevel: string;
-  logLevels: Record<string, string>;
-};
-
-export type PipelineUpdatePayload = {
-  name: string;
-  description?: string;
-  transforms: Transform[];
-  logLevel: string;
-  logLevels: Record<string, string>;
-};
-
-export type DestinationApiResponse = Destination[];
-
-export type SourceConfig = {
-  [key: string]: string; // Dynamic keys with string values
-};
-
-export type Source = {
-  type: string;
-  schema: string;
-  vaults: Vault[];
-  config: SourceConfig;
-  connection?: ConnectionConfig;
-  description?: string;
-  name: string;
-  id: number;
-};
-
-export type Predicate = {
-  type: string;
-  config: Record<string, string>;
-  negate?: boolean;
-}
-
-export type TransformData = {
-  type: string;
-  schema: string;
-  vaults: Vault[];
-  config: SourceConfig;
-  description?: string;
-  predicate?: Predicate;
-  name: string;
-  id: number;
-};
-
-export type TransformPayload = {
-  type: string;
-  schema: string;
-  vaults: Vault[];
-  config: SourceConfig;
-  description?: string;
-  predicate?: Predicate;
-  name: string;
-};
-
-export type TransformApiResponse = TransformData[];
-
-export type SourceApiResponse = Source[];
-
-export type ConnectionsApiResponse = Connection[];
-
-export type PipelineApiResponse = Pipeline[];
+const updateResourceFallback = () =>
+  i18next.t("statusMessage:apis.failedToUpdateResource");
 
 export const createPost = async <T,>(
   url: string,
-  payload: unknown
+  payload: unknown,
+  fallback = createResourceFallback()
 ): Promise<ApiResponse<T>> => {
   try {
     const response = await fetch(url, {
@@ -238,7 +27,7 @@ export const createPost = async <T,>(
     });
 
     if (!response.ok) {
-      let errorMsg = `Failed to create source: ${response.statusText}`;
+      let errorMsg = `${fallback}: ${response.statusText}`;
       try {
         const errJson = await response.json();
         if (errJson && errJson.details && errJson.details.length > 0) {
@@ -253,19 +42,17 @@ export const createPost = async <T,>(
     }
 
     const data = await response.json();
-    // Refresh data after source is created
-    queryClient.invalidateQueries("sources");
-
     return { data };
   } catch (error) {
-    console.error("Error creating source:", error);
-    return { error: "An error occurred while creating source" };
+    console.error(fallback, error);
+    return { error: fallback };
   }
 };
 
 export const editPut = async <T,>(
   url: string,
-  payload: unknown
+  payload: unknown,
+  fallback = updateResourceFallback()
 ): Promise<ApiResponse<T>> => {
   try {
     const response = await fetch(url, {
@@ -277,7 +64,7 @@ export const editPut = async <T,>(
     });
 
     if (!response.ok) {
-      let errorMsg = `Failed to create source: ${response.statusText}`;
+      let errorMsg = `${fallback}: ${response.statusText}`;
       try {
         const errJson = await response.json();
         if (errJson && errJson.details && errJson.details.length > 0) {
@@ -292,13 +79,10 @@ export const editPut = async <T,>(
     }
 
     const data = await response.json();
-    // Refresh data after source is created
-    queryClient.invalidateQueries("sources");
-
     return { data };
   } catch (error) {
-    console.error("Error creating source:", error);
-    return { error: "An error occurred while creating source" };
+    console.error(fallback, error);
+    return { error: fallback };
   }
 };
 
@@ -385,12 +169,6 @@ export const fetchFile = async (
     console.error("Error fetching file:", error);
     return { error: "An error occurred while fetching the file" };
   }
-};
-
-
-export type SignalDataCollectionVerifyResponse = {
-  exists: boolean;
-  message: string;
 };
 
 export const verifySignals = async <T,>(

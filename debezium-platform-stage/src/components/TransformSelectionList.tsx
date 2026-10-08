@@ -24,12 +24,8 @@ import {
 import { DataProcessorIcon, FilterIcon, SearchIcon } from "@patternfly/react-icons";
 import { Table, Thead, Tr, Th, Tbody, Td } from "@patternfly/react-table";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Pipeline,
-  TransformApiResponse,
-  TransformData,
-  fetchData,
-} from "../apis/apis";
+import { fetchData } from "../apis/apis";
+import { Pipeline, TransformApiResponse, TransformData } from "../apis/types";
 import { API_URL } from "../utils/constants";
 import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useTranslation } from "react-i18next";

@@ -33,7 +33,7 @@ import {
   ConnectionsApiResponse,
   Destination,
   Source,
-} from "../apis/apis";
+} from "../apis/types";
 import { getConnectionRole, getConnectorTypeName } from "../utils/helpers";
 import ConnectorImage from "./ComponentImage";
 import { API_URL } from "../utils/constants";

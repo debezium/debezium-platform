@@ -2,7 +2,7 @@
 import { screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import SourceSinkTable from "./SourceSinkTable";
 import { useDeleteData } from "src/apis";
 import { useNotification } from "../appLayout/AppNotificationContext";
@@ -19,8 +19,8 @@ vi.mock("react-router-dom", async (importOriginal) => {
   };
 });
 
-vi.mock("react-query", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("react-query")>();
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...mod,
     useQuery: vi.fn(),

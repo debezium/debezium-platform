@@ -2,14 +2,14 @@
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import SourceDestinationSelectionList from "./SourceDestinationSelectionList";
-import type { Source, Destination } from "../apis/apis";
+import type { Source, Destination } from "../apis/types";
 import pipelinesMock from "../__mocks__/data/Pipelines.json";
 import { render } from "../__test__/unit/test-utils";
 
-vi.mock("react-query", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("react-query")>();
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...mod,
     useQuery: vi.fn(),

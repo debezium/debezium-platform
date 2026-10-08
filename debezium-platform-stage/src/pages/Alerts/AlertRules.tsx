@@ -43,7 +43,7 @@ import {
   Tr,
 } from "@patternfly/react-table";
 import { FilterIcon, RhUiAddCircleIcon, RhUiTaskIcon, SearchIcon } from "@patternfly/react-icons";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "@components/PageHeader";
 import { useNotification } from "../../appLayout/AppNotificationContext";
@@ -59,7 +59,8 @@ import { AlertRule, AlertSeverity } from "./alertsTypes";
 import { formatCondition, SeverityIcon } from "./severityUtils";
 import EmptyStatus from "@components/EmptyStatus";
 import InformationModal from "@components/modal/InformationModal";
-import { fetchData, Pipeline } from "../../apis/apis";
+import { fetchData } from "../../apis/apis";
+import { Pipeline } from "../../apis/types";
 import { API_URL } from "../../utils/constants";
 import { useTranslation } from "react-i18next";
 
@@ -167,7 +168,9 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
     onClearSearch();
   };
 
-  const refreshRules = () => queryClient.invalidateQueries(ALERT_RULES_QUERY_KEY);
+  const refreshRules = () => queryClient.invalidateQueries({
+    queryKey: ALERT_RULES_QUERY_KEY
+  });
 
   const openCreatePage = () => {
     if (!pipelinesError && pipelinesList.length === 0) {

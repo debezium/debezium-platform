@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useQuery,
   useQueryClient,
@@ -6,16 +6,28 @@ import {
   type QueryKey,
   type UseQueryOptions,
   type UseQueryResult,
-} from "react-query";
+} from "@tanstack/react-query";
 import { shouldRefetchOnIntervalChange } from "../utils/getPollingInterval";
 import { POLLING, type PollingProfile } from "../utils/pollingConfig";
 import { useAdaptivePollingInterval } from "./useAdaptivePollingInterval";
 
+type ResourceQueryKey = QueryKey | string;
+
+const toQueryKey = (queryKey: ResourceQueryKey): QueryKey =>
+  Array.isArray(queryKey) ? queryKey : [queryKey];
+
 type ResourceQueryOptions<TData, TError> = Omit<
   UseQueryOptions<TData, TError>,
-  "refetchInterval" | "refetchIntervalInBackground" | "retry" | "retryDelay"
+  | "queryKey"
+  | "queryFn"
+  | "refetchInterval"
+  | "refetchIntervalInBackground"
+  | "retry"
+  | "retryDelay"
 > & {
   profile?: PollingProfile;
+  onSuccess?: (data: TData) => void;
+  onError?: (error: TError) => void;
 };
 
 export type ResourceQueryResult<TData, TError> = UseQueryResult<
@@ -48,11 +60,12 @@ type FailureState<TError> = {
 const NO_FAILURE = { count: 0, error: null };
 
 export function useResourceQuery<TData, TError = Error>(
-  queryKey: QueryKey,
+  queryKey: ResourceQueryKey,
   queryFn: QueryFunction<TData>,
   options?: ResourceQueryOptions<TData, TError>
 ): ResourceQueryResult<TData, TError> {
-  const { profile = "default", ...queryOptions } = options ?? {};
+  const { profile = "default", onError, onSuccess, ...queryOptions } = options ?? {};
+  const normalizedQueryKey = useMemo(() => toQueryKey(queryKey), [queryKey]);
   const interval = useAdaptivePollingInterval(profile);
   const queryClient = useQueryClient();
   const previousIntervalRef = useRef<number | false>(interval);
@@ -63,13 +76,11 @@ export function useResourceQuery<TData, TError = Error>(
     const previous = previousIntervalRef.current;
 
     if (shouldRefetchOnIntervalChange(previous, interval, profile)) {
-      void queryClient.refetchQueries(queryKey);
+      void queryClient.refetchQueries({ queryKey: normalizedQueryKey });
     }
 
     previousIntervalRef.current = interval;
-  }, [interval, profile, queryClient, queryKey]);
-
-  const { onError, onSuccess } = queryOptions;
+  }, [interval, profile, queryClient, normalizedQueryKey]);
 
   const handleError = useCallback(
     (error: TError) => {
@@ -89,13 +100,22 @@ export function useResourceQuery<TData, TError = Error>(
     [onSuccess]
   );
 
-  const result = useQuery<TData, TError>(queryKey, queryFn, {
+  const result = useQuery<TData, TError>({
     ...queryOptions,
+    queryKey: normalizedQueryKey,
     retry: false,
     refetchInterval: failurePollingInterval(interval, failure.count),
     refetchIntervalInBackground: false,
-    onError: handleError,
-    onSuccess: handleSuccess,
+    queryFn: async (context) => {
+      try {
+        const data = await queryFn(context);
+        handleSuccess(data);
+        return data;
+      } catch (error) {
+        handleError(error as TError);
+        throw error;
+      }
+    },
   });
 
   const { refetch } = result;

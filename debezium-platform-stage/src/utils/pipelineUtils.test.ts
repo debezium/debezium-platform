@@ -3,7 +3,7 @@ import {
   buildPipelineRestartPayload,
   getActivePipelineCount,
 } from "./pipelineUtils";
-import type { Pipeline } from "../apis/apis";
+import type { Pipeline } from "../apis/types";
 
 describe("getActivePipelineCount", () => {
   const pipelines: Pipeline[] = [

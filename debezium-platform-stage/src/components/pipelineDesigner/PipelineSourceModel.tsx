@@ -12,13 +12,13 @@ import {
   PageSection,
 } from "@patternfly/react-core";
 import React, { useCallback, useState } from "react";
-import { fetchData, Source } from "../../apis/apis";
+import { fetchData } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import SourceDestinationSelectionList from "../SourceDestinationSelectionList";
 import { CatalogGrid } from "@components/CatalogGrid";
 import { CreateSource } from "@sourcePage/CreateSource";
-import { Catalog, CatalogApiResponse } from "../../apis/types";
+import { Catalog, CatalogApiResponse, Source } from "../../apis/types";
 import CatalogSkeleton from "@components/CatalogSkeleton";
 
 type PipelineSourceModelProps = {
@@ -37,23 +37,30 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     error: _sourceError,
     isLoading: isSourceLoading,
-  } = useQuery<Source[], Error>("sources", () =>
-    fetchData<Source[]>(`${API_URL}/api/sources`)
-  );
+  } = useQuery<Source[], Error>({
+    queryKey: ["sources"],
+
+    queryFn: () =>
+      fetchData<Source[]>(`${API_URL}/api/sources`)
+  });
 
   const {
     data: sourceCatalog = [],
     error: catalogError,
     isLoading: isCatalogLoading,
     refetch: refetchCatalog,
-  } = useQuery<Catalog[], Error>("sourceConnectorCatalog", async () => {
-    const response = await fetchData<CatalogApiResponse>(
-      `${API_URL}/api/catalog`
-    );
-    return (response.components["source-connector"] ?? []).map((entry) => ({
-      ...entry,
-      role: "source",
-    }));
+  } = useQuery<Catalog[], Error>({
+    queryKey: ["sourceConnectorCatalog"],
+
+    queryFn: async () => {
+      const response = await fetchData<CatalogApiResponse>(
+        `${API_URL}/api/catalog`
+      );
+      return (response.components["source-connector"] ?? []).map((entry) => ({
+        ...entry,
+        role: "source",
+      }));
+    }
   });
 
   const [userSelection, setUserSelection] = useState<string | null>(null);

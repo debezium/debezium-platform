@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import ApiError from "@components/ApiError";
 import { Connection, Destination, fetchData, Source } from "src/apis";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useResourceQuery } from "src/hooks/useResourceQuery";
 import { API_URL } from "@utils/constants";
 import _, { debounce } from "lodash";
@@ -106,9 +106,10 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     retryResource();
   }, [retrySources, retryDestinations, retryResource]);
 
-  const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>(
-    "sourceConnectorCatalog",
-    async () => {
+  const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>({
+    queryKey: ["sourceConnectorCatalog"],
+
+    queryFn: async () => {
       const response = await fetchData<CatalogApiResponse>(
         `${API_URL}/api/catalog`
       );
@@ -117,11 +118,12 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
         role: "source",
       }));
     }
-  );
+  });
 
-  const { data: destinationCatalog = [] } = useQuery<Catalog[], Error>(
-    "destinationConnectorCatalog",
-    async () => {
+  const { data: destinationCatalog = [] } = useQuery<Catalog[], Error>({
+    queryKey: ["destinationConnectorCatalog"],
+
+    queryFn: async () => {
       const response = await fetchData<CatalogApiResponse>(
         `${API_URL}/api/catalog`
       );
@@ -130,7 +132,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
         role: "destination",
       }));
     }
-  );
+  });
 
   const catalog: Catalog[] = React.useMemo(
     () => [...sourceCatalog, ...destinationCatalog],

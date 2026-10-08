@@ -12,13 +12,13 @@ import {
   PageSection,
 } from "@patternfly/react-core";
 import React, { useCallback, useState } from "react";
-import { Destination, fetchData } from "../../apis/apis";
-import { useQuery } from "react-query";
+import { fetchData } from "../../apis/apis";
+import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "../../utils/constants";
 import SourceDestinationSelectionList from "../SourceDestinationSelectionList";
 import { CatalogGrid } from "@components/CatalogGrid";
 import { CreateDestination } from "@destinationPage/CreateDestination";
-import { Catalog, CatalogApiResponse } from "../../apis/types";
+import { Catalog, CatalogApiResponse, Destination } from "../../apis/types";
 import CatalogSkeleton from "@components/CatalogSkeleton";
 
 type PipelineDestinationModelProps = {
@@ -37,23 +37,30 @@ const PipelineDestinationModel: React.FC<PipelineDestinationModelProps> = ({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     error: _destinationError,
     isLoading: isDestinationLoading,
-  } = useQuery<Destination[], Error>("destinations", () =>
-    fetchData<Destination[]>(`${API_URL}/api/destinations`)
-  );
+  } = useQuery<Destination[], Error>({
+    queryKey: ["destinations"],
+
+    queryFn: () =>
+      fetchData<Destination[]>(`${API_URL}/api/destinations`)
+  });
 
   const {
     data: destinationCatalog = [],
     error: catalogError,
     isLoading: isCatalogLoading,
     refetch: refetchCatalog,
-  } = useQuery<Catalog[], Error>("destinationConnectorCatalog", async () => {
-    const response = await fetchData<CatalogApiResponse>(
-      `${API_URL}/api/catalog`
-    );
-    return (response.components["server-sink"] ?? []).map((entry) => ({
-      ...entry,
-      role: "destination",
-    }));
+  } = useQuery<Catalog[], Error>({
+    queryKey: ["destinationConnectorCatalog"],
+
+    queryFn: async () => {
+      const response = await fetchData<CatalogApiResponse>(
+        `${API_URL}/api/catalog`
+      );
+      return (response.components["server-sink"] ?? []).map((entry) => ({
+        ...entry,
+        role: "destination",
+      }));
+    }
   });
 
   const [userSelection, setUserSelection] = useState<string | null>(null);

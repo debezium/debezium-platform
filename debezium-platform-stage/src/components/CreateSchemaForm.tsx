@@ -53,7 +53,7 @@ import {
 } from "@patternfly/react-icons";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useResourceQuery } from "../hooks/useResourceQuery";
 import {
   Connection,
@@ -434,27 +434,29 @@ const CreateSchemaForm = React.forwardRef<
     return () => observer.disconnect();
   }, [layoutMode, allSections]);
 
-  const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>(
-    "sourceConnectorCatalog",
-    async () => {
+  const { data: sourceCatalog = [] } = useQuery<Catalog[], Error>({
+    queryKey: ["sourceConnectorCatalog"],
+
+    queryFn: async () => {
       const response = await fetchData<CatalogApiResponse>(`${API_URL}/api/catalog`);
       return (response.components["source-connector"] ?? []).map((e) => ({
         ...e,
         role: "source",
       }));
     }
-  );
+  });
 
-  const { data: destinationCatalog = [] } = useQuery<Catalog[], Error>(
-    "destinationConnectorCatalog",
-    async () => {
+  const { data: destinationCatalog = [] } = useQuery<Catalog[], Error>({
+    queryKey: ["destinationConnectorCatalog"],
+
+    queryFn: async () => {
       const response = await fetchData<CatalogApiResponse>(`${API_URL}/api/catalog`);
       return (response.components["server-sink"] ?? []).map((entry) => ({
         ...entry,
         role: "destination",
       }));
     }
-  );
+  });
 
   const catalog: Catalog[] = [...sourceCatalog, ...destinationCatalog];
 
@@ -481,9 +483,10 @@ const CreateSchemaForm = React.forwardRef<
     isLoading: isCollectionsLoading,
     error: collectionsQueryError,
     refetch: refetchCollections,
-  } = useQuery<TableData, object>(
-    ["connection-collections", selectedConnectionId],
-    async () => {
+  } = useQuery<TableData, object>({
+    queryKey: ["connection-collections", selectedConnectionId],
+
+    queryFn: async () => {
       const response = await fetchDataCall<TableData>(
         `${API_URL}/api/connections/${selectedConnectionId}/collections`
       );
@@ -492,10 +495,9 @@ const CreateSchemaForm = React.forwardRef<
       }
       return response.data as TableData;
     },
-    {
-      enabled: selectedConnectionId != null && !isDestination,
-    }
-  );
+
+    enabled: selectedConnectionId != null && !isDestination
+  });
 
   const collectionsError =
     collectionsQueryError != null

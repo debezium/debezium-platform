@@ -21,11 +21,14 @@ vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock("react-query", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("react-query")>();
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...mod,
-    useQuery: vi.fn((queryKey) => {
+    useQuery: vi.fn((options: { queryKey?: unknown }) => {
+      const queryKey = Array.isArray(options?.queryKey)
+        ? options.queryKey[0]
+        : options?.queryKey ?? options;
       // Return different data based on query key
       if (queryKey === "sourceConnectorCatalog") {
         return {

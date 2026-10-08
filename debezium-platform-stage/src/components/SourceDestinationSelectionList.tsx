@@ -28,14 +28,14 @@ import {
 } from "@patternfly/react-icons";
 import { Table, Thead, Tr, Th, Tbody, Td } from "@patternfly/react-table";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { fetchData } from "../apis/apis";
 import {
   Destination,
   DestinationApiResponse,
   Pipeline,
   Source,
   SourceApiResponse,
-  fetchData,
-} from "../apis/apis";
+} from "../apis/types";
 import { getConnectorTypeName } from "../utils/helpers";
 import ConnectorImage from "./ComponentImage";
 import { API_URL } from "../utils/constants";

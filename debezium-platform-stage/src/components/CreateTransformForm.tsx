@@ -51,7 +51,7 @@ import {
 } from "@patternfly/react-icons";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   fetchData,
   TransformData,
@@ -219,9 +219,12 @@ const CreateTransformForm = React.forwardRef<
       data: catalog,
       isLoading: isCatalogLoading,
       error: catalogError,
-    } = useQuery<CatalogApiResponse, Error>("componentCatalog", () =>
-      fetchData<CatalogApiResponse>(`${API_URL}/api/catalog`)
-    );
+    } = useQuery<CatalogApiResponse, Error>({
+      queryKey: ["componentCatalog"],
+
+      queryFn: () =>
+        fetchData<CatalogApiResponse>(`${API_URL}/api/catalog`)
+    });
 
     const transformations = useMemo(
       () => catalog?.components?.transformation ?? [],
@@ -276,27 +279,31 @@ const CreateTransformForm = React.forwardRef<
       data: transformSchema,
       isLoading: isTransformSchemaLoading,
       error: transformSchemaError,
-    } = useQuery<ConnectorSchema, Error>(
-      ["transformSchema", transformDescriptor],
-      () =>
+    } = useQuery<ConnectorSchema, Error>({
+      queryKey: ["transformSchema", transformDescriptor],
+
+      queryFn: () =>
         fetchData<ConnectorSchema>(
           `${API_URL}/api/catalog/${transformDescriptor}`
         ),
-      { enabled: !!transformDescriptor }
-    );
+
+      enabled: !!transformDescriptor
+    });
 
     const {
       data: predicateSchema,
       isLoading: isPredicateSchemaLoading,
       error: predicateSchemaError,
-    } = useQuery<ConnectorSchema, Error>(
-      ["predicateSchema", predicateDescriptor],
-      () =>
+    } = useQuery<ConnectorSchema, Error>({
+      queryKey: ["predicateSchema", predicateDescriptor],
+
+      queryFn: () =>
         fetchData<ConnectorSchema>(
           `${API_URL}/api/catalog/${predicateDescriptor}`
         ),
-      { enabled: !!predicateDescriptor }
-    );
+
+      enabled: !!predicateDescriptor
+    });
 
     // Hydrate from initial transform (edit or copy)
     useLayoutEffect(() => {
