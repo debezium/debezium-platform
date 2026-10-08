@@ -30,7 +30,7 @@ import {
   Source,
   Transform,
   TransformData,
-} from "../../apis/apis";
+} from "../../apis/types";
 import { RhUiAddIcon, UploadIcon } from "@patternfly/react-icons";
 import "./CreationFlow.css";
 import PipelineSourceModel from "./PipelineSourceModel";

@@ -46,7 +46,8 @@ import {
 } from "@patternfly/react-icons";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import PageHeader from "@components/PageHeader";
-import { fetchData, Pipeline } from "../../apis/apis";
+import { fetchData } from "../../apis/apis";
+import { Pipeline } from "../../apis/types";
 import { API_URL } from "../../utils/constants";
 import {
   AlertRuleSummary,

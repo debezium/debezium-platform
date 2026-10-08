@@ -39,18 +39,15 @@ import {
 } from "@patternfly/react-core";
 import { FilterIcon, RhUiAddCircleIcon, SearchIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
+import { editPut, fetchData, fetchDataTypeTwo, fetchFile } from "../../apis/apis";
 import {
   Connection,
   Destination,
-  fetchDataTypeTwo,
   Pipeline,
-  fetchData,
-  fetchFile,
+  PipelineStatus,
   Source,
   TransformData,
-  PipelineStatus,
-  editPut,
-} from "../../apis/apis";
+} from "../../apis/types";
 import {
   generatePropertiesContent,
   triggerPropertiesDownload,

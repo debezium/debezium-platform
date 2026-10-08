@@ -1,4 +1,4 @@
-import { Source, Destination } from "../apis/apis";
+import { Source, Destination } from "../apis/types";
 
 export const getActiveConnectionCount = (
   resourceList: Source[] | Destination[],

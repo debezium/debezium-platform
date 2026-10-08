@@ -22,7 +22,8 @@ import {
 import { DataSourceIcon, FilterIcon, RhUiAddCircleIcon } from "@patternfly/react-icons";
 import EmptyStatus from "../../components/EmptyStatus";
 import { useNavigate } from "react-router-dom";
-import { Source, fetchData } from "../../apis/apis";
+import { fetchData } from "../../apis/apis";
+import { Source } from "../../apis/types";
 import _, { debounce } from "lodash";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { API_URL } from "../../utils/constants";

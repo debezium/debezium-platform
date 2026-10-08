@@ -12,13 +12,13 @@ import {
   PageSection,
 } from "@patternfly/react-core";
 import React, { useCallback, useState } from "react";
-import { fetchData, Source } from "../../apis/apis";
+import { fetchData } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useQuery } from "react-query";
 import SourceDestinationSelectionList from "../SourceDestinationSelectionList";
 import { CatalogGrid } from "@components/CatalogGrid";
 import { CreateSource } from "@sourcePage/CreateSource";
-import { Catalog, CatalogApiResponse } from "../../apis/types";
+import { Catalog, CatalogApiResponse, Source } from "../../apis/types";
 import CatalogSkeleton from "@components/CatalogSkeleton";
 
 type PipelineSourceModelProps = {

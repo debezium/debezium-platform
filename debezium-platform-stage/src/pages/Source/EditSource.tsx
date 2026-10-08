@@ -17,15 +17,13 @@ import {
   editPut,
   fetchData,
   fetchDataTypeTwo,
-  Payload,
-  Source,
 } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { PageHeader } from "@patternfly/react-component-groups";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "react-query";
-import { ConnectorSchema } from "../../apis/types";
+import { ConnectorSchema, Payload, Source } from "../../apis/types";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
 } from "@components/CreateSchemaForm";

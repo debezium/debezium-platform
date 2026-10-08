@@ -3,8 +3,7 @@ import { screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import { useQuery } from "react-query";
 import SchemaReviewView from "./SchemaReviewView";
-import type { Source } from "../apis/apis";
-import type { ConnectorSchema } from "../apis/types";
+import type { ConnectorSchema, Source } from "../apis/types";
 import { render } from "../__test__/unit/test-utils";
 
 vi.mock("./ComponentImage", () => ({

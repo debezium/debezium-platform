@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useQuery } from "react-query";
 import SourceDestinationSelectionList from "./SourceDestinationSelectionList";
-import type { Source, Destination } from "../apis/apis";
+import type { Source, Destination } from "../apis/types";
 import pipelinesMock from "../__mocks__/data/Pipelines.json";
 import { render } from "../__test__/unit/test-utils";
 

@@ -9,7 +9,8 @@ import {
   Content,
 } from "@patternfly/react-core";
 import React, { useState } from "react";
-import { fetchData, TransformData } from "../../apis/apis";
+import { fetchData } from "../../apis/apis";
+import { TransformData } from "../../apis/types";
 import { API_URL } from "../../utils/constants";
 import { useQuery } from "react-query";
 import TransformSelectionList from "@components/TransformSelectionList";

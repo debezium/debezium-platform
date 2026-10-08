@@ -2,11 +2,8 @@ import React, { useEffect, useState } from "react";
 
 import { API_URL } from "../utils/constants";
 import { Button, Flex, FlexItem, Skeleton } from "@patternfly/react-core";
-import {
-  Destination,
-  PipelineDestination,
-  fetchDataTypeTwo,
-} from "../apis/apis";
+import { fetchDataTypeTwo } from "../apis/apis";
+import { Destination, PipelineDestination } from "../apis/types";
 import { Td } from "@patternfly/react-table";
 import ConnectorImage from "./ComponentImage";
 import ApiError from "./ApiError";
