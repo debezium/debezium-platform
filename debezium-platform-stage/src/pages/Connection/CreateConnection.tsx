@@ -25,7 +25,7 @@ import { useNotification } from "@appContext/AppNotificationContext";
 import * as yup from "yup";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@patternfly/react-component-groups";
 
 export interface ICreateConnectionProps {
@@ -43,6 +43,7 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { addNotification } = useNotification();
+    const queryClient = useQueryClient();
     const location = useLocation();
 
     const { connectionId: connectionIdParam } = useParams<{ connectionId: string }>();
@@ -209,6 +210,8 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                 `Creation successful`,
                 `Connection ${payload.name} created successfully.`
             );
+            await queryClient.invalidateQueries({ queryKey: ["connections"] });
+            await queryClient.invalidateQueries({ queryKey: ["connectionsList"] });
             if (selectedConnectionType) {
                 setSelectedConnection && setSelectedConnection({ id: (response.data as Connection)?.id, name: (response.data as Connection)?.name } as ConnectionConfig);
                 handleConnectionModalToggle && handleConnectionModalToggle();

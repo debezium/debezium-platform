@@ -15,7 +15,7 @@ import { createPost } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
 import { ConnectorSchema, Destination, Payload } from "../../apis/types";
 import CreateSchemaForm, {
@@ -45,6 +45,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   const { t } = useTranslation();
   const { addNotification } = useNotification();
   const { darkMode } = useData();
+  const queryClient = useQueryClient();
 
   const destinationIdParam = useParams<{ destinationId: string }>();
   const destinationId = modelLoaded ? selectedId : destinationIdParam.destinationId;
@@ -105,6 +106,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
         "Create successful",
         `Destination "${(response.data as Destination).name}" created successfully.`
       );
+      await queryClient.invalidateQueries({ queryKey: ["destinations"] });
       if (!modelLoaded) navigate("/destination");
     }
     setIsLoading(false);

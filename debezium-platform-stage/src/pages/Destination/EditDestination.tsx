@@ -131,8 +131,9 @@ const EditDestination: React.FunctionComponent = () => {
         })
       );
       await queryClient.invalidateQueries({
-        queryKey: ["destination", routeDestinationId]
+        queryKey: ["destination", routeDestinationId],
       });
+      await queryClient.invalidateQueries({ queryKey: ["destinations"] });
       setViewMode(true);
     }
     setIsLoading(false);

@@ -15,7 +15,7 @@ import { createPost } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
 import { ConnectorSchema, Payload, Source } from "../../apis/types";
 import CreateSchemaForm, {
@@ -45,6 +45,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
   const { t } = useTranslation();
   const { addNotification } = useNotification();
   const { darkMode } = useData();
+  const queryClient = useQueryClient();
 
   const sourceIdParam = useParams<{ sourceId: string }>();
   const sourceId = modelLoaded ? selectedId : sourceIdParam.sourceId;
@@ -105,6 +106,7 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
         "Create successful",
         `Source "${(response.data as Source).name}" created successfully.`
       );
+      await queryClient.invalidateQueries({ queryKey: ["sources"] });
       if (!modelLoaded) navigate("/source");
     }
     setIsLoading(false);
