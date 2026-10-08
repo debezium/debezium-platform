@@ -46,6 +46,7 @@ import {
 } from "@patternfly/react-core";
 import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import "./PipelineDesigner.css";
 import { editPut, fetchDataTypeTwo } from "../../apis/apis";
 import {
@@ -140,6 +141,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
   pipelineId,
 }) => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { t } = useTranslation();
 
     const [items, setItems] = React.useState<DraggableObject[]>([]);
@@ -399,6 +401,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
           t('statusMessage:edit.successTitle'),
           t('statusMessage:edit.successTitle', { val: `${t('pipeline')} ${(response.data as Pipeline).name}` }),
         );
+        await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
         navigateTo("/pipeline");
       }
     };

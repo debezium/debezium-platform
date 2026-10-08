@@ -171,8 +171,9 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
         `Transform "${(response.data as TransformData).name}" edited successfully.`
       );
       await queryClient.invalidateQueries({
-        queryKey: ["transform", transformId]
+        queryKey: ["transform", transformId],
       });
+      await queryClient.invalidateQueries({ queryKey: ["transforms"] });
       setViewMode(true);
     }
     setIsLoading(false);

@@ -49,6 +49,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "./ConfigurePipeline.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { createPost, fetchDataTypeTwo } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useAtom } from "jotai";
@@ -160,6 +161,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   const { darkMode } = useData();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const sourceId = params.get("sourceId");
@@ -324,6 +326,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
       t('statusMessage:creation.successTitle', { val: t('pipeline') }),
       t('statusMessage:creation.successDescription', { val: `${t('pipeline')} ${payload["name"]}` }),
     );
+    await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
     navigateTo("/pipeline");
 
     return response;

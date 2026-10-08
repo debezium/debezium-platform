@@ -131,8 +131,9 @@ const EditSource: React.FunctionComponent = () => {
         })
       );
       await queryClient.invalidateQueries({
-        queryKey: ["source", routeSourceId]
+        queryKey: ["source", routeSourceId],
       });
+      await queryClient.invalidateQueries({ queryKey: ["sources"] });
       setViewMode(true);
     }
     setIsLoading(false);
