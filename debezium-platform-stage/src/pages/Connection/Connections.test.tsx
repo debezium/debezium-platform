@@ -2,7 +2,7 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Connections } from "./Connections";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useDeleteData } from "src/apis";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import connectionsMock from "../../__mocks__/data/Connections.json";
@@ -15,8 +15,8 @@ vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock("react-query", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("react-query")>();
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...mod,
     useQuery: vi.fn(),
@@ -31,7 +31,7 @@ vi.mock("src/apis", () => ({
 }));
 
 vi.mock("../../hooks/useResourceQuery", async () => {
-  const { useQuery } = await import("react-query");
+  const { useQuery } = await import("@tanstack/react-query");
   return {
     useResourceQuery: (...args: any[]) => {
       const result = (useQuery as any)(...args) ?? {};
@@ -79,18 +79,29 @@ describe("Connections", () => {
     } as any);
   });
 
+  const queryName = (key: unknown): unknown => {
+    if (typeof key === "string") return key;
+    if (Array.isArray(key)) return key[0];
+    if (key && typeof key === "object" && "queryKey" in key) {
+      const queryKey = (key as { queryKey: unknown }).queryKey;
+      return Array.isArray(queryKey) ? queryKey[0] : queryKey;
+    }
+    return key;
+  };
+
   const mockQueriesLoaded = (connections: typeof connectionsMock) => {
     vi.mocked(useQuery).mockImplementation((key: unknown) => {
-      if (key === "sources") {
+      const name = queryName(key);
+      if (name === "sources") {
         return { data: sourcesMock, error: null, isLoading: false } as any;
       }
-      if (key === "destinations") {
+      if (name === "destinations") {
         return { data: destinationsMock, error: null, isLoading: false } as any;
       }
-      if (key === "connections") {
+      if (name === "connections") {
         return { data: connections, error: null, isLoading: false } as any;
       }
-      if (key === "sourceConnectorCatalog") {
+      if (name === "sourceConnectorCatalog") {
         return { data: sourceCatalogForRole, error: null, isLoading: false } as any;
       }
       return { data: undefined, error: null, isLoading: false } as any;
@@ -99,7 +110,7 @@ describe("Connections", () => {
 
   it("shows loading state while connections are loading", () => {
     vi.mocked(useQuery).mockImplementation((key: unknown) => {
-      if (key === "connections") {
+      if (queryName(key) === "connections") {
         return { data: undefined, error: null, isLoading: true } as any;
       }
       return { data: undefined, error: null, isLoading: false } as any;
@@ -110,7 +121,7 @@ describe("Connections", () => {
 
   it("shows API error when connections query fails", () => {
     vi.mocked(useQuery).mockImplementation((key: unknown) => {
-      if (key === "connections") {
+      if (queryName(key) === "connections") {
         return {
           data: undefined,
           error: new Error("boom"),

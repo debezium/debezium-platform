@@ -22,7 +22,7 @@ import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { PageHeader } from "@patternfly/react-component-groups";
 import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConnectorSchema, Destination, Payload } from "../../apis/types";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
@@ -52,10 +52,10 @@ const EditDestination: React.FunctionComponent = () => {
   const { addNotification } = useNotification();
   const queryClient = useQueryClient();
 
-  const { data: destinations = [] } = useQuery<Destination[], Error>(
-    "destinations",
-    () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
-  );
+  const { data: destinations = [] } = useQuery<Destination[], Error>({
+    queryKey: ["destinations"],
+    queryFn: () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
+  });
 
   const existingDestinations = React.useMemo(() => {
     return Array.isArray(destinations) ? destinations.map((d) => d.name) : [];
@@ -72,9 +72,10 @@ const EditDestination: React.FunctionComponent = () => {
     data: destination,
     isLoading: isDestinationLoading,
     error: destinationQueryError,
-  } = useQuery<Destination, Error>(
-    ["destination", routeDestinationId],
-    async () => {
+  } = useQuery<Destination, Error>({
+    queryKey: ["destination", routeDestinationId],
+
+    queryFn: async () => {
       const response = await fetchDataTypeTwo<Destination>(
         `${API_URL}/api/destinations/${routeDestinationId}`
       );
@@ -83,8 +84,9 @@ const EditDestination: React.FunctionComponent = () => {
       }
       return response.data as Destination;
     },
-    { enabled: !!routeDestinationId }
-  );
+
+    enabled: !!routeDestinationId
+  });
 
   const connectorType = destination?.type;
   const descriptorPath = connectorType
@@ -95,11 +97,11 @@ const EditDestination: React.FunctionComponent = () => {
     data: connectorSchema,
     isLoading: isSchemaLoading,
     error: schemaError,
-  } = useQuery<ConnectorSchema, Error>(
-    ["connectorSchema", descriptorPath],
-    () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
-    { enabled: !!descriptorPath }
-  );
+  } = useQuery<ConnectorSchema, Error>({
+    queryKey: ["connectorSchema", descriptorPath],
+    queryFn: () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
+    enabled: !!descriptorPath
+  });
 
   const destinationErrorMessage =
     destinationQueryError instanceof Error ? destinationQueryError.message : destinationQueryError
@@ -128,7 +130,9 @@ const EditDestination: React.FunctionComponent = () => {
           val: `${(response.data as Destination)?.name ?? destination?.name}`,
         })
       );
-      await queryClient.invalidateQueries(["destination", routeDestinationId]);
+      await queryClient.invalidateQueries({
+        queryKey: ["destination", routeDestinationId]
+      });
       setViewMode(true);
     }
     setIsLoading(false);

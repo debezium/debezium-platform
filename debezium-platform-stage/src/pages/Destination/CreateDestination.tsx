@@ -15,7 +15,7 @@ import { createPost } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
 import { ConnectorSchema, Destination, Payload } from "../../apis/types";
 import CreateSchemaForm, {
@@ -67,16 +67,16 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     data: connectorSchema,
     isLoading: isSchemaLoading,
     error: schemaError,
-  } = useQuery<ConnectorSchema, Error>(
-    ["connectorSchema", descriptorPath],
-    () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
-    { enabled: !!descriptorPath }
-  );
+  } = useQuery<ConnectorSchema, Error>({
+    queryKey: ["connectorSchema", descriptorPath],
+    queryFn: () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
+    enabled: !!descriptorPath
+  });
 
-  const { data: destinations = [] } = useQuery<Destination[], Error>(
-    "destinations",
-    () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
-  );
+  const { data: destinations = [] } = useQuery<Destination[], Error>({
+    queryKey: ["destinations"],
+    queryFn: () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
+  });
 
   const existingDestinations = React.useMemo(() => {
     return Array.isArray(destinations) ? destinations.map((d) => d.name) : [];

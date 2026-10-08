@@ -8,7 +8,7 @@ import { Catalog, CatalogApiResponse } from "src/apis/types";
 import _, { debounce } from "lodash";
 import { useNavigate } from "react-router-dom";
 import { CatalogGrid } from "@components/CatalogGrid";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { PageHeader } from "@patternfly/react-component-groups";
@@ -30,26 +30,34 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
 
   const {
     data: sourceCatalog = [],
-  } = useQuery<Catalog[], Error>("sourceConnectorCatalog", async () => {
-    const response = await fetchData<CatalogApiResponse>(
-      `${API_URL}/api/catalog`
-    );
-    return (response.components["source-connector"] ?? []).map((entry) => ({
-      ...entry,
-      role: "source",
-    }));
+  } = useQuery<Catalog[], Error>({
+    queryKey: ["sourceConnectorCatalog"],
+
+    queryFn: async () => {
+      const response = await fetchData<CatalogApiResponse>(
+        `${API_URL}/api/catalog`
+      );
+      return (response.components["source-connector"] ?? []).map((entry) => ({
+        ...entry,
+        role: "source",
+      }));
+    }
   });
 
   const {
     data: destinationCatalog = [],
-  } = useQuery<Catalog[], Error>("destinationConnectorCatalog", async () => {
-    const response = await fetchData<CatalogApiResponse>(
-      `${API_URL}/api/catalog`
-    );
-    return (response.components["server-sink"] ?? []).map((entry) => ({
-      ...entry,
-      role: "destination",
-    }));
+  } = useQuery<Catalog[], Error>({
+    queryKey: ["destinationConnectorCatalog"],
+
+    queryFn: async () => {
+      const response = await fetchData<CatalogApiResponse>(
+        `${API_URL}/api/catalog`
+      );
+      return (response.components["server-sink"] ?? []).map((entry) => ({
+        ...entry,
+        role: "destination",
+      }));
+    }
   });
 
   const onConnectionsTypeToggle = () => {

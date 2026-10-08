@@ -12,7 +12,7 @@ import React, { useState } from "react";
 import { fetchData } from "../../apis/apis";
 import { TransformData } from "../../apis/types";
 import { API_URL } from "../../utils/constants";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import TransformSelectionList from "@components/TransformSelectionList";
 import { CreateTransforms } from "src/pages/Transforms";
 import { useTranslation } from "react-i18next";
@@ -36,9 +36,12 @@ const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     error: _transformError,
     isLoading: isTransformLoading,
-  } = useQuery<TransformData[], Error>("transforms", () =>
-    fetchData<TransformData[]>(`${API_URL}/api/transforms`)
-  );
+  } = useQuery<TransformData[], Error>({
+    queryKey: ["transforms"],
+
+    queryFn: () =>
+      fetchData<TransformData[]>(`${API_URL}/api/transforms`)
+  });
 
   const [userSelection, setUserSelection] = useState<string | null>(null);
   const [copySeed, setCopySeed] = useState<TransformData | null>(null);

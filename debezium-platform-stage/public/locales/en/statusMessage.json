@@ -49,6 +49,8 @@
     "apis": {
         "failedToCreate": "Failed to create {{val}}",
         "failedToUpdate": "Failed to update {{val}}",
+        "failedToCreateResource": "Failed to create resource",
+        "failedToUpdateResource": "Failed to update resource",
         "failedToTest": "Failed to send test notification",
         "failedToEnable": "Failed to enable {{val}}",
         "failedToDisable": "Failed to disable {{val}}",

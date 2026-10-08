@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx';
 import "@xyflow/react/dist/style.css";
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './index.css';
 import './styles/shared.css';
 import { StrictMode, Suspense } from 'react';

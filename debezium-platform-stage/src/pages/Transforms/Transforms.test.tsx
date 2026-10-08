@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Transforms } from "./Transforms";
 import transformsMock from "../../__mocks__/data/TransformsData.json";
 import pipelinesMock from "../../__mocks__/data/Pipelines.json";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useDeleteData } from "src/apis";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { render } from "../../__test__/unit/test-utils";
@@ -13,8 +13,8 @@ vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock("react-query", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("react-query")>();
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...mod,
     useQuery: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock("src/apis", () => ({
 }));
 
 vi.mock("../../hooks/useResourceQuery", async () => {
-  const { useQuery } = await import("react-query");
+  const { useQuery } = await import("@tanstack/react-query");
   return {
     useResourceQuery: (...args: any[]) => {
       const result = (useQuery as any)(...args) ?? {};
@@ -61,7 +61,7 @@ describe("Transforms", () => {
   const mockPipelines = pipelinesMock;
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useQuery).mockImplementation((key) => {
+    vi.mocked(useQuery).mockImplementation((key: any) => {
       if (key === "transforms") {
         return {
           data: mockTransforms,
@@ -99,7 +99,7 @@ describe("Transforms", () => {
 
   it("displays error message when API fails", async () => {
     // Mock the useQuery hook to simulate an API failure for transforms
-    vi.mocked(useQuery).mockImplementation((key) => {
+    vi.mocked(useQuery).mockImplementation((key: any) => {
       if (key === "transforms") {
         return {
           data: undefined,

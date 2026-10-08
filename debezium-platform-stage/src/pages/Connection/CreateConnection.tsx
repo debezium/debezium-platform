@@ -25,7 +25,7 @@ import { useNotification } from "@appContext/AppNotificationContext";
 import * as yup from "yup";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from "react-i18next";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@patternfly/react-component-groups";
 
 export interface ICreateConnectionProps {
@@ -61,17 +61,18 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     const [properties, setProperties] = useState<Map<string, AdditionalPropertyRow>>(() => new Map([["key0", createEmptyAdditionalPropertyRow()]]));
     const [keyCount, setKeyCount] = React.useState<number>(1);
 
-    const { data: connectionsSchema = [], isLoading: isSchemaLoading } = useQuery<ConnectionsSchema[], Error>("connectionsSchema", () =>
-        fetchData<ConnectionsSchema[]>(`${API_URL}/api/connections/schemas`)
-    );
+    const { data: connectionsSchema = [], isLoading: isSchemaLoading } = useQuery<ConnectionsSchema[], Error>({
+        queryKey: ["connectionsSchema"],
 
-    const { data: existingConnections = [] } = useQuery<Connection[]>(
-        "connectionsList",
-        () => fetchData<Connection[]>(`${API_URL}/api/connections`),
-        {
-            select: (data) => data,
-        }
-    );
+        queryFn: () =>
+            fetchData<ConnectionsSchema[]>(`${API_URL}/api/connections/schemas`)
+    });
+
+    const { data: existingConnections = [] } = useQuery<Connection[]>({
+        queryKey: ["connectionsList"],
+        queryFn: () => fetchData<Connection[]>(`${API_URL}/api/connections`),
+        select: (data) => data
+    });
 
     const selectedSchema = React.useMemo(() => {
         const normalizedId = (connectionId || "").toLowerCase().replace(/-/g, "_");

@@ -24,7 +24,7 @@ import _ from "lodash";
 import { useTranslation } from "react-i18next";
 import PageTour from "../../components/PageTour";
 import { Step } from "react-joyride";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { Catalog, CatalogApiResponse } from "../../apis/types";
@@ -66,14 +66,18 @@ const DestinationCatalog: React.FunctionComponent<ISinkProps> = () => {
     error: catalogError,
     isLoading: isCatalogLoading,
     refetch,
-  } = useQuery<Catalog[], Error>("destinationConnectorCatalog", async () => {
-    const response = await fetchData<CatalogApiResponse>(
-      `${API_URL}/api/catalog`
-    );
-    return (response.components["server-sink"] ?? []).map((entry) => ({
-      ...entry,
-      role: "destination",
-    }));
+  } = useQuery<Catalog[], Error>({
+    queryKey: ["destinationConnectorCatalog"],
+
+    queryFn: async () => {
+      const response = await fetchData<CatalogApiResponse>(
+        `${API_URL}/api/catalog`
+      );
+      return (response.components["server-sink"] ?? []).map((entry) => ({
+        ...entry,
+        role: "destination",
+      }));
+    }
   });
 
   const searchResult = React.useMemo(() => {

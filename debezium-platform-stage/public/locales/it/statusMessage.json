@@ -49,6 +49,8 @@
     "apis": {
         "failedToCreate": "Creazione di {{val}} non riuscita",
         "failedToUpdate": "Aggiornamento di {{val}} non riuscito",
+        "failedToCreateResource": "Creazione della risorsa non riuscita",
+        "failedToUpdateResource": "Aggiornamento della risorsa non riuscito",
         "failedToTest": "Invio della notifica di prova non riuscito",
         "failedToEnable": "Abilitazione di {{val}} non riuscita",
         "failedToDisable": "Disabilitazione di {{val}} non riuscita",

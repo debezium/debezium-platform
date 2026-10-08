@@ -15,7 +15,7 @@ import { createPost } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
 import { ConnectorSchema, Payload, Source } from "../../apis/types";
 import CreateSchemaForm, {
@@ -67,16 +67,16 @@ const CreateSource: React.FunctionComponent<CreateSourceProps> = ({
     data: connectorSchema,
     isLoading: isSchemaLoading,
     error: schemaError,
-  } = useQuery<ConnectorSchema, Error>(
-    ["connectorSchema", descriptorPath],
-    () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
-    { enabled: !!descriptorPath }
-  );
+  } = useQuery<ConnectorSchema, Error>({
+    queryKey: ["connectorSchema", descriptorPath],
+    queryFn: () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
+    enabled: !!descriptorPath
+  });
 
-  const { data: sources = [] } = useQuery<Source[], Error>(
-    "sources",
-    () => fetchData<Source[]>(`${API_URL}/api/sources`)
-  );
+  const { data: sources = [] } = useQuery<Source[], Error>({
+    queryKey: ["sources"],
+    queryFn: () => fetchData<Source[]>(`${API_URL}/api/sources`)
+  });
 
   const existingSources = React.useMemo(() => {
     return Array.isArray(sources) ? sources.map((s) => s.name) : [];

@@ -14,7 +14,7 @@ import {
   Skeleton,
 } from "@patternfly/react-core";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import type { Source, Destination, TableData } from "src/apis";
 import { fetchDataCall } from "src/apis";
@@ -169,9 +169,10 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
     isLoading: isCollectionsLoading,
     error: collectionsQueryError,
     refetch: refetchCollections,
-  } = useQuery<TableData, object>(
-    ["connection-collections", selectedConnectionId],
-    async () => {
+  } = useQuery<TableData, object>({
+    queryKey: ["connection-collections", selectedConnectionId],
+
+    queryFn: async () => {
       const response = await fetchDataCall<TableData>(
         `${API_URL}/api/connections/${selectedConnectionId}/collections`
       );
@@ -180,10 +181,9 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
       }
       return response.data as TableData;
     },
-    {
-      enabled: selectedConnectionId != null && !hideSignalCollections,
-    }
-  );
+
+    enabled: selectedConnectionId != null && !hideSignalCollections
+  });
 
   const collectionsError =
     collectionsQueryError != null

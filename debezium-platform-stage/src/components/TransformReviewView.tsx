@@ -13,7 +13,7 @@ import {
   Skeleton,
 } from "@patternfly/react-core";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { TransformData } from "src/apis";
 import { fetchData } from "src/apis";
 import { API_URL } from "@utils/constants";
@@ -120,10 +120,10 @@ const TransformReviewView: React.FC<TransformReviewViewProps> = ({
     activeSectionRef.current = activeSection;
   }, [activeSection]);
 
-  const { data: catalog } = useQuery<CatalogApiResponse, Error>(
-    "componentCatalog",
-    () => fetchData<CatalogApiResponse>(`${API_URL}/api/catalog`)
-  );
+  const { data: catalog } = useQuery<CatalogApiResponse, Error>({
+    queryKey: ["componentCatalog"],
+    queryFn: () => fetchData<CatalogApiResponse>(`${API_URL}/api/catalog`)
+  });
 
   const entry = useMemo(
     () =>
@@ -158,24 +158,28 @@ const TransformReviewView: React.FC<TransformReviewViewProps> = ({
     data: transformSchema,
     isLoading: isSchemaLoading,
     error: schemaError,
-  } = useQuery<ConnectorSchema, Error>(
-    ["transformSchema", transformDescriptor],
-    () =>
+  } = useQuery<ConnectorSchema, Error>({
+    queryKey: ["transformSchema", transformDescriptor],
+
+    queryFn: () =>
       fetchData<ConnectorSchema>(
         `${API_URL}/api/catalog/${transformDescriptor}`
       ),
-    { enabled: !!transformDescriptor }
-  );
+
+    enabled: !!transformDescriptor
+  });
 
   const { data: predicateSchema, isLoading: isPredicateSchemaLoading } =
-    useQuery<ConnectorSchema, Error>(
-      ["predicateSchema", predicateDescriptor],
-      () =>
+    useQuery<ConnectorSchema, Error>({
+      queryKey: ["predicateSchema", predicateDescriptor],
+
+      queryFn: () =>
         fetchData<ConnectorSchema>(
           `${API_URL}/api/catalog/${predicateDescriptor}`
         ),
-      { enabled: !!predicateDescriptor }
-    );
+
+      enabled: !!predicateDescriptor
+    });
 
   const schemaValues = useMemo(() => {
     const config = (transform.config || {}) as Record<string, unknown>;
