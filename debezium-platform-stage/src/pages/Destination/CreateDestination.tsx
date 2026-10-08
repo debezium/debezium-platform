@@ -11,13 +11,13 @@ import {
 } from "@patternfly/react-core";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useRef, useState } from "react";
-import { createPost, Payload, Destination } from "../../apis/apis";
+import { createPost } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
 import { fetchData } from "../../apis/apis";
-import { ConnectorSchema } from "../../apis/types";
+import { ConnectorSchema, Destination, Payload } from "../../apis/types";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
 } from "@components/CreateSchemaForm";

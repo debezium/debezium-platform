@@ -17,14 +17,14 @@ import {
 import { API_URL } from "@utils/constants";
 import { getConnectorTypeName } from "@utils/helpers";
 import { FC, memo, useCallback, useEffect, useState } from "react";
+import { fetchDataTypeTwo } from "src/apis/apis";
 import {
   Pipeline,
   Source,
   Destination,
   Connection,
-  fetchDataTypeTwo,
   TransformData,
-} from "src/apis/apis";
+} from "src/apis/types";
 import "./PipelineOverview.css";
 declare global {
   interface Window {

@@ -5,7 +5,7 @@ import { render, testQueryClient } from "../../__test__/unit/test-utils";
 import AlertHistory from "./AlertEvents";
 import { PagedAlertEventResponse } from "./alertsTypes";
 import { ALERT_RULES_QUERY_KEY, AlertRuleSummary } from "../../apis/alerts";
-import { Pipeline } from "../../apis/apis";
+import { Pipeline } from "../../apis/types";
 
 vi.mock("../../apis/apis", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../apis/apis")>();

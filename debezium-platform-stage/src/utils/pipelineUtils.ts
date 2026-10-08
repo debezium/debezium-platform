@@ -1,4 +1,4 @@
-import { Pipeline, PipelinePayload } from "../apis/apis";
+import { Pipeline, PipelinePayload } from "../apis/types";
 
 export const getActivePipelineCount = (
   pipelineList: Pipeline[],

@@ -1,7 +1,7 @@
 import get from "lodash/get";
 import set from "lodash/set";
 import * as yup from "yup";
-import type { ConnectionSchema } from "../apis/apis";
+import type { ConnectionSchema } from "../apis/types";
 
 export const flatConnectionConfigToRhfShape = (fields: Record<string, unknown>): Record<string, unknown> => {
   const out: Record<string, unknown> = {};

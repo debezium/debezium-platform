@@ -3,7 +3,7 @@ import {
   getActiveConnectionCount,
   getActiveResourceName,
 } from "./connectionsUtils";
-import type { Source } from "../apis/apis";
+import type { Source } from "../apis/types";
 
 const src = (overrides: Partial<Source> = {}): Source =>
   ({

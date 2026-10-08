@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useQuery } from "react-query";
 import TransformSelectionList from "./TransformSelectionList";
-import type { TransformData } from "../apis/apis";
+import type { TransformData } from "../apis/types";
 import pipelinesMock from "../__mocks__/data/Pipelines.json";
 import { render } from "../__test__/unit/test-utils";
 

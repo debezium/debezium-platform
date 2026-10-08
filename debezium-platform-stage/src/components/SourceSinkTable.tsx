@@ -29,12 +29,8 @@ import {
   IAction,
 } from "@patternfly/react-table";
 import React, { useState } from "react";
-import {
-  DestinationApiResponse,
-  Pipeline,
-  SourceApiResponse,
-  fetchData,
-} from "../apis/apis";
+import { fetchData } from "../apis/apis";
+import { DestinationApiResponse, Pipeline, SourceApiResponse } from "../apis/types";
 import { getConnectorTypeName } from "../utils/helpers";
 import ConnectorImage from "./ComponentImage";
 import { API_URL } from "../utils/constants";

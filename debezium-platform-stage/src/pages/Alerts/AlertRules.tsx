@@ -59,7 +59,8 @@ import { AlertRule, AlertSeverity } from "./alertsTypes";
 import { formatCondition, SeverityIcon } from "./severityUtils";
 import EmptyStatus from "@components/EmptyStatus";
 import InformationModal from "@components/modal/InformationModal";
-import { fetchData, Pipeline } from "../../apis/apis";
+import { fetchData } from "../../apis/apis";
+import { Pipeline } from "../../apis/types";
 import { API_URL } from "../../utils/constants";
 import { useTranslation } from "react-i18next";
 

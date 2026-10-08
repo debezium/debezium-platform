@@ -47,17 +47,7 @@ import {
 import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
 import "./PipelineDesigner.css";
-import {
-  Destination,
-  editPut,
-  fetchDataTypeTwo,
-  Pipeline,
-  PipelineDestination,
-  PipelineSource,
-  PipelineUpdatePayload,
-  Source,
-  Transform,
-} from "../../apis/apis";
+import { editPut, fetchDataTypeTwo } from "../../apis/apis";
 import {
   DragDropSort,
   DragDropSortDragEndEvent,
@@ -78,7 +68,16 @@ import { useNotification } from "@appContext/AppNotificationContext";
 import ApiError from "@components/ApiError";
 import TrademarkMessage from "@components/TrademarkMessage";
 import { useTranslation } from "react-i18next";
-import { Properties } from "src/apis/types";
+import {
+  Destination,
+  Pipeline,
+  PipelineDestination,
+  PipelineSource,
+  PipelineUpdatePayload,
+  Properties,
+  Source,
+  Transform,
+} from "src/apis/types";
 import { selectedTransformAtom } from "./PipelineDesigner";
 import { getPipelineNameValidationError } from "@utils/pipelineNameValidation";
 

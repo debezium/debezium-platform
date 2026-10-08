@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import ConnectionTable from "./ConnectionTable";
 import type { Catalog } from "src/apis/types";
-import type { Connection } from "src/apis/apis";
+import type { Connection } from "src/apis/types";
 import { useDeleteData } from "src/apis";
 import { useNotification } from "../appLayout/AppNotificationContext";
 import { render } from "../__test__/unit/test-utils";

@@ -17,13 +17,8 @@ import {
 } from "@patternfly/react-core";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import {
-  editPut,
-  fetchDataTypeTwo,
-  Pipeline,
-  PipelineStatus,
-  Transform,
-} from "../../apis/apis";
+import { editPut, fetchDataTypeTwo } from "../../apis/apis";
+import { Pipeline, PipelineStatus, Transform } from "../../apis/types";
 import { API_URL } from "../../utils/constants";
 import { buildPipelineRestartPayload } from "@utils/pipelineUtils";
 import { useVisibilityPolling } from "../../hooks/useVisibilityPolling";
