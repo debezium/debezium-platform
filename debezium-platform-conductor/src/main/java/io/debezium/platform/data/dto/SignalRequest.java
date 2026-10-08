@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotEmpty;
 
 public record SignalRequest(@NotEmpty String id,
         @NotEmpty String type,
-        @NotEmpty String data,
+        String data,
         Map<String, Object> additionalData) {
 
 }
