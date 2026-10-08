@@ -155,6 +155,47 @@ The following operators must be installed in the cluster **before** deploying th
 | alerting.email.startTls                    | STARTTLS mode (`DISABLED`, `OPTIONAL`, `REQUIRED`)                                                                                                                                      | REQUIRED                                   |
 | alerting.email.auth.existingSecret         | Name of an existing K8s Secret containing `username` and `password` keys for SMTP authentication                                                                                        | ""                                         |
 
+## Server-Sent Events and ingress proxy timeouts
+
+The conductor exposes a Server-Sent Events endpoint for live snapshot progress:
+
+```
+GET /api/pipelines/{pipelineId}/snapshots/progress/stream
+```
+
+SSE connections are long-lived and can stay idle for long stretches — there are no events to send between progress updates, and a stream opened against a pipeline that is not snapshotting emits a single `IDLE` event and then sits quiet. Most ingress controllers apply an idle read timeout to proxied responses and will close the connection when it expires, which clients see as a truncated stream rather than a clean close:
+
+```
+curl: (18) transfer closed with outstanding read data remaining
+```
+
+Response buffering causes a second, subtler problem: events are held in the proxy buffer instead of being flushed to the client as they are produced, so progress appears to arrive in bursts or not at all.
+
+**If you intend to use the snapshot progress stream, check two settings on your ingress controller:**
+
+1. the **idle / read timeout** applied to proxied responses — it must be long enough to tolerate a quiet stream, or disabled;
+2. **response buffering** — it must be off, so events reach the client as they are produced.
+
+Both are controller-specific, in the setting names, the configuration mechanism and the defaults, and some are tuned on the controller itself rather than per-ingress. Consult your controller's documentation and verify its configured values; the chart cannot infer them. `ingress.annotations` is the hook for applying per-ingress overrides where your controller supports them.
+
+As an illustration, `ingress-nginx` exposes both as annotations and defaults `proxy_read_timeout` to `60s`, which closes an idle stream after a minute:
+
+```yaml
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+```
+
+This is an example, not a recommended or default configuration — the chart sets no ingress class and ships no annotations. Substitute the equivalents for whatever controller you run.
+
+Finally, the ingress is not necessarily the only hop. If TLS terminates on an external reverse proxy or a cloud load balancer in front of the cluster, check its timeouts too — whichever hop has the shortest idle timeout is the one that closes the stream.
+
+> Clients should treat a dropped SSE connection as expected and reconnect; the stream is designed to re-send the full current state as its first event, so a reconnect loses no information. Raising the proxy timeout reduces reconnect churn, it does not remove the need to handle it.
+
 ## Alerting
 
 The platform includes a built-in alerting engine that evaluates rules against Prometheus metrics and sends notifications via webhook or email channels. The evaluation loop runs on the configured interval and is a no-op when no rules exist, so no toggle is needed.
