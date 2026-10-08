@@ -7,7 +7,7 @@ package io.debezium.platform.environment.database.db;
 
 import java.util.Map;
 
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
@@ -15,10 +15,10 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 // Test resources for different databases
 public class PostgresTestResource implements QuarkusTestResourceLifecycleManager {
 
-    private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
+    private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(
             DockerImageName.parse("quay.io/debezium/postgres:16-alpine").asCompatibleSubstituteFor("postgres"));
 
-    public static PostgreSQLContainer<?> getContainer() {
+    public static PostgreSQLContainer getContainer() {
         return POSTGRES;
     }
 

@@ -17,7 +17,7 @@ import jakarta.inject.Inject;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import io.debezium.platform.MinimalDevServicesTestProfile;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
@@ -40,7 +40,7 @@ class JdbcConnectionValidatorIT {
     @Test
     @DisplayName("Should successfully validate connection with valid JDBC configuration")
     void shouldValidateSuccessfulConnection() {
-        PostgreSQLContainer<?> container = PostgresTestResource.getContainer();
+        PostgreSQLContainer container = PostgresTestResource.getContainer();
 
         Awaitility.await()
                 .atMost(TestHelper.waitTimeForContainer())
@@ -59,7 +59,7 @@ class JdbcConnectionValidatorIT {
     @Test
     @DisplayName("Should fail validation with wrong credentials")
     void shouldFailValidationWithWrongCredentials() {
-        PostgreSQLContainer<?> container = PostgresTestResource.getContainer();
+        PostgreSQLContainer container = PostgresTestResource.getContainer();
 
         Awaitility.await()
                 .atMost(TestHelper.waitTimeForContainer())
@@ -79,7 +79,7 @@ class JdbcConnectionValidatorIT {
     @Test
     @DisplayName("Should fail validation with wrong port in URL")
     void shouldFailValidationWithWrongPort() {
-        PostgreSQLContainer<?> container = PostgresTestResource.getContainer();
+        PostgreSQLContainer container = PostgresTestResource.getContainer();
 
         Awaitility.await()
                 .atMost(TestHelper.waitTimeForContainer())
