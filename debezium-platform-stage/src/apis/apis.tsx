@@ -387,10 +387,54 @@ export const fetchFile = async (
   }
 };
 
+export type SignalCollectionSetupQueryResponse = {
+  setupQuery: string;
+}
 
 export type SignalDataCollectionVerifyResponse = {
   exists: boolean;
   message: string;
+};
+
+export const fetchSignalQuery = async <T,>(
+  url: string,
+  payload: unknown
+): Promise<ApiResponse<T>> => {
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let errorMsg = `Failed to fetch the signal collection query: ${response.statusText}`;
+      try {
+        const errJson = await response.json();
+        if (errJson?.violations?.length > 0) {
+          errorMsg = errJson.violations[0].field + ":" + errJson.violations[0].message;
+        } else if (errJson?.details?.length > 0) {
+          errorMsg = errJson.details[0];
+        } else if (errJson?.error) {
+          errorMsg = errJson.error;
+        } else if (errJson?.message) {
+          errorMsg = errJson.message;
+        }
+      } catch {
+        // ignore
+      }
+      return { error: errorMsg };
+    }
+
+    const data = await response.json();
+
+    return { data };
+  } catch (error) {
+    console.error("Error fetching the signal collection query:", error);
+    return { error: "An error occurred while fetching the signal collection query." };
+  }
 };
 
 export const verifySignals = async <T,>(

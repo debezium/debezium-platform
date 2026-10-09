@@ -63,7 +63,9 @@ import {
   fetchDataCall,
   Source,
   TableData,
+  SignalCollectionSetupQueryResponse,
   SignalDataCollectionVerifyResponse,
+  fetchSignalQuery,
   verifySignals,
 } from "src/apis";
 import { API_URL } from "@utils/constants";
@@ -333,9 +335,22 @@ const CreateSchemaForm = React.forwardRef<
 
   const connectorTypeString = dataType || connectorId;
 
-  const signalCollectionSetupQuery = useMemo(
-    () => buildSignalCollectionSetupQuery(connectorTypeString, signalCollectionNameVerify),
-    [connectorTypeString, signalCollectionNameVerify]
+  // Old
+  // const oldSignalCollectionSetupQuery = useMemo(
+  //   () => buildSignalCollectionSetupQuery(connectorTypeString, signalCollectionNameVerify),
+  //   [connectorTypeString, signalCollectionNameVerify]
+  // );
+
+  const { data: signalCollectionSetupQuery } = useQuery<String>(
+    ["signalCollectionSetupQuery", connectorTypeString, signalCollectionNameVerify],
+    async () => {
+      const payload = {
+        connectorType: connectorTypeString,
+        fullyQualifiedCollectionName: signalCollectionNameVerify
+      }
+      const response = await fetchSignalQuery<SignalCollectionSetupQueryResponse>(`${API_URL}/api/signals/query`, payload);
+      return response.data?.setupQuery as String;
+    }
   );
 
   const tableManagedFilterNames = useMemo(
