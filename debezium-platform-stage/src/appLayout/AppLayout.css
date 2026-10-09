@@ -10,6 +10,27 @@ margin-left: auto;
         margin-left: 0 !important;
     }
 }
+
+/* Keep the compact side nav visible on reduced screen widths (dbz#2729) */
+@media (max-width: 74.9375rem){
+    .custom-app-page {
+        grid-template-areas:
+            "header header"
+            "sidebar main" !important;
+        grid-template-columns: 100px 1fr !important;
+    }
+    .custom-app-page .pf-v6-c-page__sidebar {
+        position: static !important;
+        transform: none !important;
+        grid-area: sidebar !important;
+        width: fit-content;
+    }
+    .custom-app-page .pf-v6-c-page__main-container {
+        grid-area: main !important;
+        margin-left: 0 !important;
+    }
+}
+
 /* .pf-v6-c-page__main-container {
     width: 100%;
 } */
