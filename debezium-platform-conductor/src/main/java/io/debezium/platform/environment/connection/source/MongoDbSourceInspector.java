@@ -151,13 +151,14 @@ public class MongoDbSourceInspector implements SourceInspector {
      * Asks the target database for that one collection rather than listing every collection in the cluster,
      * so the answer does not depend on the connector's database and collection filters.
      */
-    private boolean collectionExists(MongoDbConnection connection, CollectionId collectionId) {
+    private boolean collectionExists(MongoDbConnection connection, CollectionId collectionId) throws InterruptedException {
 
-        Document collection = connection.getMongoClient()
-                .getDatabase(collectionId.dbName())
-                .listCollections()
-                .filter(Filters.eq("name", collectionId.name()))
-                .first();
+        Document collection = connection.execute("look up signal data collection " + collectionId.identifier(), client -> {
+            return client.getDatabase(collectionId.dbName())
+                    .listCollections()
+                    .filter(Filters.eq("name", collectionId.name()))
+                    .first();
+        });
 
         return collection != null;
     }
