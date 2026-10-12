@@ -48,7 +48,7 @@ import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import "./PipelineDesigner.css";
-import { editPut, fetchDataTypeTwo } from "../../apis/apis";
+import { editPut, fetchResult } from "../../apis/apis";
 import {
   DragDropSort,
   DragDropSortDragEndEvent,
@@ -228,7 +228,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
     useEffect(() => {
       const fetchSource = async () => {
         setIsSourceFetchLoading(true);
-        const response = await fetchDataTypeTwo<Source>(
+        const response = await fetchResult<Source>(
           `${API_URL}/api/sources/${pipelineSource!.id}`
         );
 
@@ -249,7 +249,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
     useEffect(() => {
       const fetchDestination = async () => {
         setIsDestinationFetchLoading(true);
-        const response = await fetchDataTypeTwo<Destination>(
+        const response = await fetchResult<Destination>(
           `${API_URL}/api/destinations/${pipelineDestination!.id}`
         );
 

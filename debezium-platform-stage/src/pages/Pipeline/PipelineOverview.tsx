@@ -17,7 +17,7 @@ import {
 import { API_URL } from "@utils/constants";
 import { getConnectorTypeName } from "@utils/helpers";
 import { FC, memo, useCallback, useEffect, useState } from "react";
-import { fetchDataTypeTwo } from "src/apis/apis";
+import { fetchResult } from "src/apis/apis";
 import {
   Pipeline,
   Source,
@@ -73,12 +73,12 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey, 
     setIsExportLoading(true);
     try {
       const transformFetches = transforms.map((t) =>
-        fetchDataTypeTwo<TransformData>(`${API_URL}/api/transforms/${t.id}`)
+        fetchResult<TransformData>(`${API_URL}/api/transforms/${t.id}`)
       );
       const connectionFetches: Promise<{ data?: Connection | null; error?: string }>[] = [];
       if (source.connection?.id) {
         connectionFetches.push(
-          fetchDataTypeTwo<Connection>(
+          fetchResult<Connection>(
             `${API_URL}/api/connections/${source.connection.id}`
           )
         );
@@ -87,7 +87,7 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey, 
       }
       if (destination.connection?.id) {
         connectionFetches.push(
-          fetchDataTypeTwo<Connection>(
+          fetchResult<Connection>(
             `${API_URL}/api/connections/${destination.connection.id}`
           )
         );
@@ -154,10 +154,10 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey, 
 
       try {
         const [sourceResponse, destinationResponse] = await Promise.all([
-          fetchDataTypeTwo<Source>(
+          fetchResult<Source>(
             `${API_URL}/api/sources/${sourceId}`
           ),
-          fetchDataTypeTwo<Destination>(
+          fetchResult<Destination>(
             `${API_URL}/api/destinations/${destinationId}`
           ),
         ]);

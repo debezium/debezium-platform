@@ -17,7 +17,7 @@ import {
 } from "@patternfly/react-core";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { editPut, fetchDataTypeTwo } from "../../apis/apis";
+import { editPut, fetchResult } from "../../apis/apis";
 import { Pipeline, PipelineStatus, Transform } from "../../apis/types";
 import { API_URL } from "../../utils/constants";
 import { buildPipelineRestartPayload } from "@utils/pipelineUtils";
@@ -99,7 +99,7 @@ const PipelineDetails: React.FunctionComponent = () => {
     let cancelled = false;
 
     const loadPipeline = async () => {
-      const response = await fetchDataTypeTwo<Pipeline>(
+      const response = await fetchResult<Pipeline>(
         `${API_URL}/api/pipelines/${pipelineId}`
       );
 
@@ -125,7 +125,7 @@ const PipelineDetails: React.FunctionComponent = () => {
   }, [pipelineId]);
 
   const refreshPipeline = React.useCallback(async () => {
-    const response = await fetchDataTypeTwo<Pipeline>(
+    const response = await fetchResult<Pipeline>(
       `${API_URL}/api/pipelines/${pipelineId}`
     );
 

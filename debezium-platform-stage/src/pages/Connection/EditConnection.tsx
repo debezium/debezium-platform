@@ -4,7 +4,7 @@ import * as React from "react";
 import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Connection, ConnectionAdditionalConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost, editPut, fetchData, fetchDataTypeTwo } from "src/apis";
+import { Connection, ConnectionAdditionalConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost, editPut, fetchData, fetchResult } from "src/apis";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
@@ -137,7 +137,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
     useEffect(() => {
         const fetchConnections = async () => {
 
-            const response = await fetchDataTypeTwo<Connection>(
+            const response = await fetchResult<Connection>(
                 `${API_URL}/api/connections/${connectionId}`
             );
             if (response.error) {
@@ -193,7 +193,7 @@ const EditConnection: React.FunctionComponent<IEditConnectionProps> = () => {
     useEffect(() => {
         const fetchSchemas = async () => {
 
-            const response = await fetchDataTypeTwo<ConnectionsSchema[]>(
+            const response = await fetchResult<ConnectionsSchema[]>(
                 `${API_URL}/api/connections/schemas`
             );
 

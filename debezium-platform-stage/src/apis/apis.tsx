@@ -132,7 +132,7 @@ export const deleteData = async (url: string): Promise<void> => {
   }
 };
 
-export const fetchDataTypeTwo = async <T,>(
+export const fetchResult = async <T,>(
   url: string
 ): Promise<ApiResponse<T>> => {
   try {
@@ -213,7 +213,7 @@ export const verifySignals = async <T,>(
 };
 
 
-export interface ApiResponseUpdated<T> {
+export interface ApiStatusResponse<T> {
   data?: T;
   error?: {
     status: number;
@@ -224,9 +224,9 @@ export interface ApiResponseUpdated<T> {
 }
 
 
-export const fetchDataCall = async <T,>(
+export const fetchResultWithStatus = async <T,>(
   url: string,
-): Promise<ApiResponseUpdated<T>> => {
+): Promise<ApiStatusResponse<T>> => {
   try {
     const response = await fetch(url);
 

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { API_URL } from "../utils/constants";
 import { Button, Flex, FlexItem, Skeleton } from "@patternfly/react-core";
 import { Td } from "@patternfly/react-table";
-import { fetchDataTypeTwo } from "../apis/apis";
+import { fetchResult } from "../apis/apis";
 import { PipelineSource, Source } from "../apis/types";
 import ConnectorImage from "./ComponentImage";
 import ApiError from "./ApiError";
@@ -24,7 +24,7 @@ const SourceField: React.FC<SourceFieldProps> = ({ pipelineSource }) => {
   useEffect(() => {
     const fetchSources = async () => {
       setIsLoading(true);
-      const response = await fetchDataTypeTwo<Source>(
+      const response = await fetchResult<Source>(
         `${API_URL}/api/sources/${pipelineSource.id}`
       );
 

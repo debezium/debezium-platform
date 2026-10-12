@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import { API_URL } from "../utils/constants";
 import { Button, Flex, FlexItem, Skeleton } from "@patternfly/react-core";
-import { fetchDataTypeTwo } from "../apis/apis";
+import { fetchResult } from "../apis/apis";
 import { Destination, PipelineDestination } from "../apis/types";
 import { Td } from "@patternfly/react-table";
 import ConnectorImage from "./ComponentImage";
@@ -26,7 +26,7 @@ const DestinationField: React.FC<DestinationFieldProps> = ({
   useEffect(() => {
     const fetchDestination = async () => {
       setIsLoading(true);
-      const response = await fetchDataTypeTwo<Destination>(
+      const response = await fetchResult<Destination>(
         API_URL + `/api/destinations/${pipelineDestination.id}`
       );
 

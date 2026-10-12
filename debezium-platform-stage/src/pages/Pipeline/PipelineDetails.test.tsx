@@ -3,7 +3,7 @@ import { describe, expect, it, vi, afterEach } from "vitest";
 import { Route, Routes } from "react-router-dom";
 import { PipelineDetails } from "./PipelineDetails";
 import { render } from "../../__test__/unit/test-utils";
-import { fetchDataTypeTwo } from "../../apis/apis";
+import { fetchResult } from "../../apis/apis";
 
 const { mockNavigate, mockPipeline } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
@@ -48,7 +48,7 @@ vi.mock("./PipelineMonitoring", () => ({
 }));
 
 vi.mock("../../apis/apis", () => ({
-  fetchDataTypeTwo: vi.fn().mockResolvedValue({
+  fetchResult: vi.fn().mockResolvedValue({
     data: mockPipeline,
     error: null,
   }),
@@ -174,14 +174,14 @@ describe("PipelineDetails feature gating", () => {
 
 describe("PipelineDetails API failure", () => {
   afterEach(() => {
-    vi.mocked(fetchDataTypeTwo).mockResolvedValue({
+    vi.mocked(fetchResult).mockResolvedValue({
       data: mockPipeline,
       error: undefined,
     });
   });
 
   it("shows the API error empty state with retry when pipeline fetch fails", async () => {
-    vi.mocked(fetchDataTypeTwo).mockResolvedValue({
+    vi.mocked(fetchResult).mockResolvedValue({
       error: "Failed to fetch data: Internal Server Error",
     });
 

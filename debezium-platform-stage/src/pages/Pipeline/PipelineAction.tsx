@@ -4,7 +4,7 @@ import { useForm, SubmitHandler, useFieldArray } from "react-hook-form"
 import { useTranslation } from 'react-i18next';
 import signalActions from "../../__mocks__/data/Signals.json";
 import { API_URL } from '@utils/constants';
-import { createPost, fetchDataCall, PipelineSignalPayload, Source, TableData } from 'src/apis';
+import { createPost, fetchResultWithStatus, PipelineSignalPayload, Source, TableData } from 'src/apis';
 import { SelectedDataListItem } from 'src/apis/types';
 import { useNotification } from '@appContext/index';
 import { TrashIcon } from '@patternfly/react-icons';
@@ -86,7 +86,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     const fetchConnectionCollections = useCallback(async () => {
         if (!sourceId) return;
         setIsCollectionsLoading(true);
-        const sourceResponse = await fetchDataCall<Source>(
+        const sourceResponse = await fetchResultWithStatus<Source>(
             `${API_URL}/api/sources/${sourceId}`
         );
         if (sourceResponse.error) {
@@ -94,7 +94,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
         } else {
             const connectionId = sourceResponse.data?.connection?.id;
             setCollectionsError(undefined);
-            const collectionResponse = await fetchDataCall<TableData>(
+            const collectionResponse = await fetchResultWithStatus<TableData>(
                 `${API_URL}/api/connections/${connectionId}/collections`
             );
             if (collectionResponse.error) {

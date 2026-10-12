@@ -28,7 +28,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 vi.mock("../hooks/useResourceQuery", async () => {
-  const { useQuery } = await import("react-query");
+  const { useQuery } = await import("@tanstack/react-query");
   return {
     useResourceQuery: (...args: any[]) => {
       const result = (useQuery as any)(...args) ?? {};

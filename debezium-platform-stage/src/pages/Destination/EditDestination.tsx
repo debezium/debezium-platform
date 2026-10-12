@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   editPut,
   fetchData,
-  fetchDataTypeTwo,
+  fetchResult,
 } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useNotification } from "../../appLayout/AppNotificationContext";
@@ -76,7 +76,7 @@ const EditDestination: React.FunctionComponent = () => {
     queryKey: ["destination", routeDestinationId],
 
     queryFn: async () => {
-      const response = await fetchDataTypeTwo<Destination>(
+      const response = await fetchResult<Destination>(
         `${API_URL}/api/destinations/${routeDestinationId}`
       );
       if (response.error) {

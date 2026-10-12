@@ -2,7 +2,7 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useQuery } from "@tanstack/react-query";
-import { createPost, editPut, fetchDataTypeTwo } from "src/apis";
+import { createPost, editPut, fetchResult } from "src/apis";
 import { EditConnection } from "./EditConnection";
 import { render } from "../../__test__/unit/test-utils";
 
@@ -29,7 +29,7 @@ vi.mock("src/apis", async (importOriginal) => {
     ...mod,
     editPut: vi.fn(),
     createPost: vi.fn(),
-    fetchDataTypeTwo: vi.fn(),
+    fetchResult: vi.fn(),
   };
 });
 
@@ -68,7 +68,7 @@ const MATCHING_SCHEMA = [
 const UNRELATED_SCHEMA = [{ ...MATCHING_SCHEMA[0], type: "MYSQL" }];
 
 const mockApi = (schemas: unknown) => {
-  vi.mocked(fetchDataTypeTwo).mockImplementation((async (url: string) =>
+  vi.mocked(fetchResult).mockImplementation((async (url: string) =>
     url.endsWith("/api/connections/schemas")
       ? { data: schemas, error: undefined }
       : { data: CONNECTION, error: undefined }) as any);

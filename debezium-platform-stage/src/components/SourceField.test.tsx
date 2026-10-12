@@ -3,14 +3,14 @@ import { screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Table, Tbody, Tr } from "@patternfly/react-table";
 import SourceField from "./SourceField";
-import { fetchDataTypeTwo } from "../apis/apis";
+import { fetchResult } from "../apis/apis";
 import { render } from "../__test__/unit/test-utils";
 
 vi.mock("../apis/apis", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../apis/apis")>();
   return {
     ...actual,
-    fetchDataTypeTwo: vi.fn(),
+    fetchResult: vi.fn(),
   };
 });
 
@@ -22,11 +22,11 @@ vi.mock("./ComponentImage", () => ({
 
 describe("SourceField", () => {
   beforeEach(() => {
-    vi.mocked(fetchDataTypeTwo).mockReset();
+    vi.mocked(fetchResult).mockReset();
   });
 
   it("loads source and shows name with connector", async () => {
-    vi.mocked(fetchDataTypeTwo).mockResolvedValue({
+    vi.mocked(fetchResult).mockResolvedValue({
       data: {
         id: 9,
         name: "ignored",
@@ -55,7 +55,7 @@ describe("SourceField", () => {
   });
 
   it("shows small ApiError when fetch fails", async () => {
-    vi.mocked(fetchDataTypeTwo).mockResolvedValue({
+    vi.mocked(fetchResult).mockResolvedValue({
       data: null,
       error: "nope",
     } as any);

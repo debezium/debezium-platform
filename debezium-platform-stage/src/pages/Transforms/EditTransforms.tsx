@@ -17,7 +17,7 @@ import {
   createPost,
   editPut,
   fetchData,
-  fetchDataTypeTwo,
+  fetchResult,
   Pipeline,
   TransformData,
   TransformPayload,
@@ -98,7 +98,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
     queryKey: ["transform", transformId],
 
     queryFn: async () => {
-      const response = await fetchDataTypeTwo<TransformData>(
+      const response = await fetchResult<TransformData>(
         `${API_URL}/api/transforms/${transformId}`
       );
       if (response.error) {

@@ -60,7 +60,7 @@ import {
   ConnectionConfig,
   Destination,
   fetchData,
-  fetchDataCall,
+  fetchResultWithStatus,
   Source,
   TableData,
   SignalDataCollectionVerifyResponse,
@@ -487,7 +487,7 @@ const CreateSchemaForm = React.forwardRef<
     queryKey: ["connection-collections", selectedConnectionId],
 
     queryFn: async () => {
-      const response = await fetchDataCall<TableData>(
+      const response = await fetchResultWithStatus<TableData>(
         `${API_URL}/api/connections/${selectedConnectionId}/collections`
       );
       if (response.error) {

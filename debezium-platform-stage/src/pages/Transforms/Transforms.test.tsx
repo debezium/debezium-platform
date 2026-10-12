@@ -172,7 +172,7 @@ describe("Transforms", () => {
   });
 
   it("does not crash or show full page error when pipeline API fails but transforms succeeds", async () => {
-    vi.mocked(useQuery).mockImplementation((key) => {
+    vi.mocked(useQuery).mockImplementation((key: any) => {
       if (key === "transforms") {
         return {
           data: mockTransforms,

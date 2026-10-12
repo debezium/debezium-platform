@@ -39,7 +39,7 @@ import {
 } from "@patternfly/react-core";
 import { FilterIcon, RhUiAddCircleIcon, SearchIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
-import { editPut, fetchData, fetchDataTypeTwo, fetchFile } from "../../apis/apis";
+import { editPut, fetchData, fetchResult, fetchFile } from "../../apis/apis";
 import {
   Connection,
   Destination,
@@ -259,8 +259,8 @@ const Pipelines: React.FunctionComponent = () => {
     setIsExportLoading(true);
     try {
       const [sourceRes, destRes] = await Promise.all([
-        fetchDataTypeTwo<Source>(`${API_URL}/api/sources/${pipeline.source.id}`),
-        fetchDataTypeTwo<Destination>(
+        fetchResult<Source>(`${API_URL}/api/sources/${pipeline.source.id}`),
+        fetchResult<Destination>(
           `${API_URL}/api/destinations/${pipeline.destination.id}`
         ),
       ]);
@@ -278,12 +278,12 @@ const Pipelines: React.FunctionComponent = () => {
       const dest = destRes.data as Destination;
 
       const transformFetches = pipeline.transforms.map((t) =>
-        fetchDataTypeTwo<TransformData>(`${API_URL}/api/transforms/${t.id}`)
+        fetchResult<TransformData>(`${API_URL}/api/transforms/${t.id}`)
       );
       const connectionFetches: Promise<{ data?: Connection | null; error?: string }>[] = [];
       if (source.connection?.id) {
         connectionFetches.push(
-          fetchDataTypeTwo<Connection>(
+          fetchResult<Connection>(
             `${API_URL}/api/connections/${source.connection.id}`
           )
         );
@@ -292,7 +292,7 @@ const Pipelines: React.FunctionComponent = () => {
       }
       if (dest.connection?.id) {
         connectionFetches.push(
-          fetchDataTypeTwo<Connection>(
+          fetchResult<Connection>(
             `${API_URL}/api/connections/${dest.connection.id}`
           )
         );

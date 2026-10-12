@@ -50,7 +50,7 @@ import "./ConfigurePipeline.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { createPost, fetchDataTypeTwo } from "../../apis/apis";
+import { createPost, fetchResult } from "../../apis/apis";
 import { API_URL } from "../../utils/constants";
 import { useAtom } from "jotai";
 import { selectedTransformAtom } from "./PipelineDesigner";
@@ -275,7 +275,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   useEffect(() => {
     const fetchSources = async () => {
       setIsSourceLoading(true);
-      const response = await fetchDataTypeTwo<Source>(
+      const response = await fetchResult<Source>(
         `${API_URL}/api/sources/${sourceId}`
       );
 
@@ -294,7 +294,7 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   useEffect(() => {
     const fetchDestination = async () => {
       setIsDestinationLoading(true);
-      const response = await fetchDataTypeTwo<Destination>(
+      const response = await fetchResult<Destination>(
         API_URL + `/api/destinations/${destinationId}`
       );
 
