@@ -919,13 +919,13 @@
   resolved "https://registry.yarnpkg.com/@patternfly/patternfly/-/patternfly-6.6.1.tgz#0b2022ba08f4821b255bfebe0da491cdab87ccbd"
   integrity sha512-8P9C1TmFk5y5s2/1XVjmP9JmSyDXDiNBwPZewhPizULtqlaRu+Evljx/X1HTSFrCNY0qgI1uDKy+NXiorIniyA==
 
-"@patternfly/react-charts@^8.6.0":
-  version "8.6.0"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-charts/-/react-charts-8.6.0.tgz#d17cf3559aac7f938199bb0ecc8af37dcba248cf"
-  integrity sha512-ReHg/zwPlPjP78RbjurbhHxA4BrAZnj3Z0OjBp9wLZTq3dX78d/uHW+BeEHOYT4NJwSbHfLbW/cqxhJQ4dzLLg==
+"@patternfly/react-charts@^8.6.1":
+  version "8.6.1"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-charts/-/react-charts-8.6.1.tgz#91a463250f2150ae173e9a6d9217460bf3511e12"
+  integrity sha512-HkYmBanA3KmP/+dw3sbCGITjCif+r1EDzYcfjzLUUshllp55zBMv4UraEpV+pSwSv3fz1SfMQm7Dt5UXL0CWzA==
   dependencies:
-    "@patternfly/react-styles" "^6.6.0"
-    "@patternfly/react-tokens" "^6.6.0"
+    "@patternfly/react-styles" "^6.6.1"
+    "@patternfly/react-tokens" "^6.6.1"
     hoist-non-react-statics "^3.3.2"
     lodash "^4.17.23"
     tslib "^2.8.1"
