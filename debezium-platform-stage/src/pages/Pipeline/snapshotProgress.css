@@ -11,6 +11,11 @@
   min-width: 8rem;
 }
 
+.pf-v6-c-table__th.snapshot-table__rows-column,
+.pf-v6-c-table__td.snapshot-table__rows-column {
+  padding-inline-start: var(--pf-t--global--spacer--2xl, 3rem);
+}
+
 .snapshot-progress__indeterminate {
   position: relative;
   height: 0.5rem;
@@ -51,9 +56,46 @@
   font-size: var(--pf-t--global--font--size--sm, 0.875rem);
 }
 
-.snapshot-progress__section-title + .snapshot-progress__summary {
+.snapshot-progress__section-title + .snapshot-progress__summary,
+.snapshot-progress__section-title + .snapshot-table__progress__summary {
   margin-top: 0;
 }
+
+.snapshot-progress__sections {
+  /* --pf-v6-c-tabs__link--FontSize: var(--pf-t--global--font--size--md, 1rem); */
+  margin-bottom: var(--pf-t--global--spacer--md, 1rem);
+}
+
+.snapshot-progress__sections.pf-v6-c-tabs.pf-m-animate-current:not(.pf-m-box) .pf-v6-c-tabs__list::after {
+  content: none;
+}
+
+.snapshot-progress__sections.pf-v6-c-tabs.pf-m-animate-current:not(.pf-m-box) .pf-v6-c-tabs__item.pf-m-current .pf-v6-c-tabs__link::after {
+  content: "";
+  border-block-end-width: var(--pf-t--global--border--width--extra-strong, 3px);
+  border-block-end-color: var(--pf-t--global--color--brand--accent--default, #0066cc);
+}
+
+.snapshot-progress__history-toolbar {
+  /* margin-top: var(--pf-t--global--spacer--sm, 0.5rem); */
+    --pf-v6-c-toolbar--m-sticky--BoxShadow: 0 0.5rem 0.5rem -0.375rem rgba(3, 3, 3, 0.18) !important;
+    padding: 1rem 1rem 1rem 1rem !important;
+    border-radius: 1rem 1rem 0 0 !important;
+    margin-right: 1px;
+    margin-left: 1px;
+    margin-top: 1px;
+      }
+
+.snapshot-history__empty {
+  min-height: 12rem;
+  padding: var(--pf-t--global--spacer--lg, 1.5rem) 1rem;
+}
+
+      .snapshot-history__card-body {
+            padding-block-end: var(--pf-v6-c-card--child--PaddingBlockEnd);
+    padding-inline-start: var(--pf-v6-c-card--child--PaddingInlineStart);
+    padding-inline-end: var(--pf-v6-c-card--child--PaddingInlineEnd);
+      }
 
 @keyframes snapshot-progress-indeterminate {
   0% {

@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "../../__test__/unit/test-utils";
 import PipelineSnapshots from "./PipelineSnapshots";
@@ -127,7 +127,8 @@ describe("PipelineSnapshots", () => {
   it("shows the live table list while a snapshot is running", () => {
     renderSnapshots({ progress: runningProgress });
 
-    expect(screen.getByRole("heading", { name: "Snapshot progress" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Snapshot progress", selected: true })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Snapshot history" })).toBeInTheDocument();
     expect(screen.getByText("Initial snapshot")).toBeInTheDocument();
     expect(screen.getByText("Running")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "Snapshot progress" })).toHaveAttribute(
@@ -148,13 +149,26 @@ describe("PipelineSnapshots", () => {
     expect(getSnapshotHistory).not.toHaveBeenCalled();
   });
 
+  it("opens snapshot history while a snapshot is still running", async () => {
+    const user = userEvent.setup();
+
+    renderSnapshots({ progress: runningProgress });
+
+    await user.click(screen.getByRole("tab", { name: "Snapshot history" }));
+
+    expect(await screen.findByText("Initial")).toBeInTheDocument();
+    expect(screen.queryByText("Initial snapshot")).not.toBeInTheDocument();
+    expect(getSnapshotHistory).toHaveBeenCalledWith("7", { page: 0, size: 20 });
+  });
+
   it("lists history and expands a run into its tables", async () => {
     const user = userEvent.setup();
 
     renderSnapshots();
 
-    expect(await screen.findByRole("heading", { name: "Snapshot progress" })).toBeInTheDocument();
-    expect(screen.getByText("No active snapshot")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Snapshot history", selected: true })).toBeInTheDocument();
+    expect(screen.queryByText("No active snapshot")).not.toBeInTheDocument();
+
     expect(await screen.findByText("Initial")).toBeInTheDocument();
     expect(screen.getByText("12/12")).toBeInTheDocument();
     expect(screen.getByText("12m 34s")).toBeInTheDocument();
@@ -173,7 +187,43 @@ describe("PipelineSnapshots", () => {
 
     renderSnapshots();
 
-    expect(await screen.findByText("No completed snapshots yet.")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "No completed snapshots yet." })).toBeInTheDocument();
+    expect(screen.getByText("Completed snapshot runs will appear here.")).toBeInTheDocument();
+  });
+
+  it("shows an empty state that can clear filters when nothing matches", async () => {
+    const user = userEvent.setup();
+    getSnapshotHistory.mockImplementation(async (_pipelineId: string, query?: { type?: string }) => {
+      if (query?.type) {
+        return {
+          data: { ...historyPage, items: [], totalElements: 0, totalPages: 0 },
+        };
+      }
+      return { data: historyPage };
+    });
+
+    renderSnapshots();
+
+    expect(await screen.findByText("Initial")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Filter by type" }));
+    await user.click(await screen.findByRole("option", { name: "Incremental snapshot" }));
+
+    const emptyHeading = await screen.findByRole("heading", {
+      name: "No snapshots match these filters.",
+    });
+    const emptyState = emptyHeading.closest(".pf-v6-c-empty-state");
+    expect(emptyState).not.toBeNull();
+
+    await user.click(
+      within(emptyState as HTMLElement).getByRole("button", { name: "Clear all filters" })
+    );
+
+    await waitFor(() => {
+      expect(getSnapshotHistory).toHaveBeenCalledWith("7", { page: 0, size: 20 });
+    });
+    expect(await screen.findByText("Initial")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No snapshots match these filters." })).not.toBeInTheDocument();
   });
 
   it("shows a retry state when progress cannot be loaded", async () => {
@@ -187,6 +237,7 @@ describe("PipelineSnapshots", () => {
     });
 
     expect(screen.getByRole("heading", { name: "Failed to load" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Snapshot history" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(onRetryProgress).toHaveBeenCalledTimes(1);
   });
@@ -196,6 +247,61 @@ describe("PipelineSnapshots", () => {
 
     await waitFor(() => {
       expect(getSnapshotHistory).not.toHaveBeenCalled();
+    });
+  });
+
+  it("filters history by type and outcome and keeps pagination visible", async () => {
+    const user = userEvent.setup();
+
+    renderSnapshots();
+
+    expect(await screen.findByText("Initial")).toBeInTheDocument();
+    expect(getSnapshotHistory).toHaveBeenCalledWith("7", { page: 0, size: 20 });
+    expect(screen.getAllByLabelText("Pagination").length).toBeGreaterThan(0);
+
+    expect(screen.getByRole("button", { name: "Filter by type" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Filter by outcome" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Filter by type" }));
+    await user.click(await screen.findByRole("option", { name: "Incremental snapshot" }));
+
+    await waitFor(() => {
+      expect(getSnapshotHistory).toHaveBeenCalledWith(
+        "7",
+        expect.objectContaining({ page: 0, size: 20, type: "INCREMENTAL" })
+      );
+    });
+
+    await user.click(screen.getByRole("button", { name: "Type" }));
+    await user.click(await screen.findByRole("option", { name: "Outcome" }));
+    await user.click(screen.getByRole("button", { name: "Filter by outcome" }));
+    await user.click(await screen.findByRole("option", { name: "Aborted" }));
+
+    await waitFor(() => {
+      expect(getSnapshotHistory).toHaveBeenCalledWith(
+        "7",
+        expect.objectContaining({
+          page: 0,
+          size: 20,
+          type: "INCREMENTAL",
+          outcome: "ABORTED",
+        })
+      );
+    });
+
+    await user.click(screen.getByRole("button", { name: "All time" }));
+    await user.click(await screen.findByRole("option", { name: "Last 24 hours" }));
+
+    await waitFor(() => {
+      expect(getSnapshotHistory).toHaveBeenCalledWith(
+        "7",
+        expect.objectContaining({
+          type: "INCREMENTAL",
+          outcome: "ABORTED",
+          from: expect.stringMatching(/^\d{4}-/),
+          to: expect.stringMatching(/^\d{4}-/),
+        })
+      );
     });
   });
 });

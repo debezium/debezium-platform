@@ -164,15 +164,35 @@ export const normalizeSnapshotHistory = (
   ...(raw.tables ? { tables: raw.tables.map(normalizeHistoryTable) } : {}),
 });
 
+export type SnapshotHistoryQuery = {
+  page: number;
+  size: number;
+  type?: SnapshotType;
+  outcome?: SnapshotOutcome;
+  from?: string;
+  to?: string;
+};
+
 export const getSnapshotHistory = async (
   pipelineId: string,
-  page: number,
-  size: number
+  query: SnapshotHistoryQuery
 ): Promise<SnapshotClientResponse<PagedSnapshotHistoryResponse>> => {
   const params = new URLSearchParams({
-    page: String(page),
-    size: String(size),
+    page: String(query.page),
+    size: String(query.size),
   });
+  if (query.type) {
+    params.set("type", query.type);
+  }
+  if (query.outcome) {
+    params.set("outcome", query.outcome);
+  }
+  if (query.from) {
+    params.set("from", query.from);
+  }
+  if (query.to) {
+    params.set("to", query.to);
+  }
   const response = await fetchResult<RawPagedSnapshotHistory>(
     `${API_URL}${snapshotHistoryPath(pipelineId)}?${params.toString()}`
   );
@@ -185,8 +205,8 @@ export const getSnapshotHistory = async (
   return {
     data: {
       items: (data.items ?? []).map(normalizeSnapshotHistory),
-      page: data.page ?? page,
-      size: data.size ?? size,
+      page: data.page ?? query.page,
+      size: data.size ?? query.size,
       totalElements: data.totalElements ?? 0,
       totalPages: data.totalPages ?? 0,
     },

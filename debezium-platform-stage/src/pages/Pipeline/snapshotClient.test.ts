@@ -159,7 +159,7 @@ describe("snapshot progress client", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    const response = await getSnapshotHistory("7", 0, 20);
+    const response = await getSnapshotHistory("7", { page: 0, size: 20 });
 
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/api/pipelines/7/snapshots/history?page=0&size=20`
@@ -167,6 +167,37 @@ describe("snapshot progress client", () => {
     expect(response.data?.items).toHaveLength(1);
     expect(response.data?.items[0]?.tables).toBeUndefined();
     expect(response.data?.totalElements).toBe(1);
+  });
+
+  it("sends type, outcome, and time range filters", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      httpResponse({
+        items: [],
+        page: 1,
+        size: 10,
+        totalElements: 0,
+        totalPages: 0,
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getSnapshotHistory("7", {
+      page: 1,
+      size: 10,
+      type: "INCREMENTAL",
+      outcome: "ABORTED",
+      from: "2026-10-14T00:00:00.000Z",
+      to: "2026-10-15T00:00:00.000Z",
+    });
+
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]), "http://localhost");
+    expect(url.pathname).toBe("/api/pipelines/7/snapshots/history");
+    expect(url.searchParams.get("page")).toBe("1");
+    expect(url.searchParams.get("size")).toBe("10");
+    expect(url.searchParams.get("type")).toBe("INCREMENTAL");
+    expect(url.searchParams.get("outcome")).toBe("ABORTED");
+    expect(url.searchParams.get("from")).toBe("2026-10-14T00:00:00.000Z");
+    expect(url.searchParams.get("to")).toBe("2026-10-15T00:00:00.000Z");
   });
 
   it("reads one snapshot run with its tables", async () => {
