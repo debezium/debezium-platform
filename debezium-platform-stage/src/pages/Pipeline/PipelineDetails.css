@@ -26,3 +26,7 @@
     align-items: center;
     gap: var(--pf-t--global--spacer--sm, 0.5rem);
   }
+
+  .snapshot-tab-title-label .pf-v6-c-label__content {
+    gap: 0;
+  }

@@ -127,8 +127,13 @@ describe("PipelineSnapshots", () => {
   it("shows the live table list while a snapshot is running", () => {
     renderSnapshots({ progress: runningProgress });
 
+    expect(screen.getByRole("heading", { name: "Snapshot progress" })).toBeInTheDocument();
     expect(screen.getByText("Initial snapshot")).toBeInTheDocument();
-    expect(screen.getByText("58.3%")).toBeInTheDocument();
+    expect(screen.getByText("Running")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Snapshot progress" })).toHaveAttribute(
+      "aria-valuetext",
+      "58.3%"
+    );
     expect(screen.getByText(/Tables: 7 of 12 completed/)).toBeInTheDocument();
     expect(screen.getByText(/Total rows scanned: 245,000/)).toBeInTheDocument();
     expect(screen.getByText("No primary key")).toBeInTheDocument();
@@ -148,7 +153,8 @@ describe("PipelineSnapshots", () => {
 
     renderSnapshots();
 
-    expect(await screen.findByText("No active snapshot")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Snapshot progress" })).toBeInTheDocument();
+    expect(screen.getByText("No active snapshot")).toBeInTheDocument();
     expect(await screen.findByText("Initial")).toBeInTheDocument();
     expect(screen.getByText("12/12")).toBeInTheDocument();
     expect(screen.getByText("12m 34s")).toBeInTheDocument();

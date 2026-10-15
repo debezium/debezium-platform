@@ -91,6 +91,33 @@ describe("useSnapshotProgress", () => {
     expect(screen.getByText("ready")).toBeInTheDocument();
   });
 
+  it("keeps the current progress when a later event matches it", async () => {
+    getSnapshotProgress.mockResolvedValue({ data: idleProgress });
+    let renders = 0;
+    const CountingProbe = ({ pipelineId }: { pipelineId?: string }) => {
+      renders += 1;
+      const { progress } = useSnapshotProgress(pipelineId);
+      return <span>{progress?.status ?? "empty"}</span>;
+    };
+
+    render(<CountingProbe pipelineId="7" />);
+    expect(await screen.findByText("IDLE")).toBeInTheDocument();
+    const rendered = renders;
+
+    act(() => {
+      emit({ ...idleProgress, tables: [] });
+    });
+
+    expect(screen.getByText("IDLE")).toBeInTheDocument();
+    expect(renders).toBe(rendered);
+
+    act(() => {
+      emit(runningProgress);
+    });
+    expect(await screen.findByText("RUNNING")).toBeInTheDocument();
+    expect(renders).toBeGreaterThan(rendered);
+  });
+
   it("does not subscribe when no pipeline is selected", async () => {
     render(<Probe />);
 

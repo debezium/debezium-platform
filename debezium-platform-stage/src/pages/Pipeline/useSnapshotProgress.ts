@@ -1,7 +1,8 @@
-import { createContext, createElement, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { getSnapshotProgress, subscribeSnapshotProgress } from "./snapshotClient";
 import {
   isSnapshotActive,
+  snapshotProgressEqual,
   type SnapshotProgressResponse,
   type SnapshotState,
 } from "./snapshotModel";
@@ -14,9 +15,9 @@ export type SnapshotProgressQuery = {
 };
 
 /**
- * Loads the current snapshot aggregate, then replaces it with each later update.
- * A slower first read is ignored once a live update has arrived.
- * Data comes from the mock client until the snapshot APIs exist.
+ * Loads the current snapshot aggregate from the progress endpoint, then replaces
+ * it with each `snapshot-progress` event. A slower first read is ignored once a
+ * stream event has arrived.
  */
 export const useSnapshotProgress = (
   pipelineId: string | undefined
@@ -25,6 +26,12 @@ export const useSnapshotProgress = (
   const [error, setError] = useState<string | null>(null);
   const [resolvedKey, setResolvedKey] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
+  const progressRef = useRef(progress);
+  const errorRef = useRef(error);
+  const resolvedKeyRef = useRef(resolvedKey);
+  progressRef.current = progress;
+  errorRef.current = error;
+  resolvedKeyRef.current = resolvedKey;
 
   const refresh = useCallback(() => {
     setReloadToken((token) => token + 1);
@@ -45,9 +52,18 @@ export const useSnapshotProgress = (
       if (cancelled) {
         return;
       }
-      setProgress(next);
-      setError(null);
-      setResolvedKey(key);
+      if (!snapshotProgressEqual(progressRef.current, next)) {
+        progressRef.current = next;
+        setProgress(next);
+      }
+      if (errorRef.current != null) {
+        errorRef.current = null;
+        setError(null);
+      }
+      if (resolvedKeyRef.current !== key) {
+        resolvedKeyRef.current = key;
+        setResolvedKey(key);
+      }
     };
 
     void getSnapshotProgress(pipelineId).then((response) => {

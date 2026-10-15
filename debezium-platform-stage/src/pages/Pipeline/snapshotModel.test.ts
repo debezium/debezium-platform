@@ -7,6 +7,7 @@ import {
   formatSnapshotDate,
   formatSnapshotTime,
   isSnapshotActive,
+  snapshotProgressEqual,
   sortSnapshotTables,
   type SnapshotTable,
 } from "./snapshotModel";
@@ -23,6 +24,22 @@ const table = (
 });
 
 describe("snapshotModel", () => {
+  it("treats a repeated progress payload as unchanged", () => {
+    const progress = {
+      type: "INITIAL" as const,
+      status: "IDLE" as const,
+      globalProgress: null,
+      tables: [],
+      totalRowsScanned: 0,
+    };
+
+    expect(snapshotProgressEqual(progress, { ...progress, tables: [] })).toBe(true);
+    expect(
+      snapshotProgressEqual(progress, { ...progress, status: "RUNNING" })
+    ).toBe(false);
+    expect(snapshotProgressEqual(null, progress)).toBe(false);
+  });
+
   it("treats running and paused snapshots as active", () => {
     expect(isSnapshotActive("RUNNING")).toBe(true);
     expect(isSnapshotActive("PAUSED")).toBe(true);

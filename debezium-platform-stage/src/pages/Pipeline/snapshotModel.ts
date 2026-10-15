@@ -1,4 +1,4 @@
-export type SnapshotType = "INITIAL" | "INCREMENTAL";
+export type SnapshotType = "INITIAL" | "INCREMENTAL" | "BLOCKING";
 
 export type SnapshotState =
   | "IDLE"
@@ -101,6 +101,71 @@ export const snapshotHistoryPath = (pipelineId: string): string =>
 export const isSnapshotActive = (
   status: SnapshotState | null | undefined
 ): boolean => status === "RUNNING" || status === "PAUSED";
+
+const sameChunk = (
+  left: SnapshotTableChunkProgress | null,
+  right: SnapshotTableChunkProgress | null
+): boolean => {
+  if (left === right) {
+    return true;
+  }
+  if (!left || !right) {
+    return false;
+  }
+  return (
+    left.chunkIndex === right.chunkIndex &&
+    left.totalChunks === right.totalChunks &&
+    left.percentage === right.percentage
+  );
+};
+
+const sameTable = (left: SnapshotTable, right: SnapshotTable): boolean =>
+  left.name === right.name &&
+  left.status === right.status &&
+  left.rowsScanned === right.rowsScanned &&
+  left.skipReason === right.skipReason &&
+  sameChunk(left.progress, right.progress);
+
+const sameGlobal = (
+  left: SnapshotGlobalProgress | null,
+  right: SnapshotGlobalProgress | null
+): boolean => {
+  if (left === right) {
+    return true;
+  }
+  if (!left || !right) {
+    return false;
+  }
+  return (
+    left.totalTables === right.totalTables &&
+    left.completedTables === right.completedTables &&
+    left.percentage === right.percentage
+  );
+};
+
+/** True when a later progress payload would not change what the views render. */
+export const snapshotProgressEqual = (
+  left: SnapshotProgressResponse | null,
+  right: SnapshotProgressResponse | null
+): boolean => {
+  if (left === right) {
+    return true;
+  }
+  if (!left || !right) {
+    return false;
+  }
+  return (
+    left.type === right.type &&
+    left.status === right.status &&
+    left.startedAt === right.startedAt &&
+    left.lastUpdatedAt === right.lastUpdatedAt &&
+    left.elapsedSeconds === right.elapsedSeconds &&
+    left.totalRowsScanned === right.totalRowsScanned &&
+    sameGlobal(left.globalProgress, right.globalProgress) &&
+    left.tables.length === right.tables.length &&
+    left.tables.every((table, index) => sameTable(table, right.tables[index]!))
+  );
+};
 
 export const clampPercent = (value: number): number => {
   if (!Number.isFinite(value)) {

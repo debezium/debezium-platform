@@ -148,14 +148,16 @@
     "additioanlConditionsDesc": "Condizioni aggiuntive che il connettore valuta per determinare il sottoinsieme di record da includere in uno snapshot."
   },
   "snapshots": {
+    "snapshotTitle": "Snapshot",
     "inProgressTitle": "Snapshot in corso",
     "pausedTitle": "Snapshot in pausa",
     "viewDetails": "Visualizza dettagli",
     "paused": "In pausa",
     "running": "In esecuzione",
-    "runningFor": "In esecuzione da {{duration}}",
-    "pausedAfter": "In pausa dopo {{duration}}",
+    "runningFor": "In esecuzione da",
+    "pausedAfter": "In pausa dopo",
     "typeInitial": "Snapshot iniziale",
+    "typeBlocking": "Snapshot di blocco",
     "typeIncremental": "Snapshot incrementale",
     "typeInitialShort": "Iniziale",
     "typeIncrementalShort": "Incrementale",

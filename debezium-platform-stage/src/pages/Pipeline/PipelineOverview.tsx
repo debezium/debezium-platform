@@ -46,6 +46,8 @@ import SnapshotProgressCard from "./SnapshotProgressCard";
 import { isSnapshotActive, type SnapshotProgressResponse } from "./snapshotModel";
 import { useOptionalSnapshotProgress } from "./useSnapshotProgress";
 
+const CompositionFlowMemo = memo(CompositionFlow);
+
 export type PipelineOverviewProp = {
   pipelineId: string;
   activeTabKey: string;
@@ -205,8 +207,6 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({
       cancelled = true;
     };
   }, [activeTabKey, pipeline.source?.id, pipeline.destination?.id]);
-
-  const CompositionFlowMemo = memo(CompositionFlow);
 
   useEffect(() => {
     // Store original event buffer size

@@ -14,6 +14,7 @@ import {
   TabContentBody,
   Tabs,
   TabTitleText,
+  Tooltip,
 } from "@patternfly/react-core";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -42,7 +43,7 @@ import {
 } from "@support/featureFlag";
 import { PageHeader } from "@patternfly/react-component-groups";
 import { useNotification } from "../../appLayout/AppNotificationContext";
-import { InfoAltIcon, RhUiPathIcon } from "@patternfly/react-icons";
+import { InfoAltIcon, RhUiPathIcon, RhUiPauseCircleIcon, RhUiRunningIcon } from "@patternfly/react-icons";
 import ApiError from "../../components/ApiError";
 
 const PIPELINE_STATUS_CONFIG: Record<PipelineStatus, { color: LabelColor; labelKey: string; tooltipKey: string }> = {
@@ -490,14 +491,19 @@ const SnapshotsTabTitle: React.FC = () => {
       <span className="snapshot-tab-title">
         {t("pipeline:tabs.snapshots")}
         {isSnapshotActive(snapshotStatus) && (
-          <Label
-            isCompact
+          <Tooltip content={snapshotStatus === "PAUSED" ? t("pipeline:snapshots.paused") : t("pipeline:snapshots.running")}>
+            <Label
+            // isCompact
+            className="snapshot-tab-title-label"
             color={snapshotStatus === "PAUSED" ? LabelColor.orange : LabelColor.blue}
+            icon={ snapshotStatus === "PAUSED" ? <RhUiPauseCircleIcon /> : <RhUiRunningIcon />}
           >
-            {snapshotStatus === "PAUSED"
+            {/* {snapshotStatus !== "PAUSED"
               ? t("pipeline:snapshots.paused")
-              : t("pipeline:snapshots.running")}
+              : t("pipeline:snapshots.running")} */}
           </Label>
+          </Tooltip>
+          
         )}
       </span>
     </TabTitleText>

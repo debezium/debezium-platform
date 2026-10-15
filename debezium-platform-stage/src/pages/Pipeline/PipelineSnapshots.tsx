@@ -14,6 +14,7 @@ import {
   LabelColor,
   Pagination,
   Spinner,
+  Title,
 } from "@patternfly/react-core";
 import {
   ExpandableRowContent,
@@ -30,6 +31,8 @@ import {
   ExclamationTriangleIcon,
   InProgressIcon,
   OutlinedCircleIcon,
+  RhUiPauseCircleIcon,
+  RhUiRunningIcon,
 } from "@patternfly/react-icons";
 import { useTranslation } from "react-i18next";
 import ApiError from "@components/ApiError";
@@ -65,10 +68,16 @@ type PipelineSnapshotsProps = {
   onRetryProgress?: () => void;
 };
 
-const fullTypeKey = (type: SnapshotType | null): string =>
-  type === "INCREMENTAL"
-    ? "pipeline:snapshots.typeIncremental"
-    : "pipeline:snapshots.typeInitial";
+// const fullTypeKey = (type: SnapshotType | null): string =>
+//   type === "INCREMENTAL"
+//     ? "pipeline:snapshots.typeIncremental"
+//     : "pipeline:snapshots.typeInitial";
+
+const typeLabelKey = (type: SnapshotType | null): string => {
+      if (type === "INCREMENTAL") return "pipeline:snapshots.typeIncremental";
+      if (type === "INITIAL") return "pipeline:snapshots.typeInitial";
+      return "pipeline:snapshots.typeBlocking";
+    };
 
 const shortTypeKey = (type: SnapshotType): string =>
   type === "INCREMENTAL"
@@ -325,36 +334,43 @@ const PipelineSnapshots: FC<PipelineSnapshotsProps> = ({
   }
 
   const historyLoading = shouldLoadHistory && historyKey !== historyRequestKey;
+  const progressPageTitle = (
+    <Title headingLevel="h2" size="lg" className="snapshot-progress__page-title">
+      {t("pipeline:snapshots.progressTitle")}
+    </Title>
+  );
 
   if (isProgressLoading && !progress) {
     return (
-      <Bullseye>
-        <Spinner aria-label={t("pipeline:snapshots.progressTitle")} />
-      </Bullseye>
+      <>
+        {progressPageTitle}
+        <Bullseye>
+          <Spinner aria-label={t("pipeline:snapshots.progressTitle")} />
+        </Bullseye>
+      </>
     );
   }
 
   if (progressError && !progress) {
     return (
-      <ApiError
-        errorType="large"
-        errorMsg={progressError}
-        onRetry={onRetryProgress}
-      />
+      <>
+        {progressPageTitle}
+        <ApiError
+          errorType="large"
+          errorMsg={progressError}
+          onRetry={onRetryProgress}
+        />
+      </>
     );
   }
 
   if (progress && isSnapshotActive(progress.status)) {
     const isPaused = progress.status === "PAUSED";
+    const isRunning = progress.status === "RUNNING";
     const duration = formatDuration(elapsedSeconds);
     const started = formatSnapshotTime(progress.startedAt, i18n.language);
     const globalProgress = progress.globalProgress;
     const summary = [
-      t("pipeline:snapshots.statusLine", {
-        status: isPaused
-          ? t("pipeline:snapshots.paused")
-          : t("pipeline:snapshots.running"),
-      }),
       started ? t("pipeline:snapshots.startedLine", { time: started }) : null,
       duration ? t("pipeline:snapshots.elapsedLine", { duration }) : null,
     ].filter((part): part is string => Boolean(part));
@@ -374,22 +390,40 @@ const PipelineSnapshots: FC<PipelineSnapshotsProps> = ({
     const tables = sortSnapshotTables(progress.tables ?? []);
 
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("pipeline:snapshots.progressTitle")}</CardTitle>
-        </CardHeader>
-        <CardBody>
+      <>
+      
+        {progressPageTitle}
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Flex
+                spaceItems={{ default: "spaceItemsSm" }}
+                alignItems={{ default: "alignItemsCenter" }}
+              >
+                <span>{t(typeLabelKey(progress.type))}</span>
+                {isPaused && (
+                  <Label color={LabelColor.orange} icon={<RhUiPauseCircleIcon />}>
+                    {t("pipeline:snapshots.paused")}
+                  </Label>
+                )}
+                {isRunning && (
+                  <Label color={LabelColor.blue} icon={<RhUiRunningIcon />}>
+                    {t("pipeline:snapshots.running")}
+                  </Label>
+                )}
+              </Flex>
+            </CardTitle>
+          </CardHeader>
+          <CardBody>
           <Flex
             alignItems={{ default: "alignItemsCenter" }}
             flexWrap={{ default: "nowrap" }}
             spaceItems={{ default: "spaceItemsMd" }}
           >
-            <Content component="p" style={{ margin: 0, whiteSpace: "nowrap" }}>
-              {t(fullTypeKey(progress.type))}
-            </Content>
             <div className="snapshot-progress__bar">
               <SnapshotProgressBar
                 percentage={globalProgress?.percentage ?? null}
+                measureLocation="inside"
                 isPaused={isPaused}
                 ariaLabel={
                   globalProgress?.percentage == null
@@ -404,12 +438,14 @@ const PipelineSnapshots: FC<PipelineSnapshotsProps> = ({
               {summary.join(" | ")}
             </Content>
           )}
+          <Content component="h3" className="snapshot-progress__section-title">
+            {t("pipeline:snapshots.tables")}
+          </Content>
           {totals.length > 0 && (
-            <Content component="p" className="snapshot-progress__summary">
+            <Content component="p" className="snapshot-table__progress__summary">
               {totals.join(" | ")}
             </Content>
           )}
-          <Content component="h3">{t("pipeline:snapshots.tables")}</Content>
           <Table aria-label={t("pipeline:snapshots.activeTables")} variant="compact">
             <Thead>
               <Tr>
@@ -436,21 +472,23 @@ const PipelineSnapshots: FC<PipelineSnapshotsProps> = ({
               ))}
             </Tbody>
           </Table>
-        </CardBody>
-      </Card>
+          </CardBody>
+        </Card>
+      </>
     );
   }
 
   const items = history?.items ?? [];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("pipeline:snapshots.progressTitle")}</CardTitle>
-      </CardHeader>
-      <CardBody>
+    <>
+      {progressPageTitle}
+      <Card>
+        <CardBody>
         <Content component="p">{t("pipeline:snapshots.noActive")}</Content>
-        <Content component="h3">{t("pipeline:snapshots.history")}</Content>
+        <Content component="h3" className="snapshot-progress__section-title">
+          {t("pipeline:snapshots.history")}
+        </Content>
         {historyError && (
           <Alert
             variant="danger"
@@ -564,8 +602,9 @@ const PipelineSnapshots: FC<PipelineSnapshotsProps> = ({
             )}
           </>
         )}
-      </CardBody>
-    </Card>
+        </CardBody>
+      </Card>
+    </>
   );
 };
 

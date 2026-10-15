@@ -6,6 +6,7 @@ import "./snapshotProgress.css";
 type SnapshotProgressBarProps = {
   percentage: number | null;
   isPaused?: boolean;
+  measureLocation?: "outside" | "inside";
   ariaLabel: string;
   size?: "sm" | "md" | "lg";
 };
@@ -13,6 +14,7 @@ type SnapshotProgressBarProps = {
 const SnapshotProgressBar: FC<SnapshotProgressBarProps> = ({
   percentage,
   isPaused = false,
+  measureLocation = "outside",
   ariaLabel,
   size = "sm",
 }) => {
@@ -41,7 +43,7 @@ const SnapshotProgressBar: FC<SnapshotProgressBarProps> = ({
       value={clamped}
       label={label}
       valueText={label}
-      measureLocation="outside"
+      measureLocation={measureLocation}
       size={size}
       aria-label={ariaLabel}
     />

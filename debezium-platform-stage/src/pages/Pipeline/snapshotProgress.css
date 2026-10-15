@@ -1,3 +1,7 @@
+.snapshot-progress__page-title {
+  margin-bottom: var(--pf-t--global--spacer--md, 1rem);
+}
+
 .snapshot-progress__bar {
   flex: 1 1 auto;
   min-width: 8rem;
@@ -33,6 +37,22 @@
 .snapshot-progress__summary {
   margin-top: var(--pf-t--global--spacer--sm, 0.5rem);
   margin-bottom: 0;
+}
+
+.snapshot-table__progress__summary {
+  margin-top: var(--pf-t--global--spacer--sm, 0.5rem);
+  margin-bottom: 0;
+  margin-block-end: 0 !important;
+}
+
+.pf-v6-c-content--h3.snapshot-progress__section-title {
+  margin-block-start: var(--pf-t--global--spacer--lg, 1.5rem);
+  margin-block-end: var(--pf-t--global--spacer--xs, 0.25rem);
+  font-size: var(--pf-t--global--font--size--sm, 0.875rem);
+}
+
+.snapshot-progress__section-title + .snapshot-progress__summary {
+  margin-top: 0;
 }
 
 @keyframes snapshot-progress-indeterminate {

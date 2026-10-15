@@ -19,16 +19,18 @@ import {
 } from "./snapshotModel";
 import { useSnapshotElapsed } from "./useSnapshotProgress";
 import "./snapshotProgress.css";
+import { RhUiPauseCircleIcon, RhUiRunningIcon } from "@patternfly/react-icons";
 
 type SnapshotProgressCardProps = {
   progress: SnapshotProgressResponse;
   onViewDetails: () => void;
 };
 
-const typeLabelKey = (type: SnapshotType | null): string =>
-  type === "INCREMENTAL"
-    ? "pipeline:snapshots.typeIncremental"
-    : "pipeline:snapshots.typeInitial";
+const typeLabelKey = (type: SnapshotType | null): string => {
+  if (type === "INCREMENTAL") return "pipeline:snapshots.typeIncremental";
+  if (type === "INITIAL") return "pipeline:snapshots.typeInitial";
+  return "pipeline:snapshots.typeBlocking";
+};
 
 const SnapshotProgressCard: FC<SnapshotProgressCardProps> = ({
   progress,
@@ -37,6 +39,7 @@ const SnapshotProgressCard: FC<SnapshotProgressCardProps> = ({
   const { t } = useTranslation();
   const elapsedSeconds = useSnapshotElapsed(progress);
   const isPaused = progress.status === "PAUSED";
+  const isRunning = progress.status === "RUNNING";
   const duration = formatDuration(elapsedSeconds);
   const globalProgress = progress.globalProgress;
   const percentage = globalProgress?.percentage ?? null;
@@ -58,13 +61,16 @@ const SnapshotProgressCard: FC<SnapshotProgressCardProps> = ({
             alignItems={{ default: "alignItemsCenter" }}
           >
             <span>
-              {isPaused
-                ? t("pipeline:snapshots.pausedTitle")
-                : t("pipeline:snapshots.inProgressTitle")}
+              {t("pipeline:snapshots.snapshotTitle")}
             </span>
             {isPaused && (
-              <Label isCompact color={LabelColor.orange}>
+              <Label color={LabelColor.orange} icon={<RhUiPauseCircleIcon />}>
                 {t("pipeline:snapshots.paused")}
+              </Label>
+            )}
+            {isRunning && (
+              <Label color={LabelColor.blue} icon={<RhUiRunningIcon />}>
+                {t("pipeline:snapshots.running")}
               </Label>
             )}
           </Flex>
@@ -76,13 +82,15 @@ const SnapshotProgressCard: FC<SnapshotProgressCardProps> = ({
           flexWrap={{ default: "nowrap" }}
           spaceItems={{ default: "spaceItemsMd" }}
         >
-          <Content component="p" style={{ margin: 0, whiteSpace: "nowrap" }}>
+          <Content component="p" style={{ marginBottom: 0, whiteSpace: "nowrap" }}>
             {t(typeLabelKey(progress.type))}
           </Content>
           <div className="snapshot-progress__bar">
             <SnapshotProgressBar
+              measureLocation="inside"
               percentage={percentage}
               isPaused={isPaused}
+              // size="md"
               ariaLabel={
                 percentage == null
                   ? t("pipeline:snapshots.unknownProgress")
@@ -102,8 +110,9 @@ const SnapshotProgressCard: FC<SnapshotProgressCardProps> = ({
         {duration && (
           <Content component="p" className="snapshot-progress__summary">
             {isPaused
-              ? t("pipeline:snapshots.pausedAfter", { duration })
-              : t("pipeline:snapshots.runningFor", { duration })}
+              ? t("pipeline:snapshots.pausedAfter")
+              : t("pipeline:snapshots.runningFor")}
+            {" "}<strong>{duration}</strong>
           </Content>
         )}
       </CardBody>

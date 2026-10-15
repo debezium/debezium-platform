@@ -148,14 +148,16 @@
         "additioanlConditionsDesc": "Additional conditions that the connector evaluates to determine the subset of records to include in a snapshot."
     },
     "snapshots": {
+        "snapshotTitle": "Snapshot",
         "inProgressTitle": "Snapshot in progress",
         "pausedTitle": "Snapshot paused",
         "viewDetails": "View details",
         "paused": "Paused",
         "running": "Running",
-        "runningFor": "Running for {{duration}}",
-        "pausedAfter": "Paused after {{duration}}",
+        "runningFor": "Running for",
+        "pausedAfter": "Paused after",
         "typeInitial": "Initial snapshot",
+        "typeBlocking": "Blocking snapshot",
         "typeIncremental": "Incremental snapshot",
         "typeInitialShort": "Initial",
         "typeIncrementalShort": "Incremental",
