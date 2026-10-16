@@ -34,11 +34,16 @@ describe("SnapshotProgressCard", () => {
       <SnapshotProgressCard progress={runningProgress} onViewDetails={onViewDetails} />
     );
 
-    expect(screen.getByText("Snapshot in progress")).toBeInTheDocument();
+    expect(screen.getByText("Snapshot")).toBeInTheDocument();
+    expect(screen.getByText("Running")).toBeInTheDocument();
     expect(screen.getByText("Initial snapshot")).toBeInTheDocument();
     expect(screen.getByText("(7/12 tables)")).toBeInTheDocument();
-    expect(screen.getByText("58.3%")).toBeInTheDocument();
-    expect(screen.getByText(/Running for/)).toBeInTheDocument();
+    expect(screen.getByText("58%")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Snapshot progress" })).toHaveAttribute(
+      "aria-valuetext",
+      "58.3%"
+    );
+    expect(screen.getByText("Running for")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "View details" }));
     expect(onViewDetails).toHaveBeenCalledTimes(1);
@@ -49,12 +54,13 @@ describe("SnapshotProgressCard", () => {
       <SnapshotProgressCard progress={pausedProgress} onViewDetails={vi.fn()} />
     );
 
-    expect(screen.getByText("Snapshot paused")).toBeInTheDocument();
+    expect(screen.getByText("Snapshot")).toBeInTheDocument();
     expect(screen.getByText("Paused")).toBeInTheDocument();
     expect(screen.getByText("Incremental snapshot")).toBeInTheDocument();
     expect(screen.getByText("30%")).toBeInTheDocument();
     expect(screen.getByText("(3/10 tables)")).toBeInTheDocument();
-    expect(screen.getByText("Paused after 2m 15s")).toBeInTheDocument();
+    expect(screen.getByText("Paused after")).toBeInTheDocument();
+    expect(screen.getByText("2m 15s")).toBeInTheDocument();
   });
 
   it("uses an indeterminate bar when the table total is not known yet", () => {

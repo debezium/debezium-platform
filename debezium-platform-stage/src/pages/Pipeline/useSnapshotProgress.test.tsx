@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, screen, waitFor } from "@testing-library/react";
 import { render } from "../../__test__/unit/test-utils";
@@ -95,8 +96,10 @@ describe("useSnapshotProgress", () => {
     getSnapshotProgress.mockResolvedValue({ data: idleProgress });
     let renders = 0;
     const CountingProbe = ({ pipelineId }: { pipelineId?: string }) => {
-      renders += 1;
       const { progress } = useSnapshotProgress(pipelineId);
+      useEffect(() => {
+        renders += 1;
+      });
       return <span>{progress?.status ?? "empty"}</span>;
     };
 

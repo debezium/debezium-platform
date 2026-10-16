@@ -47,7 +47,7 @@ describe("PipelineOverview", () => {
     );
 
     expect(await screen.findByText("Pipeline composition")).toBeInTheDocument();
-    expect(screen.queryByText("Snapshot in progress")).not.toBeInTheDocument();
+    expect(screen.queryByText("Snapshot")).not.toBeInTheDocument();
     expect(await screen.findByText("test-cass")).toBeInTheDocument();
     expect(await screen.findByText("test-infi")).toBeInTheDocument();
     expect(await screen.findByTestId("composition-flow")).toBeInTheDocument();
@@ -83,7 +83,8 @@ describe("PipelineOverview", () => {
       />
     );
 
-    expect(screen.getByText("Snapshot in progress")).toBeInTheDocument();
+    expect(screen.getByText("Snapshot")).toBeInTheDocument();
+    expect(screen.getByText("Running")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "View details" })).toBeInTheDocument();
   });
 });

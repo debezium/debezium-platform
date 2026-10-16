@@ -29,9 +29,12 @@ export const useSnapshotProgress = (
   const progressRef = useRef(progress);
   const errorRef = useRef(error);
   const resolvedKeyRef = useRef(resolvedKey);
-  progressRef.current = progress;
-  errorRef.current = error;
-  resolvedKeyRef.current = resolvedKey;
+
+  useEffect(() => {
+    progressRef.current = progress;
+    errorRef.current = error;
+    resolvedKeyRef.current = resolvedKey;
+  });
 
   const refresh = useCallback(() => {
     setReloadToken((token) => token + 1);

@@ -342,7 +342,7 @@ const PipelineDetails: React.FunctionComponent = () => {
                 eventKey={"monitoring"}
                 title={monitoringTabTitle}
                 tabContentId={`tabContent${"monitoring"}`}
-                // isDisabled={pipeline?.status === "FAILED"}
+                isDisabled={pipeline?.status === "FAILED"}
               />
             )}
             {isPipelineTabEnabled("logs") && (
@@ -364,7 +364,7 @@ const PipelineDetails: React.FunctionComponent = () => {
                 eventKey={"action"}
                 title={actionTabTitle}
                 tabContentId={`tabContent${"action"}`}
-                // isDisabled={pipeline?.status === "FAILED"}
+                isDisabled={pipeline?.status === "FAILED"}
               />
             )}
             <Tab
