@@ -12,9 +12,9 @@ vi.mock("../appLayout/AppContext", () => ({
   }),
 }));
 
-vi.mock("@utils/featureFlag", async () => {
-  const actual = await vi.importActual<typeof import("@utils/featureFlag")>(
-    "@utils/featureFlag"
+vi.mock("@support/featureFlag", async () => {
+  const actual = await vi.importActual<typeof import("@support/featureFlag")>(
+    "@support/featureFlag"
   );
 
   return {
@@ -29,7 +29,7 @@ import {
   isFeatureComingSoon,
   isFeatureEnabled,
   isFeatureHidden,
-} from "@utils/featureFlag";
+} from "@support/featureFlag";
 
 describe("FeatureGate", () => {
   it("renders children when the feature is enabled", () => {

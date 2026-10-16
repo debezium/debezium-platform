@@ -42,17 +42,33 @@ import {
   generatePropertiesContent,
   triggerPropertiesDownload,
 } from "@utils/generateServerConfig";
+import SnapshotProgressCard from "./SnapshotProgressCard";
+import { isSnapshotActive, type SnapshotProgressResponse } from "./snapshotModel";
+import { useOptionalSnapshotProgress } from "./useSnapshotProgress";
+
+const CompositionFlowMemo = memo(CompositionFlow);
 
 export type PipelineOverviewProp = {
   pipelineId: string;
   activeTabKey: string;
   pipeline: Pipeline;
+  snapshotProgress?: SnapshotProgressResponse | null;
 };
 
-const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey, pipeline }) => {
+const PipelineOverview: FC<PipelineOverviewProp> = ({
+  pipelineId,
+  activeTabKey,
+  pipeline,
+  snapshotProgress: snapshotProgressProp,
+}) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { addNotification } = useNotification();
+  const liveSnapshot = useOptionalSnapshotProgress();
+  const snapshotProgress =
+    snapshotProgressProp !== undefined
+      ? snapshotProgressProp
+      : liveSnapshot?.progress ?? null;
 
   const navigateTo = (url: string) => {
     navigate(url);
@@ -192,8 +208,6 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey, 
     };
   }, [activeTabKey, pipeline.source?.id, pipeline.destination?.id]);
 
-  const CompositionFlowMemo = memo(CompositionFlow);
-
   useEffect(() => {
     // Store original event buffer size
     const originalSize = window.EVENT_BUFFER_SIZE;
@@ -205,16 +219,36 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({ pipelineId, activeTabKey, 
     };
   }, []);
 
+  const snapshotCard = isSnapshotActive(snapshotProgress?.status) && snapshotProgress ? (
+    <GridItem span={12}>
+      <SnapshotProgressCard
+        progress={snapshotProgress}
+        onViewDetails={() => navigate(`/pipeline/${pipelineId}/snapshots`)}
+      />
+    </GridItem>
+  ) : null;
+
   if (isFetchLoading) {
-    return <div>{t("loading")}</div>;
+    return (
+      <Grid hasGutter>
+        {snapshotCard}
+        <GridItem span={12}>{t("loading")}</GridItem>
+      </Grid>
+    );
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <Grid hasGutter>
+        {snapshotCard}
+        <GridItem span={12}>Error: {error}</GridItem>
+      </Grid>
+    );
   }
 
   return (
     <Grid hasGutter>
+      {snapshotCard}
       {/* <GridItem span={12}>
         <Card ouiaId="BasicCard">
           <CardBody>

@@ -3,9 +3,9 @@ import AppBreadcrumb, { getBreadcrumbTrail } from "./AppBreadcrumb";
 import { expect, test, vi } from "vitest";
 import { render } from "../__test__/unit/test-utils";
 
-vi.mock("@utils/featureFlag", async () => {
-  const actual = await vi.importActual<typeof import("@utils/featureFlag")>(
-    "@utils/featureFlag"
+vi.mock("@support/featureFlag", async () => {
+  const actual = await vi.importActual<typeof import("@support/featureFlag")>(
+    "@support/featureFlag"
   );
 
   return {
@@ -15,7 +15,7 @@ vi.mock("@utils/featureFlag", async () => {
   };
 });
 
-import { getPipelineDetailsRoutePattern, isFeatureAccessible } from "@utils/featureFlag";
+import { getPipelineDetailsRoutePattern, isFeatureAccessible } from "@support/featureFlag";
 
 test("render the Breadcrumb component", () => {
   const testPath = "/source/catalog";
@@ -34,6 +34,13 @@ test("render pipeline overview breadcrumb", () => {
   expect(screen.getByText("Pipeline")).toBeInTheDocument();
   expect(screen.getByText("Overview")).toBeInTheDocument();
   expect(screen.queryByText("Create pipeline")).not.toBeInTheDocument();
+});
+
+test("render pipeline snapshots breadcrumb when tab is enabled", () => {
+  render(<AppBreadcrumb />, { initialEntries: ["/pipeline/123/snapshots"] });
+
+  expect(screen.getByText("Pipeline")).toBeInTheDocument();
+  expect(screen.getByText("Snapshots")).toBeInTheDocument();
 });
 
 test("render pipeline monitoring breadcrumb when tab is enabled", () => {

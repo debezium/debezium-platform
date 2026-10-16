@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import GroupSubNav, { useActiveGroupSubNav } from "./GroupSubNav";
 import { useData } from "./AppContext";
 import { render } from "../__test__/unit/test-utils";
-import { isRouteNavVisible } from "@utils/featureFlag";
+import { isRouteNavVisible } from "@support/featureFlag";
 
 vi.mock("./AppContext", () => ({
   useData: vi.fn(),

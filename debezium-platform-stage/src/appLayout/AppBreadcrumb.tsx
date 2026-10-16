@@ -2,7 +2,7 @@ import { FC } from "react";
 import i18next from "../i18n";
 import { Breadcrumb, BreadcrumbItem } from "@patternfly/react-core";
 import { useLocation, useNavigate, NavigateFunction } from "react-router-dom";
-import { getPipelineDetailsRoutePattern, isFeatureAccessible } from "@utils/featureFlag";
+import { getPipelineDetailsRoutePattern, isFeatureAccessible } from "@support/featureFlag";
 
 interface BreadcrumbTrailItem {
   url: string;
@@ -106,6 +106,7 @@ export const getBreadcrumbTrail = (route: string): BreadcrumbTrailItem[] => {
       const detailsTab = route.split("/").pop() || "overview";
       const tabLabels: Record<string, string> = {
         overview: i18next.t("breadcrumb.overview"),
+        snapshots: i18next.t("breadcrumb.snapshots"),
         logs: i18next.t("breadcrumb.log"),
         edit:  i18next.t("breadcrumb.editResource", { val : "pipeline"}),
         action: i18next.t("breadcrumb.action"),

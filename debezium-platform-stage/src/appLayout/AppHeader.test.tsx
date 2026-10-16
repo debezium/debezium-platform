@@ -20,8 +20,8 @@ vi.mock("./AppContext", () => ({
   useData: vi.fn(),
 }));
 
-vi.mock("@utils/featureFlag", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@utils/featureFlag")>();
+vi.mock("@support/featureFlag", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@support/featureFlag")>();
   return {
     ...actual,
     isFeatureEnabled: vi.fn(actual.isFeatureEnabled),
@@ -30,7 +30,7 @@ vi.mock("@utils/featureFlag", async (importOriginal) => {
 
 import AppHeader from "./AppHeader";
 import { useData } from "./AppContext";
-import { isFeatureEnabled } from "@utils/featureFlag";
+import { isFeatureEnabled } from "@support/featureFlag";
 
 const renderAppHeader = (darkMode = false) => {
   vi.mocked(useData).mockReturnValue({
