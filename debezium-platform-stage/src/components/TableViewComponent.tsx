@@ -267,11 +267,17 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
             .map((opt) => Object.assign({}, opt))
             .filter((item) => filterItemsForCheck(item, treeViewItem));
         const flatCheckedItems = flattenTree(checkedItemTree);
+        const visibleIds = isFiltered
+            ? new Set(flattenTree(filteredItems).map((item) => item.id))
+            : undefined;
+        const itemsToToggle = visibleIds
+            ? flatCheckedItems.filter((item) => visibleIds.has(item.id))
+            : flatCheckedItems;
 
         setCheckedItems((prevCheckedItems) =>
             checked
-                ? prevCheckedItems.concat(flatCheckedItems.filter((item) => !checkedItems.some((i) => i.id === item.id)))
-                : prevCheckedItems.filter((item) => !flatCheckedItems.some((i) => i.id === item.id))
+                ? prevCheckedItems.concat(itemsToToggle.filter((item) => !checkedItems.some((i) => i.id === item.id)))
+                : prevCheckedItems.filter((item) => !itemsToToggle.some((i) => i.id === item.id))
         );
     };
 
@@ -288,10 +294,30 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     };
 
     const isChecked = (dataItem: TreeViewDataItem): boolean => checkedItems.some((item) => item.id === dataItem.id);
-    const areAllDescendantsChecked = (dataItem: TreeViewDataItem): boolean =>
-        dataItem.children ? dataItem.children.every((child) => areAllDescendantsChecked(child)) : isChecked(dataItem);
-    const areSomeDescendantsChecked = (dataItem: TreeViewDataItem): boolean =>
-        dataItem.children ? dataItem.children.some((child) => areSomeDescendantsChecked(child)) : isChecked(dataItem);
+    const findItemById = (items: TreeViewDataItem[], id: TreeViewDataItem["id"]): TreeViewDataItem | undefined => {
+        for (const item of items) {
+            if (item.id === id) return item;
+            if (item.children) {
+                const found = findItemById(item.children, id);
+                if (found) return found;
+            }
+        }
+        return undefined;
+    };
+    const fullTreeItem = (dataItem: TreeViewDataItem): TreeViewDataItem =>
+        findItemById(options, dataItem.id) ?? dataItem;
+    const areAllDescendantsChecked = (dataItem: TreeViewDataItem): boolean => {
+        const source = fullTreeItem(dataItem);
+        return source.children
+            ? source.children.every((child) => areAllDescendantsChecked(child))
+            : isChecked(source);
+    };
+    const areSomeDescendantsChecked = (dataItem: TreeViewDataItem): boolean => {
+        const source = fullTreeItem(dataItem);
+        return source.children
+            ? source.children.some((child) => areSomeDescendantsChecked(child))
+            : isChecked(source);
+    };
 
     const flattenTree = (tree: TreeViewDataItem[]) => {
         let result: TreeViewDataItem[] = [];
