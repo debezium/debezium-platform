@@ -7,7 +7,7 @@ import {
   normalizeSnapshotHistory,
   normalizeSnapshotProgress,
   subscribeSnapshotProgress,
-} from "./snapshotClient";
+} from "./snapshots";
 
 const httpResponse = (body: unknown, ok = true) =>
   ({

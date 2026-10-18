@@ -8,14 +8,14 @@ import type {
   PagedSnapshotHistoryResponse,
   SnapshotHistoryResponse,
   SnapshotProgressResponse,
-} from "./snapshotModel";
+} from "../../apis/snapshots";
 
 const { getSnapshotHistory, getSnapshotHistoryDetail } = vi.hoisted(() => ({
   getSnapshotHistory: vi.fn(),
   getSnapshotHistoryDetail: vi.fn(),
 }));
 
-vi.mock("./snapshotClient", () => ({
+vi.mock("../../apis/snapshots", () => ({
   getSnapshotHistory,
   getSnapshotHistoryDetail,
 }));

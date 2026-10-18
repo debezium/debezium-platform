@@ -51,7 +51,7 @@ vi.mock("./PipelineSnapshots", () => ({
   default: () => <div>Snapshots content</div>,
 }));
 
-vi.mock("./snapshotClient", () => ({
+vi.mock("../../apis/snapshots", () => ({
   getSnapshotProgress: vi.fn(() =>
     Promise.resolve({
       data: { type: null, status: "IDLE", globalProgress: null, tables: [] },

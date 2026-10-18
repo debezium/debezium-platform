@@ -43,7 +43,8 @@ import {
   triggerPropertiesDownload,
 } from "@utils/generateServerConfig";
 import SnapshotProgressCard from "./SnapshotProgressCard";
-import { isSnapshotActive, type SnapshotProgressResponse } from "./snapshotModel";
+import type { SnapshotProgressResponse } from "src/apis/snapshots";
+import { isSnapshotActive } from "./snapshotModel";
 import { useOptionalSnapshotProgress } from "./useSnapshotProgress";
 
 const CompositionFlowMemo = memo(CompositionFlow);

@@ -3,7 +3,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "../../__test__/unit/test-utils";
 import SnapshotProgressCard from "./SnapshotProgressCard";
-import type { SnapshotProgressResponse } from "./snapshotModel";
+import type { SnapshotProgressResponse } from "../../apis/snapshots";
 
 const runningProgress: SnapshotProgressResponse = {
   type: "INITIAL",

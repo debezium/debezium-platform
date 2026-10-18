@@ -3,14 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, screen, waitFor } from "@testing-library/react";
 import { render } from "../../__test__/unit/test-utils";
 import { useSnapshotProgress } from "./useSnapshotProgress";
-import type { SnapshotProgressResponse } from "./snapshotModel";
+import type { SnapshotProgressResponse } from "../../apis/snapshots";
 
 const { getSnapshotProgress, subscribeSnapshotProgress } = vi.hoisted(() => ({
   getSnapshotProgress: vi.fn(),
   subscribeSnapshotProgress: vi.fn(),
 }));
 
-vi.mock("./snapshotClient", () => ({
+vi.mock("../../apis/snapshots", () => ({
   getSnapshotProgress,
   subscribeSnapshotProgress,
 }));

@@ -149,8 +149,6 @@
     },
     "snapshots": {
         "snapshotTitle": "Snapshot",
-        "inProgressTitle": "Snapshot in progress",
-        "pausedTitle": "Snapshot paused",
         "viewDetails": "View details",
         "paused": "Paused",
         "running": "Running",
@@ -165,7 +163,6 @@
         "progressTitle": "Snapshot progress",
         "noActive": "No active snapshot",
         "history": "History",
-        "statusLine": "Status: {{status}}",
         "startedLine": "Started: {{time}}",
         "elapsedLine": "Elapsed: {{duration}}",
         "tablesLine": "Tables: {{completed}} of {{total}} completed",

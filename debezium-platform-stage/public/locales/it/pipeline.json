@@ -149,8 +149,6 @@
   },
   "snapshots": {
     "snapshotTitle": "Snapshot",
-    "inProgressTitle": "Snapshot in corso",
-    "pausedTitle": "Snapshot in pausa",
     "viewDetails": "Visualizza dettagli",
     "paused": "In pausa",
     "running": "In esecuzione",
@@ -165,7 +163,6 @@
     "progressTitle": "Avanzamento snapshot",
     "noActive": "Nessuno snapshot attivo",
     "history": "Cronologia",
-    "statusLine": "Stato: {{status}}",
     "startedLine": "Avviato: {{time}}",
     "elapsedLine": "Trascorso: {{duration}}",
     "tablesLine": "Tabelle: {{completed}} di {{total}} completate",

@@ -1,85 +1,11 @@
-export type SnapshotType = "INITIAL" | "INCREMENTAL" | "BLOCKING";
-
-export type SnapshotState =
-  | "IDLE"
-  | "RUNNING"
-  | "PAUSED"
-  | "COMPLETED"
-  | "ABORTED"
-  | "SKIPPED"
-  | "UNKNOWN";
-
-export type TableState =
-  | "PENDING"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "SKIPPED"
-  | "FAILED";
-
-export type SnapshotOutcome = "COMPLETED" | "ABORTED" | "SKIPPED" | "UNKNOWN";
-
-export type SnapshotGlobalProgress = {
-  totalTables: number;
-  completedTables: number;
-  percentage: number | null;
-};
-
-export type SnapshotTableChunkProgress = {
-  chunkIndex?: number;
-  totalChunks?: number;
-  percentage: number | null;
-};
-
-export type SnapshotTable = {
-  name: string;
-  status: TableState;
-  progress: SnapshotTableChunkProgress | null;
-  rowsScanned: number | null;
-  skipReason: string | null;
-};
-
-/** Full snapshot aggregate from the progress REST endpoint and each SSE event. */
-export type SnapshotProgressResponse = {
-  type: SnapshotType | null;
-  status: SnapshotState;
-  globalProgress: SnapshotGlobalProgress | null;
-  tables: SnapshotTable[];
-  startedAt?: string | null;
-  lastUpdatedAt?: string | null;
-  elapsedSeconds?: number | null;
-  totalRowsScanned?: number | null;
-};
-
-export type SnapshotHistoryTable = {
-  tableName: string;
-  outcome: string;
-  rowsScanned: number | null;
-  skipReason: string | null;
-  durationSeconds: number | null;
-};
-
-export type SnapshotHistoryResponse = {
-  id: number;
-  pipelineId: number;
-  pipelineName?: string;
-  type: SnapshotType;
-  outcome: SnapshotOutcome;
-  totalTables: number;
-  completedTables: number;
-  totalRowsScanned: number | null;
-  startedAt: string;
-  completedAt: string;
-  durationSeconds: number;
-  tables?: SnapshotHistoryTable[];
-};
-
-export type PagedSnapshotHistoryResponse = {
-  items: SnapshotHistoryResponse[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-};
+import type {
+  SnapshotGlobalProgress,
+  SnapshotProgressResponse,
+  SnapshotState,
+  SnapshotTable,
+  SnapshotTableChunkProgress,
+  TableState,
+} from "../../apis/snapshots";
 
 const TABLE_STATUS_ORDER: Record<TableState, number> = {
   COMPLETED: 0,
@@ -88,15 +14,6 @@ const TABLE_STATUS_ORDER: Record<TableState, number> = {
   IN_PROGRESS: 3,
   PENDING: 4,
 };
-
-export const snapshotProgressPath = (pipelineId: string): string =>
-  `/api/pipelines/${pipelineId}/snapshots/progress`;
-
-export const snapshotProgressStreamPath = (pipelineId: string): string =>
-  `${snapshotProgressPath(pipelineId)}/stream`;
-
-export const snapshotHistoryPath = (pipelineId: string): string =>
-  `/api/pipelines/${pipelineId}/snapshots/history`;
 
 export const isSnapshotActive = (
   status: SnapshotState | null | undefined

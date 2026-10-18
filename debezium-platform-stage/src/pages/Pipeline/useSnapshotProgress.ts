@@ -1,11 +1,11 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { getSnapshotProgress, subscribeSnapshotProgress } from "./snapshotClient";
 import {
-  isSnapshotActive,
-  snapshotProgressEqual,
+  getSnapshotProgress,
+  subscribeSnapshotProgress,
   type SnapshotProgressResponse,
   type SnapshotState,
-} from "./snapshotModel";
+} from "../../apis/snapshots";
+import { isSnapshotActive, snapshotProgressEqual } from "./snapshotModel";
 
 export type SnapshotProgressQuery = {
   progress: SnapshotProgressResponse | null;

@@ -12,11 +12,8 @@ import {
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
 import SnapshotProgressBar from "./SnapshotProgressBar";
-import {
-  formatDuration,
-  type SnapshotProgressResponse,
-  type SnapshotType,
-} from "./snapshotModel";
+import type { SnapshotProgressResponse, SnapshotType } from "../../apis/snapshots";
+import { formatDuration } from "./snapshotModel";
 import { useSnapshotElapsed } from "./useSnapshotProgress";
 import "./snapshotProgress.css";
 import { RhUiPauseCircleIcon, RhUiRunningIcon } from "@patternfly/react-icons";

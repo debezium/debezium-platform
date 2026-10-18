@@ -22,6 +22,7 @@ import { editPut, fetchResult } from "../../apis/apis";
 import { Pipeline, PipelineStatus, Transform } from "../../apis/types";
 import { API_URL } from "../../utils/constants";
 import { buildPipelineRestartPayload } from "@utils/pipelineUtils";
+import { POLLING } from "@utils/pollingConfig";
 import { useVisibilityPolling } from "../../hooks/useVisibilityPolling";
 
 import "./PipelineDetails.css";
@@ -145,11 +146,10 @@ const PipelineDetails: React.FunctionComponent = () => {
     setPipeline(response.data as Pipeline);
   }, [pipelineId]);
 
-  // Poll the pipeline every 5s so the header status can move DEPLOYING → RUNNING.
   // Skip until the first load succeeds, and pause on Edit so in-progress form
   // state is not competing with a full refetch. Pauses when the browser tab is hidden.
   useVisibilityPolling(
-    5_000,
+    POLLING.pipelineStatus,
     () => { void refreshPipeline(); },
     !!pipeline && activeTabKey !== "edit"
   );
@@ -209,7 +209,6 @@ const PipelineDetails: React.FunctionComponent = () => {
     void refreshPipeline();
   };
 
-  // Update local active tab first so the accent can animate, then sync the URL 
   const handleTabClick = (_event: any, tabIndex: string | number) => {
     const selectedTab = tabIndex as string;
     if (selectedTab === activeTabKey) {
@@ -221,8 +220,6 @@ const PipelineDetails: React.FunctionComponent = () => {
     });
   };
 
-  // Stable title nodes prevent Tab's internal useEffect from calling
-  // setAccentStyles(true) on every render, which zeroes the accent transition.
   const overviewTabTitle = React.useMemo(
     () => <TabTitleText>{t("pipeline:tabs.overview")}</TabTitleText>,
     [t]
@@ -493,14 +490,10 @@ const SnapshotsTabTitle: React.FC = () => {
         {isSnapshotActive(snapshotStatus) && (
           <Tooltip content={snapshotStatus === "PAUSED" ? t("pipeline:snapshots.paused") : t("pipeline:snapshots.running")}>
             <Label
-            // isCompact
             className="snapshot-tab-title-label"
             color={snapshotStatus === "PAUSED" ? LabelColor.orange : LabelColor.blue}
             icon={ snapshotStatus === "PAUSED" ? <RhUiPauseCircleIcon /> : <RhUiRunningIcon />}
           >
-            {/* {snapshotStatus !== "PAUSED"
-              ? t("pipeline:snapshots.paused")
-              : t("pipeline:snapshots.running")} */}
           </Label>
           </Tooltip>
           

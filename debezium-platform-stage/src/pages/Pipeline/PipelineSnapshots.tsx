@@ -65,8 +65,16 @@ import {
 import {
   getSnapshotHistory,
   getSnapshotHistoryDetail,
+  type PagedSnapshotHistoryResponse,
   type SnapshotHistoryQuery,
-} from "./snapshotClient";
+  type SnapshotHistoryResponse,
+  type SnapshotHistoryTable,
+  type SnapshotOutcome,
+  type SnapshotProgressResponse,
+  type SnapshotTable,
+  type SnapshotType,
+  type TableState,
+} from "../../apis/snapshots";
 import SnapshotProgressBar from "./SnapshotProgressBar";
 import {
   formatCount,
@@ -75,14 +83,6 @@ import {
   formatSnapshotTime,
   isSnapshotActive,
   sortSnapshotTables,
-  type PagedSnapshotHistoryResponse,
-  type SnapshotHistoryResponse,
-  type SnapshotHistoryTable,
-  type SnapshotOutcome,
-  type SnapshotProgressResponse,
-  type SnapshotTable,
-  type SnapshotType,
-  type TableState,
 } from "./snapshotModel";
 import { useSnapshotElapsed, useOptionalSnapshotProgress } from "./useSnapshotProgress";
 import "./snapshotProgress.css";
@@ -131,11 +131,6 @@ type PipelineSnapshotsProps = {
   progressError?: string | null;
   onRetryProgress?: () => void;
 };
-
-// const fullTypeKey = (type: SnapshotType | null): string =>
-//   type === "INCREMENTAL"
-//     ? "pipeline:snapshots.typeIncremental"
-//     : "pipeline:snapshots.typeInitial";
 
 const typeLabelKey = (type: SnapshotType | null): string => {
       if (type === "INCREMENTAL") return "pipeline:snapshots.typeIncremental";

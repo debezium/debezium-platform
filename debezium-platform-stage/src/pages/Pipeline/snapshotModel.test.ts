@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { SnapshotTable } from "../../apis/snapshots";
 import {
   clampPercent,
   formatCount,
@@ -9,7 +10,6 @@ import {
   isSnapshotActive,
   snapshotProgressEqual,
   sortSnapshotTables,
-  type SnapshotTable,
 } from "./snapshotModel";
 
 const table = (
