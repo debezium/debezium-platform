@@ -4758,10 +4758,10 @@ joi@^18.2.1:
     "@hapi/topo" "^6.0.2"
     "@standard-schema/spec" "^1.1.0"
 
-jotai@^2.19.1:
-  version "2.19.1"
-  resolved "https://registry.npmjs.org/jotai/-/jotai-2.19.1.tgz"
-  integrity sha512-sqm9lVZiqBHZH8aSRk32DSiZDHY3yUIlulXYn9GQj7/LvoUdYXSMti7ZPJGo+6zjzKFt5a25k/I6iBCi43PJcw==
+jotai@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/jotai/-/jotai-3.0.1.tgz#41dccd9fb2cae4a4a467acf2866194002b38ad10"
+  integrity sha512-6tS7wY9otdiNp26Wqb/1ds3OuVJVoV+tJlN4hpLrYmfFf/t9bauVt+zKBNSpS5qSl5h6GieVQ+OknVraZX+udQ==
 
 js-tokens@^10.0.0:
   version "10.0.0"
