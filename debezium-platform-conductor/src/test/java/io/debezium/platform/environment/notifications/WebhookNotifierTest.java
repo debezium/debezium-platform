@@ -18,8 +18,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.debezium.platform.config.AlertingConfigGroup;
 import io.debezium.platform.data.model.AlertStateValue;
 import io.debezium.platform.data.model.ChannelType;
@@ -30,6 +28,7 @@ import io.debezium.platform.data.model.Severity;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import tools.jackson.databind.ObjectMapper;
 
 class WebhookNotifierTest {
 

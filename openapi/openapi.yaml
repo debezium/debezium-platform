@@ -615,7 +615,6 @@ components:
       required:
       - id
       - type
-      - data
       properties:
         id:
           type: string
@@ -625,7 +624,6 @@ components:
           minLength: 1
         data:
           type: string
-          minLength: 1
         additionalData:
           type: object
           additionalProperties: {}
@@ -2207,13 +2205,8 @@ paths:
         "204": {}
 info:
   title: Debezium Platform API
-  version: 3.7.0.Final
+  version: 3.8.0-SNAPSHOT
   description: REST API for the Debezium Platform
   contact:
     name: Debezium
     url: https://github.com/debezium/debezium-platform
-servers:
-- url: http://localhost:8080
-  description: Auto generated value
-- url: http://0.0.0.0:8080
-  description: Auto generated value
