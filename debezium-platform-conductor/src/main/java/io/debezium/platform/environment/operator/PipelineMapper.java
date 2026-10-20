@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -25,7 +26,9 @@ import io.debezium.operator.api.model.DebeziumServer;
 import io.debezium.operator.api.model.DebeziumServerBuilder;
 import io.debezium.operator.api.model.DebeziumServerSpecBuilder;
 import io.debezium.operator.api.model.Format;
+import io.debezium.operator.api.model.FormatBuilder;
 import io.debezium.operator.api.model.FormatType;
+import io.debezium.operator.api.model.FormatTypeBuilder;
 import io.debezium.operator.api.model.Predicate;
 import io.debezium.operator.api.model.PredicateBuilder;
 import io.debezium.operator.api.model.Quarkus;
@@ -68,8 +71,9 @@ public class PipelineMapper {
     private static final String NOTIFICATION_HTTP_TIMEOUT_CONFIG = "notification.http.timeout.ms";
     private static final String NOTIFICATION_HTTP_RETRIES_CONFIG = "notification.http.retries";
     private static final String NOTIFICATION_HTTP_ALLOW_PRIVATE_NETWORKS_CONFIG = "notification.http.allow.private.networks";
-    private static final String FORMAT_CONFIG_PREFIX = "debezium.format.";
-    private static final List<String> FORMAT_PARTS = List.of("key", "value", "header");
+    private static final String FORMAT_KEY_CONFIG = "debezium.format.key";
+    private static final String FORMAT_VALUE_CONFIG = "debezium.format.value";
+    private static final String FORMAT_HEADER_CONFIG = "debezium.format.header";
     private static final String DEFAULT_SIGNAL_CHANNELS = "source,in-process";
     private static final String CALLBACK_URL_FORMAT = "http://%s:%d/api/internal/pipelines/%d/notifications";
     private static final String PREDICATE_PREFIX = "p";
@@ -268,10 +272,11 @@ public class PipelineMapper {
     }
 
     /**
-     * Extracts {@code debezium.format.(key|value|header)} and
-     * {@code debezium.format.(key|value|header).*} entries from the source's additional
-     * properties into a {@link Format}, removing them from {@code additionalProperties} so
-     * they are not also emitted under {@code debezium.source.*} (see debezium/dbz#1963).
+     * Extracts {@code debezium.format.(key|value|header)} and, when that parent property is
+     * present, its {@code debezium.format.(key|value|header).*} entries from the source's
+     * additional properties into a {@link Format}, removing them from
+     * {@code additionalProperties} so they are not also emitted under
+     * {@code debezium.source.*} (see debezium/dbz#1963).
      *
      * <p>This is an interim solution: it lets users configure the message format (e.g. Avro
      * with a schema registry, or disabling the JSON schema envelope) per-pipeline today,
@@ -279,34 +284,38 @@ public class PipelineMapper {
      * reusable resource of its own.
      */
     private static Format extractFormat(Map<String, Object> additionalProperties) {
-        var format = new Format();
-        Map<String, FormatType> formatTypesByPart = Map.of(
-                "key", format.getKey(),
-                "value", format.getValue(),
-                "header", format.getHeader());
+        var formatBuilder = new FormatBuilder();
 
-        for (String part : FORMAT_PARTS) {
-            FormatType formatType = formatTypesByPart.get(part);
-            String typeKey = FORMAT_CONFIG_PREFIX + part;
-            String nestedPrefix = typeKey + ".";
+        extractFormatType(additionalProperties, FORMAT_KEY_CONFIG).ifPresent(formatBuilder::withKey);
+        extractFormatType(additionalProperties, FORMAT_VALUE_CONFIG).ifPresent(formatBuilder::withValue);
+        extractFormatType(additionalProperties, FORMAT_HEADER_CONFIG).ifPresent(formatBuilder::withHeader);
 
-            Object type = additionalProperties.remove(typeKey);
-            if (type != null) {
-                formatType.setType(type.toString());
-            }
+        return formatBuilder.build();
+    }
 
-            Iterator<Map.Entry<String, Object>> iterator = additionalProperties.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<String, Object> entry = iterator.next();
-                if (entry.getKey().startsWith(nestedPrefix)) {
-                    String nestedKey = entry.getKey().substring(nestedPrefix.length());
-                    formatType.getConfig().setProps(nestedKey, entry.getValue());
-                    iterator.remove();
-                }
+    private static Optional<FormatType> extractFormatType(Map<String, Object> additionalProperties, String parentConfig) {
+        Object type = additionalProperties.remove(parentConfig);
+        if (type == null) {
+            return Optional.empty();
+        }
+
+        var formatConfig = new ConfigProperties();
+        String nestedPrefix = parentConfig + ".";
+
+        Iterator<Map.Entry<String, Object>> iterator = additionalProperties.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Object> entry = iterator.next();
+            if (entry.getKey().startsWith(nestedPrefix)) {
+                String nestedKey = entry.getKey().substring(nestedPrefix.length());
+                formatConfig.setProps(nestedKey, entry.getValue());
+                iterator.remove();
             }
         }
 
-        return format;
+        return Optional.of(new FormatTypeBuilder()
+                .withType(type.toString())
+                .withConfig(formatConfig)
+                .build());
     }
 
     /**

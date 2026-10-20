@@ -295,6 +295,28 @@ public class PipelineMapperTest {
     }
 
     @Test
+    @FixFor("debezium/dbz#1963")
+    public void testMapper_ShouldNotExtractFormatOptionsWithoutParentConfiguration() {
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL,
+                Map.of(
+                        DATABASE, "customers",
+                        USERNAME, "sa"),
+                Map.of(
+                        "debezium.format.value.schemas.enable", "false",
+                        "snapshot.mode", "when_needed"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        var format = result.getSpec().getFormat();
+        assertThat(format.getValue().getType()).isEqualTo("json");
+        assertThat(format.getValue().getConfig().getProps()).isEmpty();
+
+        assertThat(result.getSpec().getSource().getConfig().getProps())
+                .containsEntry("debezium.format.value.schemas.enable", "false")
+                .containsEntry("snapshot.mode", "when_needed");
+    }
+
+    @Test
     @FixFor("debezium/dbz#2112")
     public void testMapper_ShouldHandleTransformWithEmptyPredicate() {
         var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
