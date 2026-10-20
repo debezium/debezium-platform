@@ -33,7 +33,7 @@
     "@patternfly/react-log-viewer": "^6.5.0",
     "@patternfly/react-styles": "^6.6.0",
     "@patternfly/react-table": "^6.6.0",
-    "@patternfly/react-tokens": "^6.6.1",
+    "@patternfly/react-tokens": "^6.7.0",
     "@patternfly/react-topology": "^6.6.0",
     "@tanstack/react-query": "5.104.1",
     "@tanstack/react-virtual": "^3.13.23",
