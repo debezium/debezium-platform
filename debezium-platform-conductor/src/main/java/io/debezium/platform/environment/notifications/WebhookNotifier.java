@@ -20,14 +20,14 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.MediaType;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.debezium.platform.config.AlertingConfigGroup;
 import io.debezium.platform.data.model.ChannelType;
 import io.debezium.platform.data.model.NotificationChannelEntity;
 import io.debezium.util.DelayStrategy;
 import io.debezium.util.RetryingRunnable;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @ApplicationScoped
 public class WebhookNotifier implements Notifier {
@@ -78,7 +78,7 @@ public class WebhookNotifier implements Notifier {
         try {
             payload = buildPayload(notification);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return new NotificationResult(false, "Failed to serialize payload: " + e.getMessage());
         }
 
@@ -152,7 +152,7 @@ public class WebhookNotifier implements Notifier {
         return null;
     }
 
-    private String buildPayload(AlertNotification notification) throws JsonProcessingException {
+    private String buildPayload(AlertNotification notification) {
         boolean resolved = notification.resolvedAt() != null;
         String status = resolved ? STATUS_RESOLVED : STATUS_FIRING;
 

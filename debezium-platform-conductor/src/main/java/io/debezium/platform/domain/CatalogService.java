@@ -16,12 +16,13 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import io.debezium.platform.error.NotFoundException;
 import io.debezium.util.Strings;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 @ApplicationScoped
 public class CatalogService {
@@ -58,7 +59,7 @@ public class CatalogService {
 
             return catalog.toString();
         }
-        catch (IOException e) {
+        catch (IOException | JacksonException e) {
             throw new RuntimeException(String.format("Error while reading catalog file %s", manifestFilePath), e);
         }
     }
