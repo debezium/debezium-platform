@@ -140,6 +140,17 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     setDarkMode(isDark);
   }, [selectedTheme, setDarkMode]);
 
+  useEffect(() => {
+    if (selectedTheme !== "system" || typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e: MediaQueryListEvent) => {
+      setDarkMode(e.matches);
+      document.documentElement.classList.toggle("pf-v6-theme-dark", e.matches);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [selectedTheme, setDarkMode]);
+
   return (
     <>
       <Masthead>
