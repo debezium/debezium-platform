@@ -134,6 +134,28 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         options: []
     });
     const prevCollectionsRef = useRef<TableData | undefined>(undefined);
+    const descendantChecked = useMemo(() => {
+        const checkedIds = new Set(checkedItems.map((item) => item.id));
+        const allChecked = new Map<TreeViewDataItem["id"], boolean>();
+        const someChecked = new Map<TreeViewDataItem["id"], boolean>();
+        const visit = (item: TreeViewDataItem) => {
+            if (!item.children) {
+                const checked = checkedIds.has(item.id);
+                allChecked.set(item.id, checked);
+                someChecked.set(item.id, checked);
+                return;
+            }
+            for (const child of item.children) {
+                visit(child);
+            }
+            allChecked.set(item.id, item.children.every((child) => allChecked.get(child.id)));
+            someChecked.set(item.id, item.children.some((child) => someChecked.get(child.id)));
+        };
+        for (const item of options) {
+            visit(item);
+        }
+        return { allChecked, someChecked };
+    }, [options, checkedItems]);
 
     const flattenTreeItems = (tree: TreeViewDataItem[]): TreeViewDataItem[] => {
         let result: TreeViewDataItem[] = [];
@@ -270,13 +292,13 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         const visibleIds = isFiltered
             ? new Set(flattenTree(filteredItems).map((item) => item.id))
             : undefined;
-        const itemsToToggle = visibleIds
+        const itemsToToggle = checked && visibleIds
             ? flatCheckedItems.filter((item) => visibleIds.has(item.id))
             : flatCheckedItems;
 
         setCheckedItems((prevCheckedItems) =>
             checked
-                ? prevCheckedItems.concat(itemsToToggle.filter((item) => !checkedItems.some((i) => i.id === item.id)))
+                ? prevCheckedItems.concat(itemsToToggle.filter((item) => !prevCheckedItems.some((i) => i.id === item.id)))
                 : prevCheckedItems.filter((item) => !itemsToToggle.some((i) => i.id === item.id))
         );
     };
@@ -293,32 +315,6 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         }
     };
 
-    const isChecked = (dataItem: TreeViewDataItem): boolean => checkedItems.some((item) => item.id === dataItem.id);
-    const findItemById = (items: TreeViewDataItem[], id: TreeViewDataItem["id"]): TreeViewDataItem | undefined => {
-        for (const item of items) {
-            if (item.id === id) return item;
-            if (item.children) {
-                const found = findItemById(item.children, id);
-                if (found) return found;
-            }
-        }
-        return undefined;
-    };
-    const fullTreeItem = (dataItem: TreeViewDataItem): TreeViewDataItem =>
-        findItemById(options, dataItem.id) ?? dataItem;
-    const areAllDescendantsChecked = (dataItem: TreeViewDataItem): boolean => {
-        const source = fullTreeItem(dataItem);
-        return source.children
-            ? source.children.every((child) => areAllDescendantsChecked(child))
-            : isChecked(source);
-    };
-    const areSomeDescendantsChecked = (dataItem: TreeViewDataItem): boolean => {
-        const source = fullTreeItem(dataItem);
-        return source.children
-            ? source.children.some((child) => areSomeDescendantsChecked(child))
-            : isChecked(source);
-    };
-
     const flattenTree = (tree: TreeViewDataItem[]) => {
         let result: TreeViewDataItem[] = [];
         tree.forEach((item) => {
@@ -331,14 +327,14 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     };
 
     const mapTree = (item: TreeViewDataItem): TreeViewDataItem => {
-        const hasCheck = areAllDescendantsChecked(item);
+        const hasCheck = descendantChecked.allChecked.get(item.id);
         if (item.checkProps) {
             item.checkProps.checked = false;
 
             if (hasCheck) {
                 item.checkProps.checked = true;
             } else {
-                const hasPartialCheck = areSomeDescendantsChecked(item);
+                const hasPartialCheck = descendantChecked.someChecked.get(item.id);
                 if (hasPartialCheck) {
                     item.checkProps.checked = null;
                 }

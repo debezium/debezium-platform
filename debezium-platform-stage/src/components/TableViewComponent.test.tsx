@@ -123,6 +123,38 @@ describe("TableViewComponent selection", () => {
     expect(checkbox("public").indeterminate).toBe(true);
   });
 
+  it("unticks a schema while a search filter is active", async () => {
+    const user = userEvent.setup();
+    let latest: SelectedDataListItem | undefined;
+    render(<Harness onChange={(next) => { latest = next; }} />);
+
+    await screen.findByRole("checkbox", { name: "Select public" });
+    await user.click(checkbox("public"));
+    await waitFor(() => {
+      expect(latest).toEqual({ schemas: ["public"], tables: [] });
+    });
+
+    await user.type(searchBox(), "order");
+    expect(checkbox("public").checked).toBe(true);
+    expect(checkbox("orders").checked).toBe(true);
+    expect(checkbox("order_items").checked).toBe(true);
+
+    await user.click(checkbox("public"));
+
+    await waitFor(() => {
+      expect(latest).toEqual({ schemas: [], tables: [] });
+    });
+    expect(checkbox("public").checked).toBe(false);
+    expect(checkbox("public").indeterminate).toBe(false);
+    expect(checkbox("orders").checked).toBe(false);
+    expect(checkbox("order_items").checked).toBe(false);
+
+    await user.clear(searchBox());
+    await user.click(screen.getByRole("button", { name: "Expand" }));
+    expect(checkbox("customers").checked).toBe(false);
+    expect(checkbox("products").checked).toBe(false);
+  });
+
   it("selects every table when an unfiltered schema is checked", async () => {
     const user = userEvent.setup();
     let latest: SelectedDataListItem | undefined;
