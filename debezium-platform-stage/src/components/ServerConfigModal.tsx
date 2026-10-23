@@ -1,7 +1,6 @@
 import { Modal, ModalVariant, ModalHeader, ModalBody, ModalFooter, Button, MultipleFileUpload, MultipleFileUploadMain, MultipleFileUploadStatus, MultipleFileUploadStatusItem, Alert, AlertActionCloseButton, DropEvent, ProgressStep, ProgressStepper, TextArea } from "@patternfly/react-core";
 import { ErrorCircleOIcon, InProgressIcon, MinusCircleIcon, PendingIcon, UploadIcon } from "@patternfly/react-icons";
 import { useMemo, useState, useEffect } from "react";
-import { FileRejection } from 'react-dropzone';
 import { faker } from '@faker-js/faker';
 import "./ServerConfigModal.css"
 import { extractTransformsAndPredicates, formatCode, splitConnectionProperties } from "@utils/formatCodeUtils";
@@ -128,7 +127,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
         ]);
     };
     // dropzone prop that communicates to the user that files they've attempted to upload are not an appropriate type
-    const handleDropRejected = (fileRejections: FileRejection[]) => {
+    const handleDropRejected = (fileRejections: readonly { file: { name: string } }[]) => {
         if (fileRejections.length === 1) {
             setModalText(t('pipeline:debeziumServerModal.nonSupportedFilesMsg',{val: fileRejections[0].file.name}));
         } else {
