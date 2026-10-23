@@ -90,6 +90,7 @@ cypress/
 │   ├── smoke.cy.ts        # Basic smoke tests
 │   ├── pipeline.cy.ts     # Pipeline list, designer, create, details, delete
 │   ├── transform.cy.ts    # Transform list, catalog create form, delete
+│   ├── tableExplorer.cy.ts # Table explorer selection under an active search filter
 ├── fixtures/              # Test data
 ├── support/               # Custom commands and configuration
 │   ├── commands.ts        # Custom Cypress commands
@@ -97,6 +98,13 @@ cypress/
 ├── tsconfig.json          # TypeScript configuration
 └── README.md             # This file
 ```
+
+## Table Explorer E2E
+
+`tableExplorer.cy.ts` stubs `GET /api/connections/{id}/collections` so it needs no live Postgres.
+The stub gives `public` two tables (`orders`, `customers`), which is what makes a hidden selected
+table reachable. It covers unticking a fully selected schema while a search filter is active, which
+must clear the hidden tables too.
 
 ## Pipeline E2E
 

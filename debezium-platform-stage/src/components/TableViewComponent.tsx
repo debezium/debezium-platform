@@ -134,6 +134,28 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         options: []
     });
     const prevCollectionsRef = useRef<TableData | undefined>(undefined);
+    const descendantChecked = useMemo(() => {
+        const checkedIds = new Set(checkedItems.map((item) => item.id));
+        const allChecked = new Map<TreeViewDataItem["id"], boolean>();
+        const someChecked = new Map<TreeViewDataItem["id"], boolean>();
+        const visit = (item: TreeViewDataItem) => {
+            if (!item.children) {
+                const checked = checkedIds.has(item.id);
+                allChecked.set(item.id, checked);
+                someChecked.set(item.id, checked);
+                return;
+            }
+            for (const child of item.children) {
+                visit(child);
+            }
+            allChecked.set(item.id, item.children.every((child) => allChecked.get(child.id)));
+            someChecked.set(item.id, item.children.some((child) => someChecked.get(child.id)));
+        };
+        for (const item of options) {
+            visit(item);
+        }
+        return { allChecked, someChecked };
+    }, [options, checkedItems]);
 
     const flattenTreeItems = (tree: TreeViewDataItem[]): TreeViewDataItem[] => {
         let result: TreeViewDataItem[] = [];
@@ -267,11 +289,17 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
             .map((opt) => Object.assign({}, opt))
             .filter((item) => filterItemsForCheck(item, treeViewItem));
         const flatCheckedItems = flattenTree(checkedItemTree);
+        const visibleIds = isFiltered
+            ? new Set(flattenTree(filteredItems).map((item) => item.id))
+            : undefined;
+        const itemsToToggle = checked && visibleIds
+            ? flatCheckedItems.filter((item) => visibleIds.has(item.id))
+            : flatCheckedItems;
 
         setCheckedItems((prevCheckedItems) =>
             checked
-                ? prevCheckedItems.concat(flatCheckedItems.filter((item) => !checkedItems.some((i) => i.id === item.id)))
-                : prevCheckedItems.filter((item) => !flatCheckedItems.some((i) => i.id === item.id))
+                ? prevCheckedItems.concat(itemsToToggle.filter((item) => !prevCheckedItems.some((i) => i.id === item.id)))
+                : prevCheckedItems.filter((item) => !itemsToToggle.some((i) => i.id === item.id))
         );
     };
 
@@ -287,12 +315,6 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         }
     };
 
-    const isChecked = (dataItem: TreeViewDataItem): boolean => checkedItems.some((item) => item.id === dataItem.id);
-    const areAllDescendantsChecked = (dataItem: TreeViewDataItem): boolean =>
-        dataItem.children ? dataItem.children.every((child) => areAllDescendantsChecked(child)) : isChecked(dataItem);
-    const areSomeDescendantsChecked = (dataItem: TreeViewDataItem): boolean =>
-        dataItem.children ? dataItem.children.some((child) => areSomeDescendantsChecked(child)) : isChecked(dataItem);
-
     const flattenTree = (tree: TreeViewDataItem[]) => {
         let result: TreeViewDataItem[] = [];
         tree.forEach((item) => {
@@ -305,14 +327,14 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     };
 
     const mapTree = (item: TreeViewDataItem): TreeViewDataItem => {
-        const hasCheck = areAllDescendantsChecked(item);
+        const hasCheck = descendantChecked.allChecked.get(item.id);
         if (item.checkProps) {
             item.checkProps.checked = false;
 
             if (hasCheck) {
                 item.checkProps.checked = true;
             } else {
-                const hasPartialCheck = areSomeDescendantsChecked(item);
+                const hasPartialCheck = descendantChecked.someChecked.get(item.id);
                 if (hasPartialCheck) {
                     item.checkProps.checked = null;
                 }
