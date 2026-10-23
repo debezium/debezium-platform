@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
     test: {
       // 👋 add the line below to add jsdom to vite
       include: ['src/**/*.test.{js,jsx,ts,tsx}'], 
-      exclude: ['node_modules', 'dist', 'build', 'src/stories/**'],
+      exclude: ['node_modules', 'dist', 'build'],
       environment: "jsdom",
       globals: true,
       setupFiles: ["./vitest.setup.ts", "./src/__test__/unit/setup.ts"],
@@ -59,8 +59,6 @@ export default defineConfig(({ mode }) => {
           'node_modules', 
           'dist', 
           'build',
-          'src/stories/**',
-          '**/*.stories.tsx',
           'src/__mocks__/**',
           'src/__test__/**',
           '**/*.json',
