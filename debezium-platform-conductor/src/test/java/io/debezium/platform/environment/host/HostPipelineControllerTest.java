@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import io.debezium.DebeziumException;
 import io.debezium.platform.data.model.DeploymentStatus;
+import io.debezium.platform.data.model.PipelineStatus;
 import io.debezium.platform.domain.DeploymentRequest;
 import io.debezium.platform.domain.HostAllocation;
 import io.debezium.platform.domain.HostDeploymentService;
@@ -74,6 +75,7 @@ class HostPipelineControllerTest {
     private HostDeploymentService deploymentService;
     private HostContainerRuntime containerRuntime;
     private Instance<HostContainerRuntime> containerRuntimeInstance;
+    private PipelineService pipelineService;
     private HostPipelineController controller;
 
     @BeforeEach
@@ -91,7 +93,7 @@ class HostPipelineControllerTest {
         when(hostConfig.shutdownTimeoutSeconds()).thenReturn(5L);
         when(hostConfig.debeziumServerImage()).thenReturn("quay.io/debezium/server:latest");
 
-        PipelineService pipelineService = mock(PipelineService.class);
+        pipelineService = mock(PipelineService.class);
         controller = new HostPipelineController(logger, pipelineMapper, deploymentService, containerRuntimeInstance, hostConfig, pipelineService);
     }
 
@@ -210,6 +212,7 @@ class HostPipelineControllerTest {
         assertThat(latch.await(ASYNC_WAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
         verify(containerRuntime).stop("host-2", "my-pipeline");
         verify(deploymentService).updateStatus(300L, DeploymentStatus.STOPPED);
+        verify(pipelineService).updateStatus(10L, PipelineStatus.STOPPED, null);
     }
 
     @Test
@@ -229,6 +232,7 @@ class HostPipelineControllerTest {
         assertThat(latch.await(ASYNC_WAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
         verify(containerRuntime).start("host-3", "my-pipeline");
         verify(deploymentService).updateStatus(400L, DeploymentStatus.DEPLOYING);
+        verify(pipelineService).updateStatus(15L, PipelineStatus.DEPLOYING, null);
     }
 
     @Test

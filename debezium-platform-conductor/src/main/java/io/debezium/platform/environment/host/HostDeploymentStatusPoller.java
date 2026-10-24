@@ -17,7 +17,9 @@ import org.jboss.logging.Logger;
 import io.debezium.DebeziumException;
 import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.data.model.DeploymentStatus;
+import io.debezium.platform.data.model.PipelineStatus;
 import io.debezium.platform.domain.HostDeploymentService;
+import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.views.HostDeployment;
 import io.debezium.platform.environment.host.agent.AgentContainerStatus;
 import io.debezium.platform.environment.host.agent.HostAgentClient;
@@ -80,6 +82,7 @@ public class HostDeploymentStatusPoller {
 
     private final Logger logger;
     private final HostDeploymentService deploymentService;
+    private final PipelineService pipelineService;
     private final AnsibleCommandRunner ansibleRunner;
     private final HostAgentClient agentClient;
     private final HostConfigGroup hostConfig;
@@ -88,6 +91,7 @@ public class HostDeploymentStatusPoller {
 
     public HostDeploymentStatusPoller(Logger logger,
                                       HostDeploymentService deploymentService,
+                                      PipelineService pipelineService,
                                       AnsibleCommandRunner ansibleRunner,
                                       HostAgentClient agentClient,
                                       HostConfigGroup hostConfig,
@@ -95,6 +99,7 @@ public class HostDeploymentStatusPoller {
                                       @ConfigProperty(name = PipelineConfigGroup.DEPLOYMENT_MODE_PROPERTY, defaultValue = "operator") String deploymentMode) {
         this.logger = logger;
         this.deploymentService = deploymentService;
+        this.pipelineService = pipelineService;
         this.ansibleRunner = ansibleRunner;
         this.agentClient = agentClient;
         this.hostConfig = hostConfig;
@@ -143,6 +148,7 @@ public class HostDeploymentStatusPoller {
 
             if (containerRunning && currentStatus == DeploymentStatus.DEPLOYING) {
                 deploymentService.updateStatus(deploymentId, DeploymentStatus.RUNNING);
+                pipelineService.updateStatus(deployment.getPipelineId(), PipelineStatus.RUNNING, null);
                 return;
             }
 
@@ -156,6 +162,8 @@ public class HostDeploymentStatusPoller {
                 logger.warnv("Container {0} on {1} is not running after deploy (grace period elapsed), marking FAILED",
                         containerName, host);
                 deploymentService.updateStatus(deploymentId, DeploymentStatus.FAILED);
+                pipelineService.updateStatus(deployment.getPipelineId(), PipelineStatus.FAILED,
+                        "Container did not start before the deployment grace period elapsed");
                 return;
             }
 
@@ -163,6 +171,8 @@ public class HostDeploymentStatusPoller {
                 logger.warnv("Container {0} on {1} stopped unexpectedly, marking FAILED",
                         containerName, host);
                 deploymentService.updateStatus(deploymentId, DeploymentStatus.FAILED);
+                pipelineService.updateStatus(deployment.getPipelineId(), PipelineStatus.FAILED,
+                        "Container stopped unexpectedly");
                 return;
             }
 
