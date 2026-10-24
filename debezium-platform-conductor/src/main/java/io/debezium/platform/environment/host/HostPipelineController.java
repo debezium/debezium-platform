@@ -213,6 +213,7 @@ public class HostPipelineController implements PipelineController {
         containerRuntime.get().stop(sshAlias, containerName);
 
         deploymentService.updateStatus(deployment.getId(), DeploymentStatus.STOPPED);
+        pipelineService.updateStatus(pipelineId, PipelineStatus.STOPPED, null);
         logger.infov("Pipeline {0} stopped on host {1}", pipelineId, sshAlias);
     }
 
@@ -227,6 +228,7 @@ public class HostPipelineController implements PipelineController {
 
         // Poller will promote DEPLOYING → RUNNING once it detects the container running
         deploymentService.updateStatus(deployment.getId(), DeploymentStatus.DEPLOYING);
+        pipelineService.updateStatus(pipelineId, PipelineStatus.DEPLOYING, null);
         logger.infov("Pipeline {0} start initiated on host {1}", pipelineId, sshAlias);
     }
 
