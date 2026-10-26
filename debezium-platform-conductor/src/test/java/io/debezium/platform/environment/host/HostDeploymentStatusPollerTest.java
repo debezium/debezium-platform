@@ -19,6 +19,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import jakarta.enterprise.event.Event;
+
 import org.jboss.logging.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,8 +30,8 @@ import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.data.model.DeploymentStatus;
 import io.debezium.platform.data.model.PipelineStatus;
 import io.debezium.platform.domain.HostDeploymentService;
-import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.views.HostDeployment;
+import io.debezium.platform.environment.DebeziumServerStatusChanged;
 import io.debezium.platform.environment.host.agent.AgentContainerStatus;
 import io.debezium.platform.environment.host.agent.HostAgentClient;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
@@ -55,7 +57,7 @@ import io.debezium.platform.environment.host.provisioning.CommandResult;
 class HostDeploymentStatusPollerTest {
 
     private HostDeploymentService deploymentService;
-    private PipelineService pipelineService;
+    private Event<DebeziumServerStatusChanged> statusChangedEvent;
     private AnsibleCommandRunner ansibleRunner;
     private HostAgentClient agentClient;
     private HostConfigGroup hostConfig;
@@ -66,7 +68,7 @@ class HostDeploymentStatusPollerTest {
     void setUp() {
         Logger logger = Logger.getLogger(HostDeploymentStatusPollerTest.class);
         deploymentService = mock(HostDeploymentService.class);
-        pipelineService = mock(PipelineService.class);
+        statusChangedEvent = mock(Event.class);
         ansibleRunner = mock(AnsibleCommandRunner.class);
         agentClient = mock(HostAgentClient.class);
 
@@ -79,7 +81,7 @@ class HostDeploymentStatusPollerTest {
         when(hostRuntimeConfig.containerRuntime()).thenReturn(PipelineConfigGroup.AGENT_RUNTIME);
 
         // Host mode — poller should be active
-        poller = new HostDeploymentStatusPoller(logger, deploymentService, pipelineService, ansibleRunner, agentClient, hostConfig, pipelineConfig, "host");
+        poller = new HostDeploymentStatusPoller(logger, deploymentService, statusChangedEvent, ansibleRunner, agentClient, hostConfig, pipelineConfig, "host");
     }
 
     @Test
@@ -94,7 +96,7 @@ class HostDeploymentStatusPollerTest {
         poller.pollDeploymentStatus();
 
         verify(deploymentService).updateStatus(1L, DeploymentStatus.RUNNING);
-        verify(pipelineService).updateStatus(1L, PipelineStatus.RUNNING, null);
+        verify(statusChangedEvent).fire(new DebeziumServerStatusChanged(1L, PipelineStatus.RUNNING, null));
     }
 
     @Test
@@ -110,7 +112,8 @@ class HostDeploymentStatusPollerTest {
         poller.pollDeploymentStatus();
 
         verify(deploymentService).updateStatus(2L, DeploymentStatus.FAILED);
-        verify(pipelineService).updateStatus(eq(2L), eq(PipelineStatus.FAILED), anyString());
+        verify(statusChangedEvent).fire(new DebeziumServerStatusChanged(2L, PipelineStatus.FAILED,
+                "Container did not start before the deployment grace period elapsed"));
     }
 
     @Test
@@ -143,7 +146,8 @@ class HostDeploymentStatusPollerTest {
 
         // Should mark FAILED immediately — no retry needed
         verify(deploymentService).updateStatus(3L, DeploymentStatus.FAILED);
-        verify(pipelineService).updateStatus(eq(3L), eq(PipelineStatus.FAILED), anyString());
+        verify(statusChangedEvent).fire(new DebeziumServerStatusChanged(3L, PipelineStatus.FAILED,
+                "Container stopped unexpectedly"));
     }
 
     @Test
@@ -160,7 +164,8 @@ class HostDeploymentStatusPollerTest {
 
         // Should mark FAILED immediately — 404 is definitive, not retried
         verify(deploymentService).updateStatus(11L, DeploymentStatus.FAILED);
-        verify(pipelineService).updateStatus(eq(11L), eq(PipelineStatus.FAILED), anyString());
+        verify(statusChangedEvent).fire(new DebeziumServerStatusChanged(11L, PipelineStatus.FAILED,
+                "Container stopped unexpectedly"));
     }
 
     @Test
@@ -232,7 +237,7 @@ class HostDeploymentStatusPollerTest {
     void skipsPollingInOperatorMode() {
         Logger logger = Logger.getLogger(HostDeploymentStatusPollerTest.class);
         HostDeploymentStatusPoller operatorPoller = new HostDeploymentStatusPoller(
-                logger, deploymentService, pipelineService, ansibleRunner, agentClient, mock(HostConfigGroup.class), pipelineConfig, "operator");
+                logger, deploymentService, statusChangedEvent, ansibleRunner, agentClient, mock(HostConfigGroup.class), pipelineConfig, "operator");
 
         operatorPoller.pollDeploymentStatus();
 
@@ -263,7 +268,7 @@ class HostDeploymentStatusPollerTest {
         poller.pollDeploymentStatus();
 
         verify(deploymentService).updateStatus(14L, DeploymentStatus.RUNNING);
-        verify(pipelineService).updateStatus(14L, PipelineStatus.RUNNING, null);
+        verify(statusChangedEvent).fire(new DebeziumServerStatusChanged(14L, PipelineStatus.RUNNING, null));
         verify(agentClient, never()).status(anyString(), anyInt(), anyString(), anyString());
     }
 
