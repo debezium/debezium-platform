@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Instance;
 
@@ -19,10 +20,10 @@ import io.debezium.platform.data.model.PipelineStatus;
 import io.debezium.platform.domain.DeploymentRequest;
 import io.debezium.platform.domain.HostAllocation;
 import io.debezium.platform.domain.HostDeploymentService;
-import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.Signal;
 import io.debezium.platform.domain.views.HostDeployment;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
+import io.debezium.platform.environment.DebeziumServerStatusChanged;
 import io.debezium.platform.environment.PipelineController;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 import io.debezium.platform.environment.logs.LogReader;
@@ -59,7 +60,7 @@ public class HostPipelineController implements PipelineController {
     private final HostDeploymentService deploymentService;
     private final Instance<HostContainerRuntime> containerRuntime;
     private final HostConfigGroup hostConfig;
-    private final PipelineService pipelineService;
+    private final Event<DebeziumServerStatusChanged> statusChangedEvent;
     private final ExecutorService deployExecutor;
 
     public HostPipelineController(Logger logger,
@@ -67,13 +68,13 @@ public class HostPipelineController implements PipelineController {
                                   HostDeploymentService deploymentService,
                                   Instance<HostContainerRuntime> containerRuntime,
                                   HostConfigGroup hostConfig,
-                                  PipelineService pipelineService) {
+                                  Event<DebeziumServerStatusChanged> statusChangedEvent) {
         this.logger = logger;
         this.pipelineMapper = pipelineMapper;
         this.deploymentService = deploymentService;
         this.containerRuntime = containerRuntime;
         this.hostConfig = hostConfig;
-        this.pipelineService = pipelineService;
+        this.statusChangedEvent = statusChangedEvent;
 
         this.deployExecutor = Threads.newFixedThreadPool(
                 HostPipelineController.class, "conductor", "pipeline-deployer",
@@ -213,7 +214,8 @@ public class HostPipelineController implements PipelineController {
         containerRuntime.get().stop(sshAlias, containerName);
 
         deploymentService.updateStatus(deployment.getId(), DeploymentStatus.STOPPED);
-        pipelineService.updateStatus(pipelineId, PipelineStatus.STOPPED, null);
+        statusChangedEvent.fire(new DebeziumServerStatusChanged(
+                pipelineId, PipelineStatus.STOPPED, null));
         logger.infov("Pipeline {0} stopped on host {1}", pipelineId, sshAlias);
     }
 
@@ -228,14 +230,16 @@ public class HostPipelineController implements PipelineController {
 
         // Poller will promote DEPLOYING → RUNNING once it detects the container running
         deploymentService.updateStatus(deployment.getId(), DeploymentStatus.DEPLOYING);
-        pipelineService.updateStatus(pipelineId, PipelineStatus.DEPLOYING, null);
+        statusChangedEvent.fire(new DebeziumServerStatusChanged(
+                pipelineId, PipelineStatus.DEPLOYING, null));
         logger.infov("Pipeline {0} start initiated on host {1}", pipelineId, sshAlias);
     }
 
     private void failDeployment(Long pipelineId, String reason) {
         deploymentService.findByPipelineId(pipelineId)
                 .ifPresent(deployment -> deploymentService.updateStatus(deployment.getId(), DeploymentStatus.FAILED));
-        pipelineService.updateStatus(pipelineId, PipelineStatus.FAILED, reason);
+        statusChangedEvent.fire(new DebeziumServerStatusChanged(
+                pipelineId, PipelineStatus.FAILED, reason));
         logger.errorv("Deployment failed for pipeline {0}: {1}", pipelineId, reason);
     }
 

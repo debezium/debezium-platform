@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.enterprise.event.Event;
 import jakarta.enterprise.inject.Instance;
 
 import org.jboss.logging.Logger;
@@ -39,13 +40,13 @@ import io.debezium.platform.data.model.PipelineStatus;
 import io.debezium.platform.domain.DeploymentRequest;
 import io.debezium.platform.domain.HostAllocation;
 import io.debezium.platform.domain.HostDeploymentService;
-import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.Signal;
 import io.debezium.platform.domain.views.HostDeployment;
 import io.debezium.platform.domain.views.flat.DestinationFlat;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.domain.views.flat.SourceFlat;
 import io.debezium.platform.domain.views.refs.HostStatusReference;
+import io.debezium.platform.environment.DebeziumServerStatusChanged;
 import io.debezium.platform.environment.host.config.HostConfigGroup;
 
 /**
@@ -75,7 +76,7 @@ class HostPipelineControllerTest {
     private HostDeploymentService deploymentService;
     private HostContainerRuntime containerRuntime;
     private Instance<HostContainerRuntime> containerRuntimeInstance;
-    private PipelineService pipelineService;
+    private Event<DebeziumServerStatusChanged> statusChangedEvent;
     private HostPipelineController controller;
 
     @BeforeEach
@@ -93,8 +94,9 @@ class HostPipelineControllerTest {
         when(hostConfig.shutdownTimeoutSeconds()).thenReturn(5L);
         when(hostConfig.debeziumServerImage()).thenReturn("quay.io/debezium/server:latest");
 
-        pipelineService = mock(PipelineService.class);
-        controller = new HostPipelineController(logger, pipelineMapper, deploymentService, containerRuntimeInstance, hostConfig, pipelineService);
+        statusChangedEvent = mock(Event.class);
+        controller = new HostPipelineController(logger, pipelineMapper, deploymentService, containerRuntimeInstance,
+                hostConfig, statusChangedEvent);
     }
 
     @AfterEach
@@ -158,6 +160,8 @@ class HostPipelineControllerTest {
 
         assertThat(latch.await(ASYNC_WAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
         verify(deploymentService).updateStatus(101L, DeploymentStatus.FAILED);
+        verify(statusChangedEvent).fire(new DebeziumServerStatusChanged(2L, PipelineStatus.FAILED,
+                "Unexpected error: Failed to create config directory"));
     }
 
     @Test
@@ -212,7 +216,7 @@ class HostPipelineControllerTest {
         assertThat(latch.await(ASYNC_WAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
         verify(containerRuntime).stop("host-2", "my-pipeline");
         verify(deploymentService).updateStatus(300L, DeploymentStatus.STOPPED);
-        verify(pipelineService).updateStatus(10L, PipelineStatus.STOPPED, null);
+        verify(statusChangedEvent).fire(new DebeziumServerStatusChanged(10L, PipelineStatus.STOPPED, null));
     }
 
     @Test
@@ -232,7 +236,7 @@ class HostPipelineControllerTest {
         assertThat(latch.await(ASYNC_WAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
         verify(containerRuntime).start("host-3", "my-pipeline");
         verify(deploymentService).updateStatus(400L, DeploymentStatus.DEPLOYING);
-        verify(pipelineService).updateStatus(15L, PipelineStatus.DEPLOYING, null);
+        verify(statusChangedEvent).fire(new DebeziumServerStatusChanged(15L, PipelineStatus.DEPLOYING, null));
     }
 
     @Test
@@ -299,6 +303,8 @@ class HostPipelineControllerTest {
 
         assertThat(latch.await(ASYNC_WAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
         verify(deploymentService).updateStatus(700L, DeploymentStatus.FAILED);
+        verify(statusChangedEvent).fire(new DebeziumServerStatusChanged(70L, PipelineStatus.FAILED,
+                "Unexpected error: Unexpected NullPointer"));
     }
 
     @Test
