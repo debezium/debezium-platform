@@ -151,10 +151,7 @@ class HostPipelineControllerTest {
         HostDeployment deploymentView = mockDeployment(101L, "test-pipeline-2", "test-host",
                 DeploymentStatus.DEPLOYING, "hash456", Instant.now());
         when(deploymentService.findByPipelineId(2L)).thenReturn(Optional.of(deploymentView));
-        doAnswer(inv -> {
-            latch.countDown();
-            return null;
-        }).when(deploymentService).updateStatus(eq(101L), eq(DeploymentStatus.FAILED));
+        countDownWhenStatusEventIsFired(latch);
 
         controller.deploy(pipeline);
 
@@ -206,10 +203,7 @@ class HostPipelineControllerTest {
         when(deploymentService.requireByPipelineId(10L)).thenReturn(deployment);
 
         CountDownLatch latch = new CountDownLatch(1);
-        doAnswer(inv -> {
-            latch.countDown();
-            return null;
-        }).when(deploymentService).updateStatus(300L, DeploymentStatus.STOPPED);
+        countDownWhenStatusEventIsFired(latch);
 
         controller.stop(10L);
 
@@ -226,10 +220,7 @@ class HostPipelineControllerTest {
         when(deploymentService.requireByPipelineId(15L)).thenReturn(deployment);
 
         CountDownLatch latch = new CountDownLatch(1);
-        doAnswer(inv -> {
-            latch.countDown();
-            return null;
-        }).when(deploymentService).updateStatus(400L, DeploymentStatus.DEPLOYING);
+        countDownWhenStatusEventIsFired(latch);
 
         controller.start(15L);
 
@@ -294,10 +285,7 @@ class HostPipelineControllerTest {
         HostDeployment deploymentView = mockDeployment(700L, "test-pipeline-70", "test-host",
                 DeploymentStatus.DEPLOYING, "hash", Instant.now());
         when(deploymentService.findByPipelineId(70L)).thenReturn(Optional.of(deploymentView));
-        doAnswer(inv -> {
-            latch.countDown();
-            return null;
-        }).when(deploymentService).updateStatus(eq(700L), eq(DeploymentStatus.FAILED));
+        countDownWhenStatusEventIsFired(latch);
 
         controller.deploy(pipeline);
 
@@ -388,6 +376,13 @@ class HostPipelineControllerTest {
     }
 
     // ── Helpers ──
+
+    private void countDownWhenStatusEventIsFired(CountDownLatch latch) {
+        doAnswer(invocation -> {
+            latch.countDown();
+            return null;
+        }).when(statusChangedEvent).fire(any());
+    }
 
     private PipelineFlat buildMinimalPipeline(Long id) {
         SourceFlat source = mock(SourceFlat.class);
