@@ -94,9 +94,11 @@
       block:
         - name: Add Docker CE repository
           ansible.builtin.get_url:
-            url: https://download.docker.com/linux/centos/docker-ce.repo
+            url: "https://download.docker.com/linux/{{ docker_repo_distro }}/docker-ce.repo"
             dest: /etc/yum.repos.d/docker-ce.repo
             mode: "0644"
+          vars:
+            docker_repo_distro: "{{ 'fedora' if ansible_facts['distribution'] == 'Fedora' else 'centos' }}"
 
         - name: Remove podman/runc conflicts
           ansible.builtin.dnf:
