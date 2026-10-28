@@ -143,6 +143,19 @@
     "rule": "Rules",
     "channel": "Channels"
   },
+  "tableExplorer": {
+    "schemaCount_one": "{{count}} schema",
+    "schemaCount_other": "{{count}} schemas",
+    "tableCount_one": "{{count}} table",
+    "tableCount_other": "{{count}} tables",
+    "results": "{{tables}} in {{schemas}}",
+    "selectedNone": "No tables selected",
+    "selectedSummary": "Selected: {{counts}} · {{names}}",
+    "selectedNamesMore_one": "{{names}} +{{count}} more",
+    "selectedNamesMore_other": "{{names}} +{{count}} more",
+    "expandAllLimit": "This catalog has too many tables to expand at once. Expand a schema or search for a table.",
+    "emptyTitle": "No matching tables"
+  },
   "breadcrumb":{
     "pipeline": "Pipeline",
     "pipelineDesigner": "Pipeline designer",
