@@ -1,11 +1,27 @@
-import { Button, TreeViewDataItem, TreeViewSearch } from "@patternfly/react-core";
-import { AngleRightIcon, DatabaseIcon, ServerGroupIcon } from "@patternfly/react-icons";
+import {
+    Bullseye,
+    Button,
+    EmptyState,
+    EmptyStateActions,
+    EmptyStateBody,
+    EmptyStateFooter,
+    EmptyStateVariant,
+    Tooltip,
+    TreeViewDataItem,
+    TreeViewSearch,
+} from "@patternfly/react-core";
+import { AngleRightIcon, DatabaseIcon, SearchIcon, ServerGroupIcon } from "@patternfly/react-icons";
 import { FC, useState, useEffect, useRef, useMemo, useCallback } from "react";
+import type { TFunction } from "i18next";
 import { TableData } from "src/apis";
 import "./TableViewComponent.css";
 import { useTranslation } from "react-i18next";
 import { SelectedDataListItem } from "../apis/types";
 import { useVirtualizer } from "@tanstack/react-virtual";
+
+export const ROW_HEIGHT = 36;
+export const EXPAND_ALL_MAX_TABLES = 500;
+const SUMMARY_NAME_LIMIT = 8;
 
 type TableViewComponentProps = {
     collections: TableData | undefined;
@@ -46,6 +62,74 @@ type FlatItem = {
     depth: number;
     hasChildren: boolean;
 };
+
+function tableCount(items: TreeViewDataItem[]): number {
+    return items.reduce((sum, item) => sum + (item.children?.length ?? 0), 0);
+}
+
+/** Index of the schema row to pin, or null when the active schema header is already at the top. */
+export function pinnedSchemaIndex(
+    visibleItems: readonly { depth: number }[],
+    scrollOffset: number,
+    rowHeight: number,
+): number | null {
+    if (scrollOffset <= 0 || rowHeight <= 0 || visibleItems.length === 0) {
+        return null;
+    }
+
+    let pinned: number | null = null;
+    for (let index = 0; index < visibleItems.length; index++) {
+        if (visibleItems[index].depth !== 0) {
+            continue;
+        }
+        if (index * rowHeight < scrollOffset) {
+            pinned = index;
+        } else {
+            break;
+        }
+    }
+    if (pinned == null) {
+        return null;
+    }
+
+    let nextSchema = visibleItems.length;
+    for (let index = pinned + 1; index < visibleItems.length; index++) {
+        if (visibleItems[index].depth === 0) {
+            nextSchema = index;
+            break;
+        }
+    }
+    if (scrollOffset >= nextSchema * rowHeight) {
+        return null;
+    }
+    return pinned;
+}
+
+function formatSelectionSummary(
+    selection: SelectionResult,
+    t: TFunction,
+): { text: string; title: string } {
+    const names = [...selection.schemas, ...selection.tables];
+    if (names.length === 0) {
+        const text = t("tableExplorer.selectedNone");
+        return { text, title: text };
+    }
+
+    const shown = names.slice(0, SUMMARY_NAME_LIMIT);
+    const extra = names.length - shown.length;
+    const nameText = extra > 0
+        ? t("tableExplorer.selectedNamesMore", { names: shown.join(", "), count: extra })
+        : shown.join(", ");
+    const counts = [
+        selection.schemas.length > 0 ? t("tableExplorer.schemaCount", { count: selection.schemas.length }) : null,
+        selection.tables.length > 0 ? t("tableExplorer.tableCount", { count: selection.tables.length }) : null,
+    ].filter(Boolean).join(", ");
+
+    return {
+        text: t("tableExplorer.selectedSummary", { counts, names: nameText }),
+        title: names.join(", "),
+    };
+}
 
 export function extractSelections(selectedItems: SelectedItem[]): SelectionResult {
     const schemaSet = new Set<string>();
@@ -118,6 +202,50 @@ const TreeCheckbox: FC<{
     );
 };
 
+const TreeRow: FC<{
+    item: TreeViewDataItem;
+    depth: number;
+    hasChildren: boolean;
+    expanded: boolean;
+    readOnly?: boolean;
+    onToggle: (id: string) => void;
+    onCheck: (event: React.ChangeEvent, item: TreeViewDataItem) => void;
+}> = ({ item, depth, hasChildren, expanded, readOnly, onToggle, onCheck }) => (
+    <div
+        className="virtual-tree__row-content"
+        style={{ paddingLeft: `${depth * 24 + 8}px` }}
+    >
+        {hasChildren ? (
+            <button
+                type="button"
+                className={`virtual-tree__toggle ${expanded ? 'virtual-tree__toggle--expanded' : ''}`}
+                onClick={() => onToggle(item.id as string)}
+                aria-label={expanded ? 'Collapse' : 'Expand'}
+                disabled={readOnly}
+            >
+                <AngleRightIcon />
+            </button>
+        ) : (
+            <span className="virtual-tree__toggle-spacer" />
+        )}
+        <TreeCheckbox
+            checked={item.checkProps?.checked}
+            onChange={(event) => onCheck(event, item)}
+            ariaLabel={`Select ${item.name}`}
+            disabled={readOnly}
+        />
+        <span className="virtual-tree__icon">
+            {depth === 0 ? <DatabaseIcon /> : <ServerGroupIcon />}
+        </span>
+        <span className="virtual-tree__name">{item.name}</span>
+        {hasChildren && item.children && (
+            <span className="virtual-tree__count">
+                ({item.children.length})
+            </span>
+        )}
+    </div>
+);
+
 const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelectedDataListItems, selectedDataListItems, readOnly }) => {
     const { t } = useTranslation();
     const [allExpanded, setAllExpanded] = useState(false);
@@ -126,6 +254,8 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     const [options, setOptions] = useState<TreeViewDataItem[]>([]);
     const [checkedItems, setCheckedItems] = useState<TreeViewDataItem[]>([]);
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+    const [searchValue, setSearchValue] = useState("");
+    const [collapsedDuringSearch, setCollapsedDuringSearch] = useState<Set<string>>(new Set());
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const isInitializedRef = useRef(false);
@@ -303,8 +433,9 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         );
     };
 
-    const onSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const input = event.target.value;
+    const updateSearch = (input: string) => {
+        setSearchValue(input);
+        setCollapsedDuringSearch(new Set());
         if (input === '') {
             setFilteredItems(options);
             setIsFiltered(false);
@@ -313,6 +444,11 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
             setFilteredItems(filtered);
             setIsFiltered(true);
         }
+        scrollContainerRef.current?.scrollTo?.({ top: 0 });
+    };
+
+    const onSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+        updateSearch(event.target.value);
     };
 
     const flattenTree = (tree: TreeViewDataItem[]) => {
@@ -381,16 +517,30 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     };
 
     const mappedFilteredItems = filteredItems.map((item) => mapTree(item));
+    const selectionSummary = formatSelectionSummary(
+        extractSelections(checkedItems as SelectedItem[]),
+        t,
+    );
 
-    // Expand/collapse handlers
+    // Expand/collapse handlers. Search uses its own collapsed set so clearing
+    // the query restores the unfiltered tree instead of expanding the catalog.
     const isNodeExpanded = useCallback(
-        (id: string) => allExpanded || isFiltered || expandedIds.has(id),
-        [allExpanded, isFiltered, expandedIds]
+        (id: string) => isFiltered ? !collapsedDuringSearch.has(id) : allExpanded || expandedIds.has(id),
+        [allExpanded, isFiltered, expandedIds, collapsedDuringSearch]
     );
 
     const onToggleNode = useCallback((id: string) => {
         if (readOnly) return;
-        if (allExpanded || isFiltered) {
+        if (isFiltered) {
+            setCollapsedDuringSearch((prev) => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+            });
+            return;
+        }
+        if (allExpanded) {
             const allIds = new Set(options.map(item => item.id as string));
             allIds.delete(id);
             setExpandedIds(allIds);
@@ -405,12 +555,29 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         }
     }, [allExpanded, isFiltered, options, readOnly]);
 
+    const filteredSchemaIds = filteredItems.map((item) => item.id as string);
+    const showCollapseAll = isFiltered
+        ? filteredSchemaIds.length > 0 && filteredSchemaIds.every((id) => !collapsedDuringSearch.has(id))
+        : allExpanded;
+    const tablesToExpand = isFiltered ? tableCount(filteredItems) : tableCount(options);
+    const expandAllDisabled = !showCollapseAll && tablesToExpand > EXPAND_ALL_MAX_TABLES;
+
     const onToggleAll = () => {
         if (readOnly) return;
+        if (isFiltered) {
+            const schemaIds = filteredItems.map((item) => item.id as string);
+            const anyExpanded = schemaIds.some((id) => !collapsedDuringSearch.has(id));
+            if (anyExpanded) {
+                setCollapsedDuringSearch(new Set(schemaIds));
+            } else if (tableCount(filteredItems) <= EXPAND_ALL_MAX_TABLES) {
+                setCollapsedDuringSearch(new Set());
+            }
+            return;
+        }
         if (allExpanded) {
             setExpandedIds(new Set());
             setAllExpanded(false);
-        } else {
+        } else if (tableCount(options) <= EXPAND_ALL_MAX_TABLES) {
             setAllExpanded(true);
         }
     };
@@ -420,7 +587,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         const result: FlatItem[] = [];
         for (const item of mappedFilteredItems) {
             const id = item.id as string;
-            const expanded = allExpanded || isFiltered || expandedIds.has(id);
+            const expanded = isNodeExpanded(id);
             result.push({ item, depth: 0, hasChildren: !!item.children?.length });
             if (expanded && item.children) {
                 for (const child of item.children) {
@@ -429,102 +596,159 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
             }
         }
         return result;
-    }, [mappedFilteredItems, allExpanded, isFiltered, expandedIds]);
+    }, [mappedFilteredItems, isNodeExpanded]);
 
     const virtualizer = useVirtualizer({
         count: visibleItems.length,
         getScrollElement: () => scrollContainerRef.current,
-        estimateSize: () => 36,
+        estimateSize: () => ROW_HEIGHT,
         overscan: 20,
     });
 
+    const scrollOffset = virtualizer.scrollOffset ?? 0;
+    const pinnedIndex = pinnedSchemaIndex(visibleItems, scrollOffset, ROW_HEIGHT);
+    const pinnedItem = pinnedIndex == null ? null : visibleItems[pinnedIndex];
+
+    const matchSchemaCount = filteredItems.length;
+    const matchTableCount = tableCount(filteredItems);
+    const resultsLabel = t("tableExplorer.results", {
+        tables: t("tableExplorer.tableCount", { count: matchTableCount }),
+        schemas: t("tableExplorer.schemaCount", { count: matchSchemaCount }),
+    });
+
+    const expandAllButton = (
+        <Button variant="link" onClick={onToggleAll} isDisabled={expandAllDisabled}>
+            {showCollapseAll ? t('collapseAll') : t('expandAll')}
+        </Button>
+    );
+
     const toolbar = readOnly ? null : (
-        <div className="virtual-tree__toolbar-row">
-            <div className="virtual-tree__toolbar-search">
-                <TreeViewSearch
-                    onSearch={onSearch}
-                    id="input-search"
-                    name="search-input"
-                    aria-label="Search input example"
-                />
+        <div className="virtual-tree__toolbar">
+            <div className="virtual-tree__toolbar-row">
+                <div className="virtual-tree__toolbar-search">
+                    <TreeViewSearch
+                        onSearch={onSearch}
+                        value={searchValue}
+                        id="input-search"
+                        name="search-input"
+                        aria-label="Search input example"
+                    />
+                </div>
+                <div className="virtual-tree__toolbar-actions">
+                    {expandAllDisabled ? (
+                        <Tooltip content={t("tableExplorer.expandAllLimit")}>
+                            <span className="virtual-tree__expand-guard">{expandAllButton}</span>
+                        </Tooltip>
+                    ) : expandAllButton}
+                </div>
             </div>
-            <div className="virtual-tree__toolbar-actions">
-                <Button variant="link" onClick={onToggleAll}>
-                    {allExpanded && t('collapseAll')}
-                    {!allExpanded && t('expandAll')}
-                </Button>
-            </div>
+            {isFiltered && filteredItems.length > 0 ? (
+                <div className="virtual-tree__results" aria-live="polite">
+                    {resultsLabel}
+                </div>
+            ) : null}
         </div>
     );
 
+    const hasSelection = selectionSummary.text !== t("tableExplorer.selectedNone");
+    const searchMiss = isFiltered && filteredItems.length === 0;
+
     return (
         <div className="virtual-tree">
-            {toolbar ? <div className="virtual-tree__toolbar">{toolbar}</div> : null}
+            {toolbar}
+            <div
+                className={`virtual-tree__summary${hasSelection ? "" : " virtual-tree__summary--empty"}`}
+                title={selectionSummary.title}
+            >
+                {selectionSummary.text}
+            </div>
             <div
                 ref={scrollContainerRef}
                 className="virtual-tree__scroll-area"
             >
-                <div
-                    style={{
-                        height: `${virtualizer.getTotalSize()}px`,
-                        width: '100%',
-                        position: 'relative',
-                    }}
-                >
-                    {virtualizer.getVirtualItems().map((virtualRow) => {
-                        const { item, depth, hasChildren } = visibleItems[virtualRow.index];
-                        const expanded = hasChildren && isNodeExpanded(item.id as string);
-
-                        return (
+                {searchMiss ? (
+                    <Bullseye className="virtual-tree__empty">
+                        <EmptyState
+                            headingLevel="h2"
+                            titleText={t("tableExplorer.emptyTitle")}
+                            icon={SearchIcon}
+                            variant={EmptyStateVariant.sm}
+                        >
+                            <EmptyStateBody>{t("search.description")}</EmptyStateBody>
+                            <EmptyStateFooter>
+                                <EmptyStateActions>
+                                    <Button variant="link" onClick={() => updateSearch("")}>
+                                        {t("search.button")}
+                                    </Button>
+                                </EmptyStateActions>
+                            </EmptyStateFooter>
+                        </EmptyState>
+                    </Bullseye>
+                ) : (
+                    <>
+                        {pinnedItem ? (
                             <div
-                                key={item.id}
-                                className={`virtual-tree__row ${depth > 0 ? 'virtual-tree__row--child' : ''}`}
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: `${virtualRow.size}px`,
-                                    transform: `translateY(${virtualRow.start}px)`,
-                                }}
+                                className="virtual-tree__pinned-schema"
+                                style={{ height: ROW_HEIGHT, marginBottom: -ROW_HEIGHT }}
                             >
-                                <div
-                                    className="virtual-tree__row-content"
-                                    style={{ paddingLeft: `${depth * 24 + 8}px` }}
-                                >
-                                    {hasChildren ? (
-                                        <button
-                                            type="button"
-                                            className={`virtual-tree__toggle ${expanded ? 'virtual-tree__toggle--expanded' : ''}`}
-                                            onClick={() => onToggleNode(item.id as string)}
-                                            aria-label={expanded ? 'Collapse' : 'Expand'}
-                                            disabled={readOnly}
-                                        >
-                                            <AngleRightIcon />
-                                        </button>
-                                    ) : (
-                                        <span className="virtual-tree__toggle-spacer" />
-                                    )}
-                                    <TreeCheckbox
-                                        checked={item.checkProps?.checked}
-                                        onChange={(e) => onCheck(e as unknown as React.ChangeEvent, item)}
-                                        ariaLabel={`Select ${item.name}`}
-                                        disabled={readOnly}
+                                <div className="virtual-tree__row">
+                                    <TreeRow
+                                        item={pinnedItem.item}
+                                        depth={0}
+                                        hasChildren={pinnedItem.hasChildren}
+                                        expanded={isNodeExpanded(pinnedItem.item.id as string)}
+                                        readOnly={readOnly}
+                                        onToggle={onToggleNode}
+                                        onCheck={onCheck}
                                     />
-                                    <span className="virtual-tree__icon">
-                                        {depth === 0 ? <DatabaseIcon /> : <ServerGroupIcon />}
-                                    </span>
-                                    <span className="virtual-tree__name">{item.name}</span>
-                                    {hasChildren && item.children && (
-                                        <span className="virtual-tree__count">
-                                            ({item.children.length})
-                                        </span>
-                                    )}
                                 </div>
                             </div>
-                        );
-                    })}
-                </div>
+                        ) : null}
+                        <div
+                            style={{
+                                height: `${virtualizer.getTotalSize()}px`,
+                                width: '100%',
+                                position: 'relative',
+                            }}
+                        >
+                            {virtualizer.getVirtualItems().map((virtualRow) => {
+                                const { item, depth, hasChildren } = visibleItems[virtualRow.index];
+                                const expanded = hasChildren && isNodeExpanded(item.id as string);
+                                const scrolledOff = pinnedItem != null
+                                    && depth === 0
+                                    && item.id === pinnedItem.item.id
+                                    && virtualRow.start < scrollOffset;
+
+                                return (
+                                    <div
+                                        key={item.id}
+                                        className={`virtual-tree__row ${depth > 0 ? 'virtual-tree__row--child' : ''}`}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: `${virtualRow.size}px`,
+                                            transform: `translateY(${virtualRow.start}px)`,
+                                        }}
+                                        inert={scrolledOff || undefined}
+                                        aria-hidden={scrolledOff || undefined}
+                                    >
+                                        <TreeRow
+                                            item={item}
+                                            depth={depth}
+                                            hasChildren={hasChildren}
+                                            expanded={expanded}
+                                            readOnly={readOnly}
+                                            onToggle={onToggleNode}
+                                            onCheck={onCheck}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
