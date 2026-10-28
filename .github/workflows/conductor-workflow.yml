@@ -70,10 +70,46 @@ jobs:
           -Dformat.imports.goal=check
           -Dorg.slf4j.simpleLogger.showDateTime=true
           -Dorg.slf4j.simpleLogger.dateTimeFormat="YYYY-MM-dd HH:mm:ss,SSS"
+  validate_ansible:
+    name: "Validate Ansible playbooks"
+    needs: [ check-signed-commits ]
+    if: ${{ !cancelled() && (needs.check-signed-commits.result == 'success' || needs.check-signed-commits.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    env:
+      # one path per line; adjust to where the playbooks live
+      ANSIBLE_PLAYBOOKS: |
+        debezium-platform-conductor/src/main/resources/ansible/host-setup.yml
+        debezium-platform-conductor/src/main/resources/ansible/host-teardown.yml
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install Ansible tooling
+        run: |
+          python3 -m venv "$RUNNER_TEMP/ansible-venv"
+          "$RUNNER_TEMP/ansible-venv/bin/pip" install ansible-core ansible-lint
+          echo "$RUNNER_TEMP/ansible-venv/bin" >> "$GITHUB_PATH"
+
+      - name: Install required collections
+        run: >
+          ansible-galaxy collection install
+          community.docker community.general ansible.posix
+
+      - name: Lint and syntax check playbooks
+        run: |
+          rc=0
+          while IFS= read -r pb; do
+            [ -z "$pb" ] && continue
+            echo "::group::$pb"
+            ansible-lint "$pb" || rc=1
+            ansible-playbook --syntax-check -i localhost, "$pb" || rc=1
+            echo "::endgroup::"
+          done <<< "$ANSIBLE_PLAYBOOKS"
+          exit $rc
   tests:
     name: "Run tests"
-    needs: [ build_cache, check_style ]
-    if: ${{ !cancelled() && needs.build_cache.result == 'success' && needs.check_style.result == 'success' }}
+    needs: [ build_cache, check_style, validate_ansible ]
+    if: ${{ !cancelled() && needs.build_cache.result == 'success' && needs.check_style.result == 'success' && needs.validate_ansible.result == 'success'}}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

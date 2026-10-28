@@ -236,6 +236,10 @@
       community.docker.docker_image_pull:
         name: quay.io/debezium/server
         tag: latest
+      register: pull_result
+      retries: 3
+      delay: 5
+      until: pull_result is succeeded
 
   handlers:
     # Only restarts the Agent when the systemd unit file content actually
