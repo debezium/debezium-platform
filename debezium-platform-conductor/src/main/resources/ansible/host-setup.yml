@@ -106,7 +106,6 @@
               - podman
               - runc
             state: absent
-          ignore_errors: true
 
     # Package names (docker-ce, docker-ce-cli, containerd.io,
     # docker-compose-plugin) are IDENTICAL across Debian and RedHat, so the
