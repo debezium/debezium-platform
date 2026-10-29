@@ -94,9 +94,11 @@
       block:
         - name: Add Docker CE repository
           ansible.builtin.get_url:
-            url: https://download.docker.com/linux/centos/docker-ce.repo
+            url: "https://download.docker.com/linux/{{ docker_repo_distro }}/docker-ce.repo"
             dest: /etc/yum.repos.d/docker-ce.repo
             mode: "0644"
+          vars:
+            docker_repo_distro: "{{ 'fedora' if ansible_facts['distribution'] == 'Fedora' else 'centos' }}"
 
         - name: Remove podman/runc conflicts
           ansible.builtin.dnf:
@@ -104,7 +106,6 @@
               - podman
               - runc
             state: absent
-          ignore_errors: true
 
     # Package names (docker-ce, docker-ce-cli, containerd.io,
     # docker-compose-plugin) are IDENTICAL across Debian and RedHat, so the
@@ -234,6 +235,10 @@
       community.docker.docker_image_pull:
         name: quay.io/debezium/server
         tag: latest
+      register: pull_result
+      retries: 3
+      delay: 5
+      until: pull_result is succeeded
 
   handlers:
     # Only restarts the Agent when the systemd unit file content actually
