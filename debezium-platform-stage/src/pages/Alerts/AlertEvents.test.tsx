@@ -1,10 +1,10 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, testQueryClient } from "../../__test__/unit/test-utils";
 import AlertHistory from "./AlertEvents";
-import { PagedAlertEventResponse } from "./alertsTypes";
-import { ALERT_RULES_QUERY_KEY, AlertRuleSummary } from "../../apis/alerts";
+import { ActiveAlert, AlertStatusResponse, PagedAlertEventResponse } from "./alertsTypes";
+import { ALERT_RULES_QUERY_KEY, ALERT_STATUS_QUERY_KEY, AlertRuleSummary } from "../../apis/alerts";
 import { Pipeline } from "../../apis/types";
 
 vi.mock("../../apis/apis", async (importOriginal) => {
@@ -44,6 +44,40 @@ const singlePageResponse = (
   totalPages: 1,
   ...overrides,
 });
+
+const firingAlert = (overrides: Partial<ActiveAlert> = {}): ActiveAlert => ({
+  ruleId: 1,
+  ruleName: "high-source-lag",
+  pipelineId: "payments-stream",
+  state: "FIRING",
+  severity: "CRITICAL",
+  value: 1500,
+  threshold: 1000,
+  since: "2026-08-17T10:00:00.000Z",
+  ...overrides,
+});
+
+const statusFromAlerts = (activeAlerts: ActiveAlert[]): AlertStatusResponse => {
+  const firing = activeAlerts.filter((alert) => alert.state === "FIRING");
+  const count = (severity: ActiveAlert["severity"]) =>
+    firing.filter((alert) => alert.severity === severity).length;
+
+  return {
+    totalFiring: firing.length,
+    totalPending: activeAlerts.length - firing.length,
+    firingBySeverity: {
+      CRITICAL: count("CRITICAL"),
+      WARNING: count("WARNING"),
+      INFO: count("INFO"),
+    },
+    activeAlerts,
+  };
+};
+
+const eventFetchCount = () =>
+  vi
+    .mocked(fetchData)
+    .mock.calls.filter(([url]) => (url as string).includes("/api/alerts/events")).length;
 
 const pipelinesResponse: Pipeline[] = [
   { id: 1, name: "payments-stream" } as Pipeline,
@@ -163,6 +197,123 @@ describe("AlertHistory", () => {
     expect(lastRequestedUrl("/api/alerts/events").searchParams.getAll("status")).toEqual([
       "firing",
     ]);
+  });
+
+  describe("when firing alerts resolve", () => {
+    const stalledEvent = {
+      id: 102,
+      ruleId: 2,
+      ruleName: "snapshot-stalled",
+      pipelineId: "orders-cdc",
+      pipelineName: "Orders CDC",
+      status: "firing" as const,
+      value: 40,
+      threshold: 30,
+      severity: "WARNING" as const,
+      message: "Snapshot stalled",
+      firedAt: "2026-08-17T10:02:00.000Z",
+      resolvedAt: null,
+      durationSeconds: 30,
+      createdAt: "2026-08-17T10:02:00.000Z",
+    };
+
+    it("shows an empty state when the first status result has no firing alerts", async () => {
+      render(<AlertHistory />, { initialEntries: ["/alerts/history?status=firing"] });
+      expect(await screen.findByText("high-source-lag")).toBeInTheDocument();
+
+      eventsResponse = singlePageResponse({
+        events: [],
+        totalElements: 0,
+        totalPages: 0,
+      });
+      act(() => {
+        testQueryClient.setQueryData(ALERT_STATUS_QUERY_KEY, statusFromAlerts([]));
+      });
+
+      expect(await screen.findByRole("heading", { name: "No alert event" })).toBeInTheDocument();
+      expect(screen.queryByText("high-source-lag")).not.toBeInTheDocument();
+    });
+
+    it("shows an empty state when the last firing alert resolves", async () => {
+      testQueryClient.setQueryData(ALERT_STATUS_QUERY_KEY, statusFromAlerts([firingAlert()]));
+      render(<AlertHistory />, { initialEntries: ["/alerts/history?status=firing"] });
+
+      expect(await screen.findByText("high-source-lag")).toBeInTheDocument();
+
+      eventsResponse = singlePageResponse({
+        events: [],
+        totalElements: 0,
+        totalPages: 0,
+      });
+      act(() => {
+        testQueryClient.setQueryData(ALERT_STATUS_QUERY_KEY, statusFromAlerts([]));
+      });
+
+      expect(await screen.findByRole("heading", { name: "No alert event" })).toBeInTheDocument();
+      expect(screen.queryByText("high-source-lag")).not.toBeInTheDocument();
+      expect(screen.queryByRole("table", { name: "Alert history table" })).not.toBeInTheDocument();
+      expect(lastRequestedUrl("/api/alerts/events").searchParams.getAll("status")).toEqual([
+        "firing",
+      ]);
+    });
+
+    it("drops only the alert that resolved when other alerts are still firing", async () => {
+      const stalledAlert = firingAlert({
+        ruleId: 2,
+        ruleName: "snapshot-stalled",
+        pipelineId: "orders-cdc",
+        severity: "WARNING",
+        value: 40,
+        threshold: 30,
+        since: "2026-08-17T10:02:00.000Z",
+      });
+      eventsResponse = singlePageResponse({
+        events: [singlePageResponse().events[0], stalledEvent],
+        totalElements: 2,
+      });
+      testQueryClient.setQueryData(
+        ALERT_STATUS_QUERY_KEY,
+        statusFromAlerts([firingAlert(), stalledAlert])
+      );
+      render(<AlertHistory />, { initialEntries: ["/alerts/history?status=firing"] });
+
+      expect(await screen.findByText("high-source-lag")).toBeInTheDocument();
+      expect(screen.getByText("snapshot-stalled")).toBeInTheDocument();
+
+      eventsResponse = singlePageResponse({
+        events: [stalledEvent],
+        totalElements: 1,
+      });
+      act(() => {
+        testQueryClient.setQueryData(ALERT_STATUS_QUERY_KEY, statusFromAlerts([stalledAlert]));
+      });
+
+      expect(await screen.findByText("snapshot-stalled")).toBeInTheDocument();
+      expect(screen.queryByText("high-source-lag")).not.toBeInTheDocument();
+    });
+
+    it("leaves the list in place when alert status changes without a firing-set change", async () => {
+      const firing = statusFromAlerts([firingAlert()]);
+      testQueryClient.setQueryData(ALERT_STATUS_QUERY_KEY, firing);
+      render(<AlertHistory />, { initialEntries: ["/alerts/history?status=firing"] });
+      await screen.findByText("high-source-lag");
+
+      const fetchesBefore = eventFetchCount();
+      eventsResponse = singlePageResponse({
+        events: [],
+        totalElements: 0,
+        totalPages: 0,
+      });
+      act(() => {
+        testQueryClient.setQueryData(ALERT_STATUS_QUERY_KEY, {
+          ...firing,
+          totalPending: firing.totalPending + 1,
+        });
+      });
+
+      expect(eventFetchCount()).toBe(fetchesBefore);
+      expect(screen.getByText("high-source-lag")).toBeInTheDocument();
+    });
   });
 
   it("sends a single status= query param and replaces it when another status is selected", async () => {

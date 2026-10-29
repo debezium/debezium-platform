@@ -19,6 +19,7 @@ export const DEFAULT_ALERT_EVENTS_PAGE_SIZE = 20;
 export const ALERT_RULES_QUERY_KEY = ["alertRules"] as const;
 export const ALERT_CHANNELS_QUERY_KEY = ["alertChannels"] as const;
 export const ALERT_STATUS_QUERY_KEY = ["alertStatus"] as const;
+export const ALERT_EVENTS_QUERY_KEY = ["alertEvents"] as const;
 
 
 export interface AlertEventsQueryParams {
