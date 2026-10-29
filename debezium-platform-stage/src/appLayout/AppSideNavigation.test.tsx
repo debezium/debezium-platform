@@ -179,6 +179,9 @@ test.skipIf(!isRouteNavVisible("Alerts"))(
     expect(screen.getByTestId("location")).toHaveTextContent(
       "/alerts/history?status=firing"
     );
+
+    await userEvent.click(screen.getByRole("link", { name: "Events" }));
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/alerts\/history$/);
   }
 );
 

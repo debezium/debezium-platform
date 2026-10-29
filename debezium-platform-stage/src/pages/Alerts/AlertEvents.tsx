@@ -411,12 +411,14 @@ const AlertEvents: React.FC = () => {
   const [ruleFilter, setRuleFilter] = React.useState<number[]>([]);
   const [isFilterFieldSelectOpen, setIsFilterFieldSelectOpen] = React.useState(false);
 
+
   React.useEffect(() => {
     const next = parseStatusQueryParam(statusParam);
+    setStatusFilter(next);
     if (next === undefined) {
+      setEntityFilterMode((current) => (current === "status" ? "severity" : current));
       return;
     }
-    setStatusFilter(next);
     setEntityFilterMode("status");
   }, [statusParam]);
 
