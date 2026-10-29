@@ -45,13 +45,16 @@ import {
   TimesIcon,
 } from "@patternfly/react-icons";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@components/PageHeader";
 import { fetchData } from "../../apis/apis";
 import { Pipeline } from "../../apis/types";
 import { API_URL } from "../../utils/constants";
 import {
   AlertRuleSummary,
+  ALERT_EVENTS_QUERY_KEY,
   ALERT_RULES_QUERY_KEY,
+  ALERT_STATUS_QUERY_KEY,
   DEFAULT_ALERT_EVENTS_PAGE_SIZE,
   fetchAlertEvents,
   fetchAlertRules,
@@ -62,6 +65,7 @@ import {
   AlertEvent,
   AlertEventStatus,
   AlertSeverity,
+  AlertStatusResponse,
   DATE_RANGE_PRESETS,
   DateRangePreset,
   PagedAlertEventResponse,
@@ -198,6 +202,62 @@ interface TypeaheadMultiSelectFilterProps<T extends string | number> {
 
 const NO_RESULTS_VALUE = "__no-results__";
 const LOADING_VALUE = "__loading__";
+
+const getFiringAlertsSignature = (
+  status: AlertStatusResponse | undefined
+): string => {
+  const counts = status?.firingBySeverity;
+  const identities = (status?.activeAlerts ?? [])
+    .filter((alert) => alert.state === "FIRING")
+    .map(
+      (alert) =>
+        `${alert.ruleId}:${alert.pipelineId}:${alert.severity}:${alert.since}`
+    )
+    .sort();
+
+  return [
+    status?.totalFiring ?? 0,
+    counts?.CRITICAL ?? 0,
+    counts?.WARNING ?? 0,
+    counts?.INFO ?? 0,
+    identities.join(","),
+  ].join("|");
+};
+
+/**
+ * Refetch events when the firing set changes.
+ */
+const useRefreshAlertEventsOnFiringChange = () => {
+  const queryClient = useQueryClient();
+
+  React.useEffect(() => {
+    let previousSignature: string | null = null;
+    const cached = queryClient.getQueryData<AlertStatusResponse>(ALERT_STATUS_QUERY_KEY);
+    if (cached !== undefined) {
+      previousSignature = getFiringAlertsSignature(cached);
+    }
+
+    return queryClient.getQueryCache().subscribe((event) => {
+      if (event.type !== "updated" || event.action.type !== "success") {
+        return;
+      }
+      if (event.query.queryKey[0] !== ALERT_STATUS_QUERY_KEY[0]) {
+        return;
+      }
+
+      const nextStatus = queryClient.getQueryData<AlertStatusResponse>(ALERT_STATUS_QUERY_KEY);
+      if (nextStatus === undefined) {
+        return;
+      }
+      const nextSignature = getFiringAlertsSignature(nextStatus);
+      if (previousSignature === nextSignature) {
+        return;
+      }
+      previousSignature = nextSignature;
+      void queryClient.invalidateQueries({ queryKey: ALERT_EVENTS_QUERY_KEY });
+    });
+  }, [queryClient]);
+};
 
 
 function TypeaheadMultiSelectFilter<T extends string | number>({
@@ -491,8 +551,10 @@ const AlertEvents: React.FC = () => {
     to: dateRange?.to,
   };
 
+  useRefreshAlertEventsOnFiringChange();
+
   const { data, isLoading, isError, retry: retryResource } = useResourceQuery<PagedAlertEventResponse, Error>(
-    ["alertEvents", queryParams],
+    [...ALERT_EVENTS_QUERY_KEY, queryParams],
     () => fetchAlertEvents(queryParams),
     { profile: "slow" }
   );
