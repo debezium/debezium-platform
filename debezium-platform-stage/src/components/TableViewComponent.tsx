@@ -6,13 +6,14 @@ import {
     EmptyStateBody,
     EmptyStateFooter,
     EmptyStateVariant,
+    Label,
+    Popover,
     Tooltip,
     TreeViewDataItem,
     TreeViewSearch,
 } from "@patternfly/react-core";
 import { AngleRightIcon, DatabaseIcon, SearchIcon, ServerGroupIcon } from "@patternfly/react-icons";
 import { FC, useState, useEffect, useRef, useMemo, useCallback } from "react";
-import type { TFunction } from "i18next";
 import { TableData } from "src/apis";
 import "./TableViewComponent.css";
 import { useTranslation } from "react-i18next";
@@ -21,7 +22,6 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 
 export const ROW_HEIGHT = 36;
 export const EXPAND_ALL_MAX_TABLES = 500;
-const SUMMARY_NAME_LIMIT = 8;
 
 type TableViewComponentProps = {
     collections: TableData | undefined;
@@ -41,6 +41,13 @@ type SelectedItem = {
 type SelectionResult = {
     schemas: string[];
     tables: string[];
+};
+
+type SchemaSelectionGroup = {
+    name: string;
+    fullyIncluded: boolean;
+    selected: number;
+    total: number;
 };
 
 function selectionsEqual(
@@ -65,6 +72,27 @@ type FlatItem = {
 
 function tableCount(items: TreeViewDataItem[]): number {
     return items.reduce((sum, item) => sum + (item.children?.length ?? 0), 0);
+}
+
+function schemaSelectionCounts(
+    schemas: readonly TreeViewDataItem[],
+    checkedItems: readonly TreeViewDataItem[],
+    language: string,
+): Map<string, string> {
+    const checkedIds = new Set(checkedItems.map((item) => item.id));
+    const counts = new Map<string, string>();
+    for (const schema of schemas) {
+        const children = schema.children ?? [];
+        if (children.length === 0 || schema.id == null) {
+            continue;
+        }
+        const selected = children.filter((child) => checkedIds.has(child.id)).length;
+        counts.set(
+            String(schema.id),
+            `(${selected.toLocaleString(language)}/${children.length.toLocaleString(language)})`,
+        );
+    }
+    return counts;
 }
 
 /** Index of the schema row to pin, or null when the active schema header is already at the top. */
@@ -105,30 +133,72 @@ export function pinnedSchemaIndex(
     return pinned;
 }
 
-function formatSelectionSummary(
+function groupedCountPhrase(phrase: string, count: number, language: string): string {
+    const formatted = count.toLocaleString(language);
+    const raw = String(count);
+    return formatted === raw ? phrase : phrase.replace(raw, formatted);
+}
+
+function nodeName(name: TreeViewDataItem["name"]): string {
+    return typeof name === "string" ? name : String(name ?? "");
+}
+
+function buildSelectionGroups(
     selection: SelectionResult,
-    t: TFunction,
-): { text: string; title: string } {
-    const names = [...selection.schemas, ...selection.tables];
-    if (names.length === 0) {
-        const text = t("tableExplorer.selectedNone");
-        return { text, title: text };
+    schemas: readonly TreeViewDataItem[],
+): SchemaSelectionGroup[] {
+    const catalog = schemas.map((schema) => ({
+        name: nodeName(schema.name),
+        total: schema.children?.length ?? 0,
+    }));
+    const schemaNames = catalog.map((schema) => schema.name).filter((name) => name.length > 0);
+    const partial = new Map<string, number>();
+
+    for (const fqn of selection.tables) {
+        const schemaName = schemaNames
+            .filter((name) => fqn.startsWith(`${name}.`))
+            .sort((a, b) => b.length - a.length)[0];
+        const resolved = schemaName ?? (fqn.includes(".") ? fqn.slice(0, fqn.indexOf(".")) : fqn);
+        partial.set(resolved, (partial.get(resolved) ?? 0) + 1);
     }
 
-    const shown = names.slice(0, SUMMARY_NAME_LIMIT);
-    const extra = names.length - shown.length;
-    const nameText = extra > 0
-        ? t("tableExplorer.selectedNamesMore", { names: shown.join(", "), count: extra })
-        : shown.join(", ");
-    const counts = [
-        selection.schemas.length > 0 ? t("tableExplorer.schemaCount", { count: selection.schemas.length }) : null,
-        selection.tables.length > 0 ? t("tableExplorer.tableCount", { count: selection.tables.length }) : null,
-    ].filter(Boolean).join(", ");
+    const included = new Set(selection.schemas);
+    const seen = new Set<string>();
+    const groups: SchemaSelectionGroup[] = [];
 
-    return {
-        text: t("tableExplorer.selectedSummary", { counts, names: nameText }),
-        title: names.join(", "),
+    const push = (name: string, catalogTotal: number | undefined) => {
+        if (seen.has(name) || (!included.has(name) && !partial.has(name))) {
+            return;
+        }
+        seen.add(name);
+        const fullyIncluded = included.has(name);
+        const total = fullyIncluded ? (catalogTotal ?? partial.get(name) ?? 0) : (catalogTotal ?? 0);
+        groups.push({
+            name,
+            fullyIncluded,
+            selected: fullyIncluded ? total : (partial.get(name) ?? 0),
+            total,
+        });
     };
+
+    for (const schema of catalog) {
+        push(schema.name, schema.total);
+    }
+    for (const name of included) {
+        push(name, undefined);
+    }
+    for (const name of partial.keys()) {
+        push(name, undefined);
+    }
+    return groups;
+}
+
+function schemaCountLabel(group: SchemaSelectionGroup, language: string): string {
+    const formattedSelected = group.selected.toLocaleString(language);
+    if (!group.fullyIncluded) {
+        return formattedSelected;
+    }
+    return `${formattedSelected}/${group.total.toLocaleString(language)}`;
 }
 
 export function extractSelections(selectedItems: SelectedItem[]): SelectionResult {
@@ -175,6 +245,47 @@ export function extractSelections(selectedItems: SelectedItem[]): SelectionResul
     };
 }
 
+const SelectionSchemaList: FC<{ groups: SchemaSelectionGroup[] }> = ({ groups }) => {
+    const { i18n } = useTranslation();
+
+    return (
+        <ul className="virtual-tree__summary-list">
+            {groups.map((group) => (
+                <li key={group.name} className="virtual-tree__summary-schema">
+                    <span className="virtual-tree__summary-schema-name">{group.name}</span>
+                    <span className="virtual-tree__summary-schema-count">
+                        {schemaCountLabel(group, i18n.language)}
+                    </span>
+                </li>
+            ))}
+        </ul>
+    );
+};
+
+const SelectionListPopover: FC<{ groups: SchemaSelectionGroup[] }> = ({ groups }) => {
+    const { t } = useTranslation();
+    const [opened, setOpened] = useState(false);
+    const label = t("tableExplorer.viewSelection");
+
+    return (
+        <Popover
+            aria-label={label}
+            maxWidth="24rem"
+            bodyContent={opened ? <SelectionSchemaList groups={groups} /> : <span />}
+        >
+            <Button
+                variant="link"
+                isInline
+                type="button"
+                className="virtual-tree__summary-action"
+                onClick={() => setOpened(true)}
+            >
+                {label}
+            </Button>
+        </Popover>
+    );
+};
+
 const TreeCheckbox: FC<{
     checked: boolean | null | undefined;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -208,9 +319,10 @@ const TreeRow: FC<{
     hasChildren: boolean;
     expanded: boolean;
     readOnly?: boolean;
+    countLabel?: string;
     onToggle: (id: string) => void;
     onCheck: (event: React.ChangeEvent, item: TreeViewDataItem) => void;
-}> = ({ item, depth, hasChildren, expanded, readOnly, onToggle, onCheck }) => (
+}> = ({ item, depth, hasChildren, expanded, readOnly, countLabel, onToggle, onCheck }) => (
     <div
         className="virtual-tree__row-content"
         style={{ paddingLeft: `${depth * 24 + 8}px` }}
@@ -238,16 +350,14 @@ const TreeRow: FC<{
             {depth === 0 ? <DatabaseIcon /> : <ServerGroupIcon />}
         </span>
         <span className="virtual-tree__name">{item.name}</span>
-        {hasChildren && item.children && (
-            <span className="virtual-tree__count">
-                ({item.children.length})
-            </span>
-        )}
+        {countLabel ? (
+            <span className="virtual-tree__count">{countLabel}</span>
+        ) : null}
     </div>
 );
 
 const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelectedDataListItems, selectedDataListItems, readOnly }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [allExpanded, setAllExpanded] = useState(false);
     const [filteredItems, setFilteredItems] = useState<TreeViewDataItem[]>([]);
     const [isFiltered, setIsFiltered] = useState(false);
@@ -286,6 +396,10 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         }
         return { allChecked, someChecked };
     }, [options, checkedItems]);
+    const schemaCounts = useMemo(
+        () => schemaSelectionCounts(options, checkedItems, i18n.language),
+        [options, checkedItems, i18n.language],
+    );
 
     const flattenTreeItems = (tree: TreeViewDataItem[]): TreeViewDataItem[] => {
         let result: TreeViewDataItem[] = [];
@@ -517,10 +631,29 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     };
 
     const mappedFilteredItems = filteredItems.map((item) => mapTree(item));
-    const selectionSummary = formatSelectionSummary(
-        extractSelections(checkedItems as SelectedItem[]),
-        t,
+    const selection = useMemo(
+        () => extractSelections(checkedItems as SelectedItem[]),
+        [checkedItems],
     );
+    const groups = useMemo(
+        () => buildSelectionGroups(selection, options),
+        [selection, options],
+    );
+    const hasSelection = selection.schemas.length > 0 || selection.tables.length > 0;
+    const schemaLabel = selection.schemas.length > 0
+        ? groupedCountPhrase(
+            t("tableExplorer.schemaCount", { count: selection.schemas.length }),
+            selection.schemas.length,
+            i18n.language,
+        )
+        : null;
+    const tableLabel = selection.tables.length > 0
+        ? groupedCountPhrase(
+            t("tableExplorer.tableCount", { count: selection.tables.length }),
+            selection.tables.length,
+            i18n.language,
+        )
+        : null;
 
     // Expand/collapse handlers. Search uses its own collapsed set so clearing
     // the query restores the unfiltered tree instead of expanding the catalog.
@@ -650,7 +783,6 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         </div>
     );
 
-    const hasSelection = selectionSummary.text !== t("tableExplorer.selectedNone");
     const searchMiss = isFiltered && filteredItems.length === 0;
 
     return (
@@ -658,9 +790,24 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
             {toolbar}
             <div
                 className={`virtual-tree__summary${hasSelection ? "" : " virtual-tree__summary--empty"}`}
-                title={selectionSummary.title}
+                aria-live="polite"
             >
-                {selectionSummary.text}
+                {hasSelection ? (
+                    <>
+                        <span className="virtual-tree__summary-caption">{t("tableExplorer.selected")}</span>
+                        {schemaLabel ? (
+                            <span className="virtual-tree__summary-count">
+                                <Label isCompact color="blue">{schemaLabel}</Label>
+                            </span>
+                        ) : null}
+                        {tableLabel ? (
+                            <span className="virtual-tree__summary-count">
+                                <Label isCompact color="blue">{tableLabel}</Label>
+                            </span>
+                        ) : null}
+                        <SelectionListPopover groups={groups} />
+                    </>
+                ) : t("tableExplorer.selectedNone")}
             </div>
             <div
                 ref={scrollContainerRef}
@@ -698,6 +845,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                                         hasChildren={pinnedItem.hasChildren}
                                         expanded={isNodeExpanded(pinnedItem.item.id as string)}
                                         readOnly={readOnly}
+                                        countLabel={schemaCounts.get(String(pinnedItem.item.id))}
                                         onToggle={onToggleNode}
                                         onCheck={onCheck}
                                     />
@@ -740,6 +888,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                                             hasChildren={hasChildren}
                                             expanded={expanded}
                                             readOnly={readOnly}
+                                            countLabel={depth === 0 ? schemaCounts.get(String(item.id)) : undefined}
                                             onToggle={onToggleNode}
                                             onCheck={onCheck}
                                         />

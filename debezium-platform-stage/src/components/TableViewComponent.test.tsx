@@ -264,6 +264,20 @@ describe("TableViewComponent navigation", () => {
     expect(checkbox("order_items")).toBeInTheDocument();
   });
 
+  it("shows selected and total table counts on each schema", async () => {
+    const user = userEvent.setup();
+    render(<Harness onChange={() => {}} />);
+
+    expect(await screen.findByText("(0/4)")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^Expand$/ }));
+    await user.click(checkbox("orders"));
+    expect(screen.getByText("(1/4)")).toBeInTheDocument();
+
+    await user.click(checkbox("public"));
+    expect(screen.getByText("(4/4)")).toBeInTheDocument();
+  });
+
   it("shows an empty state and restores the tree when search is cleared", async () => {
     const user = userEvent.setup();
     render(<Harness onChange={() => {}} />);
@@ -285,12 +299,20 @@ describe("TableViewComponent navigation", () => {
     await screen.findByRole("checkbox", { name: "Select public" });
     await user.click(checkbox("public"));
 
-    const summary = await screen.findByText("Selected: 1 schema · public");
+    const summary = (await screen.findByText("Selected")).closest(".virtual-tree__summary");
+    expect(summary).toHaveTextContent("1 schema");
+    expect(summary).not.toHaveTextContent("public");
     expect(summary).not.toHaveTextContent("customers");
-    expect(summary).toHaveAttribute("title", "public");
+
+    await user.click(screen.getByRole("button", { name: "View selection" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveTextContent("public");
+    expect(dialog).toHaveTextContent("4/4");
+    expect(dialog).not.toHaveTextContent("customers");
+    expect(screen.queryByRole("button", { name: "Expand public" })).not.toBeInTheDocument();
   });
 
-  it("summarizes a single selected table by its fully qualified name", async () => {
+  it("summarizes a single selected table by schema in the selection list", async () => {
     const user = userEvent.setup();
     render(<Harness onChange={() => {}} />);
 
@@ -298,10 +320,21 @@ describe("TableViewComponent navigation", () => {
     await user.click(screen.getByRole("button", { name: /^Expand$/ }));
     await user.click(checkbox("orders"));
 
-    expect(await screen.findByText("Selected: 1 table · public.orders")).toBeInTheDocument();
+    const summary = (await screen.findByText("Selected")).closest(".virtual-tree__summary");
+    expect(summary).toHaveTextContent("1 table");
+    expect(summary).not.toHaveTextContent("public.orders");
+
+    await user.click(screen.getByRole("button", { name: "View selection" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveTextContent("public");
+    expect(dialog).toHaveTextContent("1");
+    expect(dialog).not.toHaveTextContent("1/4");
+    expect(dialog).not.toHaveTextContent("orders");
+    expect(screen.queryByRole("button", { name: "Expand public" })).not.toBeInTheDocument();
   });
 
-  it("truncates a long selection summary and keeps the full list on the title", async () => {
+  it("keeps a long selection out of the summary and lists schema counts on request", async () => {
+    const user = userEvent.setup();
     const tables = Array.from({ length: 9 }, (_, index) => `public.table_${index}`);
     render(
       <TableViewComponent
@@ -311,9 +344,45 @@ describe("TableViewComponent navigation", () => {
       />
     );
 
-    const summary = await screen.findByText(/Selected: 9 tables/);
-    expect(summary).toHaveTextContent("+1 more");
-    expect(summary).toHaveAttribute("title", tables.join(", "));
+    const summary = (await screen.findByText("Selected")).closest(".virtual-tree__summary");
+    expect(summary).toHaveTextContent("9 tables");
+    expect(summary).not.toHaveTextContent("public");
+    expect(summary).not.toHaveTextContent("table_0");
+
+    await user.click(screen.getByRole("button", { name: "View selection" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveTextContent("public");
+    expect(dialog).toHaveTextContent("9");
+    expect(dialog).not.toHaveTextContent("9/9");
+    expect(dialog).not.toHaveTextContent("table_0");
+    expect(screen.queryByRole("button", { name: "Expand public" })).not.toBeInTheDocument();
+  });
+
+  it("groups a fully included schema separately from partial tables", async () => {
+    const user = userEvent.setup();
+    render(
+      <TableViewComponent
+        collections={twoSchemas}
+        selectedDataListItems={{ schemas: ["public"], tables: ["sales.invoices"] }}
+        setSelectedDataListItems={() => {}}
+      />
+    );
+
+    const summary = (await screen.findByText("Selected")).closest(".virtual-tree__summary");
+    expect(summary).toHaveTextContent("1 schema");
+    expect(summary).toHaveTextContent("1 table");
+    expect(summary).not.toHaveTextContent("invoices");
+
+    await user.click(screen.getByRole("button", { name: "View selection" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveTextContent("public");
+    expect(dialog).toHaveTextContent("2/2");
+    expect(dialog).toHaveTextContent("sales");
+    expect(dialog).toHaveTextContent("1");
+    expect(dialog).not.toHaveTextContent("1/1");
+    expect(dialog).not.toHaveTextContent("invoices");
+    expect(dialog).not.toHaveTextContent("orders");
+    expect(screen.queryByRole("button", { name: "Expand sales" })).not.toBeInTheDocument();
   });
 
   it("disables expand all above the table limit and still collapses an open search", async () => {

@@ -150,9 +150,8 @@
     "tableCount_other": "{{count}} tables",
     "results": "{{tables}} in {{schemas}}",
     "selectedNone": "No tables selected",
-    "selectedSummary": "Selected: {{counts}} · {{names}}",
-    "selectedNamesMore_one": "{{names}} +{{count}} more",
-    "selectedNamesMore_other": "{{names}} +{{count}} more",
+    "selected": "Selected",
+    "viewSelection": "View selection",
     "expandAllLimit": "This catalog has too many tables to expand at once. Expand a schema or search for a table.",
     "emptyTitle": "No matching tables"
   },
