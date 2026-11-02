@@ -262,6 +262,12 @@ describe("TableViewComponent navigation", () => {
     await user.click(screen.getByRole("button", { name: /^Expand all$/ }));
     expect(checkbox("orders")).toBeInTheDocument();
     expect(checkbox("order_items")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Clear search" }));
+    expect(screen.queryByText("2 tables in 1 schema")).not.toBeInTheDocument();
+    expect(searchBox()).toHaveValue("");
+    expect(checkbox("public")).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Select orders" })).not.toBeInTheDocument();
   });
 
   it("shows selected and total table counts on each schema", async () => {

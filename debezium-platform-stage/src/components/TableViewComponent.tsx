@@ -74,25 +74,8 @@ function tableCount(items: TreeViewDataItem[]): number {
     return items.reduce((sum, item) => sum + (item.children?.length ?? 0), 0);
 }
 
-function schemaSelectionCounts(
-    schemas: readonly TreeViewDataItem[],
-    checkedItems: readonly TreeViewDataItem[],
-    language: string,
-): Map<string, string> {
-    const checkedIds = new Set(checkedItems.map((item) => item.id));
-    const counts = new Map<string, string>();
-    for (const schema of schemas) {
-        const children = schema.children ?? [];
-        if (children.length === 0 || schema.id == null) {
-            continue;
-        }
-        const selected = children.filter((child) => checkedIds.has(child.id)).length;
-        counts.set(
-            String(schema.id),
-            `(${selected.toLocaleString(language)}/${children.length.toLocaleString(language)})`,
-        );
-    }
-    return counts;
+function formatSchemaCount(selected: number, total: number, language: string): string {
+    return `(${selected.toLocaleString(language)}/${total.toLocaleString(language)})`;
 }
 
 /** Index of the schema row to pin, or null when the active schema header is already at the top. */
@@ -151,13 +134,14 @@ function buildSelectionGroups(
         name: nodeName(schema.name),
         total: schema.children?.length ?? 0,
     }));
-    const schemaNames = catalog.map((schema) => schema.name).filter((name) => name.length > 0);
+    const schemaNames = catalog
+        .map((schema) => schema.name)
+        .filter((name) => name.length > 0)
+        .sort((a, b) => b.length - a.length);
     const partial = new Map<string, number>();
 
     for (const fqn of selection.tables) {
-        const schemaName = schemaNames
-            .filter((name) => fqn.startsWith(`${name}.`))
-            .sort((a, b) => b.length - a.length)[0];
+        const schemaName = schemaNames.find((name) => fqn.startsWith(`${name}.`));
         const resolved = schemaName ?? (fqn.includes(".") ? fqn.slice(0, fqn.indexOf(".")) : fqn);
         partial.set(resolved, (partial.get(resolved) ?? 0) + 1);
     }
@@ -378,6 +362,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         const checkedIds = new Set(checkedItems.map((item) => item.id));
         const allChecked = new Map<TreeViewDataItem["id"], boolean>();
         const someChecked = new Map<TreeViewDataItem["id"], boolean>();
+        const schemaCounts = new Map<string, string>();
         const visit = (item: TreeViewDataItem) => {
             if (!item.children) {
                 const checked = checkedIds.has(item.id);
@@ -385,21 +370,24 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                 someChecked.set(item.id, checked);
                 return;
             }
+            let selectedChildren = 0;
             for (const child of item.children) {
                 visit(child);
+                if (checkedIds.has(child.id)) {
+                    selectedChildren += 1;
+                }
             }
             allChecked.set(item.id, item.children.every((child) => allChecked.get(child.id)));
             someChecked.set(item.id, item.children.some((child) => someChecked.get(child.id)));
+            if (item.children.length > 0 && item.id != null) {
+                schemaCounts.set(String(item.id), formatSchemaCount(selectedChildren, item.children.length, i18n.language));
+            }
         };
         for (const item of options) {
             visit(item);
         }
-        return { allChecked, someChecked };
-    }, [options, checkedItems]);
-    const schemaCounts = useMemo(
-        () => schemaSelectionCounts(options, checkedItems, i18n.language),
-        [options, checkedItems, i18n.language],
-    );
+        return { allChecked, someChecked, schemaCounts };
+    }, [options, checkedItems, i18n.language]);
 
     const flattenTreeItems = (tree: TreeViewDataItem[]): TreeViewDataItem[] => {
         let result: TreeViewDataItem[] = [];
@@ -539,12 +527,17 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         const itemsToToggle = checked && visibleIds
             ? flatCheckedItems.filter((item) => visibleIds.has(item.id))
             : flatCheckedItems;
+        const toggleIds = new Set(itemsToToggle.map((item) => item.id));
 
-        setCheckedItems((prevCheckedItems) =>
-            checked
-                ? prevCheckedItems.concat(itemsToToggle.filter((item) => !prevCheckedItems.some((i) => i.id === item.id)))
-                : prevCheckedItems.filter((item) => !itemsToToggle.some((i) => i.id === item.id))
-        );
+        setCheckedItems((prevCheckedItems) => {
+            if (checked) {
+                const prevIds = new Set(prevCheckedItems.map((item) => item.id));
+                const additions = itemsToToggle.filter((item) => !prevIds.has(item.id));
+                return additions.length === 0 ? prevCheckedItems : prevCheckedItems.concat(additions);
+            }
+            const next = prevCheckedItems.filter((item) => !toggleIds.has(item.id));
+            return next.length === prevCheckedItems.length ? prevCheckedItems : next;
+        });
     };
 
     const updateSearch = (input: string) => {
@@ -777,7 +770,16 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
             </div>
             {isFiltered && filteredItems.length > 0 ? (
                 <div className="virtual-tree__results" aria-live="polite">
-                    {resultsLabel}
+                    <span className="virtual-tree__results-label">{resultsLabel}</span>
+                    <Button
+                        variant="link"
+                        isInline
+                        type="button"
+                        className="virtual-tree__results-clear"
+                        onClick={() => updateSearch("")}
+                    >
+                        {t("search.button")}
+                    </Button>
                 </div>
             ) : null}
         </div>
@@ -845,7 +847,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                                         hasChildren={pinnedItem.hasChildren}
                                         expanded={isNodeExpanded(pinnedItem.item.id as string)}
                                         readOnly={readOnly}
-                                        countLabel={schemaCounts.get(String(pinnedItem.item.id))}
+                                        countLabel={descendantChecked.schemaCounts.get(String(pinnedItem.item.id))}
                                         onToggle={onToggleNode}
                                         onCheck={onCheck}
                                     />
@@ -888,7 +890,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                                             hasChildren={hasChildren}
                                             expanded={expanded}
                                             readOnly={readOnly}
-                                            countLabel={depth === 0 ? schemaCounts.get(String(item.id)) : undefined}
+                                            countLabel={depth === 0 ? descendantChecked.schemaCounts.get(String(item.id)) : undefined}
                                             onToggle={onToggleNode}
                                             onCheck={onCheck}
                                         />
