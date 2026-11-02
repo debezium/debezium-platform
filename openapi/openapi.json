@@ -812,7 +812,7 @@
       },
       "SignalRequest" : {
         "type" : "object",
-        "required" : [ "id", "type" ],
+        "required" : [ "id", "type", "data" ],
         "properties" : {
           "id" : {
             "type" : "string",
@@ -823,7 +823,8 @@
             "minLength" : 1
           },
           "data" : {
-            "type" : "string"
+            "type" : "string",
+            "minLength" : 1
           },
           "additionalData" : {
             "type" : "object",
@@ -3045,7 +3046,7 @@
   },
   "info" : {
     "title" : "Debezium Platform API",
-    "version" : "3.8.0-SNAPSHOT",
+    "version" : "3.7.0.Final",
     "description" : "REST API for the Debezium Platform",
     "contact" : {
       "name" : "Debezium",
