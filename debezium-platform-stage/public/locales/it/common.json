@@ -150,9 +150,8 @@
     "tableCount_other": "{{count}} tabelle",
     "results": "{{tables}} in {{schemas}}",
     "selectedNone": "Nessuna tabella selezionata",
-    "selectedSummary": "Selezionati: {{counts}} · {{names}}",
-    "selectedNamesMore_one": "{{names}} +{{count}} altro",
-    "selectedNamesMore_other": "{{names}} +{{count}} altri",
+    "selected": "Selezionati",
+    "viewSelection": "Mostra selezione",
     "expandAllLimit": "Questo catalogo ha troppe tabelle per espanderle tutte insieme. Espandi uno schema o cerca una tabella.",
     "emptyTitle": "Nessuna tabella corrispondente"
   },
