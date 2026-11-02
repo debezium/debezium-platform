@@ -128,7 +128,7 @@
             </dependency>
 
             <dependency>
-                <groupId>io.debezium.quarkus</groupId>
+                <groupId>io.debezium</groupId>
                 <artifactId>debezium-quarkus-outbox</artifactId>
                 <version>${version.debezium}</version>
             </dependency>
@@ -343,7 +343,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.debezium.quarkus</groupId>
+            <groupId>io.debezium</groupId>
             <artifactId>debezium-quarkus-outbox</artifactId>
         </dependency>
         <dependency>
