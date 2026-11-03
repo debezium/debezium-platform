@@ -23,6 +23,8 @@ spec:
     spec:
       serviceAccountName: conductor-service-account
 {{- $pullSecrets := coalesce .Values.conductor.imagePullSecrets .Values.imagePullSecrets }}
+{{- $securityEnabled := eq (include "debezium-platform.securityEnabled" .) "true" }}
+{{- $hasRoleMappings := gt (len .Values.conductor.security.roleMappings) 0 }}
 {{- if $pullSecrets }}
       imagePullSecrets:
 {{ toYaml $pullSecrets | indent 8 }}
@@ -34,9 +36,16 @@ spec:
           ports:
             - containerPort: 8080
               protocol: TCP
-{{- with .Values.conductor.extraVolumeMounts }}
+{{- if or $hasRoleMappings .Values.conductor.extraVolumeMounts }}
           volumeMounts:
+{{- if $hasRoleMappings }}
+            - name: security-role-mappings
+              mountPath: /etc/conductor/security
+              readOnly: true
+{{- end }}
+{{- with .Values.conductor.extraVolumeMounts }}
 {{ toYaml . | indent 12 }}
+{{- end }}
 {{- end }}
           env:
             - name: QUARKUS_DATASOURCE_PASSWORD
@@ -135,20 +144,46 @@ spec:
 {{- end }}
             - name: MONITORING_PANELS_REFRESH_INTERVAL
               value: {{ .Values.monitoring.panels.refreshInterval | quote }}
-{{- if .Values.conductor.oidc.enabled }}
-            # OIDC bearer-token security (service mode). See values.yaml conductor.oidc.
-            - name: QUARKUS_OIDC_TENANT_ENABLED
+{{- if $securityEnabled }}
+            # Platform IAM (debezium/dbz#3003). CONDUCTOR_SECURITY_ENABLED is the single
+            # switch; quarkus.oidc.tenant-enabled is derived from it inside the conductor,
+            # never set independently. See values.yaml conductor.oidc / conductor.security.
+            - name: CONDUCTOR_SECURITY_ENABLED
               value: "true"
             - name: OIDC_ISSUER
-              value: {{ required "conductor.oidc.authServerUrl is required when conductor.oidc.enabled=true" .Values.conductor.oidc.authServerUrl | quote }}
+              value: {{ required "conductor.oidc.authServerUrl is required when conductor.security.enabled=true" .Values.conductor.oidc.authServerUrl | quote }}
             - name: OIDC_CLIENT_ID
               value: {{ .Values.conductor.oidc.clientId | quote }}
-            - name: CONDUCTOR_API_POLICY
-              value: {{ .Values.conductor.oidc.apiPolicy | quote }}
-{{- if .Values.conductor.oidc.audience }}
-            - name: QUARKUS_OIDC_TOKEN_AUDIENCE
-              value: {{ .Values.conductor.oidc.audience | quote }}
+            - name: OIDC_AUDIENCE
+              value: {{ required "conductor.oidc.audience is required when conductor.security.enabled=true: without it, a token minted for another client in the same realm is accepted" .Values.conductor.oidc.audience | quote }}
+{{- if .Values.conductor.oidc.roleClaimPath }}
+            - name: OIDC_ROLE_CLAIM_PATH
+              value: {{ .Values.conductor.oidc.roleClaimPath | quote }}
 {{- end }}
+{{- if .Values.conductor.security.bootstrapAdminRole }}
+            - name: CONDUCTOR_SECURITY_BOOTSTRAP_ADMIN_ROLE
+              value: {{ .Values.conductor.security.bootstrapAdminRole | quote }}
+{{- end }}
+{{- end }}
+{{- if $hasRoleMappings }}
+            - name: QUARKUS_CONFIG_LOCATIONS
+              value: /etc/conductor/security/role-mappings.yaml
+{{- end }}
+{{- if .Values.conductor.security.internalCredential.existingSecret }}
+            # Not gated on CONDUCTOR_SECURITY_ENABLED: provisioning the credential ahead
+            # of enabling enforcement is the staged-enablement path (debezium/dbz#3003).
+            # A credential nothing is yet verifying is inert, so this is safe to set first.
+            - name: CONDUCTOR_INTERNAL_CREDENTIAL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.conductor.security.internalCredential.existingSecret }}
+                  key: secret
+            - name: CONDUCTOR_INTERNAL_CREDENTIAL_PREVIOUS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.conductor.security.internalCredential.existingSecret }}
+                  key: previous-secret
+                  optional: true
 {{- end }}
             - name: ALERTING_EVALUATION_INTERVAL
               value: {{ .Values.alerting.evaluation.interval | quote }}
@@ -196,8 +231,15 @@ spec:
             - name: {{ include "debezium-platform.toEnv" (dict "prefix" "PIPELINE_LABELS" "key" $key) | trim }}
               value: {{ $value | quote }}
 {{- end }}
-{{- with .Values.conductor.extraVolumes }}
+{{- if or $hasRoleMappings .Values.conductor.extraVolumes }}
       volumes:
+{{- if $hasRoleMappings }}
+        - name: security-role-mappings
+          configMap:
+            name: {{ include "debezium-platform.securityConfigMapName" . }}
+{{- end }}
+{{- with .Values.conductor.extraVolumes }}
 {{ toYaml . | indent 8 }}
+{{- end }}
 {{- end }}
       restartPolicy: Always

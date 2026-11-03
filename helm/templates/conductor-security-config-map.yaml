@@ -1,0 +1,22 @@
+{{- if .Values.conductor.security.roleMappings }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: conductor
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: debezium-platform
+{{ include "common.labels" . | indent 4 }}
+  name: {{ include "debezium-platform.securityConfigMapName" . }}
+data:
+  # Mounted and read via quarkus.config.locations (debezium/dbz#3003). Role names
+  # here are config values, never map keys, so they survive verbatim: Helm's
+  # usual map-to-env-var key transformation would mangle a role name like
+  # dmp-editor into DMP_EDITOR, matching nothing in the identity provider's
+  # token, with no error logged anywhere.
+  role-mappings.yaml: |
+    conductor:
+      security:
+        role-mappings:
+{{ toYaml .Values.conductor.security.roleMappings | indent 10 }}
+{{- end }}

@@ -42,21 +42,54 @@ conductor:
   # OIDC bearer-token security (resource-server in service mode). Disabled by
   # default. When enabled, tokens are validated against the issuer's JWKS.
   oidc:
-    enabled: false
+    # Deprecated: use conductor.security.enabled instead. Left unset (null) by
+    # default so the chart can tell "not configured" apart from "set to false";
+    # setting both this and conductor.security.enabled to disagreeing values
+    # fails `helm template`. This alias is removed after one minor release.
+    enabled: null
     # OIDC issuer / realm URL, e.g. https://keycloak.example.com/realms/dmp.
-    # Required when enabled.
+    # Required when conductor.security.enabled=true.
     authServerUrl: ""
     # Keycloak client id whose roles are read from resource_access.<clientId>.
     # Must match a client in the realm. Realm roles resolve regardless of this
     # value.
     clientId: conductor
-    # /api/* policy defaults to "authenticated" when OIDC is enabled;
-    # set CONDUCTOR_API_POLICY=permit to open back the API;
-    # or a custom role policy
-    apiPolicy: authenticated
-    # Expected audience (aud) claim. Empty disables audience enforcement; set
-    # once the issuer adds this value to tokens (e.g. a Keycloak Audience mapper).
+    # Expected audience (aud) claim. Required when conductor.security.enabled=true:
+    # without it, a token minted for an unrelated client in the same realm is
+    # accepted (the conductor refuses to start if this is left empty).
     audience: ""
+    # Claim path for roles, for identity providers that do not use Keycloak's
+    # realm_access.roles / resource_access.<clientId>.roles shape (e.g. Entra ID
+    # app roles). Example: "resource_access/conductor/roles".
+    roleClaimPath: ""
+  # Authorization: the single IAM switch and everything it governs (authentication,
+  # authorization, and the internal callback credential). See the IAM design docs.
+  security:
+    # The single IAM switch. Governs quarkus.oidc.tenant-enabled (derived, never
+    # configure it directly) and all @PermissionsAllowed enforcement. Left unset
+    # (null) by default; see conductor.oidc.enabled above for why.
+    enabled: null
+    # Always granted every permission, evaluated ahead of the role-mapping lookup.
+    # The recovery path for a deployment whose mapping is wrong or whose directory
+    # emits a role nobody has mapped yet.
+    bootstrapAdminRole: ""
+    # Role name to permission bundle, e.g.:
+    #   roleMappings:
+    #     - role: platform-engineering
+    #       permissions: ["*"]
+    #     - role: sre-oncall
+    #       permissions: [pipeline:read, pipeline:operate, pipeline:logs]
+    # Left empty, the shipped default bundles apply (dmp-admin/dmp-editor/
+    # dmp-operator/dmp-viewer). Rendered into a mounted ConfigMap, never into env
+    # vars: role names must match identity-provider claim values byte-for-byte,
+    # and env-var key transformation would mangle them silently.
+    roleMappings: []
+    internalCredential:
+      # Name of a Secret holding key `secret` (and, during rotation only, key
+      # `previous-secret`). Required for Debezium Server's snapshot-notification
+      # callbacks to authenticate once conductor.security.enabled=true; see the
+      # IAM design's staged-enablement guidance before enabling both at once.
+      existingSecret: ""
 server:
   image: ""
   # Replaces the global imagePullSecrets for Debezium Server pods created by pipelines. Leave empty to inherit it.
