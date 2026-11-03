@@ -39,6 +39,17 @@ conductor:
       registry: quay.io
       name: debezium/debezium-descriptors
       tag: nightly
+  # The single IAM switch (debezium/dbz#3003). quarkus.oidc.tenant-enabled below is
+  # derived from this, so authentication and authorization cannot be configured to
+  # disagree. role-mappings is supplied from a mounted ConfigMap in Helm deployments
+  # via quarkus.config.locations; left empty, the shipped default bundles apply
+  # (dmp-admin/dmp-editor/dmp-operator/dmp-viewer).
+  security:
+    enabled: ${CONDUCTOR_SECURITY_ENABLED:false}
+    bootstrap-admin-role: ${CONDUCTOR_SECURITY_BOOTSTRAP_ADMIN_ROLE:}
+    internal-credential:
+      secret: ${CONDUCTOR_INTERNAL_CREDENTIAL_SECRET:}
+      previous-secret: ${CONDUCTOR_INTERNAL_CREDENTIAL_PREVIOUS_SECRET:}
 pipeline:
   offset:
     storage:
@@ -143,38 +154,54 @@ quarkus:
       read-timeout: 30000
       # HostAgentClient maps Agent responses, including 404, explicitly.
       disable-default-mapper: true
-  # OIDC bearer-token validation (service mode), OFF by default. Enable with
-  # QUARKUS_OIDC_TENANT_ENABLED=true and OIDC_ISSUER; /api/* is then secured by
-  # default (see quarkus.http.auth.permission.api below).
+  # OIDC bearer-token validation (service mode), OFF by default. tenant-enabled is
+  # DERIVED from conductor.security.enabled (debezium/dbz#3003): never configure it
+  # independently, or the two enforcement layers (authentication here, authorization
+  # below and in code) could be made to disagree, which is the partial-enforcement
+  # state the design forbids.
   oidc:
-    tenant-enabled: false
+    tenant-enabled: ${conductor.security.enabled}
     application-type: service
     auth-server-url: ${OIDC_ISSUER:https://keycloak.invalid/realms/none}
     client-id: ${OIDC_CLIENT_ID:conductor}
-    # Enable audience enforcement via QUARKUS_OIDC_TOKEN_AUDIENCE.
-    # Roles read from realm_access.roles natively (no role-claim-path).
+    token:
+      # REQUIRED when IAM is enabled; EnforcementValidator fails the boot if unset.
+      # Quarkus skips audience validation entirely when this is empty, so leaving it
+      # optional would have meant off by default: the control exists, appears
+      # configured, and does nothing.
+      audience: ${OIDC_AUDIENCE:}
+    roles:
+      # Non-Keycloak IdPs (e.g. Entra ID app roles) may need this; Keycloak's
+      # realm_access.roles / resource_access.<client-id>.roles resolve without it.
+      role-claim-path: ${OIDC_ROLE_CLAIM_PATH:}
   keycloak:
     devservices:
       enabled: false
   http:
     cors:
         ~: true
+        origins: ${CONDUCTOR_CORS_ORIGINS:}
     auth:
-      # /api/* policy defaults to "authenticated" when OIDC is enabled;
-      # set CONDUCTOR_API_POLICY=permit to open back the API;
-      # or a custom role policy
       permission:
         api:
-          enabled: ${quarkus.oidc.tenant-enabled}
+          enabled: ${conductor.security.enabled}
           paths: /api/*
-          policy: ${CONDUCTOR_API_POLICY:authenticated}
-        infra:
-          paths: /q/*
+          policy: authenticated
+        # More specific than /q/* so it wins (debezium/dbz#3003). These callers
+        # cannot present a token: the kubelet probes, and the scraper is a
+        # sidecar/collector. /q/health is listed separately from /q/health/*
+        # because the aggregate endpoint is not a sub-path.
+        probes:
+          enabled: ${conductor.security.enabled}
+          paths: /q/health,/q/health/*,/q/metrics
           policy: permit
-      # Example RBAC policy; set CONDUCTOR_API_POLICY=admin-only to use.
-      # policy:
-      #   admin-only:
-      #     roles-allowed: dmp-admin
+        # Everything else under /q, in practice /q/openapi. Was "permit";
+        # the spec is not secret, but it should not be anonymously readable
+        # either (debezium/dbz#3003).
+        infra:
+          enabled: ${conductor.security.enabled}
+          paths: /q/*
+          policy: authenticated
   debezium-outbox:
     table-name: events
     aggregate-type:
@@ -189,7 +216,9 @@ quarkus:
     baseline-on-migrate: true
     migrate-at-start: true
   swagger-ui:
-    always-include: true
+    # Restores the Quarkus default: dev/test only. Debezium/dbz#3003 removes the
+    # earlier opt-in to production exposure.
+    always-include: false
   log:
     min-level: TRACE
     level: INFO
