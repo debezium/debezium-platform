@@ -27,9 +27,11 @@ import org.jboss.logging.Logger;
 import io.debezium.platform.api.dto.AlertEventResponse;
 import io.debezium.platform.api.dto.AlertStatusResponse;
 import io.debezium.platform.api.dto.PagedAlertEventResponse;
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.data.model.Severity;
 import io.debezium.platform.domain.AlertEventService;
 import io.debezium.platform.domain.AlertStateService;
+import io.quarkus.security.PermissionsAllowed;
 
 @Tag(name = "Alerting")
 @Path("/alerts")
@@ -48,6 +50,7 @@ public class AlertEventResource {
 
     @Operation(summary = "Returns paginated alert events")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = PagedAlertEventResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.ALERT_READ)
     @GET
     @Path("/events")
     public Response listEvents(@QueryParam("severity") Severity severity,
@@ -64,6 +67,7 @@ public class AlertEventResource {
 
     @Operation(summary = "Returns a single alert event by id")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = AlertEventResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.ALERT_READ)
     @GET
     @Path("/events/{id}")
     public Response getEventById(@PathParam("id") Long id) {
@@ -74,6 +78,7 @@ public class AlertEventResource {
 
     @Operation(summary = "Returns current alert status summary")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = AlertStatusResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.ALERT_READ)
     @GET
     @Path("/status")
     public Response getStatus() {

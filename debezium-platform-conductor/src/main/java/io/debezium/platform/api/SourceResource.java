@@ -32,10 +32,12 @@ import org.jboss.logging.Logger;
 import io.debezium.platform.api.dto.SourceRequest;
 import io.debezium.platform.api.dto.SourceResponse;
 import io.debezium.platform.api.mapper.SourceMapper;
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.data.dto.SignalCollectionVerifyRequest;
 import io.debezium.platform.data.dto.SignalDataCollectionVerifyResponse;
 import io.debezium.platform.domain.SourceService;
 import io.debezium.platform.error.NotFoundException;
+import io.quarkus.security.PermissionsAllowed;
 
 @Tag(name = "sources")
 @Path("/sources")
@@ -53,6 +55,7 @@ public class SourceResource {
 
     @Operation(summary = "Returns all available sources")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SourceResponse.class, required = true, type = SchemaType.ARRAY)))
+    @PermissionsAllowed(Permissions.SOURCE_READ)
     @GET
     public Response get() {
         var sources = sourceService.list();
@@ -61,6 +64,7 @@ public class SourceResource {
 
     @Operation(summary = "Returns a source with given id")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SourceResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.SOURCE_READ)
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
@@ -72,6 +76,7 @@ public class SourceResource {
 
     @Operation(summary = "Creates new source")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
+    @PermissionsAllowed(Permissions.SOURCE_WRITE)
     @POST
     public Response post(@NotNull @Valid SourceRequest request, @Context UriInfo uriInfo) {
         var view = sourceService.createEmpty();
@@ -85,6 +90,7 @@ public class SourceResource {
 
     @Operation(summary = "Updates an existing source")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SourceResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.SOURCE_WRITE)
     @PUT
     @Path("/{id}")
     public Response put(@PathParam("id") Long id, @NotNull @Valid SourceRequest request) {
@@ -96,6 +102,7 @@ public class SourceResource {
 
     @Operation(summary = "Deletes an existing source")
     @APIResponse(responseCode = "204")
+    @PermissionsAllowed(Permissions.SOURCE_WRITE)
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {
@@ -106,6 +113,9 @@ public class SourceResource {
     @Operation(summary = "Verify that signal data collection is configured correctly")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SignalDataCollectionVerifyResponse.class, type = SchemaType.OBJECT)))
     @APIResponse(responseCode = "400", description = "Invalid request, the connection id and the fully qualified table name are both required", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(type = SchemaType.OBJECT)))
+    // Egress rule: this makes an outbound connection from user-supplied configuration, so it
+    // requires :write even though it persists nothing (debezium/dbz#3003).
+    @PermissionsAllowed(Permissions.SOURCE_WRITE)
     @POST
     @Path("/signals/verify")
     public Response verifySignalConfiguration(@NotNull @Valid SignalCollectionVerifyRequest request) {

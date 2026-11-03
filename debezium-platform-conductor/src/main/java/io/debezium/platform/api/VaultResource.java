@@ -32,8 +32,10 @@ import org.jboss.logging.Logger;
 import io.debezium.platform.api.dto.VaultRequest;
 import io.debezium.platform.api.dto.VaultResponse;
 import io.debezium.platform.api.mapper.VaultMapper;
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.domain.VaultService;
 import io.debezium.platform.error.NotFoundException;
+import io.quarkus.security.PermissionsAllowed;
 
 @Tag(name = "vaults")
 @Path("/vaults")
@@ -51,6 +53,7 @@ public class VaultResource {
 
     @Operation(summary = "Returns all available vaults")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = VaultResponse.class, required = true, type = SchemaType.ARRAY)))
+    @PermissionsAllowed(Permissions.VAULT_READ)
     @GET
     public Response get() {
         var vaults = vaultService.list();
@@ -59,6 +62,7 @@ public class VaultResource {
 
     @Operation(summary = "Returns a vault with given id")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = VaultResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.VAULT_READ)
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
@@ -70,6 +74,7 @@ public class VaultResource {
 
     @Operation(summary = "Creates new vault")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
+    @PermissionsAllowed(Permissions.VAULT_WRITE)
     @POST
     public Response post(@NotNull @Valid VaultRequest request, @Context UriInfo uriInfo) {
         var view = vaultService.createEmpty();
@@ -83,6 +88,7 @@ public class VaultResource {
 
     @Operation(summary = "Updates an existing vault")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = VaultResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.VAULT_WRITE)
     @PUT
     @Path("/{id}")
     public Response put(@PathParam("id") Long id, @NotNull @Valid VaultRequest request) {
@@ -94,6 +100,7 @@ public class VaultResource {
 
     @Operation(summary = "Deletes an existing vault")
     @APIResponse(responseCode = "204")
+    @PermissionsAllowed(Permissions.VAULT_WRITE)
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {
