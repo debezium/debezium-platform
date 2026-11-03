@@ -77,6 +77,37 @@ Generates schema history envs.
 {{- end }}
 
 {{/*
+Resolves the single IAM switch (debezium/dbz#3003), honouring the deprecated
+conductor.oidc.enabled alias and failing the render if both it and
+conductor.security.enabled are set to disagreeing values. Ambiguous intent on a
+security switch is never resolved by guessing. Returns the string "true" or
+"false"; callers wanting a boolean should compare against "true".
+Usage: {{- $securityEnabled := eq (include "debezium-platform.securityEnabled" .) "true" }}
+*/}}
+{{- define "debezium-platform.securityEnabled" -}}
+{{- $old := .Values.conductor.oidc.enabled -}}
+{{- $new := .Values.conductor.security.enabled -}}
+{{- if and (not (eq $old nil)) (not (eq $new nil)) (ne $old $new) -}}
+{{- fail "conductor.oidc.enabled and conductor.security.enabled disagree. conductor.oidc.enabled is deprecated; set only conductor.security.enabled." -}}
+{{- end -}}
+{{- if not (eq $new nil) -}}
+{{- $new -}}
+{{- else if not (eq $old nil) -}}
+{{- $old -}}
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+{{/*
+Name of the ConfigMap holding conductor.security.role-mappings, mounted via
+quarkus.config.locations. Only rendered/mounted when roleMappings is non-empty.
+*/}}
+{{- define "debezium-platform.securityConfigMapName" -}}
+{{- printf "%s-security-role-mappings" .Chart.Name -}}
+{{- end -}}
+
+{{/*
 Common labels
 */}}
 
