@@ -46,12 +46,11 @@ public class AgentTokenFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
+        // debezium/dbz#3003: the fail-open branch ("no token configured means authentication is
+        // disabled") is removed. The agent process only exists in agent-based host deployments,
+        // so if it is running, it needs a token; an unset token must now reject every request,
+        // not wave them all through.
         String expectedToken = config.token().orElse("");
-
-        // If no token is configured, authentication is disabled (development mode)
-        if (expectedToken == null || expectedToken.isEmpty()) {
-            return;
-        }
 
         String authHeader = requestContext.getHeaderString("Authorization");
 
@@ -67,7 +66,10 @@ public class AgentTokenFilter implements ContainerRequestFilter {
 
         String providedToken = authHeader.substring(BEARER_PREFIX.length()).trim();
 
-        if (!timingSafeEquals(expectedToken, providedToken)) {
+        // An empty expected token must never match: without this, an empty "Authorization:
+        // Bearer " header would compare equal to an unconfigured token and authenticate,
+        // reopening exactly the fail-open hole the removed branch above used to create outright.
+        if (expectedToken.isEmpty() || !timingSafeEquals(expectedToken, providedToken)) {
             logger.warnv("Request rejected: invalid bearer token from {0}",
                     requestContext.getUriInfo().getRequestUri());
             requestContext.abortWith(
