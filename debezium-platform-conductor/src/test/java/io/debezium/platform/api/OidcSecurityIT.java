@@ -34,9 +34,11 @@ class OidcSecurityIT {
     }
 
     @Test
-    @DisplayName("Calling an API endpoint with a valid bearer token should be allowed")
+    @DisplayName("Calling an API endpoint with a valid, authorized bearer token should be allowed")
     void apiRequestWithValidTokenShouldReturnOk() {
-        String accessToken = OidcWiremockTestResource.getAccessToken("alice", Set.of("dmp-user"));
+        // debezium/dbz#3003: authentication alone is no longer sufficient; dmp-viewer is one of
+        // the shipped default bundles and holds catalog:read.
+        String accessToken = OidcWiremockTestResource.getAccessToken("alice", Set.of("dmp-viewer"));
 
         given()
                 .auth().oauth2(accessToken)

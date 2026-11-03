@@ -26,9 +26,11 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.data.dto.PanelQueryResponse;
 import io.debezium.platform.data.dto.PanelsListResponse;
 import io.debezium.platform.domain.MonitoringService;
+import io.quarkus.security.PermissionsAllowed;
 
 @Path("monitoring")
 @Tag(name = "Monitoring", description = "Pipeline monitoring and metrics")
@@ -42,6 +44,7 @@ public class MonitoringResource {
 
     @Operation(summary = "List available monitoring panels")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = PanelsListResponse.class)))
+    @PermissionsAllowed(Permissions.MONITORING_READ)
     @GET
     @Path("/panels")
     @Produces(APPLICATION_JSON)
@@ -53,6 +56,7 @@ public class MonitoringResource {
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = PanelQueryResponse.class)))
     @APIResponse(responseCode = "400", description = "Invalid parameters", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(type = SchemaType.OBJECT)))
     @APIResponse(responseCode = "404", description = "Panel not found", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(type = SchemaType.OBJECT)))
+    @PermissionsAllowed(Permissions.MONITORING_READ)
     @GET
     @Path("/panels/{id}/query")
     @Produces(APPLICATION_JSON)

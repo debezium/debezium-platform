@@ -35,6 +35,7 @@ import io.debezium.platform.api.dto.PipelineRequest;
 import io.debezium.platform.api.dto.PipelineResponse;
 import io.debezium.platform.api.dto.PipelineUpdateRequest;
 import io.debezium.platform.api.mapper.PipelineMapper;
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.data.dto.SignalRequest;
 import io.debezium.platform.data.dto.SignalResponse;
 import io.debezium.platform.domain.PipelineService;
@@ -42,6 +43,7 @@ import io.debezium.platform.domain.Signal;
 import io.debezium.platform.environment.EnvironmentController;
 import io.debezium.platform.environment.logs.LogReader;
 import io.debezium.platform.error.NotFoundException;
+import io.quarkus.security.PermissionsAllowed;
 import io.smallrye.common.annotation.RunOnVirtualThread;
 
 @Tag(name = "pipelines")
@@ -60,6 +62,7 @@ public class PipelineResource {
 
     @Operation(summary = "Returns all available pipelines")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = PipelineResponse.class, required = true, type = SchemaType.ARRAY)))
+    @PermissionsAllowed(Permissions.PIPELINE_READ)
     @GET
     public Response get() {
         var pipelines = pipelineService.list();
@@ -68,6 +71,7 @@ public class PipelineResource {
 
     @Operation(summary = "Returns a pipeline with given id")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = PipelineResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.PIPELINE_READ)
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
@@ -79,6 +83,7 @@ public class PipelineResource {
 
     @Operation(summary = "Creates new pipeline")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
+    @PermissionsAllowed(Permissions.PIPELINE_WRITE)
     @POST
     public Response post(@NotNull @Valid PipelineRequest request, @Context UriInfo uriInfo) {
         var view = pipelineService.createEmpty();
@@ -92,6 +97,7 @@ public class PipelineResource {
 
     @Operation(summary = "Updates an existing pipeline")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = PipelineResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.PIPELINE_WRITE)
     @PUT
     @Path("/{id}")
     public Response put(@PathParam("id") Long id, @NotNull @Valid PipelineUpdateRequest request) {
@@ -104,6 +110,7 @@ public class PipelineResource {
 
     @Operation(summary = "Deletes an existing pipeline")
     @APIResponse(responseCode = "204")
+    @PermissionsAllowed(Permissions.PIPELINE_WRITE)
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {
@@ -113,6 +120,7 @@ public class PipelineResource {
 
     @Operation(summary = "Returns logs for pipeline with given id")
     @APIResponse(responseCode = "200", content = @Content(mediaType = TEXT_PLAIN, schema = @Schema(implementation = String.class, required = true)))
+    @PermissionsAllowed(Permissions.PIPELINE_LOGS)
     @GET
     @Path("/{id}/logs")
     @Produces(TEXT_PLAIN)
@@ -131,6 +139,7 @@ public class PipelineResource {
     @Operation(summary = "Send signal to pipeline with given id")
     @APIResponse(responseCode = "202", description = "Signal correctly sent to the pipeline", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SignalResponse.class, required = true)))
     @APIResponse(responseCode = "404", description = "Pipeline not found")
+    @PermissionsAllowed(Permissions.PIPELINE_OPERATE)
     @POST
     @Path("/{id}/signals")
     @Produces(APPLICATION_JSON)
