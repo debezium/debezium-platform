@@ -21,7 +21,9 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.domain.CatalogService;
+import io.quarkus.security.PermissionsAllowed;
 
 @Path("catalog")
 public class CatalogResource {
@@ -37,6 +39,7 @@ public class CatalogResource {
 
     @Operation(summary = "Returns all available components for the current application version")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(required = true, type = SchemaType.OBJECT)))
+    @PermissionsAllowed(Permissions.CATALOG_READ)
     @GET
     @Produces("application/json")
     public Response getCatalog(@QueryParam("type") String componentType) {
@@ -47,6 +50,7 @@ public class CatalogResource {
 
     @Operation(summary = "Returns all available components for a specific version")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(required = true, type = SchemaType.OBJECT)))
+    @PermissionsAllowed(Permissions.CATALOG_READ)
     @GET
     @Produces("application/json")
     @Path("/{version}")
@@ -59,6 +63,7 @@ public class CatalogResource {
 
     @Operation(summary = "Returns descriptors for a specific component using current application version")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(required = true, type = SchemaType.OBJECT)))
+    @PermissionsAllowed(Permissions.CATALOG_READ)
     @GET
     @Produces("application/json")
     @Path("/{type}/{class}")
@@ -71,6 +76,7 @@ public class CatalogResource {
 
     @Operation(summary = "Returns descriptors for a specific component")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(required = true, type = SchemaType.OBJECT)))
+    @PermissionsAllowed(Permissions.CATALOG_READ)
     @GET
     @Produces("application/json")
     @Path("/{version}/{type}/{class}")

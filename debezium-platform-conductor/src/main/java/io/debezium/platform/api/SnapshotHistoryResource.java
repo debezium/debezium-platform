@@ -27,8 +27,10 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import io.debezium.connector.SnapshotType;
 import io.debezium.platform.api.dto.PagedSnapshotHistoryResponse;
 import io.debezium.platform.api.dto.SnapshotHistoryResponse;
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.data.model.SnapshotState;
 import io.debezium.platform.domain.SnapshotHistoryService;
+import io.quarkus.security.PermissionsAllowed;
 
 /**
  * Snapshot history query surfaces for a pipeline (DDD-68): a paginated, filterable list and a
@@ -46,6 +48,7 @@ public class SnapshotHistoryResource {
 
     @Operation(summary = "List completed snapshot runs for a pipeline (paginated)")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = PagedSnapshotHistoryResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.MONITORING_READ)
     @GET
     public Response list(@PathParam("pipelineId") Long pipelineId,
                          @QueryParam("type") SnapshotType type,
@@ -61,6 +64,7 @@ public class SnapshotHistoryResource {
     @Operation(summary = "Return a single snapshot run with its per-table breakdown")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = SnapshotHistoryResponse.class, required = true)))
     @APIResponse(responseCode = "404", description = "Unknown snapshot run for this pipeline")
+    @PermissionsAllowed(Permissions.MONITORING_READ)
     @GET
     @Path("/{historyId}")
     public Response getById(@PathParam("pipelineId") Long pipelineId, @PathParam("historyId") Long historyId) {

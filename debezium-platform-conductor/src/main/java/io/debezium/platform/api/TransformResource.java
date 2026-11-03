@@ -32,8 +32,10 @@ import org.jboss.logging.Logger;
 import io.debezium.platform.api.dto.TransformRequest;
 import io.debezium.platform.api.dto.TransformResponse;
 import io.debezium.platform.api.mapper.TransformMapper;
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.domain.TransformService;
 import io.debezium.platform.error.NotFoundException;
+import io.quarkus.security.PermissionsAllowed;
 
 @Tag(name = "transforms")
 @Path("/transforms")
@@ -51,6 +53,7 @@ public class TransformResource {
 
     @Operation(summary = "Returns all available transformations")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = TransformResponse.class, required = true, type = SchemaType.ARRAY)))
+    @PermissionsAllowed(Permissions.TRANSFORM_READ)
     @GET
     public Response get() {
         var transforms = transformService.list();
@@ -59,6 +62,7 @@ public class TransformResource {
 
     @Operation(summary = "Returns a transform with given id")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = TransformResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.TRANSFORM_READ)
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
@@ -70,6 +74,7 @@ public class TransformResource {
 
     @Operation(summary = "Creates new transform")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
+    @PermissionsAllowed(Permissions.TRANSFORM_WRITE)
     @POST
     public Response post(@NotNull @Valid TransformRequest request, @Context UriInfo uriInfo) {
         var view = transformService.createEmpty();
@@ -83,6 +88,7 @@ public class TransformResource {
 
     @Operation(summary = "Updates an existing transform")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = TransformResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.TRANSFORM_WRITE)
     @PUT
     @Path("/{id}")
     public Response put(@PathParam("id") Long id, @NotNull @Valid TransformRequest request) {
@@ -94,6 +100,7 @@ public class TransformResource {
 
     @Operation(summary = "Deletes an existing transform")
     @APIResponse(responseCode = "204")
+    @PermissionsAllowed(Permissions.TRANSFORM_WRITE)
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {

@@ -32,8 +32,10 @@ import org.jboss.logging.Logger;
 import io.debezium.platform.api.dto.DestinationRequest;
 import io.debezium.platform.api.dto.DestinationResponse;
 import io.debezium.platform.api.mapper.DestinationMapper;
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.domain.DestinationService;
 import io.debezium.platform.error.NotFoundException;
+import io.quarkus.security.PermissionsAllowed;
 
 @Tag(name = "destinations")
 @Path("/destinations")
@@ -51,6 +53,7 @@ public class DestinationResource {
 
     @Operation(summary = "Returns all available destinations")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = DestinationResponse.class, required = true, type = SchemaType.ARRAY)))
+    @PermissionsAllowed(Permissions.DESTINATION_READ)
     @GET
     public Response get() {
         var destinations = destinationService.list();
@@ -59,6 +62,7 @@ public class DestinationResource {
 
     @Operation(summary = "Returns a destination with given id")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = DestinationResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.DESTINATION_READ)
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
@@ -70,6 +74,7 @@ public class DestinationResource {
 
     @Operation(summary = "Creates new destination")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
+    @PermissionsAllowed(Permissions.DESTINATION_WRITE)
     @POST
     public Response post(@NotNull @Valid DestinationRequest request, @Context UriInfo uriInfo) {
         var view = destinationService.createEmpty();
@@ -83,6 +88,7 @@ public class DestinationResource {
 
     @Operation(summary = "Updates an existing destination")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = DestinationResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.DESTINATION_WRITE)
     @PUT
     @Path("/{id}")
     public Response put(@PathParam("id") Long id, @NotNull @Valid DestinationRequest request) {
@@ -94,6 +100,7 @@ public class DestinationResource {
 
     @Operation(summary = "Deletes an existing destination")
     @APIResponse(responseCode = "204")
+    @PermissionsAllowed(Permissions.DESTINATION_WRITE)
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {

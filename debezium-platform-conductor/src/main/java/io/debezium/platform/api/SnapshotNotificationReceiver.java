@@ -7,6 +7,7 @@ package io.debezium.platform.api;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
+import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -42,6 +43,13 @@ public class SnapshotNotificationReceiver {
         this.pipelineService = pipelineService;
     }
 
+    // debezium/dbz#3003: generic enforcement does not apply to this endpoint. The caller is
+    // Debezium Server, in-cluster, with no OIDC token; the guard is InternalCredentialFilter
+    // (path policy carve-out at quarkus.http.auth.permission.internal), not this annotation.
+    // Required anyway: with quarkus.security.jaxrs.deny-unannotated-endpoints=true an
+    // unannotated method is @DenyAll, so leaving this bare would silently break the callback
+    // rather than leave it open. Listed on EndpointPermissionCoverageTest's exemption list.
+    @PermitAll
     @POST
     @Consumes(APPLICATION_JSON)
     @Operation(hidden = true)
