@@ -8,6 +8,7 @@ package io.debezium.platform.config;
 import java.util.List;
 import java.util.Optional;
 
+import io.quarkus.arc.Unremovable;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
@@ -19,7 +20,12 @@ import io.smallrye.config.WithName;
  * derived {@code quarkus.oidc.tenant-enabled}, authorization, and the internal callback
  * credential. Nothing here is independently switchable; {@code enabled} is the one property an
  * operator sets.
+ *
+ * <p>{@code @Unremovable}: this is injected from several places, some of them only reachable
+ * through CDI proxies that Arc's dead-code elimination cannot always see through; keeping the
+ * bean unconditionally avoids depending on that analysis being exhaustive.
  */
+@Unremovable
 @ConfigMapping(prefix = "conductor.security")
 @ConfigRoot(phase = ConfigPhase.RUN_TIME)
 public interface SecurityConfigGroup {
