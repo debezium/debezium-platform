@@ -48,8 +48,10 @@ import io.debezium.operator.api.model.source.Source;
 import io.debezium.operator.api.model.source.SourceBuilder;
 import io.debezium.operator.api.model.source.storage.CustomStoreBuilder;
 import io.debezium.platform.config.PipelineConfigGroup;
+import io.debezium.platform.config.SecurityConfigGroup;
 import io.debezium.platform.config.SnapshotMonitoringConfigGroup;
 import io.debezium.platform.data.model.ConnectionEntity;
+import io.debezium.platform.domain.InternalCredentialService;
 import io.debezium.platform.domain.views.Transform;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.environment.operator.configuration.TableNameResolver;
@@ -65,6 +67,8 @@ public class PipelineMapper {
     private static final String NOTIFICATION_HTTP_TIMEOUT_CONFIG = "notification.http.timeout.ms";
     private static final String NOTIFICATION_HTTP_RETRIES_CONFIG = "notification.http.retries";
     private static final String NOTIFICATION_HTTP_ALLOW_PRIVATE_NETWORKS_CONFIG = "notification.http.allow.private.networks";
+    private static final String NOTIFICATION_HTTP_AUTHORIZATION_CONFIG = "notification.http.authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
     private static final String DEFAULT_SIGNAL_CHANNELS = "source,in-process";
     private static final String CALLBACK_URL_FORMAT = "http://%s:%d/api/internal/pipelines/%d/notifications";
     private static final String PREDICATE_PREFIX = "p";
@@ -94,15 +98,21 @@ public class PipelineMapper {
     final TableNameResolver tableNameResolver;
     final Metrics metrics;
     final SnapshotMonitoringConfigGroup snapshotMonitoringConfigGroup;
+    final SecurityConfigGroup securityConfigGroup;
+    final InternalCredentialService internalCredentialService;
 
     public PipelineMapper(PipelineConfigGroup pipelineConfigGroup,
                           TableNameResolver tableNameResolver,
                           Metrics metrics,
-                          SnapshotMonitoringConfigGroup snapshotMonitoringConfigGroup) {
+                          SnapshotMonitoringConfigGroup snapshotMonitoringConfigGroup,
+                          SecurityConfigGroup securityConfigGroup,
+                          InternalCredentialService internalCredentialService) {
         this.pipelineConfigGroup = pipelineConfigGroup;
         this.tableNameResolver = tableNameResolver;
         this.metrics = metrics;
         this.snapshotMonitoringConfigGroup = snapshotMonitoringConfigGroup;
+        this.securityConfigGroup = securityConfigGroup;
+        this.internalCredentialService = internalCredentialService;
     }
 
     public DebeziumServer map(PipelineFlat pipeline) {
@@ -264,6 +274,16 @@ public class PipelineMapper {
         // channel's SSRF guard must permit private networks; otherwise it rejects the callback URL. This
         // is intrinsic to how the platform wires the callback and is not a per-pipeline option.
         sourceConfig.setProps(NOTIFICATION_HTTP_ALLOW_PRIVATE_NETWORKS_CONFIG, Boolean.TRUE.toString());
+
+        // debezium/dbz#3003: provisioned whenever the secret is configured, NOT when IAM is
+        // enabled. A credential nothing is yet verifying is inert, so this can be staged ahead of
+        // enforcement, and pipeline pod rolls happen on the operator's own schedule rather than
+        // being forced by the moment enforcement is switched on. With no secret configured, the
+        // generated resource carries no such property and is unchanged from before this feature.
+        if (securityConfigGroup.internalCredential().secret().isPresent()) {
+            sourceConfig.setProps(NOTIFICATION_HTTP_AUTHORIZATION_CONFIG,
+                    BEARER_PREFIX + internalCredentialService.mint(pipeline.getId()));
+        }
     }
 
     /**

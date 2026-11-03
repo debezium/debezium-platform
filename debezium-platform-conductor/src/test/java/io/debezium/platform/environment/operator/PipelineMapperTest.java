@@ -30,8 +30,10 @@ import io.debezium.doc.FixFor;
 import io.debezium.operator.api.model.runtime.metrics.Metrics;
 import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
 import io.debezium.platform.config.PipelineConfigGroup;
+import io.debezium.platform.config.SecurityConfigGroup;
 import io.debezium.platform.config.SnapshotMonitoringConfigGroup;
 import io.debezium.platform.data.model.ConnectionEntity;
+import io.debezium.platform.domain.InternalCredentialService;
 import io.debezium.platform.domain.views.Connection;
 import io.debezium.platform.domain.views.Transform;
 import io.debezium.platform.domain.views.flat.DestinationFlat;
@@ -53,6 +55,12 @@ public class PipelineMapperTest {
 
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     SnapshotMonitoringConfigGroup snapshotMonitoringConfigGroup;
+
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    SecurityConfigGroup securityConfigGroup;
+
+    @Mock
+    InternalCredentialService internalCredentialService;
 
     private PipelineMapper pipelineMapper;
 
@@ -80,6 +88,8 @@ public class PipelineMapperTest {
         when(pipelineConfigGroup.health().readiness().periodSeconds()).thenReturn(10);
         when(pipelineConfigGroup.health().readiness().timeoutSeconds()).thenReturn(10);
         when(pipelineConfigGroup.health().readiness().failureThreshold()).thenReturn(3);
+
+        when(securityConfigGroup.internalCredential().secret()).thenReturn(Optional.empty());
 
         pipelineMapper = createMapper();
     }
@@ -339,9 +349,44 @@ public class PipelineMapperTest {
                 .containsEntry("notification.http.allow.private.networks", "true");
     }
 
+    @Test
+    @FixFor("debezium/dbz#3003")
+    public void testMapperDoesNotSetAuthorizationPropertyWhenSecretUnconfigured() {
+        // Default setUp(): no secret configured. The generated resource must carry no such
+        // property, byte-identical to the pre-feature output (NFR-5).
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getSource().getConfig().getProps())
+                .doesNotContainKey("notification.http.authorization");
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3003")
+    public void testMapperSetsAuthorizationPropertyWhenSecretConfigured() {
+        when(securityConfigGroup.internalCredential().secret()).thenReturn(Optional.of("shhh"));
+        when(internalCredentialService.mint(1L)).thenReturn("minted-credential");
+        pipelineMapper = createMapper();
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getSource().getConfig().getProps())
+                .containsEntry("notification.http.authorization", "Bearer minted-credential")
+                // The callback URL itself must still carry no credential.
+                .containsEntry("notification.http.url",
+                        "http://conductor:8080/api/internal/pipelines/1/notifications");
+    }
+
     private PipelineMapper createMapper() {
         return new PipelineMapper(pipelineConfigGroup, tableNameResolver, buildMetrics(pipelineConfigGroup),
-                snapshotMonitoringConfigGroup);
+                snapshotMonitoringConfigGroup, securityConfigGroup, internalCredentialService);
     }
 
     private static Metrics buildMetrics(PipelineConfigGroup config) {

@@ -191,6 +191,13 @@ quarkus:
         origins: ${CONDUCTOR_CORS_ORIGINS:}
     auth:
       permission:
+        # More specific than /api/* so it wins (debezium/dbz#3003). Debezium Server has no OIDC
+        # token; the guard is InternalCredentialFilter, not this policy, which merely keeps the
+        # generic "authenticated" floor from applying to a path that could never satisfy it.
+        internal:
+          enabled: ${conductor.security.enabled}
+          paths: /api/internal/*
+          policy: permit
         api:
           enabled: ${conductor.security.enabled}
           paths: /api/*
