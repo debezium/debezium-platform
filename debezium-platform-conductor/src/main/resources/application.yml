@@ -188,7 +188,6 @@ quarkus:
   http:
     cors:
         ~: true
-        origins: ${CONDUCTOR_CORS_ORIGINS:}
     auth:
       # With proactive authentication on (the Quarkus default), any request carrying an
       # Authorization: Bearer value is run through every registered authentication mechanism,

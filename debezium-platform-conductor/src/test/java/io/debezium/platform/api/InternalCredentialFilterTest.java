@@ -36,8 +36,9 @@ class InternalCredentialFilterTest {
 
     private static final String INTERNAL_PATH = "internal/pipelines/1/notifications";
     private static final String PUBLIC_PATH = "pipelines/1/snapshots/progress";
-    // 43 characters, no '.': the shape InternalCredentialService produces.
-    private static final String CREDENTIAL_SHAPED_TOKEN = "a".repeat(43);
+    // Starts with InternalCredentialService.CREDENTIAL_MARKER: the structural check
+    // looksLikeOurCredential uses to recognise one of ours.
+    private static final String CREDENTIAL_SHAPED_TOKEN = "dbz-internal-cred.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     @Mock
     ContainerRequestContext requestContext;
@@ -181,6 +182,22 @@ class InternalCredentialFilterTest {
         givenPath(PUBLIC_PATH);
         // Shaped like a JWT (contains '.'), not like our derived credential.
         givenBearerToken("header.payload.signature");
+
+        newFilter().filter(requestContext);
+
+        verify(requestContext, never()).abortWith(any());
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3003")
+    void allowsAnOpaqueUserTokenThatHappensToShareOurCredentialsLengthAndAlphabet() {
+        // An opaque reference access token (e.g. Okta, Auth0, or Keycloak configured for the
+        // opaque access_token format) can legitimately be 43 characters with no '.': exactly the
+        // shape the pre-fix heuristic treated as ours. The structural marker check must not
+        // collide with it.
+        givenEnforcementActive();
+        givenPath(PUBLIC_PATH);
+        givenBearerToken("a".repeat(43));
 
         newFilter().filter(requestContext);
 

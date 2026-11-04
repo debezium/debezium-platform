@@ -23,7 +23,7 @@ import io.debezium.platform.config.SecurityConfigGroup;
  * Mints and verifies the per-pipeline credential Debezium Server presents on the snapshot
  * notification callback (debezium/dbz#3003).
  *
- * <pre>credential = base64url( HMAC-SHA256(secret, "pipeline:" + pipelineId) )</pre>
+ * <pre>credential = CREDENTIAL_MARKER + base64url( HMAC-SHA256(secret, "pipeline:" + pipelineId) )</pre>
  *
  * <p>Derived, never stored: no table, no migration, and verification needs no database read.
  * The pipeline id is inside the MAC input, so a credential minted for one pipeline fails
@@ -37,10 +37,15 @@ public class InternalCredentialService {
     private static final String BEARER_PREFIX = "Bearer ";
 
     /**
-     * HMAC-SHA256 output is 32 bytes; base64url without padding encodes that as exactly 43
-     * characters. A bearer value of this shape, with no '.', is treated as one of ours.
+     * A fixed, non-secret marker prepended to every credential this service mints. {@code
+     * looksLikeOurCredential} uses it to tell "one of ours" from "someone else's bearer value" by
+     * exact structural match rather than by guessing from length and alphabet: an opaque
+     * reference token from an identity provider (Okta, Auth0, Keycloak configured for the opaque
+     * {@code access_token} format) can happen to be the same length as a base64url-encoded
+     * HMAC-SHA256 output with no '.' in it, which the earlier, shape-only heuristic could not
+     * tell apart from this service's own credential.
      */
-    public static final int CREDENTIAL_LENGTH = 43;
+    static final String CREDENTIAL_MARKER = "dbz-internal-cred.";
 
     private final SecurityConfigGroup config;
 
@@ -104,10 +109,10 @@ public class InternalCredentialService {
     }
 
     /**
-     * Whether a bearer value is shaped like one of ours: see {@link #CREDENTIAL_LENGTH}.
+     * Whether a bearer value is one of ours: see {@link #CREDENTIAL_MARKER}.
      */
     public static boolean looksLikeOurCredential(String token) {
-        return token != null && token.length() == CREDENTIAL_LENGTH && !token.contains(".");
+        return token != null && token.startsWith(CREDENTIAL_MARKER);
     }
 
     /**
@@ -141,7 +146,7 @@ public class InternalCredentialService {
             Mac mac = Mac.getInstance(ALGORITHM);
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), ALGORITHM));
             byte[] signature = mac.doFinal((CONTEXT_PREFIX + pipelineId).getBytes(StandardCharsets.UTF_8));
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(signature);
+            return CREDENTIAL_MARKER + Base64.getUrlEncoder().withoutPadding().encodeToString(signature);
         }
         catch (NoSuchAlgorithmException | InvalidKeyException e) {
             // HmacSHA256 is a mandatory JCE algorithm and the key is never empty by construction;

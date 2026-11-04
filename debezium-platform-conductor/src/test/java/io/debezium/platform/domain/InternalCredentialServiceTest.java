@@ -138,6 +138,37 @@ class InternalCredentialServiceTest {
 
     @Test
     @FixFor("debezium/dbz#3003")
+    void mintedCredentialLooksLikeOurs() {
+        givenSecrets(Optional.of("secret-a"), Optional.empty());
+
+        assertThat(InternalCredentialService.looksLikeOurCredential(service.mint(42L))).isTrue();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3003")
+    void anOpaqueTokenOfTheSameLengthAndAlphabetDoesNotLookLikeOurs() {
+        // Exactly the shape (43 characters, no '.') a base64url-encoded HMAC-SHA256 output has,
+        // and so the shape an opaque reference access token from an external identity provider
+        // (Okta, Auth0, Keycloak configured for the opaque access_token format) can legitimately
+        // take. looksLikeOurCredential must not collide with it: it checks for the structural
+        // CREDENTIAL_MARKER this service always prepends, not merely length and alphabet.
+        assertThat(InternalCredentialService.looksLikeOurCredential("a".repeat(43))).isFalse();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3003")
+    void aJwtShapedTokenDoesNotLookLikeOurs() {
+        assertThat(InternalCredentialService.looksLikeOurCredential("header.payload.signature")).isFalse();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3003")
+    void nullDoesNotLookLikeOurs() {
+        assertThat(InternalCredentialService.looksLikeOurCredential(null)).isFalse();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3003")
     void mintThrowsWhenSecretUnconfigured() {
         givenSecrets(Optional.empty(), Optional.empty());
 
