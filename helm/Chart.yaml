@@ -10,7 +10,7 @@ sources:
 home: https://github.com/debezium/debezium-platform
 dependencies:
     - name: debezium-operator
-      version: "3.7.0-alpha2"
+      version: "3.7.0"
       repository: "https://charts.debezium.io"
       condition: debezium-operator.enabled
     - name: database

@@ -312,9 +312,11 @@ describe("SchemaReviewView", () => {
     );
 
     expect(
-      await screen.findByText("Failed to load database table/collection"),
+      await screen.findByText(/table explorer could not be loaded/i),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Retry/i })).toBeInTheDocument();
+    expect(screen.getByText("Database include list")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Try again/i })).toBeInTheDocument();
+    expect(screen.queryByText("Failed to load database table/collection")).not.toBeInTheDocument();
   });
 
 });

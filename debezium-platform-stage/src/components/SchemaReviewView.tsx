@@ -33,13 +33,13 @@ import {
 import { buildSourceConnectorDisplayGroupedProperties } from "@utils/sourceConnectorDisplayGroups";
 import { splitSourceConfigForHydration } from "@utils/sourceConfigSplit";
 import {
-  getDataExplorerScopePhrase,
-  getTableManagedFilterPropertyNames,
+  candidateExplorerManagedProperties,
+  resolveExplorerBinding,
+  selectionFromSchemaValues,
 } from "@utils/Datatype";
-import ApiComponentError from "./ApiComponentError";
 import SchemaReviewValue from "./SchemaReviewValue";
+import TableExplorerNotice from "./TableExplorerNotice";
 import TableViewComponent from "./TableViewComponent";
-import _ from "lodash";
 import "./CreateSchemaForm.css";
 import "./SchemaReviewView.css";
 
@@ -156,11 +156,7 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
   );
 
   const connectorTypeString = typeKey;
-
-  const tableManagedFilterNames = useMemo(
-    () => new Set(getTableManagedFilterPropertyNames(connectorTypeString)),
-    [connectorTypeString]
-  );
+  const isSource = connectorType === "source";
 
   const selectedConnectionId = connector.connection?.id;
 
@@ -182,15 +178,35 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
       return response.data as TableData;
     },
 
-    enabled: selectedConnectionId != null && !hideSignalCollections
+    enabled: selectedConnectionId != null && isSource
   });
 
-  const collectionsError =
-    collectionsQueryError != null
-      ? typeof collectionsQueryError === "object"
-        ? (collectionsQueryError as object)
-        : { message: String(collectionsQueryError) }
-      : undefined;
+  const explorerReady =
+    isSource &&
+    selectedConnectionId != null &&
+    !isCollectionsLoading &&
+    collectionsQueryError == null &&
+    collections != null;
+
+  const explorerBinding = useMemo(
+    () => resolveExplorerBinding(connectorSchema.properties, collections),
+    [connectorSchema.properties, collections]
+  );
+
+  const omittedFilterNames = useMemo(() => {
+    if (!isSource || selectedConnectionId == null) return new Set<string>();
+    if (isCollectionsLoading) return new Set(candidateExplorerManagedProperties(connectorSchema.properties));
+    if (collectionsQueryError != null || collections == null) return new Set<string>();
+    return new Set(explorerBinding.managedProperties);
+  }, [
+    isSource,
+    selectedConnectionId,
+    isCollectionsLoading,
+    collectionsQueryError,
+    collections,
+    connectorSchema.properties,
+    explorerBinding,
+  ]);
 
   const allSections = useMemo(() => {
     const sections: { id: string; label: string }[] = [
@@ -252,7 +268,12 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
     return () => observer.disconnect();
   }, [allSections]);
 
-  const { schemaValues, additionalProps, signalCollectionName, selectedDataListItems } = split;
+  const { schemaValues, additionalProps, signalCollectionName } = split;
+
+  const explorerSelection = useMemo(
+    () => selectionFromSchemaValues(schemaValues, explorerBinding),
+    [schemaValues, explorerBinding]
+  );
 
   const effectiveSchemaValues = useMemo(
     () => buildEffectiveSchemaValues(connectorSchema.properties, schemaValues),
@@ -262,7 +283,10 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
   const noopSetSelectedDataListItems = useCallback(() => {}, []);
 
   const renderFiltersTableExplorer = useCallback(() => {
-    if (!connector.connection?.id) return null;
+    if (!isSource) return null;
+    if (!connector.connection?.id) {
+      return <TableExplorerNotice reason="connection" />;
+    }
     if (isCollectionsLoading) {
       return (
         <FormFieldGroup>
@@ -271,16 +295,14 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
         </FormFieldGroup>
       );
     }
-    if (!_.isEmpty(collectionsError)) {
+    if (collectionsQueryError != null || !explorerReady) {
       return (
-        <FormFieldGroup>
-          <ApiComponentError
-            error={collectionsError}
-            retry={() => {
-              void refetchCollections();
-            }}
-          />
-        </FormFieldGroup>
+        <TableExplorerNotice
+          reason="unavailable"
+          onRetry={() => {
+            void refetchCollections();
+          }}
+        />
       );
     }
     return (
@@ -296,23 +318,27 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
         </Content>
         <Content component="p" className="table-explorer-section__description">
           {t("source:create.dataTableDescription", {
-            val: getDataExplorerScopePhrase(connectorTypeString),
+            val: explorerBinding.scopePhrase,
           })}
         </Content>
         <TableViewComponent
           collections={collections}
+          binding={explorerBinding}
           setSelectedDataListItems={noopSetSelectedDataListItems}
-          selectedDataListItems={selectedDataListItems}
+          selectedDataListItems={explorerSelection}
           readOnly
         />
       </div>
     );
   }, [
+    isSource,
     connector.connection?.id,
     isCollectionsLoading,
-    collectionsError,
+    collectionsQueryError,
+    explorerReady,
     collections,
-    selectedDataListItems,
+    explorerBinding,
+    explorerSelection,
     noopSetSelectedDataListItems,
     t,
     connectorTypeString,
@@ -467,10 +493,10 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
               <Content component="p" className="jumplinks-section-description">
                 {group.description}
               </Content>
-              {group.name === "Filters" && tableManagedFilterNames.size > 0 ? renderFiltersTableExplorer() : null}
+              {group.name === "Filters" && isSource ? renderFiltersTableExplorer() : null}
               {renderSchemaGroupContent(
                 group.name,
-                group.name === "Filters" && tableManagedFilterNames.size > 0 ? tableManagedFilterNames : undefined
+                group.name === "Filters" && omittedFilterNames.size > 0 ? omittedFilterNames : undefined
               )}
             </section>
           );

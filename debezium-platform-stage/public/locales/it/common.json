@@ -129,7 +129,9 @@
     },
     "create": {
       "dataTableDescription": "Seleziona il {{val}} da sincronizzare",
-      "dataTableTitle": "{{val}} database"
+      "dataTableTitle": "{{val}} database",
+      "tableExplorerNoConnection": "Seleziona una connessione per sfogliare le tabelle, oppure inserisci i campi filtro direttamente.",
+      "tableExplorerUnavailable": "Impossibile caricare l'esploratore delle tabelle. Puoi comunque configurare i filtri inserendo i campi qui sotto."
     }
   },
   "navigation":{
