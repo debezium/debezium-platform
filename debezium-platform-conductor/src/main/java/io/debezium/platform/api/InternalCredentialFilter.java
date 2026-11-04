@@ -20,32 +20,38 @@ import io.debezium.platform.domain.InternalCredentialService;
 /**
  * Guards {@code /api/internal/*} (debezium/dbz#3003). Replaces the former
  * {@code InternalApiAccessFilter}: this still carries its proxy-provenance heuristic, but only
- * as a fallback for as long as no internal credential secret is configured.
+ * as a fallback for as long as real credential verification is not yet active.
  *
- * <p><b>Two modes, chosen per request by whether a secret exists, not by the IAM switch:</b>
+ * <p><b>Two modes, chosen by {@link InternalCredentialService#isEnforcementActive()}, not by
+ * whether a secret merely exists:</b>
  * <ul>
- * <li>No {@code conductor.security.internal-credential.secret} configured: falls back to the
- * pre-existing heuristic, rejecting an internal-path request carrying proxy-forwarding headers
- * ({@code X-Forwarded-For} or {@code Forwarded}), since Debezium Server calls the in-cluster
- * Service directly and never traverses a proxy. Unchanged from before this feature, and
- * deliberately not gated on {@code conductor.security.enabled}: it is today's only guard and
- * must not disappear just because IAM has not been enabled yet.</li>
- * <li>A secret is configured: the heuristic is replaced by real verification
- * ({@link InternalCredentialService}) of the pipeline-scoped HMAC credential, and a credential
- * shaped like ours presented at a non-internal path is rejected (FR-33), on the theory that a
- * bearer value in our derived format at a user-facing endpoint is a misuse, not a coincidence.</li>
+ * <li>Enforcement not active (no secret configured, <em>or</em> a secret is configured but
+ * {@code conductor.security.enabled} is still false): falls back to the pre-existing heuristic,
+ * rejecting an internal-path request carrying proxy-forwarding headers ({@code X-Forwarded-For}
+ * or {@code Forwarded}), since Debezium Server calls the in-cluster Service directly and never
+ * traverses a proxy. Unchanged from before this feature. The secret-configured-but-disabled case
+ * is deliberate: DDD-79's upgrade runbook sets the secret and redeploys every pipeline to carry
+ * it <em>before</em> switching {@code conductor.security.enabled} on, and real verification
+ * would reject every pipeline that has not yet redeployed if it activated on the secret alone.</li>
+ * <li>Enforcement active (secret configured <em>and</em> IAM enabled): the heuristic is replaced
+ * by real verification ({@link InternalCredentialService#verify}) of the pipeline-scoped HMAC
+ * credential, and a credential shaped like ours presented at a non-internal path is rejected
+ * (FR-33), on the theory that a bearer value in our derived format at a user-facing endpoint is a
+ * misuse, not a coincidence.</li>
  * </ul>
- *
- * <p>Checking "secret configured" rather than "IAM enabled" is what makes staged enablement
- * possible (HLD §4.3): an operator can configure the secret, let every pipeline roll with a
- * credential nothing yet requires, and only then flip {@code conductor.security.enabled}, with
- * no window in which a notification is rejected.
  *
  * <p>Priority is {@code AUTHENTICATION}, not {@code AUTHORIZATION}: this establishes who the
  * caller is (or rejects outright), ahead of any permission evaluation. It is not
  * {@code @PreMatching}, so path parameters are already resolved when it runs; it would need to
  * become so only if it ever started installing a {@code SecurityContext} rather than merely
  * allowing or aborting.
+ *
+ * <p><b>Requires {@code quarkus.http.auth.proactive=false}.</b> With proactive authentication on
+ * (the Quarkus default), any request carrying an {@code Authorization: Bearer} value is run
+ * through every registered authentication mechanism, including {@code quarkus-oidc}'s JWT
+ * parser, before routing ever reaches this filter, regardless of the {@code permit} path policy
+ * on {@code /api/internal/*}. The internal credential is not a JWT, so that attempt fails and the
+ * request is rejected before this filter runs at all, once IAM is enabled.
  */
 @Provider
 @Priority(Priorities.AUTHENTICATION)
@@ -68,7 +74,7 @@ public class InternalCredentialFilter implements ContainerRequestFilter {
     public void filter(ContainerRequestContext requestContext) {
         boolean internalPath = isInternalPath(requestContext.getUriInfo().getPath());
 
-        if (!credentials.isConfigured()) {
+        if (!credentials.isEnforcementActive()) {
             if (internalPath && cameThroughProxy(requestContext)) {
                 reject(requestContext, Response.Status.FORBIDDEN,
                         "internal endpoints are reachable only via the in-cluster conductor Service");
