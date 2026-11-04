@@ -53,6 +53,28 @@ class InternalCredentialServiceTest {
 
     @Test
     @FixFor("debezium/dbz#3003")
+    void enforcementActiveOnlyWhenSecretConfiguredAndIamEnabled() {
+        // No secret: enforcement is never active, regardless of the IAM switch.
+        givenSecrets(Optional.empty(), Optional.empty());
+        when(config.enabled()).thenReturn(false);
+        assertThat(service.isEnforcementActive()).isFalse();
+        when(config.enabled()).thenReturn(true);
+        assertThat(service.isEnforcementActive()).isFalse();
+
+        // Secret configured but IAM still disabled: the DDD-79 upgrade window where every
+        // pipeline is being redeployed to carry the credential before enforcement switches on.
+        // Must stay inactive, or a not-yet-redeployed pipeline's notifications are rejected.
+        givenSecrets(Optional.of("secret-a"), Optional.empty());
+        when(config.enabled()).thenReturn(false);
+        assertThat(service.isEnforcementActive()).isFalse();
+
+        // Secret configured and IAM enabled: real verification applies.
+        when(config.enabled()).thenReturn(true);
+        assertThat(service.isEnforcementActive()).isTrue();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3003")
     void mintThenVerifySucceeds() {
         givenSecrets(Optional.of("secret-a"), Optional.empty());
 

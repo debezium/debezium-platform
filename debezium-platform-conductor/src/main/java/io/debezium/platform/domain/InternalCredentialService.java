@@ -60,6 +60,22 @@ public class InternalCredentialService {
     }
 
     /**
+     * Whether {@code InternalCredentialFilter} should perform real HMAC verification rather than
+     * fall back to the pre-existing proxy-provenance heuristic: a secret must be configured
+     * <em>and</em> {@code conductor.security.enabled} must be true.
+     *
+     * <p>{@link #isConfigured()} alone is not enough: DDD-79's upgrade runbook for existing
+     * deployments configures the secret first and only enables enforcement once every pipeline
+     * has been redeployed to carry it (there is no periodic resync or redeploy-on-startup, so an
+     * un-redeployed pipeline keeps its credential-less resource indefinitely). Gating on the
+     * secret alone would start rejecting those pipelines' notifications the instant the secret is
+     * set, before step 1 of that runbook is even complete.
+     */
+    public boolean isEnforcementActive() {
+        return isConfigured() && config.enabled();
+    }
+
+    /**
      * @throws java.util.NoSuchElementException if no secret is configured; the caller
      *         ({@code PipelineMapper}) only calls this when one is present.
      */
