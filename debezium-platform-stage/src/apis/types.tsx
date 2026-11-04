@@ -56,6 +56,7 @@ export type Properties = { key: string; value: string };
 export type SelectedDataListItem = {
   schemas: string[];
   tables: string[];
+  values?: Record<string, string[]>;
 };
 
 export interface CatalogApiResponse {
@@ -173,7 +174,8 @@ export type TableCollection = {
 };
 
 export type TableSchema = {
-  name: string;
+  /** Null when the source has no schema level (MySQL, MariaDB, MongoDB). */
+  name: string | null;
   collections: TableCollection[];
   collectionCount: number;
 };

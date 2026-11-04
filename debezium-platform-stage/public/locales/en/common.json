@@ -129,7 +129,9 @@
     },
     "create": {
       "dataTableDescription": "Select the {{val}} to be targeted for sync",
-      "dataTableTitle": "{{val}} database"
+      "dataTableTitle": "{{val}} database",
+      "tableExplorerNoConnection": "Select a connection to browse tables, or enter the filter fields directly.",
+      "tableExplorerUnavailable": "The table explorer could not be loaded. You can still configure filters by entering the fields below."
     }
   },
   "navigation":{
