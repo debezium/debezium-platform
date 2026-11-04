@@ -3,9 +3,17 @@ import {
   additionalPropertyRowFromApiValue,
 } from "./additionalConfigProperties";
 
+const EXPLORER_INCLUDE_LISTS = new Set([
+  "database.include.list",
+  "schema.include.list",
+  "table.include.list",
+  "collection.include.list",
+]);
+
 export type SourceIncludeSelection = {
   schemas: string[];
   tables: string[];
+  values: Record<string, string[]>;
 };
 
 export type SourceConfigHydrationSplit = {
@@ -44,22 +52,26 @@ export function splitSourceConfigForHydration(
 
   const schemas: string[] = [];
   const tables: string[] = [];
+  const values: Record<string, string[]> = {};
+  const schemaValues: Record<string, string> = {};
+
   for (const key of Object.keys(cfg)) {
-    if (!/\.include\.list$/.test(key)) continue;
+    if (!EXPLORER_INCLUDE_LISTS.has(key)) continue;
     const raw = cfg[key];
     delete cfg[key];
-    const str = stringifyConfigValue(raw);
-    if (!str) continue;
-    const parts = str.split(",").map((s) => s.trim()).filter(Boolean);
-    if (key.includes("database.") || key.includes("schema.")) {
+    const parts = stringifyConfigValue(raw).split(",").map((s) => s.trim()).filter(Boolean);
+    if (!parts.length) continue;
+    const joined = parts.join(",");
+    schemaValues[key] = joined;
+    values[key] = parts;
+    if (key.startsWith("database.") || key.startsWith("schema.")) {
       schemas.push(...parts);
-    } else if (key.includes("table.") || key.includes("collection.")) {
+    } else {
       tables.push(...parts);
     }
   }
 
   const schemaNameSet = new Set(schemaPropertyNames);
-  const schemaValues: Record<string, string> = {};
   const additionalProps = new Map<string, AdditionalPropertyRow>();
   let additionalIndex = 0;
 
@@ -74,7 +86,7 @@ export function splitSourceConfigForHydration(
 
   let selectedDataListItems: SourceIncludeSelection | undefined;
   if (schemas.length > 0 || tables.length > 0) {
-    selectedDataListItems = { schemas, tables };
+    selectedDataListItems = { schemas, tables, values };
   }
 
   return {

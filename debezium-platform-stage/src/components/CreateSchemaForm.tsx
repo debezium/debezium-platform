@@ -74,18 +74,17 @@ import {
   getDatabaseType,
 } from "@utils/helpers";
 import { useNotification } from "@appContext/index";
-import { Catalog, CatalogApiResponse, ConnectorSchema, SchemaGroup, SchemaProperty } from "../apis/types";
+import { Catalog, CatalogApiResponse, ConnectorSchema, SchemaGroup, SchemaProperty, SelectedDataListItem } from "../apis/types";
 import ConnectorImage from "./ComponentImage";
 import TableViewComponent from "./TableViewComponent";
+import TableExplorerNotice from "./TableExplorerNotice";
 import SchemaGroupSection from "./SchemaGroupSection";
-import ApiComponentError from "./ApiComponentError";
 import CreateConnectionModal from "../pages/components/CreateConnectionModal";
-import { SelectedDataListItem } from "../apis/types";
 import {
-  getDataExplorerScopePhrase,
-  getIncludeList,
-  getTableManagedFilterPropertyNames,
-  getTableManagedIncludeListPropertyNames,
+  applyExplorerSelection,
+  candidateExplorerManagedProperties,
+  resolveExplorerBinding,
+  selectionFromSchemaValues,
 } from "@utils/Datatype";
 import {
   buildDependencyMap,
@@ -103,7 +102,6 @@ import {
   AdditionalPropertyValueKind,
   AdditionalPropertyRowErrorCode,
 } from "@utils/additionalConfigProperties";
-import _ from "lodash";
 import "./CreateSchemaForm.css";
 import { AdditionalPropertiesRows } from "./AdditionalPropertiesRows";
 
@@ -278,9 +276,6 @@ const CreateSchemaForm = React.forwardRef<
   const connectionInputRef = useRef<HTMLInputElement>(null);
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
 
-  // Table explorer
-  const [selectedDataListItems, setSelectedDataListItems] = useState<SelectedDataListItem | undefined>();
-
   // Signal
   const [signalCollectionName, setSignalCollectionName] = useState("");
   const [isSignalModalOpen, setIsSignalModalOpen] = useState(false);
@@ -338,16 +333,6 @@ const CreateSchemaForm = React.forwardRef<
     [connectorTypeString, signalCollectionNameVerify]
   );
 
-  const tableManagedFilterNames = useMemo(
-    () => isDestination ? new Set<string>() : new Set(getTableManagedFilterPropertyNames(connectorTypeString)),
-    [connectorTypeString, isDestination]
-  );
-
-  const tableManagedIncludeListNames = useMemo(
-    () => isDestination ? new Set<string>() : new Set(getTableManagedIncludeListPropertyNames(connectorTypeString)),
-    [connectorTypeString, isDestination]
-  );
-
   useLayoutEffect(() => {
     if (!initialSource || !connectorSchema) {
       hydratedSourceIdRef.current = null;
@@ -365,8 +350,7 @@ const CreateSchemaForm = React.forwardRef<
     );
 
     initialSchemaValuesRef.current = { ...split.schemaValues };
-  
-    /* eslint-disable react-hooks/set-state-in-effect */
+
     setConnectorName(initialSource.name);
     setDescription(initialSource.description ?? "");
     setSelectedConnection(initialSource.connection);
@@ -375,9 +359,7 @@ const CreateSchemaForm = React.forwardRef<
     setAdditionalProps(split.additionalProps);
     setAdditionalKeyCount(split.additionalKeyCount);
     setSignalCollectionName(split.signalCollectionName);
-    setSelectedDataListItems(split.selectedDataListItems as SelectedDataListItem | undefined);
     setSignalVerified(!!split.signalCollectionName);
-    /* eslint-enable react-hooks/set-state-in-effect */
   }, [initialSource, connectorSchema, schemaPropertyNames]);
 
   const allSections = useMemo(() => {
@@ -499,17 +481,54 @@ const CreateSchemaForm = React.forwardRef<
     enabled: selectedConnectionId != null && !isDestination
   });
 
-  const collectionsError =
-    collectionsQueryError != null
-      ? typeof collectionsQueryError === "object"
-        ? (collectionsQueryError as object)
-        : { message: String(collectionsQueryError) }
-      : undefined;
+  const explorerReady =
+    !isDestination &&
+    selectedConnectionId != null &&
+    !isCollectionsLoading &&
+    collectionsQueryError == null &&
+    collections != null;
+
+  const explorerBinding = useMemo(
+    () => resolveExplorerBinding(connectorSchema.properties, collections),
+    [connectorSchema.properties, collections]
+  );
+
+  const omittedFilterNames = useMemo(() => {
+    if (isDestination || selectedConnectionId == null) return new Set<string>();
+    if (isCollectionsLoading) return new Set(candidateExplorerManagedProperties(connectorSchema.properties));
+    if (collectionsQueryError != null || collections == null) return new Set<string>();
+    return new Set(explorerBinding.managedProperties);
+  }, [
+    isDestination,
+    selectedConnectionId,
+    isCollectionsLoading,
+    collectionsQueryError,
+    collections,
+    connectorSchema.properties,
+    explorerBinding,
+  ]);
+
+  const includeSelectionKey = explorerBinding.includeProperties
+    .map((name) => `${name}=${schemaValues[name] ?? ""}`)
+    .join("\n");
+
+  const explorerSelection = useMemo(
+    () => selectionFromSchemaValues(schemaValues, explorerBinding),
+    // includeSelectionKey is the include-list strings this selection is derived from.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [includeSelectionKey, explorerBinding]
+  );
+
+  const handleExplorerSelection = useCallback((selection: SelectedDataListItem | undefined) => {
+    setSchemaValues((prev) => applyExplorerSelection(prev, selection, explorerBinding));
+  }, [explorerBinding]);
 
   // Table Explorer is only for sources, not destinations
   const renderDataTableExplorer = useCallback(() => {
     if (isDestination) return null;
-    if (!selectedConnection?.id) return null;
+    if (!selectedConnection?.id) {
+      return <TableExplorerNotice reason="connection" />;
+    }
     if (isCollectionsLoading) {
       return (
         <FormFieldGroup>
@@ -517,16 +536,14 @@ const CreateSchemaForm = React.forwardRef<
         </FormFieldGroup>
       );
     }
-    if (!_.isEmpty(collectionsError)) {
+    if (collectionsQueryError != null || !explorerReady) {
       return (
-        <FormFieldGroup>
-          <ApiComponentError
-            error={collectionsError}
-            retry={() => {
-              void refetchCollections();
-            }}
-          />
-        </FormFieldGroup>
+        <TableExplorerNotice
+          reason="unavailable"
+          onRetry={() => {
+            void refetchCollections();
+          }}
+        />
       );
     }
     return (
@@ -542,13 +559,14 @@ const CreateSchemaForm = React.forwardRef<
         </Content>
         <Content component="p" className="table-explorer-section__description">
           {t("connector.create.dataTableDescription", {
-            val: getDataExplorerScopePhrase(connectorTypeString),
+            val: explorerBinding.scopePhrase,
           })}
         </Content>
         <TableViewComponent
           collections={collections}
-          setSelectedDataListItems={setSelectedDataListItems}
-          selectedDataListItems={selectedDataListItems}
+          binding={explorerBinding}
+          setSelectedDataListItems={handleExplorerSelection}
+          selectedDataListItems={explorerSelection}
           readOnly={readOnly}
         />
       </div>
@@ -557,9 +575,12 @@ const CreateSchemaForm = React.forwardRef<
     isDestination,
     selectedConnection?.id,
     isCollectionsLoading,
-    collectionsError,
+    collectionsQueryError,
+    explorerReady,
     collections,
-    selectedDataListItems,
+    explorerBinding,
+    explorerSelection,
+    handleExplorerSelection,
     readOnly,
     t,
     connectorTypeString,
@@ -816,7 +837,7 @@ const CreateSchemaForm = React.forwardRef<
       if (prop.display.group === "Connection" && prop.name !== "topic.prefix") {
         continue;
       }
-      if (tableManagedFilterNames.has(prop.name)) {
+      if (omittedFilterNames.has(prop.name)) {
         continue;
       }
       if (prop.required && !effectiveSchemaValues[prop.name]?.trim()) {
@@ -880,7 +901,7 @@ const CreateSchemaForm = React.forwardRef<
     allDependants,
     orderedGroups,
     groupedProperties,
-    tableManagedFilterNames,
+    omittedFilterNames,
     t,
     existingNames,
     initialSource,
@@ -909,18 +930,13 @@ const CreateSchemaForm = React.forwardRef<
         schemaValues,
         initialSchemaValues: initialSchemaValuesRef.current,
         isEdit: !!initialSource,
-        tableManagedIncludeListNames,
+        tableManagedIncludeListNames: new Set<string>(),
       }),
     };
 
     Object.assign(config, additionalValidation.additionalFlat);
 
     if (signalCollectionName) config["signal.data.collection"] = signalCollectionName;
-
-    // Only add include lists from table selections for sources, not destinations
-    if (!isDestination) {
-      Object.assign(config, getIncludeList(selectedDataListItems, connectorTypeString));
-    }
 
     const payload: Record<string, unknown> = {
       name: connectorName,
@@ -945,7 +961,6 @@ const CreateSchemaForm = React.forwardRef<
     effectiveSchemaValues,
     additionalProps,
     signalCollectionName,
-    selectedDataListItems,
     connectorName,
     description,
     connectorId,
@@ -953,9 +968,6 @@ const CreateSchemaForm = React.forwardRef<
     onSubmit,
     initialSource,
     connectorSchema.properties,
-    connectorTypeString,
-    tableManagedIncludeListNames,
-    isDestination,
   ]);
 
   React.useImperativeHandle(
@@ -1084,7 +1096,7 @@ const CreateSchemaForm = React.forwardRef<
     const props = groupedProperties.get(groupName);
     if (!props || props.length === 0) return null;
     const omittedPropertyNames =
-      groupName === "Filters" && tableManagedFilterNames.size > 0 ? tableManagedFilterNames : undefined;
+      groupName === "Filters" && omittedFilterNames.size > 0 ? omittedFilterNames : undefined;
     return (
       <SchemaGroupSection
         properties={props}
