@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -39,6 +40,15 @@ public class PermissionAugmentor implements SecurityIdentityAugmentor {
     private final RoleMappingProvider roleMappingProvider;
     private final SecurityConfigGroup config;
 
+    /**
+     * Resolving a role set to permissions is a pure function of {@code conductor.security.role-mappings},
+     * which is fixed at startup, so the result for a given role combination never changes; the key
+     * space is bounded by the number of distinct role combinations an identity provider actually
+     * issues. Caching avoids re-grouping permissions into {@link StringPermission}s on every
+     * authenticated request.
+     */
+    private final Map<Set<String>, Resolved> resolvedByRoles = new ConcurrentHashMap<>();
+
     public PermissionAugmentor(RoleMappingProvider roleMappingProvider, SecurityConfigGroup config) {
         this.roleMappingProvider = roleMappingProvider;
         this.config = config;
@@ -50,13 +60,21 @@ public class PermissionAugmentor implements SecurityIdentityAugmentor {
             return Uni.createFrom().item(identity);
         }
 
-        Set<Permission> granted = roleMappingProvider.permissionsFor(identity.getRoles());
+        Resolved resolved = resolvedByRoles.computeIfAbsent(identity.getRoles(), this::resolve);
 
         QuarkusSecurityIdentity.Builder builder = QuarkusSecurityIdentity.builder(identity);
-        toStringPermissions(granted).forEach(builder::addPermission);
-        builder.addAttribute(PERMISSIONS_ATTRIBUTE, granted);
+        resolved.stringPermissions().forEach(builder::addPermission);
+        builder.addAttribute(PERMISSIONS_ATTRIBUTE, resolved.permissions());
 
         return Uni.createFrom().item(builder.build());
+    }
+
+    private Resolved resolve(Set<String> roles) {
+        Set<Permission> granted = roleMappingProvider.permissionsFor(roles);
+        return new Resolved(granted, toStringPermissions(granted));
+    }
+
+    private record Resolved(Set<Permission> permissions, Collection<StringPermission> stringPermissions) {
     }
 
     /**
