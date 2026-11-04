@@ -464,6 +464,21 @@ tests:
           content:
             name: CONDUCTOR_SECURITY_ROLE_MAPPINGS_0__ROLE
 
+  - it: should annotate the pod template with a checksum of the role mappings
+    template: conductor-deployment.yaml
+    set:
+      conductor.security.roleMappings:
+        - role: dmp-editor
+          permissions: [source:read, source:write]
+    asserts:
+      # A helm upgrade that only edits role mappings updates the ConfigMap but changes no field
+      # Kubernetes diffs the Deployment on; this annotation is what forces the pod to roll so the
+      # new mappings actually take effect, rather than the old permissions silently staying in
+      # force. Asserting the shape (not a hardcoded value) so this does not pin the hash function.
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/security-config"]
+          pattern: "^[0-9a-f]{64}$"
+
   - it: should not mount a role-mappings volume when no role mappings are configured
     template: conductor-deployment.yaml
     set:

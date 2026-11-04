@@ -17,7 +17,13 @@ spec:
     type: Recreate
   template:
     metadata:
-      annotations: {}
+      annotations:
+        # Forces a pod roll when conductor.security.roleMappings changes (debezium/dbz#3003).
+        # The ConfigMap is mounted via QUARKUS_CONFIG_LOCATIONS and read once at startup; without
+        # this, a `helm upgrade` that only edits role mappings updates the ConfigMap but changes
+        # no field Kubernetes diffs the Deployment on, so no pod rolls and the old permissions
+        # stay in force with nothing to indicate it.
+        checksum/security-config: {{ toYaml .Values.conductor.security.roleMappings | sha256sum }}
       labels:
         app.kubernetes.io/name: conductor
     spec:
