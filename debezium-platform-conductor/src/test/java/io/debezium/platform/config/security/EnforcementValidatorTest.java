@@ -154,6 +154,23 @@ class EnforcementValidatorTest {
     }
 
     private EnforcementValidator newValidator(String issuer, Optional<String> audience) {
-        return new EnforcementValidator(Logger.getLogger(EnforcementValidatorTest.class), config, issuer, audience);
+        return newValidator(issuer, audience, config.enabled());
+    }
+
+    private EnforcementValidator newValidator(String issuer, Optional<String> audience, boolean tenantEnabled) {
+        return new EnforcementValidator(
+                Logger.getLogger(EnforcementValidatorTest.class), config, issuer, audience, tenantEnabled);
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3003")
+    void failsWhenTenantEnabledDisagreesWithSecurityEnabled() {
+        givenEnabled();
+        givenNoRoleMappings();
+
+        assertThatThrownBy(() -> newValidator(VALID_ISSUER, Optional.of("conductor"), false).onStart(null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("quarkus.oidc.tenant-enabled")
+                .hasMessageContaining("conductor.security.enabled");
     }
 }

@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -40,20 +41,22 @@ import io.quarkus.runtime.StartupEvent;
 public class EnforcementValidator {
 
     private static final String ISSUER_PLACEHOLDER = "https://keycloak.invalid/realms/none";
-    private static final String TENANT_ENABLED_ENV_VAR = "QUARKUS_OIDC_TENANT_ENABLED";
 
     private final Logger logger;
-    private final SecurityConfigGroup config;
+    private final SecurityConfigGroup securityConfig;
     private final String issuer;
     private final Optional<String> audience;
+    private final boolean tenantEnabled;
 
-    public EnforcementValidator(Logger logger, SecurityConfigGroup config,
+    public EnforcementValidator(Logger logger, SecurityConfigGroup securityConfig,
                                 @ConfigProperty(name = "quarkus.oidc.auth-server-url") String issuer,
-                                @ConfigProperty(name = "quarkus.oidc.token.audience") Optional<String> audience) {
+                                @ConfigProperty(name = "quarkus.oidc.token.audience") Optional<String> audience,
+                                @ConfigProperty(name = "quarkus.oidc.tenant-enabled") boolean tenantEnabled) {
         this.logger = logger;
-        this.config = config;
+        this.securityConfig = securityConfig;
         this.issuer = issuer;
         this.audience = audience;
+        this.tenantEnabled = tenantEnabled;
     }
 
     void onStart(@Observes StartupEvent event) {
@@ -63,7 +66,7 @@ public class EnforcementValidator {
         // prevent, and so is the reverse.
         checkAmbiguousTenantSwitch();
 
-        if (!config.enabled()) {
+        if (!securityConfig.enabled()) {
             logger.info("IAM is DISABLED. All API endpoints are unauthenticated and unauthorized.");
             return;
         }
@@ -86,39 +89,39 @@ public class EnforcementValidator {
             throw new IllegalStateException("IAM configuration is invalid:\n  - " + String.join("\n  - ", failures));
         }
 
-        if (config.internalCredential().secret().isEmpty()) {
+        if (securityConfig.internalCredential().secret().isEmpty()) {
             logger.warn("IAM is enabled but conductor.security.internal-credential.secret is unset. Debezium "
                     + "Server snapshot notifications are not authenticated by a credential; the pre-existing "
                     + "proxy-provenance check on /api/internal/* remains the only guard until the secret is "
                     + "configured and notification.http.authorization is available from Debezium core.");
         }
 
-        int roleMappingCount = config.roleMappings().isEmpty()
+        int roleMappingCount = securityConfig.roleMappings().isEmpty()
                 ? DefaultRoleMappings.bundles().size()
-                : config.roleMappings().size();
+                : securityConfig.roleMappings().size();
         logger.infov("IAM is ENABLED. Issuer={0}, {1} role mapping(s){2}, {3} permissions in the catalogue.",
-                issuer, roleMappingCount, config.roleMappings().isEmpty() ? " (shipped defaults)" : "",
+                issuer, roleMappingCount, securityConfig.roleMappings().isEmpty() ? " (shipped defaults)" : "",
                 Permission.all().size());
     }
 
     private void checkAmbiguousTenantSwitch() {
-        String rawTenantEnabled = System.getenv(TENANT_ENABLED_ENV_VAR);
-        if (rawTenantEnabled == null) {
-            return;
-        }
-        boolean directValue = Boolean.parseBoolean(rawTenantEnabled);
-        if (directValue != config.enabled()) {
+        // quarkus.oidc.tenant-enabled is derived from conductor.security.enabled via property
+        // expansion in application.yml, so the two agree unless something overrides the former
+        // independently from a higher-ordinal config source (env var, system property, a mounted
+        // application.properties, ...). Comparing the resolved value catches that regardless of
+        // which source produced it, rather than checking one specific transliteration by name.
+        if (tenantEnabled != securityConfig.enabled()) {
             throw new IllegalStateException(String.format(
-                    "%s=%s was set directly, which disagrees with conductor.security.enabled=%s. "
-                            + "quarkus.oidc.tenant-enabled is derived from conductor.security.enabled and must "
-                            + "not be configured independently.",
-                    TENANT_ENABLED_ENV_VAR, rawTenantEnabled, config.enabled()));
+                    "quarkus.oidc.tenant-enabled resolved to %s, which disagrees with "
+                            + "conductor.security.enabled=%s. quarkus.oidc.tenant-enabled is derived from "
+                            + "conductor.security.enabled and must not be configured independently.",
+                    tenantEnabled, securityConfig.enabled()));
         }
     }
 
     private void checkRoleMappings(List<String> failures) {
         Set<String> seenRoles = new HashSet<>();
-        for (SecurityConfigGroup.RoleMapping mapping : config.roleMappings()) {
+        for (SecurityConfigGroup.RoleMapping mapping : securityConfig.roleMappings()) {
             if (!seenRoles.add(mapping.role())) {
                 failures.add("conductor.security.role-mappings declares role \"" + mapping.role()
                         + "\" more than once.");
@@ -128,40 +131,9 @@ public class EnforcementValidator {
                     continue;
                 }
                 failures.add("conductor.security.role-mappings: role \"" + mapping.role()
-                        + "\" names unknown permission \"" + permissionId + "\"" + suggestionFor(permissionId));
+                        + "\" names unknown permission \"" + permissionId + "\". Valid permissions: "
+                        + Permission.all().stream().map(Permission::id).collect(Collectors.joining(", ")));
             }
         }
-    }
-
-    private static String suggestionFor(String unknownPermissionId) {
-        String nearest = null;
-        int best = Integer.MAX_VALUE;
-        for (Permission permission : Permission.all()) {
-            int distance = levenshteinDistance(unknownPermissionId, permission.id());
-            if (distance < best) {
-                best = distance;
-                nearest = permission.id();
-            }
-        }
-        return nearest == null ? "" : " (did you mean \"" + nearest + "\"?)";
-    }
-
-    private static int levenshteinDistance(String a, String b) {
-        int[][] distance = new int[a.length() + 1][b.length() + 1];
-        for (int i = 0; i <= a.length(); i++) {
-            distance[i][0] = i;
-        }
-        for (int j = 0; j <= b.length(); j++) {
-            distance[0][j] = j;
-        }
-        for (int i = 1; i <= a.length(); i++) {
-            for (int j = 1; j <= b.length(); j++) {
-                int substitutionCost = a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1;
-                distance[i][j] = Math.min(
-                        Math.min(distance[i - 1][j] + 1, distance[i][j - 1] + 1),
-                        distance[i - 1][j - 1] + substitutionCost);
-            }
-        }
-        return distance[a.length()][b.length()];
     }
 }

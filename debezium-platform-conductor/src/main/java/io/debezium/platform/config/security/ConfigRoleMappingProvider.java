@@ -5,6 +5,8 @@
  */
 package io.debezium.platform.config.security;
 
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,11 +77,11 @@ public class ConfigRoleMappingProvider implements RoleMappingProvider {
             return Permission.all();
         }
 
-        return roles.stream()
+        return Collections.unmodifiableSet(roles.stream()
                 .map(byRole::get)
                 .filter(Objects::nonNull)
                 .flatMap(Set::stream)
-                .collect(Collectors.toUnmodifiableSet());
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(Permission.class))));
     }
 
     private static Set<Permission> expand(List<String> permissionIds) {
@@ -87,10 +89,10 @@ public class ConfigRoleMappingProvider implements RoleMappingProvider {
             return Permission.all();
         }
 
-        return permissionIds.stream()
+        return Collections.unmodifiableSet(permissionIds.stream()
                 .map(Permission::byId)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toUnmodifiableSet());
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(Permission.class))));
     }
 }
