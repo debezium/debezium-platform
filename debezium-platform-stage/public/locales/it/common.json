@@ -143,6 +143,18 @@
     "rule": "Regole",
     "channel": "Canali"
   },
+  "tableExplorer": {
+    "schemaCount_one": "{{count}} schema",
+    "schemaCount_other": "{{count}} schemi",
+    "tableCount_one": "{{count}} tabella",
+    "tableCount_other": "{{count}} tabelle",
+    "results": "{{tables}} in {{schemas}}",
+    "selectedNone": "Nessuna tabella selezionata",
+    "selected": "Selezionati",
+    "viewSelection": "Mostra selezione",
+    "expandAllLimit": "Questo catalogo ha troppe tabelle per espanderle tutte insieme. Espandi uno schema o cerca una tabella.",
+    "emptyTitle": "Nessuna tabella corrispondente"
+  },
   "breadcrumb":{
     "pipeline": "Pipeline",
     "pipelineDesigner": "Designer della pipeline",

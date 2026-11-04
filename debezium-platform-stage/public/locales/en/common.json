@@ -143,6 +143,18 @@
     "rule": "Rules",
     "channel": "Channels"
   },
+  "tableExplorer": {
+    "schemaCount_one": "{{count}} schema",
+    "schemaCount_other": "{{count}} schemas",
+    "tableCount_one": "{{count}} table",
+    "tableCount_other": "{{count}} tables",
+    "results": "{{tables}} in {{schemas}}",
+    "selectedNone": "No tables selected",
+    "selected": "Selected",
+    "viewSelection": "View selection",
+    "expandAllLimit": "This catalog has too many tables to expand at once. Expand a schema or search for a table.",
+    "emptyTitle": "No matching tables"
+  },
   "breadcrumb":{
     "pipeline": "Pipeline",
     "pipelineDesigner": "Pipeline designer",

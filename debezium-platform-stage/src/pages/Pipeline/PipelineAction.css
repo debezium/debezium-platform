@@ -3,11 +3,13 @@
 }
 
 .pipeline-action-collection-selector .virtual-tree__scroll-area {
-    max-height: 320px;
+    --virtual-tree-min-height: 0px;
+    --virtual-tree-max-height: 320px;
 }
 
 .pipeline-action-collection-selector--compact .virtual-tree__scroll-area {
-    max-height: 220px;
+    --virtual-tree-min-height: 0px;
+    --virtual-tree-max-height: 220px;
 }
 
 .pipeline-action-grid-container {
