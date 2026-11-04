@@ -87,6 +87,35 @@ public class JdbcSourceInspectorIT {
     }
 
     @Test
+    void shouldRejectSignalDataCollectionWithWrongColumnCountOnPostgres() throws SQLException {
+
+        AgroalDataSource dataSource = postgresDataSource.get();
+        Connection connection = connectionConfiguration(ConnectionEntity.Type.POSTGRESQL);
+
+        try (Statement statement = dataSource.getConnection().createStatement()) {
+
+            statement.execute("CREATE TABLE public.signal_two_columns (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL);");
+        }
+
+        assertThat(sourceInspector.verifyDataCollectionStructure(connection, "public.signal_two_columns").exists()).isFalse();
+    }
+
+    @Test
+    void shouldAcceptSignalDataCollectionWithSmallerDataColumnOnPostgres() throws SQLException {
+
+        AgroalDataSource dataSource = postgresDataSource.get();
+        Connection connection = connectionConfiguration(ConnectionEntity.Type.POSTGRESQL);
+
+        try (Statement statement = dataSource.getConnection().createStatement()) {
+
+            statement.execute("CREATE TABLE public.signal_data_2000 (id VARCHAR(42) PRIMARY KEY, type VARCHAR(32) NOT NULL, data VARCHAR(2000) NULL);");
+        }
+
+        // the core validator only warns for a data column smaller than recommended (2000 is its minimum), so it is accepted
+        assertThat(sourceInspector.verifyDataCollectionStructure(connection, "public.signal_data_2000").exists()).isTrue();
+    }
+
+    @Test
     void testVerifySchemaOnMySQL() throws SQLException {
 
         AgroalDataSource dataSource = mysqlDataSource.get();
