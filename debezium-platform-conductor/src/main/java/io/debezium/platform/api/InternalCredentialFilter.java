@@ -54,14 +54,7 @@ public class InternalCredentialFilter implements ContainerRequestFilter {
     static final String INTERNAL_PATH_PREFIX = "internal/";
     private static final String X_FORWARDED_FOR = "X-Forwarded-For";
     private static final String FORWARDED = "Forwarded";
-    private static final String BEARER_PREFIX = "Bearer ";
     private static final String PIPELINE_ID_PATH_PARAM = "pipelineId";
-
-    /**
-     * HMAC-SHA256 output is 32 bytes; base64url without padding encodes that as exactly 43
-     * characters. A bearer value of this shape, with no '.', is treated as one of ours.
-     */
-    private static final int INTERNAL_CREDENTIAL_LENGTH = 43;
 
     private final Logger logger;
     private final InternalCredentialService credentials;
@@ -95,7 +88,7 @@ public class InternalCredentialFilter implements ContainerRequestFilter {
     }
 
     private void rejectIfInternalCredentialPresented(ContainerRequestContext requestContext) {
-        if (looksLikeInternalCredential(bearerToken(requestContext))) {
+        if (InternalCredentialService.looksLikeOurCredential(bearerToken(requestContext))) {
             reject(requestContext, Response.Status.UNAUTHORIZED, "an internal credential is not valid at this path");
         }
     }
@@ -103,10 +96,6 @@ public class InternalCredentialFilter implements ContainerRequestFilter {
     private void reject(ContainerRequestContext requestContext, Response.Status status, String reason) {
         logger.warnf("Rejected request to '%s': %s", requestContext.getUriInfo().getPath(), reason);
         requestContext.abortWith(Response.status(status).build());
-    }
-
-    private static boolean looksLikeInternalCredential(String token) {
-        return token != null && token.length() == INTERNAL_CREDENTIAL_LENGTH && !token.contains(".");
     }
 
     private static Long pipelineIdFrom(ContainerRequestContext requestContext) {
@@ -123,11 +112,7 @@ public class InternalCredentialFilter implements ContainerRequestFilter {
     }
 
     private static String bearerToken(ContainerRequestContext requestContext) {
-        String header = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
-        if (header == null || !header.startsWith(BEARER_PREFIX)) {
-            return null;
-        }
-        return header.substring(BEARER_PREFIX.length()).trim();
+        return InternalCredentialService.bearerToken(requestContext.getHeaderString(HttpHeaders.AUTHORIZATION));
     }
 
     private static boolean isInternalPath(String path) {

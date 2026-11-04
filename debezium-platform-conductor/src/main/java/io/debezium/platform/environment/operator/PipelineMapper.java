@@ -68,7 +68,6 @@ public class PipelineMapper {
     private static final String NOTIFICATION_HTTP_RETRIES_CONFIG = "notification.http.retries";
     private static final String NOTIFICATION_HTTP_ALLOW_PRIVATE_NETWORKS_CONFIG = "notification.http.allow.private.networks";
     private static final String NOTIFICATION_HTTP_AUTHORIZATION_CONFIG = "notification.http.authorization";
-    private static final String BEARER_PREFIX = "Bearer ";
     private static final String DEFAULT_SIGNAL_CHANNELS = "source,in-process";
     private static final String CALLBACK_URL_FORMAT = "http://%s:%d/api/internal/pipelines/%d/notifications";
     private static final String PREDICATE_PREFIX = "p";
@@ -282,7 +281,7 @@ public class PipelineMapper {
         // generated resource carries no such property and is unchanged from before this feature.
         if (securityConfigGroup.internalCredential().secret().isPresent()) {
             sourceConfig.setProps(NOTIFICATION_HTTP_AUTHORIZATION_CONFIG,
-                    BEARER_PREFIX + internalCredentialService.mint(pipeline.getId()));
+                    internalCredentialService.mintAuthorizationHeader(pipeline.getId()));
         }
     }
 

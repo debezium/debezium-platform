@@ -34,6 +34,13 @@ public class InternalCredentialService {
 
     private static final String ALGORITHM = "HmacSHA256";
     private static final String CONTEXT_PREFIX = "pipeline:";
+    private static final String BEARER_PREFIX = "Bearer ";
+
+    /**
+     * HMAC-SHA256 output is 32 bytes; base64url without padding encodes that as exactly 43
+     * characters. A bearer value of this shape, with no '.', is treated as one of ours.
+     */
+    public static final int CREDENTIAL_LENGTH = 43;
 
     private final SecurityConfigGroup config;
 
@@ -58,6 +65,33 @@ public class InternalCredentialService {
      */
     public String mint(Long pipelineId) {
         return compute(config.internalCredential().secret().orElseThrow(), pipelineId);
+    }
+
+    /**
+     * The value to set as the {@code Authorization} header carrying a freshly minted credential.
+     * Owns the {@code Bearer} wire convention so callers never hardcode it.
+     */
+    public String mintAuthorizationHeader(Long pipelineId) {
+        return BEARER_PREFIX + mint(pipelineId);
+    }
+
+    /**
+     * Strips the {@code Bearer} scheme from a raw {@code Authorization} header value. Returns
+     * {@code null} when the header is absent or not a bearer value, so callers can treat "no
+     * credential" and "malformed scheme" the same way.
+     */
+    public static String bearerToken(String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
+            return null;
+        }
+        return authorizationHeader.substring(BEARER_PREFIX.length()).trim();
+    }
+
+    /**
+     * Whether a bearer value is shaped like one of ours: see {@link #CREDENTIAL_LENGTH}.
+     */
+    public static boolean looksLikeOurCredential(String token) {
+        return token != null && token.length() == CREDENTIAL_LENGTH && !token.contains(".");
     }
 
     /**

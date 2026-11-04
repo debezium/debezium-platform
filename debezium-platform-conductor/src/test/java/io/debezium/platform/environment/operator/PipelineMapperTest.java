@@ -368,7 +368,7 @@ public class PipelineMapperTest {
     @FixFor("debezium/dbz#3003")
     public void testMapperSetsAuthorizationPropertyWhenSecretConfigured() {
         when(securityConfigGroup.internalCredential().secret()).thenReturn(Optional.of("shhh"));
-        when(internalCredentialService.mint(1L)).thenReturn("minted-credential");
+        when(internalCredentialService.mintAuthorizationHeader(1L)).thenReturn("Bearer minted-credential");
         pipelineMapper = createMapper();
 
         var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
