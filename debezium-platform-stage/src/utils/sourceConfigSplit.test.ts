@@ -56,8 +56,16 @@ describe("splitSourceConfigForHydration", () => {
     expect(out.selectedDataListItems).toEqual({
       schemas: ["public", "other"],
       tables: ["t1", "t2"],
+      values: {
+        "schema.include.list": ["public", "other"],
+        "table.include.list": ["t1", "t2"],
+      },
     });
-    expect(out.schemaValues).toEqual({ host: "localhost" });
+    expect(out.schemaValues).toEqual({
+      host: "localhost",
+      "schema.include.list": "public,other",
+      "table.include.list": "t1,t2",
+    });
     expect(out.additionalProps.size).toBe(0);
   });
 
@@ -72,6 +80,14 @@ describe("splitSourceConfigForHydration", () => {
     expect(out.selectedDataListItems).toEqual({
       schemas: ["db1"],
       tables: ["c1", "c2"],
+      values: {
+        "database.include.list": ["db1"],
+        "collection.include.list": ["c1", "c2"],
+      },
+    });
+    expect(out.schemaValues).toEqual({
+      "database.include.list": "db1",
+      "collection.include.list": "c1,c2",
     });
   });
 

@@ -1,4 +1,4 @@
-import { Button, TreeViewDataItem, TreeViewSearch } from "@patternfly/react-core";
+import { Button, TreeViewSearch } from "@patternfly/react-core";
 import { AngleRightIcon, DatabaseIcon, ServerGroupIcon } from "@patternfly/react-icons";
 import { FC, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { TableData } from "src/apis";
@@ -6,89 +6,74 @@ import "./TableViewComponent.css";
 import { useTranslation } from "react-i18next";
 import { SelectedDataListItem } from "../apis/types";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { ExplorerBinding, LEGACY_EXPLORER_BINDING } from "@utils/Datatype";
+import {
+    ExplorerNode,
+    buildExplorerTree,
+    extractExplorerSelections,
+    selectionsEqual,
+} from "@utils/explorerTree";
 
 type TableViewComponentProps = {
     collections: TableData | undefined;
     setSelectedDataListItems: (dataListItems: SelectedDataListItem | undefined) => void;
     selectedDataListItems: SelectedDataListItem | undefined;
+    /** Which tree levels write which catalog include-list properties. */
+    binding?: ExplorerBinding;
     readOnly?: boolean;
 };
 
-type SelectedItem = {
-    name: string;
-    id: string;
-    fullyQualifiedName?: string;
-    checkProps: { checked?: boolean | null; "aria-label"?: string };
-    children?: SelectedItem[];
-};
-
-type SelectionResult = {
-    schemas: string[];
-    tables: string[];
-};
-
-function selectionsEqual(
-    a: SelectedDataListItem | undefined,
-    b: SelectionResult
-): boolean {
-    const aSchemas = a?.schemas ?? [];
-    const aTables = a?.tables ?? [];
-    return (
-        aSchemas.length === b.schemas.length &&
-        aTables.length === b.tables.length &&
-        aSchemas.every((s, i) => s === b.schemas[i]) &&
-        aTables.every((t, i) => t === b.tables[i])
-    );
-}
-
 type FlatItem = {
-    item: TreeViewDataItem;
+    item: ExplorerNode;
     depth: number;
     hasChildren: boolean;
 };
 
-export function extractSelections(selectedItems: SelectedItem[]): SelectionResult {
-    const schemaSet = new Set<string>();
-    const tableSet = new Set<string>();
+function nodeMatchesSelection(node: ExplorerNode, selection: SelectedDataListItem | undefined): boolean {
+    if (!selection) return false;
+    const valueList = node.propertyName ? selection.values?.[node.propertyName] : undefined;
+    const hasValueKey = node.propertyName != null && selection.values != null && node.propertyName in selection.values;
 
-    for (const item of selectedItems) {
-        const isSchema = item.id.includes("schema") && !item.id.includes("collection");
-        const isTable = item.id.includes("collection");
-
-        if (isSchema) {
-            if (item.checkProps.checked === true) {
-                schemaSet.add(item.name);
-            }
-
-        } else if (isTable) {
-            // Use fullyQualifiedName if available, otherwise fall back to constructing it
-            const tableName = item.fullyQualifiedName || (() => {
-                const schemaFromId = item.id.match(/^schema-\d+-(.*?)-collection-/)?.[1];
-                const schemaName = schemaFromId ?? "unknown_schema";
-                return `${schemaName}.${item.name}`;
-            })();
-            tableSet.add(tableName);
-        }
+    if (node.level === "collection") {
+        const fullyQualifiedName = node.fullyQualifiedName || node.selectionValue;
+        if (hasValueKey) return !!valueList?.includes(fullyQualifiedName);
+        return selection.tables.includes(fullyQualifiedName);
     }
+    if (hasValueKey) return !!valueList?.includes(node.selectionValue);
+    return selection.schemas.includes(node.selectionValue);
+}
 
-    // Remove tables belonging to fully selected schemas
-    for (const schema of schemaSet) {
-        const tables = Array.from(tableSet)
-            .filter((t) => t.startsWith(`${schema}.`))
-            .map((t) => t.substring(schema.length + 1));
-        const allTablesSelected = tables.every((t) =>
-            tableSet.has(`${schema}.${t}`)
-        );
-
-        if (allTablesSelected) {
-            tables.forEach((t) => tableSet.delete(`${schema}.${t}`));
-        }
-    }
-
-    return {
-        schemas: Array.from(schemaSet),
-        tables: Array.from(tableSet),
+function collectMatchingNodes(nodes: ExplorerNode[], selection: SelectedDataListItem | undefined): ExplorerNode[] {
+    const chosen: ExplorerNode[] = [];
+    const seen = new Set<string>();
+    const addTree = (node: ExplorerNode) => {
+        if (seen.has(node.id)) return;
+        seen.add(node.id);
+        chosen.push(node);
+        node.children?.forEach(addTree);
     };
+    const walk = (items: ExplorerNode[]) => {
+        for (const node of items) {
+            if (nodeMatchesSelection(node, selection)) addTree(node);
+            else if (node.children) walk(node.children);
+        }
+    };
+    walk(nodes);
+    return chosen;
+}
+
+function collectBranchIds(nodes: ExplorerNode[]): string[] {
+    const ids: string[] = [];
+    const walk = (items: ExplorerNode[]) => {
+        for (const item of items) {
+            if (item.children?.length) {
+                ids.push(item.id);
+                walk(item.children);
+            }
+        }
+    };
+    walk(nodes);
+    return ids;
 }
 
 const TreeCheckbox: FC<{
@@ -118,28 +103,35 @@ const TreeCheckbox: FC<{
     );
 };
 
-const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelectedDataListItems, selectedDataListItems, readOnly }) => {
+const TableViewComponent: FC<TableViewComponentProps> = ({
+    collections,
+    setSelectedDataListItems,
+    selectedDataListItems,
+    binding = LEGACY_EXPLORER_BINDING,
+    readOnly,
+}) => {
     const { t } = useTranslation();
     const [allExpanded, setAllExpanded] = useState(false);
-    const [filteredItems, setFilteredItems] = useState<TreeViewDataItem[]>([]);
+    const [filteredItems, setFilteredItems] = useState<ExplorerNode[]>([]);
     const [isFiltered, setIsFiltered] = useState(false);
-    const [options, setOptions] = useState<TreeViewDataItem[]>([]);
-    const [checkedItems, setCheckedItems] = useState<TreeViewDataItem[]>([]);
+    const [options, setOptions] = useState<ExplorerNode[]>([]);
+    const [checkedItems, setCheckedItems] = useState<ExplorerNode[]>([]);
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const isInitializedRef = useRef(false);
-    const prevSelectionRef = useRef<{ selectedDataListItems: SelectedDataListItem | undefined; options: TreeViewDataItem[] }>({
+    const prevSelectionRef = useRef<{ selectedDataListItems: SelectedDataListItem | undefined; options: ExplorerNode[] }>({
         selectedDataListItems: undefined,
         options: []
     });
     const prevCollectionsRef = useRef<TableData | undefined>(undefined);
+    const prevBindingRef = useRef<ExplorerBinding | undefined>(undefined);
     const descendantChecked = useMemo(() => {
         const checkedIds = new Set(checkedItems.map((item) => item.id));
-        const allChecked = new Map<TreeViewDataItem["id"], boolean>();
-        const someChecked = new Map<TreeViewDataItem["id"], boolean>();
-        const visit = (item: TreeViewDataItem) => {
-            if (!item.children) {
+        const allChecked = new Map<ExplorerNode["id"], boolean>();
+        const someChecked = new Map<ExplorerNode["id"], boolean>();
+        const visit = (item: ExplorerNode) => {
+            if (!item.children?.length) {
                 const checked = checkedIds.has(item.id);
                 allChecked.set(item.id, checked);
                 someChecked.set(item.id, checked);
@@ -157,71 +149,28 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         return { allChecked, someChecked };
     }, [options, checkedItems]);
 
-    const flattenTreeItems = (tree: TreeViewDataItem[]): TreeViewDataItem[] => {
-        let result: TreeViewDataItem[] = [];
-        tree.forEach((item) => {
-            result.push(item);
-            if (item.children) {
-                result = result.concat(flattenTreeItems(item.children));
-            }
-        });
-        return result;
-    };
-
     useEffect(() => {
         if (options.length === 0) return;
         const prev = prevSelectionRef.current;
-        const selectionChanged = prev.selectedDataListItems !== selectedDataListItems;
-        const optionsChanged = prev.options !== options;
-
-        if (!selectionChanged && !optionsChanged) {
+        if (selectionsEqual(prev.selectedDataListItems, selectedDataListItems) && prev.options === options) {
             return;
         }
         prevSelectionRef.current = { selectedDataListItems, options };
 
         queueMicrotask(() => {
-            if (!selectedDataListItems) {
-                setCheckedItems((prev) => (prev.length === 0 ? prev : []));
+            const hasSelection =
+                !!selectedDataListItems &&
+                (selectedDataListItems.schemas.length > 0 ||
+                    selectedDataListItems.tables.length > 0 ||
+                    Object.values(selectedDataListItems.values ?? {}).some((parts) => parts.length > 0));
+
+            if (!hasSelection) {
+                setCheckedItems((prevChecked) => (prevChecked.length === 0 ? prevChecked : []));
                 isInitializedRef.current = true;
                 return;
             }
 
-            const { schemas, tables } = selectedDataListItems;
-
-            if (schemas.length === 0 && tables.length === 0) {
-                setCheckedItems((prev) => (prev.length === 0 ? prev : []));
-                isInitializedRef.current = true;
-                return;
-            }
-
-            const flatItems = flattenTreeItems(options);
-            const newCheckedItems: TreeViewDataItem[] = [];
-
-            for (const item of flatItems) {
-                const itemId = item.id as string;
-                const itemName = item.name as string;
-                const isSchemaItem = itemId.includes("schema") && !itemId.includes("collection");
-                const isTableItem = itemId.includes("collection");
-
-                if (isSchemaItem && schemas.includes(itemName)) {
-                    newCheckedItems.push(item);
-                    if (item.children) {
-                        newCheckedItems.push(...item.children);
-                    }
-                } else if (isTableItem) {
-                    // Use fullyQualifiedName if available, otherwise construct it
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const tableName = (item as any).fullyQualifiedName || (() => {
-                        const schemaFromId = itemId.match(/^schema-\d+-(.*?)-collection-/)?.[1];
-                        return `${schemaFromId}.${itemName}`;
-                    })();
-                    if (tables.includes(tableName)) {
-                        newCheckedItems.push(item);
-                    }
-                }
-            }
-
-            setCheckedItems(newCheckedItems);
+            setCheckedItems(collectMatchingNodes(options, selectedDataListItems));
             isInitializedRef.current = true;
         });
     }, [selectedDataListItems, options]);
@@ -229,60 +178,33 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     useEffect(() => {
         if (!isInitializedRef.current || readOnly) return;
 
-        const selections = extractSelections(checkedItems as SelectedItem[]);
+        const selections = extractExplorerSelections(options, new Set(checkedItems.map((item) => item.id)));
         if (selectionsEqual(selectedDataListItems, selections)) {
             return;
         }
         setSelectedDataListItems(selections);
-    }, [checkedItems, setSelectedDataListItems, readOnly, selectedDataListItems]);
+    }, [checkedItems, setSelectedDataListItems, readOnly, selectedDataListItems, options]);
 
     useEffect(() => {
-        if (prevCollectionsRef.current === collections) {
+        if (prevCollectionsRef.current === collections && prevBindingRef.current === binding) {
             return;
         }
         prevCollectionsRef.current = collections;
+        prevBindingRef.current = binding;
         queueMicrotask(() => {
-            const newOptions: TreeViewDataItem[] = [];
-            if (collections && collections.catalogs) {
-                collections.catalogs.forEach((catalog) => {
-                    if (catalog.schemas) {
-                        catalog.schemas.forEach((schema, schemaIdx) => {
-                            const collectionsChildren: TreeViewDataItem[] = [];
-                            if (schema.collections) {
-                                schema.collections.forEach((collection) => {
-                                    collectionsChildren.push({
-                                        name: collection.name,
-                                        id: `schema-${schemaIdx}-${schema.name}-collection-${collection.name}`,
-                                        icon: <ServerGroupIcon />,
-                                        checkProps: { checked: false },
-                                        fullyQualifiedName: collection.fullyQualifiedName // Store fullyQualifiedName
-                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    } as any);
-                                });
-                            }
-                            newOptions.push({
-                                name: schema.name,
-                                id: `schema-${schemaIdx}-${schema.name}`,
-                                icon: <DatabaseIcon />,
-                                checkProps: { 'aria-label': 'schema', checked: false },
-                                children: collectionsChildren
-                            });
-                        });
-                    }
-                });
-            }
-
+            const newOptions = buildExplorerTree(collections, binding);
             setOptions(newOptions);
             setFilteredItems(newOptions);
+            setIsFiltered(false);
         });
-    }, [collections]);
+    }, [collections, binding]);
 
     useEffect(() => {
         if (!readOnly || options.length === 0) return;
         setAllExpanded(true);
     }, [readOnly, options]);
 
-    const onCheck = (event: React.ChangeEvent, treeViewItem: TreeViewDataItem) => {
+    const onCheck = (event: React.ChangeEvent, treeViewItem: ExplorerNode) => {
         if (readOnly) return;
         const checked = (event.target as HTMLInputElement).checked;
         const checkedItemTree = options
@@ -315,8 +237,8 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         }
     };
 
-    const flattenTree = (tree: TreeViewDataItem[]) => {
-        let result: TreeViewDataItem[] = [];
+    const flattenTree = (tree: ExplorerNode[]) => {
+        let result: ExplorerNode[] = [];
         tree.forEach((item) => {
             result.push(item);
             if (item.children) {
@@ -326,7 +248,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         return result;
     };
 
-    const mapTree = (item: TreeViewDataItem): TreeViewDataItem => {
+    const mapTree = (item: ExplorerNode): ExplorerNode => {
         const hasCheck = descendantChecked.allChecked.get(item.id);
         if (item.checkProps) {
             item.checkProps.checked = false;
@@ -350,7 +272,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         return item;
     };
 
-    const filterItemsForCheck = (item: TreeViewDataItem, checkedItem: TreeViewDataItem): boolean => {
+    const filterItemsForCheck = (item: ExplorerNode, checkedItem: ExplorerNode): boolean => {
         if (item.id === checkedItem.id) {
             return true;
         }
@@ -365,7 +287,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         return false;
     };
 
-    const filterItemsForSearch = (item: TreeViewDataItem, input: string): boolean => {
+    const filterItemsForSearch = (item: ExplorerNode, input: string): boolean => {
         const itemName = typeof item.name === 'string' ? item.name : String(item.name || '');
         if (itemName.toLowerCase().includes(input.toLowerCase())) {
             return true;
@@ -373,8 +295,8 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         if (item.children) {
             return (
                 (item.children = item.children
-                    .map((opt: TreeViewDataItem) => Object.assign({}, opt))
-                    .filter((child: TreeViewDataItem) => filterItemsForSearch(child, input))).length > 0
+                    .map((opt: ExplorerNode) => Object.assign({}, opt))
+                    .filter((child: ExplorerNode) => filterItemsForSearch(child, input))).length > 0
             );
         }
         return false;
@@ -382,7 +304,6 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
 
     const mappedFilteredItems = filteredItems.map((item) => mapTree(item));
 
-    // Expand/collapse handlers
     const isNodeExpanded = useCallback(
         (id: string) => allExpanded || isFiltered || expandedIds.has(id),
         [allExpanded, isFiltered, expandedIds]
@@ -391,7 +312,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
     const onToggleNode = useCallback((id: string) => {
         if (readOnly) return;
         if (allExpanded || isFiltered) {
-            const allIds = new Set(options.map(item => item.id as string));
+            const allIds = new Set(collectBranchIds(options));
             allIds.delete(id);
             setExpandedIds(allIds);
             setAllExpanded(false);
@@ -415,19 +336,17 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
         }
     };
 
-    // Flatten tree into visible rows based on expand state
     const visibleItems = useMemo((): FlatItem[] => {
         const result: FlatItem[] = [];
-        for (const item of mappedFilteredItems) {
-            const id = item.id as string;
-            const expanded = allExpanded || isFiltered || expandedIds.has(id);
-            result.push({ item, depth: 0, hasChildren: !!item.children?.length });
-            if (expanded && item.children) {
-                for (const child of item.children) {
-                    result.push({ item: child, depth: 1, hasChildren: false });
-                }
+        const walk = (items: ExplorerNode[], depth: number) => {
+            for (const item of items) {
+                const hasChildren = !!item.children?.length;
+                result.push({ item, depth, hasChildren });
+                const expanded = hasChildren && (allExpanded || isFiltered || expandedIds.has(item.id));
+                if (expanded && item.children) walk(item.children, depth + 1);
             }
-        }
+        };
+        walk(mappedFilteredItems, 0);
         return result;
     }, [mappedFilteredItems, allExpanded, isFiltered, expandedIds]);
 
@@ -473,7 +392,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                 >
                     {virtualizer.getVirtualItems().map((virtualRow) => {
                         const { item, depth, hasChildren } = visibleItems[virtualRow.index];
-                        const expanded = hasChildren && isNodeExpanded(item.id as string);
+                        const expanded = hasChildren && isNodeExpanded(item.id);
 
                         return (
                             <div
@@ -496,7 +415,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                                         <button
                                             type="button"
                                             className={`virtual-tree__toggle ${expanded ? 'virtual-tree__toggle--expanded' : ''}`}
-                                            onClick={() => onToggleNode(item.id as string)}
+                                            onClick={() => onToggleNode(item.id)}
                                             aria-label={expanded ? 'Collapse' : 'Expand'}
                                             disabled={readOnly}
                                         >
@@ -512,7 +431,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                                         disabled={readOnly}
                                     />
                                     <span className="virtual-tree__icon">
-                                        {depth === 0 ? <DatabaseIcon /> : <ServerGroupIcon />}
+                                        {item.level === "collection" ? <ServerGroupIcon /> : <DatabaseIcon />}
                                     </span>
                                     <span className="virtual-tree__name">{item.name}</span>
                                     {hasChildren && item.children && (
