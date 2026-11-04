@@ -350,8 +350,7 @@ const CreateSchemaForm = React.forwardRef<
     );
 
     initialSchemaValuesRef.current = { ...split.schemaValues };
-  
-    /* eslint-disable react-hooks/set-state-in-effect */
+
     setConnectorName(initialSource.name);
     setDescription(initialSource.description ?? "");
     setSelectedConnection(initialSource.connection);
@@ -361,7 +360,6 @@ const CreateSchemaForm = React.forwardRef<
     setAdditionalKeyCount(split.additionalKeyCount);
     setSignalCollectionName(split.signalCollectionName);
     setSignalVerified(!!split.signalCollectionName);
-    /* eslint-enable react-hooks/set-state-in-effect */
   }, [initialSource, connectorSchema, schemaPropertyNames]);
 
   const allSections = useMemo(() => {
