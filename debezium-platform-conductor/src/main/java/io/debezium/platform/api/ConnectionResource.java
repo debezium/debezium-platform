@@ -34,11 +34,13 @@ import org.jboss.logging.Logger;
 import io.debezium.platform.api.dto.ConnectionRequest;
 import io.debezium.platform.api.dto.ConnectionResponse;
 import io.debezium.platform.api.mapper.ConnectionMapper;
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.data.dto.CollectionTree;
 import io.debezium.platform.data.dto.ConnectionValidationResult;
 import io.debezium.platform.domain.ConnectionSchemaService;
 import io.debezium.platform.domain.ConnectionService;
 import io.debezium.platform.error.NotFoundException;
+import io.quarkus.security.PermissionsAllowed;
 
 @Tag(name = "connections")
 @Path("/connections")
@@ -62,6 +64,7 @@ public class ConnectionResource {
 
     @Operation(summary = "Returns all available connections")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = ConnectionResponse.class, required = true, type = SchemaType.ARRAY)))
+    @PermissionsAllowed(Permissions.CONNECTION_READ)
     @GET
     public Response get() {
         var connections = connectionService.list();
@@ -70,6 +73,7 @@ public class ConnectionResource {
 
     @Operation(summary = "Returns a connection with given id")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = ConnectionResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.CONNECTION_READ)
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
@@ -81,6 +85,7 @@ public class ConnectionResource {
 
     @Operation(summary = "Creates new connection")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = URI.class, required = true)))
+    @PermissionsAllowed(Permissions.CONNECTION_WRITE)
     @POST
     public Response post(@NotNull @Valid ConnectionRequest request, @Context UriInfo uriInfo) {
         var view = connectionService.createEmpty();
@@ -94,6 +99,7 @@ public class ConnectionResource {
 
     @Operation(summary = "Updates an existing connection")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = ConnectionResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.CONNECTION_WRITE)
     @PUT
     @Path("/{id}")
     public Response put(@PathParam("id") Long id, @NotNull @Valid ConnectionRequest request) {
@@ -105,6 +111,7 @@ public class ConnectionResource {
 
     @Operation(summary = "Deletes an existing connection")
     @APIResponse(responseCode = "204")
+    @PermissionsAllowed(Permissions.CONNECTION_WRITE)
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {
@@ -114,6 +121,7 @@ public class ConnectionResource {
 
     @Operation(summary = "Verify that the connection is valid")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = ConnectionValidationResult.class, type = SchemaType.OBJECT)))
+    @PermissionsAllowed(Permissions.CONNECTION_WRITE)
     @POST
     @Path("/validate")
     public Response validateConnection(@NotNull @Valid ConnectionRequest request) {
@@ -129,6 +137,7 @@ public class ConnectionResource {
 
     @Operation(summary = "Returns a list of JSON schema describing the required field for a Connection")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(type = SchemaType.ARRAY)))
+    @PermissionsAllowed(Permissions.CONNECTION_READ)
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/schemas")
@@ -141,6 +150,7 @@ public class ConnectionResource {
 
     @Operation(summary = "Returns a list of collection names available on the source")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = CollectionTree.class, type = SchemaType.OBJECT)))
+    @PermissionsAllowed(Permissions.CONNECTION_READ)
     @GET
     @Path("/{id}/collections")
     public Response listAvailableCollections(@PathParam("id") Long id) {

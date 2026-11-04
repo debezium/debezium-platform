@@ -32,8 +32,10 @@ import org.jboss.logging.Logger;
 import io.debezium.platform.api.dto.NotificationChannelRequest;
 import io.debezium.platform.api.dto.NotificationChannelResponse;
 import io.debezium.platform.api.mapper.NotificationChannelMapper;
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.domain.NotificationChannelService;
 import io.debezium.platform.error.NotFoundException;
+import io.quarkus.security.PermissionsAllowed;
 
 @Tag(name = "Alerting")
 @Path("/alerts/channels")
@@ -51,6 +53,7 @@ public class NotificationChannelResource {
 
     @Operation(summary = "Returns all available notification channels")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = NotificationChannelResponse.class, required = true, type = SchemaType.ARRAY)))
+    @PermissionsAllowed(Permissions.ALERT_READ)
     @GET
     public Response get() {
         var channels = channelService.list();
@@ -59,6 +62,7 @@ public class NotificationChannelResource {
 
     @Operation(summary = "Returns a notification channel with given id")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = NotificationChannelResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.ALERT_READ)
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
@@ -70,6 +74,7 @@ public class NotificationChannelResource {
 
     @Operation(summary = "Creates a new notification channel")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = NotificationChannelResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.ALERT_WRITE)
     @POST
     public Response post(@NotNull @Valid NotificationChannelRequest request, @Context UriInfo uriInfo) {
         var view = channelService.createEmpty();
@@ -83,6 +88,7 @@ public class NotificationChannelResource {
 
     @Operation(summary = "Updates an existing notification channel")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = NotificationChannelResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.ALERT_WRITE)
     @PUT
     @Path("/{id}")
     public Response put(@PathParam("id") Long id, @NotNull @Valid NotificationChannelRequest request) {
@@ -94,6 +100,7 @@ public class NotificationChannelResource {
 
     @Operation(summary = "Deletes an existing notification channel")
     @APIResponse(responseCode = "204")
+    @PermissionsAllowed(Permissions.ALERT_WRITE)
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {
@@ -102,6 +109,7 @@ public class NotificationChannelResource {
     }
 
     @Operation(hidden = true)
+    @PermissionsAllowed(Permissions.ALERT_WRITE)
     @POST
     @Path("/{id}/test")
     public Response test(@PathParam("id") Long id) {

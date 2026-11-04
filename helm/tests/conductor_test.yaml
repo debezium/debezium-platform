@@ -4,6 +4,7 @@ templates:
   - conductor-service.yaml
   - conductor-ingress.yaml
   - conductor-config-map.yaml
+  - conductor-security-config-map.yaml
   - conductor-service-account.yaml
   - conductor-role.yaml
   - conductor-role-binding.yaml
@@ -286,28 +287,39 @@ tests:
             name: PIPELINE_LABELS_ARGOCD_ARGOPROJ_IO_INSTANCE
             value: "debezium-platform"
 
-  - it: should not add OIDC env variables when oidc is disabled
+  - it: should not add security env variables when security is disabled
     template: conductor-deployment.yaml
     asserts:
       - notContains:
           path: spec.template.spec.containers[0].env
           content:
-            name: QUARKUS_OIDC_TENANT_ENABLED
+            name: CONDUCTOR_SECURITY_ENABLED
             value: "true"
 
-  - it: should add OIDC env variables when oidc is enabled
+  - it: should render byte-identical output when security is unset (NFR-5)
+    template: conductor-deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_SECURITY_ENABLED
+      - notExists:
+          path: spec.template.spec.volumes
+
+  - it: should add security env variables when conductor.security.enabled is true
     template: conductor-deployment.yaml
     set:
+      conductor.security.enabled: true
       conductor.oidc:
-        enabled: true
         authServerUrl: https://keycloak.example.com/realms/dmp
         clientId: conductor
-        apiPolicy: authenticated
+        audience: conductor
+        roleClaimPath: resource_access/conductor/roles
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: QUARKUS_OIDC_TENANT_ENABLED
+            name: CONDUCTOR_SECURITY_ENABLED
             value: "true"
       - contains:
           path: spec.template.spec.containers[0].env
@@ -317,15 +329,41 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: CONDUCTOR_API_POLICY
-            value: authenticated
+            name: OIDC_AUDIENCE
+            value: conductor
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OIDC_ROLE_CLAIM_PATH
+            value: resource_access/conductor/roles
       - notContains:
           path: spec.template.spec.containers[0].env
           content:
-            name: QUARKUS_OIDC_TOKEN_AUDIENCE
-            value: conductor
+            name: CONDUCTOR_API_POLICY
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_OIDC_TENANT_ENABLED
 
-  - it: should add audience env variable when oidc audience is set
+  - it: should fail when security is enabled without authServerUrl
+    template: conductor-deployment.yaml
+    set:
+      conductor.security.enabled: true
+      conductor.oidc.audience: conductor
+    asserts:
+      - failedTemplate:
+          errorMessage: conductor.oidc.authServerUrl is required when conductor.security.enabled=true
+
+  - it: should fail when security is enabled without audience
+    template: conductor-deployment.yaml
+    set:
+      conductor.security.enabled: true
+      conductor.oidc.authServerUrl: https://keycloak.example.com/realms/dmp
+    asserts:
+      - failedTemplate:
+          errorMessage: "conductor.oidc.audience is required when conductor.security.enabled=true: without it, a token minted for another client in the same realm is accepted"
+
+  - it: should honour the deprecated conductor.oidc.enabled alias alone
     template: conductor-deployment.yaml
     set:
       conductor.oidc:
@@ -336,18 +374,125 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: QUARKUS_OIDC_TOKEN_AUDIENCE
-            value: conductor
+            name: CONDUCTOR_SECURITY_ENABLED
+            value: "true"
 
-  - it: should fail when oidc is enabled without authServerUrl
+  - it: should fail rendering when the deprecated alias and the new switch disagree
     template: conductor-deployment.yaml
     set:
-      conductor.oidc:
-        enabled: true
-        authServerUrl: ""
+      conductor.oidc.enabled: true
+      conductor.security.enabled: false
     asserts:
       - failedTemplate:
-          errorMessage: conductor.oidc.authServerUrl is required when conductor.oidc.enabled=true
+          errorMessage: conductor.oidc.enabled and conductor.security.enabled disagree. conductor.oidc.enabled is deprecated; set only conductor.security.enabled.
+
+  - it: should render bootstrap admin role and internal credential secret references by name
+    template: conductor-deployment.yaml
+    set:
+      conductor.security:
+        enabled: true
+        bootstrapAdminRole: platform-engineering
+        internalCredential:
+          existingSecret: conductor-internal-credential
+      conductor.oidc:
+        authServerUrl: https://keycloak.example.com/realms/dmp
+        audience: conductor
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_SECURITY_BOOTSTRAP_ADMIN_ROLE
+            value: platform-engineering
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_INTERNAL_CREDENTIAL_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: conductor-internal-credential
+                key: secret
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_INTERNAL_CREDENTIAL_PREVIOUS_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: conductor-internal-credential
+                key: previous-secret
+                optional: true
+
+  - it: should render the internal credential secret reference even when security is disabled (staged enablement)
+    template: conductor-deployment.yaml
+    set:
+      conductor.security.internalCredential.existingSecret: conductor-internal-credential
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_INTERNAL_CREDENTIAL_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: conductor-internal-credential
+                key: secret
+
+  - it: should render role mappings verbatim into a mounted ConfigMap, not env vars
+    template: conductor-deployment.yaml
+    set:
+      conductor.security.roleMappings:
+        - role: dmp-editor
+          permissions: [source:read, source:write]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_CONFIG_LOCATIONS
+            value: /etc/conductor/security/role-mappings.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: security-role-mappings
+            configMap:
+              name: debezium-platform-security-role-mappings
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: security-role-mappings
+            mountPath: /etc/conductor/security
+            readOnly: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_SECURITY_ROLE_MAPPINGS_0__ROLE
+
+  - it: should annotate the pod template with a checksum of the role mappings
+    template: conductor-deployment.yaml
+    set:
+      conductor.security.roleMappings:
+        - role: dmp-editor
+          permissions: [source:read, source:write]
+    asserts:
+      # A helm upgrade that only edits role mappings updates the ConfigMap but changes no field
+      # Kubernetes diffs the Deployment on; this annotation is what forces the pod to roll so the
+      # new mappings actually take effect, rather than the old permissions silently staying in
+      # force. Asserting the shape (not a hardcoded value) so this does not pin the hash function.
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/security-config"]
+          pattern: "^[0-9a-f]{64}$"
+
+  - it: should not mount a role-mappings volume when no role mappings are configured
+    template: conductor-deployment.yaml
+    set:
+      conductor.security.enabled: true
+      conductor.oidc:
+        authServerUrl: https://keycloak.example.com/realms/dmp
+        audience: conductor
+    asserts:
+      - notExists:
+          path: spec.template.spec.volumes
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_CONFIG_LOCATIONS
 
   - it: should add extra volumes and volume mounts to conductor deployment
     template: conductor-deployment.yaml
@@ -429,3 +574,36 @@ tests:
           value:
             - name: conductor-registry-secret
             - name: conductor-backup-secret
+
+  - it: should not render the security role-mappings ConfigMap when no role mappings are configured
+    template: conductor-security-config-map.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render role names verbatim in the security role-mappings ConfigMap, never mangled
+    template: conductor-security-config-map.yaml
+    set:
+      conductor.security.roleMappings:
+        - role: dmp-editor
+          permissions: [source:read, source:write]
+        - role: platform-engineering
+          permissions: ["*"]
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: debezium-platform-security-role-mappings
+      - matchRegex:
+          path: data["role-mappings.yaml"]
+          pattern: "role: dmp-editor"
+      - matchRegex:
+          path: data["role-mappings.yaml"]
+          pattern: "role: platform-engineering"
+      # The lossy map-to-env-var transformation (upper, '.'/'-' -> '_') must never
+      # apply to role names: this would turn dmp-editor into DMP_EDITOR, silently
+      # matching nothing in the identity provider's token.
+      - notMatchRegex:
+          path: data["role-mappings.yaml"]
+          pattern: "DMP_EDITOR"

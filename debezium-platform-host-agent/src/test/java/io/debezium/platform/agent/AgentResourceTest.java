@@ -11,24 +11,42 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
+import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
 
-/** Tests the HTTP validation and response mapping in {@link AgentResource}. */
+/**
+ * Tests the HTTP validation and response mapping in {@link AgentResource}.
+ *
+ * <p>debezium/dbz#3003: a token is now required (the fail-open branch in {@link AgentTokenFilter}
+ * is gone), so every request here authenticates with the token this profile configures;
+ * {@link AgentTokenFilterTest} and {@link AgentTokenFilterNoTokenConfiguredTest} cover the filter
+ * itself.
+ */
 @QuarkusTest
+@TestProfile(AgentResourceTest.TokenConfiguredProfile.class)
 class AgentResourceTest {
+
+    private static final String TOKEN = "resource-test-token";
 
     @InjectMock
     AgentContainerService containerService;
 
+    private static RequestSpecification authenticated() {
+        return given().header("Authorization", "Bearer " + TOKEN);
+    }
+
     @Test
     void documentsAgentEndpointsInOpenApi() {
-        given()
+        authenticated()
                 .accept(ContentType.JSON)
                 .when()
                 .get("/q/openapi")
@@ -40,7 +58,7 @@ class AgentResourceTest {
 
     @Test
     void deployReturns202Accepted() {
-        given()
+        authenticated()
                 .contentType(ContentType.JSON)
                 .body("""
                         {
@@ -58,7 +76,7 @@ class AgentResourceTest {
 
     @Test
     void rejectsContainerNameThatCouldEscapeAgentDirectories() {
-        given()
+        authenticated()
                 .contentType(ContentType.JSON)
                 .body("""
                         {
@@ -78,7 +96,7 @@ class AgentResourceTest {
 
     @Test
     void rejectsInvalidPathContainerNameBeforeCallingTheService() {
-        given()
+        authenticated()
                 .when()
                 .get("/api/agent/status/bad%20name")
                 .then()
@@ -89,7 +107,7 @@ class AgentResourceTest {
 
     @Test
     void rejectsInvalidDeployFieldsBeforeCallingTheService() {
-        given()
+        authenticated()
                 .contentType(ContentType.JSON)
                 .body("""
                         {
@@ -109,7 +127,7 @@ class AgentResourceTest {
 
     @Test
     void undeployUsesContainerNamePathParameter() {
-        given()
+        authenticated()
                 .when()
                 .post("/api/agent/undeploy/test-pipeline")
                 .then()
@@ -121,7 +139,7 @@ class AgentResourceTest {
         doThrow(new AgentOperationException("Docker did not stop"))
                 .when(containerService).stop("test-pipeline");
 
-        given()
+        authenticated()
                 .when()
                 .post("/api/agent/stop/test-pipeline")
                 .then()
@@ -130,7 +148,7 @@ class AgentResourceTest {
 
     @Test
     void startUsesContainerNamePathParameter() {
-        given()
+        authenticated()
                 .when()
                 .post("/api/agent/start/test-pipeline")
                 .then()
@@ -142,7 +160,7 @@ class AgentResourceTest {
         when(containerService.status("test-pipeline"))
                 .thenReturn(Optional.of(new ContainerStatus(true, "config-hash")));
 
-        given()
+        authenticated()
                 .when()
                 .get("/api/agent/status/test-pipeline")
                 .then()
@@ -155,7 +173,7 @@ class AgentResourceTest {
     void statusReturns404WhenServiceHasNoContainer() {
         when(containerService.status("missing-pipeline")).thenReturn(Optional.empty());
 
-        given()
+        authenticated()
                 .when()
                 .get("/api/agent/status/missing-pipeline")
                 .then()
@@ -166,11 +184,18 @@ class AgentResourceTest {
     void logsReturnsTheServiceOutput() {
         when(containerService.logs("test-pipeline")).thenReturn("Starting Debezium Server");
 
-        given()
+        authenticated()
                 .when()
                 .get("/api/agent/logs/test-pipeline")
                 .then()
                 .statusCode(200)
                 .body(equalTo("Starting Debezium Server"));
+    }
+
+    public static class TokenConfiguredProfile implements QuarkusTestProfile {
+        @Override
+        public Map<String, String> getConfigOverrides() {
+            return Map.of("agent.token", TOKEN);
+        }
     }
 }

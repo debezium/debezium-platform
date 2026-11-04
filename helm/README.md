@@ -87,11 +87,15 @@ The following operators must be installed in the cluster **before** deploying th
 | conductor.descriptors.official.auth.existingSecret | Name of an existing K8s Secret containing `username` and `password` keys for the descriptors registry                                                                                 | ""                                         |
 | conductor.extraVolumes                     | Extra volumes to add to the conductor deployment                                                                                                                                      | []                                         |
 | conductor.extraVolumeMounts                | Extra volume mounts to add to the conductor container                                                                                                                                 | []                                         |
-| conductor.oidc.enabled                     | Enable OIDC bearer-token security (resource-server / service mode). When disabled the conductor is unsecured                                                                          | false                                      |
-| conductor.oidc.authServerUrl               | OIDC issuer / realm URL (e.g. https://keycloak.example.com/realms/dmp). Required when enabled                                                                                         | ""                                         |
+| conductor.oidc.enabled                     | **Deprecated**, use `conductor.security.enabled`. Left `null` by default; setting both to disagreeing values fails `helm template`                                                    | null                                       |
+| conductor.oidc.authServerUrl               | OIDC issuer / realm URL (e.g. https://keycloak.example.com/realms/dmp). Required when `conductor.security.enabled=true`                                                               | ""                                         |
 | conductor.oidc.clientId                    | Keycloak client id whose roles are read from `resource_access.<clientId>`. Must match a client in the realm; realm roles resolve regardless                                           | conductor                                  |
-| conductor.oidc.apiPolicy                   | Policy applied to /api/*: authenticated by default (require a token), permit (opt back out, leave open), or a named role policy                                                       | authenticated                              |
-| conductor.oidc.audience                    | Expected aud claim. Empty disables audience enforcement                                                                                                                               | ""                                         |
+| conductor.oidc.audience                    | Expected `aud` claim. Required when `conductor.security.enabled=true`: without it, a token minted for another client in the same realm is accepted                                    | ""                                         |
+| conductor.oidc.roleClaimPath               | Claim path for roles, for identity providers that do not use Keycloak's `realm_access.roles` / `resource_access.<clientId>.roles` shape (e.g. Entra ID app roles)                      | ""                                         |
+| conductor.security.enabled                 | The single IAM switch: authentication, authorization, and the internal callback credential. Left `null` by default (see `conductor.oidc.enabled` above)                                | null                                       |
+| conductor.security.bootstrapAdminRole      | A role always granted every permission, evaluated ahead of the role-mapping lookup. The recovery path for a misconfigured mapping                                                     | ""                                         |
+| conductor.security.roleMappings            | List of `{role, permissions}`. Empty means the shipped default bundles apply (`dmp-admin`/`dmp-editor`/`dmp-operator`/`dmp-viewer`). Rendered into a mounted ConfigMap, never env vars  | []                                         |
+| conductor.security.internalCredential.existingSecret | Name of a Secret holding key `secret` (and, during rotation, key `previous-secret`) for authenticating Debezium Server's snapshot-notification callbacks                    | ""                                         |
 | server.image                               | Image for Debezium Server instances created by pipelines. If empty, the operator's ServerImageProvider determines the image                                                           | ""                                         |
 | server.imagePullSecrets                    | Replaces the global `imagePullSecrets` for Debezium Server pods created by pipelines. Leave empty to inherit it.                                                                      | []                                         |
 | database.enabled                           | Enable the installation of PostgreSQL by the chart                                                                                                                                    | false                                      |
@@ -417,6 +421,39 @@ conductor:
       mountPath: /etc/truststore 
       readOnly: true
 ```
+
+## Identity and Access Management (IAM)
+
+`conductor.security.enabled` is the single switch for authentication, authorization and the internal
+service-to-service credential. `conductor.oidc.enabled` is a deprecated alias kept for one minor
+release; setting both to disagreeing values fails `helm template` rather than silently picking one.
+
+```yaml
+conductor:
+  security:
+    enabled: true
+    roleMappings:
+      - role: platform-engineering   # an existing directory group
+        permissions: ["*"]
+      - role: sre-oncall
+        permissions: [pipeline:read, pipeline:operate, pipeline:logs, monitoring:read]
+    internalCredential:
+      existingSecret: conductor-internal-credential   # keys: secret, previous-secret
+  oidc:
+    authServerUrl: https://keycloak.example.com/realms/dmp
+    audience: conductor   # required; every client calling the conductor needs an Audience mapper
+```
+
+Leaving `roleMappings` empty uses the shipped default bundles (`dmp-admin`, `dmp-editor`,
+`dmp-operator`, `dmp-viewer`). Role names are matched against identity-provider claim values
+byte-for-byte and are rendered into a mounted ConfigMap rather than environment variables, so they
+are never mangled by the usual map-key-to-env-var transformation.
+
+**Staged enablement**, for deployments with pipelines already running: configure
+`internalCredential.existingSecret` first and leave `security.enabled` off. Pipelines re-provision
+and roll, at a time of your choosing, carrying a credential nothing yet verifies. Only once every
+pipeline has rolled, set `security.enabled: true`. Enabling both in the same step is not wrong, but
+snapshot-progress notifications are rejected for any pipeline that has not yet rolled.
 
 ## Debezium Server Image Configuration
 

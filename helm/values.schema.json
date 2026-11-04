@@ -91,29 +91,74 @@
                     "type": "object",
                     "properties": {
                         "enabled": {
-                            "type": "boolean",
-                            "default": false,
-                            "description": "Enable OIDC bearer-token security (resource-server / service mode)"
+                            "type": ["boolean", "null"],
+                            "default": null,
+                            "description": "Deprecated: use conductor.security.enabled. Left null so the chart can tell unset apart from false"
                         },
                         "authServerUrl": {
                             "type": "string",
                             "default": "",
-                            "description": "OIDC issuer / realm URL. Required when enabled"
+                            "description": "OIDC issuer / realm URL. Required when conductor.security.enabled=true"
                         },
                         "clientId": {
                             "type": "string",
                             "default": "conductor",
                             "description": "Keycloak client id whose roles are read from resource_access.<clientId>. Must match a client in the realm"
                         },
-                        "apiPolicy": {
-                            "type": "string",
-                            "default": "authenticated",
-                            "description": "Policy applied to /api/*: authenticated by default (require a token), permit (opt back out), or a named role policy"
-                        },
                         "audience": {
                             "type": "string",
                             "default": "",
-                            "description": "Expected aud claim. Empty disables audience enforcement"
+                            "description": "Expected aud claim. Required when conductor.security.enabled=true"
+                        },
+                        "roleClaimPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "Claim path for roles, for identity providers that do not use Keycloak's default shape"
+                        }
+                    }
+                },
+                "security": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": ["boolean", "null"],
+                            "default": null,
+                            "description": "The single IAM switch. Left null so the chart can tell unset apart from false"
+                        },
+                        "bootstrapAdminRole": {
+                            "type": "string",
+                            "default": "",
+                            "description": "A role always granted every permission, evaluated ahead of the role-mapping lookup"
+                        },
+                        "roleMappings": {
+                            "type": "array",
+                            "default": [],
+                            "description": "Role name to permission bundle. Empty means the shipped default bundles apply",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "role": {
+                                        "type": "string"
+                                    },
+                                    "permissions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "required": ["role", "permissions"]
+                            }
+                        },
+                        "internalCredential": {
+                            "type": "object",
+                            "properties": {
+                                "existingSecret": {
+                                    "type": "string",
+                                    "default": "",
+                                    "description": "Name of a Secret holding key 'secret' and, during rotation, key 'previous-secret'"
+                                }
+                            }
                         }
                     }
                 }

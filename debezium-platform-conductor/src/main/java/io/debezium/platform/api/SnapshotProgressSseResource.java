@@ -22,9 +22,11 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import io.debezium.platform.api.dto.SnapshotProgressResponse;
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.snapshot.SnapshotProgressAggregator;
 import io.debezium.platform.error.NotFoundException;
+import io.quarkus.security.PermissionsAllowed;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -51,6 +53,7 @@ public class SnapshotProgressSseResource {
         this.pipelineService = pipelineService;
     }
 
+    @PermissionsAllowed(Permissions.MONITORING_READ)
     @GET
     @Path("/progress")
     @Produces(MediaType.APPLICATION_JSON)
@@ -64,6 +67,7 @@ public class SnapshotProgressSseResource {
         return Response.ok(aggregator.currentState(pipelineId)).build();
     }
 
+    @PermissionsAllowed(Permissions.MONITORING_READ)
     @GET
     @Path("/progress/stream")
     @Produces(MediaType.SERVER_SENT_EVENTS)
