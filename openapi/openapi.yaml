@@ -2210,8 +2210,3 @@ info:
   contact:
     name: Debezium
     url: https://github.com/debezium/debezium-platform
-servers:
-- url: http://localhost:8080
-  description: Auto generated value
-- url: http://0.0.0.0:8080
-  description: Auto generated value

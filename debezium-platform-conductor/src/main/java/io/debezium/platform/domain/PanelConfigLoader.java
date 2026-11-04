@@ -24,10 +24,11 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-
 import io.debezium.platform.config.PanelConfig;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 @ApplicationScoped
 public class PanelConfigLoader {
@@ -37,7 +38,7 @@ public class PanelConfigLoader {
 
     private final Optional<String> userPanelsPath;
     private final Duration refreshInterval;
-    private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+    private final ObjectMapper yamlMapper = YAMLMapper.builder().build();
 
     @Inject
     public PanelConfigLoader(
@@ -82,7 +83,7 @@ public class PanelConfigLoader {
             }
             return parsePanels(is);
         }
-        catch (IOException e) {
+        catch (IOException | JacksonException e) {
             LOGGER.error("Failed to load built-in panels", e);
             return Collections.emptyList();
         }
@@ -100,7 +101,7 @@ public class PanelConfigLoader {
             LOGGER.info("Loaded {} user panel(s) from '{}'", userPanels.size(), path);
             return userPanels;
         }
-        catch (IOException e) {
+        catch (IOException | JacksonException e) {
             LOGGER.error("Failed to load user panels from '{}'", path, e);
             return Collections.emptyList();
         }
