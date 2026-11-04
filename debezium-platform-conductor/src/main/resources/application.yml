@@ -190,6 +190,16 @@ quarkus:
         ~: true
         origins: ${CONDUCTOR_CORS_ORIGINS:}
     auth:
+      # With proactive authentication on (the Quarkus default), any request carrying an
+      # Authorization: Bearer value is run through every registered authentication mechanism,
+      # including quarkus-oidc's JWT parser, before routing ever reaches a JAX-RS filter -
+      # regardless of the path's own policy. The internal credential (debezium/dbz#3003) is not a
+      # JWT, so once IAM is enabled that attempt would fail and reject the request before
+      # InternalCredentialFilter, the actual guard for /api/internal/*, ever runs. Disabling
+      # proactive authentication makes authentication lazy: it only runs when a path's policy or
+      # a JAX-RS annotation actually requires an identity, which /api/internal/*'s permit policy
+      # does not.
+      proactive: false
       permission:
         # More specific than /api/* so it wins (debezium/dbz#3003). Debezium Server has no OIDC
         # token; the guard is InternalCredentialFilter, not this policy, which merely keeps the

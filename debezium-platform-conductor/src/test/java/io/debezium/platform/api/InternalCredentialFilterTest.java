@@ -57,12 +57,14 @@ class InternalCredentialFilterTest {
         when(uriInfo.getPathParameters()).thenReturn(pathParameters);
     }
 
-    // --- No secret configured: falls back to the pre-existing proxy-provenance heuristic ---
+    // --- Enforcement not active (no secret, or a secret with IAM still disabled -- see
+    // InternalCredentialServiceTest for that distinction, which the filter itself cannot see):
+    // falls back to the pre-existing proxy-provenance heuristic ---
 
     @Test
     @FixFor("debezium/dbz#3003")
-    void internalRequestWithForwardedForHeaderIsRejectedWhenNoSecretConfigured() {
-        givenNoSecret();
+    void internalRequestWithForwardedForHeaderIsRejectedWhenEnforcementNotActive() {
+        givenEnforcementNotActive();
         givenPath(INTERNAL_PATH);
         when(requestContext.getHeaderString("X-Forwarded-For")).thenReturn("203.0.113.7");
 
@@ -73,8 +75,8 @@ class InternalCredentialFilterTest {
 
     @Test
     @FixFor("debezium/dbz#3003")
-    void internalRequestWithRfc7239ForwardedHeaderIsRejectedWhenNoSecretConfigured() {
-        givenNoSecret();
+    void internalRequestWithRfc7239ForwardedHeaderIsRejectedWhenEnforcementNotActive() {
+        givenEnforcementNotActive();
         givenPath(INTERNAL_PATH);
         when(requestContext.getHeaderString("Forwarded")).thenReturn("for=203.0.113.7");
 
@@ -85,8 +87,8 @@ class InternalCredentialFilterTest {
 
     @Test
     @FixFor("debezium/dbz#3003")
-    void inClusterInternalRequestWithoutForwardingHeadersIsAllowedWhenNoSecretConfigured() {
-        givenNoSecret();
+    void inClusterInternalRequestWithoutForwardingHeadersIsAllowedWhenEnforcementNotActive() {
+        givenEnforcementNotActive();
         givenPath(INTERNAL_PATH);
 
         newFilter().filter(requestContext);
@@ -97,7 +99,7 @@ class InternalCredentialFilterTest {
     @Test
     @FixFor("debezium/dbz#3003")
     void publicEndpointIsNeverBlockedByTheProxyHeuristic() {
-        givenNoSecret();
+        givenEnforcementNotActive();
         givenPath(PUBLIC_PATH);
         when(requestContext.getHeaderString("X-Forwarded-For")).thenReturn("203.0.113.7");
 
@@ -106,12 +108,12 @@ class InternalCredentialFilterTest {
         verify(requestContext, never()).abortWith(any());
     }
 
-    // --- A secret is configured: real credential verification applies ---
+    // --- Enforcement active (secret configured and IAM enabled): real credential verification ---
 
     @Test
     @FixFor("debezium/dbz#3003")
     void acceptsRequestWithValidCredential() {
-        givenSecretConfigured();
+        givenEnforcementActive();
         givenPath(INTERNAL_PATH);
         givenPipelineIdPathParam("1");
         givenBearerToken(CREDENTIAL_SHAPED_TOKEN);
@@ -125,7 +127,7 @@ class InternalCredentialFilterTest {
     @Test
     @FixFor("debezium/dbz#3003")
     void rejectsInternalRequestWithNoCredential() {
-        givenSecretConfigured();
+        givenEnforcementActive();
         givenPath(INTERNAL_PATH);
         givenPipelineIdPathParam("1");
 
@@ -137,7 +139,7 @@ class InternalCredentialFilterTest {
     @Test
     @FixFor("debezium/dbz#3003")
     void rejectsInternalRequestWithCredentialForAnotherPipeline() {
-        givenSecretConfigured();
+        givenEnforcementActive();
         givenPath(INTERNAL_PATH);
         givenPipelineIdPathParam("1");
         givenBearerToken(CREDENTIAL_SHAPED_TOKEN);
@@ -151,7 +153,7 @@ class InternalCredentialFilterTest {
     @Test
     @FixFor("debezium/dbz#3003")
     void rejectsInternalRequestWithNonNumericPipelineId() {
-        givenSecretConfigured();
+        givenEnforcementActive();
         givenPath(INTERNAL_PATH);
         givenPipelineIdPathParam("not-a-number");
 
@@ -163,7 +165,7 @@ class InternalCredentialFilterTest {
     @Test
     @FixFor("debezium/dbz#3003")
     void rejectsInternalCredentialShapedTokenPresentedAtAUserPath() {
-        givenSecretConfigured();
+        givenEnforcementActive();
         givenPath(PUBLIC_PATH);
         givenBearerToken(CREDENTIAL_SHAPED_TOKEN);
 
@@ -175,7 +177,7 @@ class InternalCredentialFilterTest {
     @Test
     @FixFor("debezium/dbz#3003")
     void allowsAnOrdinaryBearerTokenAtAUserPath() {
-        givenSecretConfigured();
+        givenEnforcementActive();
         givenPath(PUBLIC_PATH);
         // Shaped like a JWT (contains '.'), not like our derived credential.
         givenBearerToken("header.payload.signature");
@@ -185,12 +187,12 @@ class InternalCredentialFilterTest {
         verify(requestContext, never()).abortWith(any());
     }
 
-    private void givenNoSecret() {
-        when(credentials.isConfigured()).thenReturn(false);
+    private void givenEnforcementNotActive() {
+        when(credentials.isEnforcementActive()).thenReturn(false);
     }
 
-    private void givenSecretConfigured() {
-        when(credentials.isConfigured()).thenReturn(true);
+    private void givenEnforcementActive() {
+        when(credentials.isEnforcementActive()).thenReturn(true);
     }
 
     private void givenPath(String path) {
