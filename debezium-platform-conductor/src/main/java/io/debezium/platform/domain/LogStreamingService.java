@@ -5,7 +5,6 @@
  */
 package io.debezium.platform.domain;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,20 +26,30 @@ public class LogStreamingService {
     private final Logger logger;
     private final ExecutorService executorService;
 
-    public static class LogStreamingTask implements Runnable, Closeable {
+    /**
+     * A running log stream. Deliberately not {@link java.io.Closeable}: the task routinely outlives
+     * the scope that starts it, so being usable in a try-with-resources would invite stopping it the
+     * moment that scope exits, before anything has been read. Callers stop it through
+     * {@link #stop()}, at the point they actually know the stream is no longer wanted.
+     */
+    public static class LogStreamingTask implements Runnable {
         private final Logger logger;
 
         private final String name;
         private final AtomicBoolean running;
+        private final AtomicBoolean stopped;
         private final Supplier<LogReader> supplier;
         private final Consumer<String> consumer;
+        private final Runnable onFinished;
 
-        public LogStreamingTask(String name, Supplier<LogReader> supplier, Consumer<String> consumer, Logger logger) {
+        public LogStreamingTask(String name, Supplier<LogReader> supplier, Consumer<String> consumer, Logger logger, Runnable onFinished) {
             this.name = name;
             this.supplier = supplier;
             this.consumer = consumer;
             this.logger = logger;
+            this.onFinished = onFinished;
             this.running = new AtomicBoolean(false);
+            this.stopped = new AtomicBoolean(false);
         }
 
         public String getName() {
@@ -52,14 +61,18 @@ public class LogStreamingService {
         }
 
         public void stop() {
-            if (!running.compareAndSet(true, false)) {
+            // Marked stopped first so a task that has been submitted but has not started yet never
+            // begins streaming: stop() would otherwise be a no-op on it, and the subsequent run()
+            // would push lines at a consumer nobody is listening to any more.
+            stopped.set(true);
+            if (running.compareAndSet(true, false)) {
                 logger.infof("Stopping log streamer for '%s'", name);
             }
         }
 
         @Override
         public void run() {
-            if (!running.compareAndSet(false, true)) {
+            if (stopped.get() || !running.compareAndSet(false, true)) {
                 return;
             }
             logger.infof("Starting log streamer for '%s'", name);
@@ -77,6 +90,7 @@ public class LogStreamingService {
             }
             finally {
                 stop();
+                onFinished.run();
             }
         }
 
@@ -90,11 +104,6 @@ public class LogStreamingService {
                 consumer.accept(line);
             }
         }
-
-        @Override
-        public void close() {
-            stop();
-        }
     }
 
     public LogStreamingService(Logger logger, @VirtualThreads ExecutorService executorService) {
@@ -105,11 +114,13 @@ public class LogStreamingService {
     /**
      * Starts streaming the log, passing each line to given consumer.
      *
-     * @param consumer log consumer
+     * @param consumer   log consumer
+     * @param onFinished invoked once the task has stopped streaming, whether because the log ended,
+     *                   it failed, or {@link LogStreamingTask#stop()} was called
      */
-    public LogStreamingTask stream(String name, Supplier<LogReader> logSupplier, Consumer<String> consumer) {
+    public LogStreamingTask stream(String name, Supplier<LogReader> logSupplier, Consumer<String> consumer, Runnable onFinished) {
         logger.infof("Starting log streamer for log %s", name);
-        var task = new LogStreamingTask(name, logSupplier, consumer, logger);
+        var task = new LogStreamingTask(name, logSupplier, consumer, logger, onFinished);
         executorService.submit(task);
         return task;
     }
