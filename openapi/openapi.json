@@ -2392,6 +2392,36 @@
         }
       }
     },
+    "/api/pipelines/{id}/logs/stream" : {
+      "get" : {
+        "summary" : "Stream live logs for the pipeline with the given id via SSE",
+        "tags" : [ "pipelines" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Stream of events, each carrying a single log line",
+            "content" : {
+              "text/event-stream" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Unknown pipeline"
+          }
+        }
+      }
+    },
     "/api/pipelines/{id}/signals" : {
       "post" : {
         "summary" : "Send signal to pipeline with given id",
