@@ -6,10 +6,10 @@
 package io.debezium.platform.domain;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
@@ -18,8 +18,7 @@ import com.blazebit.persistence.CriteriaBuilderFactory;
 import com.blazebit.persistence.view.EntityViewManager;
 
 import io.debezium.platform.data.model.AlertRuleEntity;
-import io.debezium.platform.data.model.AlertStateEntity;
-import io.debezium.platform.data.model.AlertStateValue;
+import io.debezium.platform.domain.alert.AlertRuleDeleting;
 import io.debezium.platform.domain.views.AlertRule;
 import io.debezium.platform.domain.views.refs.AlertRuleReference;
 import io.debezium.platform.error.NotFoundException;
@@ -28,13 +27,13 @@ import io.debezium.platform.error.NotFoundException;
 public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule, AlertRuleReference> {
 
     private final PanelConfigLoader panelConfigLoader;
-    private final AlertStateService alertStateService;
+    private final Event<AlertRuleDeleting> ruleDeletingEvent;
 
     public AlertRuleService(EntityManager em, CriteriaBuilderFactory cbf, EntityViewManager evm,
-                            PanelConfigLoader panelConfigLoader, AlertStateService alertStateService) {
+                            PanelConfigLoader panelConfigLoader, Event<AlertRuleDeleting> ruleDeletingEvent) {
         super(AlertRuleEntity.class, AlertRule.class, AlertRuleReference.class, em, cbf, evm);
         this.panelConfigLoader = panelConfigLoader;
-        this.alertStateService = alertStateService;
+        this.ruleDeletingEvent = ruleDeletingEvent;
     }
 
     @Override
@@ -54,22 +53,18 @@ public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule
     }
 
     /**
-     * Resolves the rule's active alerts before deleting it. The rule's states are removed with it, but
-     * its events only lose their rule reference, so an event that is firing at that moment would stay
-     * firing forever: nothing evaluates it again and the history cleanup only removes resolved events.
+     * Fires {@link AlertRuleDeleting} before deleting the rule, so that its active alerts get resolved
+     * while the rule still exists. The rule's states are removed with it, but its events only lose their
+     * rule reference, so an event that is firing at that moment would stay firing forever: nothing
+     * evaluates it again and the history cleanup only removes resolved events.
      */
     @Override
     public void delete(long id) {
         AlertRuleEntity rule = em.find(AlertRuleEntity.class, id);
         if (rule != null) {
-            Instant now = Instant.now();
-            for (AlertStateEntity state : alertStateService.findByRuleId(id)) {
-                if (state.getState() != AlertStateValue.OK) {
-                    alertStateService.resolve(rule, state, now);
-                }
-            }
-            // write the resolved events before the rule row goes away, otherwise the delete below runs
-            // first and the event update then fails its foreign key to the rule
+            ruleDeletingEvent.fire(new AlertRuleDeleting(rule));
+            // write what the observers changed before the rule row goes away, otherwise the delete below
+            // runs first and an event update then fails its foreign key to the rule
             em.flush();
         }
         super.delete(id);
