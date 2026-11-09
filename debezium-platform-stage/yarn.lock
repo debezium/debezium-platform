@@ -2399,10 +2399,10 @@ csstype@^3.0.2, csstype@^3.2.2:
   resolved "https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz"
   integrity sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==
 
-cypress@16.0.0:
-  version "16.0.0"
-  resolved "https://registry.yarnpkg.com/cypress/-/cypress-16.0.0.tgz#22afcb0dbc9dda87188b05b0d7ac058215b8c35e"
-  integrity sha512-/H3zsayGwIGboFIiLWaXxy6ADmCdWy5QjjDBZgslCvjIgYAf1DkZerwAM7wXMPSpfpQ4w+lGjFlmwneRBpg27g==
+cypress@16.2.1:
+  version "16.2.1"
+  resolved "https://registry.yarnpkg.com/cypress/-/cypress-16.2.1.tgz#98993dd2e6669e303f4ec3391c380b2c59e3b005"
+  integrity sha512-3Vqf1Krr92hKww/Owob9JrDO7TgBCR2ct+OQrvBOFGSnoGsikL4YF5arqDrJb+SM8Fzi7xXIeVmCeaOqJKPhRA==
   dependencies:
     "@cypress/request" "^4.0.0"
     "@cypress/xvfb" "^1.2.4"
