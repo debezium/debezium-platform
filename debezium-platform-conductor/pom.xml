@@ -48,7 +48,7 @@
         <version.infinispan>16.3.1</version.infinispan>
         <version.pravega>0.13.0</version.pravega>
         <version.google.cloud.pubsub>1.158.0</version.google.cloud.pubsub>
-        <version.azure-messaging-eventhubs>5.21.7</version.azure-messaging-eventhubs>
+        <version.azure-messaging-eventhubs>5.22.1</version.azure-messaging-eventhubs>
         <version.impsort>1.13.0</version.impsort>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
         <version.code.formatter>2.29.0</version.code.formatter>
