@@ -75,6 +75,16 @@
     <dependencyManagement>
         <dependencies>
 
+            <!-- Debezium BOM overlay (MongoDB and MySQL drivers) must be imported before any other BOM
+                 so that its versions take precedence over those managed by Quarkus -->
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-bom-overlay</artifactId>
+                <version>${version.debezium}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
