@@ -115,6 +115,21 @@ tests:
           value:
             - prometheus
 
+  - it: should render only the metrics pipeline and only exporters every collector distribution ships
+    template: otel-collector.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
+    asserts:
+      - notExists:
+          path: spec.config.service.pipelines.logs
+      - notExists:
+          path: spec.config.service.pipelines.traces
+      - notExists:
+          path: spec.config.exporters.nop
+      - exists:
+          path: spec.config.exporters.prometheus
+
   # ServiceMonitor tests
   - it: should create ServiceMonitor when monitoring is fully enabled
     template: servicemonitor.yaml
