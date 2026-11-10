@@ -9,6 +9,7 @@ import static io.debezium.platform.environment.database.DatabaseConnectionConfig
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.USERNAME;
 import static io.debezium.platform.environment.operator.OperatorPipelineController.LABEL_DBZ_CONDUCTOR_ID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -29,6 +30,7 @@ import org.mockito.quality.Strictness;
 import io.debezium.doc.FixFor;
 import io.debezium.operator.api.model.runtime.metrics.Metrics;
 import io.debezium.operator.api.model.runtime.metrics.MetricsBuilder;
+import io.debezium.operator.api.model.runtime.templates.ContainerEnvVar;
 import io.debezium.platform.config.PipelineConfigGroup;
 import io.debezium.platform.config.SnapshotMonitoringConfigGroup;
 import io.debezium.platform.data.model.ConnectionEntity;
@@ -195,6 +197,38 @@ public class PipelineMapperTest {
 
         var otel = result.getSpec().getRuntime().getMetrics().getOpenTelemetry();
         assertThat(otel.isEnabled()).isFalse();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3042")
+    public void testMapper_ShouldTurnOffTracesAndLogsExportersWhenOpenTelemetryIsEnabled() {
+        when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(true);
+        when(pipelineConfigGroup.monitoring().otel().endpoint()).thenReturn(Optional.of("http://otel-collector:4318"));
+        pipelineMapper = createMapper();
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getRuntime().getEnvironment().getVars())
+                .extracting(ContainerEnvVar::getName, ContainerEnvVar::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("OTEL_TRACES_EXPORTER", "none"),
+                        tuple("OTEL_LOGS_EXPORTER", "none"));
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3042")
+    public void testMapper_ShouldNotSetOpenTelemetryEnvironmentWhenDisabled() {
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getRuntime().getEnvironment().getVars()).isEmpty();
     }
 
     @Test

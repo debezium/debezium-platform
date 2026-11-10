@@ -34,7 +34,9 @@ import io.debezium.operator.api.model.TransformationBuilder;
 import io.debezium.operator.api.model.runtime.Runtime;
 import io.debezium.operator.api.model.runtime.RuntimeApiBuilder;
 import io.debezium.operator.api.model.runtime.RuntimeBuilder;
+import io.debezium.operator.api.model.runtime.RuntimeEnvironment;
 import io.debezium.operator.api.model.runtime.metrics.Metrics;
+import io.debezium.operator.api.model.runtime.templates.ContainerEnvVar;
 import io.debezium.operator.api.model.runtime.templates.ContainerTemplate;
 import io.debezium.operator.api.model.runtime.templates.PodTemplate;
 import io.debezium.operator.api.model.runtime.templates.Probe;
@@ -74,6 +76,9 @@ public class PipelineMapper {
     private static final String LOG_MIN_LEVEL_PROP_NAME = "log.min-level";
     private static final String LOG_LEVEL_PROP_NAME = "log.level";
     private static final String LOG_CONSOLE_JSON_PROP_NAME = "log.console.json";
+    private static final String OTEL_TRACES_EXPORTER_ENV = "OTEL_TRACES_EXPORTER";
+    private static final String OTEL_LOGS_EXPORTER_ENV = "OTEL_LOGS_EXPORTER";
+    private static final String OTEL_EXPORTER_NONE = "none";
     private static final List<String> RESOLVABLE_CONFIGS = List.of("jdbc.schema.history.table.name", "jdbc.offset.table.name");
 
     private static final String KAFKA_CONNECTION_CONFIGURATION_PREFIX = "producer.";
@@ -199,11 +204,37 @@ public class PipelineMapper {
                 .filter(names -> !names.isEmpty())
                 .ifPresent(names -> templates.setPod(createPodTemplate(names)));
 
-        return new RuntimeBuilder()
+        var runtimeBuilder = new RuntimeBuilder()
                 .withApi(new RuntimeApiBuilder().withEnabled().build())
                 .withMetrics(metrics)
-                .withTemplates(templates)
-                .build();
+                .withTemplates(templates);
+
+        if (metrics.getOpenTelemetry().isEnabled()) {
+            runtimeBuilder.withEnvironment(createMetricsOnlyOpenTelemetryEnvironment());
+        }
+
+        return runtimeBuilder.build();
+    }
+
+    /**
+     * The OpenTelemetry agent attached to Debezium Server exports traces and logs by default, next to
+     * the metrics the operator asks it for. The platform only collects metrics, and the collector it
+     * deploys has no pipeline for the other two signals, so their exporters are turned off: the agent
+     * would otherwise produce them for nothing and log an export failure for every batch.
+     */
+    private RuntimeEnvironment createMetricsOnlyOpenTelemetryEnvironment() {
+        var environment = new RuntimeEnvironment();
+        environment.setVars(List.of(
+                createEnvVar(OTEL_TRACES_EXPORTER_ENV, OTEL_EXPORTER_NONE),
+                createEnvVar(OTEL_LOGS_EXPORTER_ENV, OTEL_EXPORTER_NONE)));
+        return environment;
+    }
+
+    private static ContainerEnvVar createEnvVar(String name, String value) {
+        var envVar = new ContainerEnvVar();
+        envVar.setName(name);
+        envVar.setValue(value);
+        return envVar;
     }
 
     private Sink createSink(PipelineFlat pipeline) {
