@@ -118,6 +118,12 @@ destinations:
       timeout: 60
       
 quarkus:
+  # The conductor produces no traces: nothing in the platform consumes them, and the collector the
+  # Helm chart deploys only has a metrics pipeline. This is a build time property, so setting
+  # QUARKUS_OTEL_TRACES_ENABLED on the container has no effect.
+  otel:
+    traces:
+      enabled: false
   smallrye-openapi:
     store-schema-directory: ../openapi
     info-title: Debezium Platform API
