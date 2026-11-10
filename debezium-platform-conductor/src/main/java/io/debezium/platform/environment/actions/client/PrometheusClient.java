@@ -11,6 +11,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import io.debezium.platform.data.dto.PrometheusInstantQueryResponse;
@@ -18,6 +19,7 @@ import io.debezium.platform.data.dto.PrometheusQueryRangeResponse;
 
 @Path("/api/v1")
 @RegisterRestClient(configKey = "prometheus-api")
+@RegisterProvider(PrometheusAuthFilter.class)
 public interface PrometheusClient {
 
     @GET
