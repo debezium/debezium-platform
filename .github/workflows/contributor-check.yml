@@ -1,9 +1,8 @@
 name: Contributor Check
 on:
-  # ATTENTION: See https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
-  # re security implications of using this trigger; in particular, no code from PR branches must
-  # be executed in any flows triggered by it
-  pull_request_target:
+  # Runs with the read-only token of the pull request. Comments are posted by pr-check-comments.yml,
+  # which is triggered through workflow_run from the result recorded by this workflow.
+  pull_request:
     branches:
       - main
       - 1.*
@@ -11,6 +10,9 @@ on:
       - 3.*
       - 4.*
     types: [ opened ]
+permissions:
+  contents: read
+
 jobs:
   check-contributors:
     uses: debezium/dbz/.github/workflows/contributor-check.yml@main
