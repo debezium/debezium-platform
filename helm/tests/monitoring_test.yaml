@@ -330,6 +330,11 @@ tests:
       - notContains:
           path: spec.template.spec.containers[0].env
           content:
+            name: MONITORING_PROMETHEUS_AUTH_ALLOW_INSECURE_TRANSPORT
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: QUARKUS_TLS_PROMETHEUS_TRUST_STORE_PEM_CERTS
           any: true
       - notContains:
@@ -406,6 +411,38 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "only one of monitoring.prometheus.auth.bearerToken.serviceAccount, auth.bearerToken.existingSecret and auth.basic.existingSecret can be set"
+
+  - it: should fail when Prometheus credentials are set for an http URL
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "HTTP://prometheus:9090"
+      monitoring.prometheus.auth.bearerToken.serviceAccount: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "monitoring.prometheus.auth is set but monitoring.prometheus.url is not an https URL, the credentials would be sent in clear text: use an https URL or set monitoring.prometheus.auth.allowInsecureTransport to true"
+
+  - it: should send Prometheus credentials to an http URL when auth.allowInsecureTransport is true
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
+      monitoring.prometheus.auth.basic.existingSecret: prometheus-basic
+      monitoring.prometheus.auth.allowInsecureTransport: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_AUTH_ALLOW_INSECURE_TRANSPORT
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_BASIC_AUTH_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: prometheus-basic
+                key: username
 
   - it: should trust a CA file already present in the container
     template: conductor-deployment.yaml

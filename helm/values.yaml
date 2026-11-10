@@ -154,6 +154,10 @@ monitoring:
       basic:
         # Name of a Secret with keys `username` and `password`.
         existingSecret: ""
+      # Allow the credentials to be sent to an http:// `url`. By default the chart refuses to
+      # render and the conductor refuses to start, as they would travel in clear text. Set it
+      # only when the connection is encrypted by other means, e.g. a service mesh.
+      allowInsecureTransport: false
     # TLS trust for an https `url`. Configure at most one CA source; with none, the JVM
     # default trust store applies.
     tls:

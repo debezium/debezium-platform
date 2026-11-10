@@ -10,6 +10,7 @@ import java.util.Optional;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 
 /**
@@ -48,6 +49,15 @@ public interface PrometheusConfigGroup {
         Optional<String> bearerToken();
 
         BasicConfigGroup basic();
+
+        /**
+         * Whether the credentials may be sent to a Prometheus URL that is not HTTPS. Off by default,
+         * so that a token or a password does not travel in clear text by oversight. Meant for setups
+         * where the connection is encrypted outside the conductor, by a service mesh for example.
+         */
+        @WithDefault("false")
+        @WithName("allow-insecure-transport")
+        boolean allowInsecureTransport();
 
         interface BasicConfigGroup {
 

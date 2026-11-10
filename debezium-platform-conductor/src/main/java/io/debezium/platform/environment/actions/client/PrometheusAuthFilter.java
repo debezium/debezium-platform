@@ -53,6 +53,11 @@ public class PrometheusAuthFilter implements ClientRequestFilter {
     /**
      * Rejects an ambiguous configuration when the conductor starts rather than on the first query,
      * which may be minutes later and would only show up as an empty panel.
+     * <p>
+     * Credentials for a plain HTTP URL are rejected too, unless explicitly allowed: the header would
+     * be readable by anything on the path to Prometheus, and a service account token is a credential
+     * for the whole cluster API, not only for Prometheus.
+     * </p>
      */
     void validate(@Observes StartupEvent event) {
         List<String> configured = new ArrayList<>();
@@ -78,8 +83,14 @@ public class PrometheusAuthFilter implements ClientRequestFilter {
                             + "monitoring.prometheus.auth.basic.password");
         }
         if (!configured.isEmpty() && prometheusUrl.regionMatches(true, 0, "http://", 0, 7)) {
-            LOGGER.warn("Prometheus credentials are configured but '{}' is not an HTTPS URL, they will be sent in clear text",
-                    prometheusUrl);
+            if (!auth.allowInsecureTransport()) {
+                throw new IllegalStateException(
+                        "Prometheus credentials are configured but '" + prometheusUrl + "' is not an HTTPS URL, so they would be sent "
+                                + "in clear text. Use an https:// URL, or set monitoring.prometheus.auth.allow-insecure-transport to true "
+                                + "if the connection is encrypted by other means");
+            }
+            LOGGER.warn("Prometheus credentials are sent to '{}' in clear text, as allowed by "
+                    + "monitoring.prometheus.auth.allow-insecure-transport", prometheusUrl);
         }
     }
 

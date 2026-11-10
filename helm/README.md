@@ -142,6 +142,7 @@ The following operators must be installed in the cluster **before** deploying th
 | monitoring.prometheus.auth.bearerToken.existingSecret | Name of a Secret holding a static bearer token for Prometheus                                                                                                                         | ""                                         |
 | monitoring.prometheus.auth.bearerToken.secretKey | Key of the bearer token in `auth.bearerToken.existingSecret`                                                                                                                          | token                                      |
 | monitoring.prometheus.auth.basic.existingSecret | Name of a Secret with `username` and `password` keys for Prometheus basic authentication                                                                                              | ""                                         |
+| monitoring.prometheus.auth.allowInsecureTransport | Allow the credentials to be sent to an `http://` Prometheus URL. Without it the chart fails to render when credentials are set for such a URL, as they would travel in clear text. For connections encrypted by other means, e.g. a service mesh. | false                                      |
 | monitoring.prometheus.tls.caFile           | Path of a PEM CA bundle already present in the conductor container, trusted for an `https` Prometheus URL                                                                              | ""                                         |
 | monitoring.prometheus.tls.caConfigMap      | Name of a ConfigMap holding the PEM CA bundle; the chart mounts it into the conductor                                                                                                  | ""                                         |
 | monitoring.prometheus.tls.caSecret         | Name of a Secret holding the PEM CA bundle; the chart mounts it into the conductor                                                                                                     | ""                                         |
@@ -215,6 +216,8 @@ A managed or hardened Prometheus usually requires TLS and credentials. Three set
 - `monitoring.prometheus.auth`: the credentials. Pick at most one of the conductor's own service account token (`bearerToken.serviceAccount`), a static bearer token from a Secret (`bearerToken.existingSecret`), or basic authentication from a Secret (`basic.existingSecret`).
 - `monitoring.prometheus.tls`: the CA to trust for an `https` URL. Pick at most one of a file already in the container (`caFile`), a ConfigMap (`caConfigMap`) or a Secret (`caSecret`). When none is set, the JVM default trust store is used, which is enough for a publicly trusted certificate.
 - `monitoring.prometheus.rbac.clusterRole`: an existing ClusterRole to bind to the conductor service account, for a Prometheus that authorizes service account tokens through Kubernetes RBAC.
+
+Credentials require an `https` URL. With an `http://` URL they would travel in clear text, so the chart fails to render and the conductor refuses to start. If the connection is encrypted by other means, a service mesh for example, set `monitoring.prometheus.auth.allowInsecureTransport: true`.
 
 Basic authentication against a Prometheus behind an ingress, for example:
 

@@ -523,6 +523,11 @@
                                             "description": "Name of a Secret with keys username and password"
                                         }
                                     }
+                                },
+                                "allowInsecureTransport": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "Allow the credentials to be sent to an http Prometheus URL, in clear text"
                                 }
                             }
                         },
