@@ -485,13 +485,85 @@
                 "prometheus": {
                     "type": "object",
                     "properties": {
-                        "external": {
+                        "url": {
+                            "type": "string",
+                            "default": "",
+                            "description": "URL of the Prometheus instance the conductor queries. Required when monitoring.otel.enabled is true."
+                        },
+                        "auth": {
                             "type": "object",
+                            "description": "Credentials the conductor sends with its Prometheus queries. At most one method can be configured.",
                             "properties": {
-                                "url": {
+                                "bearerToken": {
+                                    "type": "object",
+                                    "properties": {
+                                        "serviceAccount": {
+                                            "type": "boolean",
+                                            "default": false,
+                                            "description": "Send the conductor service account token, re-read on every request"
+                                        },
+                                        "existingSecret": {
+                                            "type": "string",
+                                            "default": "",
+                                            "description": "Name of a Secret holding a static bearer token"
+                                        },
+                                        "secretKey": {
+                                            "type": "string",
+                                            "default": "token",
+                                            "description": "Key of the bearer token in existingSecret"
+                                        }
+                                    }
+                                },
+                                "basic": {
+                                    "type": "object",
+                                    "properties": {
+                                        "existingSecret": {
+                                            "type": "string",
+                                            "default": "",
+                                            "description": "Name of a Secret with keys username and password"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "tls": {
+                            "type": "object",
+                            "description": "TLS trust for an https Prometheus URL. At most one CA source can be configured.",
+                            "properties": {
+                                "caFile": {
                                     "type": "string",
                                     "default": "",
-                                    "description": "URL of an external Prometheus instance (for users not using Prometheus Operator)"
+                                    "description": "Path of a PEM CA bundle already present in the conductor container"
+                                },
+                                "caConfigMap": {
+                                    "type": "string",
+                                    "default": "",
+                                    "description": "Name of a ConfigMap holding the PEM CA bundle under caKey"
+                                },
+                                "caSecret": {
+                                    "type": "string",
+                                    "default": "",
+                                    "description": "Name of a Secret holding the PEM CA bundle under caKey"
+                                },
+                                "caKey": {
+                                    "type": "string",
+                                    "default": "ca.crt",
+                                    "description": "Key of the PEM CA bundle in caConfigMap or caSecret"
+                                },
+                                "insecureSkipVerify": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "Disable certificate and host name verification. For testing only."
+                                }
+                            }
+                        },
+                        "rbac": {
+                            "type": "object",
+                            "properties": {
+                                "clusterRole": {
+                                    "type": "string",
+                                    "default": "",
+                                    "description": "Name of an existing ClusterRole to bind to the conductor service account, e.g. cluster-monitoring-view on OpenShift"
                                 }
                             }
                         },
