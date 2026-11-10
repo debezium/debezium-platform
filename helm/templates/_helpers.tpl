@@ -162,13 +162,18 @@ Fails when more than one CA source is set.
 
 {{/*
 Environment variables carrying the Prometheus credentials and TLS trust to the conductor.
-Fails when more than one authentication method is set.
+Fails when more than one authentication method is set, and when credentials are set for an
+http:// URL without auth.allowInsecureTransport.
 */}}
 {{- define "debezium-platform.prometheusClientEnv" -}}
 {{- $auth := .Values.monitoring.prometheus.auth -}}
 {{- $methods := compact (list (ternary "serviceAccount" "" $auth.bearerToken.serviceAccount) $auth.bearerToken.existingSecret $auth.basic.existingSecret) -}}
 {{- if gt (len $methods) 1 -}}
 {{- fail "only one of monitoring.prometheus.auth.bearerToken.serviceAccount, auth.bearerToken.existingSecret and auth.basic.existingSecret can be set" -}}
+{{- end -}}
+{{- $plainHttp := hasPrefix "http://" (lower (toString .Values.monitoring.prometheus.url)) -}}
+{{- if and $methods $plainHttp (not $auth.allowInsecureTransport) -}}
+{{- fail "monitoring.prometheus.auth is set but monitoring.prometheus.url is not an https URL, the credentials would be sent in clear text: use an https URL or set monitoring.prometheus.auth.allowInsecureTransport to true" -}}
 {{- end -}}
 {{- if $auth.bearerToken.serviceAccount }}
 - name: MONITORING_PROMETHEUS_BEARER_TOKEN_FILE
@@ -190,6 +195,10 @@ Fails when more than one authentication method is set.
     secretKeyRef:
       name: {{ $auth.basic.existingSecret }}
       key: password
+{{- end }}
+{{- if $auth.allowInsecureTransport }}
+- name: MONITORING_PROMETHEUS_AUTH_ALLOW_INSECURE_TRANSPORT
+  value: "true"
 {{- end }}
 {{- with (include "debezium-platform.prometheusCaFile" .) }}
 - name: QUARKUS_TLS_PROMETHEUS_TRUST_STORE_PEM_CERTS

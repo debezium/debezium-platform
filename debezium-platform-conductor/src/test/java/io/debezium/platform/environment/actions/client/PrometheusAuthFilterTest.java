@@ -32,6 +32,7 @@ import io.debezium.platform.config.PrometheusConfigGroup.AuthConfigGroup.BasicCo
 class PrometheusAuthFilterTest {
 
     private static final String HTTPS_URL = "https://prometheus.example.com";
+    private static final String HTTP_URL = "http://prometheus.example.com:9090";
 
     @TempDir
     Path tempDir;
@@ -121,6 +122,46 @@ class PrometheusAuthFilterTest {
                 .hasMessageContaining("requires both");
     }
 
+    @Test
+    @FixFor("debezium/dbz#3049")
+    void rejectsCredentialsForAPlainHttpUrl() {
+        PrometheusAuthFilter filter = filter(HTTP_URL, false, null, "static-token", null, null);
+
+        assertThatThrownBy(() -> filter.validate(null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(HTTP_URL)
+                .hasMessageContaining("is not an HTTPS URL")
+                .hasMessageContaining("monitoring.prometheus.auth.allow-insecure-transport");
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3049")
+    void sendsCredentialsToAPlainHttpUrlWhenExplicitlyAllowed() throws IOException {
+        PrometheusAuthFilter filter = filter(HTTP_URL, true, null, "static-token", null, null);
+
+        assertThatCode(() -> filter.validate(null)).doesNotThrowAnyException();
+        assertThat(authorizationSentBy(filter)).isEqualTo("Bearer static-token");
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3049")
+    void acceptsAPlainHttpUrlWithoutCredentials() throws IOException {
+        PrometheusAuthFilter filter = filter(HTTP_URL, false, null, null, null, null);
+
+        assertThatCode(() -> filter.validate(null)).doesNotThrowAnyException();
+        assertThat(authorizationSentBy(filter)).isNull();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3049")
+    void stillRejectsMoreThanOneAuthenticationMethodWhenPlainHttpIsAllowed() {
+        PrometheusAuthFilter filter = filter(HTTP_URL, true, null, "static-token", "user", "password");
+
+        assertThatThrownBy(() -> filter.validate(null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Only one Prometheus authentication method");
+    }
+
     private static String authorizationSentBy(PrometheusAuthFilter filter) throws IOException {
         MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
         ClientRequestContext requestContext = mock(ClientRequestContext.class);
@@ -132,6 +173,11 @@ class PrometheusAuthFilterTest {
     }
 
     private static PrometheusAuthFilter filter(String bearerTokenFile, String bearerToken, String username, String password) {
+        return filter(HTTPS_URL, false, bearerTokenFile, bearerToken, username, password);
+    }
+
+    private static PrometheusAuthFilter filter(String prometheusUrl, boolean allowInsecureTransport, String bearerTokenFile,
+                                               String bearerToken, String username, String password) {
         BasicConfigGroup basic = mock(BasicConfigGroup.class);
         when(basic.username()).thenReturn(Optional.ofNullable(username));
         when(basic.password()).thenReturn(Optional.ofNullable(password));
@@ -140,10 +186,11 @@ class PrometheusAuthFilterTest {
         when(auth.bearerTokenFile()).thenReturn(Optional.ofNullable(bearerTokenFile));
         when(auth.bearerToken()).thenReturn(Optional.ofNullable(bearerToken));
         when(auth.basic()).thenReturn(basic);
+        when(auth.allowInsecureTransport()).thenReturn(allowInsecureTransport);
 
         PrometheusConfigGroup config = mock(PrometheusConfigGroup.class);
         when(config.auth()).thenReturn(auth);
 
-        return new PrometheusAuthFilter(config, HTTPS_URL);
+        return new PrometheusAuthFilter(config, prometheusUrl);
     }
 }

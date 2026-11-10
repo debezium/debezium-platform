@@ -4,6 +4,8 @@ monitoring:
     refresh-interval: 30s
   # Credentials for the Prometheus instance set by MONITORING_PROMETHEUS_URL. All optional, and at
   # most one method can be set. The CA to trust is configured under quarkus.tls.prometheus below.
+  # Credentials are refused for an http:// URL unless
+  # MONITORING_PROMETHEUS_AUTH_ALLOW_INSECURE_TRANSPORT is true.
   prometheus:
     auth:
       # Read on every request, so a rotated Kubernetes service account token is picked up.
