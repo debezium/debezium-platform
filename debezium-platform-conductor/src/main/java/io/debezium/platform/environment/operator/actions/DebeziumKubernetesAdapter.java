@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.debezium.operator.api.model.DebeziumServer;
+import io.debezium.operator.api.model.runtime.metrics.Metrics;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceList;
@@ -170,5 +171,23 @@ public class DebeziumKubernetesAdapter {
             ds.setStopped(stop);
             kubernetesClient.resource(ds).serverSideApply();
         });
+    }
+
+    /**
+     * Applies the given metrics configuration to every DebeziumServer resource managed by the conductor,
+     * so that a changed collector endpoint reaches existing pipelines without waiting for a pipeline update.
+     *
+     * @param metrics The metrics configuration to apply.
+     */
+    public void updateMetrics(Metrics metrics) {
+        // ponytail: applies unconditionally; server-side apply leaves unchanged resources untouched
+        kubernetesClient.resources(DebeziumServer.class)
+                .withLabel(LABEL_DBZ_CONDUCTOR_ID)
+                .list()
+                .getItems()
+                .forEach(ds -> {
+                    ds.getSpec().getRuntime().setMetrics(metrics);
+                    kubernetesClient.resource(ds).serverSideApply();
+                });
     }
 }

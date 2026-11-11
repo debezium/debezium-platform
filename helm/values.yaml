@@ -146,7 +146,16 @@ monitoring:
     refreshInterval: 30s
   prometheus:
     url: ""
-    # Extra HTTP headers sent with every conductor query, e.g. X-Scope-OrgID: my-tenant for Grafana Mimir
+    # Extra HTTP headers the conductor adds to every request it sends to the Prometheus URL above,
+    # e.g. for authentication or multi-tenancy. Map of header name to value; each value is either:
+    #   - a plain string, written as-is into the conductor Deployment:
+    #       X-Scope-OrgID: my-tenant
+    #   - a valueFrom reference, so secrets are read from a Secret and never stored in the Deployment:
+    #       Authorization:
+    #         valueFrom:
+    #           secretKeyRef:
+    #             name: prometheus-credentials
+    #             key: authorization  # must hold the full header value, e.g. "Bearer <token>"
     headers: {}
     serviceMonitor:
       enabled: true

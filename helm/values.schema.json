@@ -509,10 +509,25 @@
                         "headers": {
                             "type": "object",
                             "additionalProperties": {
-                                "type": "string"
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "required": ["valueFrom"],
+                                        "additionalProperties": false,
+                                        "properties": {
+                                            "valueFrom": {
+                                                "type": "object",
+                                                "description": "Kubernetes EnvVarSource, e.g. secretKeyRef"
+                                            }
+                                        }
+                                    }
+                                ]
                             },
                             "default": {},
-                            "description": "Extra HTTP headers sent with every conductor query to Prometheus (e.g. X-Scope-OrgID for Grafana Mimir)"
+                            "description": "Extra HTTP headers sent with every conductor query to Prometheus (e.g. X-Scope-OrgID). Use valueFrom.secretKeyRef for credentials"
                         },
                         "serviceMonitor": {
                             "type": "object",

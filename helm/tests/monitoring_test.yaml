@@ -281,6 +281,27 @@ tests:
             name: quarkus.rest-client.prometheus-api.headers.X-Scope-OrgID
             value: my-tenant
 
+  - it: should read Prometheus header values from a Secret
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://mimir:8080/prometheus"
+      monitoring.prometheus.headers:
+        Authorization:
+          valueFrom:
+            secretKeyRef:
+              name: prometheus-credentials
+              key: authorization
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: quarkus.rest-client.prometheus-api.headers.Authorization
+            valueFrom:
+              secretKeyRef:
+                name: prometheus-credentials
+                key: authorization
+
   - it: should inject OTel interval env vars with default values when monitoring.otel.enabled is true
     template: conductor-deployment.yaml
     set:
