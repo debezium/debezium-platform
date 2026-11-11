@@ -5,6 +5,10 @@ To get further information, you can run the commands:
 {{- if .Values.monitoring.otel.enabled }}
 
 === Monitoring ===
+{{- if .Values.monitoring.otel.collector.endpoint }}
+
+Metrics are sent over OTLP to {{ .Values.monitoring.otel.collector.endpoint }}.
+{{- else }}
 
 Prerequisites: OpenTelemetry Operator and (optionally) Prometheus Operator must be
 installed separately before enabling monitoring. See the chart README for details.
@@ -38,5 +42,6 @@ To scrape metrics without Prometheus Operator, add to your prometheus.yml:
       static_configs:
         - targets:
             - '{{ include "debezium-platform.otelCollectorName" . }}-collector.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.monitoring.otel.collector.exporters.prometheus.port }}'
+{{- end }}
 {{- end }}
 {{- end }}

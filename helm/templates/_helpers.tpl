@@ -134,9 +134,24 @@ Get the OpenTelemetry Collector resource name.
 {{- end -}}
 
 {{/*
-Get the OpenTelemetry Collector OTLP endpoint URL.
+Get the OpenTelemetry Collector OTLP HTTP endpoint URL: the external collector when set, otherwise the one deployed by the chart.
 The OTel Operator creates a service named <collector-name>-collector for deployment mode.
 */}}
 {{- define "debezium-platform.otelCollectorEndpoint" -}}
+{{- if .Values.monitoring.otel.collector.endpoint -}}
+{{- .Values.monitoring.otel.collector.endpoint -}}
+{{- else -}}
 {{- printf "http://%s-collector.%s.svc.cluster.local:%d" (include "debezium-platform.otelCollectorName" .) .Release.Namespace (int .Values.monitoring.otel.collector.receivers.http.port) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the OTLP endpoint URL for the conductor, which may use gRPC (monitoring.otel.collector.protocol).
+*/}}
+{{- define "debezium-platform.conductorOtlpEndpoint" -}}
+{{- if and (eq .Values.monitoring.otel.collector.protocol "grpc") (not .Values.monitoring.otel.collector.endpoint) -}}
+{{- printf "http://%s-collector.%s.svc.cluster.local:%d" (include "debezium-platform.otelCollectorName" .) .Release.Namespace (int .Values.monitoring.otel.collector.receivers.grpc.port) -}}
+{{- else -}}
+{{- include "debezium-platform.otelCollectorEndpoint" . -}}
+{{- end -}}
 {{- end -}}

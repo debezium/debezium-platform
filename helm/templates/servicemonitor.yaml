@@ -1,4 +1,4 @@
-{{- if and .Values.monitoring.otel.enabled .Values.monitoring.prometheus.serviceMonitor.enabled }}
+{{- if and .Values.monitoring.otel.enabled .Values.monitoring.prometheus.serviceMonitor.enabled (not .Values.monitoring.otel.collector.endpoint) }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

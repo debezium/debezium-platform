@@ -387,6 +387,17 @@
                         "collector": {
                             "type": "object",
                             "properties": {
+                                "endpoint": {
+                                    "type": "string",
+                                    "default": "",
+                                    "description": "OTLP HTTP endpoint of an existing collector. When set, the chart does not deploy its own collector or ServiceMonitor"
+                                },
+                                "protocol": {
+                                    "type": "string",
+                                    "enum": ["http/protobuf", "grpc"],
+                                    "default": "http/protobuf",
+                                    "description": "OTLP protocol used by the conductor. Pipelines always use http/protobuf"
+                                },
                                 "image": {
                                     "type": "string",
                                     "default": "",
@@ -494,6 +505,14 @@
                                     "description": "URL of an external Prometheus instance (for users not using Prometheus Operator)"
                                 }
                             }
+                        },
+                        "headers": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            },
+                            "default": {},
+                            "description": "Extra HTTP headers sent with every conductor query to Prometheus (e.g. X-Scope-OrgID for Grafana Mimir)"
                         },
                         "serviceMonitor": {
                             "type": "object",
