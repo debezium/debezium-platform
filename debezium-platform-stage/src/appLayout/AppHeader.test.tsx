@@ -28,7 +28,13 @@ vi.mock("@support/featureFlag", async (importOriginal) => {
   };
 });
 
+vi.mock("./AuthGate", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./AuthGate")>();
+  return { ...actual, useAuthUser: vi.fn(() => null) };
+});
+
 import AppHeader from "./AppHeader";
+import { useAuthUser } from "./AuthGate";
 import { useData } from "./AppContext";
 import { isFeatureEnabled } from "@support/featureFlag";
 
@@ -93,5 +99,22 @@ describe("AppHeader", () => {
     const logoImage = screen.getByAltText("Debezium Logo");
     fireEvent.click(logoImage);
     expect(mockNavigate).toHaveBeenCalledWith("/");
+  });
+
+  test("shows no user menu when OIDC is disabled", () => {
+    renderAppHeader();
+    expect(screen.queryByText("Log out")).not.toBeInTheDocument();
+  });
+
+  test("shows the logged-in user as a menu with Log out inside", () => {
+    vi.mocked(useAuthUser).mockReturnValue({ email: "alice@example.com", name: "Alice" });
+    renderAppHeader();
+
+    expect(screen.queryByText("Log out")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Alice"));
+    expect(screen.getByText("Log out").closest("a")).toHaveAttribute(
+      "href",
+      expect.stringMatching(/\/api\/auth\/logout$/)
+    );
   });
 });

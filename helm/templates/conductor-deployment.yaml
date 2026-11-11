@@ -27,6 +27,8 @@ spec:
       imagePullSecrets:
 {{ toYaml $pullSecrets | indent 8 }}
 {{- end }}
+{{- $oidc := .Values.conductor.oidc }}
+{{- $allowlist := and $oidc.enabled $oidc.allowlist.users }}
       containers:
         - name: conductor
           image: {{ .Values.conductor.image }}
@@ -34,9 +36,16 @@ spec:
           ports:
             - containerPort: 8080
               protocol: TCP
-{{- with .Values.conductor.extraVolumeMounts }}
+{{- if or $allowlist .Values.conductor.extraVolumeMounts }}
           volumeMounts:
+{{- if $allowlist }}
+            - name: oidc-allowlist
+              mountPath: /etc/conductor/oidc
+              readOnly: true
+{{- end }}
+{{- with .Values.conductor.extraVolumeMounts }}
 {{ toYaml . | indent 12 }}
+{{- end }}
 {{- end }}
           env:
             - name: QUARKUS_DATASOURCE_PASSWORD
@@ -136,13 +145,38 @@ spec:
             - name: MONITORING_PANELS_REFRESH_INTERVAL
               value: {{ .Values.monitoring.panels.refreshInterval | quote }}
 {{- if .Values.conductor.oidc.enabled }}
-            # OIDC bearer-token security (service mode). See values.yaml conductor.oidc.
+            # OIDC security: bearer tokens and browser login. See values.yaml conductor.oidc.
             - name: QUARKUS_OIDC_TENANT_ENABLED
               value: "true"
             - name: OIDC_ISSUER
               value: {{ required "conductor.oidc.authServerUrl is required when conductor.oidc.enabled=true" .Values.conductor.oidc.authServerUrl | quote }}
             - name: OIDC_CLIENT_ID
               value: {{ .Values.conductor.oidc.clientId | quote }}
+{{- if .Values.conductor.oidc.provider }}
+            - name: OIDC_PROVIDER
+              value: {{ .Values.conductor.oidc.provider | quote }}
+{{- end }}
+{{- $prompt := .Values.conductor.oidc.loginPrompt | default (ternary "select_account" "" (eq (toString .Values.conductor.oidc.provider) "google")) }}
+{{- if $prompt }}
+            # Quarkus map property, set by its exact name (dots are valid in container env names)
+            - name: quarkus.oidc.authentication.extra-params.prompt
+              value: {{ $prompt | quote }}
+{{- end }}
+{{- if .Values.conductor.oidc.clientSecret.existingSecret }}
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.conductor.oidc.clientSecret.existingSecret }}
+                  key: client-secret
+{{- end }}
+{{- if $allowlist }}
+            - name: CONDUCTOR_AUTH_ALLOWLIST_PATH
+              value: /etc/conductor/oidc/allowlist.yml
+{{- end }}
+{{- if eq (include "debezium-platform.domainScheme" .) "https" }}
+            - name: OIDC_FORCE_HTTPS_REDIRECT
+              value: "true"
+{{- end }}
             - name: CONDUCTOR_API_POLICY
               value: {{ .Values.conductor.oidc.apiPolicy | quote }}
 {{- if .Values.conductor.oidc.audience }}
@@ -196,8 +230,15 @@ spec:
             - name: {{ include "debezium-platform.toEnv" (dict "prefix" "PIPELINE_LABELS" "key" $key) | trim }}
               value: {{ $value | quote }}
 {{- end }}
-{{- with .Values.conductor.extraVolumes }}
+{{- if or $allowlist .Values.conductor.extraVolumes }}
       volumes:
+{{- if $allowlist }}
+        - name: oidc-allowlist
+          configMap:
+            name: conductor-oidc-allowlist
+{{- end }}
+{{- with .Values.conductor.extraVolumes }}
 {{ toYaml . | indent 8 }}
+{{- end }}
 {{- end }}
       restartPolicy: Always

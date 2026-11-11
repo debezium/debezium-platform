@@ -6,6 +6,8 @@
 package io.debezium.platform.api;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 
 import java.util.Set;
 
@@ -65,5 +67,27 @@ class OidcSecurityIT {
                 .when().get("q/openapi")
                 .then()
                 .statusCode(200);
+    }
+
+    @Test
+    @DisplayName("Without an allowlist, /api/auth/me returns any authenticated user")
+    void meReturnsAuthenticatedUser() {
+        given()
+                .auth().oauth2(OidcWiremockTestResource.getAccessToken("alice", Set.of()))
+                .when().get("api/auth/me")
+                .then()
+                .statusCode(200)
+                .body("name", equalTo("alice"));
+    }
+
+    @Test
+    @DisplayName("Only the login endpoint redirects a browser to the provider")
+    void loginRedirectsToProvider() {
+        given()
+                .redirects().follow(false)
+                .when().get("api/auth/login?redirect=/pipelines")
+                .then()
+                .statusCode(302)
+                .header("Location", containsString("/auth/realms/quarkus?"));
     }
 }

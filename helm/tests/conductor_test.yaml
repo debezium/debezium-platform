@@ -7,6 +7,7 @@ templates:
   - conductor-service-account.yaml
   - conductor-role.yaml
   - conductor-role-binding.yaml
+  - conductor-oidc-allowlist.yaml
 values:
   - ../../examples/example.yaml
 tests:
@@ -429,3 +430,149 @@ tests:
           value:
             - name: conductor-registry-secret
             - name: conductor-backup-secret
+
+  - it: should allow every authenticated user when an oidc provider is set without an allowlist
+    template: conductor-deployment.yaml
+    set:
+      conductor.oidc:
+        enabled: true
+        provider: google
+        authServerUrl: https://accounts.google.com
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OIDC_PROVIDER
+            value: google
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_AUTH_ALLOWLIST_PATH
+            value: /etc/conductor/oidc/allowlist.yml
+
+  - it: should wire provider, client secret and allowlist when oidc login is configured
+    template: conductor-deployment.yaml
+    set:
+      conductor.oidc:
+        enabled: true
+        provider: google
+        authServerUrl: https://accounts.google.com
+        clientSecret:
+          existingSecret: google-oidc
+        allowlist:
+          users:
+            - email: alice@example.com
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OIDC_PROVIDER
+            value: google
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: google-oidc
+                key: client-secret
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONDUCTOR_AUTH_ALLOWLIST_PATH
+            value: /etc/conductor/oidc/allowlist.yml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: oidc-allowlist
+            mountPath: /etc/conductor/oidc
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: oidc-allowlist
+            configMap:
+              name: conductor-oidc-allowlist
+
+  - it: should ask google for the account chooser on login by default
+    template: conductor-deployment.yaml
+    set:
+      conductor.oidc:
+        enabled: true
+        provider: google
+        authServerUrl: https://accounts.google.com
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: quarkus.oidc.authentication.extra-params.prompt
+            value: select_account
+
+  - it: should not send a login prompt for custom issuers unless configured
+    template: conductor-deployment.yaml
+    set:
+      conductor.oidc:
+        enabled: true
+        authServerUrl: https://keycloak.example.com/realms/dmp
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: quarkus.oidc.authentication.extra-params.prompt
+            value: select_account
+
+  - it: should send the configured login prompt
+    template: conductor-deployment.yaml
+    set:
+      conductor.oidc:
+        enabled: true
+        authServerUrl: https://keycloak.example.com/realms/dmp
+        loginPrompt: login
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: quarkus.oidc.authentication.extra-params.prompt
+            value: login
+
+  - it: should render the allowlist configmap from values
+    template: conductor-oidc-allowlist.yaml
+    set:
+      conductor.oidc:
+        enabled: true
+        authServerUrl: https://keycloak.example.com/realms/dmp
+        allowlist:
+          users:
+            - email: alice@example.com
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: data["allowlist.yml"]
+          value: |
+            users:
+            - email: alice@example.com
+
+  - it: should not render the allowlist configmap without users
+    template: conductor-oidc-allowlist.yaml
+    set:
+      conductor.oidc:
+        enabled: true
+        authServerUrl: https://keycloak.example.com/realms/dmp
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should force https redirects for the oidc login behind a TLS ingress
+    template: conductor-deployment.yaml
+    set:
+      domain.scheme: https
+      conductor.oidc:
+        enabled: true
+        authServerUrl: https://keycloak.example.com/realms/dmp
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OIDC_FORCE_HTTPS_REDIRECT
+            value: "true"

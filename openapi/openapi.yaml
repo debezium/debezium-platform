@@ -1239,6 +1239,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AlertStatusResponse"
+  /api/auth/login:
+    get:
+      summary: "Starts the browser login, then redirects to the given relative path"
+      parameters:
+      - name: redirect
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: {}
+      tags:
+      - Auth Resource
+  /api/auth/logout:
+    get:
+      summary: "Ends the session, and the provider session when it supports RP-initiated\
+        \ logout"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json: {}
+      tags:
+      - Auth Resource
+  /api/auth/me:
+    get:
+      summary: "Returns the logged-in user; 403 when not in the allowlist, anonymous\
+        \ when OIDC is off"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: {}
+      tags:
+      - Auth Resource
   /api/catalog:
     get:
       summary: Returns all available components for the current application version

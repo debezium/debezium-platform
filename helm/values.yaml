@@ -43,13 +43,31 @@ conductor:
   # default. When enabled, tokens are validated against the issuer's JWKS.
   oidc:
     enabled: false
-    # OIDC issuer / realm URL, e.g. https://keycloak.example.com/realms/dmp.
-    # Required when enabled.
+    # Named OIDC provider (google, github, microsoft, ...). Leave empty for
+    # Keycloak or any custom issuer. Without allowlist.users any account of a
+    # public provider can log in.
+    provider: ""
+    # OIDC issuer / realm URL, e.g. https://keycloak.example.com/realms/dmp or
+    # https://accounts.google.com. Required when enabled.
     authServerUrl: ""
     # Keycloak client id whose roles are read from resource_access.<clientId>.
     # Must match a client in the realm. Realm roles resolve regardless of this
     # value.
     clientId: conductor
+    # OIDC `prompt` sent on browser login. Empty: select_account for google (shows
+    # Google's account chooser, its session survives the platform logout), none
+    # otherwise. Set e.g. "login" to force re-authentication.
+    loginPrompt: ""
+    # Client secret for the browser login (authorization code flow). Name of a
+    # Secret holding the key `client-secret`. Optional for public clients.
+    clientSecret:
+      existingSecret: ""
+    # Users allowed to access the platform, matched by verified email. Rendered
+    # to a ConfigMap read at conductor startup (restart it after a change).
+    # Empty: every user authenticated by the issuer is allowed.
+    # e.g. users: [{email: alice@example.com}]
+    allowlist:
+      users: []
     # /api/* policy defaults to "authenticated" when OIDC is enabled;
     # set CONDUCTOR_API_POLICY=permit to open back the API;
     # or a custom role policy

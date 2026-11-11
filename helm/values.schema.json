@@ -95,6 +95,45 @@
                             "default": false,
                             "description": "Enable OIDC bearer-token security (resource-server / service mode)"
                         },
+                        "provider": {
+                            "type": "string",
+                            "default": "",
+                            "description": "Named OIDC provider (google, github, ...). Empty for Keycloak/custom issuers. Without allowlist.users any account of the provider can log in"
+                        },
+                        "loginPrompt": {
+                            "type": "string",
+                            "default": "",
+                            "description": "OIDC prompt sent on browser login. Empty: select_account for google, none otherwise"
+                        },
+                        "clientSecret": {
+                            "type": "object",
+                            "properties": {
+                                "existingSecret": {
+                                    "type": "string",
+                                    "default": "",
+                                    "description": "Secret holding the key client-secret, used by the browser login"
+                                }
+                            }
+                        },
+                        "allowlist": {
+                            "type": "object",
+                            "properties": {
+                                "users": {
+                                    "type": "array",
+                                    "default": [],
+                                    "description": "Users allowed to access the platform, matched by verified email. Empty allows every authenticated user",
+                                    "items": {
+                                        "type": "object",
+                                        "required": ["email"],
+                                        "properties": {
+                                            "email": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
                         "authServerUrl": {
                             "type": "string",
                             "default": "",

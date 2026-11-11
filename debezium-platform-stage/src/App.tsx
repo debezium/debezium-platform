@@ -8,21 +8,24 @@ import { AppContextProvider } from "./appLayout/AppContext";
 import { NotificationProvider } from "./appLayout/AppNotificationContext";
 import { GuidedTourProvider } from "./components/GuidedTourContext";
 import { DocHelpProvider } from "./components/DocHelpContext";
+import { AuthGate } from "./appLayout/AuthGate";
 
 function App() {
   return (
     <Router>
-      <AppContextProvider>
-        <NotificationProvider>
-          <GuidedTourProvider>
-            <DocHelpProvider>
-              <AppLayout>
-                <AppRoutes />
-              </AppLayout>
-            </DocHelpProvider>
-          </GuidedTourProvider>
-        </NotificationProvider>
-      </AppContextProvider>
+      <AuthGate>
+        <AppContextProvider>
+          <NotificationProvider>
+            <GuidedTourProvider>
+              <DocHelpProvider>
+                <AppLayout>
+                  <AppRoutes />
+                </AppLayout>
+              </DocHelpProvider>
+            </GuidedTourProvider>
+          </NotificationProvider>
+        </AppContextProvider>
+      </AuthGate>
     </Router>
   );
 }

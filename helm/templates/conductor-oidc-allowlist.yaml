@@ -1,0 +1,14 @@
+{{- if and .Values.conductor.oidc.enabled .Values.conductor.oidc.allowlist.users }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: conductor
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: debezium-platform
+{{ include "common.labels" . | indent 4 }}
+  name: conductor-oidc-allowlist
+data:
+  allowlist.yml: |
+{{ dict "users" .Values.conductor.oidc.allowlist.users | toYaml | indent 4 }}
+{{- end }}

@@ -38,6 +38,7 @@ import { useDocHelp } from "../components/DocHelpContext";
 import { resolveDocMapping } from "../docs/docMappings";
 import GlassModeIcon from "src/assets/customeIcons/GlassModeIcon";
 import { isFeatureEnabled } from "@support/featureFlag";
+import { logoutUrl, useAuthUser } from "./AuthGate";
 
 interface AppHeaderProps {
   toggleSidebar: () => void;
@@ -60,6 +61,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { replayTour } = useGuidedTour();
+  const authUser = useAuthUser();
   const { toggleDocHelp } = useDocHelp();
   const hasDocMapping = !!resolveDocMapping(pathname);
   const [selectedTheme, setSelectedTheme] = useState<string>(() => {
@@ -67,6 +69,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   });
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const showNotificationDrawerBadge = !isFeatureEnabled("Alerts");
 
 
@@ -279,6 +282,38 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                   </Dropdown>
                 </ToolbarItem>
               </ToolbarGroup>
+              {authUser && (
+                <>
+                  <ToolbarItem variant="separator" />
+                  <ToolbarGroup variant="action-group-plain">
+                    <ToolbarItem>
+                      <Dropdown
+                        isOpen={isUserDropdownOpen}
+                        onSelect={() => setIsUserDropdownOpen(false)}
+                        onOpenChange={(isOpen) => setIsUserDropdownOpen(isOpen)}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle
+                            ref={toggleRef}
+                            onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                            isExpanded={isUserDropdownOpen}
+                            variant="plainText"
+                            title={authUser.email}
+                          >
+                            {authUser.name}
+                          </MenuToggle>
+                        )}
+                        popperProps={{ position: "right" }}
+                      >
+                        <DropdownList>
+                          <DropdownItem key="logout" to={logoutUrl()}>
+                            {t("logout")}
+                          </DropdownItem>
+                        </DropdownList>
+                      </Dropdown>
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                </>
+              )}
             </ToolbarContent>
           </Toolbar>
         </MastheadContent>
