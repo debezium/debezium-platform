@@ -173,7 +173,7 @@ export type TableCollection = {
 };
 
 export type TableSchema = {
-  name: string;
+  name: string | null;
   collections: TableCollection[];
   collectionCount: number;
 };

@@ -38,12 +38,15 @@ public class DatabaseConnectionFactory {
     public JdbcConnection create(DatabaseConnectionConfiguration databaseConnectionConfiguration) {
 
         JdbcConfiguration.Builder jdbcConfigurationBuilder = JdbcConfiguration.create()
-                .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_NAME_CONFIG, databaseConnectionConfiguration.database())
                 .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.HOSTNAME, databaseConnectionConfiguration.hostname())
                 .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.PORT, databaseConnectionConfiguration.port())
                 .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_USERNAME_CONFIG, databaseConnectionConfiguration.username())
                 .with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DatabaseConnectionConfiguration.PASSWORD, databaseConnectionConfiguration.password());
 
+        // Optional for MySQL, which connects to the server rather than to a database
+        if (databaseConnectionConfiguration.database() != null) {
+            jdbcConfigurationBuilder.with(DATABASE_CONNECTION_CONFIGURATION_PREFIX + DEBEZIUM_DATABASE_NAME_CONFIG, databaseConnectionConfiguration.database());
+        }
         databaseConnectionConfiguration.additionalConfigs().forEach((k, v) -> jdbcConfigurationBuilder.with(DRIVER_CONNECTION_CONFIGURATION_PREFIX + k, v));
 
         return switch (databaseConnectionConfiguration.databaseType()) {
