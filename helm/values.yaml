@@ -39,6 +39,11 @@ conductor:
         existingSecret: ""
   extraVolumes: [ ]
   extraVolumeMounts: [ ]
+  # OpenTelemetry SDK of the conductor itself, which exports the conductor's own
+  # traces. Set enabled to false to turn the SDK off (QUARKUS_OTEL_SDK_DISABLED=true).
+  # This is independent of monitoring.otel.enabled, which is about pipeline metrics.
+  otel:
+    enabled: true
   # OIDC bearer-token security (resource-server in service mode). Disabled by
   # default. When enabled, tokens are validated against the issuer's JWKS.
   oidc:
@@ -114,6 +119,13 @@ monitoring:
     enabled: false
     jmxIntervalMs: 1000
     metricExportIntervalMs: 5000
+    # Pipelines export only metrics by default. The collector deployed by this chart
+    # has a metrics pipeline only and rejects traces and logs, so enable these two
+    # signals only when the collector the pipelines send to has a pipeline for them.
+    traces:
+      enabled: false
+    logs:
+      enabled: false
     collector:
       # The Prometheus exporter is included in the base (otelcol) and contrib distributions,
       # but NOT in the k8s distribution (otelcol-k8s) which is the default when the OTel Operator

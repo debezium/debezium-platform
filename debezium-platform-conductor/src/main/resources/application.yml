@@ -76,6 +76,8 @@ pipeline:
       endpoint: ${PIPELINE_MONITORING_OTEL_ENDPOINT:http://localhost:4318}
       jmx-interval-ms: ${PIPELINE_MONITORING_OTEL_JMX_INTERVAL_MS:1000}
       metric-export-interval-ms: ${PIPELINE_MONITORING_OTEL_METRIC_EXPORT_INTERVAL_MS:5000}
+      traces-enabled: ${PIPELINE_MONITORING_OTEL_TRACES_ENABLED:false}
+      logs-enabled: ${PIPELINE_MONITORING_OTEL_LOGS_ENABLED:false}
 sources:
   database:
     connection:
@@ -118,12 +120,6 @@ destinations:
       timeout: 60
       
 quarkus:
-  # The conductor produces no traces: nothing in the platform consumes them, and the collector the
-  # Helm chart deploys only has a metrics pipeline. This is a build time property, so setting
-  # QUARKUS_OTEL_TRACES_ENABLED on the container has no effect.
-  otel:
-    traces:
-      enabled: false
   smallrye-openapi:
     store-schema-directory: ../openapi
     info-title: Debezium Platform API

@@ -72,5 +72,29 @@ public interface MonitoringConfigGroup {
         @WithDefault("5000")
         @WithName("metric-export-interval-ms")
         int metricExportIntervalMs();
+
+        /**
+         * Indicates whether pipelines export traces to the OpenTelemetry Collector.
+         * <p>
+         * Enable it only when the collector behind {@link #endpoint()} has a traces pipeline.
+         * </p>
+         *
+         * @return {@code true} if pipelines export traces, {@code false} otherwise
+         */
+        @WithDefault("false")
+        @WithName("traces-enabled")
+        boolean tracesEnabled();
+
+        /**
+         * Indicates whether pipelines export logs to the OpenTelemetry Collector.
+         * <p>
+         * Enable it only when the collector behind {@link #endpoint()} has a logs pipeline.
+         * </p>
+         *
+         * @return {@code true} if pipelines export logs, {@code false} otherwise
+         */
+        @WithDefault("false")
+        @WithName("logs-enabled")
+        boolean logsEnabled();
     }
 }

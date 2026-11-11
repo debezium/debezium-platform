@@ -37,7 +37,8 @@ spec:
       # Metrics only: nothing in the platform consumes logs or traces, and a pipeline for them
       # needs an exporter that not every collector distribution ships (the `nop` exporter is
       # missing from the Red Hat build, for instance). The conductor turns the logs and traces
-      # exporters of the pipelines off accordingly.
+      # exporters of the pipelines off accordingly, unless monitoring.otel.traces.enabled or
+      # monitoring.otel.logs.enabled is set.
       pipelines:
         metrics:
           receivers: [otlp]
