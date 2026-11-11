@@ -12,6 +12,7 @@ import static io.debezium.platform.environment.database.DatabaseConnectionConfig
 import static io.debezium.platform.environment.database.DatabaseConnectionConfiguration.USERNAME;
 import static io.debezium.platform.environment.database.DatabaseConnectionFactory.DATABASE_CONNECTION_CONFIGURATION_PREFIX;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -210,7 +211,7 @@ public class PipelineMapper {
                 .withTemplates(templates);
 
         if (metrics.getOpenTelemetry().isEnabled()) {
-            runtimeBuilder.withEnvironment(createMetricsOnlyOpenTelemetryEnvironment());
+            runtimeBuilder.withEnvironment(createOpenTelemetryEnvironment());
         }
 
         return runtimeBuilder.build();
@@ -218,15 +219,23 @@ public class PipelineMapper {
 
     /**
      * The OpenTelemetry agent attached to Debezium Server exports traces and logs by default, next to
-     * the metrics the operator asks it for. The platform only collects metrics, and the collector it
-     * deploys has no pipeline for the other two signals, so their exporters are turned off: the agent
-     * would otherwise produce them for nothing and log an export failure for every batch.
+     * the metrics the operator asks it for. A collector without a pipeline for these two signals
+     * rejects them, and the agent then logs an export failure for every batch. The exporter of each
+     * signal is therefore turned off, unless the signal is enabled in the configuration.
      */
-    private RuntimeEnvironment createMetricsOnlyOpenTelemetryEnvironment() {
+    private RuntimeEnvironment createOpenTelemetryEnvironment() {
+        var otelConfig = pipelineConfigGroup.monitoring().otel();
+        var vars = new ArrayList<ContainerEnvVar>();
+
+        if (!otelConfig.tracesEnabled()) {
+            vars.add(createEnvVar(OTEL_TRACES_EXPORTER_ENV, OTEL_EXPORTER_NONE));
+        }
+        if (!otelConfig.logsEnabled()) {
+            vars.add(createEnvVar(OTEL_LOGS_EXPORTER_ENV, OTEL_EXPORTER_NONE));
+        }
+
         var environment = new RuntimeEnvironment();
-        environment.setVars(List.of(
-                createEnvVar(OTEL_TRACES_EXPORTER_ENV, OTEL_EXPORTER_NONE),
-                createEnvVar(OTEL_LOGS_EXPORTER_ENV, OTEL_EXPORTER_NONE)));
+        environment.setVars(vars);
         return environment;
     }
 

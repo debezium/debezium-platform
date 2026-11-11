@@ -87,6 +87,16 @@
                     "type": "array",
                     "default": []
                 },
+                "otel": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "default": true,
+                            "description": "Enable the OpenTelemetry SDK of the conductor itself. When false, QUARKUS_OTEL_SDK_DISABLED=true is set on the conductor"
+                        }
+                    }
+                },
                 "oidc": {
                     "type": "object",
                     "properties": {
@@ -383,6 +393,26 @@
                             "type": "boolean",
                             "default": false,
                             "description": "Enable OpenTelemetry monitoring infrastructure"
+                        },
+                        "traces": {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "Let pipelines export traces. The collector deployed by this chart has no traces pipeline"
+                                }
+                            }
+                        },
+                        "logs": {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "Let pipelines export logs. The collector deployed by this chart has no logs pipeline"
+                                }
+                            }
                         },
                         "collector": {
                             "type": "object",

@@ -221,6 +221,62 @@ public class PipelineMapperTest {
 
     @Test
     @FixFor("debezium/dbz#3042")
+    public void testMapper_ShouldKeepTracesExporterWhenTracesAreEnabled() {
+        when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(true);
+        when(pipelineConfigGroup.monitoring().otel().endpoint()).thenReturn(Optional.of("http://otel-collector:4318"));
+        when(pipelineConfigGroup.monitoring().otel().tracesEnabled()).thenReturn(true);
+        pipelineMapper = createMapper();
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getRuntime().getEnvironment().getVars())
+                .extracting(ContainerEnvVar::getName, ContainerEnvVar::getValue)
+                .containsExactly(tuple("OTEL_LOGS_EXPORTER", "none"));
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3042")
+    public void testMapper_ShouldKeepLogsExporterWhenLogsAreEnabled() {
+        when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(true);
+        when(pipelineConfigGroup.monitoring().otel().endpoint()).thenReturn(Optional.of("http://otel-collector:4318"));
+        when(pipelineConfigGroup.monitoring().otel().logsEnabled()).thenReturn(true);
+        pipelineMapper = createMapper();
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getRuntime().getEnvironment().getVars())
+                .extracting(ContainerEnvVar::getName, ContainerEnvVar::getValue)
+                .containsExactly(tuple("OTEL_TRACES_EXPORTER", "none"));
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3042")
+    public void testMapper_ShouldKeepBothExportersWhenTracesAndLogsAreEnabled() {
+        when(pipelineConfigGroup.monitoring().otel().enabled()).thenReturn(true);
+        when(pipelineConfigGroup.monitoring().otel().endpoint()).thenReturn(Optional.of("http://otel-collector:4318"));
+        when(pipelineConfigGroup.monitoring().otel().tracesEnabled()).thenReturn(true);
+        when(pipelineConfigGroup.monitoring().otel().logsEnabled()).thenReturn(true);
+        pipelineMapper = createMapper();
+
+        var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
+                DATABASE, "customers",
+                USERNAME, "sa"));
+
+        var result = pipelineMapper.map(pipeline);
+
+        assertThat(result.getSpec().getRuntime().getEnvironment().getVars()).isEmpty();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3042")
     public void testMapper_ShouldNotSetOpenTelemetryEnvironmentWhenDisabled() {
         var pipeline = mockPipelineWithSource(ConnectionEntity.Type.POSTGRESQL, Map.of(
                 DATABASE, "customers",
