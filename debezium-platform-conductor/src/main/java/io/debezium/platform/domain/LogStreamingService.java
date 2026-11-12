@@ -21,8 +21,6 @@ import io.quarkus.virtual.threads.VirtualThreads;
 @ApplicationScoped
 public class LogStreamingService {
 
-    public static final int NO_DATA_SLEEP_MS = 1000;
-
     private final Logger logger;
     private final ExecutorService executorService;
 
@@ -40,9 +38,9 @@ public class LogStreamingService {
         private final AtomicBoolean stopped;
         private final Supplier<LogReader> supplier;
         private final Consumer<String> consumer;
-        private final Runnable onFinished;
+        private final Consumer<Throwable> onFinished;
 
-        public LogStreamingTask(String name, Supplier<LogReader> supplier, Consumer<String> consumer, Logger logger, Runnable onFinished) {
+        public LogStreamingTask(String name, Supplier<LogReader> supplier, Consumer<String> consumer, Logger logger, Consumer<Throwable> onFinished) {
             this.name = name;
             this.supplier = supplier;
             this.consumer = consumer;
@@ -77,29 +75,29 @@ public class LogStreamingService {
             }
             logger.infof("Starting log streamer for '%s'", name);
 
+            Throwable failure = null;
             try (var reader = supplier.get()) {
                 doStream(reader);
                 logger.infof("Finished streaming from log %s", name);
             }
-            catch (IOException e) {
-                logger.errorf("Error streaming from log %s", name);
-            }
-            catch (InterruptedException e) {
-                logger.errorf("Interrupted while waiting for more logs from log %s", name);
-                Thread.currentThread().interrupt();
+            catch (IOException | RuntimeException e) {
+                logger.errorf(e, "Error streaming from log %s", name);
+                failure = e;
             }
             finally {
                 stop();
-                onFinished.run();
+                onFinished.accept(failure);
             }
         }
 
-        private void doStream(LogReader reader) throws InterruptedException, IOException {
+        // A null line means the log itself has ended (LogReader#readLine), not that none is available
+        // yet: a live log that merely has nothing new right now blocks inside readLine() until either
+        // a line or that end arrives, rather than returning null for it.
+        private void doStream(LogReader reader) throws IOException {
             while (isRunning()) {
                 var line = reader.readLine();
                 if (line == null) {
-                    Thread.sleep(NO_DATA_SLEEP_MS);
-                    continue;
+                    return;
                 }
                 consumer.accept(line);
             }
@@ -115,10 +113,10 @@ public class LogStreamingService {
      * Starts streaming the log, passing each line to given consumer.
      *
      * @param consumer   log consumer
-     * @param onFinished invoked once the task has stopped streaming, whether because the log ended,
-     *                   it failed, or {@link LogStreamingTask#stop()} was called
+     * @param onFinished invoked once the task has stopped streaming, with {@code null} if the log
+     *                   ended or {@link LogStreamingTask#stop()} was called, or the failure otherwise
      */
-    public LogStreamingTask stream(String name, Supplier<LogReader> logSupplier, Consumer<String> consumer, Runnable onFinished) {
+    public LogStreamingTask stream(String name, Supplier<LogReader> logSupplier, Consumer<String> consumer, Consumer<Throwable> onFinished) {
         logger.infof("Starting log streamer for log %s", name);
         var task = new LogStreamingTask(name, logSupplier, consumer, logger, onFinished);
         executorService.submit(task);

@@ -7,6 +7,7 @@ package io.debezium.platform.api;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -27,6 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import jakarta.inject.Inject;
@@ -64,6 +66,12 @@ class PipelineLogStreamResourceIT {
     private static final Long PIPELINE_ID = 1L;
     private static final Long UNKNOWN_PIPELINE_ID = 999999L;
 
+    /** Dequeued by {@link #fakeLogReader()} to mean the log has ended, i.e. {@code readLine()} returning {@code null}. */
+    private static final String END_OF_LOG = "\u0000end-of-log\u0000";
+
+    /** Dequeued by {@link #fakeLogReader()} to mean the next {@code readLine()} call fails instead of returning a line. */
+    private static final String READ_FAILURE = "\u0000read-failure\u0000";
+
     @Inject
     LogStreamingService logStreamingService;
 
@@ -72,20 +80,23 @@ class PipelineLogStreamResourceIT {
 
     private final BlockingQueue<String> pendingLines = new LinkedBlockingQueue<>();
     private final AtomicBoolean logReaderClosed = new AtomicBoolean();
-    private final AtomicBoolean logEnds = new AtomicBoolean();
+    private final AtomicReference<Throwable> reportedFailure = new AtomicReference<>();
 
     @BeforeEach
     void stubLogStreaming() {
         pendingLines.clear();
         logReaderClosed.set(false);
-        logEnds.set(false);
+        reportedFailure.set(null);
 
         when(pipelineService.streamLogs(anyLong(), any(), any())).thenReturn(Optional.empty());
         when(pipelineService.streamLogs(eq(PIPELINE_ID), any(), any())).thenAnswer(invocation -> {
             Consumer<String> lineConsumer = invocation.getArgument(1);
-            Runnable onFinished = invocation.getArgument(2);
+            Consumer<Throwable> onFinished = invocation.getArgument(2);
             return Optional.of(logStreamingService.stream(
-                    String.valueOf(PIPELINE_ID), this::fakeLogReader, lineConsumer, onFinished));
+                    String.valueOf(PIPELINE_ID), this::fakeLogReader, lineConsumer, failure -> {
+                        reportedFailure.set(failure);
+                        onFinished.accept(failure);
+                    }));
         });
     }
 
@@ -93,7 +104,7 @@ class PipelineLogStreamResourceIT {
     @FixFor("debezium/dbz#3004")
     @DisplayName("Every log line is delivered to the client as an SSE event, in order")
     void streamsEachLogLineAsAnSseEvent() {
-        pendingLines.addAll(List.of("first log line", "second log line", "third log line"));
+        pendingLines.addAll(List.of("first log line", "second log line", "third log line", END_OF_LOG));
 
         List<String> receivedEvents = new CopyOnWriteArrayList<>();
         try (Client client = sseClient(); SseEventSource eventSource = SseEventSource.target(client.target(streamUri(PIPELINE_ID))).build()) {
@@ -125,6 +136,11 @@ class PipelineLogStreamResourceIT {
             }
         }
 
+        // The log-reading thread is left blocked waiting for a line that was never going to come,
+        // the same way a real, still-running log would: stop() alone does not interrupt that wait,
+        // so this wakes it so it can notice the stop and close the reader.
+        pendingLines.add(END_OF_LOG);
+
         await().atMost(Duration.ofSeconds(15))
                 .untilAsserted(() -> assertThat(logReaderClosed).isTrue());
     }
@@ -133,8 +149,7 @@ class PipelineLogStreamResourceIT {
     @FixFor("debezium/dbz#3004")
     @DisplayName("The stream is closed when the log itself ends")
     void closesTheStreamWhenTheLogEnds() throws Exception {
-        pendingLines.add("the last log line");
-        logEnds.set(true);
+        pendingLines.addAll(List.of("the last log line", END_OF_LOG));
 
         // Deliberately not an SseEventSource: that client reconnects when the server closes the
         // stream, which would hide the completion this test is about.
@@ -150,6 +165,34 @@ class PipelineLogStreamResourceIT {
         assertThat(response.headers().firstValue("content-type")).hasValue(MediaType.SERVER_SENT_EVENTS);
         assertThat(response.body()).contains("data:the last log line");
         assertThat(logReaderClosed).isTrue();
+        assertThat(reportedFailure).hasValue(null);
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3004")
+    @DisplayName("A failure reading the log fails the stream instead of closing it cleanly")
+    void failsTheStreamWhenReadingTheLogFails() {
+        pendingLines.add(READ_FAILURE);
+
+        // Deliberately not an SseEventSource, and not asserting on the response at all: a real
+        // failure resets the connection instead of ending it gracefully
+        // (PipelineLogStreamResource#endStream), which this client surfaces as a failed request
+        // rather than a complete, if empty, body (the java.net.http client discards whatever of the
+        // body it had buffered when that happens, so the named failure event it carries is not
+        // observable this way either). reportedFailure is what actually exercises that distinction,
+        // by observing what LogStreamingTask reports regardless of how the client sees it.
+        assertThatThrownBy(() -> HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create(streamUri(PIPELINE_ID)))
+                        .header("Accept", MediaType.SERVER_SENT_EVENTS)
+                        .timeout(Duration.ofSeconds(15))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()))
+                .isInstanceOf(IOException.class);
+
+        await().atMost(Duration.ofSeconds(15))
+                .untilAsserted(() -> assertThat(logReaderClosed).isTrue());
+        assertThat(reportedFailure.get()).isInstanceOf(IOException.class);
     }
 
     @Test
@@ -186,17 +229,27 @@ class PipelineLogStreamResourceIT {
     }
 
     /**
-     * A log that yields whatever the test has queued, reports "nothing yet" the way a live log does
-     * while it is quiet, and optionally ends.
+     * A log that yields whatever the test has queued, blocking for more the way a real, still-running
+     * log does, until either {@link #END_OF_LOG} or {@link #READ_FAILURE} is queued.
      */
     private LogReader fakeLogReader() {
         return new LogReader() {
 
             @Override
             public String readLine() throws IOException {
-                String line = pendingLines.poll();
-                if (line == null && logEnds.get()) {
-                    throw new IOException("log ended");
+                String line;
+                try {
+                    line = pendingLines.take();
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException(e);
+                }
+                if (line.equals(END_OF_LOG)) {
+                    return null;
+                }
+                if (line.equals(READ_FAILURE)) {
+                    throw new IOException("simulated read failure");
                 }
                 return line;
             }

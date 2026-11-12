@@ -2407,7 +2407,7 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Stream of events, each carrying a single log line",
+            "description" : "Stream of events, each carrying a single log line, or a named \"log-stream-failure\" event if the log could not be read",
             "content" : {
               "text/event-stream" : {
                 "schema" : {
