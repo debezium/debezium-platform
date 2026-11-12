@@ -409,6 +409,207 @@ describe("TableViewComponent selection", () => {
       });
     });
   });
+
+  it("does not check a same-named database from a schema include list", async () => {
+    const user = userEvent.setup();
+    const collections: TableData = {
+      catalogs: [
+        {
+          name: "public",
+          totalCollections: 2,
+          schemas: [
+            {
+              name: "app",
+              collectionCount: 1,
+              collections: [{ name: "orders", fullyQualifiedName: "public.app.orders" }],
+            },
+            {
+              name: "audit",
+              collectionCount: 1,
+              collections: [{ name: "events", fullyQualifiedName: "public.audit.events" }],
+            },
+          ],
+        },
+      ],
+    };
+    const binding = resolveExplorerBinding(
+      [
+        { name: "database.include.list" },
+        { name: "schema.include.list" },
+        { name: "table.include.list" },
+      ],
+      collections,
+    );
+
+    render(
+      <TableViewComponent
+        collections={collections}
+        binding={binding}
+        selectedDataListItems={{
+          schemas: ["public", "app"],
+          tables: [],
+          values: { "schema.include.list": ["app"] },
+        }}
+        setSelectedDataListItems={() => {}}
+      />,
+    );
+
+    const database = await screen.findByRole("checkbox", { name: "Select public" });
+    await user.click(screen.getByRole("button", { name: /^Expand$/ }));
+    expect(database.checked).toBe(false);
+    expect(database.indeterminate).toBe(true);
+    expect(checkbox("app").checked).toBe(true);
+    expect(checkbox("audit").checked).toBe(false);
+  });
+
+  it("keeps the database checkbox when a table name cannot be saved", async () => {
+    const user = userEvent.setup();
+    const collections: TableData = {
+      catalogs: [
+        {
+          name: "sales",
+          totalCollections: 2,
+          schemas: [
+            {
+              name: "dbo",
+              collectionCount: 1,
+              collections: [{ name: "orders", fullyQualifiedName: "sales.dbo.orders" }],
+            },
+            {
+              name: "audit",
+              collectionCount: 1,
+              collections: [{ name: "events", fullyQualifiedName: "sales.audit.events" }],
+            },
+          ],
+        },
+      ],
+    };
+    const binding = resolveExplorerBinding(
+      [{ name: "database.include.list" }, { name: "schema.include.list" }],
+      collections,
+    );
+    let latest: SelectedDataListItem | undefined;
+    render(
+      <Harness
+        collections={collections}
+        binding={binding}
+        onChange={(next) => { latest = next; }}
+      />,
+    );
+
+    const database = await screen.findByRole("checkbox", { name: "Select sales" });
+    expect(database).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: /^Expand$/ }));
+    expect(checkbox("dbo")).toBeEnabled();
+    expect(checkbox("audit")).toBeEnabled();
+
+    await user.click(screen.getAllByRole("button", { name: /^Expand$/ })[0]);
+    expect(checkbox("orders")).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: /^Expand$/ }));
+    expect(checkbox("events")).toBeDisabled();
+
+    await user.click(database);
+    await waitFor(() => {
+      expect(latest).toEqual({
+        schemas: ["sales"],
+        tables: [],
+        values: { "database.include.list": ["sales"] },
+      });
+    });
+  });
+
+  it("disables a schema folder when neither the schema nor its tables can be saved", async () => {
+    const user = userEvent.setup();
+    const collections: TableData = {
+      catalogs: [
+        {
+          name: "sales",
+          totalCollections: 2,
+          schemas: [
+            {
+              name: "dbo",
+              collectionCount: 1,
+              collections: [{ name: "orders", fullyQualifiedName: "sales.dbo.orders" }],
+            },
+            {
+              name: "audit",
+              collectionCount: 1,
+              collections: [{ name: "events", fullyQualifiedName: "sales.audit.events" }],
+            },
+          ],
+        },
+      ],
+    };
+    const binding = resolveExplorerBinding(
+      [{ name: "database.include.list" }],
+      collections,
+    );
+
+    render(
+      <Harness collections={collections} binding={binding} onChange={() => {}} />,
+    );
+
+    expect(await screen.findByRole("checkbox", { name: "Select sales" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: /^Expand$/ }));
+    expect(checkbox("dbo")).toBeDisabled();
+    expect(checkbox("audit")).toBeDisabled();
+  });
+
+  it("keeps a saved include value the tree cannot match until the user changes the selection", async () => {
+    const user = userEvent.setup();
+    let latest: SelectedDataListItem | undefined;
+    const saved: SelectedDataListItem = {
+      schemas: [],
+      tables: ["public.orders", "missing.orders"],
+      values: { "table.include.list": ["public.orders", "missing.orders"] },
+    };
+    render(
+      <TableViewComponent
+        collections={inventory}
+        selectedDataListItems={saved}
+        setSelectedDataListItems={(next) => { latest = next; }}
+      />,
+    );
+
+    await screen.findByRole("checkbox", { name: "Select public" });
+    await user.click(screen.getByRole("button", { name: /^Expand$/ }));
+    expect(checkbox("orders").checked).toBe(true);
+    expect(checkbox("customers").checked).toBe(false);
+    expect(latest).toBeUndefined();
+
+    await user.click(checkbox("customers"));
+    await waitFor(() => {
+      expect(latest).toEqual({
+        schemas: [],
+        tables: ["public.customers", "public.orders"],
+        values: { "table.include.list": ["public.customers", "public.orders"] },
+      });
+    });
+  });
+
+  it("still collapses a saved selection when every saved table is in the tree", async () => {
+    let latest: SelectedDataListItem | undefined;
+    const tables = ["public.customers", "public.orders", "public.order_items", "public.products"];
+    render(
+      <TableViewComponent
+        collections={inventory}
+        selectedDataListItems={{
+          schemas: [],
+          tables,
+          values: { "table.include.list": tables },
+        }}
+        setSelectedDataListItems={(next) => { latest = next; }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(latest).toEqual({
+        schemas: ["public"],
+        tables: [],
+        values: { "schema.include.list": ["public"] },
+      });
+    });
+  });
 });
 
 const twoSchemas: TableData = {
