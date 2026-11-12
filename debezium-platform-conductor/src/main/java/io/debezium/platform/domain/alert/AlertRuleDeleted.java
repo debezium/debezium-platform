@@ -17,5 +17,5 @@ import io.debezium.platform.data.model.AlertRuleEntity;
  *
  * @param rule the rule about to be deleted
  */
-public record AlertRuleDeleting(AlertRuleEntity rule) {
+public record AlertRuleDeleted(AlertRuleEntity rule) {
 }

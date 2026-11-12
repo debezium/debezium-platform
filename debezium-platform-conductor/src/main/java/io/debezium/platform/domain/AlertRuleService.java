@@ -18,7 +18,7 @@ import com.blazebit.persistence.CriteriaBuilderFactory;
 import com.blazebit.persistence.view.EntityViewManager;
 
 import io.debezium.platform.data.model.AlertRuleEntity;
-import io.debezium.platform.domain.alert.AlertRuleDeleting;
+import io.debezium.platform.domain.alert.AlertRuleDeleted;
 import io.debezium.platform.domain.views.AlertRule;
 import io.debezium.platform.domain.views.refs.AlertRuleReference;
 import io.debezium.platform.error.NotFoundException;
@@ -27,13 +27,13 @@ import io.debezium.platform.error.NotFoundException;
 public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule, AlertRuleReference> {
 
     private final PanelConfigLoader panelConfigLoader;
-    private final Event<AlertRuleDeleting> ruleDeletingEvent;
+    private final Event<AlertRuleDeleted> ruleDeletedEvent;
 
     public AlertRuleService(EntityManager em, CriteriaBuilderFactory cbf, EntityViewManager evm,
-                            PanelConfigLoader panelConfigLoader, Event<AlertRuleDeleting> ruleDeletingEvent) {
+                            PanelConfigLoader panelConfigLoader, Event<AlertRuleDeleted> ruleDeletedEvent) {
         super(AlertRuleEntity.class, AlertRule.class, AlertRuleReference.class, em, cbf, evm);
         this.panelConfigLoader = panelConfigLoader;
-        this.ruleDeletingEvent = ruleDeletingEvent;
+        this.ruleDeletedEvent = ruleDeletedEvent;
     }
 
     @Override
@@ -53,7 +53,7 @@ public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule
     }
 
     /**
-     * Fires {@link AlertRuleDeleting} before deleting the rule, so that its active alerts get resolved
+     * Fires {@link AlertRuleDeleted} before deleting the rule, so that its active alerts get resolved
      * while the rule still exists. The rule's states are removed with it, but its events only lose their
      * rule reference, so an event that is firing at that moment would stay firing forever: nothing
      * evaluates it again and the history cleanup only removes resolved events.
@@ -62,7 +62,7 @@ public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule
     public void delete(long id) {
         AlertRuleEntity rule = em.find(AlertRuleEntity.class, id);
         if (rule != null) {
-            ruleDeletingEvent.fire(new AlertRuleDeleting(rule));
+            ruleDeletedEvent.fire(new AlertRuleDeleted(rule));
             // write what the observers changed before the rule row goes away, otherwise the delete below
             // runs first and an event update then fails its foreign key to the rule
             em.flush();

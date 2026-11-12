@@ -33,7 +33,7 @@ import io.debezium.platform.data.model.AlertStateEntity;
 import io.debezium.platform.data.model.AlertStateValue;
 import io.debezium.platform.data.model.Severity;
 import io.debezium.platform.domain.alert.AlertNotificationReady;
-import io.debezium.platform.domain.alert.AlertRuleDeleting;
+import io.debezium.platform.domain.alert.AlertRuleDeleted;
 import io.debezium.platform.domain.alert.AlertTransitionEvaluator;
 import io.debezium.platform.domain.alert.StateTransition;
 import io.debezium.platform.domain.views.AlertState;
@@ -68,7 +68,7 @@ public class AlertStateService extends AbstractService<AlertStateEntity, AlertSt
      * Resolves the active alerts of a rule that is about to be deleted. Its states go away with the
      * rule, so nothing would resolve their firing events afterwards.
      */
-    void onAlertRuleDeleting(@Observes AlertRuleDeleting event) {
+    void onAlertRuleDeleted(@Observes AlertRuleDeleted event) {
         AlertRuleEntity rule = event.rule();
         Instant now = Instant.now();
         for (AlertStateEntity state : findByRuleId(rule.getId())) {
