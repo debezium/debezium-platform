@@ -113,8 +113,8 @@
           "title": "Password to connect to the database"
         },
         "server.id": {
-          "type": "string",
-          "title": "The name of the database"
+          "type": "integer",
+          "title": "Numeric ID of this client, unique among all clients of the MySQL cluster"
         }
       }
     }

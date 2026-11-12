@@ -169,4 +169,37 @@ describe("TableViewComponent selection", () => {
     expect(checkbox("public").checked).toBe(true);
     expect(checkbox("public").indeterminate).toBe(false);
   });
+
+  it("shows each database of a source without schemas, such as MySQL", async () => {
+    const user = userEvent.setup();
+    let latest: SelectedDataListItem | undefined;
+    const mysql: TableData = {
+      catalogs: ["app", "billing"].map((database) => ({
+        name: database,
+        totalCollections: 1,
+        schemas: [
+          {
+            name: null,
+            collectionCount: 1,
+            collections: [{ name: "orders", fullyQualifiedName: `${database}.orders` }],
+          },
+        ],
+      })),
+    };
+
+    render(
+      <TableViewComponent
+        collections={mysql}
+        selectedDataListItems={{ schemas: [], tables: [] }}
+        setSelectedDataListItems={(next) => { latest = next; }}
+      />
+    );
+
+    await user.click(await screen.findByRole("checkbox", { name: "Select app" }));
+
+    await waitFor(() => {
+      expect(latest).toEqual({ schemas: ["app"], tables: [] });
+    });
+    expect(checkbox("billing").checked).toBe(false);
+  });
 });

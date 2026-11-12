@@ -18,6 +18,7 @@ import jakarta.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.debezium.connector.binlog.jdbc.BinlogConnectorConnection;
 import io.debezium.jdbc.JdbcConnection;
 import io.debezium.platform.data.dto.CatalogNode;
 import io.debezium.platform.data.dto.CollectionNode;
@@ -54,7 +55,7 @@ public class JdbcSourceInspector implements SourceInspector {
         DatabaseConnectionConfiguration databaseConnectionConfiguration = DatabaseConnectionConfiguration.from(connectionConfig);
         try (JdbcConnection jdbcConnection = databaseConnectionFactory.create(databaseConnectionConfiguration)) {
 
-            List<CatalogNode> catalogs = getAllTableNames(jdbcConnection).entrySet().stream()
+            List<CatalogNode> catalogs = getAllTableNames(jdbcConnection, databaseConnectionConfiguration.database()).entrySet().stream()
                     .map(this::extractCatalogNode)
                     .toList();
 
@@ -66,11 +67,14 @@ public class JdbcSourceInspector implements SourceInspector {
         }
     }
 
-    private Map<String, Map<String, List<CollectionNode>>> getAllTableNames(JdbcConnection connection) throws SQLException {
+    private Map<String, Map<String, List<CollectionNode>>> getAllTableNames(JdbcConnection connection, String database) throws SQLException {
 
         Map<String, Map<String, List<CollectionNode>>> hierarchicalData = new HashMap<>();
 
-        Set<TableId> tableIds = connection.getAllTableIds(connection.database());
+        // getAllTableIds of MySQL and MariaDB ignores the catalog and lists every database of the server
+        Set<TableId> tableIds = connection instanceof BinlogConnectorConnection && database != null
+                ? connection.readTableNames(database, null, null, new String[]{ "TABLE" })
+                : connection.getAllTableIds(connection.database());
         tableIds.forEach(tableId -> {
             CollectionNode collectionNode = new CollectionNode(tableId.table(), tableId.identifier());
 

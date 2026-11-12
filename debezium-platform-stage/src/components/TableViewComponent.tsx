@@ -246,13 +246,17 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
             if (collections && collections.catalogs) {
                 collections.catalogs.forEach((catalog) => {
                     if (catalog.schemas) {
-                        catalog.schemas.forEach((schema, schemaIdx) => {
+                        catalog.schemas.forEach((schema) => {
+                            // Counted across catalogs, so ids stay unique when two catalogs have a schema with the same name
+                            const schemaIdx = newOptions.length;
+                            // MySQL, MariaDB and MongoDB have no schemas: the catalog is the database
+                            const schemaName = schema.name ?? catalog.name ?? "";
                             const collectionsChildren: TreeViewDataItem[] = [];
                             if (schema.collections) {
                                 schema.collections.forEach((collection) => {
                                     collectionsChildren.push({
                                         name: collection.name,
-                                        id: `schema-${schemaIdx}-${schema.name}-collection-${collection.name}`,
+                                        id: `schema-${schemaIdx}-${schemaName}-collection-${collection.name}`,
                                         icon: <ServerGroupIcon />,
                                         checkProps: { checked: false },
                                         fullyQualifiedName: collection.fullyQualifiedName // Store fullyQualifiedName
@@ -261,8 +265,8 @@ const TableViewComponent: FC<TableViewComponentProps> = ({ collections, setSelec
                                 });
                             }
                             newOptions.push({
-                                name: schema.name,
-                                id: `schema-${schemaIdx}-${schema.name}`,
+                                name: schemaName,
+                                id: `schema-${schemaIdx}-${schemaName}`,
                                 icon: <DatabaseIcon />,
                                 checkProps: { 'aria-label': 'schema', checked: false },
                                 children: collectionsChildren
