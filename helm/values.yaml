@@ -39,8 +39,8 @@ conductor:
         existingSecret: ""
   extraVolumes: [ ]
   extraVolumeMounts: [ ]
-  # OpenTelemetry SDK of the conductor itself, which exports the conductor's own
-  # traces. Set enabled to false to turn the SDK off (QUARKUS_OTEL_SDK_DISABLED=true).
+  # OpenTelemetry SDK of the conductor itself. Only traces are exported today.
+  # Set enabled to false to turn the whole SDK off (QUARKUS_OTEL_SDK_DISABLED=true).
   # This is independent of monitoring.otel.enabled, which is about pipeline metrics.
   otel:
     enabled: true
