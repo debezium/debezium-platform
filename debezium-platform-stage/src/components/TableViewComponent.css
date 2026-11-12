@@ -38,7 +38,7 @@
 }
 
 .virtual-tree__scroll-area {
-    --virtual-tree-min-height: 200px;
+    --virtual-tree-min-height: 40px;
     --virtual-tree-max-height: clamp(480px, 55vh, 720px);
     position: relative;
     min-height: var(--virtual-tree-min-height);

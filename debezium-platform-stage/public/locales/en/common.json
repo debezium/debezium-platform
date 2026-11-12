@@ -148,6 +148,8 @@
   "tableExplorer": {
     "schemaCount_one": "{{count}} schema",
     "schemaCount_other": "{{count}} schemas",
+    "databaseCount_one": "{{count}} database",
+    "databaseCount_other": "{{count}} databases",
     "tableCount_one": "{{count}} table",
     "tableCount_other": "{{count}} tables",
     "results": "{{tables}} in {{schemas}}",
