@@ -5,6 +5,10 @@
  */
 package io.debezium.platform.api;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Semaphore;
+import java.util.function.Consumer;
+
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -20,11 +24,12 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import io.debezium.platform.domain.LogStreamingService.LogStreamingTask;
 import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.error.NotFoundException;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.operators.multi.processors.UnicastProcessor;
+import io.smallrye.mutiny.subscription.MultiEmitter;
 
 /**
  * Live pipeline logs as a Server-Sent Events stream (debezium/dbz#3004). This replaces the
@@ -51,25 +56,47 @@ public class PipelineLogStreamResource {
     @APIResponse(responseCode = "200", description = "Stream of events, each carrying a single log line", content = @Content(mediaType = MediaType.SERVER_SENT_EVENTS, schema = @Schema(implementation = String.class, required = true)))
     @APIResponse(responseCode = "404", description = "Unknown pipeline")
     public Multi<OutboundSseEvent> stream(@PathParam("id") Long id, @Context Sse sse) {
-        // Both the existence check and the start of the stream must happen here, synchronously, and
-        // not at subscription time: RESTEasy commits the SSE response (200, chunked) as soon as this
-        // method returns, so a NotFoundException raised later can no longer set a status code and
-        // would merely truncate the stream. Looking the pipeline up hits the database, hence
-        // @Blocking: it keeps this method off the reactive event loop, where starting a JTA
-        // transaction is forbidden.
-        UnicastProcessor<String> lines = UnicastProcessor.create();
-        // The task has to outlive this method, which only returns the stream that RESTEasy then
-        // subscribes to: stopping it anywhere in here serves the client an empty stream that never
-        // completes. It is stopped from onTermination below instead.
-        var task = pipelineService.streamLogs(id, lines::onNext, lines::onComplete)
+        // Looked up synchronously, off the event loop via @Blocking: RESTEasy commits the SSE
+        // response as soon as this method returns, so a NotFoundException thrown once the Multi
+        // below is subscribed to would only truncate the stream, not set a status code.
+        Semaphore permits = new Semaphore(0);
+        CompletableFuture<MultiEmitter<? super String>> emitter = new CompletableFuture<>();
+
+        var task = pipelineService.streamLogs(id, emitPermittedLines(permits, emitter), completeStreamWhenReady(emitter))
                 .orElseThrow(() -> new NotFoundException(id));
 
-        // The processor buffers anything the streaming task produces between here and the
-        // subscription that RESTEasy makes once the response is committed, so no line is lost.
-        // onTermination covers completion, failure and the cancellation that a client disconnect
-        // raises, so the task is stopped on every path out of the stream.
-        return lines
-                .onTermination().invoke(task::stop)
+        return Multi.createFrom().<String> emitter(sink -> bridgeClientDemandToPermits(sink, task, permits, emitter))
                 .map(line -> sse.newEventBuilder().data(line).build());
+    }
+
+    /**
+     * RESTEasy Reactive's SSE writer requests one line at a time, only asking for the next once the
+     * current one has actually been written to the client, so acquiring a permit per line blocks the
+     * log-reading thread instead of piling lines up in memory when the client falls behind.
+     */
+    private static Consumer<String> emitPermittedLines(Semaphore permits, CompletableFuture<MultiEmitter<? super String>> emitter) {
+        return line -> {
+            permits.acquireUninterruptibly();
+            emitter.join().emit(line);
+        };
+    }
+
+    private static Runnable completeStreamWhenReady(CompletableFuture<MultiEmitter<? super String>> emitter) {
+        return () -> emitter.join().complete();
+    }
+
+    private static void bridgeClientDemandToPermits(MultiEmitter<? super String> sink, LogStreamingTask task, Semaphore permits,
+                                                    CompletableFuture<MultiEmitter<? super String>> emitter) {
+        sink.onTermination(() -> {
+            task.stop();
+            // Unblocks a log-reading thread waiting on a permit a disconnected client will never grant.
+            permits.release(Integer.MAX_VALUE / 2);
+        });
+        sink.onRequest(requested -> permits.release((int) requested));
+        // Mutiny hands the subscriber its subscription, and so its initial request(1), before running
+        // this lambda, silently dropping that first permit rather than passing it to onRequest above.
+        // Nothing has emitted yet to consume it, so granting it here can't double count it.
+        permits.release((int) sink.requested());
+        emitter.complete(sink);
     }
 }
