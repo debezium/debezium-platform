@@ -23,6 +23,7 @@ public class KubernetesLogReader implements LogReader {
     private final Supplier<TailPrettyLoggable> supplier;
     private LogWatch watch;
     private BufferedReader reader;
+    private boolean closed;
 
     public KubernetesLogReader(Supplier<TailPrettyLoggable> supplier) {
         this.supplier = Objects.requireNonNull(supplier, "Supplier cannot be null");
@@ -43,20 +44,32 @@ public class KubernetesLogReader implements LogReader {
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
+        closed = true;
+        // The watch is closed first: readLine() holds the BufferedReader's own lock for as long as
+        // its underlying read blocks, so closing that reader first would, for a read blocked on a
+        // quiet log, wait on the very lock this close is meant to free it from. Closing the watch
+        // ends the underlying stream directly, which is what actually unblocks that read, letting it
+        // throw and release the lock before reader.close() ever needs to acquire it.
         try {
-            if (reader != null) {
-                reader.close();
-            }
-        }
-        finally {
             if (watch != null) {
                 watch.close();
             }
         }
+        finally {
+            if (reader != null) {
+                reader.close();
+            }
+        }
     }
 
-    private BufferedReader ensureReader() throws IOException {
+    private synchronized BufferedReader ensureReader() throws IOException {
+        if (closed) {
+            // Without this, a reader closed (by LogStreamingService.LogStreamingTask#stop()) before its
+            // first read, while watch and reader are still null and so this close() closes nothing,
+            // would otherwise go on to lazily open a new, untracked watch right here instead.
+            throw new IOException("Log reader is closed");
+        }
         if (reader == null) {
             try {
                 this.watch = supplier.get().tailingLines(STREAM_TAIL_LINES).watchLog();
