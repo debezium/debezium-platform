@@ -20,6 +20,7 @@ import { SelectedDataListItem } from "../apis/types";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ExplorerBinding, LEGACY_EXPLORER_BINDING } from "@utils/Datatype";
 import {
+    ExplorerLevel,
     ExplorerNode,
     buildExplorerTree,
     extractExplorerSelections,
@@ -46,6 +47,7 @@ type FlatItem = {
 
 type SchemaSelectionGroup = {
     name: string;
+    level: ExplorerLevel;
     fullyIncluded: boolean;
     selected: number;
     total: number;
@@ -230,7 +232,7 @@ function buildSelectionGroups(
         if (node.level === "collection") return;
         if (parentFullyIncluded(node)) {
             const total = collectionTotal(node);
-            groups.push({ name: node.name, fullyIncluded: true, selected: total, total });
+            groups.push({ name: node.name, level: node.level, fullyIncluded: true, selected: total, total });
             return;
         }
         const children = node.children ?? [];
@@ -240,6 +242,7 @@ function buildSelectionGroups(
             if (selected > 0) {
                 groups.push({
                     name: node.name,
+                    level: node.level,
                     fullyIncluded: false,
                     selected,
                     total: children.length,
@@ -617,11 +620,21 @@ const TableViewComponent: FC<TableViewComponentProps> = ({
         () => buildSelectionGroups(selection, options),
         [selection, options],
     );
-    const hasSelection = selection.schemas.length > 0 || selection.tables.length > 0;
-    const schemaLabel = selection.schemas.length > 0
+    const fullyIncluded = groups.filter((group) => group.fullyIncluded);
+    const databaseCount = fullyIncluded.filter((group) => group.level === "catalog").length;
+    const schemaCount = fullyIncluded.filter((group) => group.level === "schema").length;
+    const hasSelection = databaseCount > 0 || schemaCount > 0 || selection.tables.length > 0;
+    const databaseLabel = databaseCount > 0
         ? groupedCountPhrase(
-            t("tableExplorer.schemaCount", { count: selection.schemas.length }),
-            selection.schemas.length,
+            t("tableExplorer.databaseCount", { count: databaseCount }),
+            databaseCount,
+            i18n.language,
+        )
+        : null;
+    const schemaLabel = schemaCount > 0
+        ? groupedCountPhrase(
+            t("tableExplorer.schemaCount", { count: schemaCount }),
+            schemaCount,
             i18n.language,
         )
         : null;
@@ -781,6 +794,11 @@ const TableViewComponent: FC<TableViewComponentProps> = ({
                 {hasSelection ? (
                     <>
                         <span className="virtual-tree__summary-caption">{t("tableExplorer.selected")}</span>
+                        {databaseLabel ? (
+                            <span className="virtual-tree__summary-count">
+                                <Label isCompact color="blue">{databaseLabel}</Label>
+                            </span>
+                        ) : null}
                         {schemaLabel ? (
                             <span className="virtual-tree__summary-count">
                                 <Label isCompact color="blue">{schemaLabel}</Label>

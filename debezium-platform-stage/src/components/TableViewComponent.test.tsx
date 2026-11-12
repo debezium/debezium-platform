@@ -408,6 +408,9 @@ describe("TableViewComponent selection", () => {
         values: { "database.include.list": ["sales"] },
       });
     });
+    const summary = screen.getByText("Selected").closest(".virtual-tree__summary");
+    expect(summary).toHaveTextContent("1 database");
+    expect(summary).not.toHaveTextContent("schema");
   });
 
   it("does not check a same-named database from a schema include list", async () => {
@@ -454,7 +457,7 @@ describe("TableViewComponent selection", () => {
       />,
     );
 
-    const database = await screen.findByRole("checkbox", { name: "Select public" });
+    const database = await screen.findByRole<HTMLInputElement>("checkbox", { name: "Select public" });
     await user.click(screen.getByRole("button", { name: /^Expand$/ }));
     expect(database.checked).toBe(false);
     expect(database.indeterminate).toBe(true);
