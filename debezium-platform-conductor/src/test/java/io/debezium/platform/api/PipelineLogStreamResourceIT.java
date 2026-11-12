@@ -111,15 +111,12 @@ class PipelineLogStreamResourceIT {
             eventSource.register(event -> receivedEvents.add(event.readData()));
             eventSource.open();
 
+            // The log is deliberately left "live" above (no END_OF_LOG queued): if it completed on its
+            // own, the server ending the stream would race against the client closing it below, and
+            // SseEventSource only skips its own reconnect if it is the one that wins that race.
             await().atMost(Duration.ofSeconds(15))
                     .until(() -> receivedEvents.size() == 3);
         }
-
-        // The log is deliberately left "live" above (no END_OF_LOG queued): if it completed on its
-        // own, the server ending the stream would race against the client closing it above, and
-        // SseEventSource only skips its own reconnect if it is the one that wins that race. This
-        // wakes the now-stopped, but still blocked, log-reading thread instead.
-        pendingLines.add(END_OF_LOG);
 
         assertThat(receivedEvents).containsExactly("first log line", "second log line", "third log line");
     }
@@ -142,11 +139,9 @@ class PipelineLogStreamResourceIT {
             }
         }
 
-        // The log-reading thread is left blocked waiting for a line that was never going to come,
-        // the same way a real, still-running log would: stop() alone does not interrupt that wait,
-        // so this wakes it so it can notice the stop and close the reader.
-        pendingLines.add(END_OF_LOG);
-
+        // The log-reading thread is left blocked waiting for a line that was never going to come, the
+        // same way a real, still-running log would: closing the reader is what forces that wait to
+        // give up (LogStreamingService.LogStreamingTask#stop()), which is what this actually verifies.
         await().atMost(Duration.ofSeconds(15))
                 .untilAsserted(() -> assertThat(logReaderClosed).isTrue());
     }
@@ -236,20 +231,27 @@ class PipelineLogStreamResourceIT {
 
     /**
      * A log that yields whatever the test has queued, blocking for more the way a real, still-running
-     * log does, until either {@link #END_OF_LOG} or {@link #READ_FAILURE} is queued.
+     * log does, until either {@link #END_OF_LOG} or {@link #READ_FAILURE} is queued, or {@code close()}
+     * is called while that wait is blocked, the way {@link LogStreamingService.LogStreamingTask#stop()}
+     * closes the real reader to force its own blocked read to give up.
      */
     private LogReader fakeLogReader() {
         return new LogReader() {
+            private final AtomicReference<Thread> blockedReadingThread = new AtomicReference<>();
 
             @Override
             public String readLine() throws IOException {
                 String line;
+                blockedReadingThread.set(Thread.currentThread());
                 try {
                     line = pendingLines.take();
                 }
                 catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new IOException(e);
+                }
+                finally {
+                    blockedReadingThread.set(null);
                 }
                 if (line.equals(END_OF_LOG)) {
                     return null;
@@ -273,6 +275,10 @@ class PipelineLogStreamResourceIT {
             @Override
             public void close() {
                 logReaderClosed.set(true);
+                Thread thread = blockedReadingThread.get();
+                if (thread != null) {
+                    thread.interrupt();
+                }
             }
         };
     }

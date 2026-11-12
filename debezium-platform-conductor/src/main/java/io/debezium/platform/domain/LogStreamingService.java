@@ -8,6 +8,7 @@ package io.debezium.platform.domain;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -39,6 +40,7 @@ public class LogStreamingService {
         private final Supplier<LogReader> supplier;
         private final Consumer<String> consumer;
         private final Consumer<Throwable> onFinished;
+        private final AtomicReference<LogReader> activeReader;
 
         public LogStreamingTask(String name, Supplier<LogReader> supplier, Consumer<String> consumer, Logger logger, Consumer<Throwable> onFinished) {
             this.name = name;
@@ -48,6 +50,7 @@ public class LogStreamingService {
             this.onFinished = onFinished;
             this.running = new AtomicBoolean(false);
             this.stopped = new AtomicBoolean(false);
+            this.activeReader = new AtomicReference<>();
         }
 
         public String getName() {
@@ -66,6 +69,10 @@ public class LogStreamingService {
             if (running.compareAndSet(true, false)) {
                 logger.infof("Stopping log streamer for '%s'", name);
             }
+            // doStream() can be blocked inside readLine(), waiting on a log that has gone quiet rather
+            // than ended, with no further line to return isRunning() to and notice the stop above:
+            // closing the reader out from under it is what forces that read to give up.
+            closeActiveReader();
         }
 
         @Override
@@ -76,17 +83,36 @@ public class LogStreamingService {
             logger.infof("Starting log streamer for '%s'", name);
 
             Throwable failure = null;
-            try (var reader = supplier.get()) {
+            try {
+                LogReader reader = supplier.get();
+                activeReader.set(reader);
                 doStream(reader);
                 logger.infof("Finished streaming from log %s", name);
             }
             catch (IOException | RuntimeException e) {
-                logger.errorf(e, "Error streaming from log %s", name);
-                failure = e;
+                // Closing the reader to force stop() out of a blocked readLine() (above) surfaces here
+                // as a failure too, even though nothing actually went wrong reading the log.
+                if (!stopped.get()) {
+                    logger.errorf(e, "Error streaming from log %s", name);
+                    failure = e;
+                }
             }
             finally {
+                closeActiveReader();
                 stop();
                 onFinished.accept(failure);
+            }
+        }
+
+        private void closeActiveReader() {
+            LogReader reader = activeReader.getAndSet(null);
+            if (reader != null) {
+                try {
+                    reader.close();
+                }
+                catch (IOException e) {
+                    logger.errorf(e, "Error closing log reader for '%s'", name);
+                }
             }
         }
 
