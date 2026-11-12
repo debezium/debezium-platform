@@ -7,9 +7,7 @@ package io.debezium.platform.domain;
 
 import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -22,8 +20,6 @@ import com.blazebit.persistence.PagedList;
 import com.blazebit.persistence.view.EntityViewManager;
 import com.blazebit.persistence.view.EntityViewSetting;
 
-import io.debezium.platform.api.dto.AlertEventResponse;
-import io.debezium.platform.api.dto.PagedAlertEventResponse;
 import io.debezium.platform.data.model.AlertEventEntity;
 import io.debezium.platform.data.model.AlertRuleEntity;
 import io.debezium.platform.data.model.Severity;
@@ -38,8 +34,8 @@ public class AlertEventService extends AbstractService<AlertEventEntity, AlertEv
     }
 
     @Transactional(SUPPORTS)
-    public PagedAlertEventResponse listEvents(Severity severity, String status, String pipelineId,
-                                              Long ruleId, Instant from, Instant to, int page, int size) {
+    public PagedList<AlertEvent> listEvents(Severity severity, String status, String pipelineId,
+                                            Long ruleId, Instant from, Instant to, int page, int size) {
 
         CriteriaBuilder<AlertEventEntity> criteria = cb();
 
@@ -72,16 +68,12 @@ public class AlertEventService extends AbstractService<AlertEventEntity, AlertEv
                 EntityViewSetting.create(AlertEvent.class, page * size, size), criteria)
                 .getResultList();
 
-        List<AlertEventResponse> events = result.stream()
-                .map(this::toResponse)
-                .toList();
-
-        return new PagedAlertEventResponse(events, page, size, result.getTotalSize(), result.getTotalPages());
+        return result;
     }
 
     @Transactional(SUPPORTS)
-    public Optional<AlertEventResponse> findEventById(Long id) {
-        return findById(id).map(this::toResponse);
+    public Optional<AlertEvent> findEventById(Long id) {
+        return findById(id);
     }
 
     @Transactional
@@ -117,28 +109,4 @@ public class AlertEventService extends AbstractService<AlertEventEntity, AlertEv
                 .executeUpdate();
     }
 
-    private AlertEventResponse toResponse(AlertEvent view) {
-        Instant firedAt = view.getFiredAt();
-        Instant resolvedAt = view.getResolvedAt();
-        String eventStatus = resolvedAt == null ? "firing" : "resolved";
-        Long durationSeconds = resolvedAt != null
-                ? Duration.between(firedAt, resolvedAt).toSeconds()
-                : Duration.between(firedAt, Instant.now()).toSeconds();
-
-        return new AlertEventResponse(
-                view.getId(),
-                view.getRuleId(),
-                view.getRuleName(),
-                view.getPipelineId(),
-                view.getPipelineName(),
-                eventStatus,
-                view.getValue(),
-                view.getThreshold(),
-                view.getSeverity(),
-                view.getMessage(),
-                firedAt,
-                resolvedAt,
-                durationSeconds,
-                view.getCreatedAt());
-    }
 }
