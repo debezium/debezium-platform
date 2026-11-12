@@ -104,7 +104,7 @@ class PipelineLogStreamResourceIT {
     @FixFor("debezium/dbz#3004")
     @DisplayName("Every log line is delivered to the client as an SSE event, in order")
     void streamsEachLogLineAsAnSseEvent() {
-        pendingLines.addAll(List.of("first log line", "second log line", "third log line", END_OF_LOG));
+        pendingLines.addAll(List.of("first log line", "second log line", "third log line"));
 
         List<String> receivedEvents = new CopyOnWriteArrayList<>();
         try (Client client = sseClient(); SseEventSource eventSource = SseEventSource.target(client.target(streamUri(PIPELINE_ID))).build()) {
@@ -114,6 +114,12 @@ class PipelineLogStreamResourceIT {
             await().atMost(Duration.ofSeconds(15))
                     .until(() -> receivedEvents.size() == 3);
         }
+
+        // The log is deliberately left "live" above (no END_OF_LOG queued): if it completed on its
+        // own, the server ending the stream would race against the client closing it above, and
+        // SseEventSource only skips its own reconnect if it is the one that wins that race. This
+        // wakes the now-stopped, but still blocked, log-reading thread instead.
+        pendingLines.add(END_OF_LOG);
 
         assertThat(receivedEvents).containsExactly("first log line", "second log line", "third log line");
     }
@@ -163,7 +169,7 @@ class PipelineLogStreamResourceIT {
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.headers().firstValue("content-type")).hasValue(MediaType.SERVER_SENT_EVENTS);
-        assertThat(response.body()).contains("data:the last log line");
+        assertThat(response.body()).contains("data:the last log line", "event:log-stream-end", "data:the log has ended");
         assertThat(logReaderClosed).isTrue();
         assertThat(reportedFailure).hasValue(null);
     }
