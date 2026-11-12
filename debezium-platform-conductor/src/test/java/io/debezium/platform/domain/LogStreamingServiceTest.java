@@ -129,6 +129,23 @@ class LogStreamingServiceTest {
 
     @Test
     @FixFor("debezium/dbz#3004")
+    void neverStartsATaskThatWasStoppedBeforeItRan() {
+        AtomicBoolean supplierCalled = new AtomicBoolean();
+        var task = new LogStreamingTask("test", () -> {
+            supplierCalled.set(true);
+            return reader;
+        }, line -> {
+        }, LOGGER, failure -> {
+        });
+
+        task.stop();
+        task.run();
+
+        assertThat(supplierCalled).isFalse();
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3004")
     void reportsTheFailureWhenOpeningTheLogFails() {
         RuntimeException failure = new RuntimeException("could not open log");
         AtomicReference<Throwable> reportedFailure = new AtomicReference<>();
