@@ -7,7 +7,6 @@ package io.debezium.platform.domain;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -32,11 +31,17 @@ public class LogStreamingService {
      * {@link #stop()}, at the point they actually know the stream is no longer wanted.
      */
     public static class LogStreamingTask implements Runnable {
+
+        private enum State {
+            NOT_STARTED,
+            RUNNING,
+            STOPPED
+        }
+
         private final Logger logger;
 
         private final String name;
-        private final AtomicBoolean running;
-        private final AtomicBoolean stopped;
+        private final AtomicReference<State> state;
         private final Supplier<LogReader> supplier;
         private final Consumer<String> consumer;
         private final Consumer<Throwable> onFinished;
@@ -48,8 +53,7 @@ public class LogStreamingService {
             this.consumer = consumer;
             this.logger = logger;
             this.onFinished = onFinished;
-            this.running = new AtomicBoolean(false);
-            this.stopped = new AtomicBoolean(false);
+            this.state = new AtomicReference<>(State.NOT_STARTED);
             this.activeReader = new AtomicReference<>();
         }
 
@@ -58,15 +62,16 @@ public class LogStreamingService {
         }
 
         public boolean isRunning() {
-            return running.get();
+            return state.get() == State.RUNNING;
         }
 
         public void stop() {
-            // Marked stopped first so a task that has been submitted but has not started yet never
-            // begins streaming: stop() would otherwise be a no-op on it, and the subsequent run()
-            // would push lines at a consumer nobody is listening to any more.
-            stopped.set(true);
-            if (running.compareAndSet(true, false)) {
+            // Transitioning straight to STOPPED, rather than checking isRunning() and then separately
+            // acting on it, is what keeps this atomic with run()'s own NOT_STARTED -> RUNNING
+            // transition below: whichever of the two reaches the shared state first decides the
+            // outcome, with no window for a stop() landing in between a check and a transition in the
+            // other to be missed, and a cancelled task to start running anyway.
+            if (state.getAndSet(State.STOPPED) == State.RUNNING) {
                 logger.infof("Stopping log streamer for '%s'", name);
             }
             // doStream() can be blocked inside readLine(), waiting on a log that has gone quiet rather
@@ -77,7 +82,7 @@ public class LogStreamingService {
 
         @Override
         public void run() {
-            if (stopped.get() || !running.compareAndSet(false, true)) {
+            if (!state.compareAndSet(State.NOT_STARTED, State.RUNNING)) {
                 return;
             }
             logger.infof("Starting log streamer for '%s'", name);
@@ -92,7 +97,7 @@ public class LogStreamingService {
             catch (IOException | RuntimeException e) {
                 // Closing the reader to force stop() out of a blocked readLine() (above) surfaces here
                 // as a failure too, even though nothing actually went wrong reading the log.
-                if (!stopped.get()) {
+                if (state.get() != State.STOPPED) {
                     logger.errorf(e, "Error streaming from log %s", name);
                     failure = e;
                 }
