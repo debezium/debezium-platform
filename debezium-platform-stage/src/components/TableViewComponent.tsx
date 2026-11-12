@@ -61,7 +61,7 @@ function nodeMatchesSelection(node: ExplorerNode, selection: SelectedDataListIte
         if (hasValueKey) return !!valueList?.includes(fullyQualifiedName);
         return selection.tables.includes(fullyQualifiedName);
     }
-    if (hasValueKey) return !!valueList?.includes(node.selectionValue);
+    if (selection.values != null) return !!valueList?.includes(node.selectionValue);
     return selection.schemas.includes(node.selectionValue);
 }
 
@@ -82,6 +82,47 @@ function collectMatchingNodes(nodes: ExplorerNode[], selection: SelectedDataList
     };
     walk(nodes);
     return chosen;
+}
+
+function treeContains(nodes: ExplorerNode[], predicate: (node: ExplorerNode) => boolean): boolean {
+    for (const node of nodes) {
+        if (predicate(node)) return true;
+        if (node.children && treeContains(node.children, predicate)) return true;
+    }
+    return false;
+}
+
+/** Every saved name is present on a node the current tree can check. */
+function savedSelectionMatchesTree(
+    roots: ExplorerNode[],
+    selection: SelectedDataListItem | undefined,
+): boolean {
+    if (!selection) return true;
+    if (selection.values != null) {
+        return Object.entries(selection.values).every(([propertyName, names]) =>
+            names.every((name) =>
+                treeContains(
+                    roots,
+                    (node) =>
+                        node.propertyName === propertyName &&
+                        (node.selectionValue === name || node.fullyQualifiedName === name),
+                ),
+            ),
+        );
+    }
+    return (
+        selection.schemas.every((name) =>
+            treeContains(roots, (node) => node.level !== "collection" && node.selectionValue === name),
+        ) &&
+        selection.tables.every((name) =>
+            treeContains(
+                roots,
+                (node) =>
+                    node.level === "collection" &&
+                    (node.fullyQualifiedName === name || node.selectionValue === name),
+            ),
+        )
+    );
 }
 
 function collectBranchIds(nodes: ExplorerNode[]): string[] {
@@ -175,13 +216,19 @@ function buildSelectionGroups(
     selection: SelectedDataListItem,
     roots: readonly ExplorerNode[],
 ): SchemaSelectionGroup[] {
-    const included = new Set(selection.schemas);
     const tables = new Set(selection.tables);
     const groups: SchemaSelectionGroup[] = [];
+    const parentFullyIncluded = (node: ExplorerNode): boolean => {
+        if (!node.propertyName) return false;
+        if (selection.values != null) {
+            return !!selection.values[node.propertyName]?.includes(node.selectionValue);
+        }
+        return selection.schemas.includes(node.selectionValue);
+    };
 
     const walk = (node: ExplorerNode) => {
         if (node.level === "collection") return;
-        if (node.propertyName && included.has(node.selectionValue)) {
+        if (parentFullyIncluded(node)) {
             const total = collectionTotal(node);
             groups.push({ name: node.name, fullyIncluded: true, selected: total, total });
             return;
@@ -283,16 +330,22 @@ const TreeCheckbox: FC<{
     );
 };
 
+/** A row with no include-list property cannot be saved when tables cannot be saved either. */
+function cannotSaveNode(item: ExplorerNode, binding: ExplorerBinding): boolean {
+    return binding.leafProperty == null && item.propertyName == null;
+}
+
 const TreeRow: FC<{
     item: ExplorerNode;
     depth: number;
     hasChildren: boolean;
     expanded: boolean;
     readOnly?: boolean;
+    checkDisabled?: boolean;
     countLabel?: string;
     onToggle: (id: string) => void;
     onCheck: (event: React.ChangeEvent, item: ExplorerNode) => void;
-}> = ({ item, depth, hasChildren, expanded, readOnly, countLabel, onToggle, onCheck }) => (
+}> = ({ item, depth, hasChildren, expanded, readOnly, checkDisabled, countLabel, onToggle, onCheck }) => (
     <div
         className="virtual-tree__row-content"
         style={{ paddingLeft: `${depth * 24 + 8}px` }}
@@ -314,7 +367,7 @@ const TreeRow: FC<{
             checked={item.checkProps?.checked}
             onChange={(event) => onCheck(event, item)}
             ariaLabel={`Select ${item.name}`}
-            disabled={readOnly}
+            disabled={readOnly || checkDisabled}
         />
         <span className="virtual-tree__icon">
             {item.level === "collection" ? <ServerGroupIcon /> : <DatabaseIcon />}
@@ -345,6 +398,8 @@ const TableViewComponent: FC<TableViewComponentProps> = ({
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const isInitializedRef = useRef(false);
+    const pendingHydrationRef = useRef(false);
+    const userEditedRef = useRef(false);
     const prevSelectionRef = useRef<{ selectedDataListItems: SelectedDataListItem | undefined; options: ExplorerNode[] }>({
         selectedDataListItems: undefined,
         options: []
@@ -387,6 +442,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({
             return;
         }
         prevSelectionRef.current = { selectedDataListItems, options };
+        pendingHydrationRef.current = true;
 
         queueMicrotask(() => {
             const hasSelection =
@@ -397,20 +453,25 @@ const TableViewComponent: FC<TableViewComponentProps> = ({
 
             if (!hasSelection) {
                 setCheckedItems((prevChecked) => (prevChecked.length === 0 ? prevChecked : []));
-                isInitializedRef.current = true;
-                return;
+            } else {
+                setCheckedItems(collectMatchingNodes(options, selectedDataListItems));
             }
-
-            setCheckedItems(collectMatchingNodes(options, selectedDataListItems));
+            pendingHydrationRef.current = false;
             isInitializedRef.current = true;
         });
     }, [selectedDataListItems, options]);
 
     useEffect(() => {
-        if (!isInitializedRef.current || readOnly) return;
+        if (!isInitializedRef.current || readOnly || pendingHydrationRef.current) return;
 
         const selections = extractExplorerSelections(options, new Set(checkedItems.map((item) => item.id)));
         if (selectionsEqual(selectedDataListItems, selections)) {
+            return;
+        }
+        // Hydration only checks nodes that exist. Keep saved names the tree cannot match
+        // until the user changes the tree. A fully matched selection still writes back,
+        // including a collapse of every table under a schema.
+        if (!userEditedRef.current && !savedSelectionMatchesTree(options, selectedDataListItems)) {
             return;
         }
         setSelectedDataListItems(selections);
@@ -438,7 +499,8 @@ const TableViewComponent: FC<TableViewComponentProps> = ({
     }, [readOnly, options]);
 
     const onCheck = (event: React.ChangeEvent, treeViewItem: ExplorerNode) => {
-        if (readOnly) return;
+        if (readOnly || cannotSaveNode(treeViewItem, binding)) return;
+        userEditedRef.current = true;
         const checked = (event.target as HTMLInputElement).checked;
         const checkedItemTree = options
             .map((opt) => Object.assign({}, opt))
@@ -769,6 +831,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({
                                         hasChildren={pinnedItem.hasChildren}
                                         expanded={isNodeExpanded(pinnedItem.item.id)}
                                         readOnly={readOnly}
+                                        checkDisabled={cannotSaveNode(pinnedItem.item, binding)}
                                         countLabel={descendantChecked.schemaCounts.get(pinnedItem.item.id)}
                                         onToggle={onToggleNode}
                                         onCheck={onCheck}
@@ -812,6 +875,7 @@ const TableViewComponent: FC<TableViewComponentProps> = ({
                                             hasChildren={hasChildren}
                                             expanded={expanded}
                                             readOnly={readOnly}
+                                            checkDisabled={cannotSaveNode(item, binding)}
                                             countLabel={hasChildren ? descendantChecked.schemaCounts.get(item.id) : undefined}
                                             onToggle={onToggleNode}
                                             onCheck={onCheck}
