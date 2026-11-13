@@ -115,6 +115,30 @@ class MilvusConnectionValidatorTest {
     }
 
     @Test
+    @DisplayName("Should fail validation when URI port is negative")
+    void shouldFailWhenPortIsNegative() {
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS,
+                Map.of("uri", "grpc://localhost:-1"));
+
+        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
+
+        assertFalse(result.valid(), "Validation should fail for a negative port");
+        Assertions.assertThat(result.message()).contains("URI is not a valid URL");
+    }
+
+    @Test
+    @DisplayName("Should fail validation when URI port overflows an integer")
+    void shouldFailWhenPortOverflowsInteger() {
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS,
+                Map.of("uri", "grpc://localhost:99999999999"));
+
+        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
+
+        assertFalse(result.valid(), "Validation should fail for an integer-overflow port");
+        Assertions.assertThat(result.message()).contains("URI is not a valid URL");
+    }
+
+    @Test
     @DisplayName("Should fail validation when URI is malformed")
     void shouldFailWhenUriIsMalformed() {
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS,

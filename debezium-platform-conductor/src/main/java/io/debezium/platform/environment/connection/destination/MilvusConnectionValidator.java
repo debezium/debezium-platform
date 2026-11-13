@@ -6,6 +6,7 @@
 package io.debezium.platform.environment.connection.destination;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -110,13 +111,13 @@ public class MilvusConnectionValidator implements ConnectionValidator {
         // that cannot be caught here: it surfaces as an uncaught exception on a library thread and
         // the caller only fails ~10 seconds later with DEADLINE_EXCEEDED.
         try {
-            int port = URI.create(uri).getPort();
+            int port = URI.create(uri).parseServerAuthority().getPort();
             if (port != -1 && (port < MIN_PORT || port > MAX_PORT)) {
                 return ConnectionValidationResult.failed(
                         String.format("Port must be between %d and %d", MIN_PORT, MAX_PORT));
             }
         }
-        catch (IllegalArgumentException e) {
+        catch (URISyntaxException | IllegalArgumentException e) {
             return ConnectionValidationResult.failed("URI is not a valid URL: " + uri);
         }
 
