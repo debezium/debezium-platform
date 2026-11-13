@@ -1,3 +1,7 @@
+import type { SnapshotState, SnapshotType } from "./snapshots";
+
+export type { SnapshotState, SnapshotType };
+
 export interface CatalogComponentEntry {
   class: string;
   name: string;
@@ -266,6 +270,8 @@ export type Pipeline = {
   transforms: Transform[];
   logLevel: string;
   logLevels: Record<string, string>;
+  activeSnapshotType?: SnapshotType | null;
+  activeSnapshotStatus?: SnapshotState | null;
 };
 
 export type PipelinePayload = {
