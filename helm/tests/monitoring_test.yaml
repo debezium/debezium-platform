@@ -115,6 +115,21 @@ tests:
           value:
             - prometheus
 
+  - it: should render only the metrics pipeline and only exporters every collector distribution ships
+    template: otel-collector.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
+    asserts:
+      - notExists:
+          path: spec.config.service.pipelines.logs
+      - notExists:
+          path: spec.config.service.pipelines.traces
+      - notExists:
+          path: spec.config.exporters.nop
+      - exists:
+          path: spec.config.exporters.prometheus
+
   # ServiceMonitor tests
   - it: should create ServiceMonitor when monitoring is fully enabled
     template: servicemonitor.yaml
@@ -245,11 +260,57 @@ tests:
             name: PIPELINE_MONITORING_OTEL_METRIC_EXPORT_INTERVAL_MS
             value: "10000"
 
+  - it: should keep pipeline traces and logs off by default when monitoring.otel.enabled is true
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_TRACES_ENABLED
+            value: "false"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_LOGS_ENABLED
+            value: "false"
+
+  - it: should turn pipeline traces and logs on when enabled
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.otel.traces.enabled: true
+      monitoring.otel.logs.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_TRACES_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_LOGS_ENABLED
+            value: "true"
+
   - it: should not inject monitoring env vars when monitoring.otel.enabled is false
     template: conductor-deployment.yaml
     set:
       monitoring.otel.enabled: false
     asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_TRACES_ENABLED
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_LOGS_ENABLED
+          any: true
       - notContains:
           path: spec.template.spec.containers[0].env
           content:

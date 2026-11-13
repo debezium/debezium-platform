@@ -429,3 +429,23 @@ tests:
           value:
             - name: conductor-registry-secret
             - name: conductor-backup-secret
+
+  - it: should leave the conductor OpenTelemetry SDK enabled by default
+    template: conductor-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_OTEL_SDK_DISABLED
+            value: "false"
+
+  - it: should disable the conductor OpenTelemetry SDK when conductor.otel.enabled is false
+    template: conductor-deployment.yaml
+    set:
+      conductor.otel.enabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_OTEL_SDK_DISABLED
+            value: "true"

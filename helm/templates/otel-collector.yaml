@@ -33,17 +33,15 @@ spec:
           enabled: {{ .Values.monitoring.otel.collector.exporters.prometheus.resourceToTelemetryConversion }}
         const_labels:
           {{- toYaml .Values.monitoring.otel.collector.exporters.prometheus.constLabels | nindent 10 }}
-      nop: {}
     service:
+      # Metrics only: nothing in the platform consumes logs or traces, and a pipeline for them
+      # needs an exporter that not every collector distribution ships (the `nop` exporter is
+      # missing from the Red Hat build, for instance). The conductor turns the logs and traces
+      # exporters of the pipelines off accordingly, unless monitoring.otel.traces.enabled or
+      # monitoring.otel.logs.enabled is set.
       pipelines:
         metrics:
           receivers: [otlp]
           processors: [batch]
           exporters: [prometheus]
-        logs:
-          receivers: [otlp]
-          exporters: [nop]
-        traces:
-          receivers: [otlp]
-          exporters: [nop]
 {{- end }}

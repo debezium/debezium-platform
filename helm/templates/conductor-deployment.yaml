@@ -122,6 +122,10 @@ spec:
               value: {{ .Values.monitoring.otel.jmxIntervalMs | quote }}
             - name: PIPELINE_MONITORING_OTEL_METRIC_EXPORT_INTERVAL_MS
               value: {{ .Values.monitoring.otel.metricExportIntervalMs | quote }}
+            - name: PIPELINE_MONITORING_OTEL_TRACES_ENABLED
+              value: {{ .Values.monitoring.otel.traces.enabled | quote }}
+            - name: PIPELINE_MONITORING_OTEL_LOGS_ENABLED
+              value: {{ .Values.monitoring.otel.logs.enabled | quote }}
             - name: MONITORING_PROMETHEUS_URL
               value: {{ include "debezium-platform.prometheusUrl" . }}
             - name: QUARKUS_OTEL_METRICS_ENABLED
@@ -129,6 +133,9 @@ spec:
             - name: QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ include "debezium-platform.otelCollectorEndpoint" . }}
 {{- end }}
+            # OpenTelemetry SDK of the conductor itself. See values.yaml conductor.otel.
+            - name: QUARKUS_OTEL_SDK_DISABLED
+              value: {{ not .Values.conductor.otel.enabled | quote }}
 {{- if .Values.monitoring.panels.additionalPanelsPath }}
             - name: MONITORING_PANELS_PATH
               value: {{ .Values.monitoring.panels.additionalPanelsPath | quote }}
