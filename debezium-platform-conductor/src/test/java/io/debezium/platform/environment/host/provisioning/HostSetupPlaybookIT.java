@@ -191,6 +191,10 @@ class HostSetupPlaybookIT {
 
             boolean finished = process.waitFor(PLAYBOOK_TIMEOUT_MINUTES, TimeUnit.MINUTES);
             if (!finished) {
+                // Capture descendants before the parent exits: once it is killed they are
+                // reparented and no longer discoverable, leaving ansible workers running.
+                List<ProcessHandle> descendants = process.descendants().toList();
+                descendants.forEach(ProcessHandle::destroyForcibly);
                 process.destroyForcibly();
                 process.waitFor(30, TimeUnit.SECONDS);
             }
