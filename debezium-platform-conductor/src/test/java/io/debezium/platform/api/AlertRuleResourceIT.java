@@ -320,54 +320,9 @@ class AlertRuleResourceIT {
     @Test
     @Order(14)
     void deleteRuleResolvesItsFiringAlert() throws Exception {
-        Long firingRuleId;
-        Long firingEventId;
-        Instant firedAt = Instant.now().minus(Duration.ofMinutes(10));
-
-        tx.begin();
-        try {
-            AlertRuleEntity rule = new AlertRuleEntity();
-            rule.setName("it-firing-rule");
-            rule.setPanelId("streaming-event-count");
-            rule.setOperator(Operator.GREATER_THAN);
-            rule.setThreshold(100.0);
-            rule.setForDuration("PT0S");
-            rule.setReduceFunction(ReduceFunction.LAST);
-            rule.setEvaluationWindow("PT5M");
-            rule.setSeverity(Severity.WARNING);
-            rule.setEnabled(true);
-            em.persist(rule);
-
-            AlertEventEntity event = new AlertEventEntity();
-            event.setRule(rule);
-            event.setRuleName("it-firing-rule");
-            event.setPipelineId("it-firing-pipeline");
-            event.setPipelineName("it-firing-pipeline");
-            event.setValue(150.0);
-            event.setThreshold(100.0);
-            event.setSeverity(Severity.WARNING);
-            event.setMessage("Threshold exceeded");
-            event.setFiredAt(firedAt);
-            em.persist(event);
-
-            AlertStateEntity state = new AlertStateEntity();
-            state.setRule(rule);
-            state.setPipelineId("it-firing-pipeline");
-            state.setState(AlertStateValue.FIRING);
-            state.setValue(150.0);
-            state.setFiredAt(firedAt);
-            state.setActiveEvent(event);
-            em.persist(state);
-
-            em.flush();
-            firingRuleId = rule.getId();
-            firingEventId = event.getId();
-            tx.commit();
-        }
-        catch (Exception e) {
-            tx.rollback();
-            throw e;
-        }
+        AlertEventEntity firingEvent = persistFiringRuleWithActiveEvent();
+        Long firingRuleId = firingEvent.getRule().getId();
+        Long firingEventId = firingEvent.getId();
 
         try {
             given()
@@ -383,17 +338,7 @@ class AlertRuleResourceIT {
                     .body("resolvedAt", notNullValue());
         }
         finally {
-            tx.begin();
-            try {
-                em.createQuery("DELETE FROM alert_event e WHERE e.id = :id")
-                        .setParameter("id", firingEventId)
-                        .executeUpdate();
-                tx.commit();
-            }
-            catch (Exception e) {
-                tx.rollback();
-                throw e;
-            }
+            deleteAlertEvent(firingEventId);
         }
     }
 
@@ -432,5 +377,71 @@ class AlertRuleResourceIT {
                 .when().delete(CHANNELS_PATH + "/" + channelId)
                 .then()
                 .statusCode(204);
+    }
+
+    /**
+     * Persists an enabled rule named {@code it-firing-rule} whose alert is firing: a firing event and the
+     * alert state that points to it.
+     */
+    private AlertEventEntity persistFiringRuleWithActiveEvent() throws Exception {
+        Instant firedAt = Instant.now().minus(Duration.ofMinutes(10));
+
+        tx.begin();
+        try {
+            AlertRuleEntity rule = new AlertRuleEntity();
+            rule.setName("it-firing-rule");
+            rule.setPanelId("streaming-event-count");
+            rule.setOperator(Operator.GREATER_THAN);
+            rule.setThreshold(100.0);
+            rule.setForDuration("PT0S");
+            rule.setReduceFunction(ReduceFunction.LAST);
+            rule.setEvaluationWindow("PT5M");
+            rule.setSeverity(Severity.WARNING);
+            rule.setEnabled(true);
+            em.persist(rule);
+
+            AlertEventEntity event = new AlertEventEntity();
+            event.setRule(rule);
+            event.setRuleName("it-firing-rule");
+            event.setPipelineId("it-firing-pipeline");
+            event.setPipelineName("it-firing-pipeline");
+            event.setValue(150.0);
+            event.setThreshold(100.0);
+            event.setSeverity(Severity.WARNING);
+            event.setMessage("Threshold exceeded");
+            event.setFiredAt(firedAt);
+            em.persist(event);
+
+            AlertStateEntity state = new AlertStateEntity();
+            state.setRule(rule);
+            state.setPipelineId("it-firing-pipeline");
+            state.setState(AlertStateValue.FIRING);
+            state.setValue(150.0);
+            state.setFiredAt(firedAt);
+            state.setActiveEvent(event);
+            em.persist(state);
+
+            em.flush();
+            tx.commit();
+            return event;
+        }
+        catch (Exception e) {
+            tx.rollback();
+            throw e;
+        }
+    }
+
+    private void deleteAlertEvent(Long eventId) throws Exception {
+        tx.begin();
+        try {
+            em.createQuery("DELETE FROM alert_event e WHERE e.id = :id")
+                    .setParameter("id", eventId)
+                    .executeUpdate();
+            tx.commit();
+        }
+        catch (Exception e) {
+            tx.rollback();
+            throw e;
+        }
     }
 }
