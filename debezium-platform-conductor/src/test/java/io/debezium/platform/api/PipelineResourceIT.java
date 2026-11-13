@@ -8,6 +8,7 @@ package io.debezium.platform.api;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 
@@ -28,10 +29,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import io.debezium.connector.SnapshotType;
 import io.debezium.doc.FixFor;
 import io.debezium.operator.api.model.DebeziumServer;
 import io.debezium.platform.MockedTestProfile;
 import io.debezium.platform.data.model.PipelineStatus;
+import io.debezium.platform.data.model.SnapshotState;
+import io.debezium.platform.domain.ActiveSnapshotService;
 import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.RecordingPipelineStatusListener;
 import io.debezium.platform.environment.operator.actions.DebeziumKubernetesAdapter;
@@ -53,6 +57,9 @@ class PipelineResourceIT {
 
     @Inject
     PipelineService pipelineService;
+
+    @Inject
+    ActiveSnapshotService activeSnapshotService;
 
     @Inject
     RecordingPipelineStatusListener statusListener;
@@ -676,4 +683,80 @@ class PipelineResourceIT {
                         }"""));
     }
 
+    @Test
+    @DisplayName("When an active snapshot is running/paused then activeSnapshotType and activeSnapshotStatus must be exposed")
+    void getPipelinesShouldExposeActiveSnapshotDetails() {
+        String createBody = """
+                {
+                  "name": "snapshot-pipeline-%s",
+                  "description": "test",
+                  "source": {
+                    "id": %d
+                  },
+                  "destination": {
+                    "id": %d
+                  },
+                  "transforms": [],
+                  "logLevel": "INFO",
+                  "logLevels": {}
+                }""".formatted(resourceSuffix, sourceId, destinationId);
+
+        Number pipelineId = given()
+                .header("Content-Type", "application/json")
+                .body(createBody).when().post("api/pipelines")
+                .then()
+                .statusCode(201)
+                .extract()
+                .path("id");
+
+        // Initially no active snapshot -> activeSnapshotType & activeSnapshotStatus are null
+        given()
+                .when().get("api/pipelines/" + pipelineId)
+                .then()
+                .statusCode(200)
+                .body("activeSnapshotType", nullValue())
+                .body("activeSnapshotStatus", nullValue());
+
+        // Create active initial snapshot
+        activeSnapshotService.create(pipelineId.longValue(), SnapshotType.INITIAL, "corr-init", java.util.List.of("test_table"), java.time.Instant.now());
+
+        given()
+                .when().get("api/pipelines/" + pipelineId)
+                .then()
+                .statusCode(200)
+                .body("activeSnapshotType", is(SnapshotType.INITIAL.name()))
+                .body("activeSnapshotStatus", is(SnapshotState.RUNNING.name()));
+
+        // Also check list endpoint
+        given()
+                .when().get("api/pipelines")
+                .then()
+                .statusCode(200)
+                .body("find { it.id == " + pipelineId + " }.activeSnapshotType", is(SnapshotType.INITIAL.name()))
+                .body("find { it.id == " + pipelineId + " }.activeSnapshotStatus", is(SnapshotState.RUNNING.name()));
+
+        // Remove initial snapshot
+        var initialActive = activeSnapshotService.findEntity(pipelineId.longValue());
+        activeSnapshotService.remove(initialActive);
+
+        // Create active incremental snapshot
+        activeSnapshotService.create(pipelineId.longValue(), SnapshotType.INCREMENTAL, "corr-inc", java.util.List.of("test_table"), java.time.Instant.now());
+
+        given()
+                .when().get("api/pipelines/" + pipelineId)
+                .then()
+                .statusCode(200)
+                .body("activeSnapshotType", is(SnapshotType.INCREMENTAL.name()))
+                .body("activeSnapshotStatus", is(SnapshotState.RUNNING.name()));
+
+        // Update status to PAUSED
+        activeSnapshotService.updateStatus(pipelineId.longValue(), SnapshotState.PAUSED, java.time.Instant.now());
+
+        given()
+                .when().get("api/pipelines/" + pipelineId)
+                .then()
+                .statusCode(200)
+                .body("activeSnapshotType", is(SnapshotType.INCREMENTAL.name()))
+                .body("activeSnapshotStatus", is(SnapshotState.PAUSED.name()));
+    }
 }
