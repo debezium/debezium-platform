@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
@@ -17,6 +18,7 @@ import com.blazebit.persistence.CriteriaBuilderFactory;
 import com.blazebit.persistence.view.EntityViewManager;
 
 import io.debezium.platform.data.model.AlertRuleEntity;
+import io.debezium.platform.domain.alert.AlertRuleDeleted;
 import io.debezium.platform.domain.views.AlertRule;
 import io.debezium.platform.domain.views.refs.AlertRuleReference;
 import io.debezium.platform.error.NotFoundException;
@@ -25,11 +27,13 @@ import io.debezium.platform.error.NotFoundException;
 public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule, AlertRuleReference> {
 
     private final PanelConfigLoader panelConfigLoader;
+    private final Event<AlertRuleDeleted> ruleDeletedEvent;
 
     public AlertRuleService(EntityManager em, CriteriaBuilderFactory cbf, EntityViewManager evm,
-                            PanelConfigLoader panelConfigLoader) {
+                            PanelConfigLoader panelConfigLoader, Event<AlertRuleDeleted> ruleDeletedEvent) {
         super(AlertRuleEntity.class, AlertRule.class, AlertRuleReference.class, em, cbf, evm);
         this.panelConfigLoader = panelConfigLoader;
+        this.ruleDeletedEvent = ruleDeletedEvent;
     }
 
     @Override
@@ -46,6 +50,24 @@ public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule
         validateForDuration(view.getForDuration());
         validateEvaluationWindow(view.getEvaluationWindow());
         return super.update(view);
+    }
+
+    /**
+     * Fires {@link AlertRuleDeleted} before deleting the rule, so that its active alerts get resolved
+     * while the rule still exists. The rule's states are removed with it, but its events only lose their
+     * rule reference, so an event that is firing at that moment would stay firing forever: nothing
+     * evaluates it again and the history cleanup only removes resolved events.
+     */
+    @Override
+    public void delete(long id) {
+        AlertRuleEntity rule = em.find(AlertRuleEntity.class, id);
+        if (rule != null) {
+            ruleDeletedEvent.fire(new AlertRuleDeleted(rule));
+            // write what the observers changed before the rule row goes away, otherwise the delete below
+            // runs first and an event update then fails its foreign key to the rule
+            em.flush();
+        }
+        super.delete(id);
     }
 
     public AlertRule enable(Long id) {

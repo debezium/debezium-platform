@@ -16,6 +16,7 @@ import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
@@ -32,6 +33,7 @@ import io.debezium.platform.data.model.AlertStateEntity;
 import io.debezium.platform.data.model.AlertStateValue;
 import io.debezium.platform.data.model.Severity;
 import io.debezium.platform.domain.alert.AlertNotificationReady;
+import io.debezium.platform.domain.alert.AlertRuleDeleted;
 import io.debezium.platform.domain.alert.AlertTransitionEvaluator;
 import io.debezium.platform.domain.alert.StateTransition;
 import io.debezium.platform.domain.views.AlertState;
@@ -60,6 +62,20 @@ public class AlertStateService extends AbstractService<AlertStateEntity, AlertSt
         return em.createNamedQuery(AlertStateEntity.FIND_BY_RULE_ID, AlertStateEntity.class)
                 .setParameter("ruleId", ruleId)
                 .getResultList();
+    }
+
+    /**
+     * Resolves the active alerts of a rule that is about to be deleted. Its states go away with the
+     * rule, so nothing would resolve their firing events afterwards.
+     */
+    void onAlertRuleDeleted(@Observes AlertRuleDeleted event) {
+        AlertRuleEntity rule = event.rule();
+        Instant now = Instant.now();
+        for (AlertStateEntity state : findByRuleId(rule.getId())) {
+            if (state.getState() != AlertStateValue.OK) {
+                resolve(rule, state, now);
+            }
+        }
     }
 
     public List<AlertStateEntity> findActive() {

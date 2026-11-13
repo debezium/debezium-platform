@@ -12,6 +12,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +26,13 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import io.debezium.platform.data.model.AlertEventEntity;
+import io.debezium.platform.data.model.AlertRuleEntity;
+import io.debezium.platform.data.model.AlertStateEntity;
+import io.debezium.platform.data.model.AlertStateValue;
+import io.debezium.platform.data.model.Operator;
+import io.debezium.platform.data.model.ReduceFunction;
+import io.debezium.platform.data.model.Severity;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 
@@ -33,6 +42,7 @@ class AlertRuleResourceIT {
 
     private static final String RULES_PATH = "api/alerts/rules";
     private static final String CHANNELS_PATH = "api/alerts/channels";
+    private static final String EVENTS_PATH = "api/alerts/events";
 
     static Long ruleId;
     static Long ruleWithChannelsId;
@@ -50,16 +60,16 @@ class AlertRuleResourceIT {
         tx.begin();
         try {
             em.createQuery("DELETE FROM alert_state s WHERE s.rule.name IN (:names)")
-                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels"))
+                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule"))
                     .executeUpdate();
             em.createQuery("DELETE FROM alert_event e WHERE e.ruleName IN (:names)")
-                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels"))
+                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule"))
                     .executeUpdate();
             em.createNativeQuery("DELETE FROM alert_rule_channel WHERE rule_id IN (SELECT id FROM alert_rule WHERE name IN (:names))")
-                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels"))
+                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule"))
                     .executeUpdate();
             em.createQuery("DELETE FROM alert_rule r WHERE r.name IN (:names)")
-                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels"))
+                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule"))
                     .executeUpdate();
             em.createQuery("DELETE FROM notification_channel c WHERE c.name = :name")
                     .setParameter("name", "rule-test-webhook")
@@ -308,6 +318,31 @@ class AlertRuleResourceIT {
     }
 
     @Test
+    @Order(14)
+    void deleteRuleResolvesItsFiringAlert() throws Exception {
+        AlertEventEntity firingEvent = persistFiringRuleWithActiveEvent();
+        Long firingRuleId = firingEvent.getRule().getId();
+        Long firingEventId = firingEvent.getId();
+
+        try {
+            given()
+                    .when().delete(RULES_PATH + "/" + firingRuleId)
+                    .then()
+                    .statusCode(204);
+
+            given()
+                    .when().get(EVENTS_PATH + "/" + firingEventId)
+                    .then()
+                    .statusCode(200)
+                    .body("status", is("resolved"))
+                    .body("resolvedAt", notNullValue());
+        }
+        finally {
+            deleteAlertEvent(firingEventId);
+        }
+    }
+
+    @Test
     @Order(96)
     void deleteRuleWithChannels() {
         given()
@@ -342,5 +377,71 @@ class AlertRuleResourceIT {
                 .when().delete(CHANNELS_PATH + "/" + channelId)
                 .then()
                 .statusCode(204);
+    }
+
+    /**
+     * Persists an enabled rule named {@code it-firing-rule} whose alert is firing: a firing event and the
+     * alert state that points to it.
+     */
+    private AlertEventEntity persistFiringRuleWithActiveEvent() throws Exception {
+        Instant firedAt = Instant.now().minus(Duration.ofMinutes(10));
+
+        tx.begin();
+        try {
+            AlertRuleEntity rule = new AlertRuleEntity();
+            rule.setName("it-firing-rule");
+            rule.setPanelId("streaming-event-count");
+            rule.setOperator(Operator.GREATER_THAN);
+            rule.setThreshold(100.0);
+            rule.setForDuration("PT0S");
+            rule.setReduceFunction(ReduceFunction.LAST);
+            rule.setEvaluationWindow("PT5M");
+            rule.setSeverity(Severity.WARNING);
+            rule.setEnabled(true);
+            em.persist(rule);
+
+            AlertEventEntity event = new AlertEventEntity();
+            event.setRule(rule);
+            event.setRuleName("it-firing-rule");
+            event.setPipelineId("it-firing-pipeline");
+            event.setPipelineName("it-firing-pipeline");
+            event.setValue(150.0);
+            event.setThreshold(100.0);
+            event.setSeverity(Severity.WARNING);
+            event.setMessage("Threshold exceeded");
+            event.setFiredAt(firedAt);
+            em.persist(event);
+
+            AlertStateEntity state = new AlertStateEntity();
+            state.setRule(rule);
+            state.setPipelineId("it-firing-pipeline");
+            state.setState(AlertStateValue.FIRING);
+            state.setValue(150.0);
+            state.setFiredAt(firedAt);
+            state.setActiveEvent(event);
+            em.persist(state);
+
+            em.flush();
+            tx.commit();
+            return event;
+        }
+        catch (Exception e) {
+            tx.rollback();
+            throw e;
+        }
+    }
+
+    private void deleteAlertEvent(Long eventId) throws Exception {
+        tx.begin();
+        try {
+            em.createQuery("DELETE FROM alert_event e WHERE e.id = :id")
+                    .setParameter("id", eventId)
+                    .executeUpdate();
+            tx.commit();
+        }
+        catch (Exception e) {
+            tx.rollback();
+            throw e;
+        }
     }
 }
