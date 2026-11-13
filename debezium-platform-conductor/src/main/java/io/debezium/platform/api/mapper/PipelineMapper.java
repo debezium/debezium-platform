@@ -23,6 +23,8 @@ import io.debezium.platform.domain.views.refs.TransformReference;
 @Mapper(componentModel = "cdi")
 public abstract class PipelineMapper extends BaseMapper {
 
+    @Mapping(target = "activeSnapshotType", ignore = true)
+    @Mapping(target = "activeSnapshotStatus", ignore = true)
     public abstract PipelineResponse toResponse(Pipeline view);
 
     public abstract List<PipelineResponse> toResponseList(List<Pipeline> views);

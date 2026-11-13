@@ -711,6 +711,14 @@
           },
           "errorMessage" : {
             "type" : "string"
+          },
+          "activeSnapshotType" : {
+            "$ref" : "#/components/schemas/SnapshotType",
+            "nullable" : true
+          },
+          "activeSnapshotStatus" : {
+            "$ref" : "#/components/schemas/SnapshotState",
+            "nullable" : true
           }
         }
       },

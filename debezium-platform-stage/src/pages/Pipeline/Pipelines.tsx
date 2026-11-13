@@ -37,7 +37,13 @@ import {
   ToolbarItem,
   Tooltip,
 } from "@patternfly/react-core";
-import { FilterIcon, RhUiAddCircleIcon, SearchIcon } from "@patternfly/react-icons";
+import {
+  FilterIcon,
+  RhUiAddCircleIcon,
+  RhUiPauseCircleIcon,
+  RhUiRunningIcon,
+  SearchIcon,
+} from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
 import { fetchData, fetchFile } from "../../apis/apis";
 import { requestErrorMessage } from "../../apis/client";
@@ -46,6 +52,8 @@ import {
   Destination,
   Pipeline,
   PipelineStatus,
+  SnapshotState,
+  SnapshotType,
   Source,
   TransformData,
 } from "../../apis/types";
@@ -123,21 +131,85 @@ const PipelineStatusLabel: React.FC<PipelineStatusLabelProps> = ({ status, onLab
   const { t } = useTranslation();
   const { color, labelKey, tooltipKey } = STATUS_CONFIG[status];
   return (
-    <Flex alignItems={{ default: "alignItemsCenter" }}>
-      <FlexItem>
-        <Tooltip
-          aria="none"
-          aria-live="polite"
-          exitDelay={100}
-          flipBehavior="flip"
-          content={t(tooltipKey)}
-        >
-          <Label color={color} onClick={status === "FAILED" ? onLabelClick : undefined}>
-            {t(labelKey)}
-          </Label>
-        </Tooltip>
-      </FlexItem>
-    </Flex>
+    <Tooltip
+      aria="none"
+      aria-live="polite"
+      exitDelay={100}
+      flipBehavior="flip"
+      content={t(tooltipKey)}
+    >
+      <Label color={color} onClick={status === "FAILED" ? onLabelClick : undefined}>
+        {t(labelKey)}
+      </Label>
+    </Tooltip>
+  );
+};
+
+const isSnapshotActive = (
+  type?: SnapshotType | null,
+  status?: SnapshotState | null
+): boolean => {
+  if (!type || !status) {
+    return false;
+  }
+  if (type === "INITIAL") {
+    return status === "RUNNING";
+  }
+  if (type === "INCREMENTAL") {
+    return status === "RUNNING" || status === "PAUSED";
+  }
+  return false;
+};
+
+type SnapshotStatusLabelProps = {
+  type: SnapshotType;
+  status: SnapshotState;
+  onLabelClick: () => void;
+};
+
+const SnapshotStatusLabel: React.FC<SnapshotStatusLabelProps> = ({
+  type,
+  status,
+  onLabelClick,
+}) => {
+  const { t } = useTranslation();
+  const isRunning = status === "RUNNING";
+  const typeLabel =
+    type === "INITIAL"
+      ? t("pipeline:snapshots.typeInitialShort")
+      : t("pipeline:snapshots.typeIncrementalShort");
+  const statusLabel = isRunning
+    ? t("pipeline:snapshots.running")
+    : t("pipeline:snapshots.paused");
+  const labelText = `${typeLabel} ${statusLabel}`;
+  return (
+    <Tooltip
+      aria="none"
+      aria-live="polite"
+      exitDelay={100}
+      flipBehavior="flip"
+      content={labelText}
+    >
+      <Label
+        className="snapshot-status-badge"
+        color={isRunning ? LabelColor.blue : LabelColor.orange}
+        icon={isRunning ? <RhUiRunningIcon /> : <RhUiPauseCircleIcon />}
+        isCompact
+        isClickable
+        render={({ className, content, componentRef }) => (
+          <button
+            type="button"
+            className={className}
+            ref={componentRef}
+            onClick={onLabelClick}
+            aria-label={labelText}
+            style={{ borderRadius: "50%" }}
+          >
+            {content}
+          </button>
+        )}
+      />
+    </Tooltip>
   );
 };
 
@@ -611,19 +683,37 @@ const Pipelines: React.FunctionComponent = () => {
                             searchResult.map((instance: Pipeline) => (
                               <Tr key={instance.id}>
                                 <Td dataLabel={t("name")} style={{ lineHeight: "35px" }}>
-                                  <Tooltip content={
-                                    <div>
-                                      View pipeline details for <b>{instance.name}</b><br />
-                                    </div>
-                                  }>
-                                    <Button
-                                      variant="link"
-                                      isInline
-                                      onClick={onPipelineClick(instance.id)}
-                                    >
-                                      {instance.name}
-                                    </Button>
-                                  </Tooltip>
+                                  <Flex alignItems={{ default: "alignItemsCenter" }} spaceItems={{ default: "spaceItemsSm" }} flexWrap={{ default: "nowrap" }}>
+                                    <FlexItem>
+                                      <Tooltip content={
+                                        <div>
+                                          View pipeline details for <b>{instance.name}</b><br />
+                                        </div>
+                                      }>
+                                        <Button
+                                          variant="link"
+                                          isInline
+                                          onClick={onPipelineClick(instance.id)}
+                                        >
+                                          {instance.name}
+                                        </Button>
+                                      </Tooltip>
+                                    </FlexItem>
+                                    {isSnapshotActive(
+                                      instance.activeSnapshotType,
+                                      instance.activeSnapshotStatus
+                                    ) && (
+                                      <FlexItem>
+                                        <SnapshotStatusLabel
+                                          type={instance.activeSnapshotType!}
+                                          status={instance.activeSnapshotStatus!}
+                                          onLabelClick={() =>
+                                            navigateTo(`/pipeline/${instance.id}/snapshots`)
+                                          }
+                                        />
+                                      </FlexItem>
+                                    )}
+                                  </Flex>
                                 </Td>
                                 <SourceField pipelineSource={instance.source} />
                                 <DestinationField
