@@ -5,6 +5,8 @@
  */
 package io.debezium.platform.environment.connection.destination;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -45,6 +47,9 @@ public class MilvusConnectionValidator implements ConnectionValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(MilvusConnectionValidator.class);
 
     private final int defaultConnectionTimeout;
+
+    private static final int MIN_PORT = 1;
+    private static final int MAX_PORT = 65535;
 
     private static final String URI_KEY = "uri";
     private static final String DATABASE_KEY = "database";
@@ -99,6 +104,21 @@ public class MilvusConnectionValidator implements ConnectionValidator {
         String uri = milvusConfig.get(URI_KEY).toString().trim();
         if (!uri.startsWith("http://") && !uri.startsWith("https://") && !uri.startsWith("grpc://")) {
             return ConnectionValidationResult.failed("URI must start with http://, https://, or grpc://");
+        }
+
+        // Validate the port before handing the URI to the Milvus SDK. The SDK resolves the host on
+        // a gRPC executor thread, which throws an IllegalArgumentException for an out-of-range port
+        // that cannot be caught here: it surfaces as an uncaught exception on a library thread and
+        // the caller only fails ~10 seconds later with DEADLINE_EXCEEDED.
+        try {
+            int port = URI.create(uri).parseServerAuthority().getPort();
+            if (port != -1 && (port < MIN_PORT || port > MAX_PORT)) {
+                return ConnectionValidationResult.failed(
+                        String.format("Port must be between %d and %d", MIN_PORT, MAX_PORT));
+            }
+        }
+        catch (URISyntaxException | IllegalArgumentException e) {
+            return ConnectionValidationResult.failed("URI is not a valid URL: " + uri);
         }
 
         return ConnectionValidationResult.successful();

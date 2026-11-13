@@ -19,7 +19,9 @@ inputs:
   maven-command:
     description: 'Maven command to run tests'
     required: false
-    default: './mvnw clean verify'
+    # failFlakyTests=false turns failures of @Flaky-annotated tests into aborted (skipped)
+    # tests, matching how the main Debezium repository treats them on CI.
+    default: './mvnw clean verify -DfailFlakyTests=false'
 
 runs:
   using: "composite"
