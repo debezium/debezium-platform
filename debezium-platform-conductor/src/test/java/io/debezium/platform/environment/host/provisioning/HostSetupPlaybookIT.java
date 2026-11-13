@@ -23,6 +23,8 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
+import io.debezium.junit.Flaky;
+
 /**
  * Integration test that executes the real {@code host-setup.yml} Ansible
  * playbook against {@code localhost} using the {@code local} connection
@@ -117,6 +119,7 @@ class HostSetupPlaybookIT {
      */
     @Test
     @Order(2)
+    @Flaky("provisions the CI runner itself and depends on external apt mirrors")
     void hostSetupPlaybookRunsSuccessfully() throws Exception {
         assumeTrue(Files.exists(PLAYBOOK_PATH),
                 "Playbook not found at " + PLAYBOOK_PATH);
@@ -140,6 +143,7 @@ class HostSetupPlaybookIT {
      */
     @Test
     @Order(3)
+    @Flaky("provisions the CI runner itself and depends on external apt mirrors")
     void hostSetupPlaybookIsIdempotent() throws Exception {
         assumeTrue(Files.exists(PLAYBOOK_PATH),
                 "Playbook not found at " + PLAYBOOK_PATH);
