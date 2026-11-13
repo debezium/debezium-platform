@@ -528,6 +528,12 @@ components:
           $ref: "#/components/schemas/PipelineStatus"
         errorMessage:
           type: string
+        activeSnapshotType:
+          $ref: "#/components/schemas/SnapshotType"
+          nullable: true
+        activeSnapshotStatus:
+          $ref: "#/components/schemas/SnapshotState"
+          nullable: true
     PipelineStatus:
       type: string
       enum:
