@@ -8,15 +8,12 @@ package io.debezium.platform.environment.host.provisioning;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
@@ -64,6 +61,12 @@ class HostSetupPlaybookIT {
 
     /** Path to the smoke-test playbook under src/test/resources/ansible/. */
     private static final Path SMOKE_TEST_PATH = Paths.get("src/test/resources/ansible/smoke-test.yml");
+
+    /**
+     * Hard upper bound for a single playbook run. A green run takes well under two minutes; this
+     * only bounds the damage when the environment (for example the apt mirrors) hangs.
+     */
+    private static final int PLAYBOOK_TIMEOUT_MINUTES = 10;
 
     @BeforeAll
     static void checkAnsibleAvailable() {
@@ -167,28 +170,41 @@ class HostSetupPlaybookIT {
 
     /**
      * Runs a command using ProcessBuilder and returns stdout+stderr as a string.
-     * Fails the test if the process does not exit with code 0.
+     * Fails the test if the process does not exit with code 0 within
+     * {@link #PLAYBOOK_TIMEOUT_MINUTES}.
+     *
+     * <p>The output is redirected to a temporary file instead of being read from a pipe: draining
+     * the pipe before waiting for the process would block until the child closes its output, so a
+     * hung playbook would make both the timeout and the exit-code assertion unreachable.
      */
     private String runCommand(List<String> command) throws Exception {
-        Process process = new ProcessBuilder(command)
-                .redirectErrorStream(true)
-                .start();
+        Path outputFile = Files.createTempFile("host-setup-playbook-", ".log");
+        try {
+            Process process = new ProcessBuilder(command)
+                    .redirectErrorStream(true)
+                    .redirectOutput(outputFile.toFile())
+                    .start();
 
-        String output;
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-            output = reader.lines().collect(Collectors.joining("\n"));
+            boolean finished = process.waitFor(PLAYBOOK_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+            if (!finished) {
+                process.destroyForcibly();
+                process.waitFor(30, TimeUnit.SECONDS);
+            }
+
+            String output = Files.readString(outputFile, StandardCharsets.UTF_8);
+
+            assertThat(finished)
+                    .as("Process should complete within %d minutes. Output so far:\n%s",
+                            PLAYBOOK_TIMEOUT_MINUTES, output)
+                    .isTrue();
+            assertThat(process.exitValue())
+                    .as("Process should exit with code 0. Output:\n%s", output)
+                    .isZero();
+
+            return output;
         }
-
-        boolean finished = process.waitFor(10, TimeUnit.MINUTES);
-
-        assertThat(finished)
-                .as("Process should complete within 10 minutes")
-                .isTrue();
-        assertThat(process.exitValue())
-                .as("Process should exit with code 0. Output:\n%s", output)
-                .isZero();
-
-        return output;
+        finally {
+            Files.deleteIfExists(outputFile);
+        }
     }
 }

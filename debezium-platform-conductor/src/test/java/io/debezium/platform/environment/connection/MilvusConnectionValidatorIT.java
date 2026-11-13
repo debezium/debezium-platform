@@ -131,21 +131,16 @@ class MilvusConnectionValidatorIT {
     @Test
     @DisplayName("Should fail with invalid port")
     void shouldFailWithInvalidPort() {
-        GenericContainer<?> container = MilvusTestResource.getContainer();
-
-        awaitPortOpen(container, 19530);
-
-        String uri = String.format("grpc://%s:%d",
-                container.getHost(),
-                99999); // Invalid port
-
+        // The port is rejected before the Milvus client is created: handing it to the SDK makes
+        // gRPC's DNS resolver throw on its own executor thread, which leaks an uncaught exception
+        // and only fails 10 seconds later with DEADLINE_EXCEEDED.
         Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS, Map.of(
-                "uri", uri));
+                "uri", "grpc://localhost:99999")); // Invalid port
 
         ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
 
         assertFalse(result.valid(), "Connection validation should fail");
-        assertThat(result.message()).containsAnyOf("connect", "refused", "UNAVAILABLE");
+        assertThat(result.message()).isEqualTo("Port must be between 1 and 65535");
     }
 
     @Test

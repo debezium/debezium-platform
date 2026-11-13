@@ -103,6 +103,30 @@ class MilvusConnectionValidatorTest {
     }
 
     @Test
+    @DisplayName("Should fail validation when URI port is out of range")
+    void shouldFailWhenPortIsOutOfRange() {
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS,
+                Map.of("uri", "grpc://localhost:99999"));
+
+        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
+
+        assertFalse(result.valid(), "Validation should fail for an out-of-range port");
+        Assertions.assertThat(result.message()).isEqualTo("Port must be between 1 and 65535");
+    }
+
+    @Test
+    @DisplayName("Should fail validation when URI is malformed")
+    void shouldFailWhenUriIsMalformed() {
+        Connection connectionConfig = new TestConnectionView(ConnectionEntity.Type.MILVUS,
+                Map.of("uri", "grpc://invalid host:19530"));
+
+        ConnectionValidationResult result = connectionValidator.validate(connectionConfig);
+
+        assertFalse(result.valid(), "Validation should fail for a malformed URI");
+        Assertions.assertThat(result.message()).contains("URI is not a valid URL");
+    }
+
+    @Test
     @DisplayName("Should accept valid HTTP URI")
     void shouldAcceptValidHttpUri() {
         Map<String, Object> config = new HashMap<>();

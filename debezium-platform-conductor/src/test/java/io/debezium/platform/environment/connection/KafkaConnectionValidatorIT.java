@@ -9,12 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
 import jakarta.inject.Inject;
 
 import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -40,6 +43,29 @@ class KafkaConnectionValidatorIT {
 
     @Inject
     KafkaConnectionValidator validator;
+
+    /**
+     * Waits until the Kafka broker can answer metadata requests.
+     *
+     * <p>The test container reports that it has started as soon as the broker process is up, but a
+     * freshly started KRaft broker can take longer than the validation timeout configured for tests
+     * ({@code destinations.kafka.connection.timeout} in the {@code %test} profile, currently 2
+     * seconds) before it serves the first {@code listNodes} call. Without this gate whichever
+     * network test happens to run first can fail with
+     * {@code Timed out waiting for a node assignment}.
+     */
+    @BeforeEach
+    void awaitBrokerReady() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("bootstrap.servers", companion.getBootstrapServers());
+
+        Awaitility.await()
+                .alias("Kafka broker to accept metadata requests")
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofSeconds(1))
+                .ignoreExceptions()
+                .until(() -> validator.validate(new TestConnectionView(ConnectionEntity.Type.KAFKA, config)).valid());
+    }
 
     @Test
     @DisplayName("Should successfully validate connection with valid Kafka configuration")
