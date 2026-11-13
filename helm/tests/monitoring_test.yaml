@@ -3,6 +3,7 @@ templates:
   - otel-collector.yaml
   - servicemonitor.yaml
   - conductor-deployment.yaml
+  - conductor-prometheus-cluster-role-binding.yaml
 values:
   - ../../examples/example.yaml
 tests:
@@ -303,3 +304,307 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "monitoring.prometheus.url is required when monitoring.otel.enabled is true"
+
+  # Prometheus client authentication and TLS
+  - it: should not set any Prometheus credential or TLS env var by default
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_BEARER_TOKEN_FILE
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_BEARER_TOKEN
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_BASIC_AUTH_USERNAME
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_AUTH_ALLOW_INSECURE_TRANSPORT
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_TLS_PROMETHEUS_TRUST_STORE_PEM_CERTS
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_TLS_PROMETHEUS_TRUST_ALL
+          any: true
+      - notExists:
+          path: spec.template.spec.volumes
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts
+
+  - it: should point the conductor at its service account token when auth.bearerToken.serviceAccount is true
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "https://thanos-querier.openshift-monitoring.svc:9091"
+      monitoring.prometheus.auth.bearerToken.serviceAccount: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_BEARER_TOKEN_FILE
+            value: /var/run/secrets/kubernetes.io/serviceaccount/token
+
+  - it: should read a static bearer token from a Secret
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "https://prometheus.example.com"
+      monitoring.prometheus.auth.bearerToken.existingSecret: prometheus-token
+      monitoring.prometheus.auth.bearerToken.secretKey: api-token
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_BEARER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: prometheus-token
+                key: api-token
+
+  - it: should read basic auth credentials from a Secret
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "https://prometheus.example.com"
+      monitoring.prometheus.auth.basic.existingSecret: prometheus-basic
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_BASIC_AUTH_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: prometheus-basic
+                key: username
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_BASIC_AUTH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: prometheus-basic
+                key: password
+
+  - it: should fail when more than one Prometheus authentication method is set
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "https://prometheus.example.com"
+      monitoring.prometheus.auth.bearerToken.serviceAccount: true
+      monitoring.prometheus.auth.basic.existingSecret: prometheus-basic
+    asserts:
+      - failedTemplate:
+          errorMessage: "only one of monitoring.prometheus.auth.bearerToken.serviceAccount, auth.bearerToken.existingSecret and auth.basic.existingSecret can be set"
+
+  - it: should fail when Prometheus credentials are set for an http URL
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "HTTP://prometheus:9090"
+      monitoring.prometheus.auth.bearerToken.serviceAccount: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "monitoring.prometheus.auth is set but monitoring.prometheus.url is not an https URL, the credentials would be sent in clear text: use an https URL or set monitoring.prometheus.auth.allowInsecureTransport to true"
+
+  - it: should send Prometheus credentials to an http URL when auth.allowInsecureTransport is true
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://prometheus:9090"
+      monitoring.prometheus.auth.basic.existingSecret: prometheus-basic
+      monitoring.prometheus.auth.allowInsecureTransport: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_AUTH_ALLOW_INSECURE_TRANSPORT
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_BASIC_AUTH_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: prometheus-basic
+                key: username
+
+  - it: should trust a CA file already present in the container
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "https://thanos-querier.openshift-monitoring.svc:9091"
+      monitoring.prometheus.tls.caFile: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_TLS_PROMETHEUS_TRUST_STORE_PEM_CERTS
+            value: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+      - notExists:
+          path: spec.template.spec.volumes
+
+  - it: should mount the CA from a ConfigMap
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "https://thanos-querier.openshift-monitoring.svc:9091"
+      monitoring.prometheus.tls.caConfigMap: openshift-service-ca.crt
+      monitoring.prometheus.tls.caKey: service-ca.crt
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_TLS_PROMETHEUS_TRUST_STORE_PEM_CERTS
+            value: /etc/debezium/prometheus-ca/ca.crt
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: prometheus-ca
+            configMap:
+              name: openshift-service-ca.crt
+              items:
+                - key: service-ca.crt
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: prometheus-ca
+            mountPath: /etc/debezium/prometheus-ca
+            readOnly: true
+
+  - it: should mount the CA from a Secret alongside extra volumes
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "https://prometheus.example.com"
+      monitoring.prometheus.tls.caSecret: prometheus-ca
+      conductor.extraVolumes:
+        - name: truststore
+          configMap:
+            name: conductor-truststore
+      conductor.extraVolumeMounts:
+        - name: truststore
+          mountPath: /etc/truststore
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: prometheus-ca
+            secret:
+              secretName: prometheus-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: truststore
+            configMap:
+              name: conductor-truststore
+      - lengthEqual:
+          path: spec.template.spec.containers[0].volumeMounts
+          count: 2
+
+  - it: should fail when more than one Prometheus CA source is set
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "https://prometheus.example.com"
+      monitoring.prometheus.tls.caFile: /etc/ssl/ca.crt
+      monitoring.prometheus.tls.caSecret: prometheus-ca
+    asserts:
+      - failedTemplate:
+          errorMessage: "only one of monitoring.prometheus.tls.caFile, caConfigMap and caSecret can be set"
+
+  - it: should disable certificate verification when tls.insecureSkipVerify is true
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "https://prometheus.example.com"
+      monitoring.prometheus.tls.insecureSkipVerify: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_TLS_PROMETHEUS_TRUST_ALL
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_TLS_PROMETHEUS_HOSTNAME_VERIFICATION_ALGORITHM
+            value: "NONE"
+
+  - it: should not mount the Prometheus CA when monitoring.otel.enabled is false
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: false
+      monitoring.prometheus.auth.bearerToken.serviceAccount: true
+      monitoring.prometheus.tls.caConfigMap: openshift-service-ca.crt
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONITORING_PROMETHEUS_BEARER_TOKEN_FILE
+          any: true
+      - notExists:
+          path: spec.template.spec.volumes
+
+  - it: should bind the conductor service account to the configured ClusterRole
+    template: conductor-prometheus-cluster-role-binding.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "https://thanos-querier.openshift-monitoring.svc:9091"
+      monitoring.prometheus.rbac.clusterRole: cluster-monitoring-view
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+      - equal:
+          path: metadata.name
+          value: conductor-prometheus-NAMESPACE
+      - equal:
+          path: roleRef
+          value:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: cluster-monitoring-view
+      - equal:
+          path: subjects
+          value:
+            - kind: ServiceAccount
+              name: conductor-service-account
+              namespace: NAMESPACE
+
+  - it: should not create a ClusterRoleBinding by default
+    template: conductor-prometheus-cluster-role-binding.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "https://thanos-querier.openshift-monitoring.svc:9091"
+      monitoring.prometheus.auth.bearerToken.serviceAccount: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not create a ClusterRoleBinding when monitoring.otel.enabled is false
+    template: conductor-prometheus-cluster-role-binding.yaml
+    set:
+      monitoring.otel.enabled: false
+      monitoring.prometheus.rbac.clusterRole: cluster-monitoring-view
+    asserts:
+      - hasDocuments:
+          count: 0

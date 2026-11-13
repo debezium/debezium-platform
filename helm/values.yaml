@@ -141,6 +141,39 @@ monitoring:
     refreshInterval: 30s
   prometheus:
     url: ""
+    # Credentials the conductor sends with its Prometheus queries. Configure at most one method.
+    auth:
+      bearerToken:
+        # Send the conductor's own service account token, re-read on every request so that
+        # rotation is transparent. The service account must be allowed to query Prometheus:
+        # see `rbac.clusterRole` below.
+        serviceAccount: false
+        # Name of a Secret holding a static bearer token under `secretKey`.
+        existingSecret: ""
+        secretKey: token
+      basic:
+        # Name of a Secret with keys `username` and `password`.
+        existingSecret: ""
+      # Allow the credentials to be sent to an http:// `url`. By default the chart refuses to
+      # render and the conductor refuses to start, as they would travel in clear text. Set it
+      # only when the connection is encrypted by other means, e.g. a service mesh.
+      allowInsecureTransport: false
+    # TLS trust for an https `url`. Configure at most one CA source; with none, the JVM
+    # default trust store applies.
+    tls:
+      # Path of a PEM CA bundle already present in the conductor container, e.g.
+      # /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt on OpenShift.
+      caFile: ""
+      # Name of a ConfigMap, or of a Secret, holding the PEM CA bundle under `caKey`.
+      caConfigMap: ""
+      caSecret: ""
+      caKey: ca.crt
+      # Disable certificate and host name verification. For testing only.
+      insecureSkipVerify: false
+    rbac:
+      # Name of an existing ClusterRole to bind to the conductor service account, granting it
+      # access to the Prometheus API (`cluster-monitoring-view` on OpenShift). Empty: no binding.
+      clusterRole: ""
     serviceMonitor:
       enabled: true
       scrapeInterval: 15s

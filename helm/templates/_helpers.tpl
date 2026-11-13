@@ -127,6 +127,92 @@ Get the Prometheus URL. Required when monitoring.otel.enabled is true.
 {{- end -}}
 
 {{/*
+Directory the Prometheus CA ConfigMap or Secret is mounted at in the conductor container.
+*/}}
+{{- define "debezium-platform.prometheusCaMountPath" -}}
+/etc/debezium/prometheus-ca
+{{- end -}}
+
+{{/*
+Whether the chart mounts a Prometheus CA into the conductor: "true" when monitoring is enabled
+and a CA ConfigMap or Secret is set, empty otherwise.
+*/}}
+{{- define "debezium-platform.prometheusCaMounted" -}}
+{{- $tls := .Values.monitoring.prometheus.tls -}}
+{{- if and .Values.monitoring.otel.enabled (or $tls.caConfigMap $tls.caSecret) -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Path of the PEM CA bundle the conductor trusts for Prometheus, empty when none is configured.
+Fails when more than one CA source is set.
+*/}}
+{{- define "debezium-platform.prometheusCaFile" -}}
+{{- $tls := .Values.monitoring.prometheus.tls -}}
+{{- if gt (len (compact (list $tls.caFile $tls.caConfigMap $tls.caSecret))) 1 -}}
+{{- fail "only one of monitoring.prometheus.tls.caFile, caConfigMap and caSecret can be set" -}}
+{{- end -}}
+{{- if $tls.caFile -}}
+{{- $tls.caFile -}}
+{{- else if or $tls.caConfigMap $tls.caSecret -}}
+{{- printf "%s/ca.crt" (include "debezium-platform.prometheusCaMountPath" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Environment variables carrying the Prometheus credentials and TLS trust to the conductor.
+Fails when more than one authentication method is set, and when credentials are set for an
+http:// URL without auth.allowInsecureTransport.
+*/}}
+{{- define "debezium-platform.prometheusClientEnv" -}}
+{{- $auth := .Values.monitoring.prometheus.auth -}}
+{{- $methods := compact (list (ternary "serviceAccount" "" $auth.bearerToken.serviceAccount) $auth.bearerToken.existingSecret $auth.basic.existingSecret) -}}
+{{- if gt (len $methods) 1 -}}
+{{- fail "only one of monitoring.prometheus.auth.bearerToken.serviceAccount, auth.bearerToken.existingSecret and auth.basic.existingSecret can be set" -}}
+{{- end -}}
+{{- $plainHttp := hasPrefix "http://" (lower (toString .Values.monitoring.prometheus.url)) -}}
+{{- if and $methods $plainHttp (not $auth.allowInsecureTransport) -}}
+{{- fail "monitoring.prometheus.auth is set but monitoring.prometheus.url is not an https URL, the credentials would be sent in clear text: use an https URL or set monitoring.prometheus.auth.allowInsecureTransport to true" -}}
+{{- end -}}
+{{- if $auth.bearerToken.serviceAccount }}
+- name: MONITORING_PROMETHEUS_BEARER_TOKEN_FILE
+  value: /var/run/secrets/kubernetes.io/serviceaccount/token
+{{- else if $auth.bearerToken.existingSecret }}
+- name: MONITORING_PROMETHEUS_BEARER_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ $auth.bearerToken.existingSecret }}
+      key: {{ $auth.bearerToken.secretKey }}
+{{- else if $auth.basic.existingSecret }}
+- name: MONITORING_PROMETHEUS_BASIC_AUTH_USERNAME
+  valueFrom:
+    secretKeyRef:
+      name: {{ $auth.basic.existingSecret }}
+      key: username
+- name: MONITORING_PROMETHEUS_BASIC_AUTH_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ $auth.basic.existingSecret }}
+      key: password
+{{- end }}
+{{- if $auth.allowInsecureTransport }}
+- name: MONITORING_PROMETHEUS_AUTH_ALLOW_INSECURE_TRANSPORT
+  value: "true"
+{{- end }}
+{{- with (include "debezium-platform.prometheusCaFile" .) }}
+- name: QUARKUS_TLS_PROMETHEUS_TRUST_STORE_PEM_CERTS
+  value: {{ . | quote }}
+{{- end }}
+{{- if .Values.monitoring.prometheus.tls.insecureSkipVerify }}
+- name: QUARKUS_TLS_PROMETHEUS_TRUST_ALL
+  value: "true"
+- name: QUARKUS_TLS_PROMETHEUS_HOSTNAME_VERIFICATION_ALGORITHM
+  value: "NONE"
+{{- end }}
+{{- end -}}
+
+{{/*
 Get the OpenTelemetry Collector resource name.
 */}}
 {{- define "debezium-platform.otelCollectorName" -}}

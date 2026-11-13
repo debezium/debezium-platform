@@ -2,6 +2,18 @@ monitoring:
   panels:
     path: ${MONITORING_PANELS_PATH:}
     refresh-interval: 30s
+  # Credentials for the Prometheus instance set by MONITORING_PROMETHEUS_URL. All optional, and at
+  # most one method can be set. The CA to trust is configured under quarkus.tls.prometheus below.
+  # Credentials are refused for an http:// URL unless
+  # MONITORING_PROMETHEUS_AUTH_ALLOW_INSECURE_TRANSPORT is true.
+  prometheus:
+    auth:
+      # Read on every request, so a rotated Kubernetes service account token is picked up.
+      bearer-token-file: ${MONITORING_PROMETHEUS_BEARER_TOKEN_FILE:}
+      bearer-token: ${MONITORING_PROMETHEUS_BEARER_TOKEN:}
+      basic:
+        username: ${MONITORING_PROMETHEUS_BASIC_AUTH_USERNAME:}
+        password: ${MONITORING_PROMETHEUS_BASIC_AUTH_PASSWORD:}
 alerting:
   evaluation:
     interval: ${ALERTING_EVALUATION_INTERVAL:60s}
@@ -118,6 +130,13 @@ destinations:
       timeout: 60
       
 quarkus:
+  # TLS configuration of the Prometheus REST client, used when MONITORING_PROMETHEUS_URL is https.
+  # As is, it trusts the JVM default CAs. To trust a private CA, point
+  # QUARKUS_TLS_PROMETHEUS_TRUST_STORE_PEM_CERTS at its PEM file. The trust store cannot be
+  # declared here with an empty default: Quarkus rejects a PEM trust store without certificates.
+  tls:
+    prometheus:
+      trust-all: false
   smallrye-openapi:
     store-schema-directory: ../openapi
     info-title: Debezium Platform API
@@ -137,6 +156,7 @@ quarkus:
     prometheus-api:
       url: ${MONITORING_PROMETHEUS_URL:http://localhost:9090}
       read-timeout: 30000
+      tls-configuration-name: prometheus
     host-agent-api:
       url: http://localhost:8090
       connect-timeout: 5000

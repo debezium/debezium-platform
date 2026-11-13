@@ -138,6 +138,17 @@ The following operators must be installed in the cluster **before** deploying th
 | monitoring.otel.collector.exporters.prometheus.resourceToTelemetryConversion | Convert OTel resource attributes to Prometheus labels                                                                                                                                 | true                                       |
 | monitoring.otel.collector.exporters.prometheus.constLabels | Static labels added to all exported metrics                                                                                                                                           | {platform: debezium}                       |
 | monitoring.prometheus.url                  | URL of the Prometheus instance used by the conductor to query metrics. **Required** when `monitoring.otel.enabled` is `true`.                                                         | ""                                         |
+| monitoring.prometheus.auth.bearerToken.serviceAccount | Send the conductor's service account token with every Prometheus query. The token file is re-read on each request, so rotation needs no restart. See [Querying an authenticated Prometheus](#querying-an-authenticated-prometheus). | false                                      |
+| monitoring.prometheus.auth.bearerToken.existingSecret | Name of a Secret holding a static bearer token for Prometheus                                                                                                                         | ""                                         |
+| monitoring.prometheus.auth.bearerToken.secretKey | Key of the bearer token in `auth.bearerToken.existingSecret`                                                                                                                          | token                                      |
+| monitoring.prometheus.auth.basic.existingSecret | Name of a Secret with `username` and `password` keys for Prometheus basic authentication                                                                                              | ""                                         |
+| monitoring.prometheus.auth.allowInsecureTransport | Allow the credentials to be sent to an `http://` Prometheus URL. Without it the chart fails to render when credentials are set for such a URL, as they would travel in clear text. For connections encrypted by other means, e.g. a service mesh. | false                                      |
+| monitoring.prometheus.tls.caFile           | Path of a PEM CA bundle already present in the conductor container, trusted for an `https` Prometheus URL                                                                              | ""                                         |
+| monitoring.prometheus.tls.caConfigMap      | Name of a ConfigMap holding the PEM CA bundle; the chart mounts it into the conductor                                                                                                  | ""                                         |
+| monitoring.prometheus.tls.caSecret         | Name of a Secret holding the PEM CA bundle; the chart mounts it into the conductor                                                                                                     | ""                                         |
+| monitoring.prometheus.tls.caKey            | Key of the PEM CA bundle in `tls.caConfigMap` or `tls.caSecret`                                                                                                                        | ca.crt                                     |
+| monitoring.prometheus.tls.insecureSkipVerify | Disable certificate and host name verification for the Prometheus URL. For testing only.                                                                                                           | false                                      |
+| monitoring.prometheus.rbac.clusterRole     | Name of an existing ClusterRole to bind to the conductor service account so it may query Prometheus, e.g. `cluster-monitoring-view` on OpenShift. Creates a ClusterRoleBinding; empty creates none. | ""                                         |
 | monitoring.prometheus.serviceMonitor.enabled | Create a ServiceMonitor for automatic Prometheus scraping. Requires the Prometheus Operator to be installed (see Prerequisites).                                                      | true                                       |
 | monitoring.prometheus.serviceMonitor.scrapeInterval | Prometheus scrape interval                                                                                                                                                            | 15s                                        |
 | monitoring.prometheus.serviceMonitor.labels | Labels for Prometheus Operator ServiceMonitor discovery                                                                                                                               | {prometheus: kube-prometheus}              |
@@ -195,6 +206,61 @@ This is an example, not a recommended or default configuration — the chart set
 Finally, the ingress is not necessarily the only hop. If TLS terminates on an external reverse proxy or a cloud load balancer in front of the cluster, check its timeouts too — whichever hop has the shortest idle timeout is the one that closes the stream.
 
 > Clients should treat a dropped SSE connection as expected and reconnect; the stream is designed to re-send the full current state as its first event, so a reconnect loses no information. Raising the proxy timeout reduces reconnect churn, it does not remove the need to handle it.
+
+## Querying an authenticated Prometheus
+
+The conductor queries Prometheus for the monitoring panels and for alert evaluation. By default it sends plain, unauthenticated requests to `monitoring.prometheus.url`, which is what an in-cluster Prometheus such as the one from `kube-prometheus-stack` expects.
+
+A managed or hardened Prometheus usually requires TLS and credentials. Three settings cover that, and they apply only when `monitoring.otel.enabled` is `true`:
+
+- `monitoring.prometheus.auth`: the credentials. Pick at most one of the conductor's own service account token (`bearerToken.serviceAccount`), a static bearer token from a Secret (`bearerToken.existingSecret`), or basic authentication from a Secret (`basic.existingSecret`).
+- `monitoring.prometheus.tls`: the CA to trust for an `https` URL. Pick at most one of a file already in the container (`caFile`), a ConfigMap (`caConfigMap`) or a Secret (`caSecret`). When none is set, the JVM default trust store is used, which is enough for a publicly trusted certificate.
+- `monitoring.prometheus.rbac.clusterRole`: an existing ClusterRole to bind to the conductor service account, for a Prometheus that authorizes service account tokens through Kubernetes RBAC.
+
+Credentials require an `https` URL. With an `http://` URL they would travel in clear text, so the chart fails to render and the conductor refuses to start. If the connection is encrypted by other means, a service mesh for example, set `monitoring.prometheus.auth.allowInsecureTransport: true`.
+
+Basic authentication against a Prometheus behind an ingress, for example:
+
+```shell
+kubectl create secret generic prometheus-credentials \
+  --from-literal=username=myuser \
+  --from-literal=password=mypassword
+```
+
+```yaml
+monitoring:
+  prometheus:
+    url: "https://prometheus.example.com"
+    auth:
+      basic:
+        existingSecret: prometheus-credentials
+```
+
+### OpenShift
+
+On OpenShift, the metrics scraped through the chart's `ServiceMonitor` are stored by the user workload monitoring Prometheus. It does not accept plain HTTP on port 9090 from other pods: the endpoints a workload can reach all sit behind `kube-rbac-proxy` and require TLS and a service account token. Point the conductor at the Thanos querier on port **9091**, which serves both platform and user workload metrics:
+
+```yaml
+monitoring:
+  otel:
+    enabled: true
+  prometheus:
+    url: "https://thanos-querier.openshift-monitoring.svc:9091"
+    auth:
+      bearerToken:
+        serviceAccount: true
+    tls:
+      caFile: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+    rbac:
+      clusterRole: cluster-monitoring-view
+    serviceMonitor:
+      enabled: true
+      labels: {}
+```
+
+- The Thanos querier certificate is issued by the OpenShift service CA, which every pod already has at the `caFile` path above. Setting `tls.caConfigMap: openshift-service-ca.crt` with `tls.caKey: service-ca.crt` is equivalent.
+- `cluster-monitoring-view` is the ClusterRole the Thanos querier requires for queries on port 9091. Binding it is cluster-scoped: it lets the conductor read every metric of the cluster, and installing the chart then requires permission to create a ClusterRoleBinding. Leave `rbac.clusterRole` empty to create the binding yourself.
+- User workload monitoring must be enabled on the cluster for the `ServiceMonitor` to be scraped.
 
 ## Alerting
 
