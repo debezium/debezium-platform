@@ -133,11 +133,9 @@ spec:
             - name: QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ include "debezium-platform.otelCollectorEndpoint" . }}
 {{- end }}
-{{- if not .Values.conductor.otel.enabled }}
-            # Turns off the OpenTelemetry SDK of the conductor itself. See values.yaml conductor.otel.
+            # OpenTelemetry SDK of the conductor itself. See values.yaml conductor.otel.
             - name: QUARKUS_OTEL_SDK_DISABLED
-              value: "true"
-{{- end }}
+              value: {{ not .Values.conductor.otel.enabled | quote }}
 {{- if .Values.monitoring.panels.additionalPanelsPath }}
             - name: MONITORING_PANELS_PATH
               value: {{ .Values.monitoring.panels.additionalPanelsPath | quote }}
