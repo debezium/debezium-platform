@@ -92,14 +92,16 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
     /**
      * Streams logs for the given pipeline, invoking given consumer for each log line
      *
-     * @param id       the pipeline id
-     * @param consumer the consumer to invoke for each log line
+     * @param id         the pipeline id
+     * @param consumer   the consumer to invoke for each log line
+     * @param onFinished invoked once streaming has stopped, with {@code null} if the log ended or
+     *                   the returned task was stopped, or the failure otherwise
      * @return log streaming task or empty optional if pipeline was not found
      */
-    public Optional<LogStreamingService.LogStreamingTask> streamLogs(Long id, Consumer<String> consumer) {
+    public Optional<LogStreamingService.LogStreamingTask> streamLogs(Long id, Consumer<String> consumer, Consumer<Throwable> onFinished) {
         return environmentController(id)
                 .map(EnvironmentController::pipelines)
-                .map(pipelines -> logStreamer.stream(String.valueOf(id), () -> pipelines.logReader(id), consumer));
+                .map(pipelines -> logStreamer.stream(String.valueOf(id), () -> pipelines.logReader(id), consumer, onFinished));
     }
 
     public Optional<String> send(Long pipelineId, Signal signal) {
