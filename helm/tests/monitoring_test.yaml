@@ -36,6 +36,64 @@ tests:
       - isNotEmpty:
           path: spec.config
 
+  - it: should not create OpenTelemetryCollector or ServiceMonitor with an external collector
+    templates:
+      - otel-collector.yaml
+      - servicemonitor.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.otel.collector.endpoint: "http://alloy.monitoring:4318"
+      monitoring.prometheus.url: "http://prometheus:9090"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should send OTLP to the external collector
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.otel.collector.endpoint: "http://alloy.monitoring:4318"
+      monitoring.prometheus.url: "http://prometheus:9090"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_ENDPOINT
+            value: http://alloy.monitoring:4318
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://alloy.monitoring:4318
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_OTEL_EXPORTER_OTLP_PROTOCOL
+            value: http/protobuf
+
+  - it: should use the configured OTLP protocol for the conductor
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.otel.collector.protocol: grpc
+      monitoring.prometheus.url: "http://prometheus:9090"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_OTEL_EXPORTER_OTLP_PROTOCOL
+            value: grpc
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://debezium-platform-otel-collector-collector.NAMESPACE.svc.cluster.local:4317
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_MONITORING_OTEL_ENDPOINT
+            value: http://debezium-platform-otel-collector-collector.NAMESPACE.svc.cluster.local:4318
+
   - it: should not create OpenTelemetryCollector when monitoring.otel.enabled is false
     template: otel-collector.yaml
     set:
@@ -208,6 +266,41 @@ tests:
           content:
             name: MONITORING_PROMETHEUS_URL
             value: "http://prometheus:9090"
+
+  - it: should send custom headers to Prometheus
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://mimir:8080/prometheus"
+      monitoring.prometheus.headers:
+        X-Scope-OrgID: my-tenant
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: quarkus.rest-client.prometheus-api.headers.X-Scope-OrgID
+            value: my-tenant
+
+  - it: should read Prometheus header values from a Secret
+    template: conductor-deployment.yaml
+    set:
+      monitoring.otel.enabled: true
+      monitoring.prometheus.url: "http://mimir:8080/prometheus"
+      monitoring.prometheus.headers:
+        Authorization:
+          valueFrom:
+            secretKeyRef:
+              name: prometheus-credentials
+              key: authorization
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: quarkus.rest-client.prometheus-api.headers.Authorization
+            valueFrom:
+              secretKeyRef:
+                name: prometheus-credentials
+                key: authorization
 
   - it: should inject OTel interval env vars with default values when monitoring.otel.enabled is true
     template: conductor-deployment.yaml

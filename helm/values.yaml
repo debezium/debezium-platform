@@ -115,6 +115,11 @@ monitoring:
     jmxIntervalMs: 1000
     metricExportIntervalMs: 5000
     collector:
+      # OTLP HTTP endpoint of an existing collector. When set, the chart does not deploy its own collector or ServiceMonitor.
+      endpoint: ""
+      # OTLP protocol used by the conductor: http/protobuf or grpc. Pipelines always use http/protobuf, so grpc
+      # works with the chart's collector, or with an external one that serves both protocols on endpoint.
+      protocol: http/protobuf
       # The Prometheus exporter is included in the base (otelcol) and contrib distributions,
       # but NOT in the k8s distribution (otelcol-k8s) which is the default when the OTel Operator
       # is installed via Helm. Override the image if your operator defaults to k8s distribution.
@@ -141,6 +146,17 @@ monitoring:
     refreshInterval: 30s
   prometheus:
     url: ""
+    # Extra HTTP headers the conductor adds to every request it sends to the Prometheus URL above,
+    # e.g. for authentication or multi-tenancy. Map of header name to value; each value is either:
+    #   - a plain string, written as-is into the conductor Deployment:
+    #       X-Scope-OrgID: my-tenant
+    #   - a valueFrom reference, so secrets are read from a Secret and never stored in the Deployment:
+    #       Authorization:
+    #         valueFrom:
+    #           secretKeyRef:
+    #             name: prometheus-credentials
+    #             key: authorization  # must hold the full header value, e.g. "Bearer <token>"
+    headers: {}
     serviceMonitor:
       enabled: true
       scrapeInterval: 15s

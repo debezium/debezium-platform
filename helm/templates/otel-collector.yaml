@@ -1,4 +1,4 @@
-{{- if .Values.monitoring.otel.enabled }}
+{{- if and .Values.monitoring.otel.enabled (not .Values.monitoring.otel.collector.endpoint) }}
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:

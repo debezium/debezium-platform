@@ -124,10 +124,21 @@ spec:
               value: {{ .Values.monitoring.otel.metricExportIntervalMs | quote }}
             - name: MONITORING_PROMETHEUS_URL
               value: {{ include "debezium-platform.prometheusUrl" . }}
+{{- range $name, $value := .Values.monitoring.prometheus.headers }}
+            - name: quarkus.rest-client.prometheus-api.headers.{{ $name }}
+{{- if kindIs "map" $value }}
+              valueFrom:
+                {{- toYaml $value.valueFrom | nindent 16 }}
+{{- else }}
+              value: {{ $value | quote }}
+{{- end }}
+{{- end }}
             - name: QUARKUS_OTEL_METRICS_ENABLED
               value: "true"
             - name: QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT
-              value: {{ include "debezium-platform.otelCollectorEndpoint" . }}
+              value: {{ include "debezium-platform.conductorOtlpEndpoint" . }}
+            - name: QUARKUS_OTEL_EXPORTER_OTLP_PROTOCOL
+              value: {{ .Values.monitoring.otel.collector.protocol | quote }}
 {{- end }}
 {{- if .Values.monitoring.panels.additionalPanelsPath }}
             - name: MONITORING_PANELS_PATH
