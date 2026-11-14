@@ -9,7 +9,9 @@ import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -55,6 +57,18 @@ public class ActiveSnapshotService extends AbstractService<ActiveSnapshotEntity,
                 EntityViewSetting.create(ActiveSnapshot.class),
                 cb().where(PIPELINE_ID_ATTRIBUTE).eq(pipelineId))
                 .getResultList().stream().findFirst();
+    }
+
+    /**
+     * All active snapshots, indexed by pipeline ID.
+     */
+    @Transactional(SUPPORTS)
+    public Map<Long, ActiveSnapshot> findActiveByPipeline() {
+        return evm.applySetting(
+                EntityViewSetting.create(ActiveSnapshot.class),
+                cb())
+                .getResultList().stream()
+                .collect(Collectors.toMap(ActiveSnapshot::getPipelineId, a -> a, (left, right) -> left));
     }
 
     /**

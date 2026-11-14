@@ -9,6 +9,7 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 
 import java.net.URI;
+import java.util.Map;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -31,14 +32,18 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
 
+import io.debezium.connector.SnapshotType;
 import io.debezium.platform.api.dto.PipelineRequest;
 import io.debezium.platform.api.dto.PipelineResponse;
 import io.debezium.platform.api.dto.PipelineUpdateRequest;
 import io.debezium.platform.api.mapper.PipelineMapper;
 import io.debezium.platform.data.dto.SignalRequest;
 import io.debezium.platform.data.dto.SignalResponse;
+import io.debezium.platform.data.model.SnapshotState;
+import io.debezium.platform.domain.ActiveSnapshotService;
 import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.domain.Signal;
+import io.debezium.platform.domain.views.ActiveSnapshot;
 import io.debezium.platform.environment.EnvironmentController;
 import io.debezium.platform.environment.logs.LogReader;
 import io.debezium.platform.error.NotFoundException;
@@ -51,11 +56,14 @@ public class PipelineResource {
     Logger logger;
     PipelineService pipelineService;
     PipelineMapper mapper;
+    ActiveSnapshotService activeSnapshotService;
 
-    public PipelineResource(Logger logger, PipelineService pipelineService, PipelineMapper mapper) {
+    public PipelineResource(Logger logger, PipelineService pipelineService, PipelineMapper mapper,
+                            ActiveSnapshotService activeSnapshotService) {
         this.logger = logger;
         this.pipelineService = pipelineService;
         this.mapper = mapper;
+        this.activeSnapshotService = activeSnapshotService;
     }
 
     @Operation(summary = "Returns all available pipelines")
@@ -63,7 +71,11 @@ public class PipelineResource {
     @GET
     public Response get() {
         var pipelines = pipelineService.list();
-        return Response.ok(mapper.toResponseList(pipelines)).build();
+        Map<Long, ActiveSnapshot> activeByPipeline = activeSnapshotService.findActiveByPipeline();
+        var responses = mapper.toResponseList(pipelines).stream()
+                .map(r -> enrichWithActiveSnapshot(r, activeByPipeline.get(r.id())))
+                .toList();
+        return Response.ok(responses).build();
     }
 
     @Operation(summary = "Returns a pipeline with given id")
@@ -73,8 +85,36 @@ public class PipelineResource {
     public Response getById(@PathParam("id") Long id) {
         return pipelineService.findById(id)
                 .map(mapper::toResponse)
+                .map(r -> enrichWithActiveSnapshot(r, activeSnapshotService.find(id).orElse(null)))
                 .map(dto -> Response.ok(dto).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
+    }
+
+    private PipelineResponse enrichWithActiveSnapshot(PipelineResponse response, ActiveSnapshot active) {
+        if (response == null || active == null) {
+            return response;
+        }
+        boolean isInitialRunning = active.getType() == SnapshotType.INITIAL
+                && active.getStatus() == SnapshotState.RUNNING;
+        boolean isIncrementalActive = active.getType() == SnapshotType.INCREMENTAL
+                && (active.getStatus() == SnapshotState.RUNNING || active.getStatus() == SnapshotState.PAUSED);
+
+        if (isInitialRunning || isIncrementalActive) {
+            return new PipelineResponse(
+                    response.id(),
+                    response.name(),
+                    response.description(),
+                    response.source(),
+                    response.destination(),
+                    response.transforms(),
+                    response.logLevel(),
+                    response.logLevels(),
+                    response.status(),
+                    response.errorMessage(),
+                    active.getType(),
+                    active.getStatus());
+        }
+        return response;
     }
 
     @Operation(summary = "Creates new pipeline")
