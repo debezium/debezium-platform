@@ -9,7 +9,7 @@ on:
       - 2.*
       - 3.*
       - 4.*
-    types: [ opened ]
+    types: [ opened, reopened, synchronize ]
 permissions:
   contents: read
 
