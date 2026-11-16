@@ -53,6 +53,7 @@ import {
   fetchAlertRules,
   setAlertRuleEnabled,
 } from "../../apis/alerts";
+import { requestErrorMessage } from "../../apis/client";
 import ApiError from "../../components/ApiError";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { AlertRule, AlertSeverity } from "./alertsTypes";
@@ -61,8 +62,9 @@ import EmptyStatus from "@components/EmptyStatus";
 import InformationModal from "@components/modal/InformationModal";
 import { fetchData } from "../../apis/apis";
 import { Pipeline } from "../../apis/types";
-import { API_URL } from "../../utils/constants";
+
 import { useTranslation } from "react-i18next";
+import { pipelinesPath } from "../../apis/endpoints";
 
 interface AlertRulesProps {
   firingRuleIds: Set<number>;
@@ -107,7 +109,7 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
     retry: retryPipelines,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
+    () => fetchData<Pipeline[]>(pipelinesPath())
   );
 
   const retryAll = React.useCallback(() => {
@@ -188,15 +190,15 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
     if (togglingRuleId !== undefined) return;
     const nextEnabled = !rule.enabled;
     setTogglingRuleId(rule.id);
-    const response = await setAlertRuleEnabled(rule.id, nextEnabled);
-    if (response.error) {
+    try {
+      await setAlertRuleEnabled(rule.id, nextEnabled);
+      await refreshRules();
+    } catch (error) {
       addNotification(
         "danger",
         nextEnabled ? "Enable failed" : "Disable failed",
-        `Failed to ${nextEnabled ? "enable" : "disable"} "${rule.name}": ${response.error}`
+        `Failed to ${nextEnabled ? "enable" : "disable"} "${rule.name}": ${requestErrorMessage(error)}`
       );
-    } else {
-      await refreshRules();
     }
     setTogglingRuleId(undefined);
   };

@@ -46,9 +46,10 @@ import {
 } from "@patternfly/react-core";
 import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import "./PipelineDesigner.css";
-import { editPut, fetchResult } from "../../apis/apis";
+import { fetchData } from "../../apis/apis";
+import { requestErrorMessage } from "../../apis/client";
+import { mutationErrorMessage, useUpdateResource } from "src/apis";
 import {
   DragDropSort,
   DragDropSortDragEndEvent,
@@ -62,7 +63,7 @@ import {
 } from "@patternfly/react-icons";
 import { ReactFlowProvider } from "@xyflow/react";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { API_URL } from "@utils/constants";
+
 import PipelineEditFlow from "@components/pipelineDesigner/PipelineEditFlow";
 import ConnectorImage from "@components/ComponentImage";
 import { useNotification } from "@appContext/AppNotificationContext";
@@ -81,6 +82,7 @@ import {
 } from "src/apis/types";
 import { selectedTransformAtom } from "./PipelineDesigner";
 import { getPipelineNameValidationError } from "@utils/pipelineNameValidation";
+import { sourcePath, destinationPath, pipelinePath } from "../../apis/endpoints";
 
 const getItems = (
   selectedTransform: Transform[],
@@ -141,7 +143,7 @@ const PipelineDesignerEdit: React.FunctionComponent<
   pipelineId,
 }) => {
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
+    const updatePipeline = useUpdateResource<Pipeline>();
     const { t } = useTranslation();
 
     const [items, setItems] = React.useState<DraggableObject[]>([]);
@@ -169,7 +171,6 @@ const PipelineDesignerEdit: React.FunctionComponent<
     const [isDestinationFetchLoading, setIsDestinationFetchLoading] =
       useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-
 
     const [pkgLevelLog, setPkgLevelLog] = useState<Map<string, Properties>>(
       new Map([["key0", { key: "", value: "" }]])
@@ -228,14 +229,10 @@ const PipelineDesignerEdit: React.FunctionComponent<
     useEffect(() => {
       const fetchSource = async () => {
         setIsSourceFetchLoading(true);
-        const response = await fetchResult<Source>(
-          `${API_URL}/api/sources/${pipelineSource!.id}`
-        );
-
-        if (response.error) {
-          setError(response.error);
-        } else {
-          setSource(response.data as Source);
+        try {
+          setSource(await fetchData<Source>(sourcePath(pipelineSource!.id)));
+        } catch (error) {
+          setError(requestErrorMessage(error));
         }
         setIsSourceFetchLoading(false);
       };
@@ -249,14 +246,12 @@ const PipelineDesignerEdit: React.FunctionComponent<
     useEffect(() => {
       const fetchDestination = async () => {
         setIsDestinationFetchLoading(true);
-        const response = await fetchResult<Destination>(
-          `${API_URL}/api/destinations/${pipelineDestination!.id}`
-        );
-
-        if (response.error) {
-          setError(response.error);
-        } else {
-          setDestination(response.data as Destination);
+        try {
+          setDestination(
+            await fetchData<Destination>(destinationPath(pipelineDestination!.id))
+          );
+        } catch (error) {
+          setError(requestErrorMessage(error));
         }
         setIsDestinationFetchLoading(false);
       };
@@ -383,26 +378,26 @@ const PipelineDesignerEdit: React.FunctionComponent<
         transforms: effectiveTransforms.map(({ id, name }) => ({ id, name })),
       };
 
-      const response = await editPut(
-        `${API_URL}/api/pipelines/${pipelineId}`,
-        payload
-      );
-      setIsLoading(false);
-
-      if (response.error) {
-        addNotification(
-          "danger",
-          t('statusMessage:edit.title'),
-          t('statusMessage:edit.failedDescription', { val: `${(response.data as Pipeline).name}: ${response.error}` }),
-        );
-      } else {
+      try {
+        const updated = await updatePipeline.mutateAsync({
+          url: pipelinePath(pipelineId),
+          payload,
+          resource: "pipelines",
+        });
+        setIsLoading(false);
         addNotification(
           "success",
           t('statusMessage:edit.successTitle'),
-          t('statusMessage:edit.successTitle', { val: `${t('pipeline')} ${(response.data as Pipeline).name}` }),
+          t('statusMessage:edit.successTitle', { val: `${t('pipeline')} ${updated?.name ?? values["pipeline-name"]}` }),
         );
-        await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
         navigateTo("/pipeline");
+      } catch (error) {
+        setIsLoading(false);
+        addNotification(
+          "danger",
+          t('statusMessage:edit.title'),
+          t('statusMessage:edit.failedDescription', { val: `${values["pipeline-name"]}: ${mutationErrorMessage(error)}` }),
+        );
       }
     };
 
@@ -412,11 +407,9 @@ const PipelineDesignerEdit: React.FunctionComponent<
 
     const [logLevel, setLogLevel] = useState("");
 
-
     useEffect(() => {
       setLogLevel(definedLogLevel);
     }, [definedLogLevel]);
-
 
     const onChange = (
       _event: React.FormEvent<HTMLSelectElement>,

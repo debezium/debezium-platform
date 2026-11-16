@@ -3,14 +3,14 @@ import { screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Table, Tbody, Tr } from "@patternfly/react-table";
 import DestinationField from "./DestinationField";
-import { fetchResult } from "../apis/apis";
+import { fetchData } from "../apis/apis";
 import { render } from "../__test__/unit/test-utils";
 
 vi.mock("../apis/apis", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../apis/apis")>();
   return {
     ...actual,
-    fetchResult: vi.fn(),
+    fetchData: vi.fn(),
   };
 });
 
@@ -22,20 +22,17 @@ vi.mock("./ComponentImage", () => ({
 
 describe("DestinationField", () => {
   beforeEach(() => {
-    vi.mocked(fetchResult).mockReset();
+    vi.mocked(fetchData).mockReset();
   });
 
   it("loads destination and shows name with connector", async () => {
-    vi.mocked(fetchResult).mockResolvedValue({
-      data: {
-        id: 3,
-        name: "ignored",
-        type: "kafka",
-        schema: "",
-        vaults: [],
-        config: {},
-      },
-      error: null,
+    vi.mocked(fetchData).mockResolvedValue({
+      id: 3,
+      name: "ignored",
+      type: "kafka",
+      schema: "",
+      vaults: [],
+      config: {},
     } as any);
 
     render(

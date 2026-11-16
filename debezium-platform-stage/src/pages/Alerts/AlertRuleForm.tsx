@@ -23,7 +23,8 @@ import {
   Spinner,
   TextInput,
 } from "@patternfly/react-core";
-import { fetchMonitoringPanels } from "../../apis/apis";
+import { fetchMonitoringPanels } from "../../apis/monitoring";
+import { requestErrorMessage } from "../../apis/client";
 import type { PanelResponse } from "../../apis/types";
 import {
   AlertOperator,
@@ -132,14 +133,17 @@ const AlertRuleForm: React.FC<AlertRuleFormProps> = ({
     const load = async () => {
       setPanelsLoading(true);
       setPanelsError(null);
-      const response = await fetchMonitoringPanels();
-      if (cancelled) return;
-      if (response.error || !response.data) {
-        setPanelsError(
-          response.error ?? "Monitoring panels API returned an invalid response"
-        );
-      } else {
-        setPanels(response.data.panels);
+      try {
+        const result = await fetchMonitoringPanels();
+        if (cancelled) return;
+        if (!result?.panels) {
+          setPanelsError("Monitoring panels API returned an invalid response");
+        } else {
+          setPanels(result.panels);
+        }
+      } catch (error) {
+        if (cancelled) return;
+        setPanelsError(requestErrorMessage(error));
       }
       setPanelsLoading(false);
     };

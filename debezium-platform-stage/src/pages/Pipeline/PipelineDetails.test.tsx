@@ -3,7 +3,7 @@ import { describe, expect, it, vi, afterEach } from "vitest";
 import { Route, Routes } from "react-router-dom";
 import { PipelineDetails } from "./PipelineDetails";
 import { render } from "../../__test__/unit/test-utils";
-import { fetchResult } from "../../apis/apis";
+import { fetchData } from "../../apis/apis";
 
 const { mockNavigate, mockPipeline } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
@@ -63,10 +63,7 @@ vi.mock("../../apis/snapshots", () => ({
 }));
 
 vi.mock("../../apis/apis", () => ({
-  fetchResult: vi.fn().mockResolvedValue({
-    data: mockPipeline,
-    error: null,
-  }),
+  fetchData: vi.fn().mockResolvedValue(mockPipeline),
 }));
 
 vi.mock("@support/featureFlag", async () => {
@@ -189,16 +186,11 @@ describe("PipelineDetails feature gating", () => {
 
 describe("PipelineDetails API failure", () => {
   afterEach(() => {
-    vi.mocked(fetchResult).mockResolvedValue({
-      data: mockPipeline,
-      error: undefined,
-    });
+    vi.mocked(fetchData).mockResolvedValue(mockPipeline);
   });
 
   it("shows the API error empty state with retry when pipeline fetch fails", async () => {
-    vi.mocked(fetchResult).mockResolvedValue({
-      error: "Failed to fetch data: Internal Server Error",
-    });
+    vi.mocked(fetchData).mockRejectedValue(new Error("Internal Server Error"));
 
     renderPipelineDetails("/pipeline/123/overview");
 
@@ -206,7 +198,7 @@ describe("PipelineDetails API failure", () => {
       await screen.findByRole("heading", { name: "Failed to load" })
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Error: Failed to fetch data: Internal Server Error")
+      screen.getByText("Error: Internal Server Error")
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /refresh/i })).toBeInTheDocument();
     expect(

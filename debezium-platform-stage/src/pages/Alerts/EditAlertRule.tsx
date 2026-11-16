@@ -29,6 +29,7 @@ import {
   fetchAlertRules,
   updateAlertRule,
 } from "../../apis/alerts";
+import { requestErrorMessage } from "../../apis/client";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { AlertRule, AlertRuleRequest, NotificationChannel } from "./alertsTypes";
 import AlertRuleForm from "./AlertRuleForm";
@@ -63,14 +64,8 @@ const EditAlertRule: React.FunctionComponent = () => {
   const handleSave = async (payload: AlertRuleRequest) => {
     if (!rule) return;
     setIsSaving(true);
-    const response = await updateAlertRule(rule.id, payload);
-    if (response.error) {
-      addNotification(
-        "danger",
-        "Edit failed",
-        `Failed to update "${payload.name}": ${response.error}`
-      );
-    } else {
+    try {
+      await updateAlertRule(rule.id, payload);
       addNotification(
         "success",
         "Save successful",
@@ -80,6 +75,12 @@ const EditAlertRule: React.FunctionComponent = () => {
         queryKey: ALERT_RULES_QUERY_KEY
       });
       setViewMode(true);
+    } catch (error) {
+      addNotification(
+        "danger",
+        "Edit failed",
+        `Failed to update "${payload.name}": ${requestErrorMessage(error)}`
+      );
     }
     setIsSaving(false);
   };

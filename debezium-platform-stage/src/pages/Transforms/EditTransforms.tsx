@@ -14,19 +14,19 @@ import { PencilAltIcon, RhUiDataProcessorIcon } from "@patternfly/react-icons";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
-  createPost,
-  editPut,
   fetchData,
-  fetchResult,
+  mutationErrorMessage,
   Pipeline,
   TransformData,
   TransformPayload,
+  useCreateResource,
+  useUpdateResource,
 } from "src/apis";
-import { API_URL } from "@utils/constants";
+
 import { nextCopyName } from "@utils/helpers";
 import { useNotification } from "@appContext/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@patternfly/react-component-groups";
 import CreateTransformForm, {
   CreateTransformFormHandle,
@@ -35,6 +35,7 @@ import TransformReviewView from "@components/TransformReviewView";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import { getActivePipelineCount } from "@components/UsedIn";
 import { resolveTransformPageViewMode, transformPageNavState } from "./transformPageNavigation";
+import { transformsPath, transformPath, pipelinesPath } from "../../apis/endpoints";
 
 export interface IEditTransformsProps {
   onSelection?: (selection: TransformData) => void;
@@ -62,7 +63,8 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   const formRef = useRef<CreateTransformFormHandle>(null);
   const { addNotification } = useNotification();
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
+  const createTransform = useCreateResource<TransformData>();
+  const updateTransform = useUpdateResource<TransformData>();
 
   useEffect(() => {
     setViewMode(
@@ -73,7 +75,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
 
   const { data: existingTransforms = [] } = useQuery<TransformData[], Error>({
     queryKey: ["transforms"],
-    queryFn: () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
+    queryFn: () => fetchData<TransformData[]>(transformsPath())
   });
 
   const { data: pipelineList, isSuccess: isPipelineListLoaded } = useQuery<
@@ -81,7 +83,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
     Error
   >({
     queryKey: ["pipelines"],
-    queryFn: () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
+    queryFn: () => fetchData<Pipeline[]>(pipelinesPath())
   });
 
   const existingNames = React.useMemo(() => {
@@ -97,15 +99,7 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
   } = useQuery<TransformData, Error>({
     queryKey: ["transform", transformId],
 
-    queryFn: async () => {
-      const response = await fetchResult<TransformData>(
-        `${API_URL}/api/transforms/${transformId}`
-      );
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      return response.data as TransformData;
-    },
+    queryFn: () => fetchData<TransformData>(transformPath(transformId)),
 
     enabled: !!transformId
   });
@@ -122,59 +116,56 @@ const EditTransforms: React.FunctionComponent<IEditTransformsProps> = ({
         payload.name === transformData?.name
           ? nextCopyName(transformData.name, existingNames)
           : payload.name;
-      const response = await createPost(`${API_URL}/api/transforms`, {
-        ...payload,
-        name,
-      });
-      if (response.error) {
-        addNotification(
-          "danger",
-          `Transform creation failed`,
-          `Failed to create ${name}: ${response.error}`
-        );
-      } else {
-        const created = response.data as TransformData;
+      try {
+        const created = await createTransform.mutateAsync({
+          url: transformsPath(),
+          payload: {
+            ...payload,
+            name,
+          },
+          resource: "transforms",
+        });
         addNotification(
           "success",
           `Create successful`,
-          `Transform "${created.name}" created successfully.`
+          `Transform "${created?.name}" created successfully.`
         );
-        await queryClient.invalidateQueries({
-          queryKey: ["transforms"]
-        });
         if (created?.id) {
           setViewMode(true);
           navigate(`/transform/${created.id}?state=view`, {
             state: transformPageNavState.view,
           });
         }
+      } catch (error) {
+        addNotification(
+          "danger",
+          `Transform creation failed`,
+          `Failed to create ${name}: ${mutationErrorMessage(error)}`
+        );
       }
       setIsLoading(false);
       return;
     }
 
-    const response = await editPut(
-      `${API_URL}/api/transforms/${transformData?.id}`,
-      payload
-    );
-    if (response.error) {
-      addNotification(
-        "danger",
-        `Transform edit failed`,
-        `Failed to edit ${payload.name}: ${response.error}`
-      );
-    } else {
-      onSelection?.(response.data as TransformData);
+    try {
+      const updated = await updateTransform.mutateAsync({
+        url: transformPath(transformData?.id),
+        payload,
+        resource: "transforms",
+      });
+      if (updated) onSelection?.(updated);
       addNotification(
         "success",
         `Edit successful`,
-        `Transform "${(response.data as TransformData).name}" edited successfully.`
+        `Transform "${updated?.name}" edited successfully.`
       );
-      await queryClient.invalidateQueries({
-        queryKey: ["transform", transformId],
-      });
-      await queryClient.invalidateQueries({ queryKey: ["transforms"] });
       setViewMode(true);
+    } catch (error) {
+      addNotification(
+        "danger",
+        `Transform edit failed`,
+        `Failed to edit ${payload.name}: ${mutationErrorMessage(error)}`
+      );
     }
     setIsLoading(false);
   };

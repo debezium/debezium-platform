@@ -10,15 +10,16 @@ import {
 } from "@patternfly/react-core";
 import { useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { createPost, fetchData, TransformData, TransformPayload } from "src/apis";
-import { API_URL } from "@utils/constants";
+import { fetchData, mutationErrorMessage, TransformData, TransformPayload, useCreateResource } from "src/apis";
+
 import { useNotification } from "@appContext/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@patternfly/react-component-groups";
 import CreateTransformForm, {
   CreateTransformFormHandle,
 } from "@components/CreateTransformForm";
+import { transformsPath } from "../../apis/endpoints";
 
 export interface ICreateTransformsProps {
   modelLoaded?: boolean;
@@ -37,7 +38,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
   const [searchParams] = useSearchParams();
   const { t } = useTranslation();
   const { addNotification } = useNotification();
-  const queryClient = useQueryClient();
+  const createTransform = useCreateResource<TransformData>();
   const formRef = useRef<CreateTransformFormHandle>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,7 +46,7 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
 
   const { data: existingTransforms = [], isLoading: isTransformsLoading } = useQuery<TransformData[]>({
     queryKey: ["transforms"],
-    queryFn: () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
+    queryFn: () => fetchData<TransformData[]>(transformsPath())
   });
 
   const existingNames = React.useMemo(() => {
@@ -64,22 +65,13 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
 
   const createNewTransform = async (payload: TransformPayload) => {
     setIsLoading(true);
-    const response = await createPost(`${API_URL}/api/transforms`, payload);
-    if (response.error) {
-      addNotification(
-        "danger",
-        `Transform creation failed`,
-        `Failed to create ${payload.name}: ${response.error}`
-      );
-    } else {
-      const created = response.data as TransformData;
-      await queryClient.invalidateQueries({
-        queryKey: ["transforms"]
+    try {
+      const created = await createTransform.mutateAsync({
+        url: transformsPath(),
+        payload,
+        resource: "transforms",
       });
-      await queryClient.invalidateQueries({
-        queryKey: ["transform"]
-      });
-      modelLoaded && onSelection?.([created]);
+      modelLoaded && onSelection?.([created as TransformData]);
       addNotification(
         "success",
         `Create successful`,
@@ -92,8 +84,15 @@ const CreateTransforms: React.FunctionComponent<ICreateTransformsProps> = ({
           navigate("/transform");
         }
       }
+    } catch (error) {
+      addNotification(
+        "danger",
+        `Transform creation failed`,
+        `Failed to create ${payload.name}: ${mutationErrorMessage(error)}`
+      );
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (

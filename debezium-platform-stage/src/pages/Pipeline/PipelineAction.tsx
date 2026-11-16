@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form"
 import { useTranslation } from 'react-i18next';
 import signalActions from "../../__mocks__/data/Signals.json";
-import { API_URL } from '@utils/constants';
-import { createPost, fetchResultWithStatus, PipelineSignalPayload, Source, TableData } from 'src/apis';
+
+import { fetchData, isApiRequestError, mutationErrorMessage, PipelineSignalPayload, Source, TableData, useCreateResource } from 'src/apis';
 import { SelectedDataListItem } from 'src/apis/types';
 import { useNotification } from '@appContext/index';
 import { TrashIcon } from '@patternfly/react-icons';
@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import './PipelineAction.css';
 import TableViewComponent from '../../components/TableViewComponent';
 import ApiComponentError from '../../components/ApiComponentError';
-
+import { sourcePath, connectionCollectionsPath, pipelineSignalsPath } from "../../apis/endpoints";
 
 const getSignalActions = () => {
     const placeholder = {
@@ -72,6 +72,7 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
 }) => {
     const { t } = useTranslation();
     const { addNotification } = useNotification();
+    const sendSignal = useCreateResource();
     const [pipelineAction, setPipelineAction] = React.useState('please choose');
     const [isLoading, setIsLoading] = React.useState(false);
 
@@ -86,24 +87,17 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     const fetchConnectionCollections = useCallback(async () => {
         if (!sourceId) return;
         setIsCollectionsLoading(true);
-        const sourceResponse = await fetchResultWithStatus<Source>(
-            `${API_URL}/api/sources/${sourceId}`
-        );
-        if (sourceResponse.error) {
-            setCollectionsError(sourceResponse);
-        } else {
-            const connectionId = sourceResponse.data?.connection?.id;
+        try {
+            const source = await fetchData<Source>(sourcePath(sourceId));
+            const connectionId = source.connection?.id;
+            setCollections(await fetchData<TableData>(connectionCollectionsPath(connectionId)));
             setCollectionsError(undefined);
-            const collectionResponse = await fetchResultWithStatus<TableData>(
-                `${API_URL}/api/connections/${connectionId}/collections`
+        } catch (error) {
+            setCollectionsError(
+                isApiRequestError(error)
+                    ? { status: error.status, statusText: error.statusText, body: error.body }
+                    : { message: mutationErrorMessage(error) }
             );
-            if (collectionResponse.error) {
-                setCollectionsError(collectionResponse.error.body?.error || "");
-                setCollectionsError(collectionResponse);
-            } else {
-                setCollections(collectionResponse.data as TableData);
-                setCollectionsError(undefined);
-            }
         }
         setIsCollectionsLoading(false);
     }, [sourceId]);
@@ -263,22 +257,25 @@ const PipelineAction: React.FC<PipelineActionProps> = ({
     );
 
     const sendPipelineSignalAction = async (payload: PipelineSignalPayload) => {
-        const response = await createPost(`${API_URL}/api/pipelines/${pipelineId}/signals`, payload);
-        if (response.error) {
-            setIsLoading(false);
-            addNotification(
-                "danger",
-                `Signal action failed`,
-                `Failed to send signal action: ${response.error
-                }`
-            );
-        } else {
+        try {
+            await sendSignal.mutateAsync({
+                url: pipelineSignalsPath(pipelineId),
+                payload,
+            });
             setIsLoading(false);
             addNotification(
                 "success",
                 `Signal action success`,
                 `Send action "${payload.type
                 }" created successfully.`
+            );
+        } catch (error) {
+            setIsLoading(false);
+            addNotification(
+                "danger",
+                `Signal action failed`,
+                `Failed to send signal action: ${mutationErrorMessage(error)
+                }`
             );
         }
     };

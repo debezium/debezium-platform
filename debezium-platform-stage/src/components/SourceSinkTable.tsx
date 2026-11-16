@@ -33,13 +33,13 @@ import { fetchData } from "../apis/apis";
 import { DestinationApiResponse, Pipeline, SourceApiResponse } from "../apis/types";
 import { getConnectorTypeName } from "../utils/helpers";
 import ConnectorImage from "./ComponentImage";
-import { API_URL } from "../utils/constants";
 import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../appLayout/AppNotificationContext";
 import { useDeleteData } from "src/apis";
 import { useTranslation, Trans } from "react-i18next";
 import UsedIn from "./UsedIn";
+import { destinationPath, pipelinesPath, sourcePath } from "../apis/endpoints";
 
 type TableType = "source" | "destination";
 
@@ -84,10 +84,11 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
     retry: retryPipelines,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
+    () => fetchData<Pipeline[]>(pipelinesPath())
   );
 
   const { mutate: deleteData } = useDeleteData({
+    resource: tableType === "source" ? "sources" : "destinations",
     onSuccess: () => {
       modalToggle(false);
       setIsLoading(false);
@@ -110,9 +111,7 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
 
   const handleDelete = async (id: number, type: string) => {
     setIsLoading(true);
-    const resourceType = type === "source" ? "sources" : "destinations";
-    const url = `${API_URL}/api/${resourceType}/${id}`;
-    deleteData(url);
+    deleteData(type === "source" ? sourcePath(id) : destinationPath(id));
   };
 
   const onDeleteHandler = (id: number, name: string) => {

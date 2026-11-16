@@ -2,7 +2,7 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useQuery } from "@tanstack/react-query";
-import { createPost, editPut, fetchResult } from "src/apis";
+import { createPost, editPut, fetchData } from "src/apis";
 import { EditConnection } from "./EditConnection";
 import { render } from "../../__test__/unit/test-utils";
 
@@ -25,11 +25,43 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 
 vi.mock("src/apis", async (importOriginal) => {
   const mod = await importOriginal<typeof import("src/apis")>();
+  const createPost = vi.fn();
+  const editPut = vi.fn();
+  const unwrap = async (
+    response: { error?: string; data?: unknown } | undefined
+  ) => {
+    if (response?.error) {
+      throw new Error(response.error);
+    }
+    return response?.data;
+  };
   return {
     ...mod,
-    editPut: vi.fn(),
-    createPost: vi.fn(),
-    fetchResult: vi.fn(),
+    editPut,
+    createPost,
+    fetchData: vi.fn(),
+    useCreateResource: () => ({
+      mutateAsync: async ({
+        url,
+        payload,
+        fallback,
+      }: {
+        url: string;
+        payload: unknown;
+        fallback?: string;
+      }) => unwrap(await createPost(url, payload, fallback)),
+    }),
+    useUpdateResource: () => ({
+      mutateAsync: async ({
+        url,
+        payload,
+        fallback,
+      }: {
+        url: string;
+        payload: unknown;
+        fallback?: string;
+      }) => unwrap(await editPut(url, payload, fallback)),
+    }),
   };
 });
 
@@ -68,10 +100,8 @@ const MATCHING_SCHEMA = [
 const UNRELATED_SCHEMA = [{ ...MATCHING_SCHEMA[0], type: "MYSQL" }];
 
 const mockApi = (schemas: unknown) => {
-  vi.mocked(fetchResult).mockImplementation((async (url: string) =>
-    url.endsWith("/api/connections/schemas")
-      ? { data: schemas, error: undefined }
-      : { data: CONNECTION, error: undefined }) as any);
+  vi.mocked(fetchData).mockImplementation((async (url: string) =>
+    url.endsWith("/api/connections/schemas") ? schemas : CONNECTION) as any);
 };
 
 const input = (id: string) => document.getElementById(id) as HTMLInputElement;

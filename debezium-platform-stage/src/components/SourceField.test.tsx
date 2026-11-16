@@ -3,14 +3,14 @@ import { screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Table, Tbody, Tr } from "@patternfly/react-table";
 import SourceField from "./SourceField";
-import { fetchResult } from "../apis/apis";
+import { fetchData } from "../apis/apis";
 import { render } from "../__test__/unit/test-utils";
 
 vi.mock("../apis/apis", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../apis/apis")>();
   return {
     ...actual,
-    fetchResult: vi.fn(),
+    fetchData: vi.fn(),
   };
 });
 
@@ -22,20 +22,17 @@ vi.mock("./ComponentImage", () => ({
 
 describe("SourceField", () => {
   beforeEach(() => {
-    vi.mocked(fetchResult).mockReset();
+    vi.mocked(fetchData).mockReset();
   });
 
   it("loads source and shows name with connector", async () => {
-    vi.mocked(fetchResult).mockResolvedValue({
-      data: {
-        id: 9,
-        name: "ignored",
-        type: "postgresql",
-        schema: "",
-        vaults: [],
-        config: {},
-      },
-      error: null,
+    vi.mocked(fetchData).mockResolvedValue({
+      id: 9,
+      name: "ignored",
+      type: "postgresql",
+      schema: "",
+      vaults: [],
+      config: {},
     } as any);
 
     render(
@@ -55,10 +52,7 @@ describe("SourceField", () => {
   });
 
   it("shows small ApiError when fetch fails", async () => {
-    vi.mocked(fetchResult).mockResolvedValue({
-      data: null,
-      error: "nope",
-    } as any);
+    vi.mocked(fetchData).mockRejectedValue(new Error("nope"));
 
     render(
       <Table aria-label="t">

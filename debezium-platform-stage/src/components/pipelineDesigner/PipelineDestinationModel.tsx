@@ -14,12 +14,13 @@ import {
 import React, { useCallback, useState } from "react";
 import { fetchData } from "../../apis/apis";
 import { useQuery } from "@tanstack/react-query";
-import { API_URL } from "../../utils/constants";
+
 import SourceDestinationSelectionList from "../SourceDestinationSelectionList";
 import { CatalogGrid } from "@components/CatalogGrid";
 import { CreateDestination } from "@destinationPage/CreateDestination";
 import { Catalog, CatalogApiResponse, Destination } from "../../apis/types";
 import CatalogSkeleton from "@components/CatalogSkeleton";
+import { catalogPath, destinationsPath } from "../../apis/endpoints";
 
 type PipelineDestinationModelProps = {
   onDestinationSelection: (destination: Destination) => void;
@@ -41,7 +42,7 @@ const PipelineDestinationModel: React.FC<PipelineDestinationModelProps> = ({
     queryKey: ["destinations"],
 
     queryFn: () =>
-      fetchData<Destination[]>(`${API_URL}/api/destinations`)
+      fetchData<Destination[]>(destinationsPath())
   });
 
   const {
@@ -54,7 +55,7 @@ const PipelineDestinationModel: React.FC<PipelineDestinationModelProps> = ({
 
     queryFn: async () => {
       const response = await fetchData<CatalogApiResponse>(
-        `${API_URL}/api/catalog`
+        catalogPath()
       );
       return (response.components["server-sink"] ?? []).map((entry) => ({
         ...entry,

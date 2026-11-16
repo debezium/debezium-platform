@@ -25,6 +25,9 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 
 vi.mock("src/apis", () => ({
   useDeleteData: vi.fn(),
+  useUpdateResource: () => ({ mutateAsync: vi.fn() }),
+  mutationErrorMessage: (error: unknown) =>
+    error instanceof Error ? error.message : String(error),
 }));
 
 vi.mock("../../appLayout/AppContext", () => ({

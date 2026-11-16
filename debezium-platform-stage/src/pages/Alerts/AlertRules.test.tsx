@@ -195,7 +195,7 @@ describe("AlertRules", () => {
   });
 
   it("calls the enable/disable endpoint when the status switch is toggled", async () => {
-    vi.mocked(setAlertRuleEnabled).mockResolvedValue({ data: sampleRule({ enabled: false }) });
+    vi.mocked(setAlertRuleEnabled).mockResolvedValue(sampleRule({ enabled: false }));
 
     render(<AlertRules firingRuleIds={new Set()}  />);
     await screen.findByText("high-error-rate");

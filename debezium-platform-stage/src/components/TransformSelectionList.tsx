@@ -26,7 +26,7 @@ import { Table, Thead, Tr, Th, Tbody, Td } from "@patternfly/react-table";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchData } from "../apis/apis";
 import { Pipeline, TransformApiResponse, TransformData } from "../apis/types";
-import { API_URL } from "../utils/constants";
+
 import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useTranslation } from "react-i18next";
 import UsedIn, { getActivePipelineCount } from "./UsedIn";
@@ -36,6 +36,7 @@ import {
   getConnectorFamily,
   isTransformCompatibleWithSource,
 } from "../utils/transformCatalog";
+import { pipelinesPath } from "../apis/endpoints";
 
 type FilterField = "name" | "type";
 
@@ -63,7 +64,7 @@ const TransformSelectionList: React.FunctionComponent<
     retry: retryPipelines,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
+    () => fetchData<Pipeline[]>(pipelinesPath())
   );
 
   const [searchInput, setSearchInput] = useState<string>("");

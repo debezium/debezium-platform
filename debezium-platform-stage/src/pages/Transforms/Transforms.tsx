@@ -41,7 +41,7 @@ import EmptyStatus from "../../components/EmptyStatus";
 import "./Transforms.css";
 import { useNavigate } from "react-router-dom";
 import { fetchData, Pipeline, TransformData, useDeleteData } from "src/apis";
-import { API_URL } from "@utils/constants";
+
 import { useResourceQuery } from "src/hooks/useResourceQuery";
 import _, { debounce } from "lodash";
 import { useState } from "react";
@@ -62,6 +62,7 @@ import { useNotification } from "@appContext/index";
 import { FeatureGate } from "@components/FeatureGate";
 import { Trans, useTranslation } from "react-i18next";
 import UsedIn from "@components/UsedIn";
+import { transformsPath, transformPath, pipelinesPath } from "../../apis/endpoints";
 
 export interface ITransformsProps {
   sampleProp?: string;
@@ -103,7 +104,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
     retry: retryPipelines,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
+    () => fetchData<Pipeline[]>(pipelinesPath())
   );
 
   const {
@@ -113,7 +114,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
     retry: retryResource,
   } = useResourceQuery<TransformData[], Error>(
     "transforms",
-    () => fetchData<TransformData[]>(`${API_URL}/api/transforms`)
+    () => fetchData<TransformData[]>(transformsPath())
   );
 
   const retryAll = React.useCallback(() => {
@@ -146,6 +147,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
   );
 
   const { mutate: deleteData } = useDeleteData({
+    resource: "transforms",
     onSuccess: () => {
       modalToggle(false);
       setIsLoading(false);
@@ -168,7 +170,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
 
   const handleDelete = async (id: number) => {
     setIsLoading(true);
-    const url = `${API_URL}/api/transforms/${id}`;
+    const url = transformPath(id);
     deleteData(url);
   };
 

@@ -39,7 +39,8 @@ import {
 } from "@patternfly/react-core";
 import { FilterIcon, RhUiAddCircleIcon, SearchIcon } from "@patternfly/react-icons";
 import { useNavigate } from "react-router-dom";
-import { editPut, fetchData, fetchResult, fetchFile } from "../../apis/apis";
+import { fetchData, fetchFile } from "../../apis/apis";
+import { requestErrorMessage } from "../../apis/client";
 import {
   Connection,
   Destination,
@@ -65,17 +66,18 @@ import {
 } from "@patternfly/react-table";
 import _, { debounce } from "lodash";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
-import { API_URL } from "../../utils/constants";
+
 import { ReactNode, useState } from "react";
 import SourceField from "../../components/SourceField";
 import DestinationField from "../../components/DestinationField";
 import ApiError from "../../components/ApiError";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { PipelineEmpty } from "./PipelineEmpty";
-import { useDeleteData } from "src/apis";
+import { mutationErrorMessage, useDeleteData, useUpdateResource } from "src/apis";
 import PageHeader from "@components/PageHeader";
 import "./Pipelines.css";
 import { Trans, useTranslation } from "react-i18next";
+import { sourcePath, destinationPath, transformPath, connectionPath, pipelinesPath, pipelinePath, pipelineLogsPath } from "../../apis/endpoints";
 
 export type DeleteInstance = {
   id: number;
@@ -186,7 +188,7 @@ const Pipelines: React.FunctionComponent = () => {
     retry: retryResource,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
+    () => fetchData<Pipeline[]>(pipelinesPath())
   );
 
   const [restartingPipelineId, setRestartingPipelineId] = useState<number | null>(
@@ -230,7 +232,7 @@ const Pipelines: React.FunctionComponent = () => {
     setIsLogLoading(true);
     // Fetch the file as a Blob
     const response = await fetchFile(
-      `${API_URL}/api/pipelines/${pipelineId}/logs`
+      pipelineLogsPath(pipelineId)
     );
     if ("error" in response) {
       addNotification(
@@ -258,66 +260,40 @@ const Pipelines: React.FunctionComponent = () => {
   const exportServerConfig = async (pipeline: Pipeline) => {
     setIsExportLoading(true);
     try {
-      const [sourceRes, destRes] = await Promise.all([
-        fetchResult<Source>(`${API_URL}/api/sources/${pipeline.source.id}`),
-        fetchResult<Destination>(
-          `${API_URL}/api/destinations/${pipeline.destination.id}`
-        ),
-      ]);
-
-      if (sourceRes.error || destRes.error) {
+      let source: Source;
+      let dest: Destination;
+      try {
+        [source, dest] = await Promise.all([
+          fetchData<Source>(sourcePath(pipeline.source.id)),
+          fetchData<Destination>(destinationPath(pipeline.destination.id)),
+        ]);
+      } catch (error) {
         addNotification(
           "danger",
           `Export failed for ${pipeline.name}`,
-          `Failed to fetch pipeline resources: ${sourceRes.error ?? destRes.error}`
+          `Failed to fetch pipeline resources: ${requestErrorMessage(error)}`
         );
         return;
       }
 
-      const source = sourceRes.data as Source;
-      const dest = destRes.data as Destination;
+      const resolvedTransforms = (
+        await Promise.all(
+          pipeline.transforms.map(async (transform) => {
+            try {
+              return await fetchData<TransformData>(transformPath(transform.id));
+            } catch {
+              return null;
+            }
+          })
+        )
+      ).filter((transform): transform is TransformData => transform != null);
 
-      const transformFetches = pipeline.transforms.map((t) =>
-        fetchResult<TransformData>(`${API_URL}/api/transforms/${t.id}`)
-      );
-      const connectionFetches: Promise<{ data?: Connection | null; error?: string }>[] = [];
-      if (source.connection?.id) {
-        connectionFetches.push(
-          fetchResult<Connection>(
-            `${API_URL}/api/connections/${source.connection.id}`
-          )
-        );
-      } else {
-        connectionFetches.push(Promise.resolve({ data: null }));
-      }
-      if (dest.connection?.id) {
-        connectionFetches.push(
-          fetchResult<Connection>(
-            `${API_URL}/api/connections/${dest.connection.id}`
-          )
-        );
-      } else {
-        connectionFetches.push(Promise.resolve({ data: null }));
-      }
-
-      const [transformResults, [sourceConnRes, destConnRes]] =
-        await Promise.all([
-          Promise.all(transformFetches),
-          Promise.all(connectionFetches),
-        ]);
-
-      const resolvedTransforms = transformResults
-        .filter((r) => !r.error && r.data)
-        .map((r) => r.data as TransformData);
-
-      const sourceConn =
-        !sourceConnRes.error && sourceConnRes.data
-          ? (sourceConnRes.data as Connection)
-          : null;
-      const destConn =
-        !destConnRes.error && destConnRes.data
-          ? (destConnRes.data as Connection)
-          : null;
+      const sourceConn = source.connection?.id
+        ? await fetchData<Connection>(connectionPath(source.connection.id)).catch(() => null)
+        : null;
+      const destConn = dest.connection?.id
+        ? await fetchData<Connection>(connectionPath(dest.connection.id)).catch(() => null)
+        : null;
 
       const content = generatePropertiesContent(
         pipeline.name,
@@ -339,7 +315,10 @@ const Pipelines: React.FunctionComponent = () => {
     }
   };
 
+  const updatePipeline = useUpdateResource();
+
   const { mutate: deleteData } = useDeleteData({
+    resource: "pipelines",
     onSuccess: () => {
       modalToggle(false);
       setIsLoading(false);
@@ -362,10 +341,9 @@ const Pipelines: React.FunctionComponent = () => {
 
   const handleDelete = async (id: number) => {
     setIsLoading(true);
-    const url = `${API_URL}/api/pipelines/${id}`;
+    const url = pipelinePath(id);
     deleteData(url);
   };
-
 
   const debouncedSetSearchQuery = React.useMemo(
     () => debounce((value: string) => {
@@ -431,31 +409,31 @@ const Pipelines: React.FunctionComponent = () => {
 
   const onRestartHandler = async (pipeline: Pipeline) => {
     setRestartingPipelineId(pipeline.id);
-    const response = await editPut(
-      `${API_URL}/api/pipelines/${pipeline.id}`,
-      buildPipelineRestartPayload(pipeline)
-    );
-    setRestartingPipelineId(null);
-
-    if (response.error) {
+    try {
+      await updatePipeline.mutateAsync({
+        url: pipelinePath(pipeline.id),
+        payload: buildPipelineRestartPayload(pipeline),
+        resource: "pipelines",
+      });
+      setRestartingPipelineId(null);
+      addNotification(
+        "success",
+        t("statusMessage:restart.successTitle"),
+        t("statusMessage:restart.successDescription", {
+          val: `${t("pipeline")} ${pipeline.name}`,
+        })
+      );
+      void refetchPipelines();
+    } catch (error) {
+      setRestartingPipelineId(null);
       addNotification(
         "danger",
         t("statusMessage:restart.failedTitle"),
         t("statusMessage:restart.failedDescription", {
-          val: `${t("pipeline")} ${pipeline.name}: ${response.error}`,
+          val: `${t("pipeline")} ${pipeline.name}: ${mutationErrorMessage(error)}`,
         })
       );
-      return;
     }
-
-    addNotification(
-      "success",
-      t("statusMessage:restart.successTitle"),
-      t("statusMessage:restart.successDescription", {
-        val: `${t("pipeline")} ${pipeline.name}`,
-      })
-    );
-    void refetchPipelines();
   };
 
   const rowActions = (actionData: ActionData): IAction[] => [
@@ -737,7 +715,6 @@ const Pipelines: React.FunctionComponent = () => {
           >
             <ModalHeader
               title={
-
 
                 <Trans
                   i18nKey="deleteModel.heading"

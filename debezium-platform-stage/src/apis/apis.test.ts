@@ -4,16 +4,15 @@ import { createPost, editPut } from "./apis";
 const httpResponse = (
   body: unknown,
   init: { ok?: boolean; statusText?: string; jsonFails?: boolean } = {}
-) =>
-  ({
-    ok: init.ok ?? true,
-    statusText: init.statusText ?? (init.ok === false ? "Bad Request" : "OK"),
-    json: init.jsonFails
-      ? async () => {
-          throw new Error("not json");
-        }
-      : async () => body,
-  }) as Response;
+) => {
+  const ok = init.ok ?? true;
+  // `jsonFails` models a server that labels its body JSON but does not send JSON.
+  return new Response(init.jsonFails ? "not json" : JSON.stringify(body), {
+    status: ok ? 200 : 400,
+    statusText: init.statusText ?? (ok ? "OK" : "Bad Request"),
+    headers: { "Content-Type": "application/json" },
+  });
+};
 
 describe("createPost and editPut error copy", () => {
   afterEach(() => {
@@ -27,10 +26,12 @@ describe("createPost and editPut error copy", () => {
       vi.fn().mockResolvedValue(httpResponse(null, { ok: false, jsonFails: true }))
     );
 
-    const response = await createPost("/api/destinations", {});
-
-    expect(response.error).toBe("Failed to create resource: Bad Request");
-    expect(response.error).not.toMatch(/creating source/i);
+    await expect(createPost("/api/destinations", {})).rejects.toMatchObject({
+      message: "Failed to create resource: Bad Request",
+    });
+    await expect(createPost("/api/destinations", {})).rejects.not.toMatchObject({
+      message: expect.stringMatching(/creating source/i),
+    });
   });
 
   it("does not describe a failed update as creating a source", async () => {
@@ -39,13 +40,12 @@ describe("createPost and editPut error copy", () => {
       vi.fn().mockResolvedValue(httpResponse(null, { ok: false, jsonFails: true }))
     );
 
-    const response = await editPut("/api/pipelines/1", {});
-
-    expect(response.error).toBe("Failed to update resource: Bad Request");
-    expect(response.error).not.toMatch(/creating source/i);
+    await expect(editPut("/api/pipelines/1", {})).rejects.toMatchObject({
+      message: "Failed to update resource: Bad Request",
+    });
   });
 
-  it("prefers a server error body over the fallback", async () => {
+  it("prefers a server error body over the fallback, and keeps the status", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -53,35 +53,53 @@ describe("createPost and editPut error copy", () => {
       )
     );
 
-    const response = await createPost("/api/sources", {});
-
-    expect(response.error).toBe("name already exists");
+    // The reworded message is for display; `status` is what a permission check reads.
+    await expect(createPost("/api/sources", {})).rejects.toMatchObject({
+      name: "ApiRequestError",
+      status: 400,
+      message: "name already exists",
+      body: { details: ["name already exists"] },
+    });
   });
 
-  it("returns the created body without touching a query cache", async () => {
+  it("keeps the status on a denied write so a 403 stays distinguishable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: "requires pipeline:write" }), {
+          status: 403,
+          statusText: "Forbidden",
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+    );
+
+    await expect(editPut("/api/pipelines/1", {})).rejects.toMatchObject({
+      name: "ApiRequestError",
+      status: 403,
+      message: "requires pipeline:write",
+    });
+  });
+
+  it("resolves with the created body without touching a query cache", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(httpResponse({ id: 1, name: "orders" }))
     );
 
-    const response = await createPost<{ id: number; name: string }>(
-      "/api/destinations",
-      { name: "orders" }
-    );
-
-    expect(response).toEqual({ data: { id: 1, name: "orders" } });
+    await expect(
+      createPost<{ id: number; name: string }>("/api/destinations", { name: "orders" })
+    ).resolves.toEqual({ id: 1, name: "orders" });
   });
 
   it("uses a caller-supplied fallback for network failures", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
 
-    const response = await editPut(
-      "/api/connections/1",
-      {},
-      "Failed to update connection"
-    );
-
-    expect(response.error).toBe("Failed to update connection");
+    await expect(
+      editPut("/api/connections/1", {}, "Failed to update connection")
+    ).rejects.toMatchObject({
+      kind: "network",
+      message: "Failed to update connection",
+    });
   });
 });

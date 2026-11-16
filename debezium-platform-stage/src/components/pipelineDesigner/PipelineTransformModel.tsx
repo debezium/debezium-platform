@@ -11,12 +11,12 @@ import {
 import React, { useState } from "react";
 import { fetchData } from "../../apis/apis";
 import { TransformData } from "../../apis/types";
-import { API_URL } from "../../utils/constants";
+
 import { useQuery } from "@tanstack/react-query";
 import TransformSelectionList from "@components/TransformSelectionList";
 import { CreateTransforms } from "src/pages/Transforms";
 import { useTranslation } from "react-i18next";
-
+import { transformsPath } from "../../apis/endpoints";
 
 type PipelineTransformModelProps = {
   onTransformSelection: (transform: TransformData[]) => void;
@@ -40,7 +40,7 @@ const PipelineTransformModel: React.FC<PipelineTransformModelProps> = ({
     queryKey: ["transforms"],
 
     queryFn: () =>
-      fetchData<TransformData[]>(`${API_URL}/api/transforms`)
+      fetchData<TransformData[]>(transformsPath())
   });
 
   const [userSelection, setUserSelection] = useState<string | null>(null);

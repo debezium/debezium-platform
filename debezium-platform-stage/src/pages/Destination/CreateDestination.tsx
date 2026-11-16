@@ -11,11 +11,11 @@ import {
 } from "@patternfly/react-core";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useRef, useState } from "react";
-import { createPost } from "../../apis/apis";
-import { API_URL } from "../../utils/constants";
+import { mutationErrorMessage, useCreateResource } from "src/apis";
+
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
 import { ConnectorSchema, Destination, Payload } from "../../apis/types";
 import CreateSchemaForm, {
@@ -26,6 +26,7 @@ import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { detectAndParseFormat } from "../../utils/formatCodeUtils";
 import { useData } from "@appContext/AppContext";
 import style from "../../styles/createConnector.module.css";
+import { catalogDescriptorPath, destinationsPath } from "../../apis/endpoints";
 
 interface CreateDestinationProps {
   modelLoaded?: boolean;
@@ -45,7 +46,7 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
   const { t } = useTranslation();
   const { addNotification } = useNotification();
   const { darkMode } = useData();
-  const queryClient = useQueryClient();
+  const createDestination = useCreateResource<Destination>();
 
   const destinationIdParam = useParams<{ destinationId: string }>();
   const destinationId = modelLoaded ? selectedId : destinationIdParam.destinationId;
@@ -70,13 +71,13 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
     error: schemaError,
   } = useQuery<ConnectorSchema, Error>({
     queryKey: ["connectorSchema", descriptorPath],
-    queryFn: () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
+    queryFn: () => fetchData<ConnectorSchema>(catalogDescriptorPath(descriptorPath)),
     enabled: !!descriptorPath
   });
 
   const { data: destinations = [] } = useQuery<Destination[], Error>({
     queryKey: ["destinations"],
-    queryFn: () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
+    queryFn: () => fetchData<Destination[]>(destinationsPath())
   });
 
   const existingDestinations = React.useMemo(() => {
@@ -89,27 +90,28 @@ const CreateDestination: React.FunctionComponent<CreateDestinationProps> = ({
 
   const createNewDestination = async (payload: Record<string, unknown>) => {
     setIsLoading(true);
-    const response = await createPost(
-      `${API_URL}/api/destinations`,
-      payload as unknown as Payload
-    );
-    if (response.error) {
-      addNotification(
-        "danger",
-        "Destination creation failed",
-        `Failed to create ${(payload as { name: string }).name}: ${response.error}`
-      );
-    } else {
-      if (modelLoaded) onSelection?.(response.data as Destination);
+    try {
+      const created = await createDestination.mutateAsync({
+        url: destinationsPath(),
+        payload: payload as unknown as Payload,
+        resource: "destinations",
+      });
+      if (modelLoaded) onSelection?.(created as Destination);
       addNotification(
         "success",
         "Create successful",
-        `Destination "${(response.data as Destination).name}" created successfully.`
+        `Destination "${(created as Destination).name}" created successfully.`
       );
-      await queryClient.invalidateQueries({ queryKey: ["destinations"] });
       if (!modelLoaded) navigate("/destination");
+    } catch (error) {
+      addNotification(
+        "danger",
+        "Destination creation failed",
+        `Failed to create ${(payload as { name: string }).name}: ${mutationErrorMessage(error)}`
+      );
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleSubmitCode = () => {

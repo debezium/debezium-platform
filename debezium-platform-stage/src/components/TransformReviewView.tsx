@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import type { TransformData } from "src/apis";
 import { fetchData } from "src/apis";
-import { API_URL } from "@utils/constants";
+
 import type {
   CatalogApiResponse,
   ConnectorSchema,
@@ -122,7 +122,7 @@ const TransformReviewView: React.FC<TransformReviewViewProps> = ({
 
   const { data: catalog } = useQuery<CatalogApiResponse, Error>({
     queryKey: ["componentCatalog"],
-    queryFn: () => fetchData<CatalogApiResponse>(`${API_URL}/api/catalog`)
+    queryFn: () => fetchData<CatalogApiResponse>(catalogPath())
   });
 
   const entry = useMemo(
@@ -163,7 +163,7 @@ const TransformReviewView: React.FC<TransformReviewViewProps> = ({
 
     queryFn: () =>
       fetchData<ConnectorSchema>(
-        `${API_URL}/api/catalog/${transformDescriptor}`
+        catalogDescriptorPath(transformDescriptor)
       ),
 
     enabled: !!transformDescriptor
@@ -175,7 +175,7 @@ const TransformReviewView: React.FC<TransformReviewViewProps> = ({
 
       queryFn: () =>
         fetchData<ConnectorSchema>(
-          `${API_URL}/api/catalog/${predicateDescriptor}`
+          catalogDescriptorPath(predicateDescriptor)
         ),
 
       enabled: !!predicateDescriptor
@@ -606,3 +606,5 @@ const TransformReviewView: React.FC<TransformReviewViewProps> = ({
 };
 
 export default TransformReviewView;
+
+import { catalogPath, catalogDescriptorPath } from "../apis/endpoints";

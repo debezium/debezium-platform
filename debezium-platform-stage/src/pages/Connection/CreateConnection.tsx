@@ -3,7 +3,7 @@ import * as React from "react";
 import _, { } from "lodash";
 import { Controller, useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Connection, ConnectionConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, createPost, fetchData } from "src/apis";
+import { Connection, ConnectionConfig, ConnectionPayload, ConnectionsSchema, ConnectionValidationResult, fetchData, mutationErrorMessage, useCreateResource } from "src/apis";
 import style from "../../styles/createConnector.module.css"
 import ConnectorImage from "@components/ComponentImage";
 import { buildFlatConfigFromFormData, buildNestedConnectionYupFields } from "@utils/connectionForm";
@@ -20,13 +20,14 @@ import { extractConnectorType, getConnectorTypeName } from "@utils/helpers";
 import { AdditionalPropertiesRows } from "@components/AdditionalPropertiesRows";
 import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon, PlusIcon } from "@patternfly/react-icons";
 import { useState } from "react";
-import { API_URL } from "@utils/constants";
+
 import { useNotification } from "@appContext/AppNotificationContext";
 import * as yup from "yup";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@patternfly/react-component-groups";
+import { connectionsPath, connectionSchemasPath, connectionValidatePath } from "../../apis/endpoints";
 
 export interface ICreateConnectionProps {
     selectedConnectionType?: "source" | "destination";
@@ -43,14 +44,13 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { addNotification } = useNotification();
-    const queryClient = useQueryClient();
+    const createResource = useCreateResource<Connection | ConnectionValidationResult>();
     const location = useLocation();
 
     const { connectionId: connectionIdParam } = useParams<{ connectionId: string }>();
     const connectionId = selectedConnectionId ? selectedConnectionId : connectionIdParam || "";
     const [connectionValidated, setConnectionValidated] = useState<boolean>(false);
     const [passwordVisible, setPasswordVisible] = useState<Record<string, boolean>>({});
-
 
     const state = location.state as { connectionType?: string } | null;
     const connectionType = state ? state.connectionType : selectedConnectionType;
@@ -66,12 +66,12 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
         queryKey: ["connectionsSchema"],
 
         queryFn: () =>
-            fetchData<ConnectionsSchema[]>(`${API_URL}/api/connections/schemas`)
+            fetchData<ConnectionsSchema[]>(connectionSchemasPath())
     });
 
     const { data: existingConnections = [] } = useQuery<Connection[]>({
         queryKey: ["connectionsList"],
-        queryFn: () => fetchData<Connection[]>(`${API_URL}/api/connections`),
+        queryFn: () => fetchData<Connection[]>(connectionsPath()),
         select: (data) => data
     });
 
@@ -90,8 +90,6 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
             setProperties(new Map([["key0", createEmptyAdditionalPropertyRow()]]));
         }
     }, [selectedSchema]);
-
-
 
     const schema = yup.object({
         name: yup.string().required().test(
@@ -154,7 +152,6 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
         });
     };
 
-
     const togglePasswordVisibility = (fieldName: string) => {
         setPasswordVisible(prev => ({ ...prev, [fieldName]: !prev[fieldName] }));
     };
@@ -165,60 +162,61 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
         }
     );
 
-
     const validateConnection = async (payload: ConnectionPayload) => {
-        const response = await createPost(`${API_URL}/api/connections/validate`, payload);
-
-        if (response.error) {
+        try {
+            const result = await createResource.mutateAsync({
+                url: connectionValidatePath(),
+                payload,
+            });
+            if (result && "valid" in result && result.valid === false) {
+                addNotification(
+                    "danger",
+                    `Connection validation failed`,
+                    `${result.errorType}: ${result.message}`
+                );
+            } else {
+                addNotification(
+                    "success",
+                    `Validation successful`,
+                    `Connection validated successfully.`
+                );
+                setConnectionValidated(true);
+            }
+        } catch {
             addNotification(
                 "danger",
                 `Connection validation failed`,
                 `Failed to validate `
             );
         }
-        else if ((response.data as ConnectionValidationResult).valid === false) {
-            addNotification(
-                "danger",
-                `Connection validation failed`,
-                `${(response.data as ConnectionValidationResult).errorType}: ${(response.data as ConnectionValidationResult).message}`
-            );
-        }
-        else {
-
-            addNotification(
-                "success",
-                `Validation successful`,
-                `Connection validated successfully.`
-            );
-            setConnectionValidated(true);
-        }
     };
 
     const createConnection = async (payload: ConnectionPayload) => {
-        const response = await createPost(`${API_URL}/api/connections`, payload);
-
-        if (response.error) {
-            addNotification(
-                "danger",
-                `Connection creation failed`,
-                `Failed to create connection ${payload.name}: ${response.error}`
-            );
-        }
-        else {
+        try {
+            const created = await createResource.mutateAsync({
+                url: connectionsPath(),
+                payload,
+                resource: "connections",
+            });
             addNotification(
                 "success",
                 `Creation successful`,
                 `Connection ${payload.name} created successfully.`
             );
-            await queryClient.invalidateQueries({ queryKey: ["connections"] });
-            await queryClient.invalidateQueries({ queryKey: ["connectionsList"] });
             if (selectedConnectionType) {
-                setSelectedConnection && setSelectedConnection({ id: (response.data as Connection)?.id, name: (response.data as Connection)?.name } as ConnectionConfig);
+                const connection = created as Connection;
+                setSelectedConnection && setSelectedConnection({ id: connection?.id, name: connection?.name } as ConnectionConfig);
                 handleConnectionModalToggle && handleConnectionModalToggle();
             }
             else {
                 navigate("/connections")
             }
+        } catch (error) {
+            addNotification(
+                "danger",
+                `Connection creation failed`,
+                `Failed to create connection ${payload.name}: ${mutationErrorMessage(error)}`
+            );
         }
     };
 
@@ -378,7 +376,6 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                     </FormHelperText>
                                 </FormGroup>
 
-
                                 {selectedSchemaProperties &&
                                     (
                                         <FormFieldGroup
@@ -401,7 +398,6 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                                         isRequired={selectedSchemaProperties.required.includes(propertyName)}
                                                         labelHelp={
                                                             <Popover
-
 
                                                                 bodyContent={
                                                                     <div>
@@ -489,7 +485,6 @@ const CreateConnection: React.FunctionComponent<ICreateConnectionProps> = ({ sel
                                                 ))}
                                         </FormFieldGroup>
                                     )}
-
 
                                 <FormFieldGroup
                                     header={

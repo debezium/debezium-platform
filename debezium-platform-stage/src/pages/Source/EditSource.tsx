@@ -13,16 +13,13 @@ import {
 import { PencilAltIcon, RhUiDataSourceIcon } from "@patternfly/react-icons";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import {
-  editPut,
-  fetchData,
-  fetchResult,
-} from "../../apis/apis";
-import { API_URL } from "../../utils/constants";
+import { fetchData } from "../../apis/apis";
+import { mutationErrorMessage, useUpdateResource } from "src/apis";
+
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { PageHeader } from "@patternfly/react-component-groups";
 import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ConnectorSchema, Payload, Source } from "../../apis/types";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
@@ -30,6 +27,7 @@ import CreateSchemaForm, {
 import SchemaReviewView from "@components/SchemaReviewView";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import { resolveSourcePageViewMode } from "./sourcePageNavigation";
+import { catalogDescriptorPath, sourcesPath, sourcePath } from "../../apis/endpoints";
 
 const EditSource: React.FunctionComponent = () => {
   const { t } = useTranslation();
@@ -50,11 +48,11 @@ const EditSource: React.FunctionComponent = () => {
 
   const formRef = useRef<CreateSchemaFormHandle>(null);
   const { addNotification } = useNotification();
-  const queryClient = useQueryClient();
+  const updateSource = useUpdateResource<Source>();
 
   const { data: sources = [] } = useQuery<Source[], Error>({
     queryKey: ["sources"],
-    queryFn: () => fetchData<Source[]>(`${API_URL}/api/sources`)
+    queryFn: () => fetchData<Source[]>(sourcesPath())
   });
 
   const existingSources = React.useMemo(() => {
@@ -75,15 +73,7 @@ const EditSource: React.FunctionComponent = () => {
   } = useQuery<Source, Error>({
     queryKey: ["source", routeSourceId],
 
-    queryFn: async () => {
-      const response = await fetchResult<Source>(
-        `${API_URL}/api/sources/${routeSourceId}`
-      );
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      return response.data as Source;
-    },
+    queryFn: () => fetchData<Source>(sourcePath(routeSourceId)),
 
     enabled: !!routeSourceId
   });
@@ -99,7 +89,7 @@ const EditSource: React.FunctionComponent = () => {
     error: schemaError,
   } = useQuery<ConnectorSchema, Error>({
     queryKey: ["connectorSchema", descriptorPath],
-    queryFn: () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
+    queryFn: () => fetchData<ConnectorSchema>(catalogDescriptorPath(descriptorPath)),
     enabled: !!descriptorPath
   });
 
@@ -110,33 +100,31 @@ const EditSource: React.FunctionComponent = () => {
 
   const handleSchemaSubmit = async (payload: Record<string, unknown>) => {
     setIsLoading(true);
-    const response = await editPut<Source>(
-      `${API_URL}/api/sources/${routeSourceId}`,
-      payload as unknown as Payload
-    );
-    if (response.error) {
-      addNotification(
-        "danger",
-        t("statusMessage:edit.failedTitle"),
-        t("statusMessage:edit.failedDescription", {
-          val: `${(response.data as Source)?.name ?? source?.name}: ${response.error}`,
-        })
-      );
-    } else {
+    try {
+      const updated = await updateSource.mutateAsync({
+        url: sourcePath(routeSourceId),
+        payload: payload as unknown as Payload,
+        resource: "sources",
+      });
       addNotification(
         "success",
         t("statusMessage:edit.successTitle"),
         t("statusMessage:edit.successDescription", {
-          val: `${(response.data as Source)?.name ?? source?.name}`,
+          val: `${updated?.name ?? source?.name}`,
         })
       );
-      await queryClient.invalidateQueries({
-        queryKey: ["source", routeSourceId],
-      });
-      await queryClient.invalidateQueries({ queryKey: ["sources"] });
       setViewMode(true);
+    } catch (error) {
+      addNotification(
+        "danger",
+        t("statusMessage:edit.failedTitle"),
+        t("statusMessage:edit.failedDescription", {
+          val: `${source?.name}: ${mutationErrorMessage(error)}`,
+        })
+      );
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleEditConfirm = (

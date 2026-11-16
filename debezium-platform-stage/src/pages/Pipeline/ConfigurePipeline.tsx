@@ -49,9 +49,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "./ConfigurePipeline.css";
 import { CodeEditor, Language } from "@patternfly/react-code-editor";
 import { useEffect, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { createPost, fetchResult } from "../../apis/apis";
-import { API_URL } from "../../utils/constants";
+import { fetchData } from "../../apis/apis";
+import { requestErrorMessage } from "../../apis/client";
+import { mutationErrorMessage, useCreateResource } from "src/apis";
+
 import { useAtom } from "jotai";
 import { selectedTransformAtom } from "./PipelineDesigner";
 import { useNotification } from "@appContext/AppNotificationContext";
@@ -72,6 +73,7 @@ import {
   getPipelineNameValidationError,
 } from "@utils/pipelineNameValidation";
 import { PageHeader } from "@patternfly/react-component-groups";
+import { sourcePath, destinationPath, pipelinesPath } from "../../apis/endpoints";
 
 const ajv = new Ajv();
 
@@ -161,12 +163,11 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   const { darkMode } = useData();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const createPipeline = useCreateResource();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const sourceId = params.get("sourceId");
   const destinationId = params.get("destinationId");
-
 
   const [pkgLevelLog, setPkgLevelLog] = useState<Map<string, Properties>>(
     new Map()
@@ -275,16 +276,11 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   useEffect(() => {
     const fetchSources = async () => {
       setIsSourceLoading(true);
-      const response = await fetchResult<Source>(
-        `${API_URL}/api/sources/${sourceId}`
-      );
-
-      if (response.error) {
-        setSourceError(response.error);
-      } else {
-        setSource(response.data as Source);
+      try {
+        setSource(await fetchData<Source>(sourcePath(sourceId)));
+      } catch (error) {
+        setSourceError(requestErrorMessage(error));
       }
-
       setIsSourceLoading(false);
     };
 
@@ -294,16 +290,11 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   useEffect(() => {
     const fetchDestination = async () => {
       setIsDestinationLoading(true);
-      const response = await fetchResult<Destination>(
-        API_URL + `/api/destinations/${destinationId}`
-      );
-
-      if (response.error) {
-        setDestinationError(response.error);
-      } else {
-        setDestination(response.data as Destination);
+      try {
+        setDestination(await fetchData<Destination>(destinationPath(destinationId)));
+      } catch (error) {
+        setDestinationError(requestErrorMessage(error));
       }
-
       setIsDestinationLoading(false);
     };
 
@@ -311,25 +302,25 @@ const ConfigurePipeline: React.FunctionComponent = () => {
   }, [destinationId]);
 
   const createNewPipeline = async (payload: PipelinePayload) => {
-    const response = await createPost(`${API_URL}/api/pipelines`, payload);
-
-    if (response.error) {
+    try {
+      await createPipeline.mutateAsync({
+        url: pipelinesPath(),
+        payload,
+        resource: "pipelines",
+      });
+      addNotification(
+        "success",
+        t('statusMessage:creation.successTitle', { val: t('pipeline') }),
+        t('statusMessage:creation.successDescription', { val: `${t('pipeline')} ${payload["name"]}` }),
+      );
+      navigateTo("/pipeline");
+    } catch (error) {
       addNotification(
         "danger",
         t('statusMessage:creation.failedTitle', { val: t('pipeline') }),
-        `${response.error}`
+        `${mutationErrorMessage(error)}`
       );
-      return;
     }
-    addNotification(
-      "success",
-      t('statusMessage:creation.successTitle', { val: t('pipeline') }),
-      t('statusMessage:creation.successDescription', { val: `${t('pipeline')} ${payload["name"]}` }),
-    );
-    await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
-    navigateTo("/pipeline");
-
-    return response;
   };
 
   const handleCreate = async (
@@ -691,7 +682,6 @@ const ConfigurePipeline: React.FunctionComponent = () => {
                                         setError(`pkg-level-log-config-props-key-field-${key}`, undefined);
                                         setError(`pkg-level-log-config-props-value-field-${key}`, undefined);
                                       }
-
 
                                       }
                                     />

@@ -1,5 +1,11 @@
-import { fetchResult } from "./apis";
-import { API_URL } from "../utils/constants";
+import { fetchData } from "./apis";
+import { requestErrorMessage } from "./client";
+import {
+  snapshotHistoryDetailPath,
+  snapshotHistoryPath,
+  snapshotProgressPath,
+  snapshotProgressStreamPath,
+} from "./endpoints";
 
 export type SnapshotType = "INITIAL" | "INCREMENTAL" | "BLOCKING";
 
@@ -98,15 +104,6 @@ export type SnapshotHistoryQuery = {
   to?: string;
 };
 
-const snapshotProgressPath = (pipelineId: string): string =>
-  `/api/pipelines/${pipelineId}/snapshots/progress`;
-
-const snapshotProgressStreamPath = (pipelineId: string): string =>
-  `${snapshotProgressPath(pipelineId)}/stream`;
-
-const snapshotHistoryPath = (pipelineId: string): string =>
-  `/api/pipelines/${pipelineId}/snapshots/history`;
-
 type RawChunkProgress = {
   chunkNumber?: number | null;
   chunkIndex?: number | null;
@@ -169,15 +166,27 @@ export const normalizeSnapshotProgress = (
   totalRowsScanned: raw.totalRowsScanned ?? null,
 });
 
+const readSnapshot = async <T,>(
+  url: string
+): Promise<{ data: T } | { error: string }> => {
+  try {
+    const data = await fetchData<T>(url);
+    if (data == null) {
+      return { error: "An error occurred while fetching data" };
+    }
+    return { data };
+  } catch (error) {
+    return { error: requestErrorMessage(error) };
+  }
+};
+
 export const getSnapshotProgress = async (
   pipelineId: string
 ): Promise<SnapshotClientResponse<SnapshotProgressResponse>> => {
-  const response = await fetchResult<RawSnapshotProgress>(
-    `${API_URL}${snapshotProgressPath(pipelineId)}`
-  );
+  const response = await readSnapshot<RawSnapshotProgress>(snapshotProgressPath(pipelineId));
 
-  if (response.error || response.data == null) {
-    return { error: response.error ?? "An error occurred while fetching data" };
+  if ("error" in response) {
+    return response;
   }
 
   return { data: normalizeSnapshotProgress(response.data) };
@@ -272,12 +281,12 @@ export const getSnapshotHistory = async (
   if (query.to) {
     params.set("to", query.to);
   }
-  const response = await fetchResult<RawPagedSnapshotHistory>(
-    `${API_URL}${snapshotHistoryPath(pipelineId)}?${params.toString()}`
+  const response = await readSnapshot<RawPagedSnapshotHistory>(
+    snapshotHistoryPath(pipelineId, params.toString())
   );
 
-  if (response.error || response.data == null) {
-    return { error: response.error ?? "An error occurred while fetching data" };
+  if ("error" in response) {
+    return response;
   }
 
   const data = response.data;
@@ -296,12 +305,12 @@ export const getSnapshotHistoryDetail = async (
   pipelineId: string,
   historyId: number
 ): Promise<SnapshotClientResponse<SnapshotHistoryResponse>> => {
-  const response = await fetchResult<RawSnapshotHistory>(
-    `${API_URL}${snapshotHistoryPath(pipelineId)}/${historyId}`
+  const response = await readSnapshot<RawSnapshotHistory>(
+    snapshotHistoryDetailPath(pipelineId, historyId)
   );
 
-  if (response.error || response.data == null) {
-    return { error: response.error ?? "An error occurred while fetching data" };
+  if ("error" in response) {
+    return response;
   }
 
   return { data: normalizeSnapshotHistory(response.data) };
@@ -317,9 +326,7 @@ export const subscribeSnapshotProgress = (
   pipelineId: string,
   onProgress: (progress: SnapshotProgressResponse) => void
 ): (() => void) => {
-  const source = new EventSource(
-    `${API_URL}${snapshotProgressStreamPath(pipelineId)}`
-  );
+  const source = new EventSource(snapshotProgressStreamPath(pipelineId));
 
   const onEvent = (event: Event) => {
     const data = (event as MessageEvent<string>).data;
