@@ -57,7 +57,7 @@ import {
   TransformData,
   TransformPayload,
 } from "src/apis";
-import { API_URL } from "@utils/constants";
+
 import { useNotification } from "@appContext/AppNotificationContext";
 import {
   CatalogApiResponse,
@@ -223,7 +223,7 @@ const CreateTransformForm = React.forwardRef<
       queryKey: ["componentCatalog"],
 
       queryFn: () =>
-        fetchData<CatalogApiResponse>(`${API_URL}/api/catalog`)
+        fetchData<CatalogApiResponse>(catalogPath())
     });
 
     const transformations = useMemo(
@@ -284,7 +284,7 @@ const CreateTransformForm = React.forwardRef<
 
       queryFn: () =>
         fetchData<ConnectorSchema>(
-          `${API_URL}/api/catalog/${transformDescriptor}`
+          catalogDescriptorPath(transformDescriptor)
         ),
 
       enabled: !!transformDescriptor
@@ -299,7 +299,7 @@ const CreateTransformForm = React.forwardRef<
 
       queryFn: () =>
         fetchData<ConnectorSchema>(
-          `${API_URL}/api/catalog/${predicateDescriptor}`
+          catalogDescriptorPath(predicateDescriptor)
         ),
 
       enabled: !!predicateDescriptor
@@ -1595,3 +1595,5 @@ const CreateTransformForm = React.forwardRef<
 
 CreateTransformForm.displayName = "CreateTransformForm";
 export default CreateTransformForm;
+
+import { catalogPath, catalogDescriptorPath } from "../apis/endpoints";

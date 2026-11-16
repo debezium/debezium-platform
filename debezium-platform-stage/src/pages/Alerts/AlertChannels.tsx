@@ -48,6 +48,7 @@ import {
   testAlertChannel,
   updateAlertChannel,
 } from "../../apis/alerts";
+import { requestErrorMessage } from "../../apis/client";
 import ApiError from "../../components/ApiError";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import {
@@ -164,17 +165,12 @@ const AlertChannels: React.FC = () => {
 
   const handleSaveChannel = async (payload: NotificationChannelRequest) => {
     setIsSaving(true);
-    const response = editingChannel
-      ? await updateAlertChannel(editingChannel.id, payload)
-      : await createAlertChannel(payload);
-
-    if (response.error) {
-      addNotification(
-        "danger",
-        editingChannel ? "Edit failed" : "Create failed",
-        `Failed to ${editingChannel ? "update" : "create"} "${payload.name}": ${response.error}`
-      );
-    } else {
+    try {
+      if (editingChannel) {
+        await updateAlertChannel(editingChannel.id, payload);
+      } else {
+        await createAlertChannel(payload);
+      }
       addNotification(
         "success",
         editingChannel ? "Save successful" : "Create successful",
@@ -183,6 +179,12 @@ const AlertChannels: React.FC = () => {
       await refreshChannels();
       setIsFormOpen(false);
       setEditingChannel(undefined);
+    } catch (error) {
+      addNotification(
+        "danger",
+        editingChannel ? "Edit failed" : "Create failed",
+        `Failed to ${editingChannel ? "update" : "create"} "${payload.name}": ${requestErrorMessage(error)}`
+      );
     }
     setIsSaving(false);
   };
@@ -216,19 +218,25 @@ const AlertChannels: React.FC = () => {
 
   const handleTest = async (channel: NotificationChannel) => {
     setTestingId(channel.id);
-    const response = await testAlertChannel(channel.id);
-    if (response.error || response.data?.success === false) {
-      addNotification(
-        "danger",
-        "Test failed",
-        response.error ?? response.data?.message ?? `Failed to send a test to "${channel.name}".`
-      );
-    } else {
-      addNotification(
-        "success",
-        "Test notification sent successfully",
-        response.data?.message ?? `A sample payload was sent to "${channel.name}".`
-      );
+    try {
+      // A reachable channel that rejects the payload answers 200 with
+      // `success: false`, so the failure case is not only a thrown error.
+      const result = await testAlertChannel(channel.id);
+      if (result?.success === false) {
+        addNotification(
+          "danger",
+          "Test failed",
+          result.message ?? `Failed to send a test to "${channel.name}".`
+        );
+      } else {
+        addNotification(
+          "success",
+          "Test notification sent successfully",
+          result?.message ?? `A sample payload was sent to "${channel.name}".`
+        );
+      }
+    } catch (error) {
+      addNotification("danger", "Test failed", requestErrorMessage(error));
     }
     setTestingId(undefined);
   };
@@ -237,20 +245,20 @@ const AlertChannels: React.FC = () => {
     if (togglingChannelId !== undefined) return;
     const nextEnabled = !channel.enabled;
     setTogglingChannelId(channel.id);
-    const response = await updateAlertChannel(channel.id, {
-      name: channel.name,
-      type: channel.type,
-      config: channel.config,
-      enabled: nextEnabled,
-    });
-    if (response.error) {
+    try {
+      await updateAlertChannel(channel.id, {
+        name: channel.name,
+        type: channel.type,
+        config: channel.config,
+        enabled: nextEnabled,
+      });
+      await refreshChannels();
+    } catch (error) {
       addNotification(
         "danger",
         nextEnabled ? "Enable failed" : "Disable failed",
-        `Failed to ${nextEnabled ? "enable" : "disable"} "${channel.name}": ${response.error}`
+        `Failed to ${nextEnabled ? "enable" : "disable"} "${channel.name}": ${requestErrorMessage(error)}`
       );
-    } else {
-      await refreshChannels();
     }
     setTogglingChannelId(undefined);
   };

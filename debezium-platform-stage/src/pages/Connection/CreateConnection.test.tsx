@@ -23,7 +23,29 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 
 vi.mock("src/apis", async (importOriginal) => {
   const mod = await importOriginal<typeof import("src/apis")>();
-  return { ...mod, createPost: vi.fn(), fetchData: vi.fn() };
+  const createPost = vi.fn();
+  return {
+    ...mod,
+    createPost,
+    fetchData: vi.fn(),
+    useCreateResource: () => ({
+      mutateAsync: async ({
+        url,
+        payload,
+        fallback,
+      }: {
+        url: string;
+        payload: unknown;
+        fallback?: string;
+      }) => {
+        const response = await createPost(url, payload, fallback);
+        if (response?.error) {
+          throw new Error(response.error);
+        }
+        return response?.data;
+      },
+    }),
+  };
 });
 
 vi.mock("../../appLayout/AppContext", () => ({

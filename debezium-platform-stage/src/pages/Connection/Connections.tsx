@@ -9,7 +9,7 @@ import ApiError from "@components/ApiError";
 import { Connection, Destination, fetchData, Source } from "src/apis";
 import { useQuery } from "@tanstack/react-query";
 import { useResourceQuery } from "src/hooks/useResourceQuery";
-import { API_URL } from "@utils/constants";
+
 import _, { debounce } from "lodash";
 import PageHeader from "@components/PageHeader";
 import { useState } from "react";
@@ -17,7 +17,7 @@ import { getConnectionRole } from "@utils/helpers";
 import ConnectionTable from "@components/ConnectionTable";
 import { Catalog, CatalogApiResponse } from "src/apis/types";
 import { FeatureGate } from "@components/FeatureGate";
-
+import { catalogPath, sourcesPath, destinationsPath, connectionsPath } from "../../apis/endpoints";
 
 export interface IConnectionsProps {
   sampleProp?: string;
@@ -77,7 +77,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     retry: retrySources,
   } = useResourceQuery<Source[], Error>(
     "sources",
-    () => fetchData<Source[]>(`${API_URL}/api/sources`)
+    () => fetchData<Source[]>(sourcesPath())
   );
 
   const {
@@ -87,7 +87,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     retry: retryDestinations,
   } = useResourceQuery<Destination[], Error>(
     "destinations",
-    () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
+    () => fetchData<Destination[]>(destinationsPath())
   );
 
   const {
@@ -97,7 +97,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     retry: retryResource,
   } = useResourceQuery<Connection[], Error>(
     "connections",
-    () => fetchData<Connection[]>(`${API_URL}/api/connections`)
+    () => fetchData<Connection[]>(connectionsPath())
   );
 
   const retryAll = React.useCallback(() => {
@@ -111,7 +111,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
     queryFn: async () => {
       const response = await fetchData<CatalogApiResponse>(
-        `${API_URL}/api/catalog`
+        catalogPath()
       );
       return (response.components["source-connector"] ?? []).map((e) => ({
         ...e,
@@ -125,7 +125,7 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
 
     queryFn: async () => {
       const response = await fetchData<CatalogApiResponse>(
-        `${API_URL}/api/catalog`
+        catalogPath()
       );
       return (response.components["server-sink"] ?? []).map((entry) => ({
         ...entry,
@@ -188,7 +188,6 @@ const Connections: React.FunctionComponent<IConnectionsProps> = () => {
     },
     [debouncedSetSearchQuery]
   );
-
 
   return (
     <div data-tour="connection-page" style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", maxHeight: "100%" }}>

@@ -13,16 +13,13 @@ import {
 import { PencilAltIcon, RhUiDataSinkIcon } from "@patternfly/react-icons";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import {
-  editPut,
-  fetchData,
-  fetchResult,
-} from "../../apis/apis";
-import { API_URL } from "../../utils/constants";
+import { fetchData } from "../../apis/apis";
+import { mutationErrorMessage, useUpdateResource } from "src/apis";
+
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { PageHeader } from "@patternfly/react-component-groups";
 import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ConnectorSchema, Destination, Payload } from "../../apis/types";
 import CreateSchemaForm, {
   CreateSchemaFormHandle,
@@ -30,6 +27,7 @@ import CreateSchemaForm, {
 import SchemaReviewView from "@components/SchemaReviewView";
 import EditConfirmationModel from "../components/EditConfirmationModel";
 import { resolveDestinationPageViewMode } from "./destinationPageNavigation";
+import { catalogDescriptorPath, destinationsPath, destinationPath } from "../../apis/endpoints";
 
 const EditDestination: React.FunctionComponent = () => {
   const { t } = useTranslation();
@@ -50,11 +48,11 @@ const EditDestination: React.FunctionComponent = () => {
 
   const formRef = useRef<CreateSchemaFormHandle>(null);
   const { addNotification } = useNotification();
-  const queryClient = useQueryClient();
+  const updateDestination = useUpdateResource<Destination>();
 
   const { data: destinations = [] } = useQuery<Destination[], Error>({
     queryKey: ["destinations"],
-    queryFn: () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
+    queryFn: () => fetchData<Destination[]>(destinationsPath())
   });
 
   const existingDestinations = React.useMemo(() => {
@@ -75,15 +73,7 @@ const EditDestination: React.FunctionComponent = () => {
   } = useQuery<Destination, Error>({
     queryKey: ["destination", routeDestinationId],
 
-    queryFn: async () => {
-      const response = await fetchResult<Destination>(
-        `${API_URL}/api/destinations/${routeDestinationId}`
-      );
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      return response.data as Destination;
-    },
+    queryFn: () => fetchData<Destination>(destinationPath(routeDestinationId)),
 
     enabled: !!routeDestinationId
   });
@@ -99,7 +89,7 @@ const EditDestination: React.FunctionComponent = () => {
     error: schemaError,
   } = useQuery<ConnectorSchema, Error>({
     queryKey: ["connectorSchema", descriptorPath],
-    queryFn: () => fetchData<ConnectorSchema>(`${API_URL}/api/catalog/${descriptorPath}`),
+    queryFn: () => fetchData<ConnectorSchema>(catalogDescriptorPath(descriptorPath)),
     enabled: !!descriptorPath
   });
 
@@ -110,33 +100,31 @@ const EditDestination: React.FunctionComponent = () => {
 
   const handleSchemaSubmit = async (payload: Record<string, unknown>) => {
     setIsLoading(true);
-    const response = await editPut<Destination>(
-      `${API_URL}/api/destinations/${routeDestinationId}`,
-      payload as unknown as Payload
-    );
-    if (response.error) {
-      addNotification(
-        "danger",
-        t("statusMessage:edit.failedTitle"),
-        t("statusMessage:edit.failedDescription", {
-          val: `${(response.data as Destination)?.name ?? destination?.name}: ${response.error}`,
-        })
-      );
-    } else {
+    try {
+      const updated = await updateDestination.mutateAsync({
+        url: destinationPath(routeDestinationId),
+        payload: payload as unknown as Payload,
+        resource: "destinations",
+      });
       addNotification(
         "success",
         t("statusMessage:edit.successTitle"),
         t("statusMessage:edit.successDescription", {
-          val: `${(response.data as Destination)?.name ?? destination?.name}`,
+          val: `${updated?.name ?? destination?.name}`,
         })
       );
-      await queryClient.invalidateQueries({
-        queryKey: ["destination", routeDestinationId],
-      });
-      await queryClient.invalidateQueries({ queryKey: ["destinations"] });
       setViewMode(true);
+    } catch (error) {
+      addNotification(
+        "danger",
+        t("statusMessage:edit.failedTitle"),
+        t("statusMessage:edit.failedDescription", {
+          val: `${destination?.name}: ${mutationErrorMessage(error)}`,
+        })
+      );
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleEditConfirm = (

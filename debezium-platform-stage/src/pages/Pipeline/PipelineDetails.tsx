@@ -18,9 +18,11 @@ import {
 } from "@patternfly/react-core";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { editPut, fetchResult } from "../../apis/apis";
+import { fetchData } from "../../apis/apis";
+import { requestErrorMessage } from "../../apis/client";
+import { mutationErrorMessage, useUpdateResource } from "src/apis";
 import { Pipeline, PipelineStatus, Transform } from "../../apis/types";
-import { API_URL } from "../../utils/constants";
+
 import { buildPipelineRestartPayload } from "@utils/pipelineUtils";
 import { POLLING } from "@utils/pollingConfig";
 import { useVisibilityPolling } from "../../hooks/useVisibilityPolling";
@@ -46,6 +48,7 @@ import { PageHeader } from "@patternfly/react-component-groups";
 import { useNotification } from "../../appLayout/AppNotificationContext";
 import { InfoAltIcon, RhUiPathIcon, RhUiPauseCircleIcon, RhUiRunningIcon } from "@patternfly/react-icons";
 import ApiError from "../../components/ApiError";
+import { pipelinePath } from "../../apis/endpoints";
 
 const PIPELINE_STATUS_CONFIG: Record<PipelineStatus, { color: LabelColor; labelKey: string; tooltipKey: string }> = {
   FAILED: { color: LabelColor.red, labelKey: "statusMessage:pipelineStatus.failed", tooltipKey: "pipeline:pipelineFailureMsg" },
@@ -64,6 +67,7 @@ const PipelineDetails: React.FunctionComponent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { addNotification } = useNotification();
+  const updatePipeline = useUpdateResource();
 
   const validTabs = React.useMemo(() => getEnabledPipelineTabs(), []);
   const snapshotsEnabled = isPipelineTabEnabled("snapshots");
@@ -108,20 +112,19 @@ const PipelineDetails: React.FunctionComponent = () => {
     let cancelled = false;
 
     const loadPipeline = async () => {
-      const response = await fetchResult<Pipeline>(
-        `${API_URL}/api/pipelines/${pipelineId}`
-      );
-
-      if (cancelled) {
-        return;
-      }
-
-      if (response.error) {
-        setError(response.error);
-        setPipeline(undefined);
-      } else {
+      try {
+        const pipelineData = await fetchData<Pipeline>(pipelinePath(pipelineId));
+        if (cancelled) {
+          return;
+        }
         setError(null);
-        setPipeline(response.data as Pipeline);
+        setPipeline(pipelineData);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+        setError(requestErrorMessage(error));
+        setPipeline(undefined);
       }
       setIsFetchLoading(false);
     };
@@ -134,16 +137,12 @@ const PipelineDetails: React.FunctionComponent = () => {
   }, [pipelineId]);
 
   const refreshPipeline = React.useCallback(async () => {
-    const response = await fetchResult<Pipeline>(
-      `${API_URL}/api/pipelines/${pipelineId}`
-    );
-
-    if (response.error) {
+    try {
+      setError(null);
+      setPipeline(await fetchData<Pipeline>(pipelinePath(pipelineId)));
+    } catch {
       return;
     }
-
-    setError(null);
-    setPipeline(response.data as Pipeline);
   }, [pipelineId]);
 
   // Skip until the first load succeeds, and pause on Edit so in-progress form
@@ -182,31 +181,31 @@ const PipelineDetails: React.FunctionComponent = () => {
     }
 
     setIsRestarting(true);
-    const response = await editPut(
-      `${API_URL}/api/pipelines/${pipeline.id}`,
-      buildPipelineRestartPayload(pipeline)
-    );
-    setIsRestarting(false);
-
-    if (response.error) {
+    try {
+      await updatePipeline.mutateAsync({
+        url: pipelinePath(pipeline.id),
+        payload: buildPipelineRestartPayload(pipeline),
+        resource: "pipelines",
+      });
+      setIsRestarting(false);
+      addNotification(
+        "success",
+        t("statusMessage:restart.successTitle"),
+        t("statusMessage:restart.successDescription", {
+          val: `${t("pipeline")} ${pipeline.name}`,
+        })
+      );
+      void refreshPipeline();
+    } catch (error) {
+      setIsRestarting(false);
       addNotification(
         "danger",
         t("statusMessage:restart.failedTitle"),
         t("statusMessage:restart.failedDescription", {
-          val: `${t("pipeline")} ${pipeline.name}: ${response.error}`,
+          val: `${t("pipeline")} ${pipeline.name}: ${mutationErrorMessage(error)}`,
         })
       );
-      return;
     }
-
-    addNotification(
-      "success",
-      t("statusMessage:restart.successTitle"),
-      t("statusMessage:restart.successDescription", {
-        val: `${t("pipeline")} ${pipeline.name}`,
-      })
-    );
-    void refreshPipeline();
   };
 
   const handleTabClick = (_event: any, tabIndex: string | number) => {

@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 
-import { API_URL } from "../utils/constants";
 import { Button, Flex, FlexItem, Skeleton } from "@patternfly/react-core";
 import { Td } from "@patternfly/react-table";
-import { fetchResult } from "../apis/apis";
+import { fetchData } from "../apis/apis";
+import { requestErrorMessage } from "../apis/client";
 import { PipelineSource, Source } from "../apis/types";
 import ConnectorImage from "./ComponentImage";
 import ApiError from "./ApiError";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { sourcePath } from "../apis/endpoints";
 
 interface SourceFieldProps {
   pipelineSource: PipelineSource;
@@ -24,14 +25,10 @@ const SourceField: React.FC<SourceFieldProps> = ({ pipelineSource }) => {
   useEffect(() => {
     const fetchSources = async () => {
       setIsLoading(true);
-      const response = await fetchResult<Source>(
-        `${API_URL}/api/sources/${pipelineSource.id}`
-      );
-
-      if (response.error) {
-        setError(response.error);
-      } else {
-        setSource(response.data as Source);
+      try {
+        setSource(await fetchData<Source>(sourcePath(pipelineSource.id)));
+      } catch (error) {
+        setError(requestErrorMessage(error));
       }
 
       setIsLoading(false);

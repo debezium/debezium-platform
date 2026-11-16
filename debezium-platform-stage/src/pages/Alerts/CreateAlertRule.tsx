@@ -21,6 +21,7 @@ import {
   fetchAlertChannels,
   fetchAlertRules,
 } from "../../apis/alerts";
+import { requestErrorMessage } from "../../apis/client";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import { AlertRule, AlertRuleRequest, NotificationChannel } from "./alertsTypes";
 import AlertRuleForm from "./AlertRuleForm";
@@ -48,14 +49,8 @@ const CreateAlertRule: React.FunctionComponent = () => {
 
   const handleSave = async (payload: AlertRuleRequest) => {
     setIsSaving(true);
-    const response = await createAlertRule(payload);
-    if (response.error) {
-      addNotification(
-        "danger",
-        "Create failed",
-        `Failed to create "${payload.name}": ${response.error}`
-      );
-    } else {
+    try {
+      await createAlertRule(payload);
       addNotification(
         "success",
         "Create successful",
@@ -65,6 +60,12 @@ const CreateAlertRule: React.FunctionComponent = () => {
         queryKey: ALERT_RULES_QUERY_KEY
       });
       navigate("/alerts/rules");
+    } catch (error) {
+      addNotification(
+        "danger",
+        "Create failed",
+        `Failed to create "${payload.name}": ${requestErrorMessage(error)}`
+      );
     }
     setIsSaving(false);
   };

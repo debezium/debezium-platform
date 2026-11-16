@@ -49,7 +49,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@components/PageHeader";
 import { fetchData } from "../../apis/apis";
 import { Pipeline } from "../../apis/types";
-import { API_URL } from "../../utils/constants";
+
 import {
   AlertRuleSummary,
   ALERT_EVENTS_QUERY_KEY,
@@ -85,6 +85,7 @@ import AlertEventsColumnModal from "./AlertEventsColumnModal";
 import { SingleSelectFilter } from "./alertsFilters";
 import "./AlertEvents.css"
 import { useTranslation } from "react-i18next";
+import { pipelinesPath } from "../../apis/endpoints";
 
 type EntityFilterMode = "pipeline" | "rule" | "severity" | "status";
 
@@ -259,7 +260,6 @@ const useRefreshAlertEventsOnFiringChange = () => {
   }, [queryClient]);
 };
 
-
 function TypeaheadMultiSelectFilter<T extends string | number>({
   label,
   options,
@@ -411,7 +411,6 @@ const AlertEvents: React.FC = () => {
   const [ruleFilter, setRuleFilter] = React.useState<number[]>([]);
   const [isFilterFieldSelectOpen, setIsFilterFieldSelectOpen] = React.useState(false);
 
-
   React.useEffect(() => {
     const next = parseStatusQueryParam(statusParam);
     setStatusFilter(next);
@@ -466,7 +465,7 @@ const AlertEvents: React.FC = () => {
 
   const { data: pipelinesList, isLoading: pipelinesLoading } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`),
+    () => fetchData<Pipeline[]>(pipelinesPath()),
     { enabled: entityFilterMode === "pipeline" || pipelineFilter.length > 0 }
   );
   const pipelineOptions = React.useMemo<TypeaheadOption<string>[]>(
@@ -804,7 +803,6 @@ const AlertEvents: React.FC = () => {
                   </>
                 )}
               </ToolbarGroup>
-
 
               <ToolbarItem>
                 <Button variant="link" onClick={() => setIsColumnModalOpen(true)}>

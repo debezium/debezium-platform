@@ -26,7 +26,8 @@ import { useVisibilityPolling } from "../../hooks/useVisibilityPolling";
 import { useTranslation } from "react-i18next";
 import "./PipelineMonitoring.css";
 
-import { fetchMonitoringPanels, fetchPanelData } from "../../apis/apis";
+import { fetchMonitoringPanels, fetchPanelData } from "../../apis/monitoring";
+import { requestErrorMessage } from "../../apis/client";
 import type { PanelResponse, PanelQueryResponse } from "../../apis/types";
 import {
   calculateTimeRange,
@@ -136,13 +137,13 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName, activeTa
   const reloadPanels = useCallback(async (
     options?: { bustCache?: boolean }
   ): Promise<{ panels: PanelResponse[] } | { error: string }> => {
-    const response = await fetchMonitoringPanels(options);
-
-    if (response.error) {
-      return { error: response.error };
+    let nextPanels: PanelResponse[] | undefined;
+    try {
+      nextPanels = (await fetchMonitoringPanels(options))?.panels;
+    } catch (error) {
+      return { error: requestErrorMessage(error) };
     }
 
-    const nextPanels = response.data?.panels;
     if (!Array.isArray(nextPanels)) {
       return { error: "Panels API returned an invalid response" };
     }
@@ -215,9 +216,17 @@ const PipelineMonitoring: FC<PipelineMonitoringProp> = ({ pipelineName, activeTa
       });
     }
 
+    // Each panel is caught on its own. A rejection that escaped here would reject
+    // the whole `Promise.all`, so one unavailable metric would blank every panel
+    // instead of just its own.
     const results = await Promise.all(
       panelIds.map(async (panelId) => {
-        const response = await fetchPanelData(panelId, pipelineName, start, end, step);
+        let response: { data?: PanelQueryResponse; error?: string };
+        try {
+          response = { data: await fetchPanelData(panelId, pipelineName, start, end, step) };
+        } catch (error) {
+          response = { error: requestErrorMessage(error) };
+        }
         return { panelId, response };
       })
     );

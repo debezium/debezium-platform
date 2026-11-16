@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 
-import { API_URL } from "../utils/constants";
 import { Button, Flex, FlexItem, Skeleton } from "@patternfly/react-core";
-import { fetchResult } from "../apis/apis";
+import { fetchData } from "../apis/apis";
+import { requestErrorMessage } from "../apis/client";
 import { Destination, PipelineDestination } from "../apis/types";
 import { Td } from "@patternfly/react-table";
 import ConnectorImage from "./ComponentImage";
 import ApiError from "./ApiError";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { destinationPath } from "../apis/endpoints";
 
 interface DestinationFieldProps {
   pipelineDestination: PipelineDestination;
@@ -26,14 +27,12 @@ const DestinationField: React.FC<DestinationFieldProps> = ({
   useEffect(() => {
     const fetchDestination = async () => {
       setIsLoading(true);
-      const response = await fetchResult<Destination>(
-        API_URL + `/api/destinations/${pipelineDestination.id}`
-      );
-
-      if (response.error) {
-        setError(response.error);
-      } else {
-        setDestination(response.data as Destination);
+      try {
+        setDestination(
+          await fetchData<Destination>(destinationPath(pipelineDestination.id))
+        );
+      } catch (error) {
+        setError(requestErrorMessage(error));
       }
 
       setIsLoading(false);

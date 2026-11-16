@@ -14,10 +14,10 @@ import {
   CardHeader,
   Button,
 } from "@patternfly/react-core";
-import { API_URL } from "@utils/constants";
+
 import { getConnectorTypeName } from "@utils/helpers";
 import { FC, memo, useCallback, useEffect, useState } from "react";
-import { fetchResult } from "src/apis/apis";
+import { fetchData } from "src/apis/apis";
 import {
   Pipeline,
   Source,
@@ -46,6 +46,7 @@ import SnapshotProgressCard from "./SnapshotProgressCard";
 import type { SnapshotProgressResponse } from "src/apis/snapshots";
 import { isSnapshotActive } from "./snapshotModel";
 import { useOptionalSnapshotProgress } from "./useSnapshotProgress";
+import { sourcePath, destinationPath, transformPath, connectionPath } from "../../apis/endpoints";
 
 const CompositionFlowMemo = memo(CompositionFlow);
 
@@ -89,47 +90,23 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({
     if (!source || !destination || !pipeline) return;
     setIsExportLoading(true);
     try {
-      const transformFetches = transforms.map((t) =>
-        fetchResult<TransformData>(`${API_URL}/api/transforms/${t.id}`)
-      );
-      const connectionFetches: Promise<{ data?: Connection | null; error?: string }>[] = [];
-      if (source.connection?.id) {
-        connectionFetches.push(
-          fetchResult<Connection>(
-            `${API_URL}/api/connections/${source.connection.id}`
-          )
-        );
-      } else {
-        connectionFetches.push(Promise.resolve({ data: null }));
-      }
-      if (destination.connection?.id) {
-        connectionFetches.push(
-          fetchResult<Connection>(
-            `${API_URL}/api/connections/${destination.connection.id}`
-          )
-        );
-      } else {
-        connectionFetches.push(Promise.resolve({ data: null }));
-      }
-
-      const [transformResults, [sourceConnRes, destConnRes]] =
-        await Promise.all([
-          Promise.all(transformFetches),
-          Promise.all(connectionFetches),
-        ]);
-
-      const resolvedTransforms = transformResults
-        .filter((r) => !r.error && r.data)
-        .map((r) => r.data as TransformData);
-
-      const sourceConn =
-        !sourceConnRes.error && sourceConnRes.data
-          ? (sourceConnRes.data as Connection)
-          : null;
-      const destConn =
-        !destConnRes.error && destConnRes.data
-          ? (destConnRes.data as Connection)
-          : null;
+      const resolvedTransforms = (
+        await Promise.all(
+          transforms.map(async (transform) => {
+            try {
+              return await fetchData<TransformData>(transformPath(transform.id));
+            } catch {
+              return null;
+            }
+          })
+        )
+      ).filter((transform): transform is TransformData => transform != null);
+      const sourceConn = source.connection?.id
+        ? await fetchData<Connection>(connectionPath(source.connection.id)).catch(() => null)
+        : null;
+      const destConn = destination.connection?.id
+        ? await fetchData<Connection>(connectionPath(destination.connection.id)).catch(() => null)
+        : null;
 
       const content = generatePropertiesContent(
         source.name,
@@ -171,24 +148,16 @@ const PipelineOverview: FC<PipelineOverviewProp> = ({
 
       try {
         const [sourceResponse, destinationResponse] = await Promise.all([
-          fetchResult<Source>(
-            `${API_URL}/api/sources/${sourceId}`
-          ),
-          fetchResult<Destination>(
-            `${API_URL}/api/destinations/${destinationId}`
-          ),
+          fetchData<Source>(sourcePath(sourceId)),
+          fetchData<Destination>(destinationPath(destinationId)),
         ]);
 
         if (cancelled) {
           return;
         }
 
-        if (sourceResponse.error || destinationResponse.error) {
-          throw new Error(sourceResponse.error ?? destinationResponse.error);
-        }
-
-        setSource(sourceResponse.data as Source);
-        setDestination(destinationResponse.data as Destination);
+        setSource(sourceResponse);
+        setDestination(destinationResponse);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : String(err));

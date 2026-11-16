@@ -38,11 +38,12 @@ import {
 } from "../apis/types";
 import { getConnectorTypeName } from "../utils/helpers";
 import ConnectorImage from "./ComponentImage";
-import { API_URL } from "../utils/constants";
+
 import { useResourceQuery } from "../hooks/useResourceQuery";
 import { useTranslation } from "react-i18next";
 import UsedIn from "./UsedIn";
 import { debounce } from "lodash";
+import { pipelinesPath } from "../apis/endpoints";
 
 type FilterField = "name" | "type";
 
@@ -69,7 +70,7 @@ const SourceDestinationSelectionList: React.FunctionComponent<
     retry: retryPipelines,
   } = useResourceQuery<Pipeline[], Error>(
     "pipelines",
-    () => fetchData<Pipeline[]>(`${API_URL}/api/pipelines`)
+    () => fetchData<Pipeline[]>(pipelinesPath())
   );
 
   const [searchInput, setSearchInput] = useState<string>("");

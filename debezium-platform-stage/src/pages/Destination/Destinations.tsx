@@ -24,7 +24,7 @@ import { useNavigate } from "react-router-dom";
 import EmptyStatus from "../../components/EmptyStatus";
 import { fetchData } from "../../apis/apis";
 import { Destination } from "../../apis/types";
-import { API_URL } from "../../utils/constants";
+
 import _, { debounce } from "lodash";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
 import SourceSinkTable from "../../components/SourceSinkTable";
@@ -34,6 +34,7 @@ import PageHeader from "@components/PageHeader";
 import { useTranslation } from "react-i18next";
 import PageTour from "../../components/PageTour";
 import { Step } from "react-joyride";
+import { destinationsPath } from "../../apis/endpoints";
 
 const useDestinationPageTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
@@ -81,7 +82,7 @@ const Destinations: React.FunctionComponent = () => {
     retry: retryResource,
   } = useResourceQuery<Destination[], Error>(
     "destinations",
-    () => fetchData<Destination[]>(`${API_URL}/api/destinations`)
+    () => fetchData<Destination[]>(destinationsPath())
   );
 
   const searchResult = React.useMemo(() => {

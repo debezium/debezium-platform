@@ -60,13 +60,13 @@ import {
   ConnectionConfig,
   Destination,
   fetchData,
-  fetchResultWithStatus,
+  requestErrorMessage,
   Source,
   TableData,
   SignalDataCollectionVerifyResponse,
   verifySignals,
 } from "src/apis";
-import { API_URL } from "@utils/constants";
+
 import {
   buildSignalCollectionSetupQuery,
   getConnectionRole,
@@ -104,11 +104,11 @@ import {
 } from "@utils/additionalConfigProperties";
 import "./CreateSchemaForm.css";
 import { AdditionalPropertiesRows } from "./AdditionalPropertiesRows";
+import { catalogPath, sourceSignalsVerifyPath, connectionsPath, connectionCollectionsPath } from "../apis/endpoints";
 
 interface connectionsList extends Connection {
   role: string;
 }
-
 
 interface CreateSchemaFormProps {
   connectorSchema: ConnectorSchema;
@@ -172,7 +172,6 @@ function getFirstJumplinkValidationErrorElementId(
   }
   return null;
 }
-
 
 function scrollJumplinkValidationTargetIntoView(elementId: string) {
   const el = document.getElementById(elementId);
@@ -420,7 +419,7 @@ const CreateSchemaForm = React.forwardRef<
     queryKey: ["sourceConnectorCatalog"],
 
     queryFn: async () => {
-      const response = await fetchData<CatalogApiResponse>(`${API_URL}/api/catalog`);
+      const response = await fetchData<CatalogApiResponse>(catalogPath());
       return (response.components["source-connector"] ?? []).map((e) => ({
         ...e,
         role: "source",
@@ -432,7 +431,7 @@ const CreateSchemaForm = React.forwardRef<
     queryKey: ["destinationConnectorCatalog"],
 
     queryFn: async () => {
-      const response = await fetchData<CatalogApiResponse>(`${API_URL}/api/catalog`);
+      const response = await fetchData<CatalogApiResponse>(catalogPath());
       return (response.components["server-sink"] ?? []).map((entry) => ({
         ...entry,
         role: "destination",
@@ -444,7 +443,7 @@ const CreateSchemaForm = React.forwardRef<
 
   const { isLoading: isConnectionsLoading } = useResourceQuery<Connection[], Error>(
     "connections",
-    () => fetchData<Connection[]>(`${API_URL}/api/connections`),
+    () => fetchData<Connection[]>(connectionsPath()),
     {
       profile: "slow",
       onSuccess: (data) => {
@@ -465,18 +464,11 @@ const CreateSchemaForm = React.forwardRef<
     isLoading: isCollectionsLoading,
     error: collectionsQueryError,
     refetch: refetchCollections,
-  } = useQuery<TableData, object>({
+  } = useQuery<TableData, Error>({
     queryKey: ["connection-collections", selectedConnectionId],
 
-    queryFn: async () => {
-      const response = await fetchResultWithStatus<TableData>(
-        `${API_URL}/api/connections/${selectedConnectionId}/collections`
-      );
-      if (response.error) {
-        throw (response.error.body || {}) as object;
-      }
-      return response.data as TableData;
-    },
+    queryFn: () =>
+      fetchData<TableData>(connectionCollectionsPath(selectedConnectionId)),
 
     enabled: selectedConnectionId != null && !isDestination
   });
@@ -744,24 +736,32 @@ const CreateSchemaForm = React.forwardRef<
       connectionId: selectedConnection.id,
       fullyQualifiedTableName: collectionName,
     };
-    const response = await verifySignals<SignalDataCollectionVerifyResponse>(
-      `${API_URL}/api/sources/signals/verify`,
-      payload
-    );
-    if (response.error) {
-      addNotification("danger", "Signal verification failed", `Couldn't verify: ${response.error}`);
-    } else if (response.data?.exists) {
-      setSignalVerified(true);
-      addNotification(
-        "success",
-        "Signal verification successful",
-        response.data.message || `Verified: ${collectionName}`
+    try {
+      // A collection that does not exist is a successful answer, not a failure;
+      // only a failed request throws.
+      const result = await verifySignals<SignalDataCollectionVerifyResponse>(
+        sourceSignalsVerifyPath(),
+        payload
       );
-    } else {
+      if (result?.exists) {
+        setSignalVerified(true);
+        addNotification(
+          "success",
+          "Signal verification successful",
+          result.message || `Verified: ${collectionName}`
+        );
+      } else {
+        addNotification(
+          "danger",
+          "Signal verification failed",
+          result?.message || "Signal collection does not exist"
+        );
+      }
+    } catch (error) {
       addNotification(
         "danger",
         "Signal verification failed",
-        response.data?.message || "Signal collection does not exist"
+        `Couldn't verify: ${requestErrorMessage(error)}`
       );
     }
     setIsSignalLoading(false);
@@ -1131,7 +1131,6 @@ const CreateSchemaForm = React.forwardRef<
       )}
     </div>
   );
-
 
   const renderSignalCollections = () => {
     const isConnectionSelected = !!selectedConnection;

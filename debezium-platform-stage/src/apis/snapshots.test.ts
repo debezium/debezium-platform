@@ -10,11 +10,11 @@ import {
 } from "./snapshots";
 
 const httpResponse = (body: unknown, ok = true) =>
-  ({
-    ok,
+  new Response(JSON.stringify(body), {
+    status: ok ? 200 : 404,
     statusText: ok ? "OK" : "Not Found",
-    json: async () => body,
-  }) as Response;
+    headers: { "Content-Type": "application/json" },
+  });
 
 describe("snapshot progress client", () => {
   afterEach(() => {
@@ -63,7 +63,7 @@ describe("snapshot progress client", () => {
 
     const response = await getSnapshotProgress("7");
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
       `${API_URL}/api/pipelines/7/snapshots/progress`
     );
     expect(response.data).toMatchObject({
@@ -85,7 +85,7 @@ describe("snapshot progress client", () => {
     const response = await getSnapshotProgress("7");
 
     expect(response.data).toBeUndefined();
-    expect(response.error).toBe("Failed to fetch data: Not Found");
+    expect(response.error).toBe("Not Found");
   });
 
   it("keeps a history table outcome that is not a snapshot outcome", () => {
@@ -161,7 +161,7 @@ describe("snapshot progress client", () => {
 
     const response = await getSnapshotHistory("7", { page: 0, size: 20 });
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
       `${API_URL}/api/pipelines/7/snapshots/history?page=0&size=20`
     );
     expect(response.data?.items).toHaveLength(1);
@@ -228,7 +228,7 @@ describe("snapshot progress client", () => {
 
     const response = await getSnapshotHistoryDetail("7", 9);
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
       `${API_URL}/api/pipelines/7/snapshots/history/9`
     );
     expect(response.data?.tables).toEqual([
@@ -252,7 +252,7 @@ describe("snapshot progress client", () => {
     const response = await getSnapshotHistoryDetail("7", 999);
 
     expect(response.data).toBeUndefined();
-    expect(response.error).toBe("Failed to fetch data: Not Found");
+    expect(response.error).toBe("Not Found");
   });
 
   it("applies named snapshot-progress events and closes the stream", () => {

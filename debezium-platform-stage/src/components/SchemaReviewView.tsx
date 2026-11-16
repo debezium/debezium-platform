@@ -16,9 +16,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import type { Source, Destination, TableData } from "src/apis";
-import { fetchResultWithStatus } from "src/apis";
-import { API_URL } from "@utils/constants";
+import { fetchData, type Source, type Destination, type TableData } from "src/apis";
+
 import type { ConnectorSchema, SchemaProperty } from "../apis/types";
 import ConnectorImage from "./ComponentImage";
 import { getConnectorTypeName } from "@utils/helpers";
@@ -165,18 +164,11 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
     isLoading: isCollectionsLoading,
     error: collectionsQueryError,
     refetch: refetchCollections,
-  } = useQuery<TableData, object>({
+  } = useQuery<TableData, Error>({
     queryKey: ["connection-collections", selectedConnectionId],
 
-    queryFn: async () => {
-      const response = await fetchResultWithStatus<TableData>(
-        `${API_URL}/api/connections/${selectedConnectionId}/collections`
-      );
-      if (response.error) {
-        throw (response.error.body || {}) as object;
-      }
-      return response.data as TableData;
-    },
+    queryFn: () =>
+      fetchData<TableData>(connectionCollectionsPath(selectedConnectionId)),
 
     enabled: selectedConnectionId != null && isSource
   });
@@ -570,3 +562,5 @@ const SchemaReviewView: React.FC<SchemaReviewViewProps> = ({
 };
 
 export default SchemaReviewView;
+
+import { connectionCollectionsPath } from "../apis/endpoints";

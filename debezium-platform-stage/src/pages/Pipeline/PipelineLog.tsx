@@ -9,13 +9,14 @@ import {
 } from "@patternfly/react-core";
 import { BellIcon, DownloadIcon, ExpandIcon } from "@patternfly/react-icons";
 import { LogViewer, LogViewerSearch } from "@patternfly/react-log-viewer";
-import { API_URL, NOTIFICATION_SERVICE_LOG_PREFIX } from "@utils/constants";
+import { NOTIFICATION_SERVICE_LOG_PREFIX } from "@utils/constants";
 import { FC, useEffect, useState, useRef, useContext } from "react";
 import "./PipelineLog.css";
 import { useNotification } from "@appContext/AppNotificationContext";
-import { fetchFile } from "src/apis/apis";
+import { fetchFile, fetchText } from "src/apis/apis";
 import { useTranslation } from "react-i18next";
 import { LogViewerToolbarContext } from "@patternfly/react-log-viewer/dist/esm/LogViewer/LogViewerContext";
+import { pipelineLogsPath, pipelineLogsStreamUrl } from "../../apis/endpoints";
 
 // Extend the Document interface
 interface ExtendedDocument extends Document {
@@ -41,7 +42,6 @@ interface PipelineLogProps {
 
 // Maximum number of log lines to keep in memory
 const MAX_LOG_LINES = 1000;
-
 
 const PipelineLog: FC<PipelineLogProps> = ({
   activeTabKey,
@@ -78,12 +78,11 @@ const PipelineLog: FC<PipelineLogProps> = ({
   }, [activeTabKey]);
 
   useEffect(() => {
-    if (activeTabKey !== "logs") return;
+    if (activeTabKey !== "logs" || !pipelineId) return;
     setIsWebSocketLoading(true);
 
     // Only fetch logs when tab is active
-    fetch(`${API_URL}/api/pipelines/${pipelineId}/logs`)
-      .then((response) => response.text())
+    fetchText(pipelineLogsPath(pipelineId))
       .then((initialLogs) => {
         const initialLogLines = initialLogs.split("\n");
 
@@ -108,10 +107,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
         setIsWebSocketLoading(false);
 
         // open WebSocket for real-time updates only if tab is active
-        const webSocketURL = API_URL.replace(/^https?/, "ws");
-        wsRef.current = new WebSocket(
-          `${webSocketURL}/api/pipelines/${pipelineId}/logs/stream`
-        );
+        wsRef.current = new WebSocket(pipelineLogsStreamUrl(pipelineId));
 
         wsRef.current.onmessage = (event) => {
           // Set loading to false when we receive the first message
@@ -184,7 +180,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
 
     // Fetch the file as a Blob
     const response = await fetchFile(
-      `${API_URL}/api/pipelines/${pipelineId}/logs`
+      pipelineLogsPath(pipelineId)
     );
 
     if ("error" in response) {

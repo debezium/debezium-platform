@@ -134,7 +134,7 @@ describe("AlertChannels", () => {
   });
 
   it("creates a channel through the API", async () => {
-    vi.mocked(createAlertChannel).mockResolvedValue({ data: sampleChannel({ id: 7, name: "ops-email" }) });
+    vi.mocked(createAlertChannel).mockResolvedValue(sampleChannel({ id: 7, name: "ops-email" }));
 
     render(<AlertChannels />);
     await screen.findByRole("button", { name: "Platform Ops Email" });
@@ -156,9 +156,9 @@ describe("AlertChannels", () => {
   });
 
   it("updates a channel through the API", async () => {
-    vi.mocked(updateAlertChannel).mockResolvedValue({
-      data: sampleChannel({ name: "Platform Ops Email Updated" }),
-    });
+    vi.mocked(updateAlertChannel).mockResolvedValue(
+      sampleChannel({ name: "Platform Ops Email Updated" })
+    );
 
     render(<AlertChannels />);
     await userEvent.click(await screen.findByRole("button", { name: "Platform Ops Email" }));
@@ -201,9 +201,7 @@ describe("AlertChannels", () => {
   });
 
   it("calls the update endpoint when the status switch is toggled", async () => {
-    vi.mocked(updateAlertChannel).mockResolvedValue({
-      data: sampleChannel({ enabled: false }),
-    });
+    vi.mocked(updateAlertChannel).mockResolvedValue(sampleChannel({ enabled: false }));
 
     render(<AlertChannels />);
     await screen.findByRole("button", { name: "Platform Ops Email" });
@@ -225,7 +223,8 @@ describe("AlertChannels", () => {
 
   it("sends a test notification through the API", async () => {
     vi.mocked(testAlertChannel).mockResolvedValue({
-      data: { success: true, message: "Test notification sent successfully" },
+      success: true,
+      message: "Test notification sent successfully",
     });
 
     render(<AlertChannels />);

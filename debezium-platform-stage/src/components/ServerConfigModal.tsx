@@ -4,12 +4,12 @@ import { useMemo, useState, useEffect } from "react";
 import { faker } from '@faker-js/faker';
 import "./ServerConfigModal.css"
 import { extractTransformsAndPredicates, formatCode, splitConnectionProperties } from "@utils/formatCodeUtils";
-import { createPost, fetchData, Connection, ConnectionsSchema, Destination, Payload, Source, Transform, TransformData } from "src/apis";
-import { API_URL } from "@utils/constants";
+import { fetchData, Connection, ConnectionsSchema, Destination, Payload, Source, Transform, TransformData, mutationErrorMessage, useCreateResource } from "src/apis";
+
 import { useNotification } from "@appContext/AppNotificationContext";
 import { getConnectorTypeName } from "@utils/helpers";
 import { useTranslation } from "react-i18next";
-
+import { transformsPath, connectionsPath, connectionSchemasPath, resourceCollectionPath } from "../apis/endpoints";
 
 interface ServerConfigModalProps {
     isModalOpen: boolean;
@@ -37,6 +37,7 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
 }) => {
     const { t } = useTranslation();
     const { addNotification } = useNotification();
+    const createResource = useCreateResource();
 
     const [currentFiles, setCurrentFiles] = useState<File[]>([]);
     const [readFileData, setReadFileData] = useState<readFile[]>([]);
@@ -46,7 +47,6 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     const [createdTransform, setCreatedTransform] = useState<Transform[] | null>(null);
     const [createdTransformData, setCreatedTransformData] = useState<TransformData[] | null>(null);
     const [createdDestination, setCreatedDestination] = useState<Destination | null>(null);
-
 
     const [createPipelineResource, setCreatePipelineResource] = useState<PipelineResourceType>("");
     const [createdPipelineResources, setCreatedPipelineResources] = useState<PipelineResourceType[]>([]);
@@ -58,14 +58,13 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     const [sourceConnectionSupported, setSourceConnectionSupported] = useState<boolean | null>(null);
     const [destConnectionSupported, setDestConnectionSupported] = useState<boolean | null>(null);
 
-
     const [creationError, setCreationError] = useState<{ step: PipelineResourceType; message: string } | null>(null);
     // Number of transforms declared in the uploaded file, set once the transform step runs.
     const [transformCount, setTransformCount] = useState<number | null>(null);
 
     useEffect(() => {
         if (!isModalOpen) return;
-        fetchData<ConnectionsSchema[]>(`${API_URL}/api/connections/schemas`)
+        fetchData<ConnectionsSchema[]>(connectionSchemasPath())
             .then(setConnectionsSchemas)
             .catch(() => { /* silent — all connector types fall back to full config */ });
     }, [isModalOpen]);
@@ -141,34 +140,37 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     const successfullyReadFileCount = readFileData.filter((fileData) => fileData.loadResult === 'success').length;
 
     const createNewSource = async (payload: Payload, resourceType: PipelineResourceType): Promise<boolean> => {
-        const response = await createPost(`${API_URL}/api/${resourceType}s`, payload);
         const resourceLabel = resourceType === "source"
             ? t('pipeline:debeziumServerModal.sourceLabel')
             : t('pipeline:debeziumServerModal.destinationLabel');
-        if (response.error) {
+        try {
+            const created = await createResource.mutateAsync({
+                url: resourceCollectionPath(resourceType),
+                payload,
+                resource: resourceType === "destination" ? "destinations" : "sources",
+            });
+            resourceType === "source" && setCreatedSource(created as Source);
+            resourceType === "source" && updateSelectedSource(created as Source);
+            resourceType === "destination" && setCreatedDestination(created as Destination);
+            resourceType === "destination" && updateSelectedDestination(created as Destination);
+            addNotification(
+                "success",
+                t('statusMessage:creation.successTitle', { val: resourceLabel }),
+                t('statusMessage:creation.successDescription', { val: `${resourceType} "${(created as Source).name}"` })
+            );
+            setCreatedPipelineResources((prevResources) => [...prevResources, resourceType]);
+            return true;
+        } catch (error) {
             const message = t('pipeline:debeziumServerModal.resourceCreationFailedMessage', {
                 name: payload.name,
                 resource: resourceType,
-                error: response.error,
+                error: mutationErrorMessage(error),
             });
             setCreationError({ step: resourceType, message });
             addNotification("danger", t('statusMessage:creation.failedTitle', { val: resourceLabel }), message);
             return false;
         }
-        resourceType === "source" && setCreatedSource(response.data as Source);
-        resourceType === "source" && updateSelectedSource(response.data as Source);
-        resourceType === "destination" && setCreatedDestination(response.data as Destination);
-        resourceType === "destination" && updateSelectedDestination(response.data as Destination);
-        addNotification(
-            "success",
-            t('statusMessage:creation.successTitle', { val: resourceLabel }),
-            t('statusMessage:creation.successDescription', { val: `${resourceType} "${(response.data as Source).name}"` })
-        );
-        setCreatedPipelineResources((prevResources) => [...prevResources, resourceType]);
-        return true;
     };
-
-
 
     const [isCreationLoading, setIsCreationLoading] = useState(false);
 
@@ -190,15 +192,24 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
 
             if (Object.keys(connectionConfig).length > 0) {
                 const connName = `dbz-src-conn-${faker.word.noun()}-${faker.number.int(1000)}`;
-                const connResponse = await createPost<Connection>(`${API_URL}/api/connections`, {
-                    name: connName,
-                    type: matchedSchema.type,
-                    config: connectionConfig,
-                });
-                if (connResponse.error) {
+                try {
+                    const conn = await createResource.mutateAsync({
+                        url: connectionsPath(),
+                        payload: {
+                            name: connName,
+                            type: matchedSchema.type,
+                            config: connectionConfig,
+                        },
+                        resource: "connections",
+                    }) as Connection;
+                    setCreatedSourceConnection(conn);
+                    setCreatedPipelineResources(prev => [...prev, "source_connection"]);
+                    sourcePayload.config = remainingConfig;
+                    sourcePayload.connection = { id: conn.id, name: conn.name };
+                } catch (error) {
                     const message = t('pipeline:debeziumServerModal.sourceConnectionFailedMessage', {
                         name: connName,
-                        error: connResponse.error,
+                        error: mutationErrorMessage(error),
                     });
                     setCreationError({ step: "source_connection", message });
                     addNotification(
@@ -208,11 +219,6 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                     );
                     return false;
                 }
-                const conn = connResponse.data as Connection;
-                setCreatedSourceConnection(conn);
-                setCreatedPipelineResources(prev => [...prev, "source_connection"]);
-                sourcePayload.config = remainingConfig;
-                sourcePayload.connection = { id: conn.id, name: conn.name };
             } else {
                 // schema matched but no overlapping keys in file — mark step done silently
                 setCreatedPipelineResources(prev => [...prev, "source_connection"]);
@@ -226,22 +232,27 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
     };
 
     const createNewTransform = async (payload: Payload): Promise<TransformData | null> => {
-        const response = await createPost(`${API_URL}/api/transforms`, payload) as { data: TransformData | null, error: string | null };
-        if (response.error) {
+        try {
+            const created = await createResource.mutateAsync({
+                url: transformsPath(),
+                payload,
+                resource: "transforms",
+            }) as TransformData;
+            addNotification(
+                "success",
+                t('statusMessage:creation.successTitle', { val: t('transforms') }),
+                t('statusMessage:creation.successDescription', { val: `${t('transforms')} "${created.name}"` })
+            );
+            return created;
+        } catch (error) {
             const message = t('pipeline:debeziumServerModal.transformFailedMessage', {
                 name: payload.name,
-                error: response.error,
+                error: mutationErrorMessage(error),
             });
             setCreationError({ step: "transform", message });
             addNotification("danger", t('statusMessage:creation.failedTitle', { val: t('transforms') }), message);
             return null;
         }
-        addNotification(
-            "success",
-            t('statusMessage:creation.successTitle', { val: t('transforms') }),
-            t('statusMessage:creation.successDescription', { val: `${t('transforms')} "${(response.data as TransformData).name}"` })
-        );
-        return response.data as TransformData;
     };
 
     const createPipelineTransform = async (): Promise<boolean> => {
@@ -279,15 +290,24 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
 
             if (Object.keys(connectionConfig).length > 0) {
                 const connName = `dbz-dest-conn-${faker.word.adjective()}-${faker.number.int(1000)}`;
-                const connResponse = await createPost<Connection>(`${API_URL}/api/connections`, {
-                    name: connName,
-                    type: matchedSchema.type,
-                    config: connectionConfig,
-                });
-                if (connResponse.error) {
+                try {
+                    const conn = await createResource.mutateAsync({
+                        url: connectionsPath(),
+                        payload: {
+                            name: connName,
+                            type: matchedSchema.type,
+                            config: connectionConfig,
+                        },
+                        resource: "connections",
+                    }) as Connection;
+                    setCreatedDestConnection(conn);
+                    setCreatedPipelineResources(prev => [...prev, "destination_connection"]);
+                    destinationPayload.config = remainingConfig;
+                    destinationPayload.connection = { id: conn.id, name: conn.name };
+                } catch (error) {
                     const message = t('pipeline:debeziumServerModal.destConnectionFailedMessage', {
                         name: connName,
-                        error: connResponse.error,
+                        error: mutationErrorMessage(error),
                     });
                     setCreationError({ step: "destination_connection", message });
                     addNotification(
@@ -297,11 +317,6 @@ const ServerConfigModal: React.FC<ServerConfigModalProps> = ({
                     );
                     return false;
                 }
-                const conn = connResponse.data as Connection;
-                setCreatedDestConnection(conn);
-                setCreatedPipelineResources(prev => [...prev, "destination_connection"]);
-                destinationPayload.config = remainingConfig;
-                destinationPayload.connection = { id: conn.id, name: conn.name };
             } else {
                 setCreatedPipelineResources(prev => [...prev, "destination_connection"]);
             }

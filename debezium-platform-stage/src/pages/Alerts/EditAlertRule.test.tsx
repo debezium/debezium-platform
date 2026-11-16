@@ -41,8 +41,8 @@ vi.mock("../../apis/alerts", async (importOriginal) => {
   };
 });
 
-vi.mock("../../apis/apis", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../apis/apis")>();
+vi.mock("../../apis/monitoring", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../apis/monitoring")>();
   return {
     ...actual,
     fetchMonitoringPanels: vi.fn(),
@@ -50,7 +50,7 @@ vi.mock("../../apis/apis", async (importOriginal) => {
 });
 
 import { fetchAlertChannels, fetchAlertRules, updateAlertRule } from "../../apis/alerts";
-import { fetchMonitoringPanels } from "../../apis/apis";
+import { fetchMonitoringPanels } from "../../apis/monitoring";
 
 const sampleRule: AlertRule = {
   id: 14,
@@ -89,10 +89,9 @@ describe("EditAlertRule", () => {
     hoisted.search = "state=view";
     vi.mocked(fetchAlertRules).mockResolvedValue([sampleRule]);
     vi.mocked(fetchAlertChannels).mockResolvedValue(sampleChannels);
-    vi.mocked(updateAlertRule).mockResolvedValue({ data: sampleRule });
+    vi.mocked(updateAlertRule).mockResolvedValue(sampleRule);
     vi.mocked(fetchMonitoringPanels).mockResolvedValue({
-      data: {
-        panels: [
+      panels: [
           {
             id: "source-lag",
             title: "Source Lag",
@@ -101,8 +100,7 @@ describe("EditAlertRule", () => {
             unit: "s",
             visualization: { type: "line", suggestedStep: "15s" },
           },
-        ],
-      },
+      ],
     });
   });
 

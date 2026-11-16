@@ -36,14 +36,14 @@ import {
 } from "../apis/types";
 import { getConnectionRole, getConnectorTypeName } from "../utils/helpers";
 import ConnectorImage from "./ComponentImage";
-import { API_URL } from "../utils/constants";
+
 import { Catalog } from "../apis/types";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../appLayout/AppNotificationContext";
 import { useDeleteData } from "src/apis";
 import { Trans, useTranslation } from "react-i18next";
 import UsedIn from "./UsedIn";
-
+import { connectionPath } from "../apis/endpoints";
 
 interface IConnectionTableProps {
   data: ConnectionsApiResponse;
@@ -96,6 +96,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const { mutate: deleteData } = useDeleteData({
+    resource: "connections",
     onSuccess: () => {
       modalToggle(false);
       setIsLoading(false);
@@ -134,7 +135,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
 
   const handleDelete = async (id: number) => {
     setIsLoading(true);
-    const url = `${API_URL}/api/connections/${id}`;
+    const url = connectionPath(id);
     deleteData(url);
   };
 

@@ -26,10 +26,11 @@ import PageTour from "../../components/PageTour";
 import { Step } from "react-joyride";
 import { useQuery } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
-import { API_URL } from "../../utils/constants";
+
 import { Catalog, CatalogApiResponse } from "../../apis/types";
 import CatalogSkeleton from "@components/CatalogSkeleton";
 import { PageHeader } from "@patternfly/react-component-groups";
+import { catalogPath } from "../../apis/endpoints";
 
 const useSourceCatalogTourSteps = (): Step[] => {
   const { t } = useTranslation("tour");
@@ -71,7 +72,7 @@ const SourceCatalog: React.FunctionComponent<ISinkProps> = () => {
 
     queryFn: async () => {
       const response = await fetchData<CatalogApiResponse>(
-        `${API_URL}/api/catalog`
+        catalogPath()
       );
       return (response.components["source-connector"] ?? []).map((entry) => ({
         ...entry,

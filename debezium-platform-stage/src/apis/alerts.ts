@@ -1,6 +1,16 @@
 import i18next from "../i18n";
-import { API_URL } from "../utils/constants";
-import { ApiResponse, deleteData, fetchData } from "./apis";
+import { deleteData, fetchData } from "./apis";
+import { ApiRequestError, errorBodyMessage, request } from "./client";
+import {
+  alertChannelPath,
+  alertChannelsPath,
+  alertChannelTestPath,
+  alertEventsPath,
+  alertRuleActionPath,
+  alertRulePath,
+  alertRulesPath,
+  alertStatusPath,
+} from "./endpoints";
 import {
   AlertChannelTestResponse,
   AlertEventStatus,
@@ -54,41 +64,38 @@ const buildAlertEventsSearchParams = (
   return searchParams;
 };
 
-const parseApiError = async (response: Response, fallback: string): Promise<string> => {
-  try {
-    const errJson = await response.json();
-    if (errJson?.details?.length > 0) return errJson.details[0];
-    if (errJson?.error) return errJson.error;
-    if (errJson?.message) return errJson.message;
-  } catch {
-    // ignore non-JSON error bodies
-  }
-  return `${fallback}: ${response.statusText}`;
-};
+const alertErrorMessage = (error: ApiRequestError, fallback: string): string =>
+  (error.parsedJson
+    ? errorBodyMessage(error.body, ["details", "error", "message"])
+    : undefined) ?? `${fallback}: ${error.statusText}`;
 
+/**
+ * Alert writes answer some requests with an empty body, so `null` is a success.
+ *
+ * Throws {@link ApiRequestError} like every other write, reworded for display but
+ * with `status` intact, so an alert action denied by `alert:write` stays tellable
+ * from a validation failure.
+ */
 const sendJson = async <T>(
   url: string,
   method: "POST" | "PUT",
   payload: unknown,
   fallback: string
-): Promise<ApiResponse<T>> => {
+): Promise<T | null> => {
   try {
-    const response = await fetch(url, {
+    return await request<T | null>(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      emptyBody: "null",
     });
-
-    if (!response.ok) {
-      return { error: await parseApiError(response, fallback) };
-    }
-
-    const text = await response.text();
-    const data = text ? (JSON.parse(text) as T) : null;
-    return { data };
   } catch (error) {
-    console.error(fallback, error);
-    return { error: fallback };
+    if (!(error instanceof ApiRequestError)) {
+      throw error;
+    }
+    throw error.withMessage(
+      error.kind === "http" ? alertErrorMessage(error, fallback) : fallback
+    );
   }
 };
 
@@ -96,13 +103,11 @@ export const fetchAlertEvents = (
   params: AlertEventsQueryParams
 ): Promise<PagedAlertEventResponse> => {
   const searchParams = buildAlertEventsSearchParams(params);
-  return fetchData<PagedAlertEventResponse>(
-    `${API_URL}/api/alerts/events?${searchParams.toString()}`
-  );
+  return fetchData<PagedAlertEventResponse>(alertEventsPath(searchParams.toString()));
 };
 
 export const fetchAlertStatus = (): Promise<AlertStatusResponse> =>
-  fetchData<AlertStatusResponse>(`${API_URL}/api/alerts/status`);
+  fetchData<AlertStatusResponse>(alertStatusPath());
 
 /** `id`/`name` projection used by the History rule typeahead. */
 export type AlertRuleSummary = Pick<AlertRule, "id" | "name">;
@@ -111,16 +116,16 @@ const asAlertRuleList = (data: unknown): AlertRule[] =>
   Array.isArray(data) ? (data as AlertRule[]) : [];
 
 export const fetchAlertRules = async (): Promise<AlertRule[]> =>
-  asAlertRuleList(await fetchData<unknown>(`${API_URL}/api/alerts/rules`));
+  asAlertRuleList(await fetchData<unknown>(alertRulesPath()));
 
 export const fetchAlertChannels = (): Promise<NotificationChannel[]> =>
-  fetchData<NotificationChannel[]>(`${API_URL}/api/alerts/channels`);
+  fetchData<NotificationChannel[]>(alertChannelsPath());
 
 export const createAlertChannel = (
   payload: NotificationChannelRequest
-): Promise<ApiResponse<NotificationChannel>> =>
+): Promise<NotificationChannel | null> =>
   sendJson<NotificationChannel>(
-    `${API_URL}/api/alerts/channels`,
+    alertChannelsPath(),
     "POST",
     payload,
     i18next.t("statusMessage:apis.failedToCreate", { val: "notification channel" })
@@ -129,22 +134,22 @@ export const createAlertChannel = (
 export const updateAlertChannel = (
   id: number,
   payload: NotificationChannelRequest
-): Promise<ApiResponse<NotificationChannel>> =>
+): Promise<NotificationChannel | null> =>
   sendJson<NotificationChannel>(
-    `${API_URL}/api/alerts/channels/${id}`,
+    alertChannelPath(id),
     "PUT",
     payload,
     i18next.t("statusMessage:apis.failedToUpdate", { val: "notification channel" })
   );
 
 export const deleteAlertChannel = (id: number): Promise<void> =>
-  deleteData(`${API_URL}/api/alerts/channels/${id}`);
+  deleteData(alertChannelPath(id));
 
 export const testAlertChannel = (
   id: number
-): Promise<ApiResponse<AlertChannelTestResponse>> =>
+): Promise<AlertChannelTestResponse | null> =>
   sendJson<AlertChannelTestResponse>(
-    `${API_URL}/api/alerts/channels/${id}/test`,
+    alertChannelTestPath(id),
     "POST",
     {},
     i18next.t("statusMessage:apis.failedToTest")
@@ -152,15 +157,15 @@ export const testAlertChannel = (
 
 export const createAlertRule = (
   payload: AlertRuleRequest
-): Promise<ApiResponse<AlertRule>> =>
-  sendJson<AlertRule>(`${API_URL}/api/alerts/rules`, "POST", payload, "Failed to create alert rule");
+): Promise<AlertRule | null> =>
+  sendJson<AlertRule>(alertRulesPath(), "POST", payload, "Failed to create alert rule");
 
 export const updateAlertRule = (
   id: number,
   payload: AlertRuleRequest
-): Promise<ApiResponse<AlertRule>> =>
+): Promise<AlertRule | null> =>
   sendJson<AlertRule>(
-    `${API_URL}/api/alerts/rules/${id}`,
+    alertRulePath(id),
     "PUT",
     payload,
     i18next.t("statusMessage:apis.failedToUpdate", { val: "alert rule" })
@@ -169,13 +174,13 @@ export const updateAlertRule = (
 export const setAlertRuleEnabled = (
   id: number,
   enabled: boolean
-): Promise<ApiResponse<AlertRule>> =>
+): Promise<AlertRule | null> =>
   sendJson<AlertRule>(
-    `${API_URL}/api/alerts/rules/${id}/${enabled ? "enable" : "disable"}`,
+    alertRuleActionPath(id, enabled ? "enable" : "disable"),
     "PUT",
     {},
     enabled ? i18next.t("statusMessage:apis.failedToEnable", { val: "alert rule" }) : i18next.t("statusMessage:apis.failedToDisable", { val: "alert rule" })
   );
 
 export const deleteAlertRule = (id: number): Promise<void> =>
-  deleteData(`${API_URL}/api/alerts/rules/${id}`);
+  deleteData(alertRulePath(id));

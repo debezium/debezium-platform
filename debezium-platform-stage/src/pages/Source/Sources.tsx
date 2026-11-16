@@ -26,7 +26,7 @@ import { fetchData } from "../../apis/apis";
 import { Source } from "../../apis/types";
 import _, { debounce } from "lodash";
 import { useResourceQuery } from "../../hooks/useResourceQuery";
-import { API_URL } from "../../utils/constants";
+
 import SourceSinkTable from "../../components/SourceSinkTable";
 import ApiError from "../../components/ApiError";
 import "./Sources.css";
@@ -35,6 +35,7 @@ import { useTranslation } from "react-i18next";
 import PageTour from "../../components/PageTour";
 import { Step } from "react-joyride";
 import { isRouteNavVisible } from "@support/featureFlag";
+import { sourcesPath } from "../../apis/endpoints";
 
 export interface ISourceProps {
   sampleProp?: string;
@@ -87,7 +88,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
     retry: retryResource,
   } = useResourceQuery<Source[], Error>(
     "sources",
-    () => fetchData<Source[]>(`${API_URL}/api/sources`)
+    () => fetchData<Source[]>(sourcesPath())
   );
 
   // Compute filtered results based on search query and filter field

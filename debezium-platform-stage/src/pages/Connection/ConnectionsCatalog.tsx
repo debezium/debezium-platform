@@ -10,8 +10,9 @@ import { useNavigate } from "react-router-dom";
 import { CatalogGrid } from "@components/CatalogGrid";
 import { useQuery } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
-import { API_URL } from "../../utils/constants";
+
 import { PageHeader } from "@patternfly/react-component-groups";
+import { catalogPath } from "../../apis/endpoints";
 
 export interface IConnectionsCatalogProps {
   sampleProp?: string;
@@ -35,7 +36,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
 
     queryFn: async () => {
       const response = await fetchData<CatalogApiResponse>(
-        `${API_URL}/api/catalog`
+        catalogPath()
       );
       return (response.components["source-connector"] ?? []).map((entry) => ({
         ...entry,
@@ -51,7 +52,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
 
     queryFn: async () => {
       const response = await fetchData<CatalogApiResponse>(
-        `${API_URL}/api/catalog`
+        catalogPath()
       );
       return (response.components["server-sink"] ?? []).map((entry) => ({
         ...entry,
@@ -177,10 +178,8 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
               </ToolbarItem>
             </ToolbarGroup>
 
-
             <ToolbarItem variant="separator" />
             <ToolbarItem>
-
 
               <Select
                 toggle={(toggleRef: React.Ref<MenuToggleElement>) => (

@@ -13,13 +13,14 @@ import {
 } from "@patternfly/react-core";
 import React, { useCallback, useState } from "react";
 import { fetchData } from "../../apis/apis";
-import { API_URL } from "../../utils/constants";
+
 import { useQuery } from "@tanstack/react-query";
 import SourceDestinationSelectionList from "../SourceDestinationSelectionList";
 import { CatalogGrid } from "@components/CatalogGrid";
 import { CreateSource } from "@sourcePage/CreateSource";
 import { Catalog, CatalogApiResponse, Source } from "../../apis/types";
 import CatalogSkeleton from "@components/CatalogSkeleton";
+import { catalogPath, sourcesPath } from "../../apis/endpoints";
 
 type PipelineSourceModelProps = {
   onSourceSelection: (source: Source) => void;
@@ -41,7 +42,7 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
     queryKey: ["sources"],
 
     queryFn: () =>
-      fetchData<Source[]>(`${API_URL}/api/sources`)
+      fetchData<Source[]>(sourcesPath())
   });
 
   const {
@@ -54,7 +55,7 @@ const PipelineSourceModel: React.FC<PipelineSourceModelProps> = ({
 
     queryFn: async () => {
       const response = await fetchData<CatalogApiResponse>(
-        `${API_URL}/api/catalog`
+        catalogPath()
       );
       return (response.components["source-connector"] ?? []).map((entry) => ({
         ...entry,
