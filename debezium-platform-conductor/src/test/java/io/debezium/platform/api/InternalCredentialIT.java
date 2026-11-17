@@ -7,7 +7,8 @@ package io.debezium.platform.api;
 
 import static io.restassured.RestAssured.given;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.equalTo;
 
 import java.util.Set;
 
@@ -61,17 +62,18 @@ class InternalCredentialIT {
     @Test
     @FixFor("debezium/dbz#3003")
     void validCredentialIsAcceptedAtInternalPath() {
-        // Not asserting 202: PIPELINE_ID need not exist for this, only the auth outcome does
-        // (same convention as AuthorizationIT). A 401 here means either defect in the class
-        // Javadoc reproduced: proactive authentication intercepting the request, or enforcement
-        // never actually switching on.
+        // 202 when PIPELINE_ID exists and 404 when it does not: both prove the credential was
+        // verified and the request reached the endpoint. The two defects this class guards against
+        // both surface as 401 (proactive authentication intercepting the request, or enforcement
+        // never actually switching on), and a 403 or 5xx here is equally a bug, so neither is
+        // accepted.
         given()
                 .header("Authorization", internalCredentialService.mintAuthorizationHeader(PIPELINE_ID))
                 .contentType(APPLICATION_JSON)
                 .body(notification())
                 .when().post(notificationsPath(PIPELINE_ID))
                 .then()
-                .statusCode(not(401));
+                .statusCode(anyOf(equalTo(202), equalTo(404)));
     }
 
     @Test
