@@ -6,10 +6,13 @@
 package io.debezium.platform.api;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 
 import java.util.Set;
 
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,6 +26,7 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.oidc.server.OidcWiremockTestResource;
+import io.restassured.response.Response;
 
 /**
  * Authorization enforcement end to end (debezium/dbz#3003), against the shipped default role
@@ -31,7 +35,7 @@ import io.quarkus.test.oidc.server.OidcWiremockTestResource;
  * <p>Parameterised over {@link Permission#all()} so a new permission added to the catalogue
  * without a corresponding case here fails the build (see {@link #endpointFor(Permission)}).
  * Each representative action targets a non-existent id where the HTTP method allows it, so the
- * test asserts only the authorization outcome (403 or not), never a particular success body.
+ * test asserts only the authorization outcome, never a particular success body.
  */
 @QuarkusTest
 @TestProfile(IamEnabledTestProfile.class)
@@ -48,10 +52,7 @@ class AuthorizationIT {
 
         requestAs(endpoint, adminToken())
                 .then()
-                // dmp-admin holds every permission; the endpoint must not reject it as forbidden.
-                // The concrete outcome otherwise depends on fixture data (e.g. 404 for a
-                // non-existent id), which is deliberately not asserted here.
-                .statusCode(not(403));
+                .statusCode(authorized());
     }
 
     @ParameterizedTest
@@ -96,7 +97,7 @@ class AuthorizationIT {
                 .body("{\"id\":\"sig-1\",\"type\":\"test\"}")
                 .when().post("api/pipelines/" + MISSING_ID + "/signals")
                 .then()
-                .statusCode(not(403));
+                .statusCode(authorized());
     }
 
     @Test
@@ -164,7 +165,7 @@ class AuthorizationIT {
                 .auth().oauth2(adminToken())
                 .when().delete("api/vaults/" + MISSING_ID)
                 .then()
-                .statusCode(not(403));
+                .statusCode(authorized());
     }
 
     @Test
@@ -239,7 +240,18 @@ class AuthorizationIT {
         };
     }
 
-    private static io.restassured.response.Response requestAs(Endpoint endpoint, String token) {
+    /**
+     * The request reached the endpoint as an authorized caller: it was neither rejected as
+     * unauthenticated (401) nor as forbidden (403), and it did not fail server-side. The success
+     * status itself depends on fixture data (e.g. 404 for a non-existent id), so it is
+     * deliberately not asserted — but a 401 here would mean the token never authenticated, and a
+     * 5xx would hide a broken endpoint behind a passing permission test.
+     */
+    private static Matcher<Integer> authorized() {
+        return allOf(not(401), not(403), lessThan(500));
+    }
+
+    private static Response requestAs(Endpoint endpoint, String token) {
         var request = given().auth().oauth2(token);
         if (endpoint.body != null) {
             request = request.contentType("application/json").body(endpoint.body);
