@@ -70,6 +70,7 @@
     "@types/react-dom": "^19.3.0",
     "@typescript-eslint/eslint-plugin": "^8.71.1",
     "@typescript-eslint/parser": "^8.71.1",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "@vitejs/plugin-react": "^5.2.0",
     "@vitejs/plugin-react-swc": "^4.3.3",
     "@vitest/coverage-v8": "^5.1.0",
@@ -81,7 +82,7 @@
     "jsdom": "^31.0.1",
     "msw": "^2.13.1",
     "start-server-and-test": "^3.0.4",
-    "typescript": "^5.9.3",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vite": "^8.3.6",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.11"
