@@ -62,10 +62,19 @@ public class IdentityResource {
         }
 
         Principal principal = identity.getPrincipal();
-        String subject = principal.getName();
-        String username = subject;
+        String principalName = principal.getName();
+        // Principal.getName() is not the JWT subject: for a JWT it resolves upn ->
+        // preferred_username -> sub, so a token carrying preferred_username would otherwise be
+        // reported with its username as the subject. The subject is the stable identifier, so it
+        // is read from the sub claim when there is one.
+        String subject = principalName;
+        String username = principalName;
         String email = null;
         if (principal instanceof JsonWebToken jwt) {
+            String jwtSubject = jwt.getSubject();
+            if (jwtSubject != null) {
+                subject = jwtSubject;
+            }
             String preferredUsername = jwt.getClaim("preferred_username");
             if (preferredUsername != null) {
                 username = preferredUsername;
