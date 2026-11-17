@@ -78,6 +78,20 @@ class PermissionAugmentorTest {
         Collection<StringPermission> grouped = PermissionAugmentor.toStringPermissions(fourActionsTwoResources);
 
         assertThat(grouped).hasSize(2);
+
+        // The object count alone would also pass if actions were dropped while both resources
+        // survived, so the action sets that actually drive authorization are asserted as well.
+        StringPermission source = permissionFor(grouped, "source");
+        assertThat(source.implies(new StringPermission("source", "read"))).isTrue();
+        assertThat(source.implies(new StringPermission("source", "write"))).isTrue();
+        assertThat(source.implies(new StringPermission("source", "operate"))).isFalse();
+
+        StringPermission pipeline = permissionFor(grouped, "pipeline");
+        assertThat(pipeline.implies(new StringPermission("pipeline", "read"))).isTrue();
+        assertThat(pipeline.implies(new StringPermission("pipeline", "write"))).isTrue();
+        assertThat(pipeline.implies(new StringPermission("pipeline", "operate"))).isTrue();
+        assertThat(pipeline.implies(new StringPermission("pipeline", "logs"))).isTrue();
+        assertThat(pipeline.implies(new StringPermission("pipeline", "delete"))).isFalse();
     }
 
     @Test
@@ -133,6 +147,13 @@ class PermissionAugmentorTest {
         assertThat(augmented.isAnonymous()).isFalse();
         Object attribute = augmented.getAttribute(PermissionAugmentor.PERMISSIONS_ATTRIBUTE);
         assertThat(attribute).isEqualTo(Set.of());
+    }
+
+    private static StringPermission permissionFor(Collection<StringPermission> grouped, String resource) {
+        return grouped.stream()
+                .filter(permission -> permission.getName().equals(resource))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No grouped permission for resource " + resource));
     }
 
     private SecurityIdentity augment(SecurityIdentity identity) {
