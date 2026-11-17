@@ -6,9 +6,9 @@
 package io.debezium.platform.api;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 import java.util.Set;
@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import io.debezium.doc.FixFor;
 import io.debezium.platform.IamEnabledTestProfile;
 import io.debezium.platform.config.security.DefaultRoleMappings;
+import io.debezium.platform.config.security.Permission;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -47,7 +48,7 @@ class IdentityResourceIT {
                 .body("subject", is("123456"))
                 .body("username", is("dave"))
                 .body("roles", hasItems(DefaultRoleMappings.ADMIN))
-                .body("permissions", hasSize(18));
+                .body("permissions", containsInAnyOrder(permissionIds(DefaultRoleMappings.bundles().get(DefaultRoleMappings.ADMIN))));
     }
 
     @Test
@@ -63,7 +64,9 @@ class IdentityResourceIT {
                 .then()
                 .statusCode(200)
                 .body("roles", hasItems(DefaultRoleMappings.EDITOR, "finance-team"))
-                .body("permissions", hasSize(16));
+                // The exact ids, not just the count: a wrong permission set of the same size
+                // would otherwise pass.
+                .body("permissions", containsInAnyOrder(permissionIds(DefaultRoleMappings.bundles().get(DefaultRoleMappings.EDITOR))));
     }
 
     @Test
@@ -89,5 +92,9 @@ class IdentityResourceIT {
 
         given().auth().oauth2(token).when().get("api/me").then().statusCode(200);
         given().when().get("api/me").then().statusCode(401);
+    }
+
+    private static String[] permissionIds(Set<Permission> permissions) {
+        return permissions.stream().map(Permission::id).toArray(String[]::new);
     }
 }
