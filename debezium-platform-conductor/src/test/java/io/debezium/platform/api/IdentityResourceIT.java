@@ -9,6 +9,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 
 import java.util.Set;
 
@@ -38,7 +39,13 @@ class IdentityResourceIT {
                 .when().get("api/me")
                 .then()
                 .statusCode(200)
-                .body("iamEnabled", org.hamcrest.Matchers.is(true))
+                .body("iamEnabled", is(true))
+                // The WireMock token deliberately carries sub=123456 and preferred_username=dave.
+                // They must differ in the response: subject comes from the sub claim, username
+                // from preferred_username, and a subject read from the principal name (which
+                // resolves preferred_username first) would collapse them into one value.
+                .body("subject", is("123456"))
+                .body("username", is("dave"))
                 .body("roles", hasItems(DefaultRoleMappings.ADMIN))
                 .body("permissions", hasSize(18));
     }
@@ -69,7 +76,7 @@ class IdentityResourceIT {
                 .when().get("api/me")
                 .then()
                 .statusCode(200)
-                .body("iamEnabled", org.hamcrest.Matchers.is(true))
+                .body("iamEnabled", is(true))
                 .body("permissions", empty());
     }
 
