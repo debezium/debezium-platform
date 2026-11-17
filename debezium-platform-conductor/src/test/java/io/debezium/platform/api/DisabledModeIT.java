@@ -6,6 +6,11 @@
 package io.debezium.platform.api;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.is;
+
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,14 +56,22 @@ class DisabledModeIT {
 
     @Test
     @FixFor("debezium/dbz#3003")
-    @DisplayName("/api/me reports iamEnabled: false and the universal-wildcard permission set")
+    @DisplayName("/api/me reports iamEnabled: false, the universal wildcard, and no identity fields")
     void identityEndpointReportsDisabled() {
-        given()
+        @SuppressWarnings("unchecked")
+        Map<String, Object> identity = given()
                 .when().get("api/me")
                 .then()
                 .statusCode(200)
-                .body("iamEnabled", org.hamcrest.Matchers.is(false))
-                .body("permissions", org.hamcrest.Matchers.contains("*"));
+                .body("iamEnabled", is(false))
+                .body("permissions", contains("*"))
+                .extract().as(Map.class);
+
+        // There is no identity in disabled mode. The fields are omitted rather than serialized as
+        // explicit nulls, which is the form the OpenAPI schema documents: plain strings, none of
+        // them required.
+        assertThat(identity)
+                .doesNotContainKeys("subject", "username", "email");
     }
 
     @Test
