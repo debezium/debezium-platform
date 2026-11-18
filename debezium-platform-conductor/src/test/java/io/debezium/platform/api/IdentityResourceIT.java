@@ -1,0 +1,100 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
+package io.debezium.platform.api;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.is;
+
+import java.util.Set;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import io.debezium.doc.FixFor;
+import io.debezium.platform.IamEnabledTestProfile;
+import io.debezium.platform.config.security.DefaultRoleMappings;
+import io.debezium.platform.config.security.Permission;
+import io.quarkus.test.common.QuarkusTestResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.oidc.server.OidcWiremockTestResource;
+
+@QuarkusTest
+@TestProfile(IamEnabledTestProfile.class)
+@QuarkusTestResource(value = OidcWiremockTestResource.class, restrictToAnnotatedClass = true)
+class IdentityResourceIT {
+
+    @Test
+    @FixFor("debezium/dbz#3003")
+    void returnsIdentityAndPermissions() {
+        String token = OidcWiremockTestResource.getAccessToken("dave", Set.of(DefaultRoleMappings.ADMIN));
+
+        given()
+                .auth().oauth2(token)
+                .when().get("api/me")
+                .then()
+                .statusCode(200)
+                .body("iamEnabled", is(true))
+                // The WireMock token deliberately carries sub=123456 and preferred_username=dave.
+                // They must differ in the response: subject comes from the sub claim, username
+                // from preferred_username, and a subject read from the principal name (which
+                // resolves preferred_username first) would collapse them into one value.
+                .body("subject", is("123456"))
+                .body("username", is("dave"))
+                .body("roles", hasItems(DefaultRoleMappings.ADMIN))
+                .body("permissions", containsInAnyOrder(permissionIds(DefaultRoleMappings.bundles().get(DefaultRoleMappings.ADMIN))));
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3003")
+    @DisplayName("Roles with no permission mapping are listed, but contribute no permissions")
+    void listsUnmappedRolesButNotAsPermissions() {
+        String token = OidcWiremockTestResource.getAccessToken("alice",
+                Set.of(DefaultRoleMappings.EDITOR, "finance-team"));
+
+        given()
+                .auth().oauth2(token)
+                .when().get("api/me")
+                .then()
+                .statusCode(200)
+                .body("roles", hasItems(DefaultRoleMappings.EDITOR, "finance-team"))
+                // The exact ids, not just the count: a wrong permission set of the same size
+                // would otherwise pass.
+                .body("permissions", containsInAnyOrder(permissionIds(DefaultRoleMappings.bundles().get(DefaultRoleMappings.EDITOR))));
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3003")
+    void reportsEmptyPermissionsForUnmappedUser() {
+        String token = OidcWiremockTestResource.getAccessToken("erin", Set.of("finance-team"));
+
+        given()
+                .auth().oauth2(token)
+                .when().get("api/me")
+                .then()
+                .statusCode(200)
+                .body("iamEnabled", is(true))
+                .body("permissions", empty());
+    }
+
+    @Test
+    @FixFor("debezium/dbz#3003")
+    void requiresAuthenticationButNoPermission() {
+        // erin holds zero permissions, yet /api/me succeeds: any authenticated caller may ask
+        // who they are, no permission required.
+        String token = OidcWiremockTestResource.getAccessToken("erin", Set.of("finance-team"));
+
+        given().auth().oauth2(token).when().get("api/me").then().statusCode(200);
+        given().when().get("api/me").then().statusCode(401);
+    }
+
+    private static String[] permissionIds(Set<Permission> permissions) {
+        return permissions.stream().map(Permission::id).toArray(String[]::new);
+    }
+}
