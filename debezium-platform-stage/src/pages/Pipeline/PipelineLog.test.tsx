@@ -83,6 +83,7 @@ vi.mock("../../apis/streams", () => ({ subscribeToEventStream }));
 type StreamHandlers = {
   onMessage: (data: string) => void;
   onOpen?: () => void;
+  onRetry?: (error: unknown) => void;
   onError?: (error: unknown) => void;
 };
 
@@ -161,7 +162,30 @@ describe("PipelineLog", () => {
   });
 
   it("subscribes to the log stream once the initial logs have loaded", async () => {
+    let release: () => void = () => undefined;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      http.get(`${API_URL}/api/pipelines/:pipelineId/logs`, async () => {
+        await pending;
+        return new HttpResponse("log line 1\nlog line 2\nlog line 3", {
+          headers: { "Content-Type": "text/plain" },
+        });
+      })
+    );
+
     render(<PipelineLog {...mockProps} />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(subscribeToEventStream).not.toHaveBeenCalled();
+    expect(screen.getByText("Loading pipeline log")).toBeInTheDocument();
+
+    await act(async () => {
+      release();
+    });
 
     await waitFor(() => {
       expect(screen.getAllByTestId("log-line")).toHaveLength(3);
@@ -182,8 +206,71 @@ describe("PipelineLog", () => {
     await emitLogs("log line 4\nlog line 5");
 
     const logLines = screen.getAllByTestId("log-line");
-    expect(logLines).toHaveLength(5);
-    expect(logLines[4]).toHaveTextContent("log line 5");
+    expect(logLines.map((line) => line.textContent)).toEqual([
+      "log line 1",
+      "log line 2",
+      "log line 3",
+      "log line 4",
+      "log line 5",
+    ]);
+  });
+
+  it("shows a reconnecting notice and clears it when the stream opens again", async () => {
+    render(<PipelineLog {...mockProps} />);
+    await waitFor(() => {
+      expect(screen.getAllByTestId("log-line")).toHaveLength(3);
+    });
+
+    await act(async () => {
+      streamHandlers().onRetry?.(new Error("closed"));
+    });
+
+    expect(
+      screen.getByText("Live log disconnected. Still trying to reconnect.")
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      streamHandlers().onOpen?.();
+    });
+
+    expect(
+      screen.queryByText("Live log disconnected. Still trying to reconnect.")
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the loaded log and says when live updates have stopped", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      render(<PipelineLog {...mockProps} />);
+      await waitFor(() => {
+        expect(screen.getAllByTestId("log-line")).toHaveLength(3);
+      });
+
+      await act(async () => {
+        streamHandlers().onError?.(new Error("forbidden"));
+      });
+
+      expect(
+        screen.getByText("Live updates have stopped. Showing the last loaded log.")
+      ).toBeInTheDocument();
+      expect(screen.getAllByTestId("log-line")).toHaveLength(3);
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
+  it("shows a line again after it has scrolled off the viewer", async () => {
+    render(<PipelineLog {...mockProps} />);
+    await waitFor(() => {
+      expect(screen.getAllByTestId("log-line")).toHaveLength(3);
+    });
+
+    await emitLogs(Array.from({ length: 1000 }, (_, index) => `extra ${index}`).join("\n"));
+    await emitLogs("log line 1");
+
+    const logLines = screen.getAllByTestId("log-line");
+    expect(logLines).toHaveLength(1000);
+    expect(logLines[logLines.length - 1]).toHaveTextContent("log line 1");
   });
 
   it("drops lines the stream replays that are already on screen", async () => {

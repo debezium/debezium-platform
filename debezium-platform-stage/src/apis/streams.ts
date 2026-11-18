@@ -18,6 +18,8 @@ export type EventStreamHandlers = {
   /** One `data:` payload. */
   onMessage: (data: string) => void;
   onOpen?: () => void;
+  /** A transient failure. The stream will try again. */
+  onRetry?: (error: unknown) => void;
   /** The stream stopped and will not retry. Not called on a normal unsubscribe. */
   onError?: (error: unknown) => void;
 };
@@ -30,12 +32,19 @@ const streamHeaders = (): Record<string, string> => ({
 });
 
 /**
- * A 4xx says the request itself is wrong — a missing pipeline today, a denied
- * permission once IAM is on. Reconnecting cannot fix it, so it ends the stream
- * instead of retrying forever. 5xx and dropped connections are transient.
+ * The media type, without parameters. `text/event-stream; charset=utf-8` matches
+ * `text/event-stream`. A longer name such as `text/event-streaming` does not.
+ */
+const mediaType = (contentType: string): string =>
+  contentType.split(";")[0].trim().toLowerCase();
+
+/**
+ * A 4xx, or a finished response that is not an event stream (a `200` HTML page
+ * from a proxy). Reconnecting cannot fix those. A 5xx and a dropped connection
+ * are transient.
  */
 const isFatal = (error: unknown): boolean =>
-  isApiRequestError(error) && error.status >= 400 && error.status < 500;
+  isApiRequestError(error) && error.status < 500;
 
 /**
  * Subscribe to an SSE endpoint. Returns an unsubscribe function; calling it
@@ -58,7 +67,7 @@ export const subscribeToEventStream = (
 
     async onopen(response) {
       const contentType = response.headers.get("content-type") ?? "";
-      if (response.ok && contentType.startsWith(EventStreamContentType)) {
+      if (response.ok && mediaType(contentType) === EventStreamContentType) {
         handlers.onOpen?.();
         return;
       }
@@ -83,6 +92,7 @@ export const subscribeToEventStream = (
       if (isFatal(error)) {
         throw error;
       }
+      handlers.onRetry?.(error);
       return RETRY_DELAY_MS;
     },
   }).catch((error: unknown) => {

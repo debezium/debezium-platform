@@ -219,6 +219,10 @@
       "grepNotification": "Notifiche grep",
       "showTooltip": "Clicca per grep i log delle notifiche.",
       "hideTooltip": "Clicca per interrompere grep i log delle notifiche."
+    },
+    "stream": {
+      "reconnecting": "Log live disconnesso. Nuovo tentativo di connessione in corso.",
+      "stopped": "Gli aggiornamenti live si sono interrotti. Viene mostrato l'ultimo log caricato."
     }
   },
   "editConfirmationModel": {
