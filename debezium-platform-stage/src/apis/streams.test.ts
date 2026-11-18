@@ -22,11 +22,16 @@ const lastCall = (): { url: string; options: Captured } => {
   return { url: call[0] as string, options: call[1] as Captured };
 };
 
-const sseResponse = (init: { status?: number; contentType?: string } = {}) =>
+const sseResponse = (
+  init: { status?: number; contentType?: string; retryAfter?: string } = {}
+) =>
   new Response(init.status && init.status >= 400 ? "nope" : "", {
     status: init.status ?? 200,
-    statusText: init.status === 403 ? "Forbidden" : "OK",
-    headers: { "Content-Type": init.contentType ?? EventStreamContentType },
+    statusText: init.status === 403 ? "Forbidden" : init.status === 429 ? "Too Many Requests" : "OK",
+    headers: {
+      "Content-Type": init.contentType ?? EventStreamContentType,
+      ...(init.retryAfter !== undefined ? { "Retry-After": init.retryAfter } : {}),
+    },
   });
 
 describe("subscribeToEventStream", () => {
@@ -161,6 +166,28 @@ describe("subscribeToEventStream", () => {
     expect(() => options.onerror?.(failure)).toThrow();
   });
 
+  it("retries a 429, waiting for Retry-After when the response has one", async () => {
+    fetchEventSource.mockReturnValue(Promise.resolve());
+    const onRetry = vi.fn();
+
+    subscribeToEventStream("/stream", { onMessage: vi.fn(), onRetry });
+    const { options } = lastCall();
+
+    const limited = await options
+      .onopen?.(sseResponse({ status: 429, retryAfter: "15" }))
+      .catch((error: unknown) => error);
+
+    expect(limited).toMatchObject({ name: "ApiRequestError", status: 429 });
+    expect(options.onerror?.(limited)).toBe(15000);
+    expect(onRetry).toHaveBeenCalledTimes(1);
+
+    const again = await options
+      .onopen?.(sseResponse({ status: 429 }))
+      .catch((error: unknown) => error);
+
+    expect(options.onerror?.(again)).toBe(3000);
+  });
+
   it("retries a 5xx", async () => {
     fetchEventSource.mockReturnValue(Promise.resolve());
     const onRetry = vi.fn();
@@ -174,6 +201,27 @@ describe("subscribeToEventStream", () => {
 
     expect(options.onerror?.(failure)).toBe(3000);
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the retry interval the stream sent", () => {
+    fetchEventSource.mockReturnValue(Promise.resolve());
+
+    subscribeToEventStream("/stream", { onMessage: vi.fn() });
+    const { options } = lastCall();
+
+    // Conductor sends this on log-stream-failure before ending the response.
+    // Returning 3000 here would start a new reader sooner than it asked.
+    options.onmessage?.({
+      id: "",
+      event: "log-stream-failure",
+      data: "",
+      retry: 15000,
+    });
+
+    expect(options.onerror?.(new TypeError("read failed"))).toBe(15000);
+    // The value stays in effect when a later event does not replace it.
+    options.onmessage?.({ id: "", event: "message", data: "line" });
+    expect(options.onerror?.(new TypeError("read failed"))).toBe(15000);
   });
 
   it("reconnects after a transient failure", () => {
