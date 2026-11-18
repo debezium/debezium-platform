@@ -37,19 +37,7 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Establish API mocking before all tests.
-// Configure to suppress warnings for WebSocket connections (they're mocked separately)
-beforeAll(() => server.listen({
-  onUnhandledRequest: (request, print) => {
-    // Suppress warnings for WebSocket connections
-    const url = request.url;
-    if (url.startsWith('ws://') || url.startsWith('wss://')) {
-      return; // Don't warn for WebSocket connections
-    }
-    
-    // For HTTP/HTTPS requests, show the default warning
-    print.warning();
-  },
-}));
+beforeAll(() => server.listen());
 
 afterEach(() => {
   // Reset any request handlers that we may add during the tests,

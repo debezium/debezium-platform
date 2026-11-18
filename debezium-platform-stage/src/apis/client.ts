@@ -215,7 +215,12 @@ const networkFailure = (cause: unknown): ApiRequestError => {
   });
 };
 
-const httpFailure = async (response: Response): Promise<ApiRequestError> => {
+/**
+ * Build the failure for a non-OK response. Exported so streaming callers, which
+ * do their own `fetch`, raise the same error type as {@link request} rather than
+ * inventing a second contract.
+ */
+export const httpFailure = async (response: Response): Promise<ApiRequestError> => {
   const parsed = await parseErrorResponse(response);
   const { statusText } = response;
   return new ApiRequestError({

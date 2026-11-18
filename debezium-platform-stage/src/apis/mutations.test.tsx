@@ -177,7 +177,7 @@ describe("resource mutations", () => {
         .catch((error: unknown) => error);
     });
 
-    // The hook must not flatten this into a plain Error: DDD-79 needs the 403 to
+    // The hook must not flatten this into a plain Error: With IAM needs the 403 to
     // render "requires source:write" rather than a generic failure.
     expect(isApiRequestError(caught)).toBe(true);
     expect((caught as ApiRequestError).status).toBe(403);

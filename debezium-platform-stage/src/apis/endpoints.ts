@@ -45,11 +45,8 @@ export const pipelinePath = (id: PathId): string => apiUrl(`/api/pipelines/${id}
 
 export const pipelineLogsPath = (id: PathId): string => apiUrl(`/api/pipelines/${id}/logs`);
 
-export const toWebSocketUrl = (httpUrl: string): string => httpUrl.replace(/^http/, "ws");
-
-/** WebSocket URL for live pipeline logs, until the conductor exposes an SSE endpoint. */
-export const pipelineLogsStreamUrl = (id: PathId): string =>
-  `${toWebSocketUrl(API_URL)}/api/pipelines/${id}/logs/stream`;
+export const pipelineLogsStreamPath = (id: PathId): string =>
+  apiUrl(`/api/pipelines/${id}/logs/stream`);
 
 export const pipelineSignalsPath = (id: PathId): string =>
   apiUrl(`/api/pipelines/${id}/signals`);

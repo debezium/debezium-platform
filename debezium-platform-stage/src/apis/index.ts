@@ -1,5 +1,6 @@
 export * from "./client";
 export * from "./endpoints";
+export * from "./streams";
 export * from "./apis";
 export * from "./monitoring";
 export * from "./mutations";

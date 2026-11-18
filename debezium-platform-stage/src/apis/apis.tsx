@@ -49,9 +49,7 @@ const writeMessage =
  *
  * Throws {@link ApiRequestError}: reworded for display, but `status` and `body`
  * survive, so a caller can tell a permission denial from a validation failure.
- * Writes are where DDD-79's permissions bite hardest — `pipeline:write` versus
- * `pipeline:operate` — so flattening these to a string would lose what the UI
- * needs to explain a 403.
+ * Flattening these to a string would lose what the UI needs to explain a 403.
  */
 const writeJson = async <T,>(
   url: string,

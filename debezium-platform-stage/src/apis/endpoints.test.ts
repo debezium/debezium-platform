@@ -6,14 +6,13 @@ import {
   connectionCollectionsPath,
   destinationPath,
   monitoringPanelQueryPath,
-  pipelineLogsStreamUrl,
+  pipelineLogsStreamPath,
   resourceCollectionPath,
   snapshotHistoryDetailPath,
   snapshotHistoryPath,
   snapshotProgressStreamPath,
   sourcePath,
   sourcesPath,
-  toWebSocketUrl,
 } from "./endpoints";
 
 describe("endpoint paths", () => {
@@ -44,15 +43,11 @@ describe("endpoint paths", () => {
     expect(alertRuleActionPath(4, "disable")).toBe(`${API_URL}/api/alerts/rules/4/disable`);
   });
 
-  it("keeps TLS when mapping an http origin to a websocket one", () => {
-    expect(toWebSocketUrl("http://localhost:8080")).toBe("ws://localhost:8080");
-    // Not `ws://` — a browser blocks an insecure socket opened from an HTTPS page.
-    expect(toWebSocketUrl("https://dmp.example.com")).toBe("wss://dmp.example.com");
-  });
-
-  it("builds the pipeline log socket from the configured API origin", () => {
-    expect(pipelineLogsStreamUrl("7")).toBe(
-      `${toWebSocketUrl(API_URL)}/api/pipelines/7/logs/stream`
+  it("builds the pipeline log stream as a plain http url", () => {
+    // Not ws:// — the log stream is SSE now, so a bearer token can be attached
+    // to it the same way as to any other request.
+    expect(pipelineLogsStreamPath("7")).toBe(
+      `${API_URL}/api/pipelines/7/logs/stream`
     );
   });
 });

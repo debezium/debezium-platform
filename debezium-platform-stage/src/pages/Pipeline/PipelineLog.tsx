@@ -16,7 +16,8 @@ import { useNotification } from "@appContext/AppNotificationContext";
 import { fetchFile, fetchText } from "src/apis/apis";
 import { useTranslation } from "react-i18next";
 import { LogViewerToolbarContext } from "@patternfly/react-log-viewer/dist/esm/LogViewer/LogViewerContext";
-import { pipelineLogsPath, pipelineLogsStreamUrl } from "../../apis/endpoints";
+import { pipelineLogsPath, pipelineLogsStreamPath } from "../../apis/endpoints";
+import { subscribeToEventStream } from "../../apis/streams";
 
 // Extend the Document interface
 interface ExtendedDocument extends Document {
@@ -56,41 +57,44 @@ const PipelineLog: FC<PipelineLogProps> = ({
   const logSet = useRef(new Set<string>());
 
   const [isLogDownloading, setIsLogDownloading] = useState<boolean>(false);
-  const [isWebSocketLoading, setIsWebSocketLoading] = useState<boolean>(false);
+  const [isLogStreamLoading, setIsLogStreamLoading] = useState<boolean>(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
   const [notificationLogToggle, setNotificationLogToggle] = useState(false);
-
-  // Close WebSocket connection when tab is not active
-  useEffect(() => {
-    const isActive = activeTabKey === "logs";
-    if (!isActive && wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }   
-    };
-  }, [activeTabKey]);
 
   useEffect(() => {
     if (activeTabKey !== "logs" || !pipelineId) return;
-    setIsWebSocketLoading(true);
 
-    // Only fetch logs when tab is active
+    // Leaving the tab or changing pipeline runs this effect's cleanup, which
+    // closes the stream — no separate teardown effect is needed.
+    let cancelled = false;
+    let closeStream: (() => void) | undefined;
+    setIsLogStreamLoading(true);
+
+    /** Appends lines not seen yet, keeping only the newest MAX_LOG_LINES. */
+    const appendLogLines = (chunk: string) => {
+      const newUniqueLogs = chunk
+        .split("\n")
+        .filter((logLine) => logLine && !logSet.current.has(logLine));
+
+      if (newUniqueLogs.length === 0) return;
+      newUniqueLogs.forEach((logLine) => logSet.current.add(logLine));
+
+      setLogs((prevLogs) => {
+        const updatedLogs = [...prevLogs, ...newUniqueLogs];
+        return updatedLogs.length > MAX_LOG_LINES
+          ? updatedLogs.slice(updatedLogs.length - MAX_LOG_LINES)
+          : updatedLogs;
+      });
+    };
+
     fetchText(pipelineLogsPath(pipelineId))
       .then((initialLogs) => {
-        const initialLogLines = initialLogs.split("\n");
+        if (cancelled) return;
 
-        // Reset logs when tab becomes active
+        // Reset logs when the tab becomes active
         logSet.current.clear();
 
-        // Add initial logs to the set and state
-        const uniqueInitialLogs = initialLogLines.filter(logLine => {
+        const uniqueInitialLogs = initialLogs.split("\n").filter((logLine) => {
           if (logLine && !logSet.current.has(logLine)) {
             logSet.current.add(logLine);
             return true;
@@ -104,61 +108,31 @@ const PipelineLog: FC<PipelineLogProps> = ({
         }
 
         setLogs(uniqueInitialLogs);
-        setIsWebSocketLoading(false);
+        setIsLogStreamLoading(false);
 
-        // open WebSocket for real-time updates only if tab is active
-        wsRef.current = new WebSocket(pipelineLogsStreamUrl(pipelineId));
-
-        wsRef.current.onmessage = (event) => {
-          // Set loading to false when we receive the first message
-          setIsWebSocketLoading(false);
-
-          const newLogs = event.data.split("\n");
-
-          const newUniqueLogs = newLogs.filter((logLine: string) => {
-            // Only keep logs that haven't been added
-            return logLine && !logSet.current.has(logLine);
-          });
-
-          // Add new unique logs to the set
-          newUniqueLogs.forEach((logLine: string) => {
-            logSet.current.add(logLine);
-          });
-
-          if (newUniqueLogs.length > 0) {
-            setLogs(prevLogs => {
-              const updatedLogs = [...prevLogs, ...newUniqueLogs];
-              // Apply log rotation - keep only the most recent MAX_LOG_LINES
-              if (updatedLogs.length > MAX_LOG_LINES) {
-                return updatedLogs.slice(updatedLogs.length - MAX_LOG_LINES);
-              }
-              return updatedLogs;
-            });
-          }
-        };
-
-        wsRef.current.onerror = (error) => {
-          console.error("WebSocket error:", error);
-          setIsWebSocketLoading(false);
-        };
-
-        wsRef.current.onclose = () => {
-          console.log("WebSocket connection closed");  
-          setIsWebSocketLoading(false);
-        };
+        // The stream replays history before tailing, so most of its first
+        // messages repeat what the fetch above already showed. `logSet` drops
+        // them, which is also what makes a reconnect idempotent.
+        closeStream = subscribeToEventStream(pipelineLogsStreamPath(pipelineId), {
+          onMessage: (data) => {
+            setIsLogStreamLoading(false);
+            appendLogLines(data);
+          },
+          onError: (error) => {
+            console.error("Pipeline log stream failed:", error);
+            setIsLogStreamLoading(false);
+          },
+        });
       })
       .catch((error) => {
         console.error("Error fetching initial logs:", error);
-        setIsWebSocketLoading(false);
+        if (!cancelled) setIsLogStreamLoading(false);
       });
 
-    // Cleanup
     return () => {
-      setIsWebSocketLoading(false);
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
+      cancelled = true;
+      closeStream?.();
+      setIsLogStreamLoading(false);
     };
   }, [activeTabKey, pipelineId]);
 
@@ -368,7 +342,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
 
   return (
     <div className="pipeline_log">
-      {isWebSocketLoading ? 
+      {isLogStreamLoading ?
       <>
         <Skeleton width="25%" screenreaderText="Loading pipeline log" />
         <br />
