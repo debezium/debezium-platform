@@ -214,6 +214,10 @@ describe("subscribeToEventStream", () => {
   });
 
   it("retries a 5xx", async () => {
+    // Each delay is a deadline minus the current time, so a real clock ticking
+    // between the two reads turns 60000 into 59999 at random. Freeze it.
+    vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
+
     fetchEventSource.mockReturnValue(Promise.resolve());
     const onRetry = vi.fn();
 
