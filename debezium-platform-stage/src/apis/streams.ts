@@ -12,10 +12,22 @@ import { httpFailure, isApiRequestError } from "./client";
  */
 
 /**
- * Reconnect delay when the stream did not send one. A `retry:` field on an
- * event replaces this until a later event sets another.
+ * Reconnect delay before the stream has sent one of its own. Once it sends a
+ * `retry:` field the library's value takes over, so this is only the opening
+ * default, not a ceiling.
  */
 const RETRY_DELAY_MS = 3000;
+
+/**
+ * `window.setTimeout` takes a signed 32-bit delay. A larger one overflows and can
+ * fire immediately, turning a long wait into a reconnect loop, so every delay
+ * returned from here is capped at the timer's own limit.
+ *
+ * This covers the delays this module computes, which is where an arbitrary
+ * intermediary's `Retry-After` arrives. A `retry:` field from the stream itself is
+ * stored by the library and handed to its timer directly, out of reach from here.
+ */
+const MAX_TIMER_DELAY_MS = 2_147_483_647;
 
 export type EventStreamHandlers = {
   /** One `data:` payload. */
@@ -42,31 +54,36 @@ const mediaType = (contentType: string): string =>
   contentType.split(";")[0].trim().toLowerCase();
 
 /**
- * `Retry-After` as a delay in milliseconds. The value is either delta-seconds
- * or an HTTP date. An unreadable header is ignored so the caller can fall back.
+ * When `Retry-After` expires, as a timestamp. Delta-seconds are counted from
+ * now. An HTTP date is already a deadline. An unreadable header is ignored so
+ * the caller can fall back. The remaining wait is computed later, after the
+ * error body has been read.
  */
-const retryAfterDelay = (response: Response): number | undefined => {
+const retryAfterDeadline = (response: Response): number | undefined => {
   const header = response.headers.get("Retry-After")?.trim();
   if (!header) {
     return undefined;
   }
   if (/^\d+(\.\d+)?$/.test(header)) {
-    return Math.round(Number(header) * 1000);
+    return Date.now() + Math.round(Number(header) * 1000);
   }
   const when = Date.parse(header);
   if (Number.isNaN(when)) {
     return undefined;
   }
-  return Math.max(0, when - Date.now());
+  return when;
 };
 
 /**
- * A 4xx other than 429, or a finished response that is not an event stream (a
- * `200` HTML page from a proxy). Reconnecting cannot fix those. A 429 is a
- * temporary limit. A 5xx and a dropped connection are transient too.
+ * Statuses a client may retry. `408` and `429` are the temporary 4xx codes.
+ * Every `5xx` is temporary. Every other status below 500 is terminal, including
+ * a `403` and a `200` that is not an event stream.
  */
+const retries = (status: number): boolean =>
+  status === 408 || status === 429 || status >= 500;
+
 const isFatal = (error: unknown): boolean =>
-  isApiRequestError(error) && error.status < 500 && error.status !== 429;
+  isApiRequestError(error) && !retries(error.status);
 
 /**
  * Subscribe to an SSE endpoint. Returns an unsubscribe function; calling it
@@ -78,11 +95,14 @@ export const subscribeToEventStream = (
   handlers: EventStreamHandlers
 ): (() => void) => {
   const controller = new AbortController();
-  // Last `retry:` value from the server, in milliseconds. The library stores
-  // the same number, then throws it away when `onerror` returns its own delay.
-  let serverRetryMs: number | undefined;
-  // Delay from the `Retry-After` header on the 429 currently being handled.
-  let retryAfterMs: number | undefined;
+  // Whether the stream has ever sent a `retry:` field. Only the fact is tracked,
+  // not the value: the library updates its own interval as each line is parsed,
+  // including one in an event that never completed and so never reached
+  // `onmessage`. Its number is therefore at least as fresh as anything captured
+  // here, and returning nothing lets it win.
+  let sawServerRetry = false;
+  // When `Retry-After` on the response being handled expires.
+  let retryDeadlineMs: number | undefined;
 
   void fetchEventSource(url, {
     signal: controller.signal,
@@ -98,15 +118,14 @@ export const subscribeToEventStream = (
         handlers.onOpen?.();
         return;
       }
-      if (response.status === 429) {
-        retryAfterMs = retryAfterDelay(response);
-      }
+      // Any retryable status may carry Retry-After. A terminal status cannot.
+      retryDeadlineMs = retries(response.status) ? retryAfterDeadline(response) : undefined;
       throw await httpFailure(response);
     },
 
     onmessage(event) {
       if (typeof event.retry === "number") {
-        serverRetryMs = event.retry;
+        sawServerRetry = true;
       }
       handlers.onMessage(event.data);
     },
@@ -126,12 +145,14 @@ export const subscribeToEventStream = (
         throw error;
       }
       handlers.onRetry?.(error);
-      if (isApiRequestError(error) && error.status === 429 && retryAfterMs !== undefined) {
-        const delay = retryAfterMs;
-        retryAfterMs = undefined;
-        return delay;
+      if (retryDeadlineMs !== undefined) {
+        const delay = Math.max(0, retryDeadlineMs - Date.now());
+        retryDeadlineMs = undefined;
+        return Math.min(delay, MAX_TIMER_DELAY_MS);
       }
-      return serverRetryMs ?? RETRY_DELAY_MS;
+      // Returning nothing keeps whatever the stream last asked for; the opening
+      // default only applies until it asks for something.
+      return sawServerRetry ? undefined : RETRY_DELAY_MS;
     },
   }).catch((error: unknown) => {
     if (!controller.signal.aborted) {

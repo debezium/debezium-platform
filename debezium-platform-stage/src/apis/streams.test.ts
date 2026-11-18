@@ -167,6 +167,10 @@ describe("subscribeToEventStream", () => {
   });
 
   it("retries a 429, waiting for Retry-After when the response has one", async () => {
+    // The delay is a deadline minus the current time, so a real clock ticking
+    // between the two reads makes this 14999 at random. Freeze it.
+    vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
+
     fetchEventSource.mockReturnValue(Promise.resolve());
     const onRetry = vi.fn();
 
@@ -188,6 +192,27 @@ describe("subscribeToEventStream", () => {
     expect(options.onerror?.(again)).toBe(3000);
   });
 
+  it("subtracts time spent reading the error body from Retry-After", async () => {
+    const start = 1_700_000_000_000;
+    let now = start;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
+    vi.spyOn(Response.prototype, "text").mockImplementation(async () => {
+      now += 10_000;
+      return "slow body";
+    });
+
+    fetchEventSource.mockReturnValue(Promise.resolve());
+    subscribeToEventStream("/stream", { onMessage: vi.fn() });
+    const { options } = lastCall();
+
+    const limited = await options
+      .onopen?.(sseResponse({ status: 429, retryAfter: "15" }))
+      .catch((error: unknown) => error);
+
+    expect(limited).toMatchObject({ name: "ApiRequestError", status: 429, message: "slow body" });
+    expect(options.onerror?.(limited)).toBe(5000);
+  });
+
   it("retries a 5xx", async () => {
     fetchEventSource.mockReturnValue(Promise.resolve());
     const onRetry = vi.fn();
@@ -201,16 +226,34 @@ describe("subscribeToEventStream", () => {
 
     expect(options.onerror?.(failure)).toBe(3000);
     expect(onRetry).toHaveBeenCalledTimes(1);
+
+    const waiting = await options
+      .onopen?.(sseResponse({ status: 503, retryAfter: "60" }))
+      .catch((error: unknown) => error);
+
+    expect(options.onerror?.(waiting)).toBe(60000);
+
+    const timedOut = await options
+      .onopen?.(sseResponse({ status: 408, retryAfter: "5" }))
+      .catch((error: unknown) => error);
+    expect(options.onerror?.(timedOut)).toBe(5000);
+
+    const badGateway = await options
+      .onopen?.(sseResponse({ status: 502, retryAfter: "30" }))
+      .catch((error: unknown) => error);
+    expect(options.onerror?.(badGateway)).toBe(30000);
   });
 
-  it("uses the retry interval the stream sent", () => {
+  it("defers to the stream's own retry interval once it has sent one", () => {
     fetchEventSource.mockReturnValue(Promise.resolve());
 
     subscribeToEventStream("/stream", { onMessage: vi.fn() });
     const { options } = lastCall();
 
+    // Before any hint, our opening default applies.
+    expect(options.onerror?.(new TypeError("read failed"))).toBe(3000);
+
     // Conductor sends this on log-stream-failure before ending the response.
-    // Returning 3000 here would start a new reader sooner than it asked.
     options.onmessage?.({
       id: "",
       event: "log-stream-failure",
@@ -218,10 +261,33 @@ describe("subscribeToEventStream", () => {
       retry: 15000,
     });
 
-    expect(options.onerror?.(new TypeError("read failed"))).toBe(15000);
-    // The value stays in effect when a later event does not replace it.
+    // Returning nothing hands the decision back to the library, which tracks
+    // `retry:` as each line is parsed — including one in an event that never
+    // completed, which `onmessage` never sees. Returning a value captured here
+    // would overwrite a fresher one with a staler one.
+    expect(options.onerror?.(new TypeError("read failed"))).toBeUndefined();
+
+    // Still deferred when a later event carries no retry of its own.
     options.onmessage?.({ id: "", event: "message", data: "line" });
-    expect(options.onerror?.(new TypeError("read failed"))).toBe(15000);
+    expect(options.onerror?.(new TypeError("read failed"))).toBeUndefined();
+  });
+
+  it("keeps a Retry-After delay inside the browser timer range", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
+    fetchEventSource.mockReturnValue(Promise.resolve());
+
+    subscribeToEventStream("/stream", { onMessage: vi.fn() });
+    const { options } = lastCall();
+
+    // 2147484 seconds exceeds the signed 32-bit millisecond argument of
+    // setTimeout. Passed through, it overflows and the retry fires at once.
+    const limited = await options
+      .onopen?.(sseResponse({ status: 429, retryAfter: "2147484" }))
+      .catch((error: unknown) => error);
+
+    const delay = options.onerror?.(limited) as number;
+    expect(delay).toBe(2_147_483_647);
+    expect(delay).toBeLessThanOrEqual(2 ** 31 - 1);
   });
 
   it("reconnects after a transient failure", () => {
