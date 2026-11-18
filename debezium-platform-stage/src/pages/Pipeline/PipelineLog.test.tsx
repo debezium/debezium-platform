@@ -72,31 +72,35 @@ vi.mock("@appContext/AppNotificationContext", () => ({
   useNotification: vi.fn(),
 }));
 
-// Create a proper mock WebSocket class
-class MockWebSocket {
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSING = 2;
-  static CLOSED = 3;
+// Logs arrive over SSE; the transport itself is covered in apis/streams.test.ts,
+// so here it is a mock whose handlers the tests drive directly.
+const { subscribeToEventStream } = vi.hoisted(() => ({
+  subscribeToEventStream: vi.fn(),
+}));
 
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  onerror: ((event: Event) => void) | null = null;
-  onclose: (() => void) | null = null;
-  onopen: (() => void) | null = null;
-  readyState = MockWebSocket.OPEN;
-  close = vi.fn();
-  send = vi.fn();
-  url: string;
+vi.mock("../../apis/streams", () => ({ subscribeToEventStream }));
 
-  addEventListener(): void {}
-  removeEventListener(): void {}
+type StreamHandlers = {
+  onMessage: (data: string) => void;
+  onOpen?: () => void;
+  onError?: (error: unknown) => void;
+};
 
-  constructor(url: string) {
-    this.url = url;
-  }
-}
+const unsubscribe = vi.fn();
 
-globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket;
+/** Handlers the component passed on its most recent subscribe. */
+const streamHandlers = (): StreamHandlers => {
+  const call = subscribeToEventStream.mock.calls.at(-1);
+  if (!call) throw new Error("the component did not subscribe to the log stream");
+  return call[1] as StreamHandlers;
+};
+
+/** Push a stream payload the way the conductor would. */
+const emitLogs = async (data: string) => {
+  await act(async () => {
+    streamHandlers().onMessage(data);
+  });
+};
 
 describe("PipelineLog", () => {
   const mockProps = {
@@ -109,6 +113,7 @@ describe("PipelineLog", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    subscribeToEventStream.mockReturnValue(unsubscribe);
     (useNotification as Mock).mockReturnValue({
       addNotification: mockAddNotification,
     });
@@ -153,6 +158,58 @@ describe("PipelineLog", () => {
     expect(logLines[0]).toHaveTextContent("log line 1");
     expect(logLines[1]).toHaveTextContent("log line 2");
     expect(logLines[2]).toHaveTextContent("log line 3");
+  });
+
+  it("subscribes to the log stream once the initial logs have loaded", async () => {
+    render(<PipelineLog {...mockProps} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("log-line")).toHaveLength(3);
+    });
+
+    expect(subscribeToEventStream).toHaveBeenCalledTimes(1);
+    expect(subscribeToEventStream.mock.calls[0][0]).toBe(
+      `${API_URL}/api/pipelines/test-pipeline-id/logs/stream`
+    );
+  });
+
+  it("appends lines pushed over the stream", async () => {
+    render(<PipelineLog {...mockProps} />);
+    await waitFor(() => {
+      expect(screen.getAllByTestId("log-line")).toHaveLength(3);
+    });
+
+    await emitLogs("log line 4\nlog line 5");
+
+    const logLines = screen.getAllByTestId("log-line");
+    expect(logLines).toHaveLength(5);
+    expect(logLines[4]).toHaveTextContent("log line 5");
+  });
+
+  it("drops lines the stream replays that are already on screen", async () => {
+    render(<PipelineLog {...mockProps} />);
+    await waitFor(() => {
+      expect(screen.getAllByTestId("log-line")).toHaveLength(3);
+    });
+
+    // The endpoint replays history before tailing, so the first messages repeat
+    // what the initial fetch already rendered.
+    await emitLogs("log line 1\nlog line 2\nlog line 3\nlog line 4");
+
+    const logLines = screen.getAllByTestId("log-line");
+    expect(logLines).toHaveLength(4);
+    expect(logLines[3]).toHaveTextContent("log line 4");
+  });
+
+  it("closes the stream when the tab is left", async () => {
+    const { rerender } = render(<PipelineLog {...mockProps} />);
+    await waitFor(() => {
+      expect(subscribeToEventStream).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(<PipelineLog {...mockProps} activeTabKey="details" />);
+
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
 
   it("does not fetch logs when tab is not active", async () => {
