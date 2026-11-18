@@ -105,17 +105,45 @@ describe("subscribeToEventStream", () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
-  it("rejects a response that is not an event stream", async () => {
+  it("accepts an event stream whose media type has a charset", async () => {
+    fetchEventSource.mockReturnValue(Promise.resolve());
+    const onOpen = vi.fn();
+
+    subscribeToEventStream("/stream", { onMessage: vi.fn(), onOpen });
+    await lastCall().options.onopen?.(
+      sseResponse({ contentType: "text/event-stream; charset=utf-8" })
+    );
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a media type that only shares the event-stream prefix", async () => {
     fetchEventSource.mockReturnValue(Promise.resolve());
     const onOpen = vi.fn();
 
     subscribeToEventStream("/stream", { onMessage: vi.fn(), onOpen });
 
-    // An HTML login page from a proxy would be a 200 of the wrong type.
     await expect(
-      lastCall().options.onopen?.(sseResponse({ contentType: "text/html" }))
+      lastCall().options.onopen?.(sseResponse({ contentType: "text/event-streaming" }))
     ).rejects.toMatchObject({ name: "ApiRequestError" });
     expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it("stops retrying when a 200 is not an event stream", async () => {
+    fetchEventSource.mockReturnValue(Promise.resolve());
+    const onRetry = vi.fn();
+
+    subscribeToEventStream("/stream", { onMessage: vi.fn(), onRetry });
+    const { options } = lastCall();
+
+    // An HTML login page from a proxy is a finished 200 of the wrong type.
+    const failure = await options
+      .onopen?.(sseResponse({ contentType: "text/html" }))
+      .catch((error: unknown) => error);
+
+    expect(failure).toMatchObject({ name: "ApiRequestError", status: 200 });
+    expect(() => options.onerror?.(failure)).toThrow();
+    expect(onRetry).not.toHaveBeenCalled();
   });
 
   it("stops retrying on a 4xx, keeping the status for a later auth layer", async () => {
@@ -133,14 +161,31 @@ describe("subscribeToEventStream", () => {
     expect(() => options.onerror?.(failure)).toThrow();
   });
 
+  it("retries a 5xx", async () => {
+    fetchEventSource.mockReturnValue(Promise.resolve());
+    const onRetry = vi.fn();
+
+    subscribeToEventStream("/stream", { onMessage: vi.fn(), onRetry });
+    const { options } = lastCall();
+
+    const failure = await options
+      .onopen?.(sseResponse({ status: 503 }))
+      .catch((error: unknown) => error);
+
+    expect(options.onerror?.(failure)).toBe(3000);
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
   it("reconnects after a transient failure", () => {
     fetchEventSource.mockReturnValue(Promise.resolve());
+    const onRetry = vi.fn();
 
-    subscribeToEventStream("/stream", { onMessage: vi.fn() });
+    subscribeToEventStream("/stream", { onMessage: vi.fn(), onRetry });
     const { options } = lastCall();
 
     // A dropped connection returns a retry delay rather than throwing.
-    expect(options.onerror?.(new TypeError("network error"))).toBeGreaterThan(0);
+    expect(options.onerror?.(new TypeError("network error"))).toBe(3000);
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
   it("reconnects when the server finishes the response", () => {

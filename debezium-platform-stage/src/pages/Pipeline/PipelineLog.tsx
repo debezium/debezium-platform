@@ -6,6 +6,7 @@ import {
   Button,
   Tooltip,
   Skeleton,
+  Alert,
 } from "@patternfly/react-core";
 import { BellIcon, DownloadIcon, ExpandIcon } from "@patternfly/react-icons";
 import { LogViewer, LogViewerSearch } from "@patternfly/react-log-viewer";
@@ -44,6 +45,8 @@ interface PipelineLogProps {
 // Maximum number of log lines to keep in memory
 const MAX_LOG_LINES = 1000;
 
+type LogStreamStatus = "reconnecting" | "stopped";
+
 const PipelineLog: FC<PipelineLogProps> = ({
   activeTabKey,
   pipelineId,
@@ -53,13 +56,17 @@ const PipelineLog: FC<PipelineLogProps> = ({
   const { t } = useTranslation();
 
   const [logs, setLogs] = useState<string[]>([]);
-  // Set to track unique logs
+  // Lines currently on screen. Updated with the set so a second chunk in the
+  // same turn sees the trim from the first.
+  const logsRef = useRef<string[]>([]);
+  // Set to track unique logs still on screen.
   const logSet = useRef(new Set<string>());
 
   const [isLogDownloading, setIsLogDownloading] = useState<boolean>(false);
   const [isLogStreamLoading, setIsLogStreamLoading] = useState<boolean>(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [notificationLogToggle, setNotificationLogToggle] = useState(false);
+  const [streamStatus, setStreamStatus] = useState<LogStreamStatus | null>(null);
 
   useEffect(() => {
     if (activeTabKey !== "logs" || !pipelineId) return;
@@ -69,6 +76,22 @@ const PipelineLog: FC<PipelineLogProps> = ({
     let cancelled = false;
     let closeStream: (() => void) | undefined;
     setIsLogStreamLoading(true);
+    setStreamStatus(null);
+
+    /**
+     * Keeps the newest MAX_LOG_LINES and remembers only those. The set drops a
+     * replay of lines still on screen. Lines that have scrolled off are
+     * forgotten, so the same text can show again and the set stays bounded.
+     */
+    const publishLogs = (lines: string[]) => {
+      const kept =
+        lines.length > MAX_LOG_LINES
+          ? lines.slice(lines.length - MAX_LOG_LINES)
+          : lines;
+      logsRef.current = kept;
+      logSet.current = new Set(kept);
+      setLogs(kept);
+    };
 
     /** Appends lines not seen yet, keeping only the newest MAX_LOG_LINES. */
     const appendLogLines = (chunk: string) => {
@@ -77,50 +100,43 @@ const PipelineLog: FC<PipelineLogProps> = ({
         .filter((logLine) => logLine && !logSet.current.has(logLine));
 
       if (newUniqueLogs.length === 0) return;
-      newUniqueLogs.forEach((logLine) => logSet.current.add(logLine));
-
-      setLogs((prevLogs) => {
-        const updatedLogs = [...prevLogs, ...newUniqueLogs];
-        return updatedLogs.length > MAX_LOG_LINES
-          ? updatedLogs.slice(updatedLogs.length - MAX_LOG_LINES)
-          : updatedLogs;
-      });
+      publishLogs([...logsRef.current, ...newUniqueLogs]);
     };
 
     fetchText(pipelineLogsPath(pipelineId))
       .then((initialLogs) => {
         if (cancelled) return;
 
-        // Reset logs when the tab becomes active
-        logSet.current.clear();
-
+        // Reset logs when the tab becomes active. Dedup the snapshot with a
+        // local set, then remember only the lines that stay on screen.
+        const seen = new Set<string>();
         const uniqueInitialLogs = initialLogs.split("\n").filter((logLine) => {
-          if (logLine && !logSet.current.has(logLine)) {
-            logSet.current.add(logLine);
-            return true;
-          }
-          return false;
+          if (!logLine || seen.has(logLine)) return false;
+          seen.add(logLine);
+          return true;
         });
 
-        // Apply log rotation if needed
-        if (uniqueInitialLogs.length > MAX_LOG_LINES) {
-          uniqueInitialLogs.splice(0, uniqueInitialLogs.length - MAX_LOG_LINES);
-        }
-
-        setLogs(uniqueInitialLogs);
+        publishLogs(uniqueInitialLogs);
         setIsLogStreamLoading(false);
 
         // The stream replays history before tailing, so most of its first
         // messages repeat what the fetch above already showed. `logSet` drops
         // them, which is also what makes a reconnect idempotent.
         closeStream = subscribeToEventStream(pipelineLogsStreamPath(pipelineId), {
+          onOpen: () => {
+            if (!cancelled) setStreamStatus(null);
+          },
           onMessage: (data) => {
             setIsLogStreamLoading(false);
             appendLogLines(data);
           },
+          onRetry: () => {
+            if (!cancelled) setStreamStatus("reconnecting");
+          },
           onError: (error) => {
             console.error("Pipeline log stream failed:", error);
             setIsLogStreamLoading(false);
+            if (!cancelled) setStreamStatus("stopped");
           },
         });
       })
@@ -133,6 +149,7 @@ const PipelineLog: FC<PipelineLogProps> = ({
       cancelled = true;
       closeStream?.();
       setIsLogStreamLoading(false);
+      setStreamStatus(null);
     };
   }, [activeTabKey, pipelineId]);
 
@@ -356,6 +373,14 @@ const PipelineLog: FC<PipelineLogProps> = ({
         <br />
         <Skeleton />
       </> : 
+      <>
+      {streamStatus && (
+        <Alert
+          variant="warning"
+          isInline
+          title={t(`pipeline:logs.stream.${streamStatus}`)}
+        />
+      )}
       <LogViewer
         key={activeTabKey}
         {...({ id: "pipeline-log-view" } as
@@ -368,7 +393,8 @@ const PipelineLog: FC<PipelineLogProps> = ({
         theme={"light"}
         toolbar={<LogViewToolbar />}
         height={(isFullScreen && "100%") || "calc(100vh - 350px)"}
-      />}
+      />
+      </>}
     </div>
   );
 };

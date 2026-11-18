@@ -219,6 +219,10 @@
             "grepNotification": "Grep notifications",
             "showTooltip": "Click to grep the notification logs.",
             "hideTooltip": "Click to stopping grep the notification logs."
+        },
+        "stream": {
+            "reconnecting": "Live log disconnected. Still trying to reconnect.",
+            "stopped": "Live updates have stopped. Showing the last loaded log."
         }
     },
     "editConfirmationModel": {
