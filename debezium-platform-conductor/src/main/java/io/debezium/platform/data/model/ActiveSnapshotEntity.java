@@ -140,4 +140,15 @@ public class ActiveSnapshotEntity {
     public void setTables(List<ActiveSnapshotTableEntity> tables) {
         this.tables = tables;
     }
+
+    public boolean affectsPipelineStatus() {
+        if (type == null || status == null) {
+            return false;
+        }
+        return switch (type) {
+            case INITIAL -> status == SnapshotState.RUNNING;
+            case INCREMENTAL -> status == SnapshotState.RUNNING || status == SnapshotState.PAUSED;
+            default -> false;
+        };
+    }
 }

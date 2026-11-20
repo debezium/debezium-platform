@@ -5,6 +5,10 @@
  */
 package io.debezium.platform.domain;
 
+import static jakarta.transaction.Transactional.TxType.SUPPORTS;
+
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -19,8 +23,11 @@ import com.blazebit.persistence.view.EntityViewManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.debezium.outbox.quarkus.ExportedEvent;
+import io.debezium.platform.api.dto.PipelineResponse;
+import io.debezium.platform.api.mapper.PipelineMapper;
 import io.debezium.platform.data.model.PipelineEntity;
 import io.debezium.platform.data.model.PipelineStatus;
+import io.debezium.platform.domain.views.ActiveSnapshotSummary;
 import io.debezium.platform.domain.views.Pipeline;
 import io.debezium.platform.domain.views.flat.PipelineFlat;
 import io.debezium.platform.domain.views.refs.PipelineReference;
@@ -35,6 +42,8 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
     private final ObjectMapper objectMapper;
     private final LogStreamingService logStreamer;
     private final Instance<EnvironmentController> environmentController;
+    private final ActiveSnapshotService activeSnapshotService;
+    private final PipelineMapper mapper;
 
     public PipelineService(EntityManager em,
                            CriteriaBuilderFactory cbf,
@@ -43,13 +52,17 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
                            Event<PipelineStatusChanged> statusChangedEvent,
                            ObjectMapper objectMapper,
                            LogStreamingService logStreamer,
-                           Instance<EnvironmentController> environmentController) {
+                           Instance<EnvironmentController> environmentController,
+                           ActiveSnapshotService activeSnapshotService,
+                           PipelineMapper mapper) {
         super(PipelineEntity.class, Pipeline.class, PipelineReference.class, em, cbf, evm);
         this.event = event;
         this.statusChangedEvent = statusChangedEvent;
         this.objectMapper = objectMapper;
         this.logStreamer = logStreamer;
         this.environmentController = environmentController;
+        this.activeSnapshotService = activeSnapshotService;
+        this.mapper = mapper;
     }
 
     @Override
@@ -112,6 +125,41 @@ public class PipelineService extends AbstractService<PipelineEntity, Pipeline, P
 
                     return signal.id();
                 });
+    }
+
+    @Transactional(SUPPORTS)
+    public List<PipelineResponse> listWithSnapshots() {
+        var pipelines = list();
+        Map<Long, ActiveSnapshotSummary> activeByPipeline = activeSnapshotService.findActiveByPipeline();
+        return mapper.toResponseList(pipelines).stream()
+                .map(r -> enrichWithActiveSnapshot(r, activeByPipeline.get(r.id())))
+                .toList();
+    }
+
+    @Transactional(SUPPORTS)
+    public Optional<PipelineResponse> findByIdWithSnapshot(Long id) {
+        return findById(id)
+                .map(mapper::toResponse)
+                .map(r -> enrichWithActiveSnapshot(r, activeSnapshotService.find(id).orElse(null)));
+    }
+
+    private PipelineResponse enrichWithActiveSnapshot(PipelineResponse response, ActiveSnapshotSummary active) {
+        if (response == null || active == null || !active.affectsPipelineStatus()) {
+            return response;
+        }
+        return new PipelineResponse(
+                response.id(),
+                response.name(),
+                response.description(),
+                response.source(),
+                response.destination(),
+                response.transforms(),
+                response.logLevel(),
+                response.logLevels(),
+                response.status(),
+                response.errorMessage(),
+                active.getType(),
+                active.getStatus());
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)

@@ -9,7 +9,9 @@ import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,6 +28,7 @@ import io.debezium.platform.data.model.ActiveSnapshotTableEntity;
 import io.debezium.platform.data.model.SnapshotState;
 import io.debezium.platform.data.model.TableState;
 import io.debezium.platform.domain.views.ActiveSnapshot;
+import io.debezium.platform.domain.views.ActiveSnapshotSummary;
 import io.debezium.platform.domain.views.refs.ActiveSnapshotReference;
 
 /**
@@ -55,6 +58,18 @@ public class ActiveSnapshotService extends AbstractService<ActiveSnapshotEntity,
                 EntityViewSetting.create(ActiveSnapshot.class),
                 cb().where(PIPELINE_ID_ATTRIBUTE).eq(pipelineId))
                 .getResultList().stream().findFirst();
+    }
+
+    /**
+     * All active snapshots, indexed by pipeline ID, as lightweight summaries (no tables).
+     */
+    @Transactional(SUPPORTS)
+    public Map<Long, ActiveSnapshotSummary> findActiveByPipeline() {
+        return evm.applySetting(
+                EntityViewSetting.create(ActiveSnapshotSummary.class),
+                cb())
+                .getResultList().stream()
+                .collect(Collectors.toMap(ActiveSnapshotSummary::getPipelineId, a -> a, (left, right) -> left));
     }
 
     /**

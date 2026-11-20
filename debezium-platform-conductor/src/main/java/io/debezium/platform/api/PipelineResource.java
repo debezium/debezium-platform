@@ -62,8 +62,7 @@ public class PipelineResource {
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = PipelineResponse.class, required = true, type = SchemaType.ARRAY)))
     @GET
     public Response get() {
-        var pipelines = pipelineService.list();
-        return Response.ok(mapper.toResponseList(pipelines)).build();
+        return Response.ok(pipelineService.listWithSnapshots()).build();
     }
 
     @Operation(summary = "Returns a pipeline with given id")
@@ -71,8 +70,7 @@ public class PipelineResource {
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
-        return pipelineService.findById(id)
-                .map(mapper::toResponse)
+        return pipelineService.findByIdWithSnapshot(id)
                 .map(dto -> Response.ok(dto).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
