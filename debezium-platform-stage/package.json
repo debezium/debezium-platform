@@ -78,7 +78,7 @@
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.7",
-    "jsdom": "^29.1.1",
+    "jsdom": "^31.0.1",
     "msw": "^2.13.1",
     "start-server-and-test": "^3.0.4",
     "typescript": "^5.9.3",
