@@ -60,7 +60,7 @@ describe("ConnectionsCatalog", () => {
     sourceCatalogRows.length + destinationCatalogFixture.length;
 
   const mockSuccessfulCatalog = () => {
-    vi.mocked(useQuery).mockImplementation((options: any) => {
+    vi.mocked(useQuery).mockImplementation((options: any): any => {
       const queryKey = Array.isArray(options?.queryKey)
         ? options.queryKey[0]
         : options?.queryKey;
