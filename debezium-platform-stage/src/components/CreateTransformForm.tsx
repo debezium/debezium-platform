@@ -219,6 +219,7 @@ const CreateTransformForm = React.forwardRef<
       data: catalog,
       isLoading: isCatalogLoading,
       error: catalogError,
+      refetch: refetchCatalog,
     } = useQuery<CatalogApiResponse, Error>({
       queryKey: ["componentCatalog"],
 
@@ -812,6 +813,30 @@ const CreateTransformForm = React.forwardRef<
       [validate, handleSubmit, getLastValidationFailureBody]
     );
 
+    const renderCatalogLoadError = () => (
+      <div className="catalog-select-error">
+        <HelperText>
+          <HelperTextItem variant="error" icon={<ExclamationCircleIcon />}>
+            {t("transform:form.catalogFetchError", {
+              defaultValue: "Failed to load catalog",
+            })}
+            {catalogError?.message ? `: ${catalogError.message}` : ""}
+          </HelperTextItem>
+        </HelperText>
+        <Button
+          variant="link"
+          isInline
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            void refetchCatalog();
+          }}
+        >
+          {t("retry", { defaultValue: "Retry" })}
+        </Button>
+      </div>
+    );
+
     const transformToggle = (toggleRef: React.Ref<MenuToggleElement>) => (
       <MenuToggle
         ref={toggleRef}
@@ -823,7 +848,7 @@ const CreateTransformForm = React.forwardRef<
         isExpanded={isTransformOpen}
         isFullWidth
         status={errors["transform-class"] ? "danger" : undefined}
-        isDisabled={!!initialTransform}
+        isDisabled={!!initialTransform && !catalogError}
       >
         <TextInputGroup isPlain>
           <TextInputGroupMain
@@ -948,6 +973,9 @@ const CreateTransformForm = React.forwardRef<
             isScrollable
             maxMenuHeight="320px"
           >
+            {catalogError ? (
+              renderCatalogLoadError()
+            ) : (
             <SelectList id="transform-class-listbox">
               {isCatalogLoading ? (
                 <>
@@ -1005,6 +1033,7 @@ const CreateTransformForm = React.forwardRef<
                 })
               )}
             </SelectList>
+            )}
           </Select>
           {errors["transform-class"] && (
             <FormHelperText>
@@ -1315,6 +1344,9 @@ const CreateTransformForm = React.forwardRef<
             isScrollable
             maxMenuHeight="320px"
           >
+            {catalogError ? (
+              renderCatalogLoadError()
+            ) : (
             <SelectList id="predicate-type-listbox">
               {isCatalogLoading ? (
                 <SelectOption isDisabled>
@@ -1340,6 +1372,7 @@ const CreateTransformForm = React.forwardRef<
                 ))
               )}
             </SelectList>
+            )}
           </Select>
           <FormHelperText>
             <HelperText>
@@ -1404,14 +1437,6 @@ const CreateTransformForm = React.forwardRef<
         )}
       </Form>
     );
-
-    if (catalogError) {
-      return (
-        <Alert variant="danger" isInline title="Failed to load catalog">
-          {catalogError.message}
-        </Alert>
-      );
-    }
 
     const renderJumpLinksLayout = () => (
       <div className="jumplinks-layout">

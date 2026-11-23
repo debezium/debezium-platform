@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { useQuery } from "@tanstack/react-query";
 import { ConnectionsCatalog } from "./ConnectionsCatalog";
 import type { Catalog } from "../../apis/types";
 import { render } from "../../__test__/unit/test-utils";
@@ -21,35 +22,20 @@ vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
 }));
 
+const mockRefetch = vi.fn();
+
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...mod,
-    useQuery: vi.fn((options: { queryKey?: unknown }) => {
-      const queryKey = Array.isArray(options?.queryKey)
-        ? options.queryKey[0]
-        : options?.queryKey ?? options;
-      // Return different data based on query key
-      if (queryKey === "sourceConnectorCatalog") {
-        return {
-          data: sourceCatalogRows,
-          error: null,
-          isLoading: false,
-        };
-      } else if (queryKey === "destinationConnectorCatalog") {
-        return {
-          data: catalogFixture.components["server-sink"].map((entry: any) => ({
-            ...entry,
-            role: "destination",
-          })),
-          error: null,
-          isLoading: false,
-        };
-      }
-      return { data: [], error: null, isLoading: false };
-    }),
+    useQuery: vi.fn(),
   };
 });
+
+vi.mock("@components/CatalogSkeleton", () => ({
+  __esModule: true,
+  default: () => <div data-testid="catalog-skeleton" />,
+}));
 
 vi.mock("@components/CatalogGrid", () => ({
   CatalogGrid: ({
@@ -73,8 +59,69 @@ describe("ConnectionsCatalog", () => {
   const defaultMergedCount =
     sourceCatalogRows.length + destinationCatalogFixture.length;
 
+  const mockSuccessfulCatalog = () => {
+    vi.mocked(useQuery).mockImplementation((options: any) => {
+      const queryKey = Array.isArray(options?.queryKey)
+        ? options.queryKey[0]
+        : options?.queryKey;
+      if (queryKey === "sourceConnectorCatalog") {
+        return {
+          data: sourceCatalogRows,
+          error: null,
+          isLoading: false,
+          refetch: mockRefetch,
+        };
+      }
+      if (queryKey === "destinationConnectorCatalog") {
+        return {
+          data: destinationCatalogFixture,
+          error: null,
+          isLoading: false,
+          refetch: mockRefetch,
+        };
+      }
+      return { data: [], error: null, isLoading: false, refetch: mockRefetch };
+    });
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSuccessfulCatalog();
+  });
+
+  it("shows skeleton while catalog is loading", () => {
+    vi.mocked(useQuery).mockReturnValue({
+      data: undefined,
+      error: null,
+      isLoading: true,
+      refetch: mockRefetch,
+    } as any);
+
+    render(<ConnectionsCatalog />);
+    expect(screen.getByTestId("catalog-skeleton")).toBeInTheDocument();
+    expect(
+      screen.queryByText("No matching connection type is present"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows error alert when catalog query fails", () => {
+    vi.mocked(useQuery).mockReturnValue({
+      data: undefined,
+      error: new Error("network failed"),
+      isLoading: false,
+      refetch: mockRefetch,
+    } as any);
+
+    render(<ConnectionsCatalog />);
+    expect(screen.getByText("Failed to load connection catalog")).toBeInTheDocument();
+    expect(screen.getByText("network failed")).toBeInTheDocument();
+    expect(
+      screen.queryByText("No matching connection type is present"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("connection-catalog-grid")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(mockRefetch).toHaveBeenCalledTimes(2);
   });
 
   it("renders title and merged catalog entries", () => {
