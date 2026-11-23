@@ -36,6 +36,22 @@ public class AlertRuleService extends AbstractService<AlertRuleEntity, AlertRule
         this.ruleDeletedEvent = ruleDeletedEvent;
     }
 
+    /**
+     * Creates a new rule that already holds the default values of {@link AlertRuleEntity}.
+     * Without this, a field missing from the request would be saved as null.
+     */
+    @Override
+    public AlertRule createEmpty() {
+        AlertRule view = super.createEmpty();
+        AlertRuleEntity defaults = new AlertRuleEntity();
+        view.setForDuration(defaults.getForDuration());
+        view.setReduceFunction(defaults.getReduceFunction());
+        view.setEvaluationWindow(defaults.getEvaluationWindow());
+        view.setSeverity(defaults.getSeverity());
+        view.setEnabled(defaults.isEnabled());
+        return view;
+    }
+
     @Override
     public AlertRule create(@Valid AlertRule view) {
         validatePanelExists(view.getPanelId());

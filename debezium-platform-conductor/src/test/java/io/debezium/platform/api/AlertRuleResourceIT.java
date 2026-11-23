@@ -46,6 +46,7 @@ class AlertRuleResourceIT {
 
     static Long ruleId;
     static Long ruleWithChannelsId;
+    static Long ruleWithDefaultsId;
     static Long channelId;
 
     @Inject
@@ -60,16 +61,16 @@ class AlertRuleResourceIT {
         tx.begin();
         try {
             em.createQuery("DELETE FROM alert_state s WHERE s.rule.name IN (:names)")
-                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule"))
+                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule", "it-defaults-rule"))
                     .executeUpdate();
             em.createQuery("DELETE FROM alert_event e WHERE e.ruleName IN (:names)")
-                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule"))
+                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule", "it-defaults-rule"))
                     .executeUpdate();
             em.createNativeQuery("DELETE FROM alert_rule_channel WHERE rule_id IN (SELECT id FROM alert_rule WHERE name IN (:names))")
-                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule"))
+                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule", "it-defaults-rule"))
                     .executeUpdate();
             em.createQuery("DELETE FROM alert_rule r WHERE r.name IN (:names)")
-                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule"))
+                    .setParameter("names", List.of("it-test-rule", "it-test-rule-updated", "it-rule-with-channels", "it-firing-rule", "it-defaults-rule"))
                     .executeUpdate();
             em.createQuery("DELETE FROM notification_channel c WHERE c.name = :name")
                     .setParameter("name", "rule-test-webhook")
@@ -340,6 +341,74 @@ class AlertRuleResourceIT {
         finally {
             deleteAlertEvent(firingEventId);
         }
+    }
+
+    @Test
+    @Order(15)
+    void createRuleWithRequiredFieldsOnly() {
+        ruleWithDefaultsId = given()
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "name", "it-defaults-rule",
+                        "panelId", "streaming-event-count",
+                        "operator", "GREATER_THAN",
+                        "threshold", 100.0))
+                .when().post(RULES_PATH)
+                .then()
+                .statusCode(201)
+                .body("forDuration", is(0.0f))
+                .body("reduceFunction", is("LAST"))
+                .body("evaluationWindow", is(300.0f))
+                .body("severity", is("WARNING"))
+                .body("enabled", is(true))
+                .extract().jsonPath().getLong("id");
+    }
+
+    @Test
+    @Order(16)
+    void updateRuleWithRequiredFieldsOnlyKeepsOtherFields() {
+        // move every optional field away from its default first
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.ofEntries(
+                        Map.entry("name", "it-defaults-rule"),
+                        Map.entry("panelId", "streaming-event-count"),
+                        Map.entry("operator", "GREATER_THAN"),
+                        Map.entry("threshold", 100.0),
+                        Map.entry("severity", "CRITICAL"),
+                        Map.entry("forDuration", "PT1M"),
+                        Map.entry("reduceFunction", "AVG"),
+                        Map.entry("evaluationWindow", "PT10M"),
+                        Map.entry("enabled", false)))
+                .when().put(RULES_PATH + "/" + ruleWithDefaultsId)
+                .then()
+                .statusCode(200);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "name", "it-defaults-rule",
+                        "panelId", "streaming-event-count",
+                        "operator", "GREATER_THAN",
+                        "threshold", 200.0))
+                .when().put(RULES_PATH + "/" + ruleWithDefaultsId)
+                .then()
+                .statusCode(200)
+                .body("threshold", is(200.0f))
+                .body("forDuration", is(60.0f))
+                .body("reduceFunction", is("AVG"))
+                .body("evaluationWindow", is(600.0f))
+                .body("severity", is("CRITICAL"))
+                .body("enabled", is(false));
+    }
+
+    @Test
+    @Order(95)
+    void deleteRuleWithDefaults() {
+        given()
+                .when().delete(RULES_PATH + "/" + ruleWithDefaultsId)
+                .then()
+                .statusCode(204);
     }
 
     @Test

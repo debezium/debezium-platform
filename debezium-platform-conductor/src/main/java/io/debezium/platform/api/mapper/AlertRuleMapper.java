@@ -69,6 +69,8 @@ public abstract class AlertRuleMapper extends BaseMapper {
     @Mapping(target = "channels", ignore = true)
     @Mapping(target = "forDuration", ignore = true)
     @Mapping(target = "evaluationWindow", ignore = true)
+    @Mapping(target = "reduceFunction", ignore = true)
+    @Mapping(target = "severity", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     abstract void applyBasicFields(AlertRuleRequest request, @MappingTarget AlertRule view);
@@ -81,6 +83,12 @@ public abstract class AlertRuleMapper extends BaseMapper {
         }
         if (request.evaluationWindow() != null) {
             view.setEvaluationWindow(request.evaluationWindow().toString());
+        }
+        if (request.reduceFunction() != null) {
+            view.setReduceFunction(request.reduceFunction());
+        }
+        if (request.severity() != null) {
+            view.setSeverity(request.severity());
         }
 
         if (request.channelIds() != null) {
