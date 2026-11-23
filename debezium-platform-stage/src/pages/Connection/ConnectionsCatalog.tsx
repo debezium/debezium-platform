@@ -1,5 +1,5 @@
 
-import { Bullseye, Button, Content, ContentVariants, EmptyState, EmptyStateActions, EmptyStateBody, EmptyStateFooter, EmptyStateVariant, MenuToggle, MenuToggleElement, PageSection, SearchInput, Select, SelectList, SelectOption, ToggleGroup, ToggleGroupItem, Toolbar, ToolbarContent, ToolbarGroup, ToolbarItem } from "@patternfly/react-core";
+import { Alert, Bullseye, Button, Content, ContentVariants, EmptyState, EmptyStateActions, EmptyStateBody, EmptyStateFooter, EmptyStateVariant, MenuToggle, MenuToggleElement, PageSection, SearchInput, Select, SelectList, SelectOption, ToggleGroup, ToggleGroupItem, Toolbar, ToolbarContent, ToolbarGroup, ToolbarItem } from "@patternfly/react-core";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { ThIcon, ListIcon, SearchIcon, FilterIcon } from "@patternfly/react-icons";
@@ -8,6 +8,7 @@ import { Catalog, CatalogApiResponse } from "src/apis/types";
 import _, { debounce } from "lodash";
 import { useNavigate } from "react-router-dom";
 import { CatalogGrid } from "@components/CatalogGrid";
+import CatalogSkeleton from "@components/CatalogSkeleton";
 import { useQuery } from "@tanstack/react-query";
 import { fetchData } from "../../apis/apis";
 
@@ -31,6 +32,9 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
 
   const {
     data: sourceCatalog = [],
+    error: sourceCatalogError,
+    isLoading: isSourceCatalogLoading,
+    refetch: refetchSourceCatalog,
   } = useQuery<Catalog[], Error>({
     queryKey: ["sourceConnectorCatalog"],
 
@@ -47,6 +51,9 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
 
   const {
     data: destinationCatalog = [],
+    error: destinationCatalogError,
+    isLoading: isDestinationCatalogLoading,
+    refetch: refetchDestinationCatalog,
   } = useQuery<Catalog[], Error>({
     queryKey: ["destinationConnectorCatalog"],
 
@@ -60,6 +67,14 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
       }));
     }
   });
+
+  const catalogError = sourceCatalogError ?? destinationCatalogError;
+  const isCatalogLoading = isSourceCatalogLoading || isDestinationCatalogLoading;
+
+  const refetchCatalog = () => {
+    void refetchSourceCatalog();
+    void refetchDestinationCatalog();
+  };
 
   const onConnectionsTypeToggle = () => {
     setConnectionsTypeIsExpanded(!connectionsTypeIsExpanded);
@@ -225,7 +240,25 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
           </ToolbarContent>
         </Toolbar>
       </PageSection>
-      {searchResult.length > 0 ? (
+      {catalogError ? (
+        <PageSection>
+          <Alert
+            variant="danger"
+            title={t("connection:catalog.fetchError", "Failed to load connection catalog")}
+            actionLinks={
+              <Button variant="link" onClick={refetchCatalog}>
+                {t("retry", "Retry")}
+              </Button>
+            }
+          >
+            {catalogError.message}
+          </Alert>
+        </PageSection>
+      ) : isCatalogLoading ? (
+        <PageSection>
+          <CatalogSkeleton />
+        </PageSection>
+      ) : searchResult.length > 0 ? (
         <CatalogGrid
           onCardSelect={onConnectionSelection}
           catalogType="connection"

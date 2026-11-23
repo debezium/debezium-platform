@@ -10,6 +10,7 @@
         "description": "Select a connection type from the catalog that you want to create. Connections that support validation are marked with a star icon. You can search by name and filter the list by source, destination, or validation support.",
         "emptyStateTitle": "No matching connection type is present",
         "emptyStateDescription": "Clear all and try again.",
+        "fetchError": "Failed to load connection catalog",
         "supportsConnectionValidation": "Supports connection validation"
     },
     "create": {

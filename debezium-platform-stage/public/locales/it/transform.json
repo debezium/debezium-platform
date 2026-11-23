@@ -13,6 +13,7 @@
         "classField": "Classe della trasformazione",
         "classFieldHelper": "Il nome della classe Java che implementa la trasformazione",
         "classPlaceholder": "Seleziona una trasformazione",
+        "catalogFetchError": "Impossibile caricare il catalogo",
         "classRequired": "La classe della trasformazione è obbligatoria",
         "variantField": "Variante",
         "variantFieldHelper": "Seleziona la variante di implementazione per questa trasformazione.",

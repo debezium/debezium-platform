@@ -14,6 +14,7 @@
         "classField": "Transform class",
         "classFieldHelper": "The name of Java class implementing the transformation",
         "classPlaceholder": "Select a transform",
+        "catalogFetchError": "Failed to load catalog",
         "classRequired": "Transform class is required",
         "variantField": "Variant",
         "variantFieldHelper": "Select the implementation flavor for this transform.",
