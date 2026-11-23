@@ -13,6 +13,7 @@ import jakarta.ws.rs.NotSupportedException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+import org.hibernate.exception.ConstraintViolationException.ConstraintKind;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +72,16 @@ public class GlobalExceptionMapper {
         LOGGER.error("Constraint violation exception occurred", ex);
 
         String constraintName = ex.getConstraintName();
-        String message = "Resource with this name already exists";
+        String violation = ex.getKind() + " constraint violated" + (constraintName != null ? ": " + constraintName : "");
+
+        if (ex.getKind() != ConstraintKind.UNIQUE) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Constraint violation", List.of(violation)))
+                    .build();
+        }
+
+        // only a unique constraint on a name is a duplicate name
+        String message = violation;
 
         if (constraintName != null) {
             java.util.regex.Matcher matcher = UNIQUE_CONSTRAINT_PATTERN.matcher(constraintName);
