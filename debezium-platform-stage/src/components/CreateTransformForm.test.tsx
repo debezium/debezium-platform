@@ -18,7 +18,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 describe("CreateTransformForm catalog errors", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useQuery).mockImplementation((options: any) => {
+    vi.mocked(useQuery).mockImplementation((options: any): any => {
       const queryKey = Array.isArray(options?.queryKey)
         ? options.queryKey[0]
         : options?.queryKey;
