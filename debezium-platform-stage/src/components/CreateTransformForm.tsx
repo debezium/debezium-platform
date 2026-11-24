@@ -165,6 +165,7 @@ const CreateTransformForm = React.forwardRef<
     const { addNotification } = useNotification();
     const hydratedIdRef = useRef<number | null>(null);
     const nameTouchedRef = useRef(false);
+    const descriptionTouchedRef = useRef(false);
     const didFocusNameRef = useRef(false);
     const initialSchemaValuesRef = useRef<Record<string, string>>({});
     const initialPredicateValuesRef = useRef<Record<string, string>>({});
@@ -178,8 +179,15 @@ const CreateTransformForm = React.forwardRef<
     const [activeSection, setActiveSection] = useState("transform-essentials");
     const activeSectionRef = useRef(activeSection);
 
-    const [transformName, setTransformName] = useState("");
-    const [description, setDescription] = useState("");
+    const [transformName, setTransformName] = useState(() => {
+      if (!initialTransform) return "";
+      return isCopy
+        ? nextCopyName(initialTransform.name, existingNames ?? [])
+        : initialTransform.name;
+    });
+    const [description, setDescription] = useState(
+      () => initialTransform?.description ?? ""
+    );
     const [selectedName, setSelectedName] = useState("");
     const [selectedEntry, setSelectedEntry] = useState<
       CatalogComponentEntry | undefined
@@ -321,16 +329,18 @@ const CreateTransformForm = React.forwardRef<
         return;
       }
       hydratedIdRef.current = initialTransform.id;
-      nameTouchedRef.current = false;
-      didFocusNameRef.current = false;
 
       const entry = findEntryByClass(transformations, initialTransform.type);
-      setTransformName(
-        isCopy
-          ? nextCopyName(initialTransform.name, existingNames ?? [])
-          : initialTransform.name
-      );
-      setDescription(initialTransform.description ?? "");
+      if (!nameTouchedRef.current) {
+        setTransformName(
+          isCopy
+            ? nextCopyName(initialTransform.name, existingNames ?? [])
+            : initialTransform.name
+        );
+      }
+      if (!descriptionTouchedRef.current) {
+        setDescription(initialTransform.description ?? "");
+      }
       if (entry) {
         setSelectedName(entry.name);
         setSelectedEntry(entry);
@@ -563,6 +573,10 @@ const CreateTransformForm = React.forwardRef<
     }, [uniquePredicateNames, predicateFilter, predicates]);
 
     const selectTransformName = (name: string) => {
+      if (initialTransform) {
+        setIsTransformOpen(false);
+        return;
+      }
       if (
         !isCatalogTransformNameCompatible(transformations, name, sourceType)
       ) {
@@ -813,6 +827,10 @@ const CreateTransformForm = React.forwardRef<
       [validate, handleSubmit, getLastValidationFailureBody]
     );
 
+    if (initialTransform && isTransformOpen) {
+      setIsTransformOpen(false);
+    }
+
     const renderCatalogLoadError = () => (
       <div className="catalog-select-error">
         <HelperText>
@@ -842,19 +860,24 @@ const CreateTransformForm = React.forwardRef<
         ref={toggleRef}
         variant="typeahead"
         onClick={() => {
+          if (initialTransform) return;
           setIsTransformOpen(!isTransformOpen);
           transformInputRef.current?.focus();
         }}
         isExpanded={isTransformOpen}
         isFullWidth
         status={errors["transform-class"] ? "danger" : undefined}
-        isDisabled={!!initialTransform && !catalogError}
+        isDisabled={!!initialTransform}
       >
         <TextInputGroup isPlain>
           <TextInputGroupMain
             value={transformInput}
-            onClick={() => !isTransformOpen && setIsTransformOpen(true)}
+            onClick={() => {
+              if (initialTransform || isTransformOpen) return;
+              setIsTransformOpen(true);
+            }}
             onChange={(_e, value) => {
+              if (initialTransform) return;
               setTransformInput(value);
               setTransformFilter(value);
               if (value !== selectedName) {
@@ -968,6 +991,7 @@ const CreateTransformForm = React.forwardRef<
               }
             }}
             onOpenChange={(open) => !open && setIsTransformOpen(false)}
+            onOpenChangeKeys={catalogError ? ["Escape"] : undefined}
             toggle={transformToggle}
             variant="typeahead"
             isScrollable
@@ -1116,7 +1140,10 @@ const CreateTransformForm = React.forwardRef<
           <TextInput
             id="transform-description"
             value={description}
-            onChange={(_e, val) => setDescription(val)}
+            onChange={(_e, val) => {
+              descriptionTouchedRef.current = true;
+              setDescription(val);
+            }}
           />
         </FormGroup>
       </Form>
@@ -1339,6 +1366,7 @@ const CreateTransformForm = React.forwardRef<
               }
             }}
             onOpenChange={(open) => !open && setIsPredicateOpen(false)}
+            onOpenChangeKeys={catalogError ? ["Escape"] : undefined}
             toggle={predicateToggle}
             variant="typeahead"
             isScrollable
