@@ -210,6 +210,15 @@ class AuthorizationIT {
                 .when().get("api/pipelines/" + MISSING_ID + "/snapshots/progress")
                 .then()
                 .statusCode(403);
+
+        // Same reasoning for PipelineLogStreamResource (debezium/dbz#3003, replacing the
+        // WebSocket endpoint that could never have carried a bearer token at all): it and
+        // /pipelines/{id}/logs carry the identical @PermissionsAllowed(PIPELINE_LOGS) annotation.
+        given()
+                .auth().oauth2(noPermissionsToken())
+                .when().get("api/pipelines/" + MISSING_ID + "/logs/stream")
+                .then()
+                .statusCode(403);
     }
 
     /**

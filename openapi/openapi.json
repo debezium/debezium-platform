@@ -2838,8 +2838,17 @@
           },
           "404" : {
             "description" : "Unknown pipeline"
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/pipelines/{id}/signals" : {

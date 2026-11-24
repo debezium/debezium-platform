@@ -2025,6 +2025,12 @@ paths:
             text/plain:
               schema:
                 type: string
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/pipelines/{id}/logs/stream:
     get:
       summary: Stream live logs for the pipeline with the given id via SSE
@@ -2048,6 +2054,12 @@ paths:
                 type: string
         "404":
           description: Unknown pipeline
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/pipelines/{id}/signals:
     post:
       summary: Send signal to pipeline with given id
