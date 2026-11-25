@@ -23,6 +23,25 @@ import org.mockito.ArgumentCaptor;
 class AgentContainerServiceTest {
 
     @Test
+    void redeployKeepsOffsets(@TempDir Path tempDir) throws Exception {
+        DockerCommandRunner commandRunner = mock(DockerCommandRunner.class);
+
+        when(commandRunner.run(any())).thenReturn(new DockerCommandRunner.CommandOutput(0, ""));
+
+        AgentContainerService service = new AgentContainerService(Logger.getLogger(AgentContainerServiceTest.class),
+                commandRunner, config(tempDir));
+        Path offsets = tempDir.resolve("data").resolve("pipeline-1").resolve("offsets.dat");
+
+        Files.createDirectories(offsets.getParent());
+        Files.writeString(offsets, "some offset");
+
+        service.undeploy("pipeline-1");
+        service.deploy(new DeployRequest("pipeline-1", "quay.io/debezium/server:latest", 8080, "a=b"));
+
+        assertTrue(Files.exists(offsets), "offsets.dat must survive a redeploy");
+    }
+
+    @Test
     void undeployStopsBeforeRemovingTheContainer(@TempDir Path tempDir) {
         DockerCommandRunner commandRunner = mock(DockerCommandRunner.class);
         when(commandRunner.run(any())).thenReturn(new DockerCommandRunner.CommandOutput(0, ""));
