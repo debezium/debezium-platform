@@ -27,6 +27,7 @@ import org.jboss.logging.Logger;
 import io.debezium.platform.api.dto.AlertEventResponse;
 import io.debezium.platform.api.dto.AlertStatusResponse;
 import io.debezium.platform.api.dto.PagedAlertEventResponse;
+import io.debezium.platform.api.mapper.AlertEventMapper;
 import io.debezium.platform.data.model.Severity;
 import io.debezium.platform.domain.AlertEventService;
 import io.debezium.platform.domain.AlertStateService;
@@ -38,12 +39,14 @@ public class AlertEventResource {
     Logger logger;
     AlertEventService alertEventService;
     AlertStateService alertStateService;
+    AlertEventMapper mapper;
 
     public AlertEventResource(Logger logger, AlertEventService alertEventService,
-                              AlertStateService alertStateService) {
+                              AlertStateService alertStateService, AlertEventMapper mapper) {
         this.logger = logger;
         this.alertEventService = alertEventService;
         this.alertStateService = alertStateService;
+        this.mapper = mapper;
     }
 
     @Operation(summary = "Returns paginated alert events")
@@ -59,7 +62,10 @@ public class AlertEventResource {
                                @QueryParam("page") @DefaultValue("0") @Min(0) int page,
                                @QueryParam("size") @DefaultValue("20") @Min(1) int size) {
         var result = alertEventService.listEvents(severity, status, pipelineId, ruleId, from, to, page, size);
-        return Response.ok(result).build();
+        var events = result.stream().map(mapper::toResponse).toList();
+        var response = new PagedAlertEventResponse(
+                events, page, size, result.getTotalSize(), result.getTotalPages());
+        return Response.ok(response).build();
     }
 
     @Operation(summary = "Returns a single alert event by id")
@@ -68,6 +74,7 @@ public class AlertEventResource {
     @Path("/events/{id}")
     public Response getEventById(@PathParam("id") Long id) {
         return alertEventService.findEventById(id)
+                .map(mapper::toResponse)
                 .map(dto -> Response.ok(dto).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
