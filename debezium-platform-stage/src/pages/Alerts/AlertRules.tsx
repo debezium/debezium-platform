@@ -318,7 +318,7 @@ const AlertRules: React.FC<AlertRulesProps> = ({ firingRuleIds }) => {
                     <ToolbarItem>
                       <SearchInput
                         aria-label={`Search rules by ${filterField}`}
-                        placeholder={`Find by ${filterField}...`}
+                        placeholder={t("findBy",{val: filterField})}
                         value={searchQuery}
                         onChange={(_e, value) => setSearchQuery(value)}
                         onClear={onClearSearch}

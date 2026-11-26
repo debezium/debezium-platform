@@ -71,7 +71,8 @@
     "welcomeDescriptionSufix": "Aggiungi una pipeline per trasmettere eventi di modifica da un database di origine della pipeline. Per creare una pipeline, puoi selezionare un'origine e una destinazione già configurate o aggiungerne di nuove.",
     "welcomeButtom": "Crea la tua prima pipeline",
     "designerTitle": "Progettista di pipeline",
-    "designerDescription": "Crea una pipeline selezionando un'origine e una destinazione esistenti o creandone di nuove se necessario. Puoi opzionalmente aggiungere una o più trasformazioni da applicare alla pipeline."
+    "designerDescription": "Crea una pipeline selezionando un'origine e una destinazione esistenti o creandone di nuove se necessario. Puoi opzionalmente aggiungere una o più trasformazioni da applicare alla pipeline.",
+    "viewDetailsFor": "Visualizza i dettagli della pipeline <1>{{name}}</1>"
   },
   "pipelineDesigner": {
         "changePipeline": "Cambia pipeline {{val}}"

@@ -42,18 +42,18 @@ const DestinationField: React.FC<DestinationFieldProps> = ({
   }, [pipelineDestination.id]);
 
   return (
-    <Td dataLabel={t("destination")} style={{ paddingLeft: "0px" }}>
+    <Td dataLabel={t("destination")} >
       {error ? (
         <ApiError errorType="small" />
       ) : isLoading ? (
         <Skeleton screenreaderText="Loading contents" />
       ) : (
         <Flex alignItems={{ default: "alignItemsCenter" }}>
-          <FlexItem spacer={{ default: "spacerMd" }}>
+          <FlexItem spacer={{ default: "spacerSm" }}>
             {destination && (
               <ConnectorImage
                 connectorType={(destination as Destination).type}
-                size={35}
+                size={23}
               />
             )}
           </FlexItem>

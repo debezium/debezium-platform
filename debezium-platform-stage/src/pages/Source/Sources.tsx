@@ -209,7 +209,7 @@ const Sources: React.FunctionComponent<ISourceProps> = () => {
                             <ToolbarItem>
                               <SearchInput
                                 aria-label={`Search sources by ${filterField}`}
-                                placeholder={`Find by ${filterField}...`}
+                                placeholder={t("findBy",{val: filterField})}
                                 value={searchQuery}
                                 onChange={(_event, value) => onSearch(value)}
                                 onClear={onClear}

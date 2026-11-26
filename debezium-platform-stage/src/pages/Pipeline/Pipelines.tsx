@@ -36,6 +36,7 @@ import {
   ToolbarGroup,
   ToolbarItem,
   Tooltip,
+  Truncate,
 } from "@patternfly/react-core";
 import {
   FilterIcon,
@@ -125,6 +126,44 @@ const STATUS_CONFIG: Record<PipelineStatus, StatusConfig> = {
 type PipelineStatusLabelProps = {
   status: PipelineStatus;
   onLabelClick: () => void;
+};
+
+type PipelineNameLinkProps = {
+  name: string;
+  onClick: () => void;
+};
+
+const PipelineNameLink: React.FC<PipelineNameLinkProps> = ({ name, onClick }) => {
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+
+  return (
+    <Tooltip
+      content={
+        <div>
+          <Trans
+            i18nKey="pipeline:pipelinePage.viewDetailsFor"
+            values={{ name }}
+            components={[<span />, <b />]}
+          />
+          <br />
+        </div>
+      }
+    >
+      <Button
+        ref={triggerRef}
+        variant="link"
+        isInline
+        className="pipeline-name-link"
+        onClick={onClick}
+      >
+        <Truncate
+          className="pipeline-name-truncate"
+          content={name}
+          tooltipProps={{ trigger: "manual", isVisible: false, triggerRef }}
+        />
+      </Button>
+    </Tooltip>
+  );
 };
 
 const PipelineStatusLabel: React.FC<PipelineStatusLabelProps> = ({ status, onLabelClick }) => {
@@ -632,7 +671,7 @@ const Pipelines: React.FunctionComponent = () => {
                             <ToolbarItem>
                               <SearchInput
                                 aria-label={`Search pipelines by ${filterField}`}
-                                placeholder={`Find by ${filterField}...`}
+                                placeholder={t("findBy",{val: filterField})}
                                 value={searchQuery}
                                 onChange={(_event, value) => onSearch(value)}
                                 onClear={onClear}
@@ -669,7 +708,9 @@ const Pipelines: React.FunctionComponent = () => {
                       <Table aria-label="Pipeline Table">
                         <Thead>
                           <Tr>
-                            <Th key={0}>{t("name")}</Th>
+                            <Th key={0} modifier="truncate" className="pipeline-name-cell">
+                              {t("name")}
+                            </Th>
                             <Th key={1}>{t("source")}</Th>
                             <Th key={2}>{t("destination")}</Th>
                             <Th key={3}>{t("status")}</Th>
@@ -682,28 +723,24 @@ const Pipelines: React.FunctionComponent = () => {
                           {searchResult.length > 0 ? (
                             searchResult.map((instance: Pipeline) => (
                               <Tr key={instance.id}>
-                                <Td dataLabel={t("name")} style={{ lineHeight: "35px" }}>
-                                  <Flex alignItems={{ default: "alignItemsCenter" }} spaceItems={{ default: "spaceItemsSm" }} flexWrap={{ default: "nowrap" }}>
-                                    <FlexItem>
-                                      <Tooltip content={
-                                        <div>
-                                          View pipeline details for <b>{instance.name}</b><br />
-                                        </div>
-                                      }>
-                                        <Button
-                                          variant="link"
-                                          isInline
-                                          onClick={onPipelineClick(instance.id)}
-                                        >
-                                          {instance.name}
-                                        </Button>
-                                      </Tooltip>
+                                <Td dataLabel={t("name")} modifier="truncate" className="pipeline-name-cell">
+                                  <Flex
+                                    className="pipeline-name-row"
+                                    alignItems={{ default: "alignItemsCenter" }}
+                                    spaceItems={{ default: "spaceItemsSm" }}
+                                    flexWrap={{ default: "nowrap" }}
+                                  >
+                                    <FlexItem className="pipeline-name-row__name">
+                                      <PipelineNameLink
+                                        name={instance.name}
+                                        onClick={onPipelineClick(instance.id)}
+                                      />
                                     </FlexItem>
                                     {isSnapshotActive(
                                       instance.activeSnapshotType,
                                       instance.activeSnapshotStatus
                                     ) && (
-                                      <FlexItem>
+                                      <FlexItem className="pipeline-name-row__badge">
                                         <SnapshotStatusLabel
                                           type={instance.activeSnapshotType!}
                                           status={instance.activeSnapshotStatus!}

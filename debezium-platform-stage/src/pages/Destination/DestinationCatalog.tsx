@@ -152,7 +152,7 @@ const DestinationCatalog: React.FunctionComponent<ISinkProps> = () => {
             <ToolbarItem data-tour="destination-catalog-search">
               <SearchInput
                 aria-label="Items  search input"
-                placeholder={t("searchByName")}
+                placeholder={t("findBy",{val: "name"})}
                 value={searchQuery}
                 onChange={(_event, value) => onSearch(value)}
                 onClear={onClear}

@@ -48,7 +48,7 @@
   "expandAll": "Expand all",
   "failedToLoad": "Failed to load",
   "failed": "Failed",
-  "findByName": "Find by name",
+  "findBy": "Find by {{val}}",
   "form": {
     "addFieldButton": "Add property",
     "error": {
@@ -96,7 +96,6 @@
     "description": "Clear search and try again.",
     "title": "No matching {{val}} is present."
   },
-  "searchByName": "Search by name",
   "searchPlaceholder": "Search...",
   "smartEditor": "Smart editor",
   "smartEditorButton": "Create using smart editor",

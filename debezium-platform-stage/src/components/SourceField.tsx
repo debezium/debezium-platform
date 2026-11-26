@@ -38,18 +38,18 @@ const SourceField: React.FC<SourceFieldProps> = ({ pipelineSource }) => {
   }, []);
 
   return (
-    <Td dataLabel={t("source")} style={{ paddingLeft: "0px" }}>
+    <Td dataLabel={t("source")} >
       {error ? (
         <ApiError errorType="small" />
       ) : isLoading ? (
         <Skeleton screenreaderText="Loading contents" />
       ) : (
         <Flex alignItems={{ default: "alignItemsCenter" }}>
-          <FlexItem spacer={{ default: "spacerMd" }}>
+          <FlexItem spacer={{ default: "spacerSm" }}>
             {source && (
               <ConnectorImage
                 connectorType={(source as Source).type}
-                size={35}
+                size={23}
               />
             )}
           </FlexItem>

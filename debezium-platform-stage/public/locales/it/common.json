@@ -48,7 +48,7 @@
   "expandAll": "Espandi tutto",
   "failedToLoad": "Caricamento non riuscito",
   "failed": "Fallito",
-  "findByName": "Cerca per nome",
+  "findBy": "Cerca per {{val}}",
   "form": {
     "addFieldButton": "Aggiungi proprietà",
     "error": {
@@ -95,7 +95,6 @@
     "description": "Cancella la ricerca e riprova.",
     "title": "Nessun {{val}} corrispondente presente."
   },
-  "searchByName": "Cerca per nome",
   "searchPlaceholder": "Cerca...",
   "smartEditor": "Editor intelligente",
   "smartEditorButton": "Crea tramite editor intelligente",

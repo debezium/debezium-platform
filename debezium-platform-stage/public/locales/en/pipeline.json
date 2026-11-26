@@ -71,7 +71,8 @@
         "welcomeDescriptionSufix": "Add a pipeline to stream change event from a pipeline source database. To create a pipeline, you can select an already configured or add a new source and destination.",
         "welcomeButtom": "Create your first pipeline",
         "designerTitle": "Pipeline designer",
-        "designerDescription": "Create a pipeline by selecting an existing source and destination, or create new ones as if needed. You can optionally add one or more transformations to apply to the pipeline."
+        "designerDescription": "Create a pipeline by selecting an existing source and destination, or create new ones as if needed. You can optionally add one or more transformations to apply to the pipeline.",
+        "viewDetailsFor": "View pipeline details for <1>{{name}}</1>"
     },
     "pipelineDesigner": {
         "changePipeline": "Change pipeline {{val}}"

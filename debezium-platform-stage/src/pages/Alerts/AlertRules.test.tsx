@@ -248,7 +248,7 @@ describe("AlertRules", () => {
       await screen.findByText("high-error-rate");
 
       expect(screen.getByRole("button", { name: "Name" })).toBeInTheDocument();
-      expect(screen.getByPlaceholderText("Find by name...")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Find by name")).toBeInTheDocument();
 
       await userEvent.type(screen.getByLabelText("Search rules by name"), "source-lag");
 
@@ -264,7 +264,7 @@ describe("AlertRules", () => {
       const listbox = await screen.findByRole("listbox");
       await userEvent.click(within(listbox).getByText("Metric"));
 
-      expect(screen.getByPlaceholderText("Find by metric...")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Find by metric")).toBeInTheDocument();
       await userEvent.type(screen.getByLabelText("Search rules by metric"), "erroneous");
 
       expect(screen.getByText("high-error-rate")).toBeInTheDocument();

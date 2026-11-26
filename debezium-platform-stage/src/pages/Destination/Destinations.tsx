@@ -206,7 +206,7 @@ const Destinations: React.FunctionComponent = () => {
                             <ToolbarItem>
                               <SearchInput
                                 aria-label={`Search destinations by ${filterField}`}
-                                placeholder={`Find by ${filterField}...`}
+                                placeholder={t("findBy",{val: filterField})}
                                 value={searchQuery}
                                 onChange={(_event, value) => onSearch(value)}
                                 onClear={onClear}

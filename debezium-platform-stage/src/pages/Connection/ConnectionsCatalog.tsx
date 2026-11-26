@@ -166,7 +166,7 @@ const ConnectionsCatalog: React.FunctionComponent<IConnectionsCatalogProps> = ()
               <ToolbarItem>
                 <SearchInput
                   aria-label="Items  search input"
-                  placeholder={t("searchByName")}
+                  placeholder={t("findBy",{val: "name"})}
                   value={searchQuery}
                   onChange={(_event, value) => onSearch(value)}
                   onClear={onClear}
