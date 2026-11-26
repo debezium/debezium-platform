@@ -176,7 +176,7 @@ const TransformSelectionList: React.FunctionComponent<
             <ToolbarItem>
               <SearchInput
                 aria-label={`Search transforms by ${selectedLabel}`}
-                placeholder={`Find by ${selectedLabel.toLowerCase()}...`}
+                placeholder={t("findBy",{val: selectedLabel.toLowerCase()})}
                 value={searchInput}
                 onChange={onSearchChange}
                 onClear={onSearchClear}

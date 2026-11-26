@@ -167,10 +167,10 @@ const SourceSinkTable: React.FunctionComponent<ISourceSinkTableProps> = ({
                     {instance.name}
                   </Button>
                 </Td>
-                <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
+                <Td dataLabel={t("type")}>
                   <Flex alignItems={{ default: "alignItemsCenter" }}>
                     <FlexItem>
-                      <ConnectorImage connectorType={instance.type} size={35} />
+                      <ConnectorImage connectorType={instance.type} size={23} />
                     </FlexItem>
                     <FlexItem>{getConnectorTypeName(instance.type)}</FlexItem>
                   </Flex>

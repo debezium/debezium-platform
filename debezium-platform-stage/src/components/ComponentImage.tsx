@@ -30,7 +30,8 @@ import milvus from "../assets/milvus.png";
 import qdrant from "../assets/qdrant.png";
 import redis from "../assets/redis.png";
 import http from "../assets/http2.png";
-import db2 from "../assets/ibm_db2.svg";
+import db2 from "../assets/ibm_db2.png";
+import elasticsearch from "../assets/elasticsearch.png"
 import { useData } from "../appLayout/AppContext";
 
 interface ConnectorImageProps {
@@ -67,6 +68,7 @@ const CONNECTOR_PATTERNS: Array<[string, { src: string; srcDark?: string; altTex
   ["redis", { src: redis, altText: "Redis(Stream)" }],
   ["http", { src: http, altText: "HTTP" }],
   ["db2", { src: db2, altText: "IBM Db2" }],
+  ["elasticsearch", { src: elasticsearch, altText: "Elasticsearch" }],
 ];
 
 const DEFAULT_CONFIG = { src: dbz, altText: "Debezium" };

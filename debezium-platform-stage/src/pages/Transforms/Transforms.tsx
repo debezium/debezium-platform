@@ -304,7 +304,7 @@ const Transforms: React.FunctionComponent<ITransformsProps> = () => {
                               <ToolbarItem>
                                 <SearchInput
                                   aria-label={`Search transforms by ${filterField}`}
-                                  placeholder={`Find by ${filterField}...`}
+                                  placeholder={t("findBy",{val: filterField})}
                                   value={searchQuery}
                                   onChange={(_event, value) => onSearch(value)}
                                   onClear={onClear}

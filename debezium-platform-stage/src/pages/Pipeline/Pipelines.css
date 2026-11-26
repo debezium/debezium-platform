@@ -2,6 +2,46 @@
     padding-top: 10px;
   }
 
+@container pf-v6-contain-table (min-width: 48rem) {
+  .pipeline-name-cell.pf-m-truncate {
+    --pf-v6-c-table--cell--MinWidth: 12rem;
+  }
+
+  .pipeline-name-link.pf-v6-c-button.pf-m-link.pf-m-inline {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-align: start;
+    white-space: nowrap;
+  }
+
+  .pipeline-name-link .pf-v6-c-button__text {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .pipeline-name-truncate.pf-v6-c-truncate {
+    max-width: 100%;
+  }
+
+  .pipeline-name-row {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .pipeline-name-row__name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .pipeline-name-row__badge {
+    flex-shrink: 0;
+  }
+}
+
 .pipeline-phase {
   padding-top: 0 !important;
   padding-left: 0 !important;

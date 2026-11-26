@@ -144,7 +144,7 @@ describe("ConnectionsCatalog", () => {
 
     render(<ConnectionsCatalog />);
 
-    const searchInput = screen.getByPlaceholderText("Search by name");
+    const searchInput = screen.getByPlaceholderText("Find by name");
     fireEvent.change(searchInput, { target: { value: "zzz" } });
 
     await waitFor(

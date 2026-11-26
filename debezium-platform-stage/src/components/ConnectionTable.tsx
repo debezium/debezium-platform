@@ -175,7 +175,7 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
         <Thead>
           <Tr>
             <Th key={0}>{t("name")}</Th>
-            <Th key={1} style={{ paddingLeft: "60px" }}>{t("type")}</Th>
+            <Th key={1}>{t("type")}</Th>
             <Th key={2}>{t("usedIn")}</Th>
           </Tr>
         </Thead>
@@ -192,10 +192,10 @@ const ConnectionTable: React.FunctionComponent<IConnectionTableProps> = ({
                     {instance.name}
                   </Button>
                 </Td>
-                <Td dataLabel={t("type")} style={{ paddingLeft: "0px" }}>
+                <Td dataLabel={t("type")}>
                   <Flex alignItems={{ default: "alignItemsCenter" }}>
                     <FlexItem>
-                      <ConnectorImage connectorType={instance.type.toLowerCase()} size={35} />
+                      <ConnectorImage connectorType={instance.type.toLowerCase()} size={23} />
                     </FlexItem>
                     <FlexItem>{getConnectorTypeName(instance.type.toLowerCase())}</FlexItem>
                   </Flex>

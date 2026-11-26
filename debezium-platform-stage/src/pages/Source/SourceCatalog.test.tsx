@@ -101,7 +101,7 @@ describe("SourceCatalog", () => {
 
     render(<SourceCatalog />);
 
-    const searchInput = screen.getByPlaceholderText("Search by name");
+    const searchInput = screen.getByPlaceholderText("Find by name");
     fireEvent.change(searchInput, { target: { value: "mongo" } });
 
     await waitFor(
