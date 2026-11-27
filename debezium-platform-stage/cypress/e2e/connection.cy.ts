@@ -15,7 +15,7 @@ describe('Connection Management', () => {
     'catalog-card-io.debezium.server.kafka.KafkaChangeConsumer';
   const KAFKA_CATALOG_DISPLAY_NAME = 'Debezium Kafka Server Sink';
 
-  const CATALOG_SEARCH = 'input[placeholder="Search by name"]';
+  const CATALOG_SEARCH = 'input[placeholder="Find by name"]';
   const CATALOG_CARD = '[data-tour^="catalog-card-"]';
   const GRID_VIEW = '[aria-label="Grid view"]';
   const LIST_VIEW = '[aria-label="List view"]';
