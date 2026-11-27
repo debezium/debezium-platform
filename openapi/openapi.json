@@ -10,6 +10,8 @@
   }, {
     "name" : "destinations"
   }, {
+    "name" : "identity"
+  }, {
     "name" : "pipelines"
   }, {
     "name" : "snapshots"
@@ -445,6 +447,37 @@
           "percentage" : {
             "type" : "number",
             "format" : "double"
+          }
+        }
+      },
+      "IdentityResponse" : {
+        "type" : "object",
+        "properties" : {
+          "iamEnabled" : {
+            "type" : "boolean"
+          },
+          "subject" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "roles" : {
+            "type" : "array",
+            "uniqueItems" : true,
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "permissions" : {
+            "type" : "array",
+            "uniqueItems" : true,
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },
@@ -1250,10 +1283,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns all available notification channels",
@@ -1271,8 +1313,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/alerts/channels/{id}" : {
@@ -1309,10 +1360,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns a notification channel with given id",
@@ -1336,8 +1396,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "delete" : {
         "summary" : "Deletes an existing notification channel",
@@ -1352,8 +1421,17 @@
           }
         } ],
         "responses" : {
-          "204" : { }
-        }
+          "204" : { },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/alerts/events" : {
@@ -1426,8 +1504,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/alerts/events/{id}" : {
@@ -1453,8 +1540,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/alerts/rules" : {
@@ -1481,10 +1577,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns all available alert rules",
@@ -1502,8 +1607,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/alerts/rules/{id}" : {
@@ -1540,10 +1654,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns an alert rule with given id",
@@ -1567,8 +1690,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "delete" : {
         "summary" : "Deletes an existing alert rule",
@@ -1583,8 +1715,17 @@
           }
         } ],
         "responses" : {
-          "204" : { }
-        }
+          "204" : { },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/alerts/rules/{id}/disable" : {
@@ -1610,8 +1751,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/alerts/rules/{id}/enable" : {
@@ -1637,8 +1787,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/alerts/status" : {
@@ -1655,8 +1814,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/catalog" : {
@@ -1679,9 +1847,18 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
         },
-        "tags" : [ "Catalog Resource" ]
+        "tags" : [ "Catalog Resource" ],
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/catalog/{type}/{class}" : {
@@ -1712,9 +1889,18 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
         },
-        "tags" : [ "Catalog Resource" ]
+        "tags" : [ "Catalog Resource" ],
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/catalog/{version}" : {
@@ -1744,9 +1930,18 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
         },
-        "tags" : [ "Catalog Resource" ]
+        "tags" : [ "Catalog Resource" ],
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/catalog/{version}/{type}/{class}" : {
@@ -1784,9 +1979,18 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
         },
-        "tags" : [ "Catalog Resource" ]
+        "tags" : [ "Catalog Resource" ],
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/connections" : {
@@ -1814,10 +2018,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns all available connections",
@@ -1835,8 +2048,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/connections/schemas" : {
@@ -1853,8 +2075,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/connections/validate" : {
@@ -1893,10 +2124,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/connections/{id}" : {
@@ -1933,10 +2173,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns a connection with given id",
@@ -1960,8 +2209,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "delete" : {
         "summary" : "Deletes an existing connection",
@@ -1976,8 +2234,17 @@
           }
         } ],
         "responses" : {
-          "204" : { }
-        }
+          "204" : { },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/connections/{id}/collections" : {
@@ -2011,8 +2278,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/destinations" : {
@@ -2040,10 +2316,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns all available destinations",
@@ -2061,8 +2346,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/destinations/{id}" : {
@@ -2099,10 +2393,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns a destination with given id",
@@ -2126,8 +2429,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "delete" : {
         "summary" : "Deletes an existing destination",
@@ -2142,8 +2454,44 @@
           }
         } ],
         "responses" : {
-          "204" : { }
-        }
+          "204" : { },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
+      }
+    },
+    "/api/me" : {
+      "get" : {
+        "summary" : "Returns the caller's identity and effective permissions",
+        "tags" : [ "identity" ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IdentityResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/monitoring/panels" : {
@@ -2160,8 +2508,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/monitoring/panels/{id}/query" : {
@@ -2238,8 +2595,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/pipelines" : {
@@ -2267,10 +2633,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns all available pipelines",
@@ -2288,8 +2663,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/pipelines/{id}" : {
@@ -2326,10 +2710,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns a pipeline with given id",
@@ -2353,8 +2746,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "delete" : {
         "summary" : "Deletes an existing pipeline",
@@ -2369,8 +2771,17 @@
           }
         } ],
         "responses" : {
-          "204" : { }
-        }
+          "204" : { },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/pipelines/{id}/logs" : {
@@ -2396,8 +2807,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/pipelines/{id}/logs/stream" : {
@@ -2426,8 +2846,17 @@
           },
           "404" : {
             "description" : "Unknown pipeline"
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/pipelines/{id}/signals" : {
@@ -2467,10 +2896,19 @@
           "404" : {
             "description" : "Pipeline not found"
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/pipelines/{pipelineId}/snapshots/history" : {
@@ -2539,8 +2977,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/pipelines/{pipelineId}/snapshots/history/{historyId}" : {
@@ -2577,8 +3024,17 @@
           },
           "404" : {
             "description" : "Unknown snapshot run for this pipeline"
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/pipelines/{pipelineId}/snapshots/progress" : {
@@ -2607,8 +3063,17 @@
           },
           "404" : {
             "description" : "Unknown pipeline"
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/pipelines/{pipelineId}/snapshots/progress/stream" : {
@@ -2637,8 +3102,17 @@
           },
           "404" : {
             "description" : "Unknown pipeline"
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/sources" : {
@@ -2666,10 +3140,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns all available sources",
@@ -2687,8 +3170,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/sources/signals/verify" : {
@@ -2733,8 +3225,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/sources/{id}" : {
@@ -2771,10 +3272,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns a source with given id",
@@ -2798,8 +3308,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "delete" : {
         "summary" : "Deletes an existing source",
@@ -2814,8 +3333,17 @@
           }
         } ],
         "responses" : {
-          "204" : { }
-        }
+          "204" : { },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/transforms" : {
@@ -2843,10 +3371,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns all available transformations",
@@ -2864,8 +3401,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/transforms/{id}" : {
@@ -2902,10 +3448,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns a transform with given id",
@@ -2929,8 +3484,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "delete" : {
         "summary" : "Deletes an existing transform",
@@ -2945,8 +3509,17 @@
           }
         } ],
         "responses" : {
-          "204" : { }
-        }
+          "204" : { },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/vaults" : {
@@ -2974,10 +3547,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns all available vaults",
@@ -2995,8 +3577,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     },
     "/api/vaults/{id}" : {
@@ -3033,10 +3624,19 @@
               }
             }
           },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          },
           "400" : {
             "description" : "Bad Request"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "get" : {
         "summary" : "Returns a vault with given id",
@@ -3060,8 +3660,17 @@
                 }
               }
             }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
           }
-        }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       },
       "delete" : {
         "summary" : "Deletes an existing vault",
@@ -3076,8 +3685,17 @@
           }
         } ],
         "responses" : {
-          "204" : { }
-        }
+          "204" : { },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
       }
     }
   },

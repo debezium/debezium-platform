@@ -25,9 +25,11 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.domain.LogStreamingService.LogStreamingTask;
 import io.debezium.platform.domain.PipelineService;
 import io.debezium.platform.error.NotFoundException;
+import io.quarkus.security.PermissionsAllowed;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.subscription.MultiEmitter;
@@ -45,6 +47,11 @@ import io.smallrye.mutiny.subscription.MultiEmitter;
  * relying on the reconnect every client falls back to otherwise, which would start a new task and
  * re-read the log from wherever its source starts it from (its very beginning for a host deployment,
  * or its last 100 lines for a Kubernetes one), duplicating lines already seen.
+ *
+ * <p>Being plain HTTP rather than a WebSocket upgrade, this endpoint goes through the same
+ * {@code @PermissionsAllowed} enforcement as every other resource in this package (debezium/dbz#3003):
+ * the one capability the previous WebSocket endpoint could not be given, since a browser cannot set
+ * an {@code Authorization} header on the handshake.
  */
 @Tag(name = "pipelines")
 @Path("/pipelines/{id}/logs/stream")
@@ -62,6 +69,7 @@ public class PipelineLogStreamResource {
         this.pipelineService = pipelineService;
     }
 
+    @PermissionsAllowed(Permissions.PIPELINE_LOGS)
     @GET
     @Produces(MediaType.SERVER_SENT_EVENTS)
     @Blocking

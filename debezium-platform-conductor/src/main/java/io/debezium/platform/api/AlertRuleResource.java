@@ -32,8 +32,10 @@ import org.jboss.logging.Logger;
 import io.debezium.platform.api.dto.AlertRuleRequest;
 import io.debezium.platform.api.dto.AlertRuleResponse;
 import io.debezium.platform.api.mapper.AlertRuleMapper;
+import io.debezium.platform.config.security.Permissions;
 import io.debezium.platform.domain.AlertRuleService;
 import io.debezium.platform.error.NotFoundException;
+import io.quarkus.security.PermissionsAllowed;
 
 @Tag(name = "Alerting")
 @Path("/alerts/rules")
@@ -51,6 +53,7 @@ public class AlertRuleResource {
 
     @Operation(summary = "Returns all available alert rules")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = AlertRuleResponse.class, required = true, type = SchemaType.ARRAY)))
+    @PermissionsAllowed(Permissions.ALERT_READ)
     @GET
     public Response get() {
         var rules = alertRuleService.list();
@@ -59,6 +62,7 @@ public class AlertRuleResource {
 
     @Operation(summary = "Returns an alert rule with given id")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = AlertRuleResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.ALERT_READ)
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
@@ -70,6 +74,7 @@ public class AlertRuleResource {
 
     @Operation(summary = "Creates a new alert rule")
     @APIResponse(responseCode = "201", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = AlertRuleResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.ALERT_WRITE)
     @POST
     public Response post(@NotNull @Valid AlertRuleRequest request, @Context UriInfo uriInfo) {
         var view = alertRuleService.createEmpty();
@@ -83,6 +88,7 @@ public class AlertRuleResource {
 
     @Operation(summary = "Updates an existing alert rule")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = AlertRuleResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.ALERT_WRITE)
     @PUT
     @Path("/{id}")
     public Response put(@PathParam("id") Long id, @NotNull @Valid AlertRuleRequest request) {
@@ -94,6 +100,7 @@ public class AlertRuleResource {
 
     @Operation(summary = "Deletes an existing alert rule")
     @APIResponse(responseCode = "204")
+    @PermissionsAllowed(Permissions.ALERT_WRITE)
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {
@@ -103,6 +110,7 @@ public class AlertRuleResource {
 
     @Operation(summary = "Enables an alert rule")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = AlertRuleResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.ALERT_WRITE)
     @PUT
     @Path("/{id}/enable")
     public Response enable(@PathParam("id") Long id) {
@@ -112,6 +120,7 @@ public class AlertRuleResource {
 
     @Operation(summary = "Disables an alert rule")
     @APIResponse(responseCode = "200", content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = AlertRuleResponse.class, required = true)))
+    @PermissionsAllowed(Permissions.ALERT_WRITE)
     @PUT
     @Path("/{id}/disable")
     public Response disable(@PathParam("id") Long id) {

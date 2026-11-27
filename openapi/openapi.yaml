@@ -6,6 +6,7 @@ tags:
   description: Pipeline monitoring and metrics
 - name: connections
 - name: destinations
+- name: identity
 - name: pipelines
 - name: snapshots
 - name: sources
@@ -333,6 +334,27 @@ components:
         percentage:
           type: number
           format: double
+    IdentityResponse:
+      type: object
+      properties:
+        iamEnabled:
+          type: boolean
+        subject:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        roles:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+        permissions:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
     Instant:
       type: string
       format: date-time
@@ -961,8 +983,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationChannelResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns all available notification channels
       tags:
@@ -976,6 +1004,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/NotificationChannelResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/alerts/channels/{id}:
     put:
       summary: Updates an existing notification channel
@@ -1001,8 +1035,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationChannelResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns a notification channel with given id
       tags:
@@ -1021,6 +1061,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationChannelResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
     delete:
       summary: Deletes an existing notification channel
       tags:
@@ -1034,6 +1080,12 @@ paths:
           format: int64
       responses:
         "204": {}
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/alerts/events:
     get:
       summary: Returns paginated alert events
@@ -1086,6 +1138,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PagedAlertEventResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/alerts/events/{id}:
     get:
       summary: Returns a single alert event by id
@@ -1105,6 +1163,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AlertEventResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/alerts/rules:
     post:
       summary: Creates a new alert rule
@@ -1122,8 +1186,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AlertRuleResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns all available alert rules
       tags:
@@ -1137,6 +1207,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AlertRuleResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/alerts/rules/{id}:
     put:
       summary: Updates an existing alert rule
@@ -1162,8 +1238,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AlertRuleResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns an alert rule with given id
       tags:
@@ -1182,6 +1264,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AlertRuleResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
     delete:
       summary: Deletes an existing alert rule
       tags:
@@ -1195,6 +1283,12 @@ paths:
           format: int64
       responses:
         "204": {}
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/alerts/rules/{id}/disable:
     put:
       summary: Disables an alert rule
@@ -1214,6 +1308,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AlertRuleResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/alerts/rules/{id}/enable:
     put:
       summary: Enables an alert rule
@@ -1233,6 +1333,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AlertRuleResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/alerts/status:
     get:
       summary: Returns current alert status summary
@@ -1245,6 +1351,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AlertStatusResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/catalog:
     get:
       summary: Returns all available components for the current application version
@@ -1260,8 +1372,14 @@ paths:
             application/json:
               schema:
                 type: object
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
       tags:
       - Catalog Resource
+      security:
+      - SecurityScheme: []
   /api/catalog/{type}/{class}:
     get:
       summary: Returns descriptors for a specific component using current application
@@ -1284,8 +1402,14 @@ paths:
             application/json:
               schema:
                 type: object
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
       tags:
       - Catalog Resource
+      security:
+      - SecurityScheme: []
   /api/catalog/{version}:
     get:
       summary: Returns all available components for a specific version
@@ -1306,8 +1430,14 @@ paths:
             application/json:
               schema:
                 type: object
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
       tags:
       - Catalog Resource
+      security:
+      - SecurityScheme: []
   /api/catalog/{version}/{type}/{class}:
     get:
       summary: Returns descriptors for a specific component
@@ -1334,8 +1464,14 @@ paths:
             application/json:
               schema:
                 type: object
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
       tags:
       - Catalog Resource
+      security:
+      - SecurityScheme: []
   /api/connections:
     post:
       summary: Creates new connection
@@ -1354,8 +1490,14 @@ paths:
               schema:
                 type: string
                 format: uri
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns all available connections
       tags:
@@ -1369,6 +1511,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ConnectionResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/connections/schemas:
     get:
       summary: Returns a list of JSON schema describing the required field for a Connection
@@ -1381,6 +1529,12 @@ paths:
             application/json:
               schema:
                 type: array
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/connections/validate:
     post:
       summary: Verify that the connection is valid
@@ -1406,8 +1560,14 @@ paths:
                     type: string
                   errorType:
                     type: string
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
   /api/connections/{id}:
     put:
       summary: Updates an existing connection
@@ -1433,8 +1593,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ConnectionResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns a connection with given id
       tags:
@@ -1453,6 +1619,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ConnectionResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
     delete:
       summary: Deletes an existing connection
       tags:
@@ -1466,6 +1638,12 @@ paths:
           format: int64
       responses:
         "204": {}
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/connections/{id}/collections:
     get:
       summary: Returns a list of collection names available on the source
@@ -1490,6 +1668,12 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/CatalogNode"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/destinations:
     post:
       summary: Creates new destination
@@ -1508,8 +1692,14 @@ paths:
               schema:
                 type: string
                 format: uri
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns all available destinations
       tags:
@@ -1523,6 +1713,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DestinationResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/destinations/{id}:
     put:
       summary: Updates an existing destination
@@ -1548,8 +1744,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DestinationResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns a destination with given id
       tags:
@@ -1568,6 +1770,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DestinationResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
     delete:
       summary: Deletes an existing destination
       tags:
@@ -1581,6 +1789,30 @@ paths:
           format: int64
       responses:
         "204": {}
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
+  /api/me:
+    get:
+      summary: Returns the caller's identity and effective permissions
+      tags:
+      - identity
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/monitoring/panels:
     get:
       summary: List available monitoring panels
@@ -1593,6 +1825,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PanelsListResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/monitoring/panels/{id}/query:
     get:
       summary: Query monitoring panel data for a specific pipeline
@@ -1647,6 +1885,12 @@ paths:
             application/json:
               schema:
                 type: object
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/pipelines:
     post:
       summary: Creates new pipeline
@@ -1665,8 +1909,14 @@ paths:
               schema:
                 type: string
                 format: uri
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns all available pipelines
       tags:
@@ -1680,6 +1930,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PipelineResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/pipelines/{id}:
     put:
       summary: Updates an existing pipeline
@@ -1705,8 +1961,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PipelineResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns a pipeline with given id
       tags:
@@ -1725,6 +1987,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PipelineResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
     delete:
       summary: Deletes an existing pipeline
       tags:
@@ -1738,6 +2006,12 @@ paths:
           format: int64
       responses:
         "204": {}
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/pipelines/{id}/logs:
     get:
       summary: Returns logs for pipeline with given id
@@ -1757,6 +2031,12 @@ paths:
             text/plain:
               schema:
                 type: string
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/pipelines/{id}/logs/stream:
     get:
       summary: Stream live logs for the pipeline with the given id via SSE
@@ -1780,6 +2060,12 @@ paths:
                 type: string
         "404":
           description: Unknown pipeline
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/pipelines/{id}/signals:
     post:
       summary: Send signal to pipeline with given id
@@ -1807,8 +2093,14 @@ paths:
                 $ref: "#/components/schemas/SignalResponse"
         "404":
           description: Pipeline not found
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
   /api/pipelines/{pipelineId}/snapshots/history:
     get:
       summary: List completed snapshot runs for a pipeline (paginated)
@@ -1859,6 +2151,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PagedSnapshotHistoryResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/pipelines/{pipelineId}/snapshots/history/{historyId}:
     get:
       summary: Return a single snapshot run with its per-table breakdown
@@ -1886,6 +2184,12 @@ paths:
                 $ref: "#/components/schemas/SnapshotHistoryResponse"
         "404":
           description: Unknown snapshot run for this pipeline
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/pipelines/{pipelineId}/snapshots/progress:
     get:
       summary: Current snapshot progress for a pipeline (non-streaming)
@@ -1907,6 +2211,12 @@ paths:
                 $ref: "#/components/schemas/SnapshotProgressResponse"
         "404":
           description: Unknown pipeline
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/pipelines/{pipelineId}/snapshots/progress/stream:
     get:
       summary: Stream live snapshot progress for a pipeline via SSE
@@ -1929,6 +2239,12 @@ paths:
                 $ref: "#/components/schemas/SnapshotProgressResponse"
         "404":
           description: Unknown pipeline
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/sources:
     post:
       summary: Creates new source
@@ -1947,8 +2263,14 @@ paths:
               schema:
                 type: string
                 format: uri
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns all available sources
       tags:
@@ -1962,6 +2284,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SourceResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/sources/signals/verify:
     post:
       summary: Verify that signal data collection is configured correctly
@@ -1992,6 +2320,12 @@ paths:
             application/json:
               schema:
                 type: object
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/sources/{id}:
     put:
       summary: Updates an existing source
@@ -2017,8 +2351,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SourceResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns a source with given id
       tags:
@@ -2037,6 +2377,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SourceResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
     delete:
       summary: Deletes an existing source
       tags:
@@ -2050,6 +2396,12 @@ paths:
           format: int64
       responses:
         "204": {}
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/transforms:
     post:
       summary: Creates new transform
@@ -2068,8 +2420,14 @@ paths:
               schema:
                 type: string
                 format: uri
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns all available transformations
       tags:
@@ -2083,6 +2441,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TransformResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/transforms/{id}:
     put:
       summary: Updates an existing transform
@@ -2108,8 +2472,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TransformResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns a transform with given id
       tags:
@@ -2128,6 +2498,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TransformResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
     delete:
       summary: Deletes an existing transform
       tags:
@@ -2141,6 +2517,12 @@ paths:
           format: int64
       responses:
         "204": {}
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/vaults:
     post:
       summary: Creates new vault
@@ -2159,8 +2541,14 @@ paths:
               schema:
                 type: string
                 format: uri
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns all available vaults
       tags:
@@ -2174,6 +2562,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/VaultResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
   /api/vaults/{id}:
     put:
       summary: Updates an existing vault
@@ -2199,8 +2593,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/VaultResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme: []
     get:
       summary: Returns a vault with given id
       tags:
@@ -2219,6 +2619,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/VaultResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
     delete:
       summary: Deletes an existing vault
       tags:
@@ -2232,6 +2638,12 @@ paths:
           format: int64
       responses:
         "204": {}
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
 info:
   title: Debezium Platform API
   version: 3.8.0-SNAPSHOT
