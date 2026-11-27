@@ -110,7 +110,7 @@ must clear the hidden tables too.
 
 `pipeline.cy.ts` self-seeds `test-postgres-connection`, `test-kafka-connection`, fixed Cypress source/destination/transform names, and an alternate source via the API in `before()` — it does not depend on other spec files running first. Designer tests cover transform gating (source required), selection from the modal list, and clearing transforms when the source changes.
 
-`transform.cy.ts` exercises the catalog-driven create form (grouped class dropdown, jump links/tabs) and list search using `Find by name...` placeholders.
+`transform.cy.ts` exercises the catalog-driven create form (grouped class dropdown, jump links/tabs) and list search using `Find by name` placeholders.
 
 ## Writing Tests
 
