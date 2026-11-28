@@ -74,7 +74,8 @@ public class AgentContainerService {
     }
 
     /**
-     * Gracefully stops a container before force-removing it and cleaning its files.
+     * Gracefully stops a container, force-removes it and cleans its config files.
+     * The data directory is kept because offsets must survive redeployments.
      */
     public void undeploy(String containerName) {
         try {
@@ -86,7 +87,7 @@ public class AgentContainerService {
         }
 
         removeStaleContainer(containerName);
-        cleanupContainerFiles(containerName);
+        cleanupConfigFiles(containerName);
         logger.infov("Undeployed container {0}", containerName);
     }
 
@@ -158,13 +159,12 @@ public class AgentContainerService {
         }
     }
 
-    private void cleanupContainerFiles(String containerName) {
+    private void cleanupConfigFiles(String containerName) {
         try {
             deleteDirectoryRecursively(containerDirectory(config.configBasePath(), containerName));
-            deleteDirectoryRecursively(containerDirectory(config.dataBasePath(), containerName));
         }
         catch (IOException e) {
-            logger.warnv(e, "Failed to clean up files for container {0}, proceeding", containerName);
+            logger.warnv(e, "Failed to clean up config files for container {0}, proceeding", containerName);
         }
     }
 
